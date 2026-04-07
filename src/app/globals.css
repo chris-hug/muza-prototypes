@@ -2,129 +2,493 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* ─── Founders Grotesk ───────────────────────────────────────────────────── */
+@font-face {
+  font-family: "Founders Grotesk";
+  src: url("/fonts/FoundersGrotesk-Light.ttf") format("truetype");
+  font-weight: 300; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Founders Grotesk";
+  src: url("/fonts/FoundersGrotesk-LightItalic.ttf") format("truetype");
+  font-weight: 300; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: "Founders Grotesk";
+  src: url("/fonts/FoundersGrotesk-Regular.ttf") format("truetype");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Founders Grotesk";
+  src: url("/fonts/FoundersGrotesk-RegularItalic.ttf") format("truetype");
+  font-weight: 400; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: "Founders Grotesk";
+  src: url("/fonts/FoundersGrotesk-Medium.ttf") format("truetype");
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Founders Grotesk";
+  src: url("/fonts/FoundersGrotesk-MediumItalic.ttf") format("truetype");
+  font-weight: 500; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: "Founders Grotesk";
+  src: url("/fonts/FoundersGrotesk-Semibold.ttf") format("truetype");
+  font-weight: 600; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Founders Grotesk";
+  src: url("/fonts/FoundersGrotesk-SemiboldItalic.ttf") format("truetype");
+  font-weight: 600; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: "Founders Grotesk";
+  src: url("/fonts/FoundersGrotesk-Bold.ttf") format("truetype");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Founders Grotesk";
+  src: url("/fonts/FoundersGrotesk-BoldItalic.ttf") format("truetype");
+  font-weight: 700; font-style: italic; font-display: swap;
+}
+
 @custom-variant dark (&:is(.dark *));
 
+/* ─── Tailwind theme bridge ──────────────────────────────────────────────── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
+  --font-sans: "Founders Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Fira Code", monospace;
+
+  --color-blue-50:   var(--blue-50);
+  --color-blue-100:  var(--blue-100);
+  --color-blue-200:  var(--blue-200);
+  --color-blue-300:  var(--blue-300);
+  --color-blue-400:  var(--blue-400);
+  --color-blue-500:  var(--blue-500);
+  --color-blue-600:  var(--blue-600);
+  --color-blue-700:  var(--blue-700);
+  --color-blue-800:  var(--blue-800);
+  --color-blue-900:  var(--blue-900);
+  --color-blue-950:  var(--blue-950);
+
+  --color-background:           var(--background);
+  --color-foreground:           var(--foreground);
+  --color-secondary-hover:      var(--secondary-hover);
+  --color-card:                 var(--card);
+  --color-card-foreground:      var(--card-foreground);
+  --color-popover:              var(--popover);
+  --color-popover-foreground:   var(--popover-foreground);
+  --color-primary:              var(--primary);
+  --color-primary-foreground:   var(--primary-foreground);
+  --color-secondary:            var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --color-muted:                var(--muted);
+  --color-muted-foreground:     var(--muted-foreground);
+  --color-accent:               var(--accent);
+  --color-accent-foreground:    var(--accent-foreground);
+  --color-destructive:          var(--destructive);
+  --color-border:               var(--border);
+  --color-input:                var(--input);
+  --color-ring:                 var(--ring);
+
+  --color-sidebar:                    var(--sidebar);
+  --color-sidebar-foreground:         var(--sidebar-foreground);
+  --color-sidebar-primary:            var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent:             var(--sidebar-accent);
+  --color-sidebar-accent-foreground:  var(--sidebar-accent-foreground);
+  --color-sidebar-border:             var(--sidebar-border);
+  --color-sidebar-ring:               var(--sidebar-ring);
+
+  /* Muza neutral palette */
+  --color-neutral-50:   var(--neutral-50);
+  --color-neutral-100:  var(--neutral-100);
+  --color-neutral-200:  var(--neutral-200);
+  --color-neutral-300:  var(--neutral-300);
+  --color-neutral-400:  var(--neutral-400);
+  --color-neutral-500:  var(--neutral-500);
+  --color-neutral-600:  var(--neutral-600);
+  --color-neutral-700:  var(--neutral-700);
+  --color-neutral-800:  var(--neutral-800);
+  --color-neutral-900:  var(--neutral-900);
+  --color-neutral-950:  var(--neutral-950);
+
+  /* Muza white + alpha */
+  --color-muza-white:    var(--muza-white);
+  --color-muza-white-a0:  var(--muza-white-a0);
+  --color-muza-white-a10: var(--muza-white-a10);
+  --color-muza-white-a20: var(--muza-white-a20);
+  --color-muza-white-a30: var(--muza-white-a30);
+  --color-muza-white-a40: var(--muza-white-a40);
+  --color-muza-white-a50: var(--muza-white-a50);
+  --color-muza-white-a60: var(--muza-white-a60);
+  --color-muza-white-a70: var(--muza-white-a70);
+  --color-muza-white-a80: var(--muza-white-a80);
+  --color-muza-white-a90: var(--muza-white-a90);
+
+  /* Muza black + alpha */
+  --color-muza-black:    var(--muza-black);
+  --color-muza-black-a0:  var(--muza-black-a0);
+  --color-muza-black-a10: var(--muza-black-a10);
+  --color-muza-black-a20: var(--muza-black-a20);
+  --color-muza-black-a30: var(--muza-black-a30);
+  --color-muza-black-a40: var(--muza-black-a40);
+  --color-muza-black-a50: var(--muza-black-a50);
+  --color-muza-black-a60: var(--muza-black-a60);
+  --color-muza-black-a70: var(--muza-black-a70);
+  --color-muza-black-a80: var(--muza-black-a80);
+  --color-muza-black-a90: var(--muza-black-a90);
+
+  /* ── Muza type scale — explicit px to avoid rem/base-font-size ambiguity ─── */
+  /* xxs=14 · xs=16 · sm=18 · base=20 · lg=24 · xl=30 · 2xl=36 · 3xl=48 · 4xl=60 · 5xl=72 */
+  --text-xxs:  14px;   /* reserved minimum — chips, badges, button-sm */
+  --text-xs:   16px;
+  --text-sm:   18px;
+  --text-base: 20px;
+  --text-lg:   24px;
+  --text-xl:   30px;
+  --text-2xl:  36px;
+  --text-3xl:  48px;
+  --text-4xl:  60px;
+  --text-5xl:  72px;
+
+  /* Custom radius tokens — only truly custom sizes not in Tailwind's default scale */
+  /* NOTE: rounded-sm/md/lg/xl/2xl/3xl use calc(var(--radius) * N) from Tailwind v4 internals.
+     Set --radius in :root to 0.5rem so the multipliers match Figma's token set:
+       rounded-md  = 0.5rem × 0.75 = 6px
+       rounded-lg  = 0.5rem × 1.0  = 8px
+       rounded-xl  = 0.5rem × 1.5  = 12px
+       rounded-2xl = 0.5rem × 2.0  = 16px   */
+  --radius-4xl:  2rem;      /* 32px — custom, no default Tailwind equivalent */
+  --radius-full: 9999px;
 }
 
+/* ─── Light mode ─────────────────────────────────────────────────────────── */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* ── Primitive palette: Muza blue ────────────────────────────────────── */
+  --blue-50:   #3E79FF;
+  --blue-100:  #3F66FF;
+  --blue-200:  #1E34D8;
+  --blue-300:  #1121C2;
+  --blue-400:  #030AB1;
+  --blue-500:  #000DA2;
+  --blue-600:  #001183;
+  --blue-700:  #000E69;
+  --blue-800:  #000A4E;
+  --blue-900:  #000734;
+  --blue-950:  #000318;
+
+  /* ── Primitive palette: warm olive-tinted neutrals ────────────────────── */
+  /* Exact match to Figma file L9yw4Yaec9YtAXGxP8q4fu neutral scale.        */
+  --neutral-50:   #F9FAF0;
+  --neutral-100:  #F1F3E6;
+  --neutral-200:  #ECEEDF;
+  --neutral-300:  #DADDCD;
+  --neutral-400:  #B5B7A7;
+  --neutral-500:  #86887C;
+  --neutral-600:  #69695D;
+  --neutral-700:  #3C3D33;
+  --neutral-800:  #2E2C24;
+  --neutral-900:  #1D1C18;
+  --neutral-950:  #0D0D04; /* muza black */
+
+  /* ── Muza white + alpha variants ─────────────────────────────────────── */
+  --muza-white:    #FEFFFB;
+  --muza-white-a0:  rgba(254, 255, 251, 0);
+  --muza-white-a10: rgba(254, 255, 251, 0.10);
+  --muza-white-a20: rgba(254, 255, 251, 0.20);
+  --muza-white-a30: rgba(254, 255, 251, 0.30);
+  --muza-white-a40: rgba(254, 255, 251, 0.40);
+  --muza-white-a50: rgba(254, 255, 251, 0.50);
+  --muza-white-a60: rgba(254, 255, 251, 0.60);
+  --muza-white-a70: rgba(254, 255, 251, 0.70);
+  --muza-white-a80: rgba(254, 255, 251, 0.80);
+  --muza-white-a90: rgba(254, 255, 251, 0.90);
+
+  /* ── Muza black + alpha variants ─────────────────────────────────────── */
+  --muza-black:    #0D0D04;
+  --muza-black-a0:  rgba(13, 13, 4, 0);
+  --muza-black-a10: rgba(13, 13, 4, 0.10);
+  --muza-black-a20: rgba(13, 13, 4, 0.20);
+  --muza-black-a30: rgba(13, 13, 4, 0.30);
+  --muza-black-a40: rgba(13, 13, 4, 0.40);
+  --muza-black-a50: rgba(13, 13, 4, 0.50);
+  --muza-black-a60: rgba(13, 13, 4, 0.60);
+  --muza-black-a70: rgba(13, 13, 4, 0.70);
+  --muza-black-a80: rgba(13, 13, 4, 0.80);
+  --muza-black-a90: rgba(13, 13, 4, 0.90);
+
+  /* ── Semantic tokens — light mode ─────────────────────────────────────── */
+  /* Surface */
+  --background:           #FEFFFB;              /* muza white — always this, never #fff */
+  --foreground:           #0D0D04;
+  --foreground-15:        rgba(13, 13, 4, 0.15);
+
+  /* Card / Popover — same surface as background */
+  --card:                 #FEFFFB;
+  --card-foreground:      #0D0D04;
+  --popover:              #FEFFFB;
+  --popover-foreground:   #0D0D04;
+
+  /* Brand */
+  --primary:              #000DA2;              /* blue-500 */
+  --primary-foreground:   #F9FAF0;              /* neutral-50 */
+
+  /* Muted — neutral-50, structural fills (slider track, skeleton, near-invisible) */
+  --muted:                #F9FAF0;              /* neutral-50 */
+  --muted-foreground:     rgba(105, 105, 93, 0.75); /* neutral-600 @ 75% opacity */
+
+  /* Secondary — neutral-100, neutral surface */
+  --secondary:            #F1F3E6;              /* neutral-100 */
+  --secondary-foreground: #1D1C18;              /* neutral-900 */
+  --secondary-0:          rgba(241, 243, 230, 0);
+  --secondary-50:         rgba(241, 243, 230, 0.5);
+
+  /* Accent — neutral-200, interaction state (hover, active, selected) — always more emphatic than secondary */
+  --accent:               #F1F3E6;              /* neutral-100 — same as secondary */
+  --accent-foreground:    #1D1C18;              /* neutral-900 */
+  --secondary-hover:      #ECEEDF;              /* neutral-200 — secondary button hover */
+
+  /* Destructive */
+  --destructive:          #DC2626;
+  --destructive-foreground: #FEF2F2;
+
+  /* Structural */
+  --border:               #DADDCD;              /* neutral-300 */
+  --input:                #ECEEDF;              /* neutral-200 — slightly more prominent than secondary */
+  --ring:                 #1D1C18;              /* neutral-900 */
+  --radius:               0.5rem;
+
+  /* Background / foreground alpha — now aliases to muza-white/black primitives */
+  --background-0:         var(--muza-white-a0);
+  --background-20:        var(--muza-white-a20);
+  --background-50:        var(--muza-white-a50);
+  --background-75:        var(--muza-white-a70);
+  --foreground-15:        var(--muza-black-a10);
+
+  /* ── Sidebar tokens — light ────────────────────────────────────────────── */
+  --sidebar:                    #FEFFFB;        /* muza white — currently matches background */
+  --sidebar-foreground:         #0D0D04;        /* muza black — currently matches foreground */
+  --sidebar-primary:            #ECEEDF;        /* neutral-200 — active item bg (emphatic) */
+  --sidebar-primary-foreground: #1D1C18;        /* neutral-900 */
+  --sidebar-accent:             #F1F3E6;        /* neutral-100 — hover bg (subtle) */
+  --sidebar-accent-foreground:  #1D1C18;        /* neutral-900 */
+  --sidebar-border:             #DADDCD;        /* neutral-300 */
+  --sidebar-ring:               #B5B7A7;        /* neutral-400 */
+
+  /* ── Chart colors — light ──────────────────────────────────────────────── */
+  --chart-1: #2A9D90;
+  --chart-2: #E76E50;
+  --chart-3: #274754;
+  --chart-4: #E8C468;
+  --chart-5: #F4A462;
 }
 
+/* ─── Dark mode ─────────────────────────────────────────────────────────── */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* Surface */
+  --background:           #0D0D04;              /* muza black */
+  --foreground:           #FAFCF4;              /* neutrals-50 */
+  --foreground-15:        rgba(250, 252, 244, 0.15);
+
+  /* Card / Popover */
+  --card:                 #0D0D04;
+  --card-foreground:      #FAFCF4;
+  --popover:              #0D0D04;
+  --popover-foreground:   #FAFCF4;
+
+  /* Brand */
+  --primary:              #1121C2;              /* blue-300 */
+  --primary-foreground:   #F9FAF0;              /* neutral-50 */
+
+  /* Muted — neutral-900, structural fills */
+  --muted:                #1D1C18;              /* neutral-900 */
+  --muted-foreground:     rgba(134, 136, 124, 0.75); /* neutral-500 @ 75% opacity */
+
+  /* Secondary — neutral-800, neutral surface */
+  --secondary:            #2E2C24;              /* neutral-800 */
+  --secondary-foreground: #F9FAF0;              /* neutral-50 */
+  --secondary-0:          rgba(46, 44, 36, 0);
+  --secondary-50:         rgba(46, 44, 36, 0.5);
+
+  /* Accent — neutral-700, interaction state (hover, active, selected) — always more emphatic than secondary */
+  --accent:               #2E2C24;              /* neutral-800 — same as secondary */
+  --accent-foreground:    #F9FAF0;              /* neutral-50 */
+  --secondary-hover:      #3C3D33;              /* neutral-700 — secondary button hover */
+
+  /* Destructive */
+  --destructive:          #7F1D1D;
+  --destructive-foreground: #FEF2F2;
+
+  /* Structural */
+  --border:               #2E2C24;              /* neutral-800 */
+  --input:                #2E2C24;              /* neutral-800 */
+  --ring:                 #DADDCD;              /* neutral-300 */
+
+  /* Background / foreground alpha — aliases to muza-black/white primitives */
+  --background-0:         var(--muza-black-a0);
+  --background-20:        var(--muza-black-a20);
+  --background-50:        var(--muza-black-a50);
+  --background-75:        var(--muza-black-a70);
+  --foreground-15:        var(--muza-white-a10);
+
+  /* ── Sidebar tokens — dark ─────────────────────────────────────────────── */
+  --sidebar:                    #0D0D04;        /* muza black — currently matches background */
+  --sidebar-foreground:         #FEFFFB;        /* muza white — currently matches foreground */
+  --sidebar-primary:            #3C3D33;        /* neutral-700 — active item bg (emphatic) */
+  --sidebar-primary-foreground: #F9FAF0;        /* neutral-50 */
+  --sidebar-accent:             #2E2C24;        /* neutral-800 — hover bg (subtle) */
+  --sidebar-accent-foreground:  #F9FAF0;        /* neutral-50 */
+  --sidebar-border:             #2E2C24;        /* neutral-800 */
+  --sidebar-ring:               #DADDCD;        /* neutral-300 */
+
+  /* ── Chart colors — dark ───────────────────────────────────────────────── */
+  --chart-1: #2662D9;
+  --chart-2: #E23670;
+  --chart-3: #E88C30;
+  --chart-4: #AF57DB;
+  --chart-5: #2EB88A;
 }
 
+/* ─── Base styles ────────────────────────────────────────────────────────── */
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
   }
-  html {
-    @apply font-sans;
-  }
+}
+
+/* ── Sidebar collapsible panel animation ─────────────────────────────────── */
+.sidebar-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 200ms ease;
+}
+.sidebar-panel[data-open] {
+  grid-template-rows: 1fr;
+}
+.sidebar-panel > div {
+  overflow: hidden;
+}
+
+/* Fill variant — expands to remaining flex space, inner content scrollable */
+.sidebar-panel-fill {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 200ms ease;
+  flex: 1;
+  min-height: 0;
+}
+.sidebar-panel-fill[data-open] {
+  grid-template-rows: 1fr;
+}
+.sidebar-panel-fill > div {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.sidebar-panel-fill[data-open] > div {
+  overflow: visible;
+}
+
+/* ── Animated Logo (mal-*) ────────────────────────────────────────────────── */
+
+.mal-root {
+  --mal-size: 240px;
+}
+
+/* Scene container — 3D perspective + gentle float */
+.mal-container {
+  width:    var(--mal-size);
+  height:   var(--mal-size);
+  position: relative;
+  perspective: 950px;
+  animation: malFloat 3s ease-in-out infinite;
+}
+@keyframes malFloat {
+  0%, 100% { transform: translateY(0);    }
+  50%       { transform: translateY(-8px); }
+}
+
+/* Tilt layer — JS rotates with mouse */
+.mal-tilt-wrapper {
+  width:            100%;
+  height:           100%;
+  transform-style:  preserve-3d;
+  transform-origin: 50% 50%;
+  will-change:      transform;
+}
+
+/* Carousel ring */
+.mal-carousel {
+  width:           100%;
+  height:          100%;
+  position:        absolute;
+  top:             0;
+  transform-style: preserve-3d;
+  transform:       rotateY(0deg);
+  will-change:     transform, top;
+}
+.mal-carousel.mal-rotate-transition {
+  transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+/* Items at 90° steps around the ring */
+.mal-item-wrapper {
+  position:        absolute;
+  transform-style: preserve-3d;
+}
+.mal-item-wrapper:nth-child(1) { transform: rotateY(0deg)   translate3d(0, 0, calc(var(--mal-size) * 0.6)); }
+.mal-item-wrapper:nth-child(2) { transform: rotateY(90deg)  translate3d(0, 0, calc(var(--mal-size) * 0.6)); }
+.mal-item-wrapper:nth-child(3) { transform: rotateY(180deg) translate3d(0, 0, calc(var(--mal-size) * 0.6)); }
+.mal-item-wrapper:nth-child(4) { transform: rotateY(270deg) translate3d(0, 0, calc(var(--mal-size) * 0.6)); }
+
+/* Sphere */
+.mal-item {
+  background:    var(--foreground);
+  width:         var(--mal-size);
+  height:        var(--mal-size);
+  border-radius: 50%;
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  color:         var(--background);
+  font-size:     0em;            /* hide letter labels */
+  box-shadow:    0 0 1px rgba(0,0,0,1);
+  opacity:       1;
+  will-change:   transform, opacity, filter;
+  transition:
+    transform   0.6s cubic-bezier(0.645, 0.045, 0.355, 1),
+    filter      0.5s ease-in-out,
+    opacity     0.4s ease-in-out,
+    box-shadow  0.3s ease-in-out;
+}
+.mal-item-inner {
+  width:         100%;
+  height:        100%;
+  border-radius: 50%;
+  transform:     translateZ(1px);
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+}
+
+/* Click animations */
+.mal-item.mal-squash   { transform: scale(0.75)  !important; transition: transform 100ms ease-out !important; }
+.mal-item.mal-blow-up  { transform: scale(1.15)  !important; }
+.mal-item.mal-snap-back {
+  animation:  malScaleBounce 450ms ease-out forwards !important;
+  transition: none !important;
+}
+@keyframes malScaleBounce {
+  0%   { transform: scale(1.15); }
+  40%  { transform: scale(0.97); }
+  65%  { transform: scale(1.03); }
+  80%  { transform: scale(0.99); }
+  100% { transform: scale(1);    }
 }

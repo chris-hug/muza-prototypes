@@ -1,0 +1,159 @@
+"use client"
+
+import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
+import { ChevronDown, Disc3, Globe, ListMusic, Lock, Mic, Music2 } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+// ─── Base Badge ───────────────────────────────────────────────────────────────
+//
+// Figma source: L9yw4Yaec9YtAXGxP8q4fu › node 26:169
+//
+// All variants carry `border` in the base so box-sizing is identical across
+// all variants — bordered and non-bordered badges are always the same height.
+// Non-bordered variants use `border-transparent`.
+//
+// Specs:
+//   rounded-sm · pt-[4px] pb-[6px] px-[6px] · gap-1
+//   text-xxs font-normal leading-none · icon slot: size-3 (12px)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const badgeVariants = cva(
+  [
+    "inline-flex w-fit shrink-0 items-center gap-1",
+    "rounded-sm",
+    "border border-transparent",           // always present — keeps height consistent
+    "pt-[4px] pb-[6px] px-[6px]",
+    "text-xxs font-normal leading-none whitespace-nowrap",
+    "transition-colors",
+    "[&>svg]:pointer-events-none [&>svg]:shrink-0 [&>svg]:size-3",
+  ],
+  {
+    variants: {
+      variant: {
+        // Accent fill (node 26:170) — used for content-type labels
+        secondary:
+          "bg-accent text-accent-foreground",
+        // Glassmorphism outline (node 26:181) — used for status labels
+        outline:
+          "backdrop-blur-[8px] bg-background/50 border-border text-muted-foreground",
+        // Destructive (node 26:185)
+        destructive:
+          "bg-destructive text-white",
+      },
+    },
+    defaultVariants: {
+      variant: "secondary",
+    },
+  }
+)
+
+interface BadgeProps
+  extends React.HTMLAttributes<HTMLSpanElement>,
+    VariantProps<typeof badgeVariants> {}
+
+function Badge({ className, variant, ...props }: BadgeProps) {
+  return (
+    <span
+      data-slot="badge"
+      className={cn(badgeVariants({ variant }), className)}
+      {...props}
+    />
+  )
+}
+
+// ─── ContentTypeBadge ─────────────────────────────────────────────────────────
+//
+// Figma source: L9yw4Yaec9YtAXGxP8q4fu › node 21368:27118
+//
+// Content-type labels shown on tracks, releases, playlists.
+// Always: bg-accent + left Lucide icon (12px) + label text.
+// ─────────────────────────────────────────────────────────────────────────────
+
+type ContentType = "song" | "album" | "single" | "ep" | "artist" | "playlist"
+
+const contentTypeConfig: Record<ContentType, { label: string; icon: React.ElementType }> = {
+  song:     { label: "Song",     icon: Music2 },
+  album:    { label: "Album",    icon: Disc3 },
+  single:   { label: "Single",   icon: Disc3 },
+  ep:       { label: "EP",       icon: Disc3 },
+  artist:   { label: "Artist",   icon: Mic },
+  playlist: { label: "Playlist", icon: ListMusic },
+}
+
+interface ContentTypeBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+  type: ContentType
+}
+
+function ContentTypeBadge({ type, className, ...props }: ContentTypeBadgeProps) {
+  const { label, icon: Icon } = contentTypeConfig[type]
+  return (
+    <span
+      data-slot="content-type-badge"
+      className={cn(
+        "inline-flex w-fit shrink-0 items-center gap-1",
+        "rounded-sm border border-transparent",  // transparent border — same height as outline/status
+        "bg-accent text-accent-foreground",
+        "pt-[4px] pb-[6px] px-[6px]",
+        "text-xxs font-normal leading-none whitespace-nowrap",
+        "[&>svg]:pointer-events-none [&>svg]:shrink-0 [&>svg]:size-3",
+        className,
+      )}
+      {...props}
+    >
+      <Icon />
+      {label}
+    </span>
+  )
+}
+
+// ─── StatusBadge ──────────────────────────────────────────────────────────────
+//
+// Figma source: L9yw4Yaec9YtAXGxP8q4fu › node 21368:27118
+//
+// Track/release visibility status. Always uses the glassmorphism outline style.
+// Always interactive (has chevron + onClick). Icon indicates visibility state.
+//   public  → Globe icon
+//   private → Lock icon
+// ─────────────────────────────────────────────────────────────────────────────
+
+type StatusBadgeStatus = "public" | "private"
+
+const statusConfig: Record<StatusBadgeStatus, { label: string; icon: React.ElementType }> = {
+  public:  { label: "Public",  icon: Globe },
+  private: { label: "Private", icon: Lock },
+}
+
+interface StatusBadgeProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  status: StatusBadgeStatus
+}
+
+function StatusBadge({ status, className, ...props }: StatusBadgeProps) {
+  const { label, icon: Icon } = statusConfig[status]
+  return (
+    <button
+      type="button"
+      data-slot="status-badge"
+      className={cn(
+        "inline-flex w-fit shrink-0 items-center gap-1",
+        "rounded-sm border border-border",       // solid border — same 1px as base
+        "backdrop-blur-[8px] bg-background/50 text-muted-foreground",
+        "pt-[4px] pb-[6px] px-[6px]",
+        "text-xxs font-normal leading-none whitespace-nowrap",
+        "transition-colors hover:border-foreground/40 hover:bg-muted hover:text-foreground",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+        "[&>svg]:pointer-events-none [&>svg]:shrink-0 [&>svg]:size-3",
+        className,
+      )}
+      {...props}
+    >
+      <Icon />
+      {label}
+      <ChevronDown className="opacity-60" />
+    </button>
+  )
+}
+
+export { Badge, badgeVariants, ContentTypeBadge, StatusBadge }
+export type { ContentType, StatusBadgeStatus }
