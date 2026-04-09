@@ -63,7 +63,7 @@ function ContextMenuTitle({ children, className }: ContextMenuTitleProps) {
   return (
     <div className={cn("px-1", className)}>
       <div className="pl-8 pr-2 py-[6px]">
-        <p className="text-xs font-medium text-muted-foreground leading-none truncate">{children}</p>
+        <p className="text-xs font-normal text-muted-foreground leading-none truncate">{children}</p>
       </div>
     </div>
   )
@@ -102,7 +102,7 @@ function ContextMenuItem({
           "relative flex items-center w-full",
           "pl-8 pr-2 pt-[6px] pb-2 rounded-lg text-left",
           "text-base font-normal text-popover-foreground leading-normal",
-          "hover:bg-secondary hover:text-secondary-foreground transition-colors",
+          "hover:bg-accent hover:text-accent-foreground transition-colors",
           disabled && "opacity-50 pointer-events-none",
           className,
         )}
@@ -146,8 +146,8 @@ function ContextMenuSubTrigger({
           "relative flex items-center w-full",
           "pl-8 pr-2 pt-[6px] pb-2 rounded-lg text-left",
           "text-base font-normal text-popover-foreground leading-normal",
-          "hover:bg-secondary hover:text-secondary-foreground transition-colors",
-          active && "bg-secondary text-secondary-foreground",
+          "hover:bg-accent hover:text-accent-foreground transition-colors",
+          active && "bg-accent text-accent-foreground",
           className,
         )}
       >

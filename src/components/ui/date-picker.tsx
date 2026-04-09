@@ -120,7 +120,7 @@ function DatePicker({
         className={cn(
           "flex h-10 w-full items-center justify-between gap-2",
           "rounded-full border border-border bg-background",
-          "px-3 py-2 text-base font-normal",
+          "px-3 pt-[6px] pb-[10px] text-base font-normal",
           "transition-colors outline-none select-none",
           "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
           "disabled:cursor-not-allowed disabled:opacity-50",
@@ -131,7 +131,7 @@ function DatePicker({
         <span className="truncate">
           {value ? formatDate(value) : placeholder}
         </span>
-        <CalendarIcon className="size-4 shrink-0 text-muted-foreground" />
+        <CalendarIcon className="size-4 shrink-0 text-muted-foreground translate-y-[2px]" />
       </PopoverPrimitive.Trigger>
 
       <PopoverPrimitive.Portal>

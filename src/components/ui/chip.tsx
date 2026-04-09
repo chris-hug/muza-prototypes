@@ -47,6 +47,9 @@ const chipVariants = cva(
         // Selected state — primary fill
         selected:
           "border-primary bg-primary text-primary-foreground",
+        // Selected state — dark outline only (secondary toggle)
+        "selected-outline":
+          "border-foreground bg-muted text-foreground",
       },
     },
     defaultVariants: {
@@ -59,10 +62,13 @@ interface ChipProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof chipVariants> {
   selected?: boolean
+  activeStyle?: "fill" | "outline"
 }
 
-function Chip({ className, variant, selected, children, ...props }: ChipProps) {
-  const resolvedVariant = selected ? "selected" : (variant ?? "default")
+function Chip({ className, variant, selected, activeStyle = "fill", children, ...props }: ChipProps) {
+  const resolvedVariant = selected
+    ? (activeStyle === "outline" ? "selected-outline" : "selected")
+    : (variant ?? "default")
 
   return (
     <button

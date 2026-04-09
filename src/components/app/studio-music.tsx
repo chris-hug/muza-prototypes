@@ -331,7 +331,7 @@ function RadioIndicator({ checked }: { checked: boolean }) {
         "flex size-4 shrink-0 rounded-full border items-center justify-center transition-colors",
         checked
           ? "border-primary bg-primary"
-          : "border-input dark:bg-input/30",
+          : "border-muted-foreground dark:bg-input/30",
       )}
     >
       {checked && (
@@ -531,26 +531,10 @@ interface TableRowProps {
   visibleCols: Record<ColKey, boolean>
 }
 
-const STATUS_CONFIG: Record<ReleaseStatus, { label: string; icon: React.ElementType }> = {
-  public:  { label: "Public",  icon: Globe },
-  private: { label: "Private", icon: Lock  },
-}
-
 function TableRow({ release, index, colWidths, visibleCols }: TableRowProps) {
   const [status,       setStatus]       = useState<ReleaseStatus>(release.status)
   const [hovered,      setHovered]      = useState(false)
-  const [statusOpen,   setStatusOpen]   = useState(false)
-  const statusRef                       = useRef<HTMLDivElement>(null)
   const vis = visibleCols
-
-  useEffect(() => {
-    if (!statusOpen) return
-    const handler = (e: MouseEvent) => {
-      if (!statusRef.current?.contains(e.target as Node)) setStatusOpen(false)
-    }
-    document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
-  }, [statusOpen])
 
   return (
     <div
@@ -583,7 +567,7 @@ function TableRow({ release, index, colWidths, visibleCols }: TableRowProps) {
 
       {vis.cover && (
         <div
-          className="shrink-0 rounded-sm bg-neutral-200 overflow-hidden"
+          className="shrink-0 rounded-xs bg-neutral-200 overflow-hidden"
           style={{ width: colWidths.cover, height: colWidths.cover }}
         >
           <img src={release.cover} alt={release.title} className="size-full object-cover" draggable={false} />
@@ -630,33 +614,8 @@ function TableRow({ release, index, colWidths, visibleCols }: TableRowProps) {
       )}
 
       {vis.state && (
-        <div ref={statusRef} className="relative shrink-0 flex" style={{ width: colWidths.state }}>
-          <StatusBadge
-            status={status}
-            onClick={e => { e.stopPropagation(); setStatusOpen(v => !v) }}
-          />
-          {statusOpen && (
-            <div className="absolute top-full left-0 mt-1.5 z-50 w-max rounded-xl bg-popover p-1 ring-1 ring-foreground/10">
-              {(["public", "private"] as ReleaseStatus[]).map(s => {
-                const { label, icon: Icon } = STATUS_CONFIG[s]
-                return (
-                  <div
-                    key={s}
-                    role="option"
-                    aria-selected={status === s}
-                    tabIndex={0}
-                    onClick={e => { e.stopPropagation(); setStatus(s); setStatusOpen(false) }}
-                    onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); setStatus(s); setStatusOpen(false) } }}
-                    className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-default select-none"
-                  >
-                    <RadioIndicator checked={status === s} />
-                    <Icon className="size-3 text-muted-foreground" />
-                    {label}
-                  </div>
-                )
-              })}
-            </div>
-          )}
+        <div className="shrink-0 flex" style={{ width: colWidths.state }}>
+          <StatusBadge status={status} onStatusChange={setStatus} />
         </div>
       )}
 
@@ -676,7 +635,7 @@ function TableRow({ release, index, colWidths, visibleCols }: TableRowProps) {
 
 // ─── StudioMusicView ──────────────────────────────────────────────────────────
 
-export function StudioMusicView() {
+export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void }) {
   // Multi-select filters
   const [typeFilters,   setTypeFilters]   = useState<Set<ContentType>>(new Set())
   const [statusFilter,  setStatusFilter]  = useState<ReleaseStatus | "all">("all")
@@ -695,7 +654,6 @@ export function StudioMusicView() {
   })
   // Cover auto-hide driven by ResizeObserver (separate from user toggle)
   const [autoCoverHide, setAutoCoverHide] = useState(false)
-  const [uploadOpen, setUploadOpen] = useState(false)
 
   const resizeRef      = useRef<{ col: ColKey; startX: number; startW: number } | null>(null)
   const tableWrapRef   = useRef<HTMLDivElement>(null)
@@ -766,7 +724,7 @@ export function StudioMusicView() {
   const anyFilter = typeFilters.size > 0 || statusFilter !== "all" || artistFilters.size > 0 || q.length > 0
 
   return (
-    <div ref={tableWrapRef} className="flex flex-col h-full">
+    <div ref={tableWrapRef} className="relative flex flex-col h-full">
 
       {/* ── Page header ──────────────────────────────────────────────── */}
       <div className="shrink-0 flex items-start justify-between gap-6 px-10 pt-8 pb-6">
@@ -776,7 +734,7 @@ export function StudioMusicView() {
             {RELEASES.length} releases
           </p>
         </div>
-        <Button size="lg" className="shrink-0 gap-2" onClick={() => setUploadOpen(true)}>
+        <Button size="lg" className="shrink-0 gap-2" onClick={onOpenUpload}>
           <Upload className="size-4" />
           Upload music
         </Button>
@@ -1043,7 +1001,6 @@ export function StudioMusicView() {
         )}
       </div>
 
-      <UploadMusicDialog open={uploadOpen} onClose={() => setUploadOpen(false)} />
     </div>
   )
 }

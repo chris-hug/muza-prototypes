@@ -27,7 +27,7 @@ function Tabs({
       data-slot="tabs"
       data-orientation={orientation}
       className={cn(
-        "group/tabs flex gap-2 data-horizontal:flex-col",
+        "group/tabs flex gap-2 data-[orientation=horizontal]:flex-col",
         className
       )}
       {...props}
@@ -42,17 +42,28 @@ const tabsListVariants = cva(
       variant: {
         // Pill/segment — tabs inside a muted background container
         default:
-          "rounded-xl bg-muted p-1 text-muted-foreground gap-0.5",
+          "rounded-full bg-muted p-1 text-muted-foreground gap-0",
         // Underline — transparent container, bottom-border active indicator
         line:
-          "rounded-none bg-transparent gap-1 text-muted-foreground",
+          "rounded-none bg-transparent gap-2 text-muted-foreground",
         // Pill — each tab is its own pill (no container background)
         pill:
           "rounded-none bg-transparent gap-1.5 text-muted-foreground",
       },
+      size: {
+        sm:      "",
+        default: "",
+        lg:      "",
+      },
     },
+    compoundVariants: [
+      { variant: "default", size: "sm",      className: "h-[40px]" },
+      { variant: "default", size: "default", className: "h-12" },
+      { variant: "default", size: "lg",      className: "h-[52px]" },
+    ],
     defaultVariants: {
       variant: "default",
+      size: "default",
     },
   }
 )
@@ -60,13 +71,15 @@ const tabsListVariants = cva(
 function TabsList({
   className,
   variant = "default",
+  size = "default",
   ...props
 }: TabsPrimitive.List.Props & VariantProps<typeof tabsListVariants>) {
   return (
     <TabsPrimitive.List
       data-slot="tabs-list"
       data-variant={variant}
-      className={cn(tabsListVariants({ variant }), className)}
+      data-size={variant === "default" ? size : undefined}
+      className={cn(tabsListVariants({ variant, size }), className)}
       {...props}
     />
   )
@@ -84,21 +97,24 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
 
         // ── Default variant (segment/pill within muted bg) ──────────────
-        "group-data-[variant=default]/tabs-list:rounded-lg",
-        "group-data-[variant=default]/tabs-list:px-3 group-data-[variant=default]/tabs-list:py-1",
-        "group-data-[variant=default]/tabs-list:text-sm",
+        "group-data-[variant=default]/tabs-list:flex-1 group-data-[variant=default]/tabs-list:h-full",
+        "group-data-[variant=default]/tabs-list:rounded-full",
+        // Size-specific padding & typography (only applied when variant=default since data-size is only set then)
+        "group-data-[size=sm]/tabs-list:px-3 group-data-[size=sm]/tabs-list:text-xxs group-data-[size=sm]/tabs-list:font-normal",
+        "group-data-[size=default]/tabs-list:px-6 group-data-[size=default]/tabs-list:text-sm group-data-[size=default]/tabs-list:font-normal",
+        "group-data-[size=lg]/tabs-list:px-8 group-data-[size=lg]/tabs-list:text-sm group-data-[size=lg]/tabs-list:font-medium",
         "group-data-[variant=default]/tabs-list:text-muted-foreground",
         "group-data-[variant=default]/tabs-list:hover:text-foreground",
-        // Active: white bg + foreground text
+        // Active: white bg + border
         "group-data-[variant=default]/tabs-list:data-active:bg-background",
+        "group-data-[variant=default]/tabs-list:data-active:border group-data-[variant=default]/tabs-list:data-active:border-border",
         "group-data-[variant=default]/tabs-list:data-active:text-foreground",
-        "group-data-[variant=default]/tabs-list:data-active:shadow-sm",
         // Dark active
         "dark:group-data-[variant=default]/tabs-list:data-active:bg-input/30",
 
         // ── Line/underline variant ──────────────────────────────────────
         "group-data-[variant=line]/tabs-list:rounded-none",
-        "group-data-[variant=line]/tabs-list:px-1 group-data-[variant=line]/tabs-list:pb-3 group-data-[variant=line]/tabs-list:pt-0",
+        "group-data-[variant=line]/tabs-list:px-3 group-data-[variant=line]/tabs-list:pb-3 group-data-[variant=line]/tabs-list:pt-0",
         "group-data-[variant=line]/tabs-list:text-sm",
         "group-data-[variant=line]/tabs-list:text-muted-foreground",
         "group-data-[variant=line]/tabs-list:hover:text-foreground",
@@ -110,13 +126,12 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
 
         // ── Pill variant ────────────────────────────────────────────────
         "group-data-[variant=pill]/tabs-list:rounded-full",
-        "group-data-[variant=pill]/tabs-list:px-3 group-data-[variant=pill]/tabs-list:py-1.5",
-        "group-data-[variant=pill]/tabs-list:text-sm",
+        "group-data-[variant=pill]/tabs-list:h-[38px] group-data-[variant=pill]/tabs-list:px-[18px]",
+        "group-data-[variant=pill]/tabs-list:text-sm group-data-[variant=pill]/tabs-list:font-medium",
         "group-data-[variant=pill]/tabs-list:text-muted-foreground",
         "group-data-[variant=pill]/tabs-list:hover:bg-muted",
         "group-data-[variant=pill]/tabs-list:hover:text-foreground",
-        // Active: muted bg + foreground text
-        "group-data-[variant=pill]/tabs-list:data-active:bg-muted",
+        "group-data-[variant=pill]/tabs-list:data-active:bg-accent",
         "group-data-[variant=pill]/tabs-list:data-active:text-foreground",
 
         className

@@ -23,8 +23,9 @@ function Checkbox({ className, ...props }: CheckboxPrimitive.Root.Props) {
       className={cn(
         // Layout
         "peer relative flex size-4 shrink-0 items-center justify-center",
-        // Shape — Figma: rounded-sm (2px), muted-foreground border at 0.5px
-        "rounded-sm border border-muted-foreground",
+        // Shape — Figma: 3px radius, muted-foreground border at 0.5px
+        // Fixed px value — must NOT scale with --radius (would become a circle)
+        "rounded-[3px] border border-muted-foreground",
         // Transitions + outline
         "transition-colors outline-none",
         // Touch target expansion
