@@ -28,7 +28,7 @@ function RadioGroupItem({ className, ...props }: RadioPrimitive.Root.Props) {
     <RadioPrimitive.Root
       data-slot="radio-group-item"
       className={cn(
-        "group/radio-group-item peer relative flex aspect-square size-4 shrink-0 rounded-full border border-input outline-none",
+        "group/radio-group-item peer relative flex aspect-square size-4 shrink-0 rounded-full border border-muted-foreground outline-none",
         // Touch target
         "after:absolute after:-inset-x-3 after:-inset-y-2",
         // Focus ring

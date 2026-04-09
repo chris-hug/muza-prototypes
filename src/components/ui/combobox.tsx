@@ -37,13 +37,13 @@ function ComboboxTrigger({ className, placeholder }: ComboboxTriggerProps) {
       className={cn(
         "relative flex w-full items-center",
         "rounded-full border border-border bg-background",
-        "h-10 px-3 gap-2",
+        "h-10 px-3 pt-[6px] pb-[10px] gap-2",
         "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50",
         "transition-colors",
         className
       )}
     >
-      <SearchIcon className="size-4 shrink-0 text-muted-foreground pointer-events-none" />
+      <SearchIcon className="size-4 shrink-0 text-muted-foreground pointer-events-none translate-y-[2px]" />
       <ComboboxPrimitive.Input
         data-slot="combobox-input"
         placeholder={placeholder}
@@ -57,7 +57,7 @@ function ComboboxTrigger({ className, placeholder }: ComboboxTriggerProps) {
         className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
         tabIndex={-1}
       >
-        <ChevronDownIcon className="size-4" />
+        <ChevronDownIcon className="size-4 translate-y-[2px]" />
       </ComboboxPrimitive.Trigger>
     </ComboboxPrimitive.InputGroup>
   )
@@ -105,7 +105,7 @@ function ComboboxGroup({ className, ...props }: ComboboxPrimitive.Group.Props) {
   return (
     <ComboboxPrimitive.Group
       data-slot="combobox-group"
-      className={cn("p-1", className)}
+      className={cn("", className)}
       {...props}
     />
   )
@@ -118,7 +118,7 @@ function ComboboxGroupLabel({
   return (
     <ComboboxPrimitive.GroupLabel
       data-slot="combobox-group-label"
-      className={cn("px-2.5 py-1.5 text-xs font-medium text-muted-foreground", className)}
+      className={cn("px-2.5 py-1.5 text-xs font-normal text-muted-foreground", className)}
       {...props}
     />
   )
@@ -127,8 +127,9 @@ function ComboboxGroupLabel({
 function ComboboxItem({
   className,
   children,
+  hideIndicator,
   ...props
-}: ComboboxPrimitive.Item.Props) {
+}: ComboboxPrimitive.Item.Props & { hideIndicator?: boolean }) {
   return (
     <ComboboxPrimitive.Item
       data-slot="combobox-item"
@@ -137,6 +138,7 @@ function ComboboxItem({
         "rounded-lg px-2.5 py-1.5",
         "text-base font-normal outline-none select-none",
         "focus:bg-accent focus:text-accent-foreground",
+        "data-highlighted:bg-accent data-highlighted:text-accent-foreground",
         "data-disabled:pointer-events-none data-disabled:opacity-50",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
@@ -144,9 +146,11 @@ function ComboboxItem({
       {...props}
     >
       {children}
-      <ComboboxPrimitive.ItemIndicator className="ml-auto">
-        <CheckIcon className="size-4" />
-      </ComboboxPrimitive.ItemIndicator>
+      {!hideIndicator && (
+        <ComboboxPrimitive.ItemIndicator className="ml-auto">
+          <CheckIcon className="size-4" />
+        </ComboboxPrimitive.ItemIndicator>
+      )}
     </ComboboxPrimitive.Item>
   )
 }

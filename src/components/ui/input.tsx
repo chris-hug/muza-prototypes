@@ -24,7 +24,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         // Shape — rounded-xl = 12px per Muza radius scale
         "rounded-full border border-border",
         // Surface
-        "bg-background px-3 py-2",
+        "bg-background px-4 pt-[6px] pb-[10px]",
         // Typography
         "text-base font-normal text-foreground",
         "placeholder:text-muted-foreground",

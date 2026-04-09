@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { AnimatedLogo } from "@/components/app/animated-logo"
 import { Sidebar } from "@/components/app/sidebar"
@@ -10,6 +8,7 @@ import { Badge, ContentTypeBadge, StatusBadge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { InputSelect } from "@/components/ui/input-select"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox, CheckboxField } from "@/components/ui/checkbox"
@@ -40,8 +39,28 @@ import {
   AlertCircle, CheckCircle2, Info, Music2, Heart, Share2,
   SkipBack, SkipForward, Play, Pause, Shuffle, Repeat,
   Settings, User, LogOut, Upload, MoreHorizontal,
-  Plus, Search, ChevronDown, Trash2,
+  Plus, Search, ChevronDown, Trash2, SlidersHorizontal, Maximize2,
 } from "lucide-react"
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
+import {
+  Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table"
+import {
+  Pagination, PaginationContent, PaginationEllipsis, PaginationItem,
+  PaginationLink, PaginationNext, PaginationPrevious,
+} from "@/components/ui/pagination"
+import {
+  Command, CommandDialog, CommandInput, CommandList, CommandEmpty,
+  CommandGroup, CommandItem, CommandShortcut, CommandSeparator,
+} from "@/components/ui/command"
+import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from "@/components/ui/input-otp"
+import {
+  Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage,
+} from "@/components/ui/form"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import { UploadMusicDialog } from "@/components/app/upload-music-dialog"
 
 // ─── Section heading component ────────────────────────────────────────────────
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
@@ -64,55 +83,10 @@ function SubLabel({ children }: { children: React.ReactNode }) {
 // ─── Home view ────────────────────────────────────────────────────────────────
 function HomeView() {
   return (
-    <div className="p-10 max-w-3xl">
-      <h1 className="text-4xl font-semibold tracking-tight mb-2">Good evening</h1>
-      <p className="text-muted-foreground text-lg mb-10">Here's what's new on Muza today.</p>
-
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-12">
-        {[
-          { emoji: "🎵", title: "Blue Afternoon",   sub: "River Lotus" },
-          { emoji: "🎸", title: "Midnight Circuit",  sub: "Axon Fade" },
-          { emoji: "🎤", title: "Haunt the Waves",   sub: "Dusk Ensemble" },
-          { emoji: "🎹", title: "Static Memory",     sub: "Nora Voss" },
-          { emoji: "🥁", title: "Low Tide Prayer",   sub: "Coastal Rites" },
-          { emoji: "🎺", title: "Signal Lost",       sub: "Axon Fade" },
-        ].map((card) => (
-          <div
-            key={card.title}
-            className="flex items-center gap-3 bg-background rounded-xl p-3 border border-border hover:bg-muted transition-colors cursor-pointer"
-          >
-            <div className="size-12 rounded-lg bg-neutral-300 flex items-center justify-center text-xl shrink-0">
-              {card.emoji}
-            </div>
-            <div className="min-w-0">
-              <p className="font-normal text-sm truncate">{card.title}</p>
-              <p className="text-xs text-muted-foreground">{card.sub}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <h2 className="text-xl font-medium mb-4">Recently played</h2>
-      <div className="flex flex-col max-w-md">
-        {[
-          { n: 1, emoji: "🎵", title: "Blue Afternoon",  artist: "River Lotus",   dur: "3:42", active: false },
-          { n: 2, emoji: "🎸", title: "Midnight Circuit", artist: "Axon Fade",     dur: "4:15", active: false },
-          { n: 3, emoji: "🎤", title: "Haunt the Waves",  artist: "Dusk Ensemble", dur: "5:01", active: true },
-          { n: 4, emoji: "🎹", title: "Static Memory",    artist: "Nora Voss",     dur: "2:58", active: false },
-        ].map(({ n, emoji, title, artist, dur, active }) => (
-          <div key={n} className={`flex items-center gap-3 px-2 py-2.5 rounded-lg cursor-pointer transition-colors ${active ? "bg-muted" : "hover:bg-muted"}`}>
-            <div className="w-5 text-center text-sm text-muted-foreground shrink-0">
-              {active ? <Play className="size-3.5 fill-primary text-primary mx-auto" /> : n}
-            </div>
-            <div className="size-9 rounded-md bg-neutral-300 shrink-0 flex items-center justify-center">{emoji}</div>
-            <div className="flex-1 min-w-0">
-              <p className={`text-sm font-normal truncate ${active ? "text-primary" : ""}`}>{title}</p>
-              <p className="text-xs text-muted-foreground">{artist}</p>
-            </div>
-            <span className="text-xs text-muted-foreground shrink-0">{dur}</span>
-          </div>
-        ))}
-      </div>
+    <div className="p-10 max-w-2xl flex flex-col gap-6">
+      <p className="text-2xl font-normal text-foreground">muza is the platform for independent music.</p>
+      <p className="text-2xl font-normal text-foreground">Built as a non-profit, muza exists to fix streaming's broken economics. Instead of paying artists per click, muza rewards attention — distributing revenue based on actual listening time and direct listener support. Your subscription goes only to the artists you play.</p>
+      <p className="text-2xl font-normal text-foreground">We combine subscription streaming with direct artist uploads, giving musicians full control over how their music is shared and monetised. Artists retain ownership, receive up to 90–95% of revenue, and are paid directly — no hidden intermediaries.</p>
     </div>
   )
 }
@@ -130,8 +104,8 @@ function toTabValue(label: string) {
   return label.toLowerCase().replace(/\s+/g, "-")
 }
 
-function StudioView({ page }: { page: string }) {
-  if (page === "Music") return <StudioMusicView />
+function StudioView({ page, onOpenUpload }: { page: string; onOpenUpload?: () => void }) {
+  if (page === "Music") return <StudioMusicView onOpenUpload={onOpenUpload} />
 
   const tabs = STUDIO_TABS[page] ?? []
 
@@ -174,12 +148,7 @@ function StudioView({ page }: { page: string }) {
 
 function StatusBadgeDemo() {
   const [status, setStatus] = useState<"public" | "private">("public")
-  return (
-    <StatusBadge
-      status={status}
-      onClick={() => setStatus(s => s === "public" ? "private" : "public")}
-    />
-  )
+  return <StatusBadge status={status} onStatusChange={setStatus} />
 }
 
 function ChipFilterDemo() {
@@ -201,6 +170,31 @@ function ChipFilterDemo() {
       {genres.map((g) => (
         <Chip
           key={g}
+          selected={g === "All" ? selected.length === 0 : selected.includes(g.toLowerCase())}
+          onClick={() => toggle(g.toLowerCase())}
+        >
+          {g}
+        </Chip>
+      ))}
+    </ChipGroup>
+  )
+}
+
+function ChipFilterOutlineDemo() {
+  const [selected, setSelected] = useState<string[]>(["electronic"])
+  const genres = ["All", "Hip-Hop", "Electronic", "Jazz", "R&B", "Indie", "Afrobeats", "Pop"]
+
+  function toggle(g: string) {
+    if (g === "all") { setSelected([]); return }
+    setSelected((prev) => prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g])
+  }
+
+  return (
+    <ChipGroup>
+      {genres.map((g) => (
+        <Chip
+          key={g}
+          activeStyle="outline"
           selected={g === "All" ? selected.length === 0 : selected.includes(g.toLowerCase())}
           onClick={() => toggle(g.toLowerCase())}
         >
@@ -306,8 +300,120 @@ function DatePickerDemo() {
   )
 }
 
+// ─── Command demo ────────────────────────────────────────────────────────────
+function CommandDemo() {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <div className="flex flex-wrap gap-3">
+        <Button variant="outline" onClick={() => setOpen(true)}>
+          <Search className="size-4" />Open Command Palette
+          <CommandShortcut>⌘K</CommandShortcut>
+        </Button>
+      </div>
+      <CommandDialog open={open} onOpenChange={setOpen}>
+        <CommandInput placeholder="Search tracks, artists, playlists…" />
+        <CommandList>
+          <CommandEmpty>No results found.</CommandEmpty>
+          <CommandGroup heading="Tracks">
+            <CommandItem><Music2 className="size-4" />Blue Afternoon<CommandShortcut>↵</CommandShortcut></CommandItem>
+            <CommandItem><Music2 className="size-4" />Midnight Circuit</CommandItem>
+            <CommandItem><Music2 className="size-4" />Static Memory</CommandItem>
+          </CommandGroup>
+          <CommandSeparator />
+          <CommandGroup heading="Artists">
+            <CommandItem><User className="size-4" />River Lotus</CommandItem>
+            <CommandItem><User className="size-4" />Axon Fade</CommandItem>
+          </CommandGroup>
+          <CommandSeparator />
+          <CommandGroup heading="Actions">
+            <CommandItem><Upload className="size-4" />Upload a track<CommandShortcut>⌘U</CommandShortcut></CommandItem>
+            <CommandItem><Settings className="size-4" />Settings<CommandShortcut>⌘,</CommandShortcut></CommandItem>
+          </CommandGroup>
+        </CommandList>
+      </CommandDialog>
+    </>
+  )
+}
+
+// ─── Form demo ────────────────────────────────────────────────────────────────
+const trackSchema = z.object({
+  title: z.string().min(2, "Title must be at least 2 characters"),
+  genre: z.string().min(1, "Please select a genre"),
+  bio: z.string().max(280, "Max 280 characters").optional(),
+})
+
+function FormDemo() {
+  const form = useForm<z.infer<typeof trackSchema>>({
+    resolver: zodResolver(trackSchema),
+    defaultValues: { title: "", genre: "", bio: "" },
+  })
+
+  function onSubmit(values: z.infer<typeof trackSchema>) {
+    console.log(values)
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5 max-w-sm">
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Track title</FormLabel>
+              <FormControl><Input placeholder="e.g. Blue Afternoon" {...field} /></FormControl>
+              <FormDescription>Your track's public display name.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="genre"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Genre</FormLabel>
+              <FormControl>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger><SelectValue placeholder="Select a genre" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="electronic">Electronic</SelectItem>
+                    <SelectItem value="hip-hop">Hip-Hop</SelectItem>
+                    <SelectItem value="jazz">Jazz</SelectItem>
+                    <SelectItem value="indie">Indie</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="bio"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl><Textarea placeholder="Tell listeners about this track…" rows={3} {...field} /></FormControl>
+              <FormDescription>Max 280 characters.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="flex gap-2">
+          <Button type="submit">Submit</Button>
+          <Button type="button" variant="outline" onClick={() => form.reset()}>Reset</Button>
+        </div>
+      </form>
+    </Form>
+  )
+}
+
 // ─── Kitchen sink (Explore view) ──────────────────────────────────────────────
 function ExploreView() {
+  const [inputSelectCurrency, setInputSelectCurrency] = useState("USD")
+  const [inputSelectTld, setInputSelectTld] = useState(".com")
   const [playing, setPlaying] = useState(false)
   const [volume, setVolume] = useState([62])
   const [progress, setProgress] = useState([38])
@@ -332,6 +438,7 @@ function ExploreView() {
           "Colors","Typography","Buttons","Badges","Chips","Inputs","Combobox","Date Picker",
           "Checkbox","Switch & Slider","Avatar","Tabs","Cards","Alerts","Alert Dialog",
           "Dropdown","Toast","Player","Song List","Skeleton",
+          "Popover","Table","Pagination","Command","OTP Input","Form",
         ].map((s) => {
           const id = s.toLowerCase().replace(/\s+&\s+/g,"-").replace(/\s+/g,"-")
           return (
@@ -349,57 +456,173 @@ function ExploreView() {
 
       {/* ══ COLORS ══ */}
       <Section id="colors" title="Colors">
-        <p className="text-xs font-normal text-muted-foreground mb-3">Muza neutrals — warm olive-tinted</p>
-        <div className="flex gap-1 mb-8">
+        {/* Primitive scales */}
+        <div className="flex flex-col gap-6 mb-10">
           {[
-            { name: "50",  bg: "#f9faf0" },
-            { name: "100", bg: "#f1f3e6" },
-            { name: "200", bg: "#eceedf" },
-            { name: "300", bg: "#daddcd" },
-            { name: "400", bg: "#b5b7a7" },
-            { name: "500", bg: "#86887c" },
-            { name: "600", bg: "#69695d" },
-            { name: "700", bg: "#3c3d33" },
-            { name: "800", bg: "#2e2c24" },
-            { name: "900", bg: "#1d1c18" },
-            { name: "950", bg: "#0d0d04" },
-          ].map((c) => (
-            <div key={c.name} className="flex-1 min-w-0">
-              <div className="h-14 rounded-md border border-border" style={{ background: c.bg }} />
-              <div className="mt-1.5 text-xs text-muted-foreground leading-tight">
-                <span className="block text-foreground">{c.name}</span>
-                {c.bg}
+            {
+              label: "muza-white / muza-black",
+              stops: [
+                { name: "white", hex: "#FEFFFB" },
+                { name: "black", hex: "#0D0D04" },
+              ],
+            },
+            {
+              label: "muza-neutrals",
+              stops: [
+                { name: "50",  hex: "#F9FAF0" },
+                { name: "100", hex: "#F1F3E6" },
+                { name: "200", hex: "#ECEEDF" },
+                { name: "300", hex: "#DADDCD" },
+                { name: "400", hex: "#B5B7A7" },
+                { name: "500", hex: "#86887C" },
+                { name: "600", hex: "#69695D" },
+                { name: "700", hex: "#3C3D33" },
+                { name: "800", hex: "#2E2C24" },
+                { name: "900", hex: "#1D1C18" },
+                { name: "950", hex: "#0D0D04" },
+              ],
+            },
+            {
+              label: "muza-blue",
+              stops: [
+                { name: "50",  hex: "#3E79FF" },
+                { name: "100", hex: "#3F66FF" },
+                { name: "200", hex: "#1E34D8" },
+                { name: "300", hex: "#1121C2" },
+                { name: "400", hex: "#030AB1" },
+                { name: "500", hex: "#000DA2" },
+                { name: "600", hex: "#001183" },
+                { name: "700", hex: "#000E69" },
+                { name: "800", hex: "#000A4E" },
+                { name: "900", hex: "#000734" },
+                { name: "950", hex: "#000318" },
+              ],
+            },
+          ].map((scale) => (
+            <div key={scale.label}>
+              <p className="text-xs font-normal text-muted-foreground mb-2">{scale.label}</p>
+              <div className="flex gap-2">
+                {scale.stops.map((s) => (
+                  <div key={s.name} className="flex-1 flex flex-col items-center gap-1.5">
+                    <div className="w-full h-14 rounded-xl border border-border" style={{ background: s.hex }} />
+                    <span className="text-xs font-mono text-muted-foreground">{s.name}</span>
+                  </div>
+                ))}
               </div>
             </div>
           ))}
         </div>
 
-        <p className="text-xs font-normal text-muted-foreground mb-3">Semantic tokens</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-          {[
-            { name: "--background",    cls: "bg-background border border-border", label: "#fefffb" },
-            { name: "--foreground",    cls: "bg-foreground",                       label: "#0d0d04" },
-            { name: "--primary",       cls: "bg-primary",                          label: "#001183" },
-            { name: "--secondary",     cls: "bg-secondary border border-border",   label: "#eceedf" },
-            { name: "--accent",        cls: "bg-accent border border-border",      label: "#f1f3e6" },
-            { name: "--muted",         cls: "bg-muted border border-border",       label: "#f9faf0" },
-            { name: "--border",        cls: "bg-border",                           label: "#daddcd" },
-            { name: "--destructive",   cls: "bg-destructive",                      label: "#dc2626" },
-            { name: "--muted-fg",      cls: "bg-[rgba(105,105,93,0.75)]",          label: "neutral-600 @ 75%" },
-            { name: "--primary-fg",    cls: "bg-primary-foreground border border-border", label: "#f9faf0" },
-            { name: "--sidebar",       cls: "bg-sidebar border border-border",     label: "#fefffb" },
-            { name: "--sidebar-accent",cls: "bg-sidebar-accent border border-border", label: "#f1f3e6" },
-            { name: "--input",         cls: "bg-input",                            label: "#eceedf" },
-          ].map((t) => (
-            <div key={t.name} className="flex flex-col gap-1.5">
-              <div className={`h-10 rounded-md ${t.cls}`} />
-              <div className="text-xs text-muted-foreground leading-tight">
-                <span className="block text-foreground">{t.name}</span>
-                {t.label}
-              </div>
-            </div>
-          ))}
-        </div>
+        <table className="w-full text-xs border-collapse">
+          <thead>
+            <tr className="border-b border-border text-left">
+              <th className="pb-2 pr-8 font-medium text-foreground">Token</th>
+              <th className="pb-2 pr-8 font-medium text-foreground">Light</th>
+              <th className="pb-2 font-medium text-foreground">Dark</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              {
+                token: "--background",
+                lHex: "#FEFFFB", lPrim: "--muza-white",            lOklch: "99.81% 0.0053 118.5",
+                dHex: "#0D0D04", dPrim: "--muza-black",            dOklch: "15.55% 0.0204 108.6",
+              },
+              {
+                token: "--foreground",
+                lHex: "#0D0D04", lPrim: "--muza-neutrals-950",     lOklch: "15.55% 0.0204 108.6",
+                dHex: "#F9FAF0", dPrim: "--muza-neutrals-50",      dOklch: "98.16% 0.0131 111.4",
+              },
+              {
+                token: "--card / --popover",
+                lHex: "#FEFFFB", lPrim: "--muza-white",            lOklch: "99.81% 0.0053 118.5",
+                dHex: "#0D0D04", dPrim: "--muza-neutrals-950",     dOklch: "15.55% 0.0204 108.6",
+              },
+              {
+                token: "--primary",
+                lHex: "#000DA2", lPrim: "--muza-blue-500",         lOklch: "33.02% 0.2175 264.2",
+                dHex: "#1121C2", dPrim: "--muza-blue-300",         dOklch: "39.43% 0.2371 266.1",
+              },
+              {
+                token: "--primary-foreground",
+                lHex: "#F9FAF0", lPrim: "--muza-neutrals-50",      lOklch: "98.16% 0.0131 111.4",
+                dHex: "#F9FAF0", dPrim: "--muza-neutrals-50",      dOklch: "98.16% 0.0131 111.4",
+              },
+              {
+                token: "--secondary",
+                lHex: "#ECEEDF", lPrim: "--muza-neutrals-200",     lOklch: "94.35% 0.0199 113.1",
+                dHex: "#2E2C24", dPrim: "--muza-neutrals-800",     dOklch: "29.25% 0.0143 95.6",
+              },
+              {
+                token: "--secondary-hover",
+                lHex: "#DADDCD", lPrim: "--muza-neutrals-300",     lOklch: "89.08% 0.0217 115.6",
+                dHex: "#3C3D33", dPrim: "--muza-neutrals-700",     dOklch: "35.57% 0.0168 111.9",
+              },
+              {
+                token: "--muted",
+                lHex: "#F9FAF0", lPrim: "--muza-neutrals-50",      lOklch: "98.16% 0.0131 111.4",
+                dHex: "#1D1C18", dPrim: "--muza-neutrals-900",     dOklch: "22.61% 0.0077 95.4",
+              },
+              {
+                token: "--muted-foreground",
+                lHex: "rgba(84,84,69,.75)", lPrim: "--muza-neutrals-a75-700", lOklch: "44.13% 0.0237 107.4 / 0.75",
+                dHex: "rgba(249,250,240,.5)", dPrim: "--muza-neutrals-a50-50", dOklch: "98.16% 0.0131 111.4 / 0.5",
+              },
+              {
+                token: "--accent",
+                lHex: "#F1F3E6", lPrim: "--muza-neutrals-100",     lOklch: "95.91% 0.0172 114",
+                dHex: "#2E2C24", dPrim: "--muza-neutrals-800",     dOklch: "29.25% 0.0143 95.6",
+              },
+              {
+                token: "--accent-foreground",
+                lHex: "#1D1C18", lPrim: "--muza-neutrals-900",     lOklch: "22.61% 0.0077 95.4",
+                dHex: "#F9FAF0", dPrim: "--muza-neutrals-50",      dOklch: "98.16% 0.0131 111.4",
+              },
+              {
+                token: "--destructive",
+                lHex: "#DC2626", lPrim: "--tw-red-600",            lOklch: "57.71% 0.2151 27.3",
+                dHex: "#7F1D1D", dPrim: "--tw-red-900",            dOklch: "39.59% 0.1331 25.7",
+              },
+              {
+                token: "--border",
+                lHex: "#DADDCD", lPrim: "--muza-neutrals-300",     lOklch: "89.08% 0.0217 115.6",
+                dHex: "#3C3D33", dPrim: "--muza-neutrals-700",     dOklch: "35.57% 0.0168 111.9",
+              },
+              {
+                token: "--input",
+                lHex: "#ECEEDF", lPrim: "--muza-neutrals-200",     lOklch: "94.35% 0.0199 113.1",
+                dHex: "#DADDCD", dPrim: "--muza-neutrals-300",     dOklch: "89.08% 0.0217 115.6",
+              },
+              {
+                token: "--ring",
+                lHex: "#1D1C18", lPrim: "--muza-neutrals-900",     lOklch: "22.61% 0.0077 95.4",
+                dHex: "#DADDCD", dPrim: "--muza-neutrals-300",     dOklch: "89.08% 0.0217 115.6",
+              },
+            ].map((r) => (
+              <tr key={r.token} className="border-b border-border">
+                <td className="py-2 pr-8 font-mono text-foreground whitespace-nowrap">{r.token}</td>
+                <td className="py-2 pr-8">
+                  <div className="flex gap-2">
+                    <div className="size-10 rounded-xl border border-border shrink-0 self-center" style={{ background: r.lHex }} />
+                    <div>
+                      <span className="block font-mono text-foreground">{r.lPrim}</span>
+                      <span className="font-mono text-muted-foreground">oklch({r.lOklch})</span>
+                    </div>
+                  </div>
+                </td>
+                <td className="py-2">
+                  <div className="flex gap-2">
+                    <div className="size-10 rounded-xl border border-border shrink-0 self-center" style={{ background: r.dHex }} />
+                    <div>
+                      <span className="block font-mono text-foreground">{r.dPrim}</span>
+                      <span className="font-mono text-muted-foreground">oklch({r.dOklch})</span>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </Section>
 
       {/* ══ TYPOGRAPHY ══ */}
@@ -460,55 +683,100 @@ function ExploreView() {
 
       {/* ══ BUTTONS ══ */}
       <Section id="buttons" title="Buttons">
-        <div className="flex flex-col gap-6">
-          <div>
-            <SubLabel>Variants</SubLabel>
-            <div className="flex flex-wrap gap-3">
-              <Button>Primary</Button>
-              <Button variant="secondary">Secondary</Button>
-              <Button variant="destructive">Destructive</Button>
-              <Button variant="outline">Outline</Button>
-              <Button variant="outline-primary">Primary outline</Button>
-              <Button variant="ghost">Ghost</Button>
-              <Button variant="link">Link</Button>
+        {(() => {
+          const VARIANTS = [
+            { key: "default",         label: "Primary" },
+            { key: "secondary",       label: "Secondary" },
+            { key: "outline",         label: "Outline" },
+            { key: "outline-primary", label: "Primary outline" },
+            { key: "ghost",           label: "Ghost" },
+            { key: "link",            label: "Link" },
+            { key: "destructive",     label: "Destructive" },
+          ] as const
+
+          const Spin = () => (
+            <svg className="animate-spin size-4 shrink-0" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity=".25" strokeWidth="3"/>
+              <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+            </svg>
+          )
+
+          const GRID_TEXT = "grid grid-cols-[120px_auto_auto_auto_auto] gap-x-8 items-center py-3"
+          const GRID_ICON = "grid grid-cols-[120px_auto_auto_auto_auto] gap-x-6 items-center py-3"
+          const D = "border-b border-border/50"
+
+          return (
+            <div className="flex flex-col gap-10">
+              {/* ── Text buttons ── */}
+              <div className="flex flex-col">
+                <div className={GRID_TEXT + " pb-2"}>
+                  <div />
+                  <p className="text-xxs text-muted-foreground pl-10">XLarge</p>
+                  <p className="text-xxs text-muted-foreground pl-[34px]">Large</p>
+                  <p className="text-xxs text-muted-foreground pl-[18px]">Default</p>
+                  <p className="text-xxs text-muted-foreground pl-3">Small</p>
+                </div>
+                {VARIANTS.map((v) => (
+                  <div key={v.key} className={GRID_TEXT + " " + D}>
+                    <p className="text-xxs text-muted-foreground">{v.label}</p>
+                    <div className="flex"><Button variant={v.key as any} size="xl">{v.label}</Button></div>
+                    <div className="flex"><Button variant={v.key as any} size="lg">{v.label}</Button></div>
+                    <div className="flex"><Button variant={v.key as any}>{v.label}</Button></div>
+                    <div className="flex"><Button variant={v.key as any} size="sm">{v.label}</Button></div>
+                  </div>
+                ))}
+                <div className={GRID_TEXT + " " + D}>
+                  <p className="text-xxs text-muted-foreground">Disabled</p>
+                  <div className="flex"><Button size="xl" disabled>Primary</Button></div>
+                  <div className="flex"><Button size="lg" disabled>Primary</Button></div>
+                  <div className="flex"><Button disabled>Primary</Button></div>
+                  <div className="flex"><Button size="sm" disabled>Primary</Button></div>
+                </div>
+                <div className={GRID_TEXT}>
+                  <p className="text-xxs text-muted-foreground">Loading</p>
+                  <div className="flex"><Button size="xl" disabled><Spin />Primary</Button></div>
+                  <div className="flex"><Button size="lg" disabled><Spin />Primary</Button></div>
+                  <div className="flex"><Button disabled><Spin />Primary</Button></div>
+                  <div className="flex"><Button size="sm" disabled><Spin />Primary</Button></div>
+                </div>
+              </div>
+
+              {/* ── Icon-only buttons ── */}
+              <div className="flex flex-col">
+                <div className={GRID_ICON + " pb-2"}>
+                  <div />
+                  <p className="text-xxs text-muted-foreground">XLarge</p>
+                  <p className="text-xxs text-muted-foreground">Large</p>
+                  <p className="text-xxs text-muted-foreground">Default</p>
+                  <p className="text-xxs text-muted-foreground">Small</p>
+                </div>
+                {VARIANTS.map((v) => (
+                  <div key={v.key} className={GRID_ICON + " " + D}>
+                    <p className="text-xxs text-muted-foreground">{v.label}</p>
+                    <div className="flex"><Button variant={v.key as any} size="icon-xl"><Plus /></Button></div>
+                    <div className="flex"><Button variant={v.key as any} size="icon-lg"><Plus /></Button></div>
+                    <div className="flex"><Button variant={v.key as any} size="icon"><Plus /></Button></div>
+                    <div className="flex"><Button variant={v.key as any} size="icon-sm"><Plus /></Button></div>
+                  </div>
+                ))}
+                <div className={GRID_ICON + " " + D}>
+                  <p className="text-xxs text-muted-foreground">Disabled</p>
+                  <div className="flex"><Button size="icon-xl" disabled><Plus /></Button></div>
+                  <div className="flex"><Button size="icon-lg" disabled><Plus /></Button></div>
+                  <div className="flex"><Button size="icon" disabled><Plus /></Button></div>
+                  <div className="flex"><Button size="icon-sm" disabled><Plus /></Button></div>
+                </div>
+                <div className={GRID_ICON}>
+                  <p className="text-xxs text-muted-foreground">Loading</p>
+                  <div className="flex"><Button size="icon-xl" disabled><Spin /></Button></div>
+                  <div className="flex"><Button size="icon-lg" disabled><Spin /></Button></div>
+                  <div className="flex"><Button size="icon" disabled><Spin /></Button></div>
+                  <div className="flex"><Button size="icon-sm" disabled><Spin /></Button></div>
+                </div>
+              </div>
             </div>
-          </div>
-          <div>
-            <SubLabel>Sizes</SubLabel>
-            <div className="flex flex-wrap items-center gap-3">
-              <Button size="lg">Large</Button>
-              <Button>Default</Button>
-              <Button size="sm">Small</Button>
-              <Button size="icon"><Plus /></Button>
-              <Button size="icon-sm"><Plus /></Button>
-              <Button size="icon-lg"><Plus /></Button>
-            </div>
-          </div>
-          <div>
-            <SubLabel>States</SubLabel>
-            <div className="flex flex-wrap items-center gap-3">
-              <Button>Default</Button>
-              <Button disabled>Disabled</Button>
-              <Button disabled className="opacity-75 pointer-events-none">
-                <svg className="animate-spin size-4" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity=".25" strokeWidth="3"/>
-                  <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-                </svg>
-                Loading
-              </Button>
-            </div>
-          </div>
-          <div>
-            <SubLabel>With icons</SubLabel>
-            <div className="flex flex-wrap items-center gap-3">
-              <Button><Plus className="size-4" />Add to playlist</Button>
-              <Button variant="secondary"><Heart className="size-4" />Follow</Button>
-              <Button variant="outline"><Upload className="size-4" />Upload</Button>
-              <Button variant="outline" size="icon"><Share2 /></Button>
-              <Button variant="ghost" size="icon"><MoreHorizontal /></Button>
-            </div>
-          </div>
-        </div>
+          )
+        })()}
       </Section>
 
       {/* ══ BADGES ══ */}
@@ -548,6 +816,10 @@ function ExploreView() {
           <div>
             <SubLabel>Filter chips — toggle</SubLabel>
             <ChipFilterDemo />
+          </div>
+          <div>
+            <SubLabel>Filter chips — toggle (outline active)</SubLabel>
+            <ChipFilterOutlineDemo />
           </div>
           <div>
             <SubLabel>States</SubLabel>
@@ -606,6 +878,34 @@ function ExploreView() {
               <Input placeholder="Invite by email" />
               <Button>Invite</Button>
             </div>
+          </div>
+          <div className="flex flex-col gap-1.5 min-w-[300px]">
+            <Label>Price (with currency select)</Label>
+            <InputSelect
+              placeholder="1.00"
+              selectValue={inputSelectCurrency}
+              onSelectChange={setInputSelectCurrency}
+              options={[
+                { value: "USD", label: "USD" },
+                { value: "EUR", label: "EUR" },
+                { value: "GBP", label: "GBP" },
+                { value: "JPY", label: "JPY" },
+              ]}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5 min-w-[300px]">
+            <Label>Domain</Label>
+            <InputSelect
+              placeholder="yourdomain"
+              selectValue={inputSelectTld}
+              onSelectChange={setInputSelectTld}
+              options={[
+                { value: ".com", label: ".com" },
+                { value: ".io",  label: ".io"  },
+                { value: ".co",  label: ".co"  },
+                { value: ".org", label: ".org" },
+              ]}
+            />
           </div>
         </div>
       </Section>
@@ -758,18 +1058,35 @@ function ExploreView() {
 
       {/* ══ TABS ══ */}
       <Section id="tabs" title="Tabs">
-        <div className="flex flex-col gap-8 max-w-xl">
+        <div className="flex flex-col gap-20 max-w-xl">
           <div>
-            <SubLabel>Segment (default)</SubLabel>
+            <SubLabel>Segment — small</SubLabel>
+            <Tabs defaultValue="music">
+              <TabsList size="sm">
+                <TabsTrigger value="music">Music</TabsTrigger>
+                <TabsTrigger value="podcasts">Podcasts</TabsTrigger>
+                <TabsTrigger value="live">Live</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+          <div>
+            <SubLabel>Segment — default</SubLabel>
             <Tabs defaultValue="music">
               <TabsList>
                 <TabsTrigger value="music">Music</TabsTrigger>
                 <TabsTrigger value="podcasts">Podcasts</TabsTrigger>
                 <TabsTrigger value="live">Live</TabsTrigger>
               </TabsList>
-              <TabsContent value="music" className="pt-3 text-sm text-muted-foreground">
-                Music tab content.
-              </TabsContent>
+            </Tabs>
+          </div>
+          <div>
+            <SubLabel>Segment — large</SubLabel>
+            <Tabs defaultValue="music">
+              <TabsList size="lg">
+                <TabsTrigger value="music">Music</TabsTrigger>
+                <TabsTrigger value="podcasts">Podcasts</TabsTrigger>
+                <TabsTrigger value="live">Live</TabsTrigger>
+              </TabsList>
             </Tabs>
           </div>
           <div>
@@ -1015,10 +1332,191 @@ function ExploreView() {
             </div>
           </div>
           <div className="flex flex-col gap-2.5">
-            <Skeleton className="size-44 rounded-xl" />
+            <Skeleton className="size-44 rounded-xs" />
             <Skeleton className="h-3.5 w-36" />
             <Skeleton className="h-3 w-24" />
           </div>
+        </div>
+      </Section>
+
+      {/* ══ POPOVER ══ */}
+      <Section id="popover" title="Popover">
+        <div className="flex flex-wrap gap-4">
+          <Popover>
+            <PopoverTrigger render={<Button variant="outline" />}>
+              Track info
+            </PopoverTrigger>
+            <PopoverContent>
+              <div className="flex flex-col gap-3">
+                <p className="text-sm font-medium leading-none">Blue Afternoon</p>
+                <p className="text-xs text-muted-foreground">River Lotus · Electronic · 2024</p>
+                <Separator />
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Streams</span>
+                    <span>12,430</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Duration</span>
+                    <span>3:42</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Release</span>
+                    <span>Mar 2024</span>
+                  </div>
+                </div>
+                <Button size="sm" className="w-full mt-1">View track</Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <Popover>
+            <PopoverTrigger render={<Button variant="outline" size="icon" />}>
+              <SlidersHorizontal className="size-4" />
+            </PopoverTrigger>
+            <PopoverContent side="right">
+              <p className="text-sm font-medium mb-3">Equalizer</p>
+              <div className="flex flex-col gap-3">
+                {["Bass","Mid","Treble"].map((band) => (
+                  <div key={band} className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground w-12">{band}</span>
+                    <Slider defaultValue={[50]} max={100} step={1} className="flex-1" />
+                  </div>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      </Section>
+
+      {/* ══ TABLE ══ */}
+      <Section id="table" title="Table">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-8">#</TableHead>
+              <TableHead>Title</TableHead>
+              <TableHead>Artist</TableHead>
+              <TableHead>Genre</TableHead>
+              <TableHead className="text-right">Streams</TableHead>
+              <TableHead className="text-right">Duration</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {[
+              { n: 1,  emoji: "🎵", title: "Blue Afternoon",   artist: "River Lotus",   genre: "Electronic", streams: "12,430", dur: "3:42" },
+              { n: 2,  emoji: "🎸", title: "Midnight Circuit",  artist: "Axon Fade",     genre: "Indie",       streams: "9,814",  dur: "4:15" },
+              { n: 3,  emoji: "🎤", title: "Haunt the Waves",   artist: "Dusk Ensemble", genre: "Jazz",        streams: "7,201",  dur: "5:01" },
+              { n: 4,  emoji: "🎹", title: "Static Memory",     artist: "Nora Voss",     genre: "Electronic",  streams: "5,588",  dur: "2:58" },
+              { n: 5,  emoji: "🥁", title: "Low Tide Prayer",   artist: "Coastal Rites", genre: "Indie",       streams: "3,112",  dur: "4:33" },
+            ].map(({ n, emoji, title, artist, genre, streams, dur }) => (
+              <TableRow key={n}>
+                <TableCell className="text-muted-foreground">{n}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2.5">
+                    <div className="size-8 rounded-md bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center text-base">{emoji}</div>
+                    <span className="font-normal">{title}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-muted-foreground">{artist}</TableCell>
+                <TableCell><Badge variant="secondary">{genre}</Badge></TableCell>
+                <TableCell className="text-right text-muted-foreground">{streams}</TableCell>
+                <TableCell className="text-right text-muted-foreground">{dur}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+          <TableFooter>
+            <TableRow>
+              <TableCell colSpan={4}>Total</TableCell>
+              <TableCell className="text-right">38,145</TableCell>
+              <TableCell />
+            </TableRow>
+          </TableFooter>
+        </Table>
+      </Section>
+
+      {/* ══ PAGINATION ══ */}
+      <Section id="pagination" title="Pagination">
+        <div className="flex flex-col gap-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem><PaginationPrevious href="#" /></PaginationItem>
+              <PaginationItem><PaginationLink href="#">1</PaginationLink></PaginationItem>
+              <PaginationItem><PaginationLink href="#" isActive>2</PaginationLink></PaginationItem>
+              <PaginationItem><PaginationLink href="#">3</PaginationLink></PaginationItem>
+              <PaginationItem><PaginationEllipsis /></PaginationItem>
+              <PaginationItem><PaginationLink href="#">8</PaginationLink></PaginationItem>
+              <PaginationItem><PaginationNext href="#" /></PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      </Section>
+
+      {/* ══ COMMAND ══ */}
+      <Section id="command" title="Command">
+        <div className="flex flex-col gap-5">
+          <div>
+            <SubLabel>Dialog — press ⌘K or click</SubLabel>
+            <CommandDemo />
+          </div>
+          <div>
+            <SubLabel>Inline — always visible</SubLabel>
+            <Command className="border border-border rounded-xl max-w-sm">
+              <CommandInput placeholder="Search…" />
+              <CommandList>
+                <CommandEmpty>No results.</CommandEmpty>
+                <CommandGroup heading="Recent">
+                  <CommandItem><Music2 className="size-4" />Blue Afternoon</CommandItem>
+                  <CommandItem><Music2 className="size-4" />Midnight Circuit</CommandItem>
+                </CommandGroup>
+                <CommandSeparator />
+                <CommandGroup heading="Actions">
+                  <CommandItem><Upload className="size-4" />Upload track</CommandItem>
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </div>
+        </div>
+      </Section>
+
+      {/* ══ OTP INPUT ══ */}
+      <Section id="otp-input" title="OTP Input">
+        <div className="flex flex-col gap-6">
+          <div>
+            <SubLabel>6-digit verification code</SubLabel>
+            <InputOTP maxLength={6}>
+              <InputOTPGroup>
+                <InputOTPSlot index={0} />
+                <InputOTPSlot index={1} />
+                <InputOTPSlot index={2} />
+              </InputOTPGroup>
+              <InputOTPSeparator />
+              <InputOTPGroup>
+                <InputOTPSlot index={3} />
+                <InputOTPSlot index={4} />
+                <InputOTPSlot index={5} />
+              </InputOTPGroup>
+            </InputOTP>
+          </div>
+          <div>
+            <SubLabel>4-digit PIN</SubLabel>
+            <InputOTP maxLength={4}>
+              <InputOTPGroup>
+                <InputOTPSlot index={0} />
+                <InputOTPSlot index={1} />
+                <InputOTPSlot index={2} />
+                <InputOTPSlot index={3} />
+              </InputOTPGroup>
+            </InputOTP>
+          </div>
+        </div>
+      </Section>
+
+      {/* ══ FORM ══ */}
+      <Section id="form" title="Form">
+        <div className="flex flex-col gap-2">
+          <SubLabel>Controlled form with Zod validation — try submitting empty</SubLabel>
+          <FormDemo />
         </div>
       </Section>
 
@@ -1028,9 +1526,12 @@ function ExploreView() {
 }
 
 // ─── Root page — unified app shell ────────────────────────────────────────────
-export default function App() {
+export default function Home() {
   const [activeNav, setActiveNav] = useState("Home")
   const [collapsed, setCollapsed] = useState(false)
+  const [uploadOpen, setUploadOpen] = useState(false)
+  const [uploadMinimized, setUploadMinimized] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
 
   return (
     <div className="flex h-screen bg-background">
@@ -1040,17 +1541,54 @@ export default function App() {
         activeNav={activeNav}
         onNavChange={setActiveNav}
       />
-      <main className="flex-1 min-w-0 flex flex-col">
+      <main className="flex-1 min-w-0 flex flex-col relative">
         <Topbar actions={<TopbarDefaultActions />} />
         <div className="flex-1 overflow-auto">
           {activeNav === "Home"      && <HomeView />}
           {activeNav === "Explore"   && <ExploreView />}
-          {Object.keys(STUDIO_TABS).includes(activeNav) && <StudioView page={activeNav} />}
+          {Object.keys(STUDIO_TABS).includes(activeNav) && (
+            <StudioView
+              page={activeNav}
+              onOpenUpload={() => { setUploadOpen(true); setUploadMinimized(false) }}
+            />
+          )}
           {["Playlists","Albums","Artists","Songs"].includes(activeNav) && (
             <div className="p-10"><h1 className="text-2xl font-medium">{activeNav}</h1></div>
           )}
         </div>
+
+        {/* Global upload dialog — absolute within main, sidebar stays visible */}
+        {uploadOpen && (
+          <div className="absolute inset-0 z-50">
+            <UploadMusicDialog
+              onClose={() => { setUploadOpen(false); setUploadMinimized(false) }}
+              onMinimize={() => { setUploadOpen(false); setUploadMinimized(true) }}
+              onProgressChange={setUploadProgress}
+            />
+          </div>
+        )}
       </main>
+
+      {/* Global upload toast — always visible when minimized */}
+      {uploadMinimized && (
+        <div className="fixed top-[86px] right-10 z-50 flex items-center gap-3 pl-3 pr-2 py-2 rounded-xl bg-background border border-border shadow-lg">
+          <div className="flex flex-col gap-1 min-w-[160px]">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-sm font-medium text-foreground leading-tight">Uploading music</span>
+              <span className="text-xs text-muted-foreground font-normal leading-tight">{uploadProgress}%</span>
+            </div>
+            <div className="h-1 rounded-full bg-secondary overflow-hidden">
+              <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+            </div>
+          </div>
+          <button
+            onClick={() => { setUploadMinimized(false); setUploadOpen(true) }}
+            className="size-7 flex items-center justify-center rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors ml-1"
+          >
+            <Maximize2 className="size-3.5" />
+          </button>
+        </div>
+      )}
     </div>
   )
 }

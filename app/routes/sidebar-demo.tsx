@@ -1,8 +1,6 @@
-"use client"
-
+import { useState } from "react"
 import { Sidebar } from "@/components/app/sidebar"
 import { Topbar, TopbarDefaultActions } from "@/components/app/topbar"
-import { useState } from "react"
 import { Music2 } from "lucide-react"
 
 export default function SidebarDemo() {

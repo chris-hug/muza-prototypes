@@ -14,19 +14,19 @@ const buttonVariants = cva(
       variant: {
         // Primary — deep blue
         default:
-          "bg-primary text-primary-foreground hover:bg-primary/85",
+          "bg-primary text-primary-foreground hover:bg-primary-hover",
         // Secondary — light surface, always solid foreground text
         secondary:
           "bg-secondary text-foreground hover:bg-secondary-hover",
         // Outline — border only, primary text
         outline:
-          "border-border bg-background text-foreground hover:bg-secondary",
+          "border-border bg-background text-foreground hover:bg-accent",
         // Primary outline — border, primary text
         "outline-primary":
-          "border-border bg-background text-primary hover:bg-secondary",
+          "border-border bg-background text-primary hover:bg-accent",
         // Ghost — bg-clip-border so fill reaches the outer edge
         ghost:
-          "hover:bg-secondary text-foreground bg-clip-border",
+          "hover:bg-accent text-foreground bg-clip-border",
         // Link
         link:
           "text-primary underline-offset-4 hover:underline p-0 h-auto",
@@ -39,15 +39,19 @@ const buttonVariants = cva(
         //   sm:      h-8  (32px) · px-3 (12px) · text-xs  (14px) · font-normal
         //   default: h-9  (36px) · px-4 (16px) · text-sm  (16px) · font-medium
         //   lg:      h-10 (40px) · px-8 (32px) · text-sm  (16px) · font-medium
+        //   xl:      h-12 (48px) · px-10 (40px) · text-sm (16px) · font-medium
         //   icon:    size-9  (36px)
         //   icon-sm: size-8  (32px)
         //   icon-lg: size-10 (40px)
+        //   icon-xl: size-12 (48px)
         default:    "h-[38px] px-[18px] text-sm font-medium",
         sm:         "h-8 px-3 text-xxs font-normal",
         lg:         "h-[44px] px-[34px] text-sm font-medium",
+        xl:         "h-12 px-10 text-sm font-medium",
         icon:       "size-9",
         "icon-sm":  "size-8",
         "icon-lg":  "size-10",
+        "icon-xl":  "size-12",
       },
     },
     defaultVariants: {

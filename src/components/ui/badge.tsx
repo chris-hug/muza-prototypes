@@ -2,7 +2,8 @@
 
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-import { ChevronDown, Disc3, Globe, ListMusic, Lock, Mic, Music2 } from "lucide-react"
+import { ChevronDown, Disc3, Globe, ListMusic, Lock, Mic, Music2, Check } from "lucide-react"
+import { Menu as MenuPrimitive } from "@base-ui/react/menu"
 
 import { cn } from "@/lib/utils"
 
@@ -34,7 +35,7 @@ const badgeVariants = cva(
       variant: {
         // Accent fill (node 26:170) — used for content-type labels
         secondary:
-          "bg-accent text-accent-foreground",
+          "bg-muted text-foreground border-border",
         // Glassmorphism outline (node 26:181) — used for status labels
         outline:
           "backdrop-blur-[8px] bg-background/50 border-border text-muted-foreground",
@@ -93,8 +94,8 @@ function ContentTypeBadge({ type, className, ...props }: ContentTypeBadgeProps) 
       data-slot="content-type-badge"
       className={cn(
         "inline-flex w-fit shrink-0 items-center gap-1",
-        "rounded-sm border border-transparent",  // transparent border — same height as outline/status
-        "bg-accent text-accent-foreground",
+        "rounded-sm border border-border",
+        "bg-muted text-foreground",
         "pt-[4px] pb-[6px] px-[6px]",
         "text-xxs font-normal leading-none whitespace-nowrap",
         "[&>svg]:pointer-events-none [&>svg]:shrink-0 [&>svg]:size-3",
@@ -112,8 +113,8 @@ function ContentTypeBadge({ type, className, ...props }: ContentTypeBadgeProps) 
 //
 // Figma source: L9yw4Yaec9YtAXGxP8q4fu › node 21368:27118
 //
-// Track/release visibility status. Always uses the glassmorphism outline style.
-// Always interactive (has chevron + onClick). Icon indicates visibility state.
+// Track/release visibility status. Self-contained — clicking opens a dropdown
+// to switch between public / private. Pass `onStatusChange` to be notified.
 //   public  → Globe icon
 //   private → Lock icon
 // ─────────────────────────────────────────────────────────────────────────────
@@ -125,33 +126,66 @@ const statusConfig: Record<StatusBadgeStatus, { label: string; icon: React.Eleme
   private: { label: "Private", icon: Lock },
 }
 
-interface StatusBadgeProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface StatusBadgeProps {
   status: StatusBadgeStatus
+  onStatusChange?: (status: StatusBadgeStatus) => void
+  className?: string
 }
 
-function StatusBadge({ status, className, ...props }: StatusBadgeProps) {
+const STATUS_TRIGGER_CLS = cn(
+  "inline-flex w-fit shrink-0 items-center gap-1",
+  "rounded-sm border border-border",
+  "backdrop-blur-[8px] bg-background/50 text-muted-foreground",
+  "pt-[4px] pb-[6px] px-[6px]",
+  "text-xxs font-normal leading-none whitespace-nowrap",
+  "transition-colors hover:border-foreground/40 hover:bg-muted hover:text-foreground",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+  "[&>svg]:pointer-events-none [&>svg]:shrink-0 [&>svg]:size-3",
+  "cursor-pointer select-none",
+)
+
+function StatusBadge({ status, onStatusChange, className }: StatusBadgeProps) {
   const { label, icon: Icon } = statusConfig[status]
   return (
-    <button
-      type="button"
-      data-slot="status-badge"
-      className={cn(
-        "inline-flex w-fit shrink-0 items-center gap-1",
-        "rounded-sm border border-border",       // solid border — same 1px as base
-        "backdrop-blur-[8px] bg-background/50 text-muted-foreground",
-        "pt-[4px] pb-[6px] px-[6px]",
-        "text-xxs font-normal leading-none whitespace-nowrap",
-        "transition-colors hover:border-foreground/40 hover:bg-muted hover:text-foreground",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
-        "[&>svg]:pointer-events-none [&>svg]:shrink-0 [&>svg]:size-3",
-        className,
-      )}
-      {...props}
-    >
-      <Icon />
-      {label}
-      <ChevronDown className="opacity-60" />
-    </button>
+    <MenuPrimitive.Root>
+      <MenuPrimitive.Trigger
+        data-slot="status-badge"
+        className={cn(STATUS_TRIGGER_CLS, className)}
+      >
+        <Icon aria-hidden />
+        {label}
+        <ChevronDown className="opacity-80" aria-hidden />
+      </MenuPrimitive.Trigger>
+
+      <MenuPrimitive.Portal>
+        <MenuPrimitive.Positioner side="bottom" align="start" sideOffset={4}>
+          <MenuPrimitive.Popup className={cn(
+            "z-50 min-w-[7rem] rounded-xl border border-border bg-popover p-1 shadow-md outline-none",
+            "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
+            "data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          )}>
+            {(Object.entries(statusConfig) as [StatusBadgeStatus, { label: string; icon: React.ElementType }][]).map(
+              ([key, { label: itemLabel, icon: ItemIcon }]) => (
+                <MenuPrimitive.Item
+                  key={key}
+                  className={cn(
+                    "relative flex cursor-pointer select-none items-center gap-2 rounded-lg px-2.5 py-1.5",
+                    "text-xs outline-none transition-colors",
+                    "data-highlighted:bg-accent data-highlighted:text-accent-foreground",
+                    "data-disabled:pointer-events-none data-disabled:opacity-50",
+                  )}
+                  onClick={() => onStatusChange?.(key)}
+                >
+                  <ItemIcon className="size-3 shrink-0" aria-hidden />
+                  {itemLabel}
+                  {key === status && <Check className="ml-auto size-3 text-primary" aria-hidden />}
+                </MenuPrimitive.Item>
+              )
+            )}
+          </MenuPrimitive.Popup>
+        </MenuPrimitive.Positioner>
+      </MenuPrimitive.Portal>
+    </MenuPrimitive.Root>
   )
 }
 

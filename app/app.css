@@ -1,0 +1,458 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* ─── Founders Grotesk ───────────────────────────────────────────────────── */
+@font-face {
+  font-family: "Founders Grotesk";
+  src: url("/fonts/FoundersGrotesk-Light.ttf") format("truetype");
+  font-weight: 300; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Founders Grotesk";
+  src: url("/fonts/FoundersGrotesk-LightItalic.ttf") format("truetype");
+  font-weight: 300; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: "Founders Grotesk";
+  src: url("/fonts/FoundersGrotesk-Regular.ttf") format("truetype");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Founders Grotesk";
+  src: url("/fonts/FoundersGrotesk-RegularItalic.ttf") format("truetype");
+  font-weight: 400; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: "Founders Grotesk";
+  src: url("/fonts/FoundersGrotesk-Medium.ttf") format("truetype");
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Founders Grotesk";
+  src: url("/fonts/FoundersGrotesk-MediumItalic.ttf") format("truetype");
+  font-weight: 500; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: "Founders Grotesk";
+  src: url("/fonts/FoundersGrotesk-Semibold.ttf") format("truetype");
+  font-weight: 600; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Founders Grotesk";
+  src: url("/fonts/FoundersGrotesk-SemiboldItalic.ttf") format("truetype");
+  font-weight: 600; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: "Founders Grotesk";
+  src: url("/fonts/FoundersGrotesk-Bold.ttf") format("truetype");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Founders Grotesk";
+  src: url("/fonts/FoundersGrotesk-BoldItalic.ttf") format("truetype");
+  font-weight: 700; font-style: italic; font-display: swap;
+}
+
+/* Dark mode via .dark class */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * TIER 3 — TAILWIND THEME MAPPING
+ * ═══════════════════════════════════════════════════════════════════════ */
+@theme inline {
+  /* Typography */
+  --font-sans: "Founders Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Fira Code", monospace;
+
+  /* Semantic colors */
+  --color-background:              var(--background);
+  --color-foreground:              var(--foreground);
+  --color-card:                    var(--card);
+  --color-card-foreground:         var(--card-foreground);
+  --color-popover:                 var(--popover);
+  --color-popover-foreground:      var(--popover-foreground);
+  --color-primary:                 var(--primary);
+  --color-primary-hover:           var(--primary-hover);
+  --color-primary-foreground:      var(--primary-foreground);
+  --color-secondary:               var(--secondary);
+  --color-secondary-foreground:    var(--secondary-foreground);
+  --color-secondary-hover:         var(--secondary-hover);
+  --color-muted:                   var(--muted);
+  --color-muted-foreground:        var(--muted-foreground);
+  --color-accent:                  var(--accent);
+  --color-accent-foreground:       var(--accent-foreground);
+  --color-destructive:             var(--destructive);
+  --color-destructive-foreground:  var(--destructive-foreground);
+  --color-border:                  var(--border);
+  --color-input:                   var(--input);
+  --color-ring:                    var(--ring);
+
+  /* Charts */
+  --color-chart-1:  var(--chart-1);
+  --color-chart-2:  var(--chart-2);
+  --color-chart-3:  var(--chart-3);
+  --color-chart-4:  var(--chart-4);
+  --color-chart-5:  var(--chart-5);
+
+  /* Sidebar */
+  --color-sidebar:                      var(--sidebar-background);
+  --color-sidebar-foreground:           var(--sidebar-foreground);
+  --color-sidebar-primary:              var(--sidebar-primary);
+  --color-sidebar-primary-foreground:   var(--sidebar-primary-foreground);
+  --color-sidebar-accent:               var(--sidebar-accent);
+  --color-sidebar-accent-foreground:    var(--sidebar-accent-foreground);
+  --color-sidebar-border:               var(--sidebar-border);
+  --color-sidebar-ring:                 var(--sidebar-ring);
+
+  /* Muza neutral palette (warm olive-tinted) */
+  --color-neutral-50:   var(--muza-neutrals-50);
+  --color-neutral-100:  var(--muza-neutrals-100);
+  --color-neutral-200:  var(--muza-neutrals-200);
+  --color-neutral-300:  var(--muza-neutrals-300);
+  --color-neutral-400:  var(--muza-neutrals-400);
+  --color-neutral-700:  var(--muza-neutrals-700);
+  --color-neutral-800:  var(--muza-neutrals-800);
+  --color-neutral-900:  var(--muza-neutrals-900);
+  --color-neutral-950:  var(--muza-neutrals-950);
+
+  /* Muza blue palette */
+  --color-blue-500: var(--muza-blue-500);
+  --color-blue-300: var(--muza-blue-300);
+
+  /* Muza white + alpha */
+  --color-muza-white:    var(--muza-white);
+
+  /* Muza black + alpha */
+  --color-muza-black:    var(--muza-black);
+
+  /* ── Muza type scale ──────────────────────────────────────────────────── */
+  --text-xxs:  14px;
+  --text-xs:   16px;
+  --text-sm:   18px;
+  --text-base: 20px;
+  --text-lg:   24px;
+  --text-xl:   30px;
+  --text-2xl:  36px;
+  --text-3xl:  48px;
+  --text-4xl:  60px;
+  --text-5xl:  72px;
+
+  /* Border radius */
+  --radius-xs:  calc(var(--radius) - 10px);
+  --radius-sm:  calc(var(--radius) - 4px);
+  --radius-md:  calc(var(--radius) - 2px);
+  --radius-lg:  var(--radius);
+  --radius-xl:  calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 6px);
+  --radius-full: 9999px;
+
+  /* Animations */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up:   accordion-up 0.2s ease-out;
+  --animate-caret-blink:    caret-blink 1.25s ease-out infinite;
+}
+
+@keyframes accordion-down {
+  from { height: 0; }
+  to   { height: var(--radix-accordion-content-height); }
+}
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to   { height: 0; }
+}
+@keyframes caret-blink {
+  0%, 70%, 100% { opacity: 1; }
+  20%, 50%      { opacity: 0; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * TIER 1 — PRIMITIVE TOKENS  (OKLCH — source of truth from Figma)
+ * ═══════════════════════════════════════════════════════════════════════ */
+:root {
+  /* muza colors/base */
+  --muza-white:          oklch(99.81% 0.0053 118.5);   /* #FEFFFB */
+  --muza-black:          oklch(15.55% 0.0204 108.6);   /* #0D0D04 */
+
+  /* muza colors/blue (full scale — 300 + 500 active in semantic tokens; rest reserved) */
+  --muza-blue-50:        #3E79FF;
+  --muza-blue-100:       #3F66FF;
+  --muza-blue-200:       #1E34D8;
+  --muza-blue-300:       oklch(39.43% 0.2371 266.1);   /* #1121C2 — dark mode primary */
+  --muza-blue-400:       #030AB1;
+  --muza-blue-500:       oklch(33.02% 0.2175 264.2);   /* #000DA2 — light mode primary */
+  --muza-blue-600:       #001183;
+  --muza-blue-700:       #000E69;
+  --muza-blue-800:       #000A4E;
+  --muza-blue-900:       #000734;
+  --muza-blue-950:       #000318;
+
+  /* muza colors/neutrals (warm olive-tinted) */
+  --muza-neutrals-50:    oklch(98.16% 0.0131 111.4);   /* #F9FAF0 */
+  --muza-neutrals-100:   oklch(95.91% 0.0172 114);     /* #F1F3E6 */
+  --muza-neutrals-200:   oklch(94.35% 0.0199 113.1);   /* #ECEEDF */
+  --muza-neutrals-300:   oklch(89.08% 0.0217 115.6);   /* #DADDCD */
+  --muza-neutrals-400:   oklch(77.33% 0.0223 112.8);   /* #B5B7A7 */
+  --muza-neutrals-700:   oklch(35.57% 0.0168 111.9);   /* #3C3D33 */
+  --muza-neutrals-800:   oklch(29.25% 0.0143 95.6);    /* #2E2C24 */
+  --muza-neutrals-900:   oklch(22.61% 0.0077 95.4);    /* #1D1C18 */
+  --muza-neutrals-950:   oklch(15.55% 0.0204 108.6);   /* #0D0D04 = muza-black */
+
+  /* tailwind colors/red */
+  --tw-red-50:           oklch(97.05% 0.0129 17);      /* #FEF2F2 */
+  --tw-red-600:          oklch(57.71% 0.2151 27.3);    /* #DC2626 */
+  --tw-red-900:          oklch(39.59% 0.1331 25.7);    /* #7F1D1D */
+
+  /* Alpha primitives */
+  --muza-neutrals-a75-700: oklch(44.13% 0.0237 107.4 / 0.75);  /* #545445 @75% */
+  --muza-neutrals-a50-50:  oklch(98.16% 0.0131 111.4 / 0.5);   /* #F9FAF0 @50% */
+
+  /* Base radius (= Figma border radius/xl = 12px) */
+  --radius: 0.75rem;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * TIER 2 — SEMANTIC TOKENS
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─── Light mode ─────────────────────────────────────────────────────── */
+:root {
+  --background:              var(--muza-white);
+  --foreground:              var(--muza-neutrals-950);
+
+  --card:                    var(--muza-white);
+  --card-foreground:         var(--muza-neutrals-950);
+
+  --popover:                 var(--muza-white);
+  --popover-foreground:      var(--muza-neutrals-950);
+
+  --primary:                 var(--muza-blue-500);
+  --primary-hover:           color-mix(in srgb, black 20%, var(--muza-blue-500));
+  --primary-foreground:      var(--muza-neutrals-50);
+
+  --secondary:               var(--muza-neutrals-200);
+  --secondary-foreground:    var(--muza-neutrals-900);
+  --secondary-hover:         var(--muza-neutrals-300);
+
+  --muted:                   var(--muza-neutrals-50);
+  --muted-foreground:        var(--muza-neutrals-a75-700);
+
+  --accent:                  var(--muza-neutrals-100);
+  --accent-foreground:       var(--muza-neutrals-900);
+
+  --destructive:             var(--tw-red-600);
+  --destructive-foreground:  var(--tw-red-50);
+
+  --border:                  var(--muza-neutrals-300);
+  --input:                   var(--muza-neutrals-200);
+  --ring:                    var(--muza-neutrals-900);
+
+  --chart-1: oklch(58.62% 0.1069 166.5);
+  --chart-2: oklch(67.66% 0.1574 35.5);
+  --chart-3: oklch(34.6%  0.0327 228.2);
+  --chart-4: oklch(83.31% 0.1175 88.2);
+  --chart-5: oklch(73%    0.1557 57.4);
+
+  --sidebar-background:           var(--muza-white);
+  --sidebar-foreground:           var(--muza-neutrals-900);
+  --sidebar-primary:              var(--muza-neutrals-200);
+  --sidebar-primary-foreground:   var(--muza-neutrals-900);
+  --sidebar-accent:               var(--muza-neutrals-50);
+  --sidebar-accent-foreground:    var(--muza-neutrals-900);
+  --sidebar-border:               var(--muza-neutrals-200);
+  --sidebar-ring:                 var(--muza-neutrals-400);
+}
+
+/* ─── Dark mode ──────────────────────────────────────────────────────── */
+.dark {
+  --background:              var(--muza-black);
+  --foreground:              var(--muza-neutrals-50);
+
+  --card:                    var(--muza-neutrals-950);
+  --card-foreground:         var(--muza-neutrals-50);
+
+  --popover:                 var(--muza-neutrals-950);
+  --popover-foreground:      var(--muza-neutrals-50);
+
+  --primary:                 var(--muza-blue-300);
+  --primary-hover:           color-mix(in srgb, black 20%, var(--muza-blue-300));
+  --primary-foreground:      var(--muza-neutrals-50);
+
+  --secondary:               var(--muza-neutrals-800);
+  --secondary-foreground:    var(--muza-neutrals-50);
+  --secondary-hover:         var(--muza-neutrals-700);
+
+  --muted:                   var(--muza-neutrals-900);
+  --muted-foreground:        var(--muza-neutrals-a50-50);
+
+  --accent:                  var(--muza-neutrals-800);
+  --accent-foreground:       var(--muza-neutrals-50);
+
+  --destructive:             var(--tw-red-900);
+  --destructive-foreground:  var(--tw-red-50);
+
+  --border:                  var(--muza-neutrals-700);
+  --input:                   var(--muza-neutrals-300);
+  --ring:                    var(--muza-neutrals-300);
+
+  --chart-1: oklch(52.98% 0.1932 262.1);
+  --chart-2: oklch(61.73% 0.2024 7.5);
+  --chart-3: oklch(71.93% 0.1509 59.4);
+  --chart-4: oklch(61.93% 0.203  312.7);
+  --chart-5: oklch(75.84% 0.1628 159.1);
+
+  --sidebar-background:           var(--muza-black);
+  --sidebar-foreground:           var(--muza-neutrals-100);
+  --sidebar-primary:              var(--muza-neutrals-700);
+  --sidebar-primary-foreground:   var(--muza-neutrals-50);
+  --sidebar-accent:               var(--muza-neutrals-800);
+  --sidebar-accent-foreground:    var(--muza-neutrals-100);
+  --sidebar-border:               var(--muza-neutrals-800);
+  --sidebar-ring:                 var(--muza-neutrals-300);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * BASE STYLES
+ * ═══════════════════════════════════════════════════════════════════════ */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* ── Sidebar collapsible panel animation ─────────────────────────────────── */
+.sidebar-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 200ms ease;
+}
+.sidebar-panel[data-open] {
+  grid-template-rows: 1fr;
+}
+.sidebar-panel > div {
+  overflow: hidden;
+}
+
+/* Fill variant — expands to remaining flex space, inner content scrollable */
+.sidebar-panel-fill {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 200ms ease;
+  flex: 1;
+  min-height: 0;
+}
+.sidebar-panel-fill[data-open] {
+  grid-template-rows: 1fr;
+}
+.sidebar-panel-fill > div {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.sidebar-panel-fill[data-open] > div {
+  overflow: visible;
+}
+
+/* ── Animated Logo (mal-*) ────────────────────────────────────────────────── */
+
+.mal-root {
+  --mal-size: 240px;
+}
+
+/* Scene container — 3D perspective + gentle float */
+.mal-container {
+  width:    var(--mal-size);
+  height:   var(--mal-size);
+  position: relative;
+  perspective: 950px;
+  animation: malFloat 3s ease-in-out infinite;
+}
+@keyframes malFloat {
+  0%, 100% { transform: translateY(0);    }
+  50%       { transform: translateY(-8px); }
+}
+
+/* Tilt layer — JS rotates with mouse */
+.mal-tilt-wrapper {
+  width:            100%;
+  height:           100%;
+  transform-style:  preserve-3d;
+  transform-origin: 50% 50%;
+  will-change:      transform;
+}
+
+/* Carousel ring */
+.mal-carousel {
+  width:           100%;
+  height:          100%;
+  position:        absolute;
+  top:             0;
+  transform-style: preserve-3d;
+  transform:       rotateY(0deg);
+  will-change:     transform, top;
+}
+.mal-carousel.mal-rotate-transition {
+  transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+/* Items at 90° steps around the ring */
+.mal-item-wrapper {
+  position:        absolute;
+  transform-style: preserve-3d;
+}
+.mal-item-wrapper:nth-child(1) { transform: rotateY(0deg)   translate3d(0, 0, calc(var(--mal-size) * 0.6)); }
+.mal-item-wrapper:nth-child(2) { transform: rotateY(90deg)  translate3d(0, 0, calc(var(--mal-size) * 0.6)); }
+.mal-item-wrapper:nth-child(3) { transform: rotateY(180deg) translate3d(0, 0, calc(var(--mal-size) * 0.6)); }
+.mal-item-wrapper:nth-child(4) { transform: rotateY(270deg) translate3d(0, 0, calc(var(--mal-size) * 0.6)); }
+
+/* Sphere */
+.mal-item {
+  background:    var(--foreground);
+  width:         var(--mal-size);
+  height:        var(--mal-size);
+  border-radius: 50%;
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  color:         var(--background);
+  font-size:     0em;
+  box-shadow:    0 0 1px rgba(0,0,0,1);
+  opacity:       1;
+  will-change:   transform, opacity, filter;
+  transition:
+    transform   0.6s cubic-bezier(0.645, 0.045, 0.355, 1),
+    filter      0.5s ease-in-out,
+    opacity     0.4s ease-in-out,
+    box-shadow  0.3s ease-in-out;
+}
+.mal-item-inner {
+  width:         100%;
+  height:        100%;
+  border-radius: 50%;
+  transform:     translateZ(1px);
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+}
+
+/* Click animations */
+.mal-item.mal-squash   { transform: scale(0.75)  !important; transition: transform 100ms ease-out !important; }
+.mal-item.mal-blow-up  { transform: scale(1.15)  !important; }
+.mal-item.mal-snap-back {
+  animation:  malScaleBounce 450ms ease-out forwards !important;
+  transition: none !important;
+}
+@keyframes malScaleBounce {
+  0%   { transform: scale(1.15); }
+  40%  { transform: scale(0.97); }
+  65%  { transform: scale(1.03); }
+  80%  { transform: scale(0.99); }
+  100% { transform: scale(1);    }
+}
