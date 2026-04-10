@@ -41,12 +41,12 @@ interface Release {
 
 const DEFAULT_WIDTHS: Record<ColKey, number> = {
   id: 64, cover: 44, title: 200, artist: 100, band: 100,
-  year: 44, tracks: 36, uploaded: 88, type: 72, state: 88,
+  year: 44, tracks: 52, uploaded: 88, type: 72, state: 88,
 }
 
 const MIN_WIDTHS: Record<ColKey, number> = {
   id: 48, cover: 44, title: 140, artist: 72, band: 72,
-  year: 32, tracks: 28, uploaded: 72, type: 56, state: 80,
+  year: 32, tracks: 48, uploaded: 72, type: 56, state: 80,
 }
 
 const COL_DEFS: { key: ColKey; label: string; required?: boolean }[] = [
@@ -313,7 +313,7 @@ function ContentTypeMultiSelect({
   return (
     <div ref={containerRef} className="relative">
       <FilterTrigger
-        label="Content Type"
+        label="Type"
         active={selected.size > 0}
         count={selected.size}
         onClick={() => setOpen(v => !v)}
@@ -414,7 +414,7 @@ function ArtistMultiSelect({
   return (
     <div ref={containerRef} className="relative">
       <FilterTrigger
-        label="Artist"
+        label="Main Artist"
         active={selected.size > 0}
         count={selected.size}
         onClick={() => setOpen(v => !v)}
