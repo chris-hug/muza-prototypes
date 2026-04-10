@@ -84,7 +84,7 @@ function SubLabel({ children }: { children: React.ReactNode }) {
 function useViewportLogoSize() {
   const [size, setSize] = useState(360)
   useEffect(() => {
-    const update = () => setSize(Math.round(Math.max(200, Math.min(420, window.innerWidth * 0.25))))
+    const update = () => setSize(Math.round(Math.max(200, Math.min(380, window.innerWidth * 0.25))))
     update()
     window.addEventListener("resize", update)
     return () => window.removeEventListener("resize", update)
