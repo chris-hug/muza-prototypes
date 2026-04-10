@@ -88,7 +88,7 @@ function HomeView() {
         <AnimatedLogo size={360} />
         <img src="/wordmark.svg" alt="muza" className="h-8 w-auto dark:invert" />
       </div>
-      <h1 className="text-[clamp(3rem,_4.5vw,_6rem)] leading-tight font-medium text-foreground mb-8 text-center">The Platform<br />Independent Music.</h1>
+      <h1 className="text-[clamp(3rem,_4.5vw,_6rem)] leading-tight font-medium text-foreground mb-8 text-center">The Platform for<br />Independent Music.</h1>
       <p className="text-[clamp(2rem,_3vw,_4rem)] leading-snug font-normal text-foreground">Built as a non-profit, muza exists to fix streaming's broken economics. Instead of paying artists per click, muza rewards attention — distributing revenue based on actual listening time and direct listener support. Your subscription goes only to the artists you play.</p>
       <p className="text-[clamp(2rem,_3vw,_4rem)] leading-snug font-normal text-foreground">We combine subscription streaming with direct artist uploads, giving musicians full control over how their music is shared and monetised. Artists retain ownership, receive up to 90–95% of revenue, and are paid directly — no hidden intermediaries.</p>
     </div>
