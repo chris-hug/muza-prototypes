@@ -437,12 +437,8 @@ function ExploreView() {
     <div>
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col items-center justify-center gap-6 py-16 border-b border-border bg-muted">
-        <AnimatedLogo size={220} />
-        <div className="text-center">
-          <h1 className="text-2xl font-medium mb-1">Design System</h1>
-          <p className="text-sm text-muted-foreground">Founders Grotesk · shadcn/ui · Tailwind v4</p>
-        </div>
+      <div className="px-10 pt-16 pb-10 border-b border-border">
+        <h1 className="text-5xl font-medium tracking-tight">muza design system</h1>
       </div>
 
     <div className="max-w-6xl 3xl:max-w-[1600px] mx-auto w-full px-10 py-10 pb-32">
