@@ -496,7 +496,7 @@ interface TableHeaderProps {
 }
 
 function TableHeader({ colWidths, visibleCols, onResizeStart, sortKey, sortDir, onSort }: TableHeaderProps) {
-  const cell = (key: ColKey, label: string, grow = false) => {
+  const cell = (key: ColKey, label: string, grow = false, resizable = true) => {
     if (!visibleCols[key]) return null
     const sk = COL_SORT_KEY[key]
     const isActive = sk !== undefined && sk === sortKey
@@ -526,7 +526,7 @@ function TableHeader({ colWidths, visibleCols, onResizeStart, sortKey, sortDir, 
         ) : (
           <span className="text-xs font-normal text-muted-foreground truncate">{label}</span>
         )}
-        <ResizeHandle colKey={key} onStart={onResizeStart} />
+        {resizable && <ResizeHandle colKey={key} onStart={onResizeStart} />}
       </div>
     )
   }
@@ -540,7 +540,7 @@ function TableHeader({ colWidths, visibleCols, onResizeStart, sortKey, sortDir, 
       <div style={{ width: NUM_W,  flexShrink: 0 }} />
 
       {cell("id",       "ID")}
-      {cell("cover",    "Cover")}
+      {cell("cover",    "Cover", false, false)}
       {cell("title",    "Title", true)}
       {cell("artist",   "Main Artist")}
       {cell("band",     "Band")}
