@@ -41,12 +41,12 @@ interface Release {
 
 const DEFAULT_WIDTHS: Record<ColKey, number> = {
   id: 64, cover: 44, title: 200, artist: 100, band: 100,
-  year: 44, tracks: 52, uploaded: 88, type: 72, state: 88,
+  year: 44, tracks: 68, uploaded: 88, type: 72, state: 88,
 }
 
 const MIN_WIDTHS: Record<ColKey, number> = {
   id: 48, cover: 44, title: 140, artist: 72, band: 72,
-  year: 32, tracks: 48, uploaded: 72, type: 56, state: 80,
+  year: 32, tracks: 60, uploaded: 72, type: 56, state: 80,
 }
 
 const COL_DEFS: { key: ColKey; label: string; required?: boolean }[] = [
