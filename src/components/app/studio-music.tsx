@@ -871,10 +871,6 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="h-9 flex items-center shrink-0">
-          <div className="h-4 w-px bg-border" />
-        </div>
 
         {/* RIGHT — table controls */}
         <div className="flex items-center gap-2 shrink-0">
