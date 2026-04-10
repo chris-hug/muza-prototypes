@@ -85,7 +85,7 @@ function HomeView() {
   return (
     <div className="px-10 py-10 max-w-6xl 3xl:max-w-[1600px] mx-auto w-full flex flex-col gap-6">
       <div className="mb-4">
-        <AnimatedLogo size={160} ambient />
+        <AnimatedLogo size={220} />
       </div>
       <p className="text-[clamp(2rem,_3vw,_4rem)] leading-snug font-normal text-foreground">muza is the platform for independent music.</p>
       <p className="text-[clamp(2rem,_3vw,_4rem)] leading-snug font-normal text-foreground">Built as a non-profit, muza exists to fix streaming's broken economics. Instead of paying artists per click, muza rewards attention — distributing revenue based on actual listening time and direct listener support. Your subscription goes only to the artists you play.</p>
