@@ -71,12 +71,13 @@ const COVER_HIDE_THRESHOLD = 800
 
 // ─── Sort & upload date helpers ───────────────────────────────────────────────
 
-/** Deterministic fake upload date derived from release id */
+/** Deterministic fake upload date derived from release id.
+ *  id 60 = today (10 Apr 2026), spread ~12 days apart going backwards. */
 function mockUploadDate(id: string): string {
   const n = parseInt(id, 10)
-  const d = new Date(2023, 0, 1)
-  d.setDate(d.getDate() + n * 53)
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" })
+  const today = new Date(2026, 3, 10) // Apr 10 2026
+  today.setDate(today.getDate() - (60 - n) * 12)
+  return today.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" })
 }
 
 function sortReleases(releases: Release[], key: SortKey, dir: SortDir): Release[] {
