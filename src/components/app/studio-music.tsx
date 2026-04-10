@@ -20,9 +20,9 @@ import { UploadMusicDialog } from "@/components/app/upload-music-dialog"
 
 type ContentType  = "album" | "single" | "ep" | "song"
 type ReleaseStatus = "public" | "private"
-type SortKey      = "date" | "id" | "artist" | "title"
+type SortKey      = "id" | "title" | "artist" | "band" | "year" | "tracks" | "uploaded"
 type SortDir      = "asc" | "desc"
-type ColKey       = "id" | "cover" | "title" | "artist" | "band" | "year" | "tracks" | "type" | "state"
+type ColKey       = "id" | "cover" | "title" | "artist" | "band" | "year" | "tracks" | "uploaded" | "type" | "state"
 
 interface Release {
   id:      string
@@ -41,24 +41,25 @@ interface Release {
 
 const DEFAULT_WIDTHS: Record<ColKey, number> = {
   id: 72, cover: 44, title: 220, artist: 120, band: 120,
-  year: 44, tracks: 36, type: 72, state: 88,
+  year: 44, tracks: 36, uploaded: 96, type: 72, state: 88,
 }
 
 const MIN_WIDTHS: Record<ColKey, number> = {
   id: 48, cover: 44, title: 140, artist: 72, band: 72,
-  year: 32, tracks: 28, type: 56, state: 80,
+  year: 32, tracks: 28, uploaded: 72, type: 56, state: 80,
 }
 
 const COL_DEFS: { key: ColKey; label: string; required?: boolean }[] = [
-  { key: "id",     label: "ID" },
-  { key: "cover",  label: "Cover" },
-  { key: "title",  label: "Title",      required: true },
-  { key: "artist", label: "Main Artist" },
-  { key: "band",   label: "Band" },
-  { key: "year",   label: "Year" },
-  { key: "tracks", label: "Tracks" },
-  { key: "type",   label: "Type" },
-  { key: "state",  label: "State",      required: true },
+  { key: "id",       label: "ID" },
+  { key: "cover",    label: "Cover" },
+  { key: "title",    label: "Title",      required: true },
+  { key: "artist",   label: "Main Artist" },
+  { key: "band",     label: "Band" },
+  { key: "year",     label: "Year" },
+  { key: "tracks",   label: "Tracks" },
+  { key: "uploaded", label: "Uploaded" },
+  { key: "type",     label: "Type" },
+  { key: "state",    label: "State",      required: true },
 ]
 
 const GRIP_W             = 16
@@ -68,26 +69,36 @@ const COL_GAP            = 16
 // When the table container shrinks below this width, cover auto-hides
 const COVER_HIDE_THRESHOLD = 800
 
-// ─── Sort configuration ────────────────────────────────────────────────────────
+// ─── Sort & upload date helpers ───────────────────────────────────────────────
 
-const SORT_LABELS: Record<SortKey, string> = {
-  date:   "Recording date",
-  id:     "ID",
-  artist: "Main Artist A–Z",
-  title:  "Title A–Z",
+/** Deterministic fake upload date derived from release id */
+function mockUploadDate(id: string): string {
+  const n = parseInt(id, 10)
+  const d = new Date(2023, 0, 1)
+  d.setDate(d.getDate() + n * 53)
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" })
 }
 
 function sortReleases(releases: Release[], key: SortKey, dir: SortDir): Release[] {
   return [...releases].sort((a, b) => {
     let cmp = 0
     switch (key) {
-      case "date":   cmp = a.year - b.year; break
-      case "id":     cmp = a.catalog.localeCompare(b.catalog); break
-      case "artist": cmp = a.artist.localeCompare(b.artist); break
-      case "title":  cmp = a.title.localeCompare(b.title); break
+      case "id":       cmp = a.catalog.localeCompare(b.catalog); break
+      case "title":    cmp = a.title.localeCompare(b.title); break
+      case "artist":   cmp = a.artist.localeCompare(b.artist); break
+      case "band":     cmp = (a.band ?? "").localeCompare(b.band ?? ""); break
+      case "year":     cmp = a.year - b.year; break
+      case "tracks":   cmp = a.tracks - b.tracks; break
+      case "uploaded": cmp = parseInt(a.id) - parseInt(b.id); break
     }
     return dir === "desc" ? -cmp : cmp
   })
+}
+
+/** Which ColKey maps to which SortKey (only sortable columns) */
+const COL_SORT_KEY: Partial<Record<ColKey, SortKey>> = {
+  id: "id", title: "title", artist: "artist",
+  band: "band", year: "year", tracks: "tracks", uploaded: "uploaded",
 }
 
 // ─── Jazz mock data (30 releases) ─────────────────────────────────────────────
@@ -478,12 +489,17 @@ interface TableHeaderProps {
   colWidths:     Record<ColKey, number>
   visibleCols:   Record<ColKey, boolean>
   onResizeStart: (key: ColKey, e: React.MouseEvent) => void
+  sortKey:       SortKey
+  sortDir:       SortDir
+  onSort:        (key: SortKey) => void
 }
 
-function TableHeader({ colWidths, visibleCols, onResizeStart }: TableHeaderProps) {
-  // Fixed-width resizable cell
-  const cell = (key: ColKey, label: string, grow = false) =>
-    visibleCols[key] ? (
+function TableHeader({ colWidths, visibleCols, onResizeStart, sortKey, sortDir, onSort }: TableHeaderProps) {
+  const cell = (key: ColKey, label: string, grow = false) => {
+    if (!visibleCols[key]) return null
+    const sk = COL_SORT_KEY[key]
+    const isActive = sk !== undefined && sk === sortKey
+    return (
       <div
         key={key}
         className="relative flex items-center overflow-hidden group/th"
@@ -491,12 +507,28 @@ function TableHeader({ colWidths, visibleCols, onResizeStart }: TableHeaderProps
           ? { flex: 1, minWidth: colWidths[key] }
           : { width: colWidths[key], flexShrink: 0 }}
       >
-        <span className="text-xs font-normal text-muted-foreground truncate">
-          {label}
-        </span>
+        {sk ? (
+          <button
+            className="flex items-center gap-0.5 min-w-0 overflow-hidden cursor-pointer group/sort select-none"
+            onClick={() => onSort(sk)}
+          >
+            <span className={cn("text-xs font-normal truncate", isActive ? "text-foreground" : "text-muted-foreground")}>
+              {label}
+            </span>
+            {isActive
+              ? (sortDir === "asc"
+                  ? <ArrowUp   className="size-3 shrink-0 text-foreground" />
+                  : <ArrowDown className="size-3 shrink-0 text-foreground" />)
+              : <ArrowUpDown className="size-3 shrink-0 text-muted-foreground opacity-0 group-hover/sort:opacity-50 transition-opacity" />
+            }
+          </button>
+        ) : (
+          <span className="text-xs font-normal text-muted-foreground truncate">{label}</span>
+        )}
         <ResizeHandle colKey={key} onStart={onResizeStart} />
       </div>
-    ) : null
+    )
+  }
 
   return (
     <div
@@ -506,15 +538,16 @@ function TableHeader({ colWidths, visibleCols, onResizeStart }: TableHeaderProps
       <div style={{ width: GRIP_W, flexShrink: 0 }} />
       <div style={{ width: NUM_W,  flexShrink: 0 }} />
 
-      {cell("id",     "ID")}
-      {cell("cover",  "Cover")}
-      {cell("title",  "Title", true)}
-      {cell("artist", "Main Artist")}
-      {cell("band",   "Band")}
-      {cell("year",   "Year")}
-      {cell("tracks", "Tracks")}
-      {cell("type",   "Type")}
-      {cell("state",  "State")}
+      {cell("id",       "ID")}
+      {cell("cover",    "Cover")}
+      {cell("title",    "Title", true)}
+      {cell("artist",   "Main Artist")}
+      {cell("band",     "Band")}
+      {cell("year",     "Year")}
+      {cell("tracks",   "Tracks")}
+      {cell("uploaded", "Uploaded")}
+      {cell("type",     "Type")}
+      {cell("state",    "State")}
       <div style={{ width: ACTION_W, flexShrink: 0 }} />
     </div>
   )
@@ -602,6 +635,12 @@ function TableRow({ release, index, colWidths, visibleCols }: TableRowProps) {
         </span>
       )}
 
+      {vis.uploaded && (
+        <span className="text-xs font-normal text-muted-foreground tabular-nums shrink-0" style={{ width: colWidths.uploaded }}>
+          {mockUploadDate(release.id)}
+        </span>
+      )}
+
       {vis.type && (
         <div className="shrink-0 overflow-hidden" style={{ width: colWidths.type }}>
           <ContentTypeBadge type={release.type} />
@@ -638,15 +677,15 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
   const [artistFilters, setArtistFilters] = useState<Set<string>>(new Set())
 
   const [searchQuery, setSearchQuery] = useState("")
-  const [sortKey, setSortKey]         = useState<SortKey>("date")
-  const [sortDir, setSortDir]         = useState<SortDir>("asc")
+  const [sortKey, setSortKey]         = useState<SortKey>("uploaded")
+  const [sortDir, setSortDir]         = useState<SortDir>("desc")
   const [view,    setView]            = useState<"list" | "grid">("list")
 
   const [colWidths,      setColWidths]      = useState<Record<ColKey, number>>(DEFAULT_WIDTHS)
   const [colWidthsReady, setColWidthsReady] = useState(false)
   const [visibleCols,    setVisibleCols]    = useState<Record<ColKey, boolean>>({
     id: true, cover: true, title: true, artist: true, band: true,
-    year: true, tracks: true, type: true, state: true,
+    year: true, tracks: true, uploaded: true, type: true, state: true,
   })
   // Cover auto-hide driven by ResizeObserver (separate from user toggle)
   const [autoCoverHide, setAutoCoverHide] = useState(false)
@@ -662,9 +701,10 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
       setAutoCoverHide(entry.contentRect.width < COVER_HIDE_THRESHOLD)
       if (colWidthsReady) return
       const available = entry.contentRect.width
-        - GRIP_W - NUM_W - COL_GAP * 10 - 16
+        - GRIP_W - NUM_W - COL_GAP * 11 - 16 // fixed cols + gaps + padding
         - DEFAULT_WIDTHS.id - DEFAULT_WIDTHS.cover - DEFAULT_WIDTHS.year
-        - DEFAULT_WIDTHS.tracks - DEFAULT_WIDTHS.type - DEFAULT_WIDTHS.state
+        - DEFAULT_WIDTHS.tracks - DEFAULT_WIDTHS.uploaded - DEFAULT_WIDTHS.type - DEFAULT_WIDTHS.state
+      // distribute remaining space across title, artist, band (ratio 2:1:1)
       const unit = Math.max(0, available / 4)
       setColWidths(prev => ({
         ...prev,
@@ -678,6 +718,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
     return () => ro.disconnect()
   }, [colWidthsReady])
 
+  // Separate observer just for auto-hide after widths are ready
   useEffect(() => {
     if (!colWidthsReady) return
     const el = tableWrapRef.current
@@ -716,10 +757,12 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
     else { setSortKey(key); setSortDir("asc") }
   }
 
+
   // Effective visibility — cover obeys both user toggle AND auto-hide
   const effectiveVis: Record<ColKey, boolean> = {
     ...visibleCols,
-    cover: visibleCols.cover && !autoCoverHide,
+    cover:    visibleCols.cover && !autoCoverHide,
+    uploaded: visibleCols.uploaded,
   }
 
   const isColsModified =
@@ -834,42 +877,6 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
 
         {/* RIGHT — table controls */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* Sort — plain text, no active state, stable ArrowUpDown icon */}
-          <DropdownMenu>
-            <DropdownMenuTrigger className={cn(
-              "inline-flex items-center gap-1.5 h-9 px-3 text-xs font-normal whitespace-nowrap transition-colors",
-              "text-foreground hover:opacity-70",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
-            )}>
-              <ArrowUpDown className="size-3 shrink-0" />
-              {SORT_LABELS[sortKey]}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-52">
-              {(Object.keys(SORT_LABELS) as SortKey[]).map(k => (
-                <DropdownMenuItem
-                  key={k}
-                  onClick={() => handleSortChange(k)}
-                  closeOnClick={false}
-                  className="text-foreground text-xs"
-                >
-                  <span className="w-4 flex items-center justify-center shrink-0">
-                    {sortKey === k && (
-                      sortDir === "asc"
-                        ? <ArrowUp className="size-3" />
-                        : <ArrowDown className="size-3" />
-                    )}
-                  </span>
-                  {SORT_LABELS[k]}
-                  {sortKey === k && (
-                    <span className="ml-auto text-[10px] text-muted-foreground pl-4 tabular-nums">
-                      click to reverse
-                    </span>
-                  )}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
           {/* Columns */}
           <DropdownMenu>
             <DropdownMenuTrigger className={cn(
@@ -907,7 +914,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
                   label="Reset"
                   onClear={() => {
                     setColWidthsReady(false)
-                    setVisibleCols({ id: true, cover: true, title: true, artist: true, band: true, year: true, tracks: true, type: true, state: true })
+                    setVisibleCols({ id: true, cover: true, title: true, artist: true, band: true, year: true, tracks: true, uploaded: true, type: true, state: true })
                   }}
                 />
               )}
@@ -990,6 +997,9 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
           colWidths={colWidths}
           visibleCols={effectiveVis}
           onResizeStart={handleResizeStart}
+          sortKey={sortKey}
+          sortDir={sortDir}
+          onSort={handleSortChange}
         />
       </div>
 
