@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@custom-variant 3xl (@media (width >= 1920px));
+
 /* ─── Founders Grotesk ───────────────────────────────────────────────────── */
 @font-face {
   font-family: "Founders Grotesk";
