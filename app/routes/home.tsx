@@ -83,7 +83,7 @@ function SubLabel({ children }: { children: React.ReactNode }) {
 // ─── Home view ────────────────────────────────────────────────────────────────
 function HomeView() {
   return (
-    <div className="p-10 max-w-2xl flex flex-col gap-6">
+    <div className="px-10 py-10 max-w-4xl mx-auto w-full flex flex-col gap-6">
       <p className="text-2xl font-normal text-foreground">muza is the platform for independent music.</p>
       <p className="text-2xl font-normal text-foreground">Built as a non-profit, muza exists to fix streaming's broken economics. Instead of paying artists per click, muza rewards attention — distributing revenue based on actual listening time and direct listener support. Your subscription goes only to the artists you play.</p>
       <p className="text-2xl font-normal text-foreground">We combine subscription streaming with direct artist uploads, giving musicians full control over how their music is shared and monetised. Artists retain ownership, receive up to 90–95% of revenue, and are paid directly — no hidden intermediaries.</p>
@@ -430,7 +430,7 @@ function ExploreView() {
         </div>
       </div>
 
-    <div className="max-w-[960px] px-10 py-10 pb-32">
+    <div className="max-w-4xl mx-auto w-full px-10 py-10 pb-32">
 
       {/* Quick nav */}
       <nav className="flex flex-wrap gap-1.5 mb-12">
