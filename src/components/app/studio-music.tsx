@@ -482,12 +482,14 @@ interface TableHeaderProps {
 
 function TableHeader({ colWidths, visibleCols, onResizeStart }: TableHeaderProps) {
   // Fixed-width resizable cell
-  const cell = (key: ColKey, label: string) =>
+  const cell = (key: ColKey, label: string, grow = false) =>
     visibleCols[key] ? (
       <div
         key={key}
-        className="relative shrink-0 flex items-center overflow-hidden group/th"
-        style={{ width: colWidths[key] }}
+        className="relative flex items-center overflow-hidden group/th"
+        style={grow
+          ? { flex: 1, minWidth: colWidths[key] }
+          : { width: colWidths[key], flexShrink: 0 }}
       >
         <span className="text-xs font-normal text-muted-foreground truncate">
           {label}
@@ -506,17 +508,13 @@ function TableHeader({ colWidths, visibleCols, onResizeStart }: TableHeaderProps
 
       {cell("id",     "ID")}
       {cell("cover",  "Cover")}
-      {cell("title",  "Title")}
+      {cell("title",  "Title", true)}
       {cell("artist", "Main Artist")}
       {cell("band",   "Band")}
       {cell("year",   "Year")}
       {cell("tracks", "Tracks")}
-
-      {/* Spacer — absorbs slack, groups Type/State/Action on right */}
-      <div className="flex-1 min-w-0" />
-
-      {cell("type",  "Type")}
-      {cell("state", "State")}
+      {cell("type",   "Type")}
+      {cell("state",  "State")}
       <div style={{ width: ACTION_W, flexShrink: 0 }} />
     </div>
   )
@@ -575,7 +573,7 @@ function TableRow({ release, index, colWidths, visibleCols }: TableRowProps) {
       )}
 
       {vis.title && (
-        <span className="text-xs font-normal text-foreground truncate shrink-0" style={{ width: colWidths.title }}>
+        <span className="text-xs font-normal text-foreground truncate" style={{ flex: 1, minWidth: colWidths.title }}>
           {release.title}
         </span>
       )}
@@ -603,9 +601,6 @@ function TableRow({ release, index, colWidths, visibleCols }: TableRowProps) {
           {release.tracks}
         </span>
       )}
-
-      {/* Spacer — mirrors header */}
-      <div className="flex-1 min-w-0" />
 
       {vis.type && (
         <div className="shrink-0 overflow-hidden" style={{ width: colWidths.type }}>
