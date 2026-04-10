@@ -1063,6 +1063,10 @@ function StepMonetisation({
 
 // ─── StepTrackMatching ────────────────────────────────────────────────────────
 
+type TCol = "track" | "file" | "composer"
+const TM_MIN: Record<TCol, number> = { track: 100, file: 140, composer: 100 }
+const TM_INIT: Record<TCol, number> = { track: 180, file: 260, composer: 160 }
+
 function StepTrackMatching({
   release, isNew, newForm, tracks, onTracksChange, files,
 }: {
@@ -1070,6 +1074,42 @@ function StepTrackMatching({
   tracks: TrackRow[]; onTracksChange: (t: TrackRow[]) => void; files: UploadFile[]
 }) {
   const matched = tracks.filter(t => t.matchScore >= 60).length
+  const [colW, setColW] = useState<Record<TCol, number>>(TM_INIT)
+  const resizeRef = useRef<{ col: TCol; startX: number; startW: number } | null>(null)
+
+  function startResize(col: TCol, e: React.MouseEvent) {
+    e.preventDefault()
+    resizeRef.current = { col, startX: e.clientX, startW: colW[col] }
+    const onMove = (ev: MouseEvent) => {
+      if (!resizeRef.current) return
+      const { col, startX, startW } = resizeRef.current
+      setColW(prev => ({ ...prev, [col]: Math.max(TM_MIN[col], startW + ev.clientX - startX) }))
+    }
+    const onUp = () => {
+      resizeRef.current = null
+      document.removeEventListener("mousemove", onMove)
+      document.removeEventListener("mouseup", onUp)
+    }
+    document.addEventListener("mousemove", onMove)
+    document.addEventListener("mouseup", onUp)
+  }
+
+  function ResizableTh({ col, label, align = "left" }: { col: TCol; label: string; align?: string }) {
+    return (
+      <th
+        className={`text-${align} text-xs font-normal text-muted-foreground pb-1.5 pl-2 relative overflow-hidden select-none`}
+        style={{ width: colW[col] }}
+      >
+        {label}
+        <div
+          className="absolute right-0 top-0 h-full w-3 flex items-center justify-center cursor-col-resize z-10 group/rh"
+          onMouseDown={e => startResize(col, e)}
+        >
+          <div className="w-px h-3/4 rounded-full bg-border opacity-0 group-hover/rh:opacity-100 transition-opacity" />
+        </div>
+      </th>
+    )
+  }
   const title   = isNew ? (newForm.title || "Untitled") : (release?.title ?? "")
   const type    = isNew ? newForm.type : (release?.type ?? "album")
 
@@ -1099,12 +1139,12 @@ function StepTrackMatching({
 
       {/* Table */}
       <div className="flex flex-col overflow-x-auto">
-        <table className="w-full border-collapse table-fixed" style={{ minWidth: 600 }}>
+        <table className="border-collapse" style={{ minWidth: 600, tableLayout: "fixed", width: "100%" }}>
           <colgroup>
             <col style={{ width: 28 }} />
-            <col style={{ width: "22%" }} />
-            <col style={{ width: "35%" }} />
-            <col style={{ width: "22%" }} />
+            <col style={{ width: colW.track }} />
+            <col style={{ width: colW.file }} />
+            <col style={{ width: colW.composer }} />
             <col style={{ width: 56 }} />
             <col style={{ width: 80 }} />
             <col style={{ width: ACTION_W }} />
@@ -1112,9 +1152,9 @@ function StepTrackMatching({
           <thead>
             <tr className="border-b border-border">
               <th className="text-left text-xs font-normal text-muted-foreground pb-1.5 pl-2">#</th>
-              <th className="text-left text-xs font-normal text-muted-foreground pb-1.5 pl-2 resize-x overflow-hidden">Track</th>
-              <th className="text-left text-xs font-normal text-muted-foreground pb-1.5 pl-2 resize-x overflow-hidden">File</th>
-              <th className="text-left text-xs font-normal text-muted-foreground pb-1.5 pl-2 resize-x overflow-hidden">Composer</th>
+              <ResizableTh col="track" label="Track" />
+              <ResizableTh col="file" label="File" />
+              <ResizableTh col="composer" label="Composer" />
               <th className="text-right text-xs font-normal text-muted-foreground pb-1.5 pr-2">Time</th>
               <th className="text-center text-xs font-normal text-muted-foreground pb-1.5">Match</th>
               <th />
