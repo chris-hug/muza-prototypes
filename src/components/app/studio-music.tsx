@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import {
-  ArrowDown, ArrowUp, ArrowUpDown, Columns2, ChevronDown, Globe, GripVertical,
-  LayoutGrid, List, Lock, Pencil, Search, Upload, X,
+  ArrowDown, ArrowUp, ArrowUpDown, Columns2, ChevronDown, GripVertical,
+  Pencil, Search, Upload, X,
 } from "lucide-react"
 import { UploadMusicDialog } from "@/components/app/upload-music-dialog"
 
@@ -679,7 +679,6 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
   const [searchQuery, setSearchQuery] = useState("")
   const [sortKey, setSortKey]         = useState<SortKey>("uploaded")
   const [sortDir, setSortDir]         = useState<SortDir>("desc")
-  const [view,    setView]            = useState<"list" | "grid">("list")
 
   const [colWidths,      setColWidths]      = useState<Record<ColKey, number>>(DEFAULT_WIDTHS)
   const [colWidthsReady, setColWidthsReady] = useState(false)
@@ -701,7 +700,9 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
       setAutoCoverHide(entry.contentRect.width < COVER_HIDE_THRESHOLD)
       if (colWidthsReady) return
       const available = entry.contentRect.width
-        - GRIP_W - NUM_W - COL_GAP * 11 - 16 // fixed cols + gaps + padding
+        - 96             // px-10 wrapper (40+40) + header pad (8+8)
+        - GRIP_W - NUM_W - ACTION_W
+        - COL_GAP * 12   // 13 flex children → 12 inter-item gaps
         - DEFAULT_WIDTHS.id - DEFAULT_WIDTHS.cover - DEFAULT_WIDTHS.year
         - DEFAULT_WIDTHS.tracks - DEFAULT_WIDTHS.uploaded - DEFAULT_WIDTHS.type - DEFAULT_WIDTHS.state
       // distribute remaining space across title, artist, band (ratio 2:1:1)
@@ -885,7 +886,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
             )}>
               <Columns2 className="size-3" />
-              Columns
+              Set columns
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuGroup>
@@ -921,27 +922,6 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* View toggle — ModeToggle style */}
-          <div className="flex items-center h-9 px-1 rounded-full bg-muted gap-0.5">
-            <button
-              onClick={() => setView("list")}
-              className={cn(
-                "size-7 flex items-center justify-center rounded-full transition-colors",
-                view === "list" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <List className="size-[14px]" />
-            </button>
-            <button
-              onClick={() => setView("grid")}
-              className={cn(
-                "size-7 flex items-center justify-center rounded-full transition-colors",
-                view === "grid" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <LayoutGrid className="size-[14px]" />
-            </button>
-          </div>
         </div>
       </div>
 
