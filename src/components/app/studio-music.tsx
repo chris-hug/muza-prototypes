@@ -464,10 +464,10 @@ function ResizeHandle({ colKey, onStart }: {
 }) {
   return (
     <div
-      className="absolute right-0 top-0 h-full w-3 flex items-center justify-center cursor-col-resize select-none group/rh z-10"
+      className="absolute right-0 top-0 h-full w-3 flex items-center justify-center cursor-col-resize select-none z-10"
       onMouseDown={e => { e.preventDefault(); e.stopPropagation(); onStart(colKey, e) }}
     >
-      <div className="w-px h-3/4 rounded-full bg-border opacity-0 group-hover/rh:opacity-100 transition-opacity" />
+      <div className="w-px h-3/4 rounded-full bg-border opacity-0 group-hover/th:opacity-100 transition-opacity" />
     </div>
   )
 }
@@ -482,12 +482,14 @@ interface TableHeaderProps {
 
 function TableHeader({ colWidths, visibleCols, onResizeStart }: TableHeaderProps) {
   // Fixed-width resizable cell
-  const cell = (key: ColKey, label: string) =>
+  const cell = (key: ColKey, label: string, grow = false) =>
     visibleCols[key] ? (
       <div
         key={key}
-        className="relative shrink-0 flex items-center overflow-hidden"
-        style={{ width: colWidths[key] }}
+        className="relative flex items-center overflow-hidden group/th"
+        style={grow
+          ? { flex: 1, minWidth: colWidths[key] }
+          : { width: colWidths[key], flexShrink: 0 }}
       >
         <span className="text-xs font-normal text-muted-foreground truncate">
           {label}
@@ -506,17 +508,13 @@ function TableHeader({ colWidths, visibleCols, onResizeStart }: TableHeaderProps
 
       {cell("id",     "ID")}
       {cell("cover",  "Cover")}
-      {cell("title",  "Title")}
+      {cell("title",  "Title", true)}
       {cell("artist", "Main Artist")}
       {cell("band",   "Band")}
       {cell("year",   "Year")}
       {cell("tracks", "Tracks")}
-
-      {/* Spacer — absorbs slack, groups Type/State/Action on right */}
-      <div className="flex-1 min-w-0" />
-
-      {cell("type",  "Type")}
-      {cell("state", "State")}
+      {cell("type",   "Type")}
+      {cell("state",  "State")}
       <div style={{ width: ACTION_W, flexShrink: 0 }} />
     </div>
   )
@@ -575,7 +573,7 @@ function TableRow({ release, index, colWidths, visibleCols }: TableRowProps) {
       )}
 
       {vis.title && (
-        <span className="text-xs font-normal text-foreground truncate shrink-0" style={{ width: colWidths.title }}>
+        <span className="text-xs font-normal text-foreground truncate" style={{ flex: 1, minWidth: colWidths.title }}>
           {release.title}
         </span>
       )}
@@ -603,9 +601,6 @@ function TableRow({ release, index, colWidths, visibleCols }: TableRowProps) {
           {release.tracks}
         </span>
       )}
-
-      {/* Spacer — mirrors header */}
-      <div className="flex-1 min-w-0" />
 
       {vis.type && (
         <div className="shrink-0 overflow-hidden" style={{ width: colWidths.type }}>
@@ -648,6 +643,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
   const [view,    setView]            = useState<"list" | "grid">("list")
 
   const [colWidths,      setColWidths]      = useState<Record<ColKey, number>>(DEFAULT_WIDTHS)
+  const [colWidthsReady, setColWidthsReady] = useState(false)
   const [visibleCols,    setVisibleCols]    = useState<Record<ColKey, boolean>>({
     id: true, cover: true, title: true, artist: true, band: true,
     year: true, tracks: true, type: true, state: true,
@@ -658,8 +654,32 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
   const resizeRef      = useRef<{ col: ColKey; startX: number; startW: number } | null>(null)
   const tableWrapRef   = useRef<HTMLDivElement>(null)
 
-  // Auto-hide cover when table container is too narrow
+  // Compute initial column widths to fill container evenly, then keep them fixed after user resizes
   useEffect(() => {
+    const el = tableWrapRef.current
+    if (!el || colWidthsReady) return
+    const ro = new ResizeObserver(([entry]) => {
+      setAutoCoverHide(entry.contentRect.width < COVER_HIDE_THRESHOLD)
+      if (colWidthsReady) return
+      const available = entry.contentRect.width
+        - GRIP_W - NUM_W - COL_GAP * 10 - 16
+        - DEFAULT_WIDTHS.id - DEFAULT_WIDTHS.cover - DEFAULT_WIDTHS.year
+        - DEFAULT_WIDTHS.tracks - DEFAULT_WIDTHS.type - DEFAULT_WIDTHS.state
+      const unit = Math.max(0, available / 4)
+      setColWidths(prev => ({
+        ...prev,
+        title:  Math.max(MIN_WIDTHS.title,  Math.round(unit * 2)),
+        artist: Math.max(MIN_WIDTHS.artist, Math.round(unit)),
+        band:   Math.max(MIN_WIDTHS.band,   Math.round(unit)),
+      }))
+      setColWidthsReady(true)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [colWidthsReady])
+
+  useEffect(() => {
+    if (!colWidthsReady) return
     const el = tableWrapRef.current
     if (!el) return
     const ro = new ResizeObserver(([entry]) => {
@@ -667,7 +687,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
     })
     ro.observe(el)
     return () => ro.disconnect()
-  }, [])
+  }, [colWidthsReady])
 
   function handleResizeStart(col: ColKey, e: React.MouseEvent) {
     resizeRef.current = { col, startX: e.clientX, startW: colWidths[col] }
@@ -886,7 +906,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
                 <FilterPopoverClearAll
                   label="Reset"
                   onClear={() => {
-                    setColWidths(DEFAULT_WIDTHS)
+                    setColWidthsReady(false)
                     setVisibleCols({ id: true, cover: true, title: true, artist: true, band: true, year: true, tracks: true, type: true, state: true })
                   }}
                 />
