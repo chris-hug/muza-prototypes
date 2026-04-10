@@ -8,7 +8,7 @@ export default defineConfig({
     tailwindcss(),
     reactRouter(),
   ],
-  server: {
+server: {
     port: parseInt(process.env.PORT || "5173"),
     strictPort: true,
   },

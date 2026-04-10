@@ -16,6 +16,7 @@
 # build output
 /dist
 /.react-router/
+/build
 
 # misc
 .DS_Store
