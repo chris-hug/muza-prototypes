@@ -851,7 +851,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search…"
+              placeholder="Search your music"
               className={cn(
                 "h-9 pl-8 pr-3 rounded-full border text-xs font-normal bg-transparent transition-all",
                 "text-foreground placeholder:text-muted-foreground focus:outline-none",
