@@ -1097,15 +1097,15 @@ function StepTrackMatching({
   function ResizableTh({ col, label, align = "left" }: { col: TCol; label: string; align?: string }) {
     return (
       <th
-        className={`text-${align} text-xs font-normal text-muted-foreground pb-1.5 pl-2 relative overflow-hidden select-none`}
+        className={`text-${align} text-xs font-normal text-muted-foreground pb-1.5 pl-2 relative overflow-hidden select-none group/th`}
         style={{ width: colW[col] }}
       >
         {label}
         <div
-          className="absolute right-0 top-0 h-full w-3 flex items-center justify-center cursor-col-resize z-10 group/rh"
+          className="absolute right-0 top-0 h-full w-3 flex items-center justify-center cursor-col-resize z-10"
           onMouseDown={e => startResize(col, e)}
         >
-          <div className="w-px h-3/4 rounded-full bg-border opacity-0 group-hover/rh:opacity-100 transition-opacity" />
+          <div className="w-px h-3/4 rounded-full bg-border opacity-0 group-hover/th:opacity-100 transition-opacity" />
         </div>
       </th>
     )

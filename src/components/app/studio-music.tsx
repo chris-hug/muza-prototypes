@@ -464,10 +464,10 @@ function ResizeHandle({ colKey, onStart }: {
 }) {
   return (
     <div
-      className="absolute right-0 top-0 h-full w-3 flex items-center justify-center cursor-col-resize select-none group/rh z-10"
+      className="absolute right-0 top-0 h-full w-3 flex items-center justify-center cursor-col-resize select-none z-10"
       onMouseDown={e => { e.preventDefault(); e.stopPropagation(); onStart(colKey, e) }}
     >
-      <div className="w-px h-3/4 rounded-full bg-border opacity-0 group-hover/rh:opacity-100 transition-opacity" />
+      <div className="w-px h-3/4 rounded-full bg-border opacity-0 group-hover/th:opacity-100 transition-opacity" />
     </div>
   )
 }
@@ -486,7 +486,7 @@ function TableHeader({ colWidths, visibleCols, onResizeStart }: TableHeaderProps
     visibleCols[key] ? (
       <div
         key={key}
-        className="relative shrink-0 flex items-center overflow-hidden"
+        className="relative shrink-0 flex items-center overflow-hidden group/th"
         style={{ width: colWidths[key] }}
       >
         <span className="text-xs font-normal text-muted-foreground truncate">
