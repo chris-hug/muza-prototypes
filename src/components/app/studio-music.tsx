@@ -809,7 +809,6 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
 
         {/* LEFT — filters */}
         <div className="flex items-start gap-2 flex-1 flex-wrap">
-          <span className="text-xs font-normal text-muted-foreground h-9 flex items-center mr-1 shrink-0">Filter</span>
 
           {/* Content Type — multi-select */}
           <ContentTypeMultiSelect
