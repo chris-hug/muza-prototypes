@@ -40,8 +40,8 @@ interface Release {
 // ─── Column configuration ──────────────────────────────────────────────────────
 
 const DEFAULT_WIDTHS: Record<ColKey, number> = {
-  id: 72, cover: 44, title: 220, artist: 120, band: 120,
-  year: 44, tracks: 36, uploaded: 96, type: 72, state: 88,
+  id: 64, cover: 44, title: 200, artist: 100, band: 100,
+  year: 44, tracks: 36, uploaded: 88, type: 72, state: 88,
 }
 
 const MIN_WIDTHS: Record<ColKey, number> = {
@@ -971,19 +971,20 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
         </div>
       )}
 
-      {/* ── Table ────────────────────────────────────────────────────── */}
-      <div className="shrink-0 px-10">
-        <TableHeader
-          colWidths={colWidths}
-          visibleCols={effectiveVis}
-          onResizeStart={handleResizeStart}
-          sortKey={sortKey}
-          sortDir={sortDir}
-          onSort={handleSortChange}
-        />
-      </div>
+      {/* ── Table (header + rows share one scroll container so they always align) ── */}
+      <div className="flex-1 overflow-auto px-10">
+        {/* Sticky header — scrolls horizontally with rows, stays fixed vertically */}
+        <div className="sticky top-0 z-10 bg-background">
+          <TableHeader
+            colWidths={colWidths}
+            visibleCols={effectiveVis}
+            onResizeStart={handleResizeStart}
+            sortKey={sortKey}
+            sortDir={sortDir}
+            onSort={handleSortChange}
+          />
+        </div>
 
-      <div className="flex-1 overflow-auto px-10 py-1">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 gap-2">
             <p className="text-sm font-normal text-muted-foreground">No releases match the current filters.</p>
