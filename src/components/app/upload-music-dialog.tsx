@@ -1593,20 +1593,22 @@ export function UploadMusicDialog({
       {/* Body */}
       <div className="flex flex-1 min-h-0">
         {isFullWidth ? (
-          /* Steps 3 & 4: full width */
-          <div className="flex-1 overflow-y-auto px-20 pt-4 pb-8">
-            {step === 3 && (
-              <StepTrackMatching
-                release={selectedRelease} isNew={isCreatingNew} newForm={newForm}
-                tracks={tracks} onTracksChange={setTracks} files={files}
-              />
-            )}
-            {step === 4 && (
-              <StepConfirmation
-                release={selectedRelease} isNew={isCreatingNew} newForm={newForm}
-                tracks={tracks} onPublish={handleNext}
-              />
-            )}
+          /* Steps 3 & 4: full width, centered */
+          <div className="flex-1 overflow-y-auto px-10 pt-4 pb-8">
+            <div className="max-w-6xl 3xl:max-w-[1600px] mx-auto w-full">
+              {step === 3 && (
+                <StepTrackMatching
+                  release={selectedRelease} isNew={isCreatingNew} newForm={newForm}
+                  tracks={tracks} onTracksChange={setTracks} files={files}
+                />
+              )}
+              {step === 4 && (
+                <StepConfirmation
+                  release={selectedRelease} isNew={isCreatingNew} newForm={newForm}
+                  tracks={tracks} onPublish={handleNext}
+                />
+              )}
+            </div>
           </div>
         ) : (
           /* Steps 1 & 2: 50/50 split */
