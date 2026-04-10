@@ -84,9 +84,9 @@ function SubLabel({ children }: { children: React.ReactNode }) {
 function HomeView() {
   return (
     <div className="px-10 py-10 max-w-6xl 3xl:max-w-[1600px] mx-auto w-full flex flex-col gap-6">
-      <p className="text-2xl 3xl:text-3xl font-normal text-foreground">muza is the platform for independent music.</p>
-      <p className="text-2xl 3xl:text-3xl font-normal text-foreground">Built as a non-profit, muza exists to fix streaming's broken economics. Instead of paying artists per click, muza rewards attention — distributing revenue based on actual listening time and direct listener support. Your subscription goes only to the artists you play.</p>
-      <p className="text-2xl 3xl:text-3xl font-normal text-foreground">We combine subscription streaming with direct artist uploads, giving musicians full control over how their music is shared and monetised. Artists retain ownership, receive up to 90–95% of revenue, and are paid directly — no hidden intermediaries.</p>
+      <p className="text-[clamp(1.25rem,_2vw,_3rem)] leading-snug font-normal text-foreground">muza is the platform for independent music.</p>
+      <p className="text-[clamp(1.25rem,_2vw,_3rem)] leading-snug font-normal text-foreground">Built as a non-profit, muza exists to fix streaming's broken economics. Instead of paying artists per click, muza rewards attention — distributing revenue based on actual listening time and direct listener support. Your subscription goes only to the artists you play.</p>
+      <p className="text-[clamp(1.25rem,_2vw,_3rem)] leading-snug font-normal text-foreground">We combine subscription streaming with direct artist uploads, giving musicians full control over how their music is shared and monetised. Artists retain ownership, receive up to 90–95% of revenue, and are paid directly — no hidden intermediaries.</p>
     </div>
   )
 }
