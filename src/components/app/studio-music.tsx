@@ -856,8 +856,8 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
                 "h-9 pl-8 pr-3 rounded-full border text-xs font-normal bg-transparent transition-all",
                 "text-foreground placeholder:text-muted-foreground focus:outline-none",
                 searchQuery
-                  ? "border-foreground/40 bg-muted text-foreground w-44"
-                  : "border-border text-foreground w-32 hover:border-foreground/20 focus:border-foreground/40 focus:bg-muted focus:w-44",
+                  ? "border-foreground/40 bg-muted text-foreground w-56"
+                  : "border-border text-foreground w-48 hover:border-foreground/20 focus:border-foreground/40 focus:bg-muted focus:w-56",
               )}
             />
             {searchQuery && (
