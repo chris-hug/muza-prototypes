@@ -84,7 +84,7 @@ function SubLabel({ children }: { children: React.ReactNode }) {
 function HomeView() {
   return (
     <div className="px-10 py-10 max-w-6xl 3xl:max-w-[1600px] mx-auto w-full flex flex-col gap-6">
-      <div className="flex flex-col items-center gap-4 py-10">
+      <div className="flex flex-col items-center gap-4 pt-40 pb-10">
         <AnimatedLogo size={360} />
         <img src="/wordmark.svg" alt="muza" className="h-8 w-auto dark:invert" />
       </div>
