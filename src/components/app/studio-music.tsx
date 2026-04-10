@@ -648,6 +648,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
   const [view,    setView]            = useState<"list" | "grid">("list")
 
   const [colWidths,      setColWidths]      = useState<Record<ColKey, number>>(DEFAULT_WIDTHS)
+  const [colWidthsReady, setColWidthsReady] = useState(false)
   const [visibleCols,    setVisibleCols]    = useState<Record<ColKey, boolean>>({
     id: true, cover: true, title: true, artist: true, band: true,
     year: true, tracks: true, type: true, state: true,
@@ -658,8 +659,34 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
   const resizeRef      = useRef<{ col: ColKey; startX: number; startW: number } | null>(null)
   const tableWrapRef   = useRef<HTMLDivElement>(null)
 
-  // Auto-hide cover when table container is too narrow
+  // Compute initial column widths to fill container evenly, then keep them fixed after user resizes
   useEffect(() => {
+    const el = tableWrapRef.current
+    if (!el || colWidthsReady) return
+    const ro = new ResizeObserver(([entry]) => {
+      setAutoCoverHide(entry.contentRect.width < COVER_HIDE_THRESHOLD)
+      if (colWidthsReady) return
+      const available = entry.contentRect.width
+        - GRIP_W - NUM_W - COL_GAP * 10 - 16 // fixed cols + gaps + padding
+        - DEFAULT_WIDTHS.id - DEFAULT_WIDTHS.cover - DEFAULT_WIDTHS.year
+        - DEFAULT_WIDTHS.tracks - DEFAULT_WIDTHS.type - DEFAULT_WIDTHS.state
+      // distribute remaining space across title, artist, band (ratio 2:1:1)
+      const unit = Math.max(0, available / 4)
+      setColWidths(prev => ({
+        ...prev,
+        title:  Math.max(MIN_WIDTHS.title,  Math.round(unit * 2)),
+        artist: Math.max(MIN_WIDTHS.artist, Math.round(unit)),
+        band:   Math.max(MIN_WIDTHS.band,   Math.round(unit)),
+      }))
+      setColWidthsReady(true)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [colWidthsReady])
+
+  // Separate observer just for auto-hide after widths are ready
+  useEffect(() => {
+    if (!colWidthsReady) return
     const el = tableWrapRef.current
     if (!el) return
     const ro = new ResizeObserver(([entry]) => {
@@ -667,7 +694,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
     })
     ro.observe(el)
     return () => ro.disconnect()
-  }, [])
+  }, [colWidthsReady])
 
   function handleResizeStart(col: ColKey, e: React.MouseEvent) {
     resizeRef.current = { col, startX: e.clientX, startW: colWidths[col] }
@@ -886,7 +913,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
                 <FilterPopoverClearAll
                   label="Reset"
                   onClear={() => {
-                    setColWidths(DEFAULT_WIDTHS)
+                    setColWidthsReady(false)
                     setVisibleCols({ id: true, cover: true, title: true, artist: true, band: true, year: true, tracks: true, type: true, state: true })
                   }}
                 />
