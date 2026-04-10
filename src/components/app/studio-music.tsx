@@ -799,7 +799,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
             {RELEASES.length} releases
           </p>
         </div>
-        <Button size="lg" className="shrink-0 gap-2" onClick={onOpenUpload}>
+        <Button size="xl" className="shrink-0 gap-2" onClick={onOpenUpload}>
           <Upload className="size-4" />
           Upload music
         </Button>
