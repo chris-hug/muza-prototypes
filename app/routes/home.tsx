@@ -443,8 +443,10 @@ function ExploreView() {
     <div>
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
-      <div className="px-10 pt-16 pb-10 border-b border-border">
-        <h1 className="text-5xl font-medium tracking-tight">muza design system</h1>
+      <div className="bg-muted border-b border-border pt-24 pb-[3.75rem] px-10">
+        <div className="max-w-6xl 3xl:max-w-[1600px] mx-auto">
+          <h1 className="text-5xl font-medium tracking-tight">muza design system</h1>
+        </div>
       </div>
 
     <div className="max-w-6xl 3xl:max-w-[1600px] mx-auto w-full px-10 py-10 pb-32">
