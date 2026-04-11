@@ -1268,6 +1268,16 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
           </div>
         ) : (
           <div className="flex flex-col gap-0.5 py-1">
+            {/* Upload row */}
+            <button
+              onClick={onOpenUpload}
+              className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-muted transition-colors text-left group"
+            >
+              <div className="flex items-center justify-center size-11 shrink-0">
+                <Upload className="size-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+              </div>
+              <span className="text-sm font-normal text-muted-foreground group-hover:text-foreground transition-colors">Upload music</span>
+            </button>
             {filtered.map((r) => (
               <TableRow
                 key={r.id}
