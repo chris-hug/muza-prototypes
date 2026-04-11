@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { AnimatedLogo } from "@/components/app/animated-logo"
 import { Sidebar } from "@/components/app/sidebar"
 import { StudioMusicView } from "@/components/app/studio-music"
@@ -1549,6 +1549,12 @@ export default function Home() {
   const [uploadOpen, setUploadOpen] = useState(false)
   const [uploadMinimized, setUploadMinimized] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  function navigate(view: string) {
+    setActiveNav(view)
+    scrollRef.current?.scrollTo({ top: 0, behavior: "instant" })
+  }
 
   return (
     <div className="flex h-screen bg-background">
@@ -1556,12 +1562,12 @@ export default function Home() {
         collapsed={collapsed}
         onCollapsedChange={setCollapsed}
         activeNav={activeNav}
-        onNavChange={setActiveNav}
+        onNavChange={navigate}
       />
       <main className="flex-1 min-w-0 flex flex-col relative">
         <Topbar actions={<TopbarDefaultActions />} />
-        <div className="flex-1 overflow-auto">
-          {activeNav === "Home"      && <HomeView onNavigate={setActiveNav} />}
+        <div ref={scrollRef} className="flex-1 overflow-auto">
+          {activeNav === "Home"      && <HomeView onNavigate={navigate} />}
           {activeNav === "Explore"   && <ExploreView />}
           {Object.keys(STUDIO_TABS).includes(activeNav) && (
             <StudioView
