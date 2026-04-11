@@ -106,7 +106,7 @@ function HomeView() {
       <p className="text-[clamp(2rem,_3vw,_4rem)] leading-snug font-normal text-foreground mt-16">Built as a non-profit, muza exists to fix streaming's broken economics. Instead of paying artists per click, muza rewards attention — distributing revenue based on actual listening time and direct listener support. Your subscription goes only to the artists you play.</p>
       <p className="text-[clamp(2rem,_3vw,_4rem)] leading-snug font-normal text-foreground">We combine subscription streaming with direct artist uploads, giving musicians full control over how their music is shared and monetised. Artists retain ownership, receive up to 90–95% of revenue, and are paid directly — no hidden intermediaries.</p>
       <div className="flex justify-center mt-24">
-        <Button size="xl" className="text-lg px-16 h-16 rounded-full">Join muza now</Button>
+        <Button size="xl" className="text-[2rem] px-[5.5rem] h-[5.5rem] rounded-full transition-transform duration-300 ease-out hover:transition-transform hover:duration-250 hover:ease-[cubic-bezier(0.22,1.8,0.36,1)] hover:scale-[1.07]">Join muza now</Button>
       </div>
     </div>
   )
