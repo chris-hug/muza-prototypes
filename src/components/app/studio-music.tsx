@@ -1019,16 +1019,21 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
     <div ref={tableWrapRef} className="relative flex flex-col h-full">
 
       {/* ── Page header ──────────────────────────────────────────────── */}
-      <div className="shrink-0 flex flex-col gap-4 px-10 pt-8 pb-6">
-        <Button size="xl" className="self-start text-base px-8 h-14 gap-2.5" onClick={onOpenUpload}>
-          <Upload className="size-5" />
-          Upload music
-        </Button>
+      <div className="shrink-0 flex items-center justify-between gap-6 px-10 pt-8 pb-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">My Music</h1>
           <p className="text-sm font-normal text-muted-foreground mt-1">
             {RELEASES.length} releases
           </p>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <Button size="xl" variant="secondary" className="text-base px-8 h-14 gap-2.5">
+            Import release
+          </Button>
+          <Button size="xl" className="text-base px-8 h-14 gap-2.5" onClick={onOpenUpload}>
+            <Upload className="size-5" />
+            Upload music
+          </Button>
         </div>
       </div>
 

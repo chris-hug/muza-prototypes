@@ -386,7 +386,7 @@ export function Sidebar({
                       key={pl.id}
                       className="flex h-8 px-3 w-full text-left rounded-lg text-sidebar-foreground hover:bg-sidebar-accent transition-colors items-center"
                     >
-                      <span className="text-sm font-normal truncate">{pl.title}</span>
+                      <span className="text-xs font-normal truncate">{pl.title}</span>
                     </button>
                   ))}
                 </div>

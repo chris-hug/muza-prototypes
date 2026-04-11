@@ -1868,8 +1868,8 @@ export function UploadMusicDialog({
 
       {/* ── Published success modal ───────────────────────────────────── */}
       {published && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-6 text-center max-w-xs px-6">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center backdrop-blur-md bg-background/60">
+          <div className="flex flex-col items-center gap-6 text-center bg-background border border-border rounded-2xl shadow-xl px-10 py-10 max-w-sm w-full mx-6">
             <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center">
               <CheckCircle2 className="size-8 text-primary" />
             </div>
