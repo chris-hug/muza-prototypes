@@ -92,7 +92,7 @@ function useViewportLogoSize() {
   return size
 }
 
-function HomeView() {
+function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
   const logoSize = useViewportLogoSize()
   return (
     <div className="px-10 pt-10 pb-64 max-w-6xl 3xl:max-w-[1600px] mx-auto w-full flex flex-col gap-6">
@@ -106,7 +106,7 @@ function HomeView() {
       <p className="text-[clamp(2rem,_3vw,_4rem)] leading-snug font-normal text-foreground mt-16">Built as a non-profit, muza exists to fix streaming's broken economics. Instead of paying artists per click, muza rewards attention — distributing revenue based on actual listening time and direct listener support. Your subscription goes only to the artists you play.</p>
       <p className="text-[clamp(2rem,_3vw,_4rem)] leading-snug font-normal text-foreground">We combine subscription streaming with direct artist uploads, giving musicians full control over how their music is shared and monetised. Artists retain ownership, receive up to 90–95% of revenue, and are paid directly — no hidden intermediaries.</p>
       <div className="flex justify-center mt-24">
-        <Button size="xl" className="text-[2rem] px-[5.5rem] h-[5.5rem] rounded-full transition-transform duration-300 ease-out hover:transition-transform hover:duration-250 hover:ease-[cubic-bezier(0.22,1.8,0.36,1)] hover:scale-[1.07]">Join muza now</Button>
+        <Button size="xl" className="text-[2rem] px-[5.5rem] h-[5.5rem] rounded-full transition-transform duration-300 ease-out hover:transition-transform hover:duration-250 hover:ease-[cubic-bezier(0.22,1.8,0.36,1)] hover:scale-[1.07]" onClick={() => onNavigate("Music")}>Join muza now</Button>
       </div>
     </div>
   )
@@ -1561,7 +1561,7 @@ export default function Home() {
       <main className="flex-1 min-w-0 flex flex-col relative">
         <Topbar actions={<TopbarDefaultActions />} />
         <div className="flex-1 overflow-auto">
-          {activeNav === "Home"      && <HomeView />}
+          {activeNav === "Home"      && <HomeView onNavigate={setActiveNav} />}
           {activeNav === "Explore"   && <ExploreView />}
           {Object.keys(STUDIO_TABS).includes(activeNav) && (
             <StudioView
