@@ -370,7 +370,7 @@ function ContentTypeMultiSelect({
       />
       {open && (
         <FilterPopover>
-          {(["album", "single", "ep", "song"] as ContentType[]).map(t => (
+          {(["album", "single", "ep"] as ContentType[]).map(t => (
             <FilterPopoverItem key={t} checked={selected.has(t)} onToggle={() => toggle(t)}>
               {CONTENT_TYPE_LABELS[t]}
             </FilterPopoverItem>
@@ -1027,9 +1027,6 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <Button size="xl" variant="secondary" className="text-base px-8 h-14 gap-2.5">
-            Import release
-          </Button>
           <Button size="xl" className="text-base px-8 h-14 gap-2.5" onClick={onOpenUpload}>
             <Upload className="size-5" />
             Upload music
