@@ -20,7 +20,7 @@ import {
   Search, X, Check, CloudUpload, ImagePlus, Music2, Disc3,
   Plus, GripVertical, FileAudio, Loader2, ChevronRight,
   AlertTriangle, Trash2, Minimize2, Play, Shuffle,
-  Share2, Info, MoreHorizontal, CheckCircle2, ArrowRight,
+  Share2, Info, MoreHorizontal, CheckCircle2,
 } from "lucide-react"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -1794,34 +1794,8 @@ export function UploadMusicDialog({
   const publishedArtist  = isCreatingNew ? newForm.mainArtists.filter(Boolean).join(", ") : (selectedRelease?.mainArtists.join(", ") ?? "")
   const publishedCover   = selectedRelease?.coverUrl
 
-  if (published) {
-    return (
-      <div className="flex flex-col h-full bg-background items-center justify-center gap-10 px-10">
-        <div className="flex flex-col items-center gap-6 text-center max-w-sm">
-          <div className="size-20 rounded-full bg-primary/10 flex items-center justify-center">
-            <CheckCircle2 className="size-10 text-primary" />
-          </div>
-          <div className="flex flex-col gap-2">
-            <h1 className="text-2xl font-semibold">Your release is live.</h1>
-            <p className="text-sm text-muted-foreground font-normal">
-              {publishedTitle}{publishedArtist ? ` by ${publishedArtist}` : ""} is now public on muza.
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 w-full pt-2">
-            <Button size="xl" className="w-full gap-2" onClick={onClose}>
-              View in My Music <ArrowRight className="size-4" />
-            </Button>
-            <Button size="xl" variant="secondary" className="w-full" onClick={onClose}>
-              Done
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="relative flex flex-col h-full bg-background">
       {/* Top nav — stepper + navigation */}
       <TopNavBar
         step={step}
@@ -1891,6 +1865,26 @@ export function UploadMusicDialog({
           </>
         )}
       </div>
+
+      {/* ── Published success modal ───────────────────────────────────── */}
+      {published && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-6 text-center max-w-xs px-6">
+            <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <CheckCircle2 className="size-8 text-primary" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <h2 className="text-xl font-semibold">Your release is live.</h2>
+              <p className="text-sm text-muted-foreground font-normal">
+                {publishedTitle}{publishedArtist ? ` by ${publishedArtist}` : ""} is now public on muza.
+              </p>
+            </div>
+            <Button size="xl" className="w-full" onClick={onClose}>
+              Done
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
