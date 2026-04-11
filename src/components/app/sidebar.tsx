@@ -8,7 +8,7 @@ import { LogoHorizontal, LogoMark } from "@/components/ui/logo"
 import {
   Home, Compass, ListMusic, Disc3, Mic, Music2,
   Paintbrush, FileText, ShoppingBag, CreditCard, Library,
-  Plus, PanelLeftClose, PanelLeftOpen, ChevronRight,
+  Plus, PanelLeftClose, PanelLeftOpen, ChevronRight, BarChart2,
 } from "lucide-react"
 
 import {
@@ -42,10 +42,11 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Studio",
     icon: <Paintbrush className="size-4" />,
     children: [
-      { label: "Pages",  icon: <FileText    className="size-4" /> },
-      { label: "Music",  icon: <Music2      className="size-4" /> },
-      { label: "Shop",   icon: <ShoppingBag className="size-4" /> },
-      { label: "Wallet", icon: <CreditCard  className="size-4" /> },
+      { label: "Pages",     icon: <FileText    className="size-4" /> },
+      { label: "Music",     icon: <Music2      className="size-4" /> },
+      { label: "Analytics", icon: <BarChart2   className="size-4" /> },
+      { label: "Shop",      icon: <ShoppingBag className="size-4" /> },
+      { label: "Wallet",    icon: <CreditCard  className="size-4" /> },
     ],
   },
   {
