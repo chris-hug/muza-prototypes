@@ -36,21 +36,21 @@ const buttonVariants = cva(
       },
       size: {
         // Figma node 37:931 — exact px values:
-        //   sm:      h-8  (32px) · px-3 (12px) · text-xs  (14px) · font-normal
-        //   default: h-9  (36px) · px-4 (16px) · text-sm  (16px) · font-medium
-        //   lg:      h-10 (40px) · px-8 (32px) · text-sm  (16px) · font-medium
-        //   xl:      h-12 (48px) · px-10 (40px) · text-sm (16px) · font-medium
-        //   icon:    size-9  (36px)
+        //   sm:      h-8  (32px) · px-3  · text-xs · font-normal
+        //   default: h-10 (40px) · px-[18px] · text-sm · font-medium  ← matches input/select/datepicker
+        //   lg:      h-11 (44px) · px-[34px] · text-sm · font-medium
+        //   xl:      h-12 (48px) · px-10 · text-sm · font-medium
+        //   icon:    size-10 (40px)
         //   icon-sm: size-8  (32px)
-        //   icon-lg: size-10 (40px)
+        //   icon-lg: size-11 (44px)
         //   icon-xl: size-12 (48px)
-        default:    "h-[38px] px-[18px] text-sm font-medium",
+        default:    "h-10 px-[18px] text-sm font-medium",
         sm:         "h-8 px-3 text-xxs font-normal",
-        lg:         "h-[44px] px-[34px] text-sm font-medium",
+        lg:         "h-11 px-[34px] text-sm font-medium",
         xl:         "h-12 px-10 text-sm font-medium",
-        icon:       "size-9",
+        icon:       "size-10",
         "icon-sm":  "size-8",
-        "icon-lg":  "size-10",
+        "icon-lg":  "size-11",
         "icon-xl":  "size-12",
       },
     },
