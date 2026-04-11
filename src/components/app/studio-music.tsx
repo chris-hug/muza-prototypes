@@ -1271,9 +1271,11 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
             {/* Upload row */}
             <button
               onClick={onOpenUpload}
-              className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-muted transition-colors text-left group"
+              className="flex items-center w-full rounded-lg hover:bg-muted transition-colors text-left group"
+              style={{ paddingLeft: 8, paddingRight: 8, gap: COL_GAP, height: 56 }}
             >
-              <div className="flex items-center justify-center size-11 shrink-0">
+              <div style={{ width: CHECKBOX_W, flexShrink: 0 }} />
+              <div className="flex items-center justify-center shrink-0" style={{ width: 44, height: 44 }}>
                 <Upload className="size-4 text-muted-foreground group-hover:text-foreground transition-colors" />
               </div>
               <span className="text-sm font-normal text-muted-foreground group-hover:text-foreground transition-colors">Upload music</span>
