@@ -1501,7 +1501,7 @@ function ExploreView() {
         <div className="flex flex-col gap-6">
           <div>
             <SubLabel>6-digit verification code</SubLabel>
-            <InputOTP maxLength={6}>
+            <InputOTP maxLength={6} autoFocus={false}>
               <InputOTPGroup>
                 <InputOTPSlot index={0} />
                 <InputOTPSlot index={1} />
@@ -1517,7 +1517,7 @@ function ExploreView() {
           </div>
           <div>
             <SubLabel>4-digit PIN</SubLabel>
-            <InputOTP maxLength={4}>
+            <InputOTP maxLength={4} autoFocus={false}>
               <InputOTPGroup>
                 <InputOTPSlot index={0} />
                 <InputOTPSlot index={1} />
