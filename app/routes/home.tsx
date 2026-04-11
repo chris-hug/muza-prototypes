@@ -1553,8 +1553,15 @@ export default function Home() {
 
   function navigate(view: string) {
     setActiveNav(view)
-    scrollRef.current?.scrollTo({ top: 0, behavior: "instant" })
   }
+
+  useEffect(() => {
+    // Run after all child mount effects (including Command's scrollIntoView) have fired
+    const id = setTimeout(() => {
+      scrollRef.current?.scrollTo({ top: 0, behavior: "instant" })
+    }, 0)
+    return () => clearTimeout(id)
+  }, [activeNav])
 
   return (
     <div className="flex h-screen bg-background">
