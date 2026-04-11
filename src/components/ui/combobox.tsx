@@ -39,7 +39,7 @@ function ComboboxTrigger({ className, placeholder, showSearchIcon = true }: Comb
         "relative flex w-full items-center",
         "rounded-full border border-border bg-background",
         "h-10 px-3 pt-[6px] pb-[10px] gap-2",
-        "hover:border-foreground/20",
+        "hover:border-foreground/40",
         "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50",
         "transition-colors",
         className
