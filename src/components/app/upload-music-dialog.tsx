@@ -25,7 +25,7 @@ import {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type ContentType      = "album" | "single" | "ep" | "song"
+type ContentType      = "album" | "single" | "ep"
 type Step             = 1 | 2 | 3 | 4
 type SearchMode       = "idle" | "searching" | "results" | "not-found"
 type MonetizationType = "streaming" | "purchase"
@@ -72,12 +72,24 @@ const ENTITIES: Entity[] = [
 ]
 
 const MOCK_RELEASES: Release[] = [
-  { id: "r1", title: "Space Is the Place",                mainArtists: ["Sun Ra"], band: "Sun Ra Arkestra", label: "Impulse!",          catalogNumber: "AS-9956",    type: "album",  tracks: 5,  country: "US", year: 1973, recordingDate: "1972", coverUrl: "https://picsum.photos/seed/sunra73/48/48" },
-  { id: "r2", title: "The Heliocentric Worlds of Sun Ra", mainArtists: ["Sun Ra"], band: "Sun Ra Arkestra", label: "ESP-Disk",           catalogNumber: "ESP-1014",   type: "album",  tracks: 6,  country: "US", year: 1965,                        coverUrl: "https://picsum.photos/seed/sunra65/48/48" },
-  { id: "r3", title: "Atlantis",                          mainArtists: ["Sun Ra"],                          label: "El Saturn Records", catalogNumber: "SaturnLP508", type: "album",  tracks: 6,               year: 1969,                        coverUrl: "https://picsum.photos/seed/sunra69/48/48" },
-  { id: "r4", title: "Nuclear War",                       mainArtists: ["Sun Ra"],                                                                                    type: "single", tracks: 2,               year: 1982,                        coverUrl: "https://picsum.photos/seed/sunra82/48/48" },
-  { id: "r5", title: "Outer Spaceways Incorporated",      mainArtists: ["Sun Ra"],                                                                                    type: "song",   tracks: 1,               year: 1968,                        coverUrl: "https://picsum.photos/seed/sunra68/48/48" },
-  { id: "r6", title: "Sleeping Beauty",                   mainArtists: ["Sun Ra"],                          label: "Saturn Records",                                  type: "album",  tracks: 4,               year: 1979,                        coverUrl: "https://picsum.photos/seed/sunra79/48/48" },
+  { id: "r1",  title: "Space Is the Place",                mainArtists: ["Sun Ra"], band: "Sun Ra Arkestra", label: "Impulse!",          catalogNumber: "AS-9956",    type: "album",  tracks: 5,  country: "US", year: 1973, recordingDate: "1972", coverUrl: "https://picsum.photos/seed/sunra73/48/48" },
+  { id: "r2",  title: "The Heliocentric Worlds of Sun Ra", mainArtists: ["Sun Ra"], band: "Sun Ra Arkestra", label: "ESP-Disk",           catalogNumber: "ESP-1014",   type: "album",  tracks: 6,  country: "US", year: 1965,                        coverUrl: "https://picsum.photos/seed/sunra65/48/48" },
+  { id: "r3",  title: "Atlantis",                          mainArtists: ["Sun Ra"],                          label: "El Saturn Records", catalogNumber: "SaturnLP508", type: "album",  tracks: 6,               year: 1969,                        coverUrl: "https://picsum.photos/seed/sunra69/48/48" },
+  { id: "r4",  title: "Nuclear War",                       mainArtists: ["Sun Ra"],                                                                                    type: "single", tracks: 2,               year: 1982,                        coverUrl: "https://picsum.photos/seed/sunra82/48/48" },
+  { id: "r5",  title: "Outer Spaceways Incorporated",      mainArtists: ["Sun Ra"],                                                                                    type: "single", tracks: 2,               year: 1968,                        coverUrl: "https://picsum.photos/seed/sunra68/48/48" },
+  { id: "r6",  title: "Sleeping Beauty",                   mainArtists: ["Sun Ra"],                          label: "Saturn Records",                                  type: "album",  tracks: 4,               year: 1979,                        coverUrl: "https://picsum.photos/seed/sunra79/48/48" },
+  { id: "r7",  title: "Angels and Demons at Play",         mainArtists: ["Sun Ra"], band: "Sun Ra Arkestra", label: "El Saturn Records", catalogNumber: "ESR-507",     type: "album",  tracks: 8,  country: "US", year: 1965,                        coverUrl: "https://picsum.photos/seed/sunra65b/48/48" },
+  { id: "r8",  title: "The Magic City",                    mainArtists: ["Sun Ra"],                          label: "El Saturn Records", catalogNumber: "ESR-408",     type: "album",  tracks: 2,               year: 1966,                        coverUrl: "https://picsum.photos/seed/sunra66/48/48" },
+  { id: "r9",  title: "Lanquidity",                        mainArtists: ["Sun Ra"], band: "Sun Ra Arkestra", label: "Philly Jazz",       catalogNumber: "PJ-1001",     type: "album",  tracks: 6,  country: "US", year: 1978,                        coverUrl: "https://picsum.photos/seed/sunra78/48/48" },
+  { id: "r10", title: "Strange Strings",                   mainArtists: ["Sun Ra"],                          label: "El Saturn Records",                               type: "album",  tracks: 4,               year: 1967,                        coverUrl: "https://picsum.photos/seed/sunra67/48/48" },
+  { id: "r11", title: "Holiday for Soul Dance",            mainArtists: ["Sun Ra"],                          label: "El Saturn Records",                               type: "album",  tracks: 8,               year: 1970,                        coverUrl: "https://picsum.photos/seed/sunra70/48/48" },
+  { id: "r12", title: "Sun Song",                          mainArtists: ["Sun Ra"], band: "Sun Ra Arkestra", label: "Transition",        catalogNumber: "J-10",        type: "album",  tracks: 10, country: "US", year: 1956,                        coverUrl: "https://picsum.photos/seed/sunra56/48/48" },
+  { id: "r13", title: "Interstellar Low Ways",             mainArtists: ["Sun Ra"],                          label: "El Saturn Records",                               type: "album",  tracks: 7,               year: 1966,                        coverUrl: "https://picsum.photos/seed/sunra66b/48/48" },
+  { id: "r14", title: "Discipline 27-II",                  mainArtists: ["Sun Ra"], band: "Sun Ra Arkestra", label: "El Saturn Records",                               type: "album",  tracks: 5,  country: "US", year: 1969,                        coverUrl: "https://picsum.photos/seed/sunra69b/48/48" },
+  { id: "r15", title: "My Brother the Wind Vol. II",       mainArtists: ["Sun Ra"],                          label: "El Saturn Records",                               type: "album",  tracks: 6,               year: 1970,                        coverUrl: "https://picsum.photos/seed/sunra70b/48/48" },
+  { id: "r16", title: "Astro Black",                       mainArtists: ["Sun Ra"], band: "Sun Ra Arkestra", label: "Impulse!",          catalogNumber: "AS-9255",     type: "album",  tracks: 6,  country: "US", year: 1973,                        coverUrl: "https://picsum.photos/seed/sunra73b/48/48" },
+  { id: "r17", title: "Cosmos",                            mainArtists: ["Sun Ra"],                          label: "El Saturn Records",                               type: "ep",     tracks: 3,               year: 1976,                        coverUrl: "https://picsum.photos/seed/sunra76/48/48" },
+  { id: "r18", title: "Sunrise in Different Dimensions",   mainArtists: ["Sun Ra"], band: "Sun Ra Arkestra", label: "hat HUT",           catalogNumber: "2R08",        type: "album",  tracks: 10, country: "CH", year: 1980,                        coverUrl: "https://picsum.photos/seed/sunra80/48/48" },
 ]
 
 const MOCK_FILES: UploadFile[] = [
@@ -92,7 +104,7 @@ const MOCK_TRACKS: TrackRow[] = [
   { id: "t3", fileName: "SunRa_Atlantis_Side1_Master.wav",  trackName: "Atlantis",            composer: "Sun Ra", duration: "8:37",  matchScore: 20, assignedFile: "f3" },
 ]
 
-const TYPE_LABELS: Record<ContentType, string> = { album: "Album", single: "Single", ep: "EP", song: "Song" }
+const TYPE_LABELS: Record<ContentType, string> = { album: "Album", single: "Single", ep: "EP" }
 const STEP_LABELS = ["Release Info", "Monetisation", "Track matching", "Confirm"]
 
 // Table constants — exact My Music values
@@ -585,7 +597,6 @@ function CreditsSection({
               onKeyDown={e => { if (e.key === "Enter") commitDraft(i) }}
               placeholder="Name"
               className="text-sm font-normal"
-              autoFocus
             />
             <Input
               value={d.instrument}
@@ -688,24 +699,25 @@ function NewReleaseForm({ form, onChange, entityName }: { form: ReleaseForm; onC
         </div>
       </div>
 
-      {/* 2. Band name */}
+      {/* 2. Release title */}
+      <div className="flex flex-col gap-1.5">
+        <Label>Release title</Label>
+        <Input
+          autoFocus
+          value={form.title}
+          onChange={e => onChange({ ...form, title: e.target.value })}
+          placeholder="Title"
+          className="text-sm font-normal"
+        />
+      </div>
+
+      {/* 3. Band name */}
       <div className="flex flex-col gap-1.5">
         <Label>Band name</Label>
         <Input
           value={form.band}
           onChange={e => onChange({ ...form, band: e.target.value })}
           placeholder="Band / ensemble"
-          className="text-sm font-normal"
-        />
-      </div>
-
-      {/* 3. Album title */}
-      <div className="flex flex-col gap-1.5">
-        <Label>Album title</Label>
-        <Input
-          value={form.title}
-          onChange={e => onChange({ ...form, title: e.target.value })}
-          placeholder="Title"
           className="text-sm font-normal"
         />
       </div>
@@ -743,7 +755,6 @@ function NewReleaseForm({ form, onChange, entityName }: { form: ReleaseForm; onC
             <SelectItem value="album">Album</SelectItem>
             <SelectItem value="single">Single</SelectItem>
             <SelectItem value="ep">EP</SelectItem>
-            <SelectItem value="song">Song</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -789,11 +800,11 @@ function NewReleaseForm({ form, onChange, entityName }: { form: ReleaseForm; onC
 function StepRelease({
   entityId, onEntityChange,
   searchQuery, onSearchChange, searchMode, searchResults,
-  selectedRelease, isCreatingNew, newForm,
-  onSelectRelease, onCreateNew, onChangeRelease, onNewFormChange,
+  selectedRelease, isCreatingNew, newForm, onNewFormChange,
   musicians, onAddMusician, onRemoveMusician,
   additionalRoles, onAdditionalRolesChange,
-  onContinue, canContinue,
+  onSelectRelease, onCreateNew, onChangeRelease,
+  onContinue,
 }: {
   entityId: string; onEntityChange: (id: string) => void
   searchQuery: string; onSearchChange: (q: string) => void
@@ -807,132 +818,296 @@ function StepRelease({
   additionalRoles: AdditionalRoles
   onAdditionalRolesChange: (r: AdditionalRoles) => void
   onContinue: () => void
-  canContinue: boolean
 }) {
-  const showDetails = selectedRelease !== null || isCreatingNew
+  // Visual mode within step 1
+  type StepMode = "input" | "results" | "details" | "create"
+  const [stepMode, setStepMode] = useState<StepMode>("input")
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [focusedIndex, setFocusedIndex] = useState(-1)
+  const [confirmed, setConfirmed] = useState(false)
+  const [collecting, setCollecting] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const hasTitle = searchQuery.trim().length > 0
+  const suggestions = searchResults.slice(0, 5)
+
+  // Reset to input if query cleared
+  useEffect(() => {
+    if (!searchQuery) { setStepMode("input"); setShowSuggestions(false) }
+  }, [searchQuery])
+
+  // Reset confirmed whenever query changes
+  useEffect(() => { setConfirmed(false) }, [searchQuery])
+
+  // Sync back when parent resets (e.g. onChangeRelease)
+  useEffect(() => {
+    if (!selectedRelease && !isCreatingNew) setStepMode("input")
+  }, [selectedRelease, isCreatingNew])
+
   const [entityInputValue, setEntityInputValue] = useState(
     ENTITIES.find(e => e.id === entityId)?.name ?? ""
   )
-
   useEffect(() => {
     setEntityInputValue(ENTITIES.find(e => e.id === entityId)?.name ?? "")
   }, [entityId])
 
-  return (
+  function selectRelease(r: Release) {
+    onSelectRelease(r)
+    setStepMode("details")
+    setShowSuggestions(false)
+  }
+
+  function goCreate() {
+    onCreateNew()
+    setStepMode("create")
+    setShowSuggestions(false)
+  }
+
+  function goResults() {
+    setStepMode("results")
+    setShowSuggestions(false)
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Escape") { setShowSuggestions(false); setFocusedIndex(-1); return }
+    if (e.key === "ArrowDown") { e.preventDefault(); setFocusedIndex(i => Math.min(i + 1, suggestions.length - 1)); return }
+    if (e.key === "ArrowUp")   { e.preventDefault(); setFocusedIndex(i => Math.max(i - 1, 0)); return }
+    if (e.key === "Enter" && hasTitle) {
+      e.preventDefault()
+      if (focusedIndex >= 0 && suggestions[focusedIndex]) {
+        selectRelease(suggestions[focusedIndex])
+      } else {
+        setShowSuggestions(false)
+        setFocusedIndex(-1)
+        setCollecting(true)
+        setTimeout(() => { setCollecting(false); goResults() }, 1200)
+      }
+    }
+  }
+
+  const EntityCombobox = (
+    <div className="flex flex-col gap-1.5">
+      <Label>Upload as</Label>
+      <Combobox
+        value={entityId}
+        onValueChange={(v) => {
+          if (v) { onEntityChange(v as string); setEntityInputValue(ENTITIES.find(e => e.id === v)?.name ?? "") }
+        }}
+        inputValue={entityInputValue}
+        onInputValueChange={(v) => {
+          const entity = ENTITIES.find(e => e.id === v)
+          setEntityInputValue(entity ? entity.name : v)
+        }}
+      >
+        <ComboboxTrigger placeholder="Search artist or label…" showSearchIcon={false} />
+        <ComboboxContent>
+          <ComboboxGroup>
+            <ComboboxGroupLabel>Upload as artist</ComboboxGroupLabel>
+            {ENTITIES.filter(e => e.type === "artist").map(entity => (
+              <ComboboxItem key={entity.id} value={entity.id} hideIndicator className="py-2.5 gap-3">
+                <div className="size-11 rounded-full bg-secondary flex items-center justify-center shrink-0 font-medium text-secondary-foreground text-xs shadow-sm select-none">{entity.initials}</div>
+                {entity.name}
+              </ComboboxItem>
+            ))}
+          </ComboboxGroup>
+          <ComboboxSeparator />
+          <ComboboxGroup>
+            <ComboboxGroupLabel>Upload as label</ComboboxGroupLabel>
+            {ENTITIES.filter(e => e.type === "label").map(entity => (
+              <ComboboxItem key={entity.id} value={entity.id} hideIndicator className="py-2.5 gap-3">
+                <div className="size-11 rounded-full bg-secondary flex items-center justify-center shrink-0 font-medium text-secondary-foreground text-xs shadow-sm select-none">{entity.initials}</div>
+                {entity.name}
+              </ComboboxItem>
+            ))}
+          </ComboboxGroup>
+        </ComboboxContent>
+      </Combobox>
+    </div>
+  )
+
+  // ── input mode ──────────────────────────────────────────────────────────────
+  if (stepMode === "input") return (
+    <div className="overflow-y-auto flex-1 px-10 pt-4 pb-8">
     <div className="flex flex-col gap-6 max-w-lg mx-auto w-full">
-
-      <h1 className="text-xl font-medium">Release Info</h1>
-
-      {/* ── Section 1: Upload as ── */}
-      <div className="flex flex-col gap-1.5">
-        <Label>Upload as</Label>
-        <Combobox
-          value={entityId}
-          onValueChange={(v) => {
-            if (v) {
-              onEntityChange(v as string)
-              setEntityInputValue(ENTITIES.find(e => e.id === v)?.name ?? "")
-            }
-          }}
-          inputValue={entityInputValue}
-          onInputValueChange={(v) => {
-            // base-ui may pass the raw entity ID instead of the name — map to name
-            const entity = ENTITIES.find(e => e.id === v)
-            setEntityInputValue(entity ? entity.name : v)
-          }}
-        >
-          <ComboboxTrigger placeholder="Search artist or label…" showSearchIcon={false} />
-          <ComboboxContent>
-            <ComboboxGroup>
-              <ComboboxGroupLabel>Upload as artist</ComboboxGroupLabel>
-              {ENTITIES.filter(e => e.type === "artist").map(entity => (
-                <ComboboxItem key={entity.id} value={entity.id} hideIndicator className="py-2.5 gap-3">
-                  <div className="size-11 rounded-full bg-secondary flex items-center justify-center shrink-0 font-medium text-secondary-foreground text-xs shadow-sm select-none">
-                    {entity.initials}
-                  </div>
-                  {entity.name}
-                </ComboboxItem>
-              ))}
-            </ComboboxGroup>
-            <ComboboxSeparator />
-            <ComboboxGroup>
-              <ComboboxGroupLabel>Upload as label</ComboboxGroupLabel>
-              {ENTITIES.filter(e => e.type === "label").map(entity => (
-                <ComboboxItem key={entity.id} value={entity.id} hideIndicator className="py-2.5 gap-3">
-                  <div className="size-11 rounded-full bg-secondary flex items-center justify-center shrink-0 font-medium text-secondary-foreground text-xs shadow-sm select-none">
-                    {entity.initials}
-                  </div>
-                  {entity.name}
-                </ComboboxItem>
-              ))}
-            </ComboboxGroup>
-          </ComboboxContent>
-        </Combobox>
+      <div>
+        <h1 className="text-xl font-medium">Release Info</h1>
+        <p className="text-sm text-muted-foreground font-normal mt-1">Details looked up from MusicBrainz and Discogs</p>
       </div>
-
-      {/* ── Section 2: Find your release ── */}
+      {EntityCombobox}
       <div className="flex flex-col gap-1.5">
-        <Label>Find your release</Label>
+        <Label>Release title</Label>
+        <div className="relative">
+          <div className="flex items-center gap-2 h-10 px-3 rounded-full border border-border bg-background focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 transition-colors">
+            <Search className="size-4 text-muted-foreground shrink-0" />
+            <input
+              ref={inputRef}
+              value={searchQuery}
+              onChange={e => { onSearchChange(e.target.value); setShowSuggestions(true); setFocusedIndex(-1) }}
+              onFocus={() => { if (hasTitle) setShowSuggestions(true) }}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+              onKeyDown={handleKeyDown}
+              placeholder="Enter your title"
+              className="flex-1 bg-transparent text-sm font-normal outline-none text-foreground placeholder:text-muted-foreground"
+            />
+            {searchMode === "searching" && <Loader2 className="size-4 text-muted-foreground animate-spin shrink-0" />}
+            {searchQuery && <button onClick={() => { onSearchChange(""); setShowSuggestions(false) }} className="text-muted-foreground hover:text-foreground"><X className="size-4" /></button>}
+          </div>
+          {/* Suggestion dropdown */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-popover rounded-xl border border-border shadow-md overflow-hidden p-1">
+              {suggestions.map((r, i) => (
+                <button
+                  key={r.id}
+                  onMouseDown={() => selectRelease(r)}
+                  className={cn("group relative flex items-center gap-3 w-full px-2.5 py-3 rounded-lg text-left transition-colors overflow-hidden", focusedIndex === i ? "bg-accent" : "hover:bg-accent")}
+                >
+                  <ReleaseRow release={r} />
+                  <div className={cn("pointer-events-none absolute right-0 top-0 h-full w-28 bg-gradient-to-l to-transparent transition-colors", focusedIndex === i ? "from-accent" : "from-popover group-hover:from-accent")} />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-col gap-3 pt-2">
+        <Button size="xl" className="w-full" disabled={!hasTitle || collecting} onClick={() => {
+          setCollecting(true)
+          setTimeout(() => { setCollecting(false); goResults() }, 1200)
+        }}>
+          {collecting ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
+          Collect release details
+        </Button>
+        <Button size="xl" className="w-full" variant="secondary" disabled={!hasTitle} onClick={goCreate}>
+          <Plus className="size-4" /> Create new release
+        </Button>
+      </div>
+    </div>
+    </div>
+  )
 
-        {showDetails && !isCreatingNew && selectedRelease ? (
-          <SelectedReleaseCard
-            release={selectedRelease}
-            musicians={musicians}
-            additionalRoles={additionalRoles}
-            onChangeRelease={onChangeRelease}
-          />
-        ) : showDetails && isCreatingNew ? (
-          /* Creating new — inline header + form */
-          <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-200">
-            <div className="rounded-2xl border border-border overflow-hidden">
-              <div className="flex items-center gap-2 px-8 py-4">
-                <div className="size-12 rounded-xs bg-secondary shrink-0 flex items-center justify-center shadow-sm">
-                  <Music2 className="size-4 text-muted-foreground" />
-                </div>
-                <div className="flex flex-col gap-1 flex-1 min-w-0">
-                  <p className="text-sm font-normal leading-none truncate">{newForm.title || "New release"}</p>
-                  <div className="flex items-center gap-1.5">
-                    <ContentTypeBadge type={newForm.type} />
-                    <span className="text-sm text-muted-foreground font-normal truncate">
-                      {ENTITIES.find(e => e.id === entityId)?.name ?? "New release"}
-                    </span>
-                  </div>
-                </div>
-                <Button variant="secondary" size="sm" onClick={onChangeRelease} className="shrink-0">
-                  Change
+  // ── results mode ────────────────────────────────────────────────────────────
+  if (stepMode === "results") return (
+    <div className="relative flex-1 overflow-hidden">
+      {/* Scrollable list */}
+      <div className="overflow-y-auto h-full px-10 pt-4 pb-32">
+        <div className="flex flex-col gap-6 max-w-lg mx-auto w-full">
+          <div>
+            <h1 className="text-xl font-medium">Release Info</h1>
+            <p className="text-sm text-muted-foreground font-normal mt-1">Details looked up from MusicBrainz and Discogs</p>
+          </div>
+          {EntityCombobox}
+          <div className="flex flex-col gap-1.5">
+            <Label>Release title</Label>
+            <div className="flex items-center gap-2 h-10 px-3 rounded-full border border-border bg-background focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 transition-colors">
+              <Search className="size-4 text-muted-foreground shrink-0" />
+              <input
+                value={searchQuery}
+                onChange={e => { onSearchChange(e.target.value); if (!e.target.value) setStepMode("input") }}
+                placeholder="Enter your title"
+                className="flex-1 bg-transparent text-sm font-normal outline-none text-foreground placeholder:text-muted-foreground"
+              />
+              {searchMode === "searching" && <Loader2 className="size-4 text-muted-foreground animate-spin shrink-0" />}
+              {searchQuery && <button onClick={() => { onSearchChange(""); setStepMode("input") }} className="text-muted-foreground hover:text-foreground"><X className="size-4" /></button>}
+            </div>
+          </div>
+          <div className="flex flex-col">
+            <p className="px-1 pb-2 text-xs text-muted-foreground font-normal">Results for "{searchQuery}"</p>
+            {searchMode === "searching" && (
+              <div className="flex items-center gap-2 px-2.5 py-3 text-xs text-muted-foreground">
+                <Loader2 className="size-3.5 animate-spin" /> Searching…
+              </div>
+            )}
+            {searchMode === "results" && searchResults.map(r => (
+              <button
+                key={r.id}
+                onClick={() => selectRelease(r)}
+                className="group relative flex items-center gap-3 w-full px-2.5 py-3 rounded-lg text-left hover:bg-accent transition-colors overflow-hidden"
+              >
+                <ReleaseRow release={r} />
+                <div className="pointer-events-none absolute right-0 top-0 h-full w-28 bg-gradient-to-l from-background group-hover:from-accent to-transparent transition-colors" />
+              </button>
+            ))}
+            {searchMode === "not-found" && (
+              <div className="flex flex-col gap-3 pt-1">
+                <p className="px-2.5 text-xs text-muted-foreground font-normal">No releases found for "{searchQuery}"</p>
+                <Button size="xl" className="w-full" onClick={goCreate}>
+                  <Plus className="size-4" /> Create new release
                 </Button>
               </div>
-            </div>
-            <NewReleaseForm form={newForm} onChange={onNewFormChange} entityName={ENTITIES.find(e => e.id === entityId)?.name ?? ""} />
+            )}
           </div>
-        ) : (
-          /* Search dropdown */
-          <ReleaseSearchDropdown
-            searchQuery={searchQuery}
-            onSearchChange={onSearchChange}
-            searchMode={searchMode}
-            searchResults={searchResults}
-            onSelectRelease={onSelectRelease}
-            onCreateNew={onCreateNew}
-          />
-        )}
+        </div>
       </div>
-
-      {/* ── Section 4: Credits (only when creating new — DB releases show credits in expanded card) ── */}
-      {isCreatingNew && (
-        <CreditsSection
-          musicians={musicians}
-          onAddMusician={onAddMusician}
-          onRemoveMusician={onRemoveMusician}
-          additionalRoles={additionalRoles}
-          onAdditionalRolesChange={onAdditionalRolesChange}
-        />
+      {/* Glass footer — only when results exist */}
+      {searchMode === "results" && (
+        <div className="absolute bottom-0 inset-x-0 px-10 pt-8 pb-6 bg-gradient-to-t from-background via-background/90 to-transparent">
+          <div className="max-w-lg mx-auto">
+            <Button size="xl" className="w-full" onClick={goCreate}>
+              <Plus className="size-4" /> Create new release
+            </Button>
+          </div>
+        </div>
       )}
+    </div>
+  )
 
-      {/* Continue button at bottom of step */}
-      <div className="flex justify-end">
-        <Button size="default" onClick={onContinue} disabled={!canContinue}>Next</Button>
+  // ── details mode ────────────────────────────────────────────────────────────
+  if (stepMode === "details" && selectedRelease) return (
+    <div className="overflow-y-auto flex-1 px-10 pt-4 pb-8">
+    <div className="flex flex-col gap-6 max-w-lg mx-auto w-full">
+      <div>
+        <h1 className="text-xl font-medium">Release Info</h1>
+        <p className="text-sm text-muted-foreground font-normal mt-1">Details looked up from MusicBrainz and Discogs</p>
       </div>
+      <SelectedReleaseCard
+        release={selectedRelease}
+        musicians={musicians}
+        additionalRoles={additionalRoles}
+        onChangeRelease={() => { onChangeRelease(); setStepMode("input") }}
+      />
+      <div className="flex justify-end">
+        <Button onClick={onContinue}>Next</Button>
+      </div>
+    </div>
+    </div>
+  )
+
+  // ── create mode ─────────────────────────────────────────────────────────────
+  return (
+    <div className="overflow-y-auto flex-1 px-10 pt-4 pb-8">
+    <div className="flex flex-col gap-6 max-w-lg mx-auto w-full">
+      <div>
+        <h1 className="text-xl font-medium">Release Info</h1>
+        <p className="text-sm text-muted-foreground font-normal mt-1">Fill in the details for your new release</p>
+      </div>
+      <div className="rounded-2xl border border-border overflow-hidden">
+        <div className="flex items-center gap-2 px-8 py-4">
+          <div className="size-12 rounded-xs bg-secondary shrink-0 flex items-center justify-center shadow-sm">
+            <Music2 className="size-4 text-muted-foreground" />
+          </div>
+          <div className="flex flex-col gap-1 flex-1 min-w-0">
+            <p className="text-sm font-normal leading-none truncate">{newForm.title || "New release"}</p>
+            <div className="flex items-center gap-1.5">
+              <ContentTypeBadge type={newForm.type} />
+              <span className="text-sm text-muted-foreground font-normal truncate">
+                {ENTITIES.find(e => e.id === entityId)?.name ?? ""}
+              </span>
+            </div>
+          </div>
+          <Button variant="secondary" size="sm" onClick={() => { onChangeRelease(); setStepMode("input") }} className="shrink-0">
+            Change
+          </Button>
+        </div>
+      </div>
+      <NewReleaseForm form={newForm} onChange={onNewFormChange} entityName={ENTITIES.find(e => e.id === entityId)?.name ?? ""} />
+      <CreditsSection
+        musicians={musicians} onAddMusician={onAddMusician} onRemoveMusician={onRemoveMusician}
+        additionalRoles={additionalRoles} onAdditionalRolesChange={onAdditionalRolesChange}
+      />
+      <div className="flex justify-end">
+        <Button onClick={onContinue}>Next</Button>
+      </div>
+    </div>
     </div>
   )
 }
@@ -1569,7 +1744,7 @@ export function UploadMusicDialog({
 
   const showDetails  = selectedRelease !== null || isCreatingNew
   const isFullWidth  = step === 3 || step === 4
-  const canContinue  = step === 1 ? showDetails : true
+  const canContinue  = true
 
   function handleNext() {
     if (step === 1 && files.length === 0) setFiles(MOCK_FILES)
@@ -1592,7 +1767,7 @@ export function UploadMusicDialog({
   function handleCreateNew() {
     setIsCreatingNew(true)
     setSelectedRelease(null)
-    setNewForm(f => ({ ...f, title: searchQuery }))
+    setNewForm(f => ({ ...f, title: searchQuery.trim() }))
   }
 
   function handleChangeRelease() {
@@ -1653,7 +1828,7 @@ export function UploadMusicDialog({
         ) : (
           /* Steps 1 & 2: 50/50 split */
           <>
-            <div ref={leftPanelRef} className="w-1/2 shrink-0 overflow-y-auto px-10 pt-4 pb-8">
+            <div ref={leftPanelRef} className="w-1/2 shrink-0 flex flex-col overflow-hidden">
               {step === 1 && (
                 <StepRelease
                   entityId={entityId} onEntityChange={setEntityId}
@@ -1662,13 +1837,9 @@ export function UploadMusicDialog({
                   selectedRelease={selectedRelease} isCreatingNew={isCreatingNew} newForm={newForm}
                   onSelectRelease={handleSelectRelease} onCreateNew={handleCreateNew}
                   onChangeRelease={handleChangeRelease} onNewFormChange={setNewForm}
-                  musicians={musicians}
-                  onAddMusician={addMusician}
-                  onRemoveMusician={removeMusician}
-                  additionalRoles={additionalRoles}
-                  onAdditionalRolesChange={setAdditionalRoles}
+                  musicians={musicians} onAddMusician={addMusician} onRemoveMusician={removeMusician}
+                  additionalRoles={additionalRoles} onAdditionalRolesChange={setAdditionalRoles}
                   onContinue={handleNext}
-                  canContinue={canContinue}
                 />
               )}
               {step === 2 && (

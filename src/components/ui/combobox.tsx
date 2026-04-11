@@ -29,9 +29,10 @@ const ComboboxValue = ComboboxPrimitive.Value
 interface ComboboxTriggerProps {
   placeholder?: string
   className?: string
+  showSearchIcon?: boolean
 }
 
-function ComboboxTrigger({ className, placeholder }: ComboboxTriggerProps) {
+function ComboboxTrigger({ className, placeholder, showSearchIcon = true }: ComboboxTriggerProps) {
   return (
     <ComboboxPrimitive.InputGroup
       className={cn(
@@ -43,7 +44,7 @@ function ComboboxTrigger({ className, placeholder }: ComboboxTriggerProps) {
         className
       )}
     >
-      <SearchIcon className="size-4 shrink-0 text-muted-foreground pointer-events-none translate-y-[2px]" />
+      {showSearchIcon && <SearchIcon className="size-4 shrink-0 text-muted-foreground pointer-events-none translate-y-[2px]" />}
       <ComboboxPrimitive.Input
         data-slot="combobox-input"
         placeholder={placeholder}

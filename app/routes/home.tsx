@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AnimatedLogo } from "@/components/app/animated-logo"
 import { Sidebar } from "@/components/app/sidebar"
 import { StudioMusicView } from "@/components/app/studio-music"
@@ -81,12 +81,27 @@ function SubLabel({ children }: { children: React.ReactNode }) {
 }
 
 // ─── Home view ────────────────────────────────────────────────────────────────
+function useViewportLogoSize() {
+  const [size, setSize] = useState(288)
+  useEffect(() => {
+    const update = () => setSize(Math.round(Math.max(160, Math.min(304, window.innerWidth * 0.20))))
+    update()
+    window.addEventListener("resize", update)
+    return () => window.removeEventListener("resize", update)
+  }, [])
+  return size
+}
+
 function HomeView() {
+  const logoSize = useViewportLogoSize()
   return (
     <div className="px-10 py-10 max-w-6xl 3xl:max-w-[1600px] mx-auto w-full flex flex-col gap-6">
-      <p className="text-2xl font-normal text-foreground">muza is the platform for independent music.</p>
-      <p className="text-2xl font-normal text-foreground">Built as a non-profit, muza exists to fix streaming's broken economics. Instead of paying artists per click, muza rewards attention — distributing revenue based on actual listening time and direct listener support. Your subscription goes only to the artists you play.</p>
-      <p className="text-2xl font-normal text-foreground">We combine subscription streaming with direct artist uploads, giving musicians full control over how their music is shared and monetised. Artists retain ownership, receive up to 90–95% of revenue, and are paid directly — no hidden intermediaries.</p>
+      <div className="flex flex-col items-center gap-28 min-h-[78vh] justify-center">
+        <h1 className="text-[clamp(3rem,_4.5vw,_6rem)] leading-tight font-medium text-foreground text-center">The Platform for<br />Independent Music.</h1>
+        <AnimatedLogo size={logoSize} />
+      </div>
+      <p className="text-[clamp(2rem,_3vw,_4rem)] leading-snug font-normal text-foreground">Built as a non-profit, muza exists to fix streaming's broken economics. Instead of paying artists per click, muza rewards attention — distributing revenue based on actual listening time and direct listener support. Your subscription goes only to the artists you play.</p>
+      <p className="text-[clamp(2rem,_3vw,_4rem)] leading-snug font-normal text-foreground">We combine subscription streaming with direct artist uploads, giving musicians full control over how their music is shared and monetised. Artists retain ownership, receive up to 90–95% of revenue, and are paid directly — no hidden intermediaries.</p>
     </div>
   )
 }
@@ -422,12 +437,8 @@ function ExploreView() {
     <div>
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col items-center justify-center gap-6 py-16 border-b border-border bg-muted">
-        <AnimatedLogo size={220} />
-        <div className="text-center">
-          <h1 className="text-2xl font-medium mb-1">Design System</h1>
-          <p className="text-sm text-muted-foreground">Founders Grotesk · shadcn/ui · Tailwind v4</p>
-        </div>
+      <div className="px-10 pt-16 pb-10 border-b border-border">
+        <h1 className="text-5xl font-medium tracking-tight">muza design system</h1>
       </div>
 
     <div className="max-w-6xl 3xl:max-w-[1600px] mx-auto w-full px-10 py-10 pb-32">
