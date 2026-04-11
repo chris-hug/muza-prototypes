@@ -20,10 +20,10 @@ const buttonVariants = cva(
           "bg-secondary text-foreground hover:bg-secondary-hover",
         // Outline — border only, primary text
         outline:
-          "border-border bg-background text-foreground hover:bg-accent",
+          "border-border bg-background text-foreground hover:bg-muted hover:border-foreground/20",
         // Primary outline — border, primary text
         "outline-primary":
-          "border-border bg-background text-primary hover:bg-accent",
+          "border-border bg-background text-primary hover:bg-muted hover:border-foreground/20",
         // Ghost — bg-clip-border so fill reaches the outer edge
         ghost:
           "hover:bg-accent text-foreground bg-clip-border",
