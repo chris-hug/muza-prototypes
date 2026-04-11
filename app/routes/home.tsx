@@ -98,7 +98,7 @@ function HomeView() {
     <div className="px-10 py-10 max-w-6xl 3xl:max-w-[1600px] mx-auto w-full flex flex-col gap-6">
       <div className="flex flex-col items-center gap-28 min-h-[65vh] justify-center">
         <div className="flex flex-col items-center gap-6">
-          <img src="/wordmark.svg" alt="muza" className="h-4 opacity-40" />
+          <img src="/wordmark.svg" alt="muza" className="h-4" />
           <h1 className="text-[clamp(3.6rem,_5.4vw,_7.2rem)] leading-[1] font-medium text-foreground text-center">The Platform for<br />Independent Music.</h1>
         </div>
         <AnimatedLogo size={logoSize} />
