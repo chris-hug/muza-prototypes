@@ -231,8 +231,8 @@ const STATUS_LABELS: Record<ReleaseStatus, string> = {
 // ─── Shared filter UI primitives ──────────────────────────────────────────────
 
 const FILTER_TRIGGER_BASE = [
-  "inline-flex items-center gap-1.5 h-8 px-3 rounded-full border",
-  "text-xxs font-normal whitespace-nowrap transition-colors select-none cursor-pointer",
+  "inline-flex items-center gap-1.5 h-10 px-[18px] rounded-full border",
+  "text-sm font-normal whitespace-nowrap transition-colors select-none cursor-pointer",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
 ].join(" ")
 
@@ -247,12 +247,14 @@ const filterTriggerCls = (active: boolean) => cn(
 function FilterTrigger({
   label,
   active,
+  open,
   count,
   onClick,
   onKeyDown,
 }: {
   label: string
   active: boolean
+  open?: boolean
   count?: number
   onClick?: () => void
   onKeyDown?: (e: React.KeyboardEvent) => void
@@ -271,7 +273,7 @@ function FilterTrigger({
           {count}
         </span>
       )}
-      <ChevronDown className="size-3 opacity-60" />
+      <ChevronDown className={cn("size-3 opacity-60 transition-transform duration-200", open && "rotate-180")} />
     </div>
   )
 }
@@ -364,6 +366,7 @@ function ContentTypeMultiSelect({
       <FilterTrigger
         label="Type"
         active={selected.size > 0}
+        open={open}
         count={selected.size}
         onClick={() => setOpen(v => !v)}
         onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setOpen(v => !v) }}
@@ -410,7 +413,7 @@ function FilterButton({ label, active, children }: {
     <DropdownMenu>
       <DropdownMenuTrigger className={filterTriggerCls(active)}>
         {label}
-        <ChevronDown className="size-3 opacity-60" />
+        <ChevronDown className="size-3 opacity-60 transition-transform duration-200 [[aria-expanded=true]_&]:rotate-180" />
       </DropdownMenuTrigger>
       {children}
     </DropdownMenu>
@@ -465,6 +468,7 @@ function ArtistMultiSelect({
       <FilterTrigger
         label="Main Artist"
         active={selected.size > 0}
+        open={open}
         count={selected.size}
         onClick={() => setOpen(v => !v)}
         onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setOpen(v => !v) }}
@@ -551,6 +555,7 @@ function LabelMultiSelect({
       <FilterTrigger
         label="Label"
         active={selected.size > 0}
+        open={open}
         count={selected.size}
         onClick={() => setOpen(v => !v)}
         onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setOpen(v => !v) }}
@@ -610,6 +615,7 @@ function MonetisationMultiSelect({
       <FilterTrigger
         label="Monetisation"
         active={selected.size > 0}
+        open={open}
         count={selected.size}
         onClick={() => setOpen(v => !v)}
         onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setOpen(v => !v) }}
@@ -1027,7 +1033,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <Button size="xl" className="text-base px-8 h-14 gap-2.5" onClick={onOpenUpload}>
+          <Button size="lg" className="text-base px-8 h-14 gap-2.5" onClick={onOpenUpload}>
             <Upload className="size-5" />
             Upload music
           </Button>
@@ -1088,14 +1094,14 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
 
           {/* Keyword search */}
           <div className="relative flex items-center">
-            <Search className="absolute left-3 size-3.5 text-muted-foreground pointer-events-none" />
+            <Search className="absolute left-3.5 size-4 text-muted-foreground pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search your music"
               className={cn(
-                "h-8 pl-8 pr-3 rounded-full border text-xxs font-normal bg-transparent transition-all",
+                "h-10 pl-10 pr-[18px] rounded-full border text-sm font-normal bg-transparent transition-all",
                 "text-foreground placeholder:text-muted-foreground focus:outline-none",
                 searchQuery
                   ? "border-foreground/40 bg-muted text-foreground w-56"
@@ -1119,8 +1125,8 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
           {/* Columns */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Columns2 className="size-3" />
+              <Button variant="outline">
+                <Columns2 className="size-4" />
                 Set columns
               </Button>
             </DropdownMenuTrigger>

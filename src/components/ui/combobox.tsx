@@ -59,7 +59,7 @@ function ComboboxTrigger({ className, placeholder, showSearchIcon = true }: Comb
         className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
         tabIndex={-1}
       >
-        <ChevronDownIcon className="size-4 translate-y-[2px]" />
+        <ChevronDownIcon className="size-4 translate-y-[2px] transition-transform duration-200 [[aria-expanded=true]_&]:rotate-180" />
       </ComboboxPrimitive.Trigger>
     </ComboboxPrimitive.InputGroup>
   )
@@ -73,7 +73,7 @@ function ComboboxContent({
 }: ComboboxPrimitive.Popup.Props &
   Pick<ComboboxPrimitive.Positioner.Props, "sideOffset">) {
   return (
-    <ComboboxPrimitive.Portal>
+    <ComboboxPrimitive.Portal keepMounted>
       <ComboboxPrimitive.Positioner
         className="isolate z-50"
         sideOffset={sideOffset}
@@ -87,7 +87,6 @@ function ComboboxContent({
             "shadow-md ring-1 ring-foreground/10",
             "duration-100",
             "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
-            "data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
             "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",
             className
           )}

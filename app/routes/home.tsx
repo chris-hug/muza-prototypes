@@ -3,7 +3,7 @@ import { AnimatedLogo } from "@/components/app/animated-logo"
 import { Sidebar } from "@/components/app/sidebar"
 import { StudioMusicView } from "@/components/app/studio-music"
 import { Topbar, TopbarDefaultActions } from "@/components/app/topbar"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Badge, ContentTypeBadge, StatusBadge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -106,7 +106,7 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
       <p className="text-[clamp(2rem,_3vw,_4rem)] leading-snug font-normal text-foreground mt-16">Built as a non-profit, muza exists to fix streaming's broken economics. Instead of paying artists per click, muza rewards attention — distributing revenue based on actual listening time and direct listener support. Your subscription goes only to the artists you play.</p>
       <p className="text-[clamp(2rem,_3vw,_4rem)] leading-snug font-normal text-foreground">We combine subscription streaming with direct artist uploads, giving musicians full control over how their music is shared and monetised. Artists retain ownership, receive up to 90–95% of revenue, and are paid directly — no hidden intermediaries.</p>
       <div className="flex justify-center mt-24">
-        <Button size="xl" className="text-[2rem] px-[5.5rem] h-[5.5rem] rounded-full transition-transform duration-300 ease-out hover:transition-transform hover:duration-250 hover:ease-[cubic-bezier(0.22,1.8,0.36,1)] hover:scale-[1.07]" onClick={() => onNavigate("Music")}>Join muza now</Button>
+        <Button size="lg" className="text-[2rem] px-[5.5rem] h-[5.5rem] rounded-full transition-transform duration-300 ease-out hover:transition-transform hover:duration-250 hover:ease-[cubic-bezier(0.22,1.8,0.36,1)] hover:scale-[1.07]" onClick={() => onNavigate("Music")}>Join muza now</Button>
       </div>
     </div>
   )
@@ -431,6 +431,26 @@ function FormDemo() {
   )
 }
 
+// ─── Hex → OKLch converter ────────────────────────────────────────────────────
+function hexToOklch(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16) / 255
+  const g = parseInt(hex.slice(3, 5), 16) / 255
+  const b = parseInt(hex.slice(5, 7), 16) / 255
+  const lin = (c: number) => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+  const lr = lin(r), lg = lin(g), lb = lin(b)
+  const lms  = 0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb
+  const mms  = 0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb
+  const sms  = 0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb
+  const l_ = Math.cbrt(lms), m_ = Math.cbrt(mms), s_ = Math.cbrt(sms)
+  const L  =  0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_
+  const a  =  1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_
+  const bb =  0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_
+  const C  = Math.sqrt(a * a + bb * bb)
+  let   H  = Math.atan2(bb, a) * 180 / Math.PI
+  if (H < 0) H += 360
+  return `${(L * 100).toFixed(2)}% ${C.toFixed(4)} ${H.toFixed(1)}`
+}
+
 // ─── Kitchen sink (Explore view) ──────────────────────────────────────────────
 function ExploreView() {
   const [inputSelectCurrency, setInputSelectCurrency] = useState("USD")
@@ -443,9 +463,9 @@ function ExploreView() {
     <div>
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
-      <div className="bg-muted border-b border-border pt-24 pb-[3.75rem] px-10">
-        <div className="max-w-6xl 3xl:max-w-[1600px] mx-auto">
-          <h1 className="text-5xl font-medium tracking-tight">muza design system</h1>
+      <div className="bg-muted border-b border-border pt-24 pb-[3.75rem]">
+        <div className="max-w-6xl 3xl:max-w-[1600px] mx-auto px-10">
+          <h1 className="text-5xl font-medium tracking-tight">The muza design system</h1>
         </div>
       </div>
 
@@ -454,9 +474,9 @@ function ExploreView() {
       {/* Quick nav */}
       <nav className="flex flex-wrap gap-1.5 mb-12">
         {[
-          "Colors","Typography","Buttons","Badges","Chips","Inputs","Combobox","Date Picker",
-          "Checkbox","Switch & Slider","Avatar","Tabs","Cards","Alerts","Alert Dialog",
-          "Dropdown","Toast","Player","Song List","Skeleton",
+          "Colors","Typography","Buttons","Badges","Chips","Inputs","Combobox","Dropdown",
+          "Date Picker","Checkbox","Switch & Slider","Avatar","Tabs","Cards","Alerts","Alert Dialog",
+          "Dialogs","Toast","Skeleton",
           "Popover","Table","Pagination","Command","OTP Input","Form",
         ].map((s) => {
           const id = s.toLowerCase().replace(/\s+&\s+/g,"-").replace(/\s+/g,"-")
@@ -475,6 +495,13 @@ function ExploreView() {
 
       {/* ══ COLORS ══ */}
       <Section id="colors" title="Colors">
+        {/* oklch legend */}
+        <p className="text-xs text-muted-foreground mb-6 leading-relaxed">
+          Colors are defined in <span className="text-foreground">oklch</span> — a perceptually uniform space where equal numeric steps look equal to the human eye.
+          Each swatch shows three values: <span className="text-foreground">L</span> lightness (0–100%),{" "}
+          <span className="text-foreground">C</span> chroma/saturation (0 = grey, ~0.37 = max), and{" "}
+          <span className="text-foreground">H</span> hue angle (0–360°).
+        </p>
         {/* Primitive scales */}
         <div className="flex flex-col gap-6 mb-10">
           {[
@@ -522,9 +549,14 @@ function ExploreView() {
               <p className="text-xs font-normal text-muted-foreground mb-2">{scale.label}</p>
               <div className="flex gap-2">
                 {scale.stops.map((s) => (
-                  <div key={s.name} className="flex-1 flex flex-col items-center gap-1.5">
+                  <div key={s.name} className="flex-1 flex flex-col items-start gap-1">
                     <div className="w-full h-14 rounded-xl border border-border" style={{ background: s.hex }} />
-                    <span className="text-xs font-mono text-muted-foreground">{s.name}</span>
+                    <span className="text-xxs text-foreground leading-tight">{s.name}</span>
+                    {hexToOklch(s.hex).split(" ").map((v, i) => (
+                      <span key={i} className="text-xxs text-muted-foreground leading-tight">
+                        <span className="text-muted-foreground/40">{["L","C","H"][i]} </span>{v}
+                      </span>
+                    ))}
                   </div>
                 ))}
               </div>
@@ -535,9 +567,9 @@ function ExploreView() {
         <table className="w-full text-xs border-collapse">
           <thead>
             <tr className="border-b border-border text-left">
-              <th className="pb-2 pr-8 font-medium text-foreground">Token</th>
-              <th className="pb-2 pr-8 font-medium text-foreground">Light</th>
-              <th className="pb-2 font-medium text-foreground">Dark</th>
+              <th className="pb-2 pr-8 font-normal text-foreground">Token</th>
+              <th className="pb-2 pr-8 font-normal text-foreground">Light</th>
+              <th className="pb-2 font-normal text-foreground">Dark</th>
             </tr>
           </thead>
           <tbody>
@@ -619,13 +651,13 @@ function ExploreView() {
               },
             ].map((r) => (
               <tr key={r.token} className="border-b border-border">
-                <td className="py-2 pr-8 font-mono text-foreground whitespace-nowrap">{r.token}</td>
+                <td className="py-2 pr-8 text-foreground whitespace-nowrap">{r.token}</td>
                 <td className="py-2 pr-8">
                   <div className="flex gap-2">
                     <div className="size-10 rounded-xl border border-border shrink-0 self-center" style={{ background: r.lHex }} />
                     <div>
-                      <span className="block font-mono text-foreground">{r.lPrim}</span>
-                      <span className="font-mono text-muted-foreground">oklch({r.lOklch})</span>
+                      <span className="block text-foreground">{r.lPrim}</span>
+                      <span className="text-muted-foreground">oklch({r.lOklch})</span>
                     </div>
                   </div>
                 </td>
@@ -633,8 +665,8 @@ function ExploreView() {
                   <div className="flex gap-2">
                     <div className="size-10 rounded-xl border border-border shrink-0 self-center" style={{ background: r.dHex }} />
                     <div>
-                      <span className="block font-mono text-foreground">{r.dPrim}</span>
-                      <span className="font-mono text-muted-foreground">oklch({r.dOklch})</span>
+                      <span className="block text-foreground">{r.dPrim}</span>
+                      <span className="text-muted-foreground">oklch({r.dOklch})</span>
                     </div>
                   </div>
                 </td>
@@ -685,7 +717,8 @@ function ExploreView() {
           {[
             { label: "Regular",  cls: "font-normal",   val: "400", note: "default",             noteCls: "text-green-700 dark:text-green-400" },
             { label: "Medium",   cls: "font-medium",   val: "500", note: "emphasis & headlines", noteCls: "text-green-700 dark:text-green-400" },
-            { label: "Semibold", cls: "font-semibold", val: "600", note: "hardly ever",          noteCls: "text-yellow-700 dark:text-yellow-400" },
+            { label: "Semibold", cls: "font-semibold line-through", val: "600", note: "hardly ever",          noteCls: "text-yellow-700 dark:text-yellow-400" },
+            { label: "Bold",     cls: "font-bold line-through",     val: "700", note: "never",                 noteCls: "text-red-600 dark:text-red-400" },
           ].map(({ label, cls, val, note, noteCls }) => (
             <div key={label} className="flex items-center gap-6 py-3.5">
               <div className="w-40 shrink-0">
@@ -720,8 +753,8 @@ function ExploreView() {
             </svg>
           )
 
-          const GRID_TEXT = "grid grid-cols-[120px_auto_auto_auto_auto] gap-x-8 items-center py-3"
-          const GRID_ICON = "grid grid-cols-[120px_auto_auto_auto_auto] gap-x-6 items-center py-3"
+          const GRID_TEXT = "grid grid-cols-[120px_auto_auto_auto] gap-x-8 items-center py-3"
+          const GRID_ICON = "grid grid-cols-[120px_auto_auto_auto] gap-x-6 items-center py-3"
           const D = "border-b border-border/50"
 
           return (
@@ -730,15 +763,13 @@ function ExploreView() {
               <div className="flex flex-col">
                 <div className={GRID_TEXT + " pb-2"}>
                   <div />
-                  <p className="text-xxs text-muted-foreground pl-10">XLarge</p>
-                  <p className="text-xxs text-muted-foreground pl-[34px]">Large</p>
+                  <p className="text-xxs text-muted-foreground pl-10">Large</p>
                   <p className="text-xxs text-muted-foreground pl-[18px]">Default</p>
                   <p className="text-xxs text-muted-foreground pl-3">Small</p>
                 </div>
                 {VARIANTS.map((v) => (
                   <div key={v.key} className={GRID_TEXT + " " + D}>
                     <p className="text-xxs text-muted-foreground">{v.label}</p>
-                    <div className="flex"><Button variant={v.key as any} size="xl">{v.label}</Button></div>
                     <div className="flex"><Button variant={v.key as any} size="lg">{v.label}</Button></div>
                     <div className="flex"><Button variant={v.key as any}>{v.label}</Button></div>
                     <div className="flex"><Button variant={v.key as any} size="sm">{v.label}</Button></div>
@@ -746,14 +777,12 @@ function ExploreView() {
                 ))}
                 <div className={GRID_TEXT + " " + D}>
                   <p className="text-xxs text-muted-foreground">Disabled</p>
-                  <div className="flex"><Button size="xl" disabled>Primary</Button></div>
                   <div className="flex"><Button size="lg" disabled>Primary</Button></div>
                   <div className="flex"><Button disabled>Primary</Button></div>
                   <div className="flex"><Button size="sm" disabled>Primary</Button></div>
                 </div>
                 <div className={GRID_TEXT}>
                   <p className="text-xxs text-muted-foreground">Loading</p>
-                  <div className="flex"><Button size="xl" disabled><Spin />Primary</Button></div>
                   <div className="flex"><Button size="lg" disabled><Spin />Primary</Button></div>
                   <div className="flex"><Button disabled><Spin />Primary</Button></div>
                   <div className="flex"><Button size="sm" disabled><Spin />Primary</Button></div>
@@ -764,7 +793,6 @@ function ExploreView() {
               <div className="flex flex-col">
                 <div className={GRID_ICON + " pb-2"}>
                   <div />
-                  <p className="text-xxs text-muted-foreground">XLarge</p>
                   <p className="text-xxs text-muted-foreground">Large</p>
                   <p className="text-xxs text-muted-foreground">Default</p>
                   <p className="text-xxs text-muted-foreground">Small</p>
@@ -772,7 +800,6 @@ function ExploreView() {
                 {VARIANTS.map((v) => (
                   <div key={v.key} className={GRID_ICON + " " + D}>
                     <p className="text-xxs text-muted-foreground">{v.label}</p>
-                    <div className="flex"><Button variant={v.key as any} size="icon-xl"><Plus /></Button></div>
                     <div className="flex"><Button variant={v.key as any} size="icon-lg"><Plus /></Button></div>
                     <div className="flex"><Button variant={v.key as any} size="icon"><Plus /></Button></div>
                     <div className="flex"><Button variant={v.key as any} size="icon-sm"><Plus /></Button></div>
@@ -780,14 +807,12 @@ function ExploreView() {
                 ))}
                 <div className={GRID_ICON + " " + D}>
                   <p className="text-xxs text-muted-foreground">Disabled</p>
-                  <div className="flex"><Button size="icon-xl" disabled><Plus /></Button></div>
                   <div className="flex"><Button size="icon-lg" disabled><Plus /></Button></div>
                   <div className="flex"><Button size="icon" disabled><Plus /></Button></div>
                   <div className="flex"><Button size="icon-sm" disabled><Plus /></Button></div>
                 </div>
                 <div className={GRID_ICON}>
                   <p className="text-xxs text-muted-foreground">Loading</p>
-                  <div className="flex"><Button size="icon-xl" disabled><Spin /></Button></div>
                   <div className="flex"><Button size="icon-lg" disabled><Spin /></Button></div>
                   <div className="flex"><Button size="icon" disabled><Spin /></Button></div>
                   <div className="flex"><Button size="icon-sm" disabled><Spin /></Button></div>
@@ -959,6 +984,44 @@ function ExploreView() {
               </ComboboxContent>
             </Combobox>
           </div>
+        </div>
+      </Section>
+
+      {/* ══ DROPDOWN ══ */}
+      <Section id="dropdown" title="Dropdown menu">
+        <div className="flex flex-wrap gap-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger className={buttonVariants({ variant: "outline" })}>
+              My Account <ChevronDown className="size-4 transition-transform duration-200 [[aria-expanded=true]_&]:rotate-180" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-52">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem><User className="size-4" />Profile</DropdownMenuItem>
+              <DropdownMenuItem><Settings className="size-4" />Settings</DropdownMenuItem>
+              <DropdownMenuItem><Music2 className="size-4" />My uploads</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem><Heart className="size-4" />Liked songs</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive">
+                <LogOut className="size-4" />Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<Button size="icon" variant="ghost" />}>
+              <MoreHorizontal className="size-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-44">
+              <DropdownMenuItem><Upload className="size-4" />Upload track</DropdownMenuItem>
+              <DropdownMenuItem><Share2 className="size-4" />Share profile</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive">
+                <Trash2 className="size-4" />Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </Section>
 
@@ -1288,44 +1351,6 @@ function ExploreView() {
               <Button>Publish</Button>
             </div>
           </div>
-        </div>
-      </Section>
-
-      {/* ══ DROPDOWN ══ */}
-      <Section id="dropdown" title="Dropdown menu">
-        <div className="flex flex-wrap gap-4">
-          <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant="outline" />}>
-              My Account <ChevronDown className="size-4" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-52">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem><User className="size-4" />Profile</DropdownMenuItem>
-              <DropdownMenuItem><Settings className="size-4" />Settings</DropdownMenuItem>
-              <DropdownMenuItem><Music2 className="size-4" />My uploads</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem><Heart className="size-4" />Liked songs</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive">
-                <LogOut className="size-4" />Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger render={<Button size="icon" variant="ghost" />}>
-              <MoreHorizontal className="size-4" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-44">
-              <DropdownMenuItem><Upload className="size-4" />Upload track</DropdownMenuItem>
-              <DropdownMenuItem><Share2 className="size-4" />Share profile</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive">
-                <Trash2 className="size-4" />Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </Section>
 

@@ -970,14 +970,14 @@ function StepRelease({
         </div>
       </div>
       <div className="flex flex-col gap-3 pt-2">
-        <Button size="xl" className="w-full" disabled={!hasTitle || collecting} onClick={() => {
+        <Button size="lg" className="w-full" disabled={!hasTitle || collecting} onClick={() => {
           setCollecting(true)
           setTimeout(() => { setCollecting(false); goResults() }, 1200)
         }}>
           {collecting ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
           Collect release details
         </Button>
-        <Button size="xl" className="w-full" variant="secondary" disabled={!hasTitle} onClick={goCreate}>
+        <Button size="lg" className="w-full" variant="secondary" disabled={!hasTitle} onClick={goCreate}>
           <Plus className="size-4" /> Create new release
         </Button>
       </div>
@@ -1030,7 +1030,7 @@ function StepRelease({
             {searchMode === "not-found" && (
               <div className="flex flex-col gap-3 pt-1">
                 <p className="px-2.5 text-xs text-muted-foreground font-normal">No releases found for "{searchQuery}"</p>
-                <Button size="xl" className="w-full" onClick={goCreate}>
+                <Button size="lg" className="w-full" onClick={goCreate}>
                   <Plus className="size-4" /> Create new release
                 </Button>
               </div>
@@ -1042,7 +1042,7 @@ function StepRelease({
       {searchMode === "results" && (
         <div className="absolute bottom-0 inset-x-0 px-10 pt-8 pb-6 bg-gradient-to-t from-background via-background/90 to-transparent">
           <div className="max-w-lg mx-auto">
-            <Button size="xl" className="w-full" onClick={goCreate}>
+            <Button size="lg" className="w-full" onClick={goCreate}>
               <Plus className="size-4" /> Create new release
             </Button>
           </div>
@@ -1879,7 +1879,7 @@ export function UploadMusicDialog({
                 {publishedTitle}{publishedArtist ? ` by ${publishedArtist}` : ""} is now public on muza.
               </p>
             </div>
-            <Button size="xl" className="w-full" onClick={onClose}>
+            <Button size="lg" className="w-full" onClick={onClose}>
               Done
             </Button>
           </div>

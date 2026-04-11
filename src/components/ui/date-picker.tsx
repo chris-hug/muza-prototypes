@@ -134,7 +134,7 @@ function DatePicker({
         <CalendarIcon className="size-4 shrink-0 text-muted-foreground translate-y-[2px]" />
       </PopoverPrimitive.Trigger>
 
-      <PopoverPrimitive.Portal>
+      <PopoverPrimitive.Portal keepMounted>
         <PopoverPrimitive.Positioner
           className="isolate z-50"
           sideOffset={6}
@@ -146,7 +146,6 @@ function DatePicker({
               "w-72 rounded-xl bg-popover border border-border p-4",
               "shadow-md ring-1 ring-foreground/10",
               "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
-              "data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
               "duration-150 outline-none",
             )}
           >

@@ -154,15 +154,14 @@ function StatusBadge({ status, onStatusChange, className }: StatusBadgeProps) {
       >
         <Icon aria-hidden />
         {label}
-        <ChevronDown className="opacity-80" aria-hidden />
+        <ChevronDown className="opacity-80 transition-transform duration-200 [[aria-expanded=true]_&]:rotate-180" aria-hidden />
       </MenuPrimitive.Trigger>
 
-      <MenuPrimitive.Portal>
+      <MenuPrimitive.Portal keepMounted>
         <MenuPrimitive.Positioner side="bottom" align="start" sideOffset={4}>
           <MenuPrimitive.Popup className={cn(
             "z-50 min-w-[7rem] rounded-xl border border-border bg-popover p-1 shadow-md outline-none",
             "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
-            "data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           )}>
             {(Object.entries(statusConfig) as [StatusBadgeStatus, { label: string; icon: React.ElementType }][]).map(
               ([key, { label: itemLabel, icon: ItemIcon }]) => (
