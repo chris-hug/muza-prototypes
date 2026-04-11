@@ -119,7 +119,7 @@ function DatePicker({
         disabled={disabled}
         className={cn(
           "flex h-10 w-full items-center justify-between gap-2",
-          "rounded-full border border-border bg-background",
+          "rounded-full border border-border hover:border-foreground/30 bg-background",
           "px-3 pt-[6px] pb-[10px] text-base font-normal",
           "transition-colors outline-none select-none",
           "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
