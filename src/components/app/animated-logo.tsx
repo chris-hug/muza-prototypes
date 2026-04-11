@@ -33,9 +33,6 @@ export function AnimatedLogo({ size = 240, className, ambient = false }: Animate
     let lastInteraction = ambient ? -Infinity : Date.now()
     let rafId: number
 
-    // ── parallax (wheel) ──────────────────────────────────────────────────────
-    let scrollOffsetY = 0
-    let scrollTargetY = 0
     const IDLE_DELAY  = 800
 
     // ── auto-rotation wobble ──────────────────────────────────────────────────
@@ -180,20 +177,11 @@ export function AnimatedLogo({ size = 240, className, ambient = false }: Animate
       }
     }
 
-    const onWheel = (e: WheelEvent) => {
-      scrollTargetY += e.deltaY * 0.1
-      scrollTargetY  = Math.max(-100, Math.min(100, scrollTargetY))
-      registerInteraction()
-    }
-
     // ── RAF loop ──────────────────────────────────────────────────────────────
     function frame() {
       tiltX += (targetTiltX - tiltX) * TILT_EASE
       tiltY += (targetTiltY - tiltY) * TILT_EASE
       tiltWrapper.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`
-
-      scrollOffsetY  += (scrollTargetY - scrollOffsetY) * 0.1
-      carousel.style.top = `${scrollOffsetY}px`
 
       updateAutoRotation()
       rafId = requestAnimationFrame(frame)
@@ -201,10 +189,9 @@ export function AnimatedLogo({ size = 240, className, ambient = false }: Animate
 
     frame()
     if (!ambient) {
-      container.addEventListener("click",     onClickContainer)
-      window.addEventListener("mousemove",    onMouseMove, { passive: true })
-      window.addEventListener("mouseout",     onMouseOut,  { passive: true })
-      window.addEventListener("wheel",        onWheel,     { passive: true })
+      container.addEventListener("click",  onClickContainer)
+      window.addEventListener("mousemove", onMouseMove, { passive: true })
+      window.addEventListener("mouseout",  onMouseOut,  { passive: true })
     }
 
     return () => {
@@ -213,7 +200,6 @@ export function AnimatedLogo({ size = 240, className, ambient = false }: Animate
         container.removeEventListener("click",  onClickContainer)
         window.removeEventListener("mousemove", onMouseMove)
         window.removeEventListener("mouseout",  onMouseOut)
-        window.removeEventListener("wheel",     onWheel)
       }
     }
   }, [ambient])

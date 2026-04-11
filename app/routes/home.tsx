@@ -82,9 +82,9 @@ function SubLabel({ children }: { children: React.ReactNode }) {
 
 // ─── Home view ────────────────────────────────────────────────────────────────
 function useViewportLogoSize() {
-  const [size, setSize] = useState(360)
+  const [size, setSize] = useState(288)
   useEffect(() => {
-    const update = () => setSize(Math.round(Math.max(200, Math.min(380, window.innerWidth * 0.25))))
+    const update = () => setSize(Math.round(Math.max(160, Math.min(304, window.innerWidth * 0.20))))
     update()
     window.addEventListener("resize", update)
     return () => window.removeEventListener("resize", update)
@@ -96,10 +96,10 @@ function HomeView() {
   const logoSize = useViewportLogoSize()
   return (
     <div className="px-10 py-10 max-w-6xl 3xl:max-w-[1600px] mx-auto w-full flex flex-col gap-6">
-      <div className="flex flex-col items-center gap-4 pt-40 pb-10">
+      <div className="flex flex-col items-center gap-28 min-h-[78vh] justify-center">
+        <h1 className="text-[clamp(3rem,_4.5vw,_6rem)] leading-tight font-medium text-foreground text-center">The Platform for<br />Independent Music.</h1>
         <AnimatedLogo size={logoSize} />
       </div>
-      <h1 className="text-[clamp(3rem,_4.5vw,_6rem)] leading-tight font-medium text-foreground mb-8 text-center">The Platform for<br />Independent Music.</h1>
       <p className="text-[clamp(2rem,_3vw,_4rem)] leading-snug font-normal text-foreground">Built as a non-profit, muza exists to fix streaming's broken economics. Instead of paying artists per click, muza rewards attention — distributing revenue based on actual listening time and direct listener support. Your subscription goes only to the artists you play.</p>
       <p className="text-[clamp(2rem,_3vw,_4rem)] leading-snug font-normal text-foreground">We combine subscription streaming with direct artist uploads, giving musicians full control over how their music is shared and monetised. Artists retain ownership, receive up to 90–95% of revenue, and are paid directly — no hidden intermediaries.</p>
     </div>

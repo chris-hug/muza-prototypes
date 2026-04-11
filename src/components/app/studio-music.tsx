@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { ContentTypeBadge, StatusBadge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -11,18 +11,18 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import {
-  ArrowDown, ArrowUp, ArrowUpDown, Columns2, ChevronDown, GripVertical,
-  Pencil, Search, Upload, X,
+  ArrowDown, ArrowUp, ArrowUpDown, Columns2, ChevronDown,
+  Download, Pencil, Play, Search, Upload, X,
 } from "lucide-react"
 import { UploadMusicDialog } from "@/components/app/upload-music-dialog"
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
-type ContentType  = "album" | "single" | "ep" | "song"
+type ContentType  = "album" | "single" | "ep"
 type ReleaseStatus = "public" | "private"
-type SortKey      = "id" | "title" | "artist" | "band" | "year" | "tracks" | "uploaded"
+type SortKey      = "id" | "title" | "artist" | "band" | "year" | "tracks" | "uploaded" | "label"
 type SortDir      = "asc" | "desc"
-type ColKey       = "id" | "cover" | "title" | "artist" | "band" | "year" | "tracks" | "uploaded" | "type" | "state"
+type ColKey       = "id" | "cover" | "title" | "artist" | "band" | "year" | "tracks" | "uploaded" | "type" | "state" | "label" | "monetisation"
 
 interface Release {
   id:      string
@@ -42,29 +42,31 @@ interface Release {
 const DEFAULT_WIDTHS: Record<ColKey, number> = {
   id: 64, cover: 44, title: 200, artist: 100, band: 100,
   year: 44, tracks: 68, uploaded: 88, type: 72, state: 88,
+  label: 96, monetisation: 148,
 }
 
 const MIN_WIDTHS: Record<ColKey, number> = {
   id: 48, cover: 44, title: 140, artist: 72, band: 72,
   year: 32, tracks: 60, uploaded: 72, type: 56, state: 80,
+  label: 72, monetisation: 96,
 }
 
 const COL_DEFS: { key: ColKey; label: string; required?: boolean }[] = [
-  { key: "id",       label: "ID" },
-  { key: "cover",    label: "Cover" },
-  { key: "title",    label: "Title",      required: true },
-  { key: "artist",   label: "Main Artist" },
-  { key: "band",     label: "Band" },
-  { key: "year",     label: "Year" },
-  { key: "tracks",   label: "Tracks" },
-  { key: "uploaded", label: "Uploaded" },
-  { key: "type",     label: "Type" },
-  { key: "state",    label: "State",      required: true },
+  { key: "id",          label: "ID" },
+  { key: "cover",       label: "Cover" },
+  { key: "title",       label: "Title",       required: true },
+  { key: "artist",      label: "Main Artist" },
+  { key: "band",        label: "Band" },
+  { key: "year",        label: "Year" },
+  { key: "tracks",      label: "Tracks" },
+  { key: "label",       label: "Label" },
+  { key: "uploaded",    label: "Uploaded" },
+  { key: "type",        label: "Type" },
+  { key: "state",       label: "State",       required: true },
+  { key: "monetisation",label: "Monetisation", required: true },
 ]
 
-const GRIP_W             = 16
-const NUM_W              = 24
-const ACTION_W           = 36
+const CHECKBOX_W         = 24
 const COL_GAP            = 16
 // When the table container shrinks below this width, cover auto-hides
 const COVER_HIDE_THRESHOLD = 800
@@ -72,12 +74,75 @@ const COVER_HIDE_THRESHOLD = 800
 // ─── Sort & upload date helpers ───────────────────────────────────────────────
 
 /** Deterministic fake upload date derived from release id.
- *  id 60 = today (10 Apr 2026), spread ~12 days apart going backwards. */
+ *  id 47 = today (10 Apr 2026), spread ~12 days apart going backwards. */
 function mockUploadDate(id: string): string {
   const n = parseInt(id, 10)
   const today = new Date(2026, 3, 10) // Apr 10 2026
-  today.setDate(today.getDate() - (60 - n) * 12)
+  today.setDate(today.getDate() - (47 - n) * 12)
   return today.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" })
+}
+
+/** Derive record label name from catalog prefix */
+function mockLabel(catalog: string): string {
+  if (catalog.startsWith("COL")) return "Columbia"
+  if (catalog.startsWith("BN"))  return "Blue Note"
+  if (catalog.startsWith("IMP")) return "Impulse!"
+  if (catalog.startsWith("PR"))  return "Prestige"
+  if (catalog.startsWith("RLP") || catalog.startsWith("RVG")) return "Riverside"
+  if (catalog.startsWith("VER")) return "Verve"
+  if (catalog.startsWith("ATL")) return "Atlantic"
+  if (catalog.startsWith("CAN")) return "Candid"
+  if (catalog.startsWith("TRK")) return "ECM"
+  return "Independent"
+}
+
+type PriceType = "fixed" | "min"
+type PricePoint = { priceType: PriceType; price: number }
+
+type MonetisationState =
+  | { kind: "streaming" }
+  | { kind: "purchase";          purchase: PricePoint }
+  | { kind: "purchase+download"; purchase: PricePoint; download: PricePoint }
+
+/** Derive monetisation state from id — every release always has a plan */
+function mockMonetisation(id: string, _status?: ReleaseStatus): MonetisationState {
+  const n = parseInt(id, 10)
+  if (n % 7 === 0) return { kind: "streaming" }
+  const purchaseType: PriceType = n % 5 === 0 ? "min" : "fixed"
+  const purchase: PricePoint = { priceType: purchaseType, price: 8.50 }
+  if (n % 2 === 0) {
+    const downloadType: PriceType = n % 4 === 0 ? "min" : "fixed"
+    return { kind: "purchase+download", purchase, download: { priceType: downloadType, price: 10.50 } }
+  }
+  return { kind: "purchase", purchase }
+}
+
+function PriceTag({ point, icon }: { point: PricePoint; icon?: React.ReactNode }) {
+  return (
+    <span className="flex items-center gap-0.5 tabular-nums">
+      {point.priceType === "min" && <span className="opacity-50">≥</span>}
+      <span>${point.price.toFixed(2)}</span>
+      {icon && <span className="opacity-40">{icon}</span>}
+    </span>
+  )
+}
+
+function MonetisationCell({ state, dimmed }: { state: MonetisationState; dimmed?: boolean }) {
+  const cls = cn("text-xs", dimmed ? "text-muted-foreground/50" : "text-muted-foreground")
+  if (state.kind === "streaming") {
+    return <span className={cls}>Streaming</span>
+  }
+  if (state.kind === "purchase") {
+    return <span className={cls}><PriceTag point={state.purchase} /></span>
+  }
+  // purchase+download
+  return (
+    <span className={cn("flex items-center gap-1.5 text-xs", dimmed ? "text-muted-foreground/50" : "text-muted-foreground")}>
+      <PriceTag point={state.purchase} />
+      <span className="opacity-30">·</span>
+      <PriceTag point={state.download} icon={<Download className="size-3 shrink-0" />} />
+    </span>
+  )
 }
 
 function sortReleases(releases: Release[], key: SortKey, dir: SortDir): Release[] {
@@ -91,6 +156,7 @@ function sortReleases(releases: Release[], key: SortKey, dir: SortDir): Release[
       case "year":     cmp = a.year - b.year; break
       case "tracks":   cmp = a.tracks - b.tracks; break
       case "uploaded": cmp = parseInt(a.id) - parseInt(b.id); break
+      case "label":    cmp = mockLabel(a.catalog).localeCompare(mockLabel(b.catalog)); break
     }
     return dir === "desc" ? -cmp : cmp
   })
@@ -99,82 +165,64 @@ function sortReleases(releases: Release[], key: SortKey, dir: SortDir): Release[
 /** Which ColKey maps to which SortKey (only sortable columns) */
 const COL_SORT_KEY: Partial<Record<ColKey, SortKey>> = {
   id: "id", title: "title", artist: "artist",
-  band: "band", year: "year", tracks: "tracks", uploaded: "uploaded",
+  band: "band", year: "year", tracks: "tracks", uploaded: "uploaded", label: "label",
 }
 
 // ─── Jazz mock data (30 releases) ─────────────────────────────────────────────
 
 const RELEASES: Release[] = [
-  { id: "1",  catalog: "COL8163",  cover: "https://picsum.photos/seed/kob59/44/44",     title: "Kind of Blue",                       artist: "Miles Davis",         band: "Miles Davis Quintet",    year: 1959, tracks: 5,  type: "album",  status: "public"  },
-  { id: "2",  catalog: "IMP77",    cover: "https://picsum.photos/seed/als64/44/44",     title: "A Love Supreme",                     artist: "John Coltrane",       band: "Coltrane Quartet",       year: 1964, tracks: 4,  type: "album",  status: "public"  },
-  { id: "3",  catalog: "COL1397",  cover: "https://picsum.photos/seed/brub59/44/44",    title: "Time Out",                           artist: "Dave Brubeck",        band: "Brubeck Quartet",        year: 1959, tracks: 6,  type: "album",  status: "public"  },
-  { id: "4",  catalog: "ATL1311",  cover: "https://picsum.photos/seed/gsteps60/44/44",  title: "Giant Steps",                        artist: "John Coltrane",                                       year: 1960, tracks: 8,  type: "album",  status: "public"  },
-  { id: "5",  catalog: "COL32731", cover: "https://picsum.photos/seed/hh73/44/44",      title: "Head Hunters",                       artist: "Herbie Hancock",                                      year: 1973, tracks: 4,  type: "album",  status: "public"  },
-  { id: "6",  catalog: "BN4195",   cover: "https://picsum.photos/seed/mv65/44/44",      title: "Maiden Voyage",                      artist: "Herbie Hancock",      band: "Hancock Quintet",        year: 1965, tracks: 6,  type: "album",  status: "private" },
-  { id: "7",  catalog: "RVG12291", cover: "https://picsum.photos/seed/wfd61/44/44",     title: "Waltz for Debby",                    artist: "Bill Evans",          band: "Bill Evans Trio",        year: 1961, tracks: 11, type: "album",  status: "public"  },
-  { id: "8",  catalog: "PR7079",   cover: "https://picsum.photos/seed/saxroll56/44/44", title: "Saxophone Colossus",                 artist: "Sonny Rollins",                                       year: 1956, tracks: 5,  type: "album",  status: "public"  },
-  { id: "9",  catalog: "BN4003",   cover: "https://picsum.photos/seed/blakey58/44/44",  title: "Moanin'",                            artist: "Art Blakey",          band: "Jazz Messengers",        year: 1958, tracks: 8,  type: "album",  status: "private" },
-  { id: "10", catalog: "BN1577",   cover: "https://picsum.photos/seed/bluetr57/44/44",  title: "Blue Train",                         artist: "John Coltrane",       band: "Coltrane Sextet",        year: 1957, tracks: 5,  type: "album",  status: "public"  },
-  { id: "11", catalog: "COL8271",  cover: "https://picsum.photos/seed/sos60/44/44",     title: "Sketches of Spain",                  artist: "Miles Davis",         band: "Miles Davis Orchestra",  year: 1960, tracks: 6,  type: "album",  status: "public"  },
-  { id: "12", catalog: "COL26",    cover: "https://picsum.photos/seed/bb70/44/44",      title: "Bitches Brew",                       artist: "Miles Davis",                                         year: 1970, tracks: 6,  type: "album",  status: "public"  },
-  { id: "13", catalog: "RLP1162",  cover: "https://picsum.photos/seed/pij59/44/44",     title: "Portrait in Jazz",                   artist: "Bill Evans",          band: "Bill Evans Trio",        year: 1959, tracks: 9,  type: "album",  status: "public"  },
-  { id: "14", catalog: "RLP351",   cover: "https://picsum.photos/seed/exp61/44/44",     title: "Explorations",                       artist: "Bill Evans",          band: "Bill Evans Trio",        year: 1961, tracks: 7,  type: "album",  status: "private" },
-  { id: "15", catalog: "VER8545",  cover: "https://picsum.photos/seed/gg64/44/44",      title: "Getz/Gilberto",                      artist: "Stan Getz",           band: "Getz/Gilberto",          year: 1964, tracks: 9,  type: "album",  status: "public"  },
-  { id: "16", catalog: "ATL1317",  cover: "https://picsum.photos/seed/sjtc59/44/44",    title: "The Shape of Jazz to Come",          artist: "Ornette Coleman",     band: "Coleman Quartet",        year: 1959, tracks: 6,  type: "album",  status: "public"  },
-  { id: "17", catalog: "COL1370",  cover: "https://picsum.photos/seed/mau59/44/44",     title: "Mingus Ah Um",                       artist: "Charles Mingus",                                      year: 1959, tracks: 9,  type: "album",  status: "public"  },
-  { id: "18", catalog: "IMP35",    cover: "https://picsum.photos/seed/bssl63/44/44",    title: "The Black Saint and the Sinner Lady",artist: "Charles Mingus",                                      year: 1963, tracks: 6,  type: "album",  status: "private" },
-  { id: "19", catalog: "COL2184",  cover: "https://picsum.photos/seed/md63/44/44",      title: "Monk's Dream",                       artist: "Thelonious Monk",     band: "Monk Quartet",           year: 1963, tracks: 8,  type: "album",  status: "public"  },
-  { id: "20", catalog: "RLP226",   cover: "https://picsum.photos/seed/bc57/44/44",      title: "Brilliant Corners",                  artist: "Thelonious Monk",     band: "Monk Quintet",           year: 1957, tracks: 5,  type: "album",  status: "public"  },
-  { id: "21", catalog: "BN4157",   cover: "https://picsum.photos/seed/sw64/44/44",      title: "The Sidewinder",                     artist: "Lee Morgan",          band: "Lee Morgan Quintet",     year: 1964, tracks: 5,  type: "album",  status: "public"  },
-  { id: "22", catalog: "BN4194",   cover: "https://picsum.photos/seed/sne66/44/44",     title: "Speak No Evil",                      artist: "Wayne Shorter",       band: "Shorter Quintet",        year: 1966, tracks: 6,  type: "album",  status: "public"  },
-  { id: "23", catalog: "BN4175",   cover: "https://picsum.photos/seed/ei64/44/44",      title: "Empyrean Isles",                     artist: "Herbie Hancock",      band: "Hancock Quartet",        year: 1964, tracks: 4,  type: "album",  status: "public"  },
-  { id: "24", catalog: "BN1595",   cover: "https://picsum.photos/seed/se58/44/44",      title: "Somethin' Else",                     artist: "Cannonball Adderley", band: "Adderley Quintet",       year: 1958, tracks: 5,  type: "album",  status: "public"  },
-  { id: "25", catalog: "COL1193",  cover: "https://picsum.photos/seed/mil58/44/44",     title: "Milestones",                         artist: "Miles Davis",         band: "Miles Davis Sextet",     year: 1958, tracks: 6,  type: "album",  status: "private" },
-  { id: "26", catalog: "ATL1361",  cover: "https://picsum.photos/seed/mft61/44/44",     title: "My Favorite Things",                 artist: "John Coltrane",       band: "Coltrane Quartet",       year: 1961, tracks: 4,  type: "album",  status: "public"  },
-  { id: "27", catalog: "IMP9195",  cover: "https://picsum.photos/seed/cr65/44/44",      title: "Crescent",                           artist: "John Coltrane",       band: "Coltrane Quartet",       year: 1964, tracks: 5,  type: "album",  status: "public"  },
-  { id: "28", catalog: "CAN9002",  cover: "https://picsum.photos/seed/wi60/44/44",      title: "We Insist!",                         artist: "Max Roach",                                           year: 1960, tracks: 6,  type: "album",  status: "public"  },
-  { id: "29", catalog: "VER6547",  cover: "https://picsum.photos/seed/pgb63/44/44",     title: "Night Has a Thousand Eyes",          artist: "Oscar Peterson",      band: "Oscar Peterson Trio",    year: 1963, tracks: 8,  type: "album",  status: "public"  },
-  { id: "30", catalog: "ATL1260",  cover: "https://picsum.photos/seed/cl57/44/44",      title: "The Clown",                          artist: "Charles Mingus",                                      year: 1957, tracks: 4,  type: "ep",      status: "private" },
+  { id: "1",  catalog: "COL8163",  cover: "https://picsum.photos/seed/kob59/44/44",     title: "Kind of Blue",                        artist: "Miles Davis",         band: "Miles Davis Quintet",    year: 1959, tracks: 5,  type: "album",  status: "public"  },
+  { id: "2",  catalog: "IMP77",    cover: "https://picsum.photos/seed/als64/44/44",     title: "A Love Supreme",                      artist: "John Coltrane",       band: "Coltrane Quartet",       year: 1964, tracks: 4,  type: "album",  status: "public"  },
+  { id: "3",  catalog: "COL1397",  cover: "https://picsum.photos/seed/brub59/44/44",    title: "Time Out",                            artist: "Dave Brubeck",        band: "Brubeck Quartet",        year: 1959, tracks: 6,  type: "album",  status: "public"  },
+  { id: "4",  catalog: "ATL1311",  cover: "https://picsum.photos/seed/gsteps60/44/44",  title: "Giant Steps",                         artist: "John Coltrane",                                       year: 1960, tracks: 8,  type: "album",  status: "public"  },
+  { id: "5",  catalog: "COL32731", cover: "https://picsum.photos/seed/hh73/44/44",      title: "Head Hunters",                        artist: "Herbie Hancock",                                      year: 1973, tracks: 4,  type: "ep",     status: "public"  },
+  { id: "6",  catalog: "BN4195",   cover: "https://picsum.photos/seed/mv65/44/44",      title: "Maiden Voyage",                       artist: "Herbie Hancock",      band: "Hancock Quintet",        year: 1965, tracks: 6,  type: "album",  status: "private" },
+  { id: "7",  catalog: "RVG12291", cover: "https://picsum.photos/seed/wfd61/44/44",     title: "Waltz for Debby",                     artist: "Bill Evans",          band: "Bill Evans Trio",        year: 1961, tracks: 11, type: "album",  status: "public"  },
+  { id: "8",  catalog: "PR7079",   cover: "https://picsum.photos/seed/saxroll56/44/44", title: "Saxophone Colossus",                  artist: "Sonny Rollins",                                       year: 1956, tracks: 5,  type: "album",  status: "public"  },
+  { id: "9",  catalog: "BN4003",   cover: "https://picsum.photos/seed/blakey58/44/44",  title: "Moanin'",                             artist: "Art Blakey",          band: "Jazz Messengers",        year: 1958, tracks: 8,  type: "album",  status: "private" },
+  { id: "10", catalog: "BN1577",   cover: "https://picsum.photos/seed/bluetr57/44/44",  title: "Blue Train",                          artist: "John Coltrane",       band: "Coltrane Sextet",        year: 1957, tracks: 5,  type: "album",  status: "public"  },
+  { id: "11", catalog: "COL8271",  cover: "https://picsum.photos/seed/sos60/44/44",     title: "Sketches of Spain",                   artist: "Miles Davis",         band: "Miles Davis Orchestra",  year: 1960, tracks: 6,  type: "album",  status: "public"  },
+  { id: "12", catalog: "ATL45s1",  cover: "https://picsum.photos/seed/sng32/44/44",     title: "Acknowledgement",                     artist: "John Coltrane",       band: "Coltrane Quartet",       year: 1964, tracks: 2,  type: "single", status: "public"  },
+  { id: "13", catalog: "RLP1162",  cover: "https://picsum.photos/seed/pij59/44/44",     title: "Portrait in Jazz",                    artist: "Bill Evans",          band: "Bill Evans Trio",        year: 1959, tracks: 9,  type: "album",  status: "public"  },
+  { id: "14", catalog: "RLP351",   cover: "https://picsum.photos/seed/exp61/44/44",     title: "Explorations",                        artist: "Bill Evans",          band: "Bill Evans Trio",        year: 1961, tracks: 7,  type: "album",  status: "private" },
+  { id: "15", catalog: "VER8545",  cover: "https://picsum.photos/seed/gg64/44/44",      title: "Getz/Gilberto",                       artist: "Stan Getz",           band: "Getz/Gilberto",          year: 1964, tracks: 9,  type: "album",  status: "public"  },
+  { id: "16", catalog: "PR45s3",   cover: "https://picsum.photos/seed/sng33/44/44",     title: "St. Thomas",                          artist: "Sonny Rollins",                                       year: 1956, tracks: 3,  type: "single", status: "public"  },
+  { id: "17", catalog: "COL1370",  cover: "https://picsum.photos/seed/mau59/44/44",     title: "Mingus Ah Um",                        artist: "Charles Mingus",                                      year: 1959, tracks: 9,  type: "album",  status: "public"  },
+  { id: "18", catalog: "IMP35",    cover: "https://picsum.photos/seed/bssl63/44/44",    title: "The Black Saint and the Sinner Lady", artist: "Charles Mingus",                                      year: 1963, tracks: 6,  type: "album",  status: "private" },
+  { id: "19", catalog: "COL2184",  cover: "https://picsum.photos/seed/md63/44/44",      title: "Monk's Dream",                        artist: "Thelonious Monk",     band: "Monk Quartet",           year: 1963, tracks: 8,  type: "album",  status: "public"  },
+  { id: "20", catalog: "BN45s4",   cover: "https://picsum.photos/seed/sng34/44/44",     title: "Watermelon Man",                      artist: "Herbie Hancock",                                      year: 1962, tracks: 4,  type: "ep",     status: "private" },
+  { id: "21", catalog: "BN4157",   cover: "https://picsum.photos/seed/sw64/44/44",      title: "The Sidewinder",                      artist: "Lee Morgan",          band: "Lee Morgan Quintet",     year: 1964, tracks: 5,  type: "album",  status: "public"  },
+  { id: "22", catalog: "BN4194",   cover: "https://picsum.photos/seed/sne66/44/44",     title: "Speak No Evil",                       artist: "Wayne Shorter",       band: "Shorter Quintet",        year: 1966, tracks: 6,  type: "album",  status: "public"  },
+  { id: "23", catalog: "BN4175",   cover: "https://picsum.photos/seed/ei64/44/44",      title: "Empyrean Isles",                      artist: "Herbie Hancock",      band: "Hancock Quartet",        year: 1964, tracks: 4,  type: "ep",     status: "public"  },
+  { id: "24", catalog: "RVG45s5",  cover: "https://picsum.photos/seed/sng35/44/44",     title: "Blue in Green",                       artist: "Bill Evans",          band: "Bill Evans Trio",        year: 1959, tracks: 2,  type: "single", status: "public"  },
+  { id: "25", catalog: "COL1193",  cover: "https://picsum.photos/seed/mil58/44/44",     title: "Milestones",                          artist: "Miles Davis",         band: "Miles Davis Sextet",     year: 1958, tracks: 6,  type: "album",  status: "private" },
+  { id: "26", catalog: "ATL1361",  cover: "https://picsum.photos/seed/mft61/44/44",     title: "My Favorite Things",                  artist: "John Coltrane",       band: "Coltrane Quartet",       year: 1961, tracks: 4,  type: "ep",     status: "public"  },
+  { id: "27", catalog: "IMP9195",  cover: "https://picsum.photos/seed/cr65/44/44",      title: "Crescent",                            artist: "John Coltrane",       band: "Coltrane Quartet",       year: 1964, tracks: 5,  type: "ep",     status: "public"  },
+  { id: "28", catalog: "CAN9002",  cover: "https://picsum.photos/seed/wi60/44/44",      title: "We Insist!",                          artist: "Max Roach",                                           year: 1960, tracks: 6,  type: "album",  status: "public"  },
+  { id: "29", catalog: "VER6547",  cover: "https://picsum.photos/seed/pgb63/44/44",     title: "Night Has a Thousand Eyes",           artist: "Oscar Peterson",      band: "Oscar Peterson Trio",    year: 1963, tracks: 8,  type: "album",  status: "public"  },
+  { id: "30", catalog: "ATL1260",  cover: "https://picsum.photos/seed/cl57/44/44",      title: "The Clown",                           artist: "Charles Mingus",                                      year: 1957, tracks: 4,  type: "ep",     status: "private" },
+  { id: "31", catalog: "COL4s72",  cover: "https://picsum.photos/seed/sng31/44/44",     title: "So What",                             artist: "Miles Davis",         band: "Miles Davis Quintet",    year: 1959, tracks: 2,  type: "single", status: "public"  },
+  { id: "32", catalog: "COL26",    cover: "https://picsum.photos/seed/bb70/44/44",      title: "Bitches Brew",                        artist: "Miles Davis",                                         year: 1970, tracks: 6,  type: "album",  status: "public"  },
+  { id: "33", catalog: "COL45s7",  cover: "https://picsum.photos/seed/sng37/44/44",     title: "Freddie Freeloader",                  artist: "Miles Davis",         band: "Miles Davis Quintet",    year: 1959, tracks: 2,  type: "single", status: "public"  },
+  { id: "34", catalog: "RLP226",   cover: "https://picsum.photos/seed/bc57/44/44",      title: "Brilliant Corners",                   artist: "Thelonious Monk",     band: "Monk Quintet",           year: 1957, tracks: 5,  type: "album",  status: "public"  },
+  { id: "35", catalog: "IMP45s8",  cover: "https://picsum.photos/seed/sng38/44/44",     title: "Alabama",                             artist: "John Coltrane",       band: "Coltrane Quartet",       year: 1963, tracks: 2,  type: "single", status: "private" },
+  { id: "36", catalog: "ATL1317",  cover: "https://picsum.photos/seed/sjtc59/44/44",    title: "The Shape of Jazz to Come",           artist: "Ornette Coleman",     band: "Coleman Quartet",        year: 1959, tracks: 6,  type: "album",  status: "public"  },
+  { id: "37", catalog: "VER45s6",  cover: "https://picsum.photos/seed/sng36/44/44",     title: "The Girl from Ipanema",               artist: "Stan Getz",           band: "Getz/Gilberto",          year: 1963, tracks: 3,  type: "single", status: "public"  },
+  { id: "38", catalog: "BN45s9",   cover: "https://picsum.photos/seed/sng39/44/44",     title: "The Sidewinder",                      artist: "Lee Morgan",          band: "Lee Morgan Quintet",     year: 1964, tracks: 3,  type: "single", status: "public"  },
+  { id: "39", catalog: "COL45s10", cover: "https://picsum.photos/seed/sng40/44/44",     title: "Milestones",                          artist: "Miles Davis",                                         year: 1958, tracks: 2,  type: "single", status: "public"  },
+  { id: "40", catalog: "BN1595",   cover: "https://picsum.photos/seed/se58/44/44",      title: "Somethin' Else",                      artist: "Cannonball Adderley", band: "Adderley Quintet",       year: 1958, tracks: 5,  type: "album",  status: "public"  },
+  { id: "41", catalog: "PRep3",    cover: "https://picsum.photos/seed/ep43/44/44",      title: "Moving Out",                          artist: "Sonny Rollins",                                       year: 1954, tracks: 2,  type: "single", status: "private" },
+  { id: "42", catalog: "COLep2",   cover: "https://picsum.photos/seed/ep42/44/44",      title: "Workin' with the Miles Davis Quintet",artist: "Miles Davis",         band: "Miles Davis Quintet",    year: 1956, tracks: 5,  type: "album",  status: "public"  },
+  { id: "43", catalog: "ATLep4",   cover: "https://picsum.photos/seed/ep44/44/44",      title: "Tomorrow Is the Question!",           artist: "Ornette Coleman",                                     year: 1959, tracks: 2,  type: "single", status: "public"  },
+  { id: "44", catalog: "IMPep5",   cover: "https://picsum.photos/seed/ep45/44/44",      title: "Duke Ellington & John Coltrane",      artist: "John Coltrane",                                       year: 1962, tracks: 6,  type: "album",  status: "public"  },
+  { id: "45", catalog: "VERep6",   cover: "https://picsum.photos/seed/ep46/44/44",      title: "Focus",                               artist: "Stan Getz",                                           year: 1961, tracks: 5,  type: "ep",     status: "private" },
+  { id: "46", catalog: "BNep1",    cover: "https://picsum.photos/seed/ep41/44/44",      title: "Interplay",                           artist: "Bill Evans",          band: "Bill Evans Trio",        year: 1962, tracks: 5,  type: "ep",     status: "public"  },
+  { id: "47", catalog: "BNep7",    cover: "https://picsum.photos/seed/ep47/44/44",      title: "Night Dreamer",                       artist: "Wayne Shorter",       band: "Shorter Quartet",        year: 1964, tracks: 5,  type: "album",  status: "public"  },
 
-  // Singles (multi-track)
-  { id: "31", catalog: "COL4s72",  cover: "https://picsum.photos/seed/sng31/44/44",    title: "So What",                            artist: "Miles Davis",         band: "Miles Davis Quintet",    year: 1959, tracks: 2,  type: "single",  status: "public"  },
-  { id: "32", catalog: "ATL45s1",  cover: "https://picsum.photos/seed/sng32/44/44",    title: "Acknowledgement",                    artist: "John Coltrane",       band: "Coltrane Quartet",       year: 1964, tracks: 2,  type: "single",  status: "public"  },
-  { id: "33", catalog: "PR45s3",   cover: "https://picsum.photos/seed/sng33/44/44",    title: "St. Thomas",                         artist: "Sonny Rollins",                                       year: 1956, tracks: 3,  type: "single",  status: "public"  },
-  { id: "34", catalog: "BN45s4",   cover: "https://picsum.photos/seed/sng34/44/44",    title: "Watermelon Man",                     artist: "Herbie Hancock",                                      year: 1962, tracks: 2,  type: "single",  status: "private" },
-  { id: "35", catalog: "RVG45s5",  cover: "https://picsum.photos/seed/sng35/44/44",    title: "Blue in Green",                      artist: "Bill Evans",          band: "Bill Evans Trio",        year: 1959, tracks: 2,  type: "single",  status: "public"  },
-  { id: "36", catalog: "VER45s6",  cover: "https://picsum.photos/seed/sng36/44/44",    title: "The Girl from Ipanema",              artist: "Stan Getz",           band: "Getz/Gilberto",          year: 1963, tracks: 3,  type: "single",  status: "public"  },
-  { id: "37", catalog: "COL45s7",  cover: "https://picsum.photos/seed/sng37/44/44",    title: "Freddie Freeloader",                 artist: "Miles Davis",         band: "Miles Davis Quintet",    year: 1959, tracks: 2,  type: "single",  status: "public"  },
-  { id: "38", catalog: "IMP45s8",  cover: "https://picsum.photos/seed/sng38/44/44",    title: "Alabama",                            artist: "John Coltrane",       band: "Coltrane Quartet",       year: 1963, tracks: 2,  type: "single",  status: "private" },
-  { id: "39", catalog: "BN45s9",   cover: "https://picsum.photos/seed/sng39/44/44",    title: "The Sidewinder",                     artist: "Lee Morgan",          band: "Lee Morgan Quintet",     year: 1964, tracks: 3,  type: "single",  status: "public"  },
-  { id: "40", catalog: "COL45s10", cover: "https://picsum.photos/seed/sng40/44/44",    title: "Milestones",                         artist: "Miles Davis",                                         year: 1958, tracks: 2,  type: "single",  status: "public"  },
-
-  // EPs
-  { id: "41", catalog: "BNep1",    cover: "https://picsum.photos/seed/ep41/44/44",     title: "Interplay",                          artist: "Bill Evans",          band: "Bill Evans Trio",        year: 1962, tracks: 5,  type: "ep",      status: "public"  },
-  { id: "42", catalog: "COLep2",   cover: "https://picsum.photos/seed/ep42/44/44",     title: "Workin' with the Miles Davis Quintet",artist: "Miles Davis",        band: "Miles Davis Quintet",    year: 1956, tracks: 5,  type: "ep",      status: "public"  },
-  { id: "43", catalog: "PRep3",    cover: "https://picsum.photos/seed/ep43/44/44",     title: "Moving Out",                         artist: "Sonny Rollins",                                       year: 1954, tracks: 4,  type: "ep",      status: "private" },
-  { id: "44", catalog: "ATLep4",   cover: "https://picsum.photos/seed/ep44/44/44",     title: "Tomorrow Is the Question!",          artist: "Ornette Coleman",                                     year: 1959, tracks: 5,  type: "ep",      status: "public"  },
-  { id: "45", catalog: "IMPep5",   cover: "https://picsum.photos/seed/ep45/44/44",     title: "Duke Ellington & John Coltrane",     artist: "John Coltrane",                                       year: 1962, tracks: 6,  type: "ep",      status: "public"  },
-  { id: "46", catalog: "VERep6",   cover: "https://picsum.photos/seed/ep46/44/44",     title: "Focus",                              artist: "Stan Getz",                                           year: 1961, tracks: 5,  type: "ep",      status: "private" },
-  { id: "47", catalog: "BNep7",    cover: "https://picsum.photos/seed/ep47/44/44",     title: "Night Dreamer",                      artist: "Wayne Shorter",       band: "Shorter Quartet",        year: 1964, tracks: 5,  type: "ep",      status: "public"  },
-
-  // Songs (individual tracks)
-  { id: "48", catalog: "TRK001",   cover: "https://picsum.photos/seed/trk48/44/44",   title: "Take Five",                          artist: "Dave Brubeck",        band: "Brubeck Quartet",        year: 1959, tracks: 1,  type: "song",    status: "public"  },
-  { id: "49", catalog: "TRK002",   cover: "https://picsum.photos/seed/trk49/44/44",   title: "Round Midnight",                     artist: "Thelonious Monk",                                     year: 1957, tracks: 1,  type: "song",    status: "public"  },
-  { id: "50", catalog: "TRK003",   cover: "https://picsum.photos/seed/trk50/44/44",   title: "Autumn Leaves",                      artist: "Bill Evans",          band: "Bill Evans Trio",        year: 1959, tracks: 1,  type: "song",    status: "public"  },
-  { id: "51", catalog: "TRK004",   cover: "https://picsum.photos/seed/trk51/44/44",   title: "My Funny Valentine",                 artist: "Miles Davis",         band: "Miles Davis Quintet",    year: 1964, tracks: 1,  type: "song",    status: "private" },
-  { id: "52", catalog: "TRK005",   cover: "https://picsum.photos/seed/trk52/44/44",   title: "Naima",                              artist: "John Coltrane",       band: "Coltrane Quartet",       year: 1959, tracks: 1,  type: "song",    status: "public"  },
-  { id: "53", catalog: "TRK006",   cover: "https://picsum.photos/seed/trk53/44/44",   title: "Straight, No Chaser",                artist: "Thelonious Monk",     band: "Monk Quartet",           year: 1951, tracks: 1,  type: "song",    status: "public"  },
-  { id: "54", catalog: "TRK007",   cover: "https://picsum.photos/seed/trk54/44/44",   title: "Autumn in New York",                 artist: "Art Tatum",                                           year: 1952, tracks: 1,  type: "song",    status: "public"  },
-  { id: "55", catalog: "TRK008",   cover: "https://picsum.photos/seed/trk55/44/44",   title: "All Blues",                          artist: "Miles Davis",         band: "Miles Davis Quintet",    year: 1959, tracks: 1,  type: "song",    status: "public"  },
-  { id: "56", catalog: "TRK009",   cover: "https://picsum.photos/seed/trk56/44/44",   title: "Impressions",                        artist: "John Coltrane",       band: "Coltrane Quartet",       year: 1963, tracks: 1,  type: "song",    status: "private" },
-  { id: "57", catalog: "TRK010",   cover: "https://picsum.photos/seed/trk57/44/44",   title: "Body and Soul",                      artist: "Coleman Hawkins",                                     year: 1939, tracks: 1,  type: "song",    status: "public"  },
-  { id: "58", catalog: "TRK011",   cover: "https://picsum.photos/seed/trk58/44/44",   title: "Dolphin Dance",                      artist: "Herbie Hancock",      band: "Hancock Quintet",        year: 1965, tracks: 1,  type: "song",    status: "public"  },
-  { id: "59", catalog: "TRK012",   cover: "https://picsum.photos/seed/trk59/44/44",   title: "Speak No Evil",                      artist: "Wayne Shorter",       band: "Shorter Quintet",        year: 1964, tracks: 1,  type: "song",    status: "public"  },
-  { id: "60", catalog: "TRK013",   cover: "https://picsum.photos/seed/trk60/44/44",   title: "Footprints",                         artist: "Wayne Shorter",       band: "Shorter Quintet",        year: 1966, tracks: 1,  type: "song",    status: "private" },
 ]
 
 const CONTENT_TYPE_LABELS: Record<ContentType, string> = {
-  album: "Album", single: "Single", ep: "EP", song: "Song",
+  album: "Album", single: "Single", ep: "EP",
 }
 const STATUS_LABELS: Record<ReleaseStatus, string> = {
   public: "Public", private: "Private",
@@ -468,6 +516,118 @@ function ArtistMultiSelect({
   )
 }
 
+// ─── LabelMultiSelect ─────────────────────────────────────────────────────────
+
+function LabelMultiSelect({
+  options,
+  selected,
+  onChange,
+}: {
+  options: string[]
+  selected: Set<string>
+  onChange: (next: Set<string>) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const containerRef    = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (!containerRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [open])
+
+  const toggle = (label: string) => {
+    const next = new Set(selected)
+    if (next.has(label)) next.delete(label)
+    else next.add(label)
+    onChange(next)
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <FilterTrigger
+        label="Label"
+        active={selected.size > 0}
+        count={selected.size}
+        onClick={() => setOpen(v => !v)}
+        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setOpen(v => !v) }}
+      />
+      {open && (
+        <FilterPopover>
+          {options.map(label => (
+            <FilterPopoverItem key={label} checked={selected.has(label)} onToggle={() => toggle(label)}>
+              {label}
+            </FilterPopoverItem>
+          ))}
+          {selected.size > 0 && <FilterPopoverClearAll onClear={() => onChange(new Set())} />}
+        </FilterPopover>
+      )}
+    </div>
+  )
+}
+
+// ─── MonetisationMultiSelect ──────────────────────────────────────────────────
+
+const MONETISATION_KINDS = ["streaming", "purchase", "purchase+download"] as const
+type MonetisationKind = typeof MONETISATION_KINDS[number]
+const MONETISATION_KIND_LABELS: Record<MonetisationKind, string> = {
+  "streaming":          "Streaming",
+  "purchase":           "Purchase",
+  "purchase+download":  "Purchase + Download",
+}
+
+function MonetisationMultiSelect({
+  selected,
+  onChange,
+}: {
+  selected: Set<MonetisationKind>
+  onChange: (next: Set<MonetisationKind>) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const containerRef    = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (!containerRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [open])
+
+  const toggle = (kind: MonetisationKind) => {
+    const next = new Set(selected)
+    if (next.has(kind)) next.delete(kind)
+    else next.add(kind)
+    onChange(next)
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <FilterTrigger
+        label="Monetisation"
+        active={selected.size > 0}
+        count={selected.size}
+        onClick={() => setOpen(v => !v)}
+        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setOpen(v => !v) }}
+      />
+      {open && (
+        <FilterPopover>
+          {MONETISATION_KINDS.map(kind => (
+            <FilterPopoverItem key={kind} checked={selected.has(kind)} onToggle={() => toggle(kind)}>
+              {MONETISATION_KIND_LABELS[kind]}
+            </FilterPopoverItem>
+          ))}
+          {selected.size > 0 && <FilterPopoverClearAll onClear={() => onChange(new Set())} />}
+        </FilterPopover>
+      )}
+    </div>
+  )
+}
+
 // ─── ResizeHandle ─────────────────────────────────────────────────────────────
 
 function ResizeHandle({ colKey, onStart }: {
@@ -493,9 +653,12 @@ interface TableHeaderProps {
   sortKey:       SortKey
   sortDir:       SortDir
   onSort:        (key: SortKey) => void
+  allSelected:   boolean
+  someSelected:  boolean
+  onSelectAll:   () => void
 }
 
-function TableHeader({ colWidths, visibleCols, onResizeStart, sortKey, sortDir, onSort }: TableHeaderProps) {
+function TableHeader({ colWidths, visibleCols, onResizeStart, sortKey, sortDir, onSort, allSelected, someSelected, onSelectAll }: TableHeaderProps) {
   const cell = (key: ColKey, label: string, grow = false, resizable = true) => {
     if (!visibleCols[key]) return null
     const sk = COL_SORT_KEY[key]
@@ -536,20 +699,27 @@ function TableHeader({ colWidths, visibleCols, onResizeStart, sortKey, sortDir, 
       className="flex items-center w-full pb-1.5 border-b border-border"
       style={{ gap: COL_GAP, paddingLeft: 8, paddingRight: 8 }}
     >
-      <div style={{ width: GRIP_W, flexShrink: 0 }} />
-      <div style={{ width: NUM_W,  flexShrink: 0 }} />
+      <div style={{ width: CHECKBOX_W, flexShrink: 0 }} className="flex items-center justify-center">
+        <Checkbox
+          checked={allSelected}
+          indeterminate={!allSelected && someSelected}
+          onCheckedChange={onSelectAll}
+          className="after:hidden"
+        />
+      </div>
 
-      {cell("id",       "ID")}
-      {cell("cover",    "Cover", false, false)}
-      {cell("title",    "Title", true)}
-      {cell("artist",   "Main Artist")}
-      {cell("band",     "Band")}
-      {cell("year",     "Year")}
-      {cell("tracks",   "Tracks")}
-      {cell("uploaded", "Uploaded")}
-      {cell("type",     "Type")}
-      {cell("state",    "State")}
-      <div style={{ width: ACTION_W, flexShrink: 0 }} />
+      {cell("id",          "ID")}
+      {cell("cover",       "Cover", false, false)}
+      {cell("title",       "Title", true)}
+      {cell("artist",      "Main Artist")}
+      {cell("band",        "Band")}
+      {cell("year",        "Year")}
+      {cell("tracks",      "Tracks")}
+      {cell("label",       "Label")}
+      {cell("uploaded",    "Uploaded")}
+      {cell("type",        "Type")}
+      {cell("state",       "State")}
+      {cell("monetisation","Monetisation")}
     </div>
   )
 }
@@ -557,37 +727,39 @@ function TableHeader({ colWidths, visibleCols, onResizeStart, sortKey, sortDir, 
 // ─── TableRow ─────────────────────────────────────────────────────────────────
 
 interface TableRowProps {
-  release:     Release
-  index:       number
-  colWidths:   Record<ColKey, number>
-  visibleCols: Record<ColKey, boolean>
+  release:        Release
+  colWidths:      Record<ColKey, number>
+  visibleCols:    Record<ColKey, boolean>
+  isSelected:     boolean
+  onSelect:       () => void
+  status:         ReleaseStatus
+  onStatusChange: (s: ReleaseStatus) => void
 }
 
-function TableRow({ release, index, colWidths, visibleCols }: TableRowProps) {
-  const [status,       setStatus]       = useState<ReleaseStatus>(release.status)
-  const [hovered,      setHovered]      = useState(false)
+function TableRow({ release, colWidths, visibleCols, isSelected, onSelect, status, onStatusChange }: TableRowProps) {
+  const [hovered, setHovered] = useState(false)
   const vis = visibleCols
 
   return (
     <div
       className={cn(
-        "flex items-center w-full rounded-lg transition-colors cursor-default",
-        hovered && "bg-muted",
+        "flex items-center w-full rounded-lg transition-colors cursor-pointer",
+        isSelected ? "bg-muted" : hovered && "bg-muted",
       )}
       style={{ gap: COL_GAP, paddingLeft: 8, paddingRight: 8, height: 56 }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={() => { /* TODO: navigate to release edit page */ }}
     >
-      {/* Grip */}
-      <div style={{ width: GRIP_W, flexShrink: 0 }} className="flex items-center justify-center">
-        {hovered && <GripVertical className="size-3 text-foreground cursor-grab" />}
-      </div>
-
-      {/* # / checkbox — both always mounted, toggled via visibility to avoid layout shift */}
-      <div style={{ width: NUM_W, flexShrink: 0 }} className="relative flex items-center justify-center">
-        <span className={cn("text-xs font-normal text-muted-foreground tabular-nums transition-opacity", hovered ? "opacity-0" : "opacity-100")}>{index}</span>
-        <div className={cn("absolute inset-0 flex items-center justify-center transition-opacity", hovered ? "opacity-100" : "opacity-0 pointer-events-none")}>
-          <Checkbox className="after:hidden" />
+      {/* Checkbox — always visible when selected, on hover otherwise */}
+      <div style={{ width: CHECKBOX_W, flexShrink: 0 }} className="flex items-center justify-center">
+        <div className={cn("transition-opacity", (hovered || isSelected) ? "opacity-100" : "opacity-0 pointer-events-none")}>
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={onSelect}
+            onClick={e => e.stopPropagation()}
+            className="after:hidden"
+          />
         </div>
       </div>
 
@@ -615,6 +787,12 @@ function TableRow({ release, index, colWidths, visibleCols }: TableRowProps) {
       {vis.artist && (
         <span className="text-xs font-normal text-muted-foreground truncate shrink-0" style={{ width: colWidths.artist }}>
           {release.artist}
+        </span>
+      )}
+
+      {vis.label && (
+        <span className="text-xs font-normal text-muted-foreground truncate shrink-0" style={{ width: colWidths.label }}>
+          {mockLabel(release.catalog)}
         </span>
       )}
 
@@ -650,20 +828,30 @@ function TableRow({ release, index, colWidths, visibleCols }: TableRowProps) {
 
       {vis.state && (
         <div className="shrink-0 flex" style={{ width: colWidths.state }}>
-          <StatusBadge status={status} onStatusChange={setStatus} />
+          <StatusBadge status={status} onStatusChange={onStatusChange} />
         </div>
       )}
 
-      <div
-        className="shrink-0 flex items-center justify-center"
-        style={{ width: ACTION_W }}
-      >
-        {hovered && (
-          <Button variant="ghost" size="icon" className="size-7">
-            <Pencil className="size-3.5" />
-          </Button>
-        )}
-      </div>
+      {vis.monetisation && (
+        <div className="relative shrink-0 flex items-center" style={{ width: colWidths.monetisation }}>
+          <div className={cn("transition-opacity duration-150", hovered ? "opacity-0" : "opacity-100")}>
+            <MonetisationCell state={mockMonetisation(release.id)} dimmed={status === "private"} />
+          </div>
+          {hovered && (
+            <div className="absolute inset-0 flex items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1.5 text-xs px-2.5"
+                onClick={e => e.stopPropagation()}
+              >
+                <Pencil className="size-3" />
+                Edit
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -671,11 +859,33 @@ function TableRow({ release, index, colWidths, visibleCols }: TableRowProps) {
 // ─── StudioMusicView ──────────────────────────────────────────────────────────
 
 export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void }) {
+  // Lifted release statuses
+  const [statuses, setStatuses] = useState<Record<string, ReleaseStatus>>(
+    () => Object.fromEntries(RELEASES.map(r => [r.id, r.status]))
+  )
+
+  function setReleaseStatus(id: string, s: ReleaseStatus) {
+    setStatuses(prev => ({ ...prev, [id]: s }))
+  }
+
+  // Row selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
   // Multi-select filters
-  const [typeFilters,   setTypeFilters]   = useState<Set<ContentType>>(new Set())
-  const [statusFilter,  setStatusFilter]  = useState<ReleaseStatus | "all">("all")
-  // Multi-select artist combobox
-  const [artistFilters, setArtistFilters] = useState<Set<string>>(new Set())
+  const [typeFilters,         setTypeFilters]         = useState<Set<ContentType>>(new Set())
+  const [statusFilter,        setStatusFilter]        = useState<ReleaseStatus | "all">("all")
+  const [artistFilters,       setArtistFilters]       = useState<Set<string>>(new Set())
+  const [labelFilters,        setLabelFilters]        = useState<Set<string>>(new Set())
+  const [monetisationFilters, setMonetisationFilters] = useState<Set<MonetisationKind>>(new Set())
 
   const [searchQuery, setSearchQuery] = useState("")
   const [sortKey, setSortKey]         = useState<SortKey>("uploaded")
@@ -684,8 +894,9 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
   const [colWidths,      setColWidths]      = useState<Record<ColKey, number>>(DEFAULT_WIDTHS)
   const [colWidthsReady, setColWidthsReady] = useState(false)
   const [visibleCols,    setVisibleCols]    = useState<Record<ColKey, boolean>>({
-    id: true, cover: true, title: true, artist: true, band: true,
-    year: true, tracks: true, uploaded: true, type: true, state: true,
+    id: false, cover: true, title: true, artist: true, band: false,
+    year: false, tracks: false, uploaded: true, type: true, state: true,
+    label: true, monetisation: true,
   })
   // Cover auto-hide driven by ResizeObserver (separate from user toggle)
   const [autoCoverHide, setAutoCoverHide] = useState(false)
@@ -700,19 +911,20 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
     const ro = new ResizeObserver(([entry]) => {
       setAutoCoverHide(entry.contentRect.width < COVER_HIDE_THRESHOLD)
       if (colWidthsReady) return
+      // Default visible: checkbox + cover + title + artist + label + uploaded + type + state + monetisation
+      // = 9 flex children → 8 inter-item gaps
       const available = entry.contentRect.width
-        - 96             // px-10 wrapper (40+40) + header pad (8+8)
-        - GRIP_W - NUM_W - ACTION_W
-        - COL_GAP * 12   // 13 flex children → 12 inter-item gaps
-        - DEFAULT_WIDTHS.id - DEFAULT_WIDTHS.cover - DEFAULT_WIDTHS.year
-        - DEFAULT_WIDTHS.tracks - DEFAULT_WIDTHS.uploaded - DEFAULT_WIDTHS.type - DEFAULT_WIDTHS.state
-      // distribute remaining space across title, artist, band (ratio 2:1:1)
-      const unit = Math.max(0, available / 4)
+        - 96                   // px-10 wrapper (40+40) + header pad (8+8)
+        - CHECKBOX_W
+        - COL_GAP * 8
+        - DEFAULT_WIDTHS.cover - DEFAULT_WIDTHS.label - DEFAULT_WIDTHS.uploaded
+        - DEFAULT_WIDTHS.type  - DEFAULT_WIDTHS.state  - DEFAULT_WIDTHS.monetisation
+      // distribute remaining space across title (2) and artist (1)
+      const unit = Math.max(0, available / 3)
       setColWidths(prev => ({
         ...prev,
         title:  Math.max(MIN_WIDTHS.title,  Math.round(unit * 2)),
         artist: Math.max(MIN_WIDTHS.artist, Math.round(unit)),
-        band:   Math.max(MIN_WIDTHS.band,   Math.round(unit)),
       }))
       setColWidthsReady(true)
     })
@@ -760,11 +972,10 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
   }
 
 
-  // Effective visibility — cover obeys both user toggle AND auto-hide
+  // Effective visibility — cover also obeys auto-hide at narrow widths
   const effectiveVis: Record<ColKey, boolean> = {
     ...visibleCols,
-    cover:    visibleCols.cover && !autoCoverHide,
-    uploaded: visibleCols.uploaded,
+    cover: visibleCols.cover && !autoCoverHide,
   }
 
   const isColsModified =
@@ -772,21 +983,37 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
     (Object.keys(DEFAULT_WIDTHS) as ColKey[]).some(k => colWidths[k] !== DEFAULT_WIDTHS[k])
 
   const artists = Array.from(new Set(RELEASES.map(r => r.artist))).sort()
+  const labels  = Array.from(new Set(RELEASES.map(r => mockLabel(r.catalog)))).sort()
 
   const q = searchQuery.trim().toLowerCase()
   const filtered = sortReleases(
     RELEASES.filter(r => {
-      if (typeFilters.size > 0   && !typeFilters.has(r.type))       return false
-      if (statusFilter !== "all"  && r.status !== statusFilter)       return false
-      if (artistFilters.size > 0 && !artistFilters.has(r.artist))   return false
-      if (q && !`${r.title} ${r.artist} ${r.band ?? ""}`.toLowerCase().includes(q)) return false
+      if (typeFilters.size > 0         && !typeFilters.has(r.type))                            return false
+      if (statusFilter !== "all"        && (statuses[r.id] ?? r.status) !== statusFilter)        return false
+      if (artistFilters.size > 0       && !artistFilters.has(r.artist))                        return false
+      if (labelFilters.size > 0        && !labelFilters.has(mockLabel(r.catalog)))             return false
+      if (monetisationFilters.size > 0 && !monetisationFilters.has(mockMonetisation(r.id).kind as MonetisationKind)) return false
+      if (q && !`${r.title} ${r.artist} ${r.band ?? ""}`.toLowerCase().includes(q))           return false
       return true
     }),
     sortKey,
     sortDir,
   )
 
-  const anyFilter = typeFilters.size > 0 || statusFilter !== "all" || artistFilters.size > 0 || q.length > 0
+  const anyFilter =
+    typeFilters.size > 0 || statusFilter !== "all" || artistFilters.size > 0 ||
+    labelFilters.size > 0 || monetisationFilters.size > 0 || q.length > 0
+
+  const allSelected = filtered.length > 0 && filtered.every(r => selectedIds.has(r.id))
+  const someSelected = filtered.some(r => selectedIds.has(r.id))
+
+  function toggleSelectAll() {
+    if (allSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filtered.map(r => r.id)))
+    }
+  }
 
   return (
     <div ref={tableWrapRef} className="relative flex flex-col h-full">
@@ -842,6 +1069,19 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
             options={artists}
             selected={artistFilters}
             onChange={setArtistFilters}
+          />
+
+          {/* Label — multi-select */}
+          <LabelMultiSelect
+            options={labels}
+            selected={labelFilters}
+            onChange={setLabelFilters}
+          />
+
+          {/* Monetisation — multi-select */}
+          <MonetisationMultiSelect
+            selected={monetisationFilters}
+            onChange={setMonetisationFilters}
           />
 
           {/* Keyword search */}
@@ -911,7 +1151,11 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
                   label="Reset"
                   onClear={() => {
                     setColWidthsReady(false)
-                    setVisibleCols({ id: true, cover: true, title: true, artist: true, band: true, year: true, tracks: true, uploaded: true, type: true, state: true })
+                    setVisibleCols({
+                      id: false, cover: true, title: true, artist: true, band: false,
+                      year: false, tracks: false, uploaded: true, type: true, state: true,
+                      label: true, monetisation: true,
+                    })
                   }}
                 />
               )}
@@ -925,7 +1169,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
       {anyFilter && (
         <div className="shrink-0 flex items-center gap-1.5 px-10 pb-3 flex-wrap">
           <button
-            onClick={() => { setTypeFilters(new Set()); setStatusFilter("all"); setArtistFilters(new Set()); setSearchQuery("") }}
+            onClick={() => { setTypeFilters(new Set()); setStatusFilter("all"); setArtistFilters(new Set()); setLabelFilters(new Set()); setMonetisationFilters(new Set()); setSearchQuery("") }}
             className="text-xs font-normal text-muted-foreground hover:text-foreground transition-colors mr-1 shrink-0"
           >
             Clear all
@@ -959,6 +1203,30 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
               {a}
             </ChipDismiss>
           ))}
+          {[...labelFilters].map(l => (
+            <ChipDismiss
+              key={l}
+              onDismiss={() => {
+                const next = new Set(labelFilters)
+                next.delete(l)
+                setLabelFilters(next)
+              }}
+            >
+              {l}
+            </ChipDismiss>
+          ))}
+          {[...monetisationFilters].map(k => (
+            <ChipDismiss
+              key={k}
+              onDismiss={() => {
+                const next = new Set(monetisationFilters)
+                next.delete(k)
+                setMonetisationFilters(next)
+              }}
+            >
+              {MONETISATION_KIND_LABELS[k]}
+            </ChipDismiss>
+          ))}
           {searchQuery && (
             <ChipDismiss onDismiss={() => setSearchQuery("")}>
               &ldquo;{searchQuery}&rdquo;
@@ -978,6 +1246,9 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
             sortKey={sortKey}
             sortDir={sortDir}
             onSort={handleSortChange}
+            allSelected={allSelected}
+            someSelected={someSelected}
+            onSelectAll={toggleSelectAll}
           />
         </div>
 
@@ -986,7 +1257,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
             <p className="text-sm font-normal text-muted-foreground">No releases match the current filters.</p>
             {anyFilter && (
               <button
-                onClick={() => { setTypeFilters(new Set()); setStatusFilter("all"); setArtistFilters(new Set()); setSearchQuery("") }}
+                onClick={() => { setTypeFilters(new Set()); setStatusFilter("all"); setArtistFilters(new Set()); setLabelFilters(new Set()); setMonetisationFilters(new Set()); setSearchQuery("") }}
                 className="text-xs font-normal text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
               >
                 Clear filters
@@ -995,18 +1266,58 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
           </div>
         ) : (
           <div className="flex flex-col gap-0.5 py-1">
-            {filtered.map((r, i) => (
+            {filtered.map((r) => (
               <TableRow
                 key={r.id}
                 release={r}
-                index={i + 1}
                 colWidths={colWidths}
                 visibleCols={effectiveVis}
+                isSelected={selectedIds.has(r.id)}
+                onSelect={() => toggleSelect(r.id)}
+                status={statuses[r.id] ?? r.status}
+                onStatusChange={s => setReleaseStatus(r.id, s)}
               />
             ))}
           </div>
         )}
       </div>
+
+      {selectedIds.size > 0 && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-popover border border-border shadow-xl">
+            <span className="text-sm font-medium text-foreground tabular-nums pr-2">
+              {selectedIds.size} selected
+            </span>
+            <div className="w-px h-5 bg-border" />
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                selectedIds.forEach(id => setReleaseStatus(id, "public"))
+                setSelectedIds(new Set())
+              }}
+            >
+              Make public
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                selectedIds.forEach(id => setReleaseStatus(id, "private"))
+                setSelectedIds(new Set())
+              }}
+            >
+              Make private
+            </Button>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="ml-1 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   )
