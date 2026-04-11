@@ -95,7 +95,7 @@ function useViewportLogoSize() {
 function HomeView() {
   const logoSize = useViewportLogoSize()
   return (
-    <div className="px-10 py-10 max-w-6xl 3xl:max-w-[1600px] mx-auto w-full flex flex-col gap-6">
+    <div className="px-10 pt-10 pb-64 max-w-6xl 3xl:max-w-[1600px] mx-auto w-full flex flex-col gap-6">
       <div className="flex flex-col items-center gap-28 min-h-[65vh] justify-center">
         <div className="flex flex-col items-center gap-6">
           <img src="/wordmark.svg" alt="muza" className="h-4" />
@@ -103,8 +103,11 @@ function HomeView() {
         </div>
         <AnimatedLogo size={logoSize} />
       </div>
-      <p className="text-[clamp(2rem,_3vw,_4rem)] leading-snug font-normal text-foreground">Built as a non-profit, muza exists to fix streaming's broken economics. Instead of paying artists per click, muza rewards attention — distributing revenue based on actual listening time and direct listener support. Your subscription goes only to the artists you play.</p>
+      <p className="text-[clamp(2rem,_3vw,_4rem)] leading-snug font-normal text-foreground mt-16">Built as a non-profit, muza exists to fix streaming's broken economics. Instead of paying artists per click, muza rewards attention — distributing revenue based on actual listening time and direct listener support. Your subscription goes only to the artists you play.</p>
       <p className="text-[clamp(2rem,_3vw,_4rem)] leading-snug font-normal text-foreground">We combine subscription streaming with direct artist uploads, giving musicians full control over how their music is shared and monetised. Artists retain ownership, receive up to 90–95% of revenue, and are paid directly — no hidden intermediaries.</p>
+      <div className="flex justify-center mt-24">
+        <Button size="xl" className="text-lg px-16 h-16 rounded-full">Join muza now</Button>
+      </div>
     </div>
   )
 }
