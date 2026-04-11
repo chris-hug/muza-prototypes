@@ -1118,13 +1118,11 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
         <div className="flex items-center gap-2 shrink-0">
           {/* Columns */}
           <DropdownMenu>
-            <DropdownMenuTrigger className={cn(
-              "inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full border text-xs font-normal whitespace-nowrap transition-colors",
-              "border-border bg-transparent text-foreground hover:border-foreground/20",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
-            )}>
-              <Columns2 className="size-3" />
-              Set columns
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Columns2 className="size-3" />
+                Set columns
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuGroup>
