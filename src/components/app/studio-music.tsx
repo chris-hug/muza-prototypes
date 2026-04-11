@@ -231,8 +231,8 @@ const STATUS_LABELS: Record<ReleaseStatus, string> = {
 // ─── Shared filter UI primitives ──────────────────────────────────────────────
 
 const FILTER_TRIGGER_BASE = [
-  "inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full border",
-  "text-xs font-normal whitespace-nowrap transition-colors select-none cursor-pointer",
+  "inline-flex items-center gap-1.5 h-8 px-3 rounded-full border",
+  "text-xxs font-normal whitespace-nowrap transition-colors select-none cursor-pointer",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
 ].join(" ")
 
@@ -240,7 +240,7 @@ const filterTriggerCls = (active: boolean) => cn(
   FILTER_TRIGGER_BASE,
   active
     ? "border-foreground/40 bg-muted text-foreground"
-    : "border-border bg-transparent text-foreground hover:border-foreground/20",
+    : "border-border bg-transparent text-foreground hover:border-foreground/30",
 )
 
 /** Pill trigger shared by ContentTypeMultiSelect and ArtistMultiSelect */
@@ -1095,11 +1095,11 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search your music"
               className={cn(
-                "h-9 pl-8 pr-3 rounded-full border text-xs font-normal bg-transparent transition-all",
+                "h-8 pl-8 pr-3 rounded-full border text-xxs font-normal bg-transparent transition-all",
                 "text-foreground placeholder:text-muted-foreground focus:outline-none",
                 searchQuery
                   ? "border-foreground/40 bg-muted text-foreground w-56"
-                  : "border-border text-foreground w-48 hover:border-foreground/20 focus:border-foreground/40 focus:bg-muted focus:w-56",
+                  : "border-border text-foreground w-48 hover:border-foreground/30 focus:border-foreground/40 focus:bg-muted focus:w-56",
               )}
             />
             {searchQuery && (
