@@ -124,7 +124,7 @@ const STUDIO_TABS: Record<string, string[]> = {
   Music:     ["My Music", "Upload Music"],
   Analytics: [],
   Shop:      ["My Products", "Orders", "Add Product"],
-  Wallet:    ["Dashboard", "Transfer", "Report", "Manage", "Manage-v2"],
+  Wallet:    ["Dashboard", "Transfer", "Manage", "Manage-v2"],
 }
 
 function toTabValue(label: string) {
@@ -170,7 +170,6 @@ function StudioView({ page, onOpenUpload }: { page: string; onOpenUpload?: () =>
           >
             {page === "Wallet" && tab === "Dashboard" ? <WalletView /> :
              page === "Wallet" && tab === "Transfer"  ? <TransferView /> :
-             page === "Wallet" && tab === "Report"    ? <ReportView embedded /> :
              page === "Wallet" && tab === "Manage"    ? <ManageView /> :
              page === "Wallet" && tab === "Manage-v2" ? <ManageV2 /> :
              <div className="p-10"><p className="text-sm text-muted-foreground">{tab}</p></div>
