@@ -133,7 +133,6 @@ function MatchBadge({ score }: { score: number }) {
   const good = score >= 60
   return (
     <Badge className={cn(
-      "rounded-full",
       good ? "bg-green-50 text-green-700 border-transparent" : "bg-red-50 text-red-600 border-transparent"
     )}>
       {good ? <Check className="size-3" /> : <AlertTriangle className="size-3" />}
@@ -1304,7 +1303,7 @@ function StepTrackMatching({
           coverUrl: release?.coverUrl,
         }} />
         <Badge className={cn(
-          "rounded-full border-transparent",
+          "border-transparent",
           matched === tracks.length ? "bg-green-50 text-green-700"
             : matched > 0          ? "bg-yellow-50 text-yellow-700"
                                    : "bg-red-50 text-red-600"
