@@ -425,7 +425,7 @@
   justify-content: center;
   color:         var(--background);
   font-size:     0em;
-  box-shadow:    0 0 1px rgba(0,0,0,1);
+  box-shadow:    none;
   opacity:       1;
   will-change:   transform, opacity, filter;
   transition:

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { LogoHorizontal, LogoMark } from "@/components/ui/logo"
 import {
   Home, Compass, ListMusic, Disc3, Mic, Music2,
-  Paintbrush, FileText, ShoppingBag, CreditCard, Library,
+  Sliders, FileText, ShoppingBag, CreditCard, Library,
   Plus, PanelLeftClose, PanelLeftOpen, ChevronRight, BarChart2,
 } from "lucide-react"
 
@@ -40,7 +40,7 @@ const NAV_TOP: NavItem[] = [
 const NAV_GROUPS: NavGroup[] = [
   {
     label: "Studio",
-    icon: <Paintbrush className="size-4" />,
+    icon: <Sliders className="size-4" />,
     children: [
       { label: "Pages",     icon: <FileText    className="size-4" /> },
       { label: "Music",     icon: <Music2      className="size-4" /> },
