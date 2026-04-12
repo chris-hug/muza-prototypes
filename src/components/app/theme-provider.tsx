@@ -24,17 +24,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const toggleTheme = () => {
     const next: Theme = theme === "light" ? "dark" : "light"
-    // Suppress all transitions for the duration of the theme swap
-    document.documentElement.classList.add("theme-switching")
+    // Inject a temporary <style> to kill all transitions for exactly one frame
+    const style = document.createElement("style")
+    style.textContent = "*, *::before, *::after { transition: none !important; }"
+    document.head.appendChild(style)
+    // Apply theme
     setTheme(next)
     localStorage.setItem("muza-theme", next)
     document.documentElement.classList.toggle("dark", next === "dark")
-    // Two rAFs: first lets the class paint, second lets the browser commit
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        document.documentElement.classList.remove("theme-switching")
-      })
-    })
+    // Remove after browser has painted the new colours
+    requestAnimationFrame(() => document.head.removeChild(style))
   }
 
   return (
