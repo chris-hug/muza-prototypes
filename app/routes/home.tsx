@@ -2,6 +2,11 @@ import { useState, useEffect, useRef } from "react"
 import { AnimatedLogo } from "@/components/app/animated-logo"
 import { Sidebar } from "@/components/app/sidebar"
 import { StudioMusicView } from "@/components/app/studio-music"
+import { WalletView } from "@/components/app/wallet-view"
+import { TransferView } from "@/components/app/transfer-view"
+import { ManageView } from "@/components/app/manage-view"
+import { ManageV2 } from "@/components/app/manage-v2"
+import { ReportView } from "@/components/app/report-view"
 import { Topbar, TopbarDefaultActions } from "@/components/app/topbar"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Badge, ContentTypeBadge, StatusBadge } from "@/components/ui/badge"
@@ -95,7 +100,7 @@ function useViewportLogoSize() {
 function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
   const logoSize = useViewportLogoSize()
   return (
-    <div className="px-10 pt-10 pb-64 max-w-6xl 3xl:max-w-[1600px] mx-auto w-full flex flex-col gap-6">
+    <div className="px-10 pt-30 pb-64 max-w-6xl 3xl:max-w-[1600px] mx-auto w-full flex flex-col gap-6">
       <div className="flex flex-col items-center gap-28 min-h-[65vh] justify-center">
         <div className="flex flex-col items-center gap-6">
           <img src="/wordmark.svg" alt="muza" className="h-4" />
@@ -103,8 +108,8 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
         </div>
         <AnimatedLogo size={logoSize} />
       </div>
-      <p className="text-[clamp(2rem,_3vw,_4rem)] leading-snug font-normal text-foreground mt-16">Built as a non-profit, muza exists to fix streaming's broken economics. Instead of paying artists per click, muza rewards attention — distributing revenue based on actual listening time and direct listener support. Your subscription goes only to the artists you play.</p>
-      <p className="text-[clamp(2rem,_3vw,_4rem)] leading-snug font-normal text-foreground">We combine subscription streaming with direct artist uploads, giving musicians full control over how their music is shared and monetised. Artists retain ownership, receive up to 90–95% of revenue, and are paid directly — no hidden intermediaries.</p>
+      <p className="text-[clamp(2rem,_3vw,_4rem)] leading-[1.1] font-normal text-foreground mt-16">Built as a non-profit, muza exists to fix streaming's broken economics. Instead of paying artists per click, muza rewards attention — distributing revenue based on actual listening time and direct listener support. Your subscription goes only to the artists you play.</p>
+      <p className="text-[clamp(2rem,_3vw,_4rem)] leading-[1.1] font-normal text-foreground mt-10">We combine subscription streaming with direct artist uploads, giving musicians full control over how their music is shared and monetised. Artists retain ownership, receive up to 90–95% of revenue, and are paid directly — no hidden intermediaries.</p>
       <div className="flex justify-center mt-24">
         <Button size="lg" className="text-[2rem] px-[5.5rem] h-[5.5rem] rounded-full transition-transform duration-300 ease-out hover:transition-transform hover:duration-250 hover:ease-[cubic-bezier(0.22,1.8,0.36,1)] hover:scale-[1.07]" onClick={() => onNavigate("Music")}>Join muza now</Button>
       </div>
@@ -115,10 +120,11 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
 // ─── Studio pages ─────────────────────────────────────────────────────────────
 
 const STUDIO_TABS: Record<string, string[]> = {
-  Pages:  ["Artists", "Label"],
-  Music:  ["My Music", "Upload Music"],
-  Shop:   ["My Products", "Orders", "Add Product"],
-  Wallet: ["Dashboard", "Transfer", "Report", "Manage"],
+  Pages:     ["Artists", "Label"],
+  Music:     ["My Music", "Upload Music"],
+  Analytics: [],
+  Shop:      ["My Products", "Orders", "Add Product"],
+  Wallet:    ["Dashboard", "Transfer", "Report", "Manage", "Manage-v2"],
 }
 
 function toTabValue(label: string) {
@@ -126,15 +132,21 @@ function toTabValue(label: string) {
 }
 
 function StudioView({ page, onOpenUpload }: { page: string; onOpenUpload?: () => void }) {
-  if (page === "Music") return <StudioMusicView onOpenUpload={onOpenUpload} />
+  if (page === "Music")     return <StudioMusicView onOpenUpload={onOpenUpload} />
+  if (page === "Analytics") return <ReportView />
 
   const tabs = STUDIO_TABS[page] ?? []
 
   return (
-    <Tabs defaultValue={toTabValue(tabs[0])} className="flex flex-col h-full">
+    <Tabs defaultValue={toTabValue(tabs[0])} className="flex flex-col h-full gap-0">
 
-      {/* ── Header + tab list ──────────────────────────────────────────── */}
-      <div className="shrink-0 px-10 pt-6 border-b border-border">
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <div className="shrink-0 px-16 pt-8 pb-6">
+        <h1 className="text-2xl font-semibold tracking-tight">{page}</h1>
+      </div>
+
+      {/* ── Tab list ───────────────────────────────────────────────────── */}
+      <div className="shrink-0 px-16 border-b border-border">
         <TabsList variant="line" className="w-auto justify-start gap-0 h-auto pb-0">
           {tabs.map((tab) => (
             <TabsTrigger
@@ -154,9 +166,15 @@ function StudioView({ page, onOpenUpload }: { page: string; onOpenUpload?: () =>
           <TabsContent
             key={tab}
             value={toTabValue(tab)}
-            className="p-10 h-full"
+            className="h-full"
           >
-            <p className="text-sm text-muted-foreground">{tab}</p>
+            {page === "Wallet" && tab === "Dashboard" ? <WalletView /> :
+             page === "Wallet" && tab === "Transfer"  ? <TransferView /> :
+             page === "Wallet" && tab === "Report"    ? <ReportView embedded /> :
+             page === "Wallet" && tab === "Manage"    ? <ManageView /> :
+             page === "Wallet" && tab === "Manage-v2" ? <ManageV2 /> :
+             <div className="p-10"><p className="text-sm text-muted-foreground">{tab}</p></div>
+            }
           </TabsContent>
         ))}
       </div>
@@ -465,7 +483,7 @@ function ExploreView() {
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <div className="bg-muted border-b border-border pt-24 pb-[3.75rem]">
         <div className="max-w-6xl 3xl:max-w-[1600px] mx-auto px-10">
-          <h1 className="text-5xl font-medium tracking-tight">The muza design system</h1>
+          <h1 className="text-5xl font-semibold leading-none tracking-[-0.025em]">The muza design system</h1>
         </div>
       </div>
 
@@ -474,7 +492,7 @@ function ExploreView() {
       {/* Quick nav */}
       <nav className="flex flex-wrap gap-1.5 mb-12">
         {[
-          "Colors","Typography","Buttons","Badges","Chips","Inputs","Combobox","Dropdown",
+          "Colors","Typography","Buttons","Badges","Chips","Input","Select","Combobox","Menu",
           "Date Picker","Checkbox","Switch & Slider","Avatar","Tabs","Cards","Alerts","Alert Dialog",
           "Dialogs","Toast","Skeleton",
           "Popover","Table","Pagination","Command","OTP Input","Form",
@@ -879,11 +897,11 @@ function ExploreView() {
         </div>
       </Section>
 
-      {/* ══ INPUTS ══ */}
-      <Section id="inputs" title="Inputs">
+      {/* ══ INPUT ══ */}
+      <Section id="input" title="Input">
         <div className="flex flex-wrap gap-6 items-start">
           <div className="flex flex-col gap-1.5 min-w-[260px]">
-            <Label htmlFor="artist">Artist name</Label>
+            <Label htmlFor="artist">Default</Label>
             <Input id="artist" placeholder="e.g. Kendrick Lamar" />
             <p className="text-xs text-muted-foreground">Your public display name on Muza.</p>
           </div>
@@ -892,27 +910,14 @@ function ExploreView() {
             <Input id="email" type="email" placeholder="you@muza.com" />
           </div>
           <div className="flex flex-col gap-1.5 min-w-[260px]">
-            <Label htmlFor="search-input">Search</Label>
+            <Label htmlFor="search-input">With icon</Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input id="search-input" className="pl-9" placeholder="Search artists, albums…" />
             </div>
           </div>
-          <div className="flex flex-col gap-1.5 min-w-[200px]">
-            <Label>Genre</Label>
-            <Select>
-              <SelectTrigger><SelectValue placeholder="Select a genre" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="hip-hop">Hip-Hop</SelectItem>
-                <SelectItem value="electronic">Electronic</SelectItem>
-                <SelectItem value="jazz">Jazz</SelectItem>
-                <SelectItem value="rb">R&amp;B</SelectItem>
-                <SelectItem value="indie">Indie</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
           <div className="flex flex-col gap-1.5 min-w-[320px]">
-            <Label htmlFor="bio">Bio</Label>
+            <Label htmlFor="bio">Textarea</Label>
             <Textarea id="bio" placeholder="Tell listeners about yourself…" rows={3} />
             <p className="text-xs text-muted-foreground">Max 280 characters.</p>
           </div>
@@ -924,7 +929,7 @@ function ExploreView() {
             </div>
           </div>
           <div className="flex flex-col gap-1.5 min-w-[300px]">
-            <Label>Price (with currency select)</Label>
+            <Label>With inline select</Label>
             <InputSelect
               placeholder="1.00"
               selectValue={inputSelectCurrency}
@@ -938,7 +943,7 @@ function ExploreView() {
             />
           </div>
           <div className="flex flex-col gap-1.5 min-w-[300px]">
-            <Label>Domain</Label>
+            <Label>With inline select (suffix)</Label>
             <InputSelect
               placeholder="yourdomain"
               selectValue={inputSelectTld}
@@ -950,6 +955,48 @@ function ExploreView() {
                 { value: ".org", label: ".org" },
               ]}
             />
+          </div>
+        </div>
+      </Section>
+
+      {/* ══ SELECT ══ */}
+      <Section id="select" title="Select">
+        <div className="flex flex-wrap gap-6 items-start">
+          <div className="flex flex-col gap-1.5">
+            <Label>Genre</Label>
+            <Select>
+              <SelectTrigger><SelectValue placeholder="Select a genre" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="hip-hop">Hip-Hop</SelectItem>
+                <SelectItem value="electronic">Electronic</SelectItem>
+                <SelectItem value="jazz">Jazz</SelectItem>
+                <SelectItem value="rb">R&amp;B</SelectItem>
+                <SelectItem value="indie">Indie</SelectItem>
+                <SelectItem value="pop">Pop</SelectItem>
+                <SelectItem value="afrobeats">Afrobeats</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label>Sort by</Label>
+            <Select>
+              <SelectTrigger><SelectValue placeholder="Most recent" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Most recent</SelectItem>
+                <SelectItem value="popular">Most popular</SelectItem>
+                <SelectItem value="az">A → Z</SelectItem>
+                <SelectItem value="za">Z → A</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label>Disabled</Label>
+            <Select disabled>
+              <SelectTrigger><SelectValue placeholder="Select a genre" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="hip-hop">Hip-Hop</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </Section>
@@ -987,27 +1034,29 @@ function ExploreView() {
         </div>
       </Section>
 
-      {/* ══ DROPDOWN ══ */}
-      <Section id="dropdown" title="Dropdown menu">
+      {/* ══ MENU ══ */}
+      <Section id="menu" title="Menu">
         <div className="flex flex-wrap gap-4">
-          <DropdownMenu>
-            <DropdownMenuTrigger className={buttonVariants({ variant: "outline" })}>
-              My Account <ChevronDown className="size-4 transition-transform duration-200 [[aria-expanded=true]_&]:rotate-180" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-52">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem><User className="size-4" />Profile</DropdownMenuItem>
-              <DropdownMenuItem><Settings className="size-4" />Settings</DropdownMenuItem>
-              <DropdownMenuItem><Music2 className="size-4" />My uploads</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem><Heart className="size-4" />Liked songs</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive">
-                <LogOut className="size-4" />Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {(["default", "secondary", "outline", "ghost"] as const).map((variant) => (
+            <DropdownMenu key={variant}>
+              <DropdownMenuTrigger className={buttonVariants({ variant })}>
+                My Account <ChevronDown className="size-4 transition-transform duration-200 [[aria-expanded=true]_&]:rotate-180" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-52">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem><User className="size-4" />Profile</DropdownMenuItem>
+                <DropdownMenuItem><Settings className="size-4" />Settings</DropdownMenuItem>
+                <DropdownMenuItem><Music2 className="size-4" />My uploads</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem><Heart className="size-4" />Liked songs</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem variant="destructive">
+                  <LogOut className="size-4" />Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ))}
 
           <DropdownMenu>
             <DropdownMenuTrigger render={<Button size="icon" variant="ghost" />}>

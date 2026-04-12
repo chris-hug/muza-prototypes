@@ -42,10 +42,10 @@ const tabsListVariants = cva(
       variant: {
         // Pill/segment — tabs inside a muted background container
         default:
-          "rounded-full bg-muted p-1 text-muted-foreground gap-0",
+          "rounded-full bg-muted p-1 text-muted-foreground gap-0 border border-border",
         // Underline — transparent container, bottom-border active indicator
         line:
-          "rounded-none bg-transparent gap-2 text-muted-foreground",
+          "rounded-none bg-transparent gap-3 text-muted-foreground",
         // Pill — each tab is its own pill (no container background)
         pill:
           "rounded-none bg-transparent gap-1.5 text-muted-foreground",
@@ -107,14 +107,14 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
         "group-data-[variant=default]/tabs-list:hover:text-foreground",
         // Active: white bg + border
         "group-data-[variant=default]/tabs-list:data-active:bg-background",
-        "group-data-[variant=default]/tabs-list:data-active:border group-data-[variant=default]/tabs-list:data-active:border-border",
+        "group-data-[variant=default]/tabs-list:data-active:border group-data-[variant=default]/tabs-list:data-active:border-border/40",
         "group-data-[variant=default]/tabs-list:data-active:text-foreground",
         // Dark active
         "dark:group-data-[variant=default]/tabs-list:data-active:bg-input/30",
 
         // ── Line/underline variant ──────────────────────────────────────
         "group-data-[variant=line]/tabs-list:rounded-none",
-        "group-data-[variant=line]/tabs-list:px-3 group-data-[variant=line]/tabs-list:pb-3 group-data-[variant=line]/tabs-list:pt-0",
+        "group-data-[variant=line]/tabs-list:px-[18px] group-data-[variant=line]/tabs-list:pb-3 group-data-[variant=line]/tabs-list:pt-0",
         "group-data-[variant=line]/tabs-list:text-sm",
         "group-data-[variant=line]/tabs-list:text-muted-foreground",
         "group-data-[variant=line]/tabs-list:hover:text-foreground",

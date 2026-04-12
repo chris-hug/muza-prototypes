@@ -1,5 +1,23 @@
+"use client"
+
 import * as React from "react"
+import { useRef } from "react"
 import { cn } from "@/lib/utils"
+
+// ─── ResizeHandle — shared visual, exported for use in custom tables ──────────
+
+export function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
+  return (
+    <div
+      className="absolute right-0 top-0 h-full w-3 flex items-center justify-center cursor-col-resize select-none z-10"
+      onMouseDown={onMouseDown}
+    >
+      <div className="w-px h-3/4 rounded-full bg-border opacity-0 group-hover/th:opacity-100 transition-opacity" />
+    </div>
+  )
+}
+
+// ─── Table primitives ─────────────────────────────────────────────────────────
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
@@ -17,7 +35,7 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
       data-slot="table-header"
-      className={cn("[&_tr]:border-b [&_tr]:border-border", className)}
+      className={cn("[&_tr]:border-b [&_tr]:border-border [&_tr]:hover:bg-transparent", className)}
       {...props}
     />
   )
@@ -51,7 +69,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "border-b border-border transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+        "border-b border-border transition-colors hover:bg-muted data-[state=selected]:bg-muted",
         className
       )}
       {...props}
@@ -59,16 +77,85 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   )
 }
 
-function TableHead({ className, ...props }: React.ComponentProps<"th">) {
+// ─── TableHead — built-in column resize via shared startColumnResize ──────────
+
+interface TableHeadProps extends React.ComponentProps<"th"> {
+  /** Show a drag handle on the right edge to resize this column. Default: true */
+  resizable?: boolean
+  /** Minimum width in px when resizing. Default: 60 */
+  minWidth?: number
+}
+
+function TableHead({
+  className,
+  resizable = true,
+  minWidth = 60,
+  children,
+  ...props
+}: TableHeadProps) {
+  const thRef = useRef<HTMLTableCellElement>(null)
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const th = thRef.current
+    if (!th) return
+
+    e.preventDefault()
+    e.stopPropagation()
+
+    const startX     = e.clientX
+    const startWidth = th.offsetWidth
+
+    // Snapshot following resizable siblings and their starting widths
+    const row = th.parentElement
+    const siblings = row
+      ? Array.from(row.children).slice(Array.from(row.children).indexOf(th) + 1)
+          .filter((el): el is HTMLTableCellElement =>
+            el.tagName === "TH" && el.getAttribute("data-resizable") === "true"
+          )
+      : []
+    const siblingStarts = siblings.map(el => el.offsetWidth)
+
+    const onMove = (ev: MouseEvent) => {
+      const newW        = Math.max(minWidth, startWidth + (ev.clientX - startX))
+      const actualDelta = newW - startWidth
+
+      th.style.width    = `${newW}px`
+      th.style.minWidth = `${newW}px`
+
+      if (siblings.length > 0) {
+        const share = -actualDelta / siblings.length
+        siblings.forEach((el, i) => {
+          const sibMin = parseInt(el.getAttribute("data-min-width") ?? "60", 10)
+          const newSibW = Math.max(sibMin, siblingStarts[i] + share)
+          el.style.width    = `${newSibW}px`
+          el.style.minWidth = `${newSibW}px`
+        })
+      }
+    }
+
+    const onUp = () => {
+      document.removeEventListener("mousemove", onMove)
+      document.removeEventListener("mouseup",   onUp)
+    }
+    document.addEventListener("mousemove", onMove)
+    document.addEventListener("mouseup",   onUp)
+  }
+
   return (
     <th
+      ref={thRef}
       data-slot="table-head"
+      data-resizable={resizable ? "true" : undefined}
+      data-min-width={minWidth}
       className={cn(
-        "h-11 px-4 text-left align-middle text-xs font-normal text-muted-foreground [&:has([role=checkbox])]:pr-0",
+        "relative group/th h-11 px-4 text-left align-middle text-xs font-normal text-muted-foreground hover:bg-muted transition-colors [&:has([role=checkbox])]:pr-0",
         className
       )}
       {...props}
-    />
+    >
+      {children}
+      {resizable && <ResizeHandle onMouseDown={handleMouseDown} />}
+    </th>
   )
 }
 
