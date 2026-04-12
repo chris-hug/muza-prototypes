@@ -1243,10 +1243,11 @@ const TM_MIN: Record<TCol, number> = { track: 100, file: 140, composer: 100 }
 const TM_INIT: Record<TCol, number> = { track: 180, file: 260, composer: 160 }
 
 function StepTrackMatching({
-  release, isNew, newForm, tracks, onTracksChange, files,
+  release, isNew, newForm, tracks, onTracksChange, files, onContinue,
 }: {
   release: Release | null; isNew: boolean; newForm: ReleaseForm
   tracks: TrackRow[]; onTracksChange: (t: TrackRow[]) => void; files: UploadFile[]
+  onContinue: () => void
 }) {
   const matched = tracks.filter(t => t.matchScore >= 60).length
   const [colW, setColW] = useState<Record<TCol, number>>(TM_INIT)
@@ -1422,18 +1423,10 @@ function StepTrackMatching({
         </table>
       </div>
 
-      {/* Add track (isNew only) */}
-      {isNew && (
-        <Button
-          variant="secondary" size="sm" className="self-start gap-1.5"
-          onClick={() => onTracksChange([...tracks, {
-            id: `t${Date.now()}`, fileName: "", trackName: "", composer: "",
-            duration: "0:00", matchScore: 0, assignedFile: ""
-          }])}
-        >
-          <Plus className="size-3.5" />Add track
-        </Button>
-      )}
+      <div className="flex justify-end">
+        <Button size="default" onClick={onContinue}>Next</Button>
+      </div>
+
     </div>
   )
 }
@@ -1817,6 +1810,7 @@ export function UploadMusicDialog({
                 <StepTrackMatching
                   release={selectedRelease} isNew={isCreatingNew} newForm={newForm}
                   tracks={tracks} onTracksChange={setTracks} files={files}
+                  onContinue={handleNext}
                 />
               )}
               {step === 4 && (
