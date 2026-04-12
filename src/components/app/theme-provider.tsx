@@ -24,9 +24,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const toggleTheme = () => {
     const next: Theme = theme === "light" ? "dark" : "light"
+    // Kill transitions for the duration of the repaint, then restore
+    const css = document.createElement("style")
+    css.textContent = "* { transition-duration: 0s !important; }"
+    document.head.appendChild(css)
+    document.documentElement.classList.toggle("dark", next === "dark")
     setTheme(next)
     localStorage.setItem("muza-theme", next)
-    document.documentElement.classList.toggle("dark", next === "dark")
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    window.getComputedStyle(document.documentElement).opacity // force reflow
+    document.head.removeChild(css)
   }
 
   return (
