@@ -251,7 +251,7 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
           <div className="absolute -top-6 inset-x-0 flex items-center justify-center pointer-events-none z-10">
             <div className="pointer-events-auto">
               <Tabs value={metric} onValueChange={v => setMetric(v as Metric)}>
-                <TabsList>
+                <TabsList className="border border-border">
                   <TabsTrigger value="listeners">Listeners</TabsTrigger>
                   <TabsTrigger value="streams">Streams</TabsTrigger>
                   <TabsTrigger value="earnings">Earnings</TabsTrigger>
