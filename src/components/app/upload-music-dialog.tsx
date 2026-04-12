@@ -1804,7 +1804,7 @@ export function UploadMusicDialog({
       <div className="flex flex-1 min-h-0">
         {isFullWidth ? (
           /* Steps 3 & 4: full width, centered */
-          <div className="flex-1 overflow-y-auto px-16 pt-8 pb-16">
+          <div className="flex-1 overflow-y-auto px-10 pt-6 pb-10">
             <div className="max-w-6xl 3xl:max-w-[1600px] mx-auto w-full">
               {step === 3 && (
                 <StepTrackMatching
