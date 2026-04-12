@@ -328,6 +328,11 @@
   }
 }
 
+/* ── Disable all transitions during theme switch ─────────────────────────── */
+.theme-switching * {
+  transition: none !important;
+}
+
 /* ── Sidebar collapsible panel animation ─────────────────────────────────── */
 .sidebar-panel {
   display: grid;
