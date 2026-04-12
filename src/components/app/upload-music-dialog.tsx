@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { ContentTypeBadge } from "@/components/ui/badge"
+import { Badge, ContentTypeBadge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -132,13 +132,13 @@ function EntityAvatar({ initials, size = "md" }: { initials: string; size?: "sm"
 function MatchBadge({ score }: { score: number }) {
   const good = score >= 60
   return (
-    <span className={cn(
-      "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-normal shrink-0",
-      good ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"
+    <Badge className={cn(
+      "rounded-full",
+      good ? "bg-green-50 text-green-700 border-transparent" : "bg-red-50 text-red-600 border-transparent"
     )}>
       {good ? <Check className="size-3" /> : <AlertTriangle className="size-3" />}
       {score}%
-    </span>
+    </Badge>
   )
 }
 
@@ -1303,14 +1303,14 @@ function StepTrackMatching({
           type,
           coverUrl: release?.coverUrl,
         }} />
-        <span className={cn(
-          "text-xs font-normal px-3 py-1 rounded-full shrink-0",
+        <Badge className={cn(
+          "rounded-full border-transparent",
           matched === tracks.length ? "bg-green-50 text-green-700"
             : matched > 0          ? "bg-yellow-50 text-yellow-700"
                                    : "bg-red-50 text-red-600"
         )}>
           {matched}/{tracks.length} Matches
-        </span>
+        </Badge>
       </div>
 
       {/* Table */}
