@@ -1350,16 +1350,7 @@ function StepTrackMatching({
 
                 {/* Track name */}
                 <td className="pl-2 pr-2">
-                  {isNew ? (
-                    <Input
-                      value={track.trackName}
-                      onChange={e => onTracksChange(tracks.map((t, j) => j === i ? { ...t, trackName: e.target.value } : t))}
-                      className="h-8 text-xs font-normal"
-                      placeholder="Song name"
-                    />
-                  ) : (
-                    <span className="text-xs font-normal truncate block">{track.trackName}</span>
-                  )}
+                  <span className="text-xs font-normal truncate block">{track.trackName}</span>
                 </td>
 
                 {/* File */}
