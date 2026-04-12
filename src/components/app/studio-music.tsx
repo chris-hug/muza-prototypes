@@ -1313,14 +1313,15 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
 
       {selectedIds.size > 0 && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-popover border border-border shadow-xl">
-            <span className="text-sm font-medium text-foreground tabular-nums pr-2">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-foreground border border-foreground shadow-xl">
+            <span className="text-sm font-medium text-background tabular-nums pr-2">
               {selectedIds.size} selected
             </span>
-            <div className="w-px h-5 bg-border" />
+            <div className="w-px h-5 bg-background/20" />
             <Button
               size="sm"
               variant="secondary"
+              className="bg-background/15 hover:bg-background/25 text-background border-transparent"
               onClick={() => {
                 selectedIds.forEach(id => setReleaseStatus(id, "public"))
                 setSelectedIds(new Set())
@@ -1331,6 +1332,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
             <Button
               size="sm"
               variant="secondary"
+              className="bg-background/15 hover:bg-background/25 text-background border-transparent"
               onClick={() => {
                 selectedIds.forEach(id => setReleaseStatus(id, "private"))
                 setSelectedIds(new Set())
@@ -1340,7 +1342,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
             </Button>
             <button
               onClick={() => setSelectedIds(new Set())}
-              className="ml-1 text-muted-foreground hover:text-foreground transition-colors"
+              className="ml-1 text-background/50 hover:text-background transition-colors"
             >
               <X className="size-4" />
             </button>
