@@ -927,7 +927,7 @@ function StepRelease({
 
   // ── input mode ──────────────────────────────────────────────────────────────
   if (stepMode === "input") return (
-    <div className="overflow-y-auto flex-1 px-8 pt-6 pb-8">
+    <div className="overflow-y-auto flex-1 px-10 pt-6 pb-8">
     <div className="flex flex-col gap-6 w-full">
       <div>
         <h1 className="text-xl font-medium">Release Info</h1>
@@ -1040,7 +1040,7 @@ function StepRelease({
       </div>
       {/* Glass footer — only when results exist */}
       {searchMode === "results" && (
-        <div className="absolute bottom-0 inset-x-0 px-8 pt-8 pb-6 bg-gradient-to-t from-background via-background/90 to-transparent">
+        <div className="absolute bottom-0 inset-x-0 px-10 pt-8 pb-6 bg-gradient-to-t from-background via-background/90 to-transparent">
           <Button size="lg" className="w-full" onClick={goCreate}>
             <Plus className="size-4" /> Create new release
           </Button>
@@ -1051,7 +1051,7 @@ function StepRelease({
 
   // ── details mode ────────────────────────────────────────────────────────────
   if (stepMode === "details" && selectedRelease) return (
-    <div className="overflow-y-auto flex-1 px-8 pt-6 pb-8">
+    <div className="overflow-y-auto flex-1 px-10 pt-6 pb-8">
     <div className="flex flex-col gap-6 w-full">
       <div>
         <h1 className="text-xl font-medium">Release Info</h1>
@@ -1072,7 +1072,7 @@ function StepRelease({
 
   // ── create mode ─────────────────────────────────────────────────────────────
   return (
-    <div className="overflow-y-auto flex-1 px-8 pt-6 pb-8">
+    <div className="overflow-y-auto flex-1 px-10 pt-6 pb-8">
     <div className="flex flex-col gap-6 w-full">
       <div>
         <h1 className="text-xl font-medium">Release Info</h1>
@@ -1127,7 +1127,7 @@ function StepMonetisation({
 }) {
   const [currency, setCurrency] = useState("USD")
   return (
-    <div className="overflow-y-auto flex-1 px-8 pt-6 pb-8">
+    <div className="overflow-y-auto flex-1 px-10 pt-6 pb-8">
     <div className="flex flex-col gap-6 w-full">
       <div>
         <h1 className="text-xl font-medium">Monetisation</h1>
@@ -1848,7 +1848,7 @@ export function UploadMusicDialog({
             </div>
 
             {/* Right: file panel */}
-            <div className="w-1/2 shrink-0 border-l border-border px-8 pt-6 pb-8 overflow-y-auto">
+            <div className="w-1/2 shrink-0 border-l border-border px-10 pt-6 pb-8 overflow-y-auto">
               <FilePanel
                 files={files} onFilesChange={setFiles}
                 isDragging={isDragging} onDragChange={setIsDragging}
