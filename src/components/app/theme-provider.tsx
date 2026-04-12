@@ -24,16 +24,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const toggleTheme = () => {
     const next: Theme = theme === "light" ? "dark" : "light"
-    // Inject a temporary <style> to kill all transitions for exactly one frame
-    const style = document.createElement("style")
-    style.textContent = "*, *::before, *::after { transition: none !important; }"
-    document.head.appendChild(style)
-    // Apply theme
     setTheme(next)
     localStorage.setItem("muza-theme", next)
     document.documentElement.classList.toggle("dark", next === "dark")
-    // Remove after browser has painted the new colours
-    requestAnimationFrame(() => document.head.removeChild(style))
   }
 
   return (
