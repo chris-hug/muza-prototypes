@@ -928,7 +928,7 @@ function StepRelease({
   // ── input mode ──────────────────────────────────────────────────────────────
   if (stepMode === "input") return (
     <div className="overflow-y-auto flex-1 px-10 pt-6 pb-8">
-    <div className="flex flex-col gap-6 w-full">
+    <div className="flex flex-col gap-6 max-w-lg mx-auto w-full">
       <div>
         <h1 className="text-xl font-medium">Release Info</h1>
         <p className="text-sm text-muted-foreground font-normal mt-1">Details looked up from MusicBrainz and Discogs</p>
@@ -990,7 +990,7 @@ function StepRelease({
     <div className="relative flex-1 overflow-hidden">
       {/* Scrollable list */}
       <div className="overflow-y-auto h-full px-8 pt-6 pb-32">
-        <div className="flex flex-col gap-6 w-full">
+        <div className="flex flex-col gap-6 max-w-lg mx-auto w-full">
           <div>
             <h1 className="text-xl font-medium">Release Info</h1>
             <p className="text-sm text-muted-foreground font-normal mt-1">Details looked up from MusicBrainz and Discogs</p>
@@ -1052,7 +1052,7 @@ function StepRelease({
   // ── details mode ────────────────────────────────────────────────────────────
   if (stepMode === "details" && selectedRelease) return (
     <div className="overflow-y-auto flex-1 px-10 pt-6 pb-8">
-    <div className="flex flex-col gap-6 w-full">
+    <div className="flex flex-col gap-6 max-w-lg mx-auto w-full">
       <div>
         <h1 className="text-xl font-medium">Release Info</h1>
         <p className="text-sm text-muted-foreground font-normal mt-1">Details looked up from MusicBrainz and Discogs</p>
@@ -1073,7 +1073,7 @@ function StepRelease({
   // ── create mode ─────────────────────────────────────────────────────────────
   return (
     <div className="overflow-y-auto flex-1 px-10 pt-6 pb-8">
-    <div className="flex flex-col gap-6 w-full">
+    <div className="flex flex-col gap-6 max-w-lg mx-auto w-full">
       <div>
         <h1 className="text-xl font-medium">Release Info</h1>
         <p className="text-sm text-muted-foreground font-normal mt-1">Fill in the details for your new release</p>
@@ -1128,7 +1128,7 @@ function StepMonetisation({
   const [currency, setCurrency] = useState("USD")
   return (
     <div className="overflow-y-auto flex-1 px-10 pt-6 pb-8">
-    <div className="flex flex-col gap-6 w-full">
+    <div className="flex flex-col gap-6 max-w-lg mx-auto w-full">
       <div>
         <h1 className="text-xl font-medium">Monetisation</h1>
         <p className="text-sm text-muted-foreground font-normal mt-1">Choose how listeners access this release</p>
@@ -1290,7 +1290,7 @@ function StepTrackMatching({
   const type    = isNew ? newForm.type : (release?.type ?? "album")
 
   return (
-    <div className="flex flex-col gap-6 w-full">
+    <div className="flex flex-col gap-6 max-w-lg mx-auto w-full">
 
       <h1 className="text-xl font-medium">Track matching</h1>
 
