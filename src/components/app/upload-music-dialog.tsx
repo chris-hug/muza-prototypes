@@ -105,7 +105,7 @@ const MOCK_TRACKS: TrackRow[] = [
 ]
 
 const TYPE_LABELS: Record<ContentType, string> = { album: "Album", single: "Single", ep: "EP" }
-const STEP_LABELS = ["Release Info", "Monetisation", "Track matching", "Confirm"]
+const STEP_LABELS = ["Release Info", "Monetisation", "Track matching", "Preview"]
 
 // Table constants — exact My Music values
 const COL_GAP  = 16
@@ -1447,6 +1447,8 @@ function StepConfirmation({
 
   return (
     <div className="flex flex-col gap-8 w-full">
+
+      <h1 className="text-xl font-medium">Preview</h1>
 
       {/* Media header */}
       <div className="flex gap-6 items-start">
