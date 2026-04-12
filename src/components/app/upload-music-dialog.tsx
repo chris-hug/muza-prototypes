@@ -44,7 +44,7 @@ interface ReleaseForm {
 }
 interface UploadFile { id: string; name: string; size: string; progress: number; done: boolean }
 interface TrackRow {
-  id: string; fileName: string; trackName: string; composer: string
+  id: string; fileName: string; trackName: string; composer: string; lyricist: string
   duration: string; matchScore: number; assignedFile: string
 }
 interface MusicianEntry {
@@ -99,9 +99,9 @@ const MOCK_FILES: UploadFile[] = [
 ]
 
 const MOCK_TRACKS: TrackRow[] = [
-  { id: "t1", fileName: "SunRa_SpaceIsThePlace_Take01.wav", trackName: "Space Is the Place", composer: "Sun Ra", duration: "4:54",  matchScore: 80, assignedFile: "f1" },
-  { id: "t2", fileName: "SunRa_HelioCentricWorlds_01.wav",  trackName: "Heliocentric",        composer: "Sun Ra", duration: "12:18", matchScore: 80, assignedFile: "f2" },
-  { id: "t3", fileName: "SunRa_Atlantis_Side1_Master.wav",  trackName: "Atlantis",            composer: "Sun Ra", duration: "8:37",  matchScore: 20, assignedFile: "f3" },
+  { id: "t1", fileName: "SunRa_SpaceIsThePlace_Take01.wav", trackName: "Space Is the Place", composer: "Sun Ra", lyricist: "Sun Ra", duration: "4:54",  matchScore: 80, assignedFile: "f1" },
+  { id: "t2", fileName: "SunRa_HelioCentricWorlds_01.wav",  trackName: "Heliocentric",        composer: "Sun Ra", lyricist: "",       duration: "12:18", matchScore: 80, assignedFile: "f2" },
+  { id: "t3", fileName: "SunRa_Atlantis_Side1_Master.wav",  trackName: "Atlantis",            composer: "Sun Ra", lyricist: "",       duration: "8:37",  matchScore: 20, assignedFile: "f3" },
 ]
 
 const TYPE_LABELS: Record<ContentType, string> = { album: "Album", single: "Single", ep: "EP" }
@@ -1238,9 +1238,9 @@ function StepMonetisation({
 
 // ─── StepTrackMatching ────────────────────────────────────────────────────────
 
-type TCol = "track" | "file" | "composer"
-const TM_MIN: Record<TCol, number> = { track: 100, file: 140, composer: 100 }
-const TM_INIT: Record<TCol, number> = { track: 180, file: 260, composer: 160 }
+type TCol = "track" | "file" | "composer" | "lyricist"
+const TM_MIN: Record<TCol, number> = { track: 100, file: 140, composer: 100, lyricist: 100 }
+const TM_INIT: Record<TCol, number> = { track: 180, file: 260, composer: 140, lyricist: 140 }
 
 function StepTrackMatching({
   release, isNew, newForm, tracks, onTracksChange, files, onContinue,
@@ -1321,6 +1321,7 @@ function StepTrackMatching({
             <col style={{ width: colW.track }} />
             <col style={{ width: colW.file }} />
             <col style={{ width: colW.composer }} />
+            <col style={{ width: colW.lyricist }} />
             <col style={{ width: 56 }} />
             <col style={{ width: 80 }} />
             <col style={{ width: ACTION_W }} />
@@ -1331,6 +1332,7 @@ function StepTrackMatching({
               <ResizableTh col="track" label="Track" />
               <ResizableTh col="file" label="File" />
               <ResizableTh col="composer" label="Composer" />
+              <ResizableTh col="lyricist" label="Lyricist" />
               <th className="text-right text-xs font-normal text-muted-foreground pb-1.5 pr-2">Time</th>
               <th className="text-center text-xs font-normal text-muted-foreground pb-1.5">Match</th>
               <th />
@@ -1397,6 +1399,20 @@ function StepTrackMatching({
                     />
                   ) : (
                     <span className="text-xs font-normal text-muted-foreground truncate block">{track.composer}</span>
+                  )}
+                </td>
+
+                {/* Lyricist */}
+                <td className="pl-2 pr-2">
+                  {isNew ? (
+                    <Input
+                      value={track.lyricist}
+                      onChange={e => onTracksChange(tracks.map((t, j) => j === i ? { ...t, lyricist: e.target.value } : t))}
+                      className="h-8 text-xs font-normal"
+                      placeholder="Lyricist"
+                    />
+                  ) : (
+                    <span className="text-xs font-normal text-muted-foreground truncate block">{track.lyricist}</span>
                   )}
                 </td>
 
