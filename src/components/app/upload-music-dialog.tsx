@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { ContentTypeBadge } from "@/components/ui/badge"
+import { Badge, ContentTypeBadge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -44,7 +44,7 @@ interface ReleaseForm {
 }
 interface UploadFile { id: string; name: string; size: string; progress: number; done: boolean }
 interface TrackRow {
-  id: string; fileName: string; trackName: string; composer: string
+  id: string; fileName: string; trackName: string; composer: string; lyricist: string
   duration: string; matchScore: number; assignedFile: string
 }
 interface MusicianEntry {
@@ -99,13 +99,13 @@ const MOCK_FILES: UploadFile[] = [
 ]
 
 const MOCK_TRACKS: TrackRow[] = [
-  { id: "t1", fileName: "SunRa_SpaceIsThePlace_Take01.wav", trackName: "Space Is the Place", composer: "Sun Ra", duration: "4:54",  matchScore: 80, assignedFile: "f1" },
-  { id: "t2", fileName: "SunRa_HelioCentricWorlds_01.wav",  trackName: "Heliocentric",        composer: "Sun Ra", duration: "12:18", matchScore: 80, assignedFile: "f2" },
-  { id: "t3", fileName: "SunRa_Atlantis_Side1_Master.wav",  trackName: "Atlantis",            composer: "Sun Ra", duration: "8:37",  matchScore: 20, assignedFile: "f3" },
+  { id: "t1", fileName: "SunRa_SpaceIsThePlace_Take01.wav", trackName: "Space Is the Place", composer: "Sun Ra", lyricist: "Sun Ra", duration: "4:54",  matchScore: 80, assignedFile: "f1" },
+  { id: "t2", fileName: "SunRa_HelioCentricWorlds_01.wav",  trackName: "Heliocentric",        composer: "Sun Ra", lyricist: "",       duration: "12:18", matchScore: 80, assignedFile: "f2" },
+  { id: "t3", fileName: "SunRa_Atlantis_Side1_Master.wav",  trackName: "Atlantis",            composer: "Sun Ra", lyricist: "",       duration: "8:37",  matchScore: 20, assignedFile: "f3" },
 ]
 
 const TYPE_LABELS: Record<ContentType, string> = { album: "Album", single: "Single", ep: "EP" }
-const STEP_LABELS = ["Release Info", "Monetisation", "Track matching", "Confirm"]
+const STEP_LABELS = ["Release Info", "Monetisation", "Track matching", "Preview"]
 
 // Table constants — exact My Music values
 const COL_GAP  = 16
@@ -132,13 +132,12 @@ function EntityAvatar({ initials, size = "md" }: { initials: string; size?: "sm"
 function MatchBadge({ score }: { score: number }) {
   const good = score >= 60
   return (
-    <span className={cn(
-      "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-normal shrink-0",
-      good ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"
+    <Badge className={cn(
+      good ? "bg-green-50 text-green-700 border-transparent" : "bg-red-50 text-red-600 border-transparent"
     )}>
       {good ? <Check className="size-3" /> : <AlertTriangle className="size-3" />}
       {score}%
-    </span>
+    </Badge>
   )
 }
 
@@ -927,8 +926,8 @@ function StepRelease({
 
   // ── input mode ──────────────────────────────────────────────────────────────
   if (stepMode === "input") return (
-    <div className="overflow-y-auto flex-1 px-10 pt-4 pb-8">
-    <div className="flex flex-col gap-6 max-w-lg mx-auto w-full">
+    <div className="overflow-y-auto flex-1 px-16 pt-6 pb-8">
+    <div className="flex flex-col gap-6 w-full">
       <div>
         <h1 className="text-xl font-medium">Release Info</h1>
         <p className="text-sm text-muted-foreground font-normal mt-1">Details looked up from MusicBrainz and Discogs</p>
@@ -989,8 +988,8 @@ function StepRelease({
   if (stepMode === "results") return (
     <div className="relative flex-1 overflow-hidden">
       {/* Scrollable list */}
-      <div className="overflow-y-auto h-full px-10 pt-4 pb-32">
-        <div className="flex flex-col gap-6 max-w-lg mx-auto w-full">
+      <div className="overflow-y-auto h-full px-8 pt-6 pb-32">
+        <div className="flex flex-col gap-6 w-full">
           <div>
             <h1 className="text-xl font-medium">Release Info</h1>
             <p className="text-sm text-muted-foreground font-normal mt-1">Details looked up from MusicBrainz and Discogs</p>
@@ -1040,12 +1039,10 @@ function StepRelease({
       </div>
       {/* Glass footer — only when results exist */}
       {searchMode === "results" && (
-        <div className="absolute bottom-0 inset-x-0 px-10 pt-8 pb-6 bg-gradient-to-t from-background via-background/90 to-transparent">
-          <div className="max-w-lg mx-auto">
-            <Button size="lg" className="w-full" onClick={goCreate}>
-              <Plus className="size-4" /> Create new release
-            </Button>
-          </div>
+        <div className="absolute bottom-0 inset-x-0 px-16 pt-8 pb-6 bg-gradient-to-t from-background via-background/90 to-transparent">
+          <Button size="lg" className="w-full" onClick={goCreate}>
+            <Plus className="size-4" /> Create new release
+          </Button>
         </div>
       )}
     </div>
@@ -1053,8 +1050,8 @@ function StepRelease({
 
   // ── details mode ────────────────────────────────────────────────────────────
   if (stepMode === "details" && selectedRelease) return (
-    <div className="overflow-y-auto flex-1 px-10 pt-4 pb-8">
-    <div className="flex flex-col gap-6 max-w-lg mx-auto w-full">
+    <div className="overflow-y-auto flex-1 px-16 pt-6 pb-8">
+    <div className="flex flex-col gap-6 w-full">
       <div>
         <h1 className="text-xl font-medium">Release Info</h1>
         <p className="text-sm text-muted-foreground font-normal mt-1">Details looked up from MusicBrainz and Discogs</p>
@@ -1074,8 +1071,8 @@ function StepRelease({
 
   // ── create mode ─────────────────────────────────────────────────────────────
   return (
-    <div className="overflow-y-auto flex-1 px-10 pt-4 pb-8">
-    <div className="flex flex-col gap-6 max-w-lg mx-auto w-full">
+    <div className="overflow-y-auto flex-1 px-16 pt-6 pb-8">
+    <div className="flex flex-col gap-6 w-full">
       <div>
         <h1 className="text-xl font-medium">Release Info</h1>
         <p className="text-sm text-muted-foreground font-normal mt-1">Fill in the details for your new release</p>
@@ -1129,7 +1126,8 @@ function StepMonetisation({
 }) {
   const [currency, setCurrency] = useState("USD")
   return (
-    <div className="flex flex-col gap-6 max-w-lg mx-auto w-full">
+    <div className="overflow-y-auto flex-1 px-16 pt-6 pb-8">
+    <div className="flex flex-col gap-6 w-full">
       <div>
         <h1 className="text-xl font-medium">Monetisation</h1>
         <p className="text-sm text-muted-foreground font-normal mt-1">Choose how listeners access this release</p>
@@ -1233,20 +1231,22 @@ function StepMonetisation({
         <Button size="default" onClick={onContinue}>Next</Button>
       </div>
     </div>
+    </div>
   )
 }
 
 // ─── StepTrackMatching ────────────────────────────────────────────────────────
 
-type TCol = "track" | "file" | "composer"
-const TM_MIN: Record<TCol, number> = { track: 100, file: 140, composer: 100 }
-const TM_INIT: Record<TCol, number> = { track: 180, file: 260, composer: 160 }
+type TCol = "track" | "file" | "composer" | "lyricist"
+const TM_MIN: Record<TCol, number> = { track: 100, file: 140, composer: 100, lyricist: 100 }
+const TM_INIT: Record<TCol, number> = { track: 180, file: 260, composer: 140, lyricist: 140 }
 
 function StepTrackMatching({
-  release, isNew, newForm, tracks, onTracksChange, files,
+  release, isNew, newForm, tracks, onTracksChange, files, onContinue,
 }: {
   release: Release | null; isNew: boolean; newForm: ReleaseForm
   tracks: TrackRow[]; onTracksChange: (t: TrackRow[]) => void; files: UploadFile[]
+  onContinue: () => void
 }) {
   const matched = tracks.filter(t => t.matchScore >= 60).length
   const [colW, setColW] = useState<Record<TCol, number>>(TM_INIT)
@@ -1289,7 +1289,7 @@ function StepTrackMatching({
   const type    = isNew ? newForm.type : (release?.type ?? "album")
 
   return (
-    <div className="flex flex-col gap-6 w-full mx-auto">
+    <div className="flex flex-col gap-6 w-full">
 
       <h1 className="text-xl font-medium">Track matching</h1>
 
@@ -1302,14 +1302,14 @@ function StepTrackMatching({
           type,
           coverUrl: release?.coverUrl,
         }} />
-        <span className={cn(
-          "text-xs font-normal px-3 py-1 rounded-full shrink-0",
+        <Badge className={cn(
+          "border-transparent",
           matched === tracks.length ? "bg-green-50 text-green-700"
             : matched > 0          ? "bg-yellow-50 text-yellow-700"
                                    : "bg-red-50 text-red-600"
         )}>
           {matched}/{tracks.length} Matches
-        </span>
+        </Badge>
       </div>
 
       {/* Table */}
@@ -1320,6 +1320,7 @@ function StepTrackMatching({
             <col style={{ width: colW.track }} />
             <col style={{ width: colW.file }} />
             <col style={{ width: colW.composer }} />
+            <col style={{ width: colW.lyricist }} />
             <col style={{ width: 56 }} />
             <col style={{ width: 80 }} />
             <col style={{ width: ACTION_W }} />
@@ -1330,6 +1331,7 @@ function StepTrackMatching({
               <ResizableTh col="track" label="Track" />
               <ResizableTh col="file" label="File" />
               <ResizableTh col="composer" label="Composer" />
+              <ResizableTh col="lyricist" label="Lyricist" />
               <th className="text-right text-xs font-normal text-muted-foreground pb-1.5 pr-2">Time</th>
               <th className="text-center text-xs font-normal text-muted-foreground pb-1.5">Match</th>
               <th />
@@ -1340,23 +1342,14 @@ function StepTrackMatching({
               <tr
                 key={track.id}
                 className="hover:bg-muted cursor-default transition-colors rounded-lg"
-                style={{ height: 56 }}
+                style={{ height: 64 }}
               >
                 {/* # */}
                 <td className="text-xs font-normal text-muted-foreground pl-2">{i + 1}</td>
 
                 {/* Track name */}
                 <td className="pl-2 pr-2">
-                  {isNew ? (
-                    <Input
-                      value={track.trackName}
-                      onChange={e => onTracksChange(tracks.map((t, j) => j === i ? { ...t, trackName: e.target.value } : t))}
-                      className="h-8 text-xs font-normal"
-                      placeholder="Song name"
-                    />
-                  ) : (
-                    <span className="text-xs font-normal truncate block">{track.trackName}</span>
-                  )}
+                  <span className="text-xs font-normal truncate block">{track.trackName}</span>
                 </td>
 
                 {/* File */}
@@ -1369,14 +1362,14 @@ function StepTrackMatching({
                       value={track.assignedFile}
                       onValueChange={fileId => onTracksChange(tracks.map((t, j) => j === i ? { ...t, assignedFile: fileId, fileName: files.find(f => f.id === fileId)?.name ?? t.fileName } : t))}
                     >
-                      <SelectTrigger data-size="sm" className="min-w-0 flex-1">
+                      <SelectTrigger className="min-w-0 flex-1">
                         <span className="truncate">
                           {files.find(f => f.id === track.assignedFile)?.name ?? "—"}
                         </span>
                       </SelectTrigger>
                       <SelectContent className="min-w-64 [--anchor-width:max-content]">
                         {files.map(f => (
-                          <SelectItem key={f.id} value={f.id} className="text-xs">
+                          <SelectItem key={f.id} value={f.id}>
                             {f.name}
                           </SelectItem>
                         ))}
@@ -1391,11 +1384,23 @@ function StepTrackMatching({
                     <Input
                       value={track.composer}
                       onChange={e => onTracksChange(tracks.map((t, j) => j === i ? { ...t, composer: e.target.value } : t))}
-                      className="h-8 text-xs font-normal"
                       placeholder="Composer"
                     />
                   ) : (
-                    <span className="text-xs font-normal text-muted-foreground truncate block">{track.composer}</span>
+                    <span className="text-sm font-normal text-muted-foreground truncate block">{track.composer}</span>
+                  )}
+                </td>
+
+                {/* Lyricist */}
+                <td className="pl-2 pr-2">
+                  {isNew ? (
+                    <Input
+                      value={track.lyricist}
+                      onChange={e => onTracksChange(tracks.map((t, j) => j === i ? { ...t, lyricist: e.target.value } : t))}
+                      placeholder="Lyricist"
+                    />
+                  ) : (
+                    <span className="text-sm font-normal text-muted-foreground truncate block">{track.lyricist}</span>
                   )}
                 </td>
 
@@ -1408,12 +1413,14 @@ function StepTrackMatching({
                 {/* Action */}
                 <td className="text-center">
                   {isNew && (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => onTracksChange(tracks.filter((_, j) => j !== i))}
-                      className="size-8 flex items-center justify-center rounded-full bg-secondary hover:bg-muted text-muted-foreground transition-colors mx-auto"
+                      className="mx-auto"
                     >
-                      <Trash2 className="size-3.5" />
-                    </button>
+                      <Trash2 />
+                    </Button>
                   )}
                 </td>
               </tr>
@@ -1422,18 +1429,10 @@ function StepTrackMatching({
         </table>
       </div>
 
-      {/* Add track (isNew only) */}
-      {isNew && (
-        <Button
-          variant="secondary" size="sm" className="self-start gap-1.5"
-          onClick={() => onTracksChange([...tracks, {
-            id: `t${Date.now()}`, fileName: "", trackName: "", composer: "",
-            duration: "0:00", matchScore: 0, assignedFile: ""
-          }])}
-        >
-          <Plus className="size-3.5" />Add track
-        </Button>
-      )}
+      <div className="flex justify-end">
+        <Button size="default" onClick={onContinue}>Next</Button>
+      </div>
+
     </div>
   )
 }
@@ -1453,13 +1452,15 @@ function StepConfirmation({
   const year    = isNew ? (newForm.recordingDate || "—") : String(release?.year ?? "")
 
   return (
-    <div className="flex flex-col gap-8 w-full mx-auto">
+    <div className="flex flex-col gap-8 w-full">
+
+      <h1 className="text-xl font-medium">Preview</h1>
 
       {/* Media header */}
-      <div className="flex gap-6 items-start py-4">
+      <div className="flex gap-6 items-start">
         <CoverPlaceholder size="lg" src={release?.coverUrl} />
 
-        <div className="flex flex-col justify-between h-56 flex-1 min-w-0 px-4">
+        <div className="flex flex-col justify-between h-56 flex-1 min-w-0">
           <div className="flex flex-col gap-3">
             <h1 className="text-2xl font-medium truncate">{title}</h1>
             <div className="flex items-center gap-4 flex-wrap">
@@ -1811,12 +1812,12 @@ export function UploadMusicDialog({
       <div className="flex flex-1 min-h-0">
         {isFullWidth ? (
           /* Steps 3 & 4: full width, centered */
-          <div className="flex-1 overflow-y-auto px-10 pt-4 pb-8">
-            <div className="max-w-6xl 3xl:max-w-[1600px] mx-auto w-full">
+          <div className="flex-1 overflow-y-auto px-16 pt-6 pb-10">
               {step === 3 && (
                 <StepTrackMatching
                   release={selectedRelease} isNew={isCreatingNew} newForm={newForm}
                   tracks={tracks} onTracksChange={setTracks} files={files}
+                  onContinue={handleNext}
                 />
               )}
               {step === 4 && (
@@ -1825,7 +1826,6 @@ export function UploadMusicDialog({
                   tracks={tracks} onPublish={handleNext}
                 />
               )}
-            </div>
           </div>
         ) : (
           /* Steps 1 & 2: 50/50 split */
@@ -1856,7 +1856,7 @@ export function UploadMusicDialog({
             </div>
 
             {/* Right: file panel */}
-            <div className="w-1/2 shrink-0 border-l border-border px-8 pt-4 pb-8 overflow-y-auto">
+            <div className="w-1/2 shrink-0 border-l border-border px-16 pt-6 pb-8 overflow-y-auto">
               <FilePanel
                 files={files} onFilesChange={setFiles}
                 isDragging={isDragging} onDragChange={setIsDragging}

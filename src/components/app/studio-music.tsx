@@ -10,8 +10,10 @@ import {
   DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
+import { startColumnResize } from "@/lib/column-resize"
+import { ResizeHandle } from "@/components/ui/table"
 import {
-  ArrowDown, ArrowUp, ArrowUpDown, Columns2, ChevronDown,
+  ArrowDown, ArrowUp, ArrowUpDown, Settings2, ChevronDown,
   Download, Pencil, Play, Search, Upload, X,
 } from "lucide-react"
 import { UploadMusicDialog } from "@/components/app/upload-music-dialog"
@@ -55,7 +57,7 @@ const COL_DEFS: { key: ColKey; label: string; required?: boolean }[] = [
   { key: "id",          label: "ID" },
   { key: "cover",       label: "Cover" },
   { key: "title",       label: "Title",       required: true },
-  { key: "artist",      label: "Main Artist" },
+  { key: "artist",      label: "Artist" },
   { key: "band",        label: "Band" },
   { key: "year",        label: "Year" },
   { key: "tracks",      label: "Tracks" },
@@ -68,6 +70,9 @@ const COL_DEFS: { key: ColKey; label: string; required?: boolean }[] = [
 
 const CHECKBOX_W         = 24
 const COL_GAP            = 16
+
+// Ordered list of columns eligible for redistribution (excludes cover & monetisation)
+const COL_ORDER: ColKey[] = ["id", "title", "artist", "band", "year", "tracks", "label", "uploaded", "type", "state"]
 // When the table container shrinks below this width, cover auto-hides
 const COVER_HIDE_THRESHOLD = 800
 
@@ -466,7 +471,7 @@ function ArtistMultiSelect({
   return (
     <div ref={containerRef} className="relative">
       <FilterTrigger
-        label="Main Artist"
+        label="Artist"
         active={selected.size > 0}
         open={open}
         count={selected.size}
@@ -634,37 +639,21 @@ function MonetisationMultiSelect({
   )
 }
 
-// ─── ResizeHandle ─────────────────────────────────────────────────────────────
-
-function ResizeHandle({ colKey, onStart }: {
-  colKey: ColKey
-  onStart: (key: ColKey, e: React.MouseEvent) => void
-}) {
-  return (
-    <div
-      className="absolute right-0 top-0 h-full w-3 flex items-center justify-center cursor-col-resize select-none z-10"
-      onMouseDown={e => { e.preventDefault(); e.stopPropagation(); onStart(colKey, e) }}
-    >
-      <div className="w-px h-3/4 rounded-full bg-border opacity-0 group-hover/th:opacity-100 transition-opacity" />
-    </div>
-  )
-}
-
 // ─── TableHeader ──────────────────────────────────────────────────────────────
 
 interface TableHeaderProps {
-  colWidths:     Record<ColKey, number>
-  visibleCols:   Record<ColKey, boolean>
-  onResizeStart: (key: ColKey, e: React.MouseEvent) => void
-  sortKey:       SortKey
-  sortDir:       SortDir
-  onSort:        (key: SortKey) => void
-  allSelected:   boolean
-  someSelected:  boolean
-  onSelectAll:   () => void
+  colWidths:   Record<ColKey, number>
+  visibleCols: Record<ColKey, boolean>
+  onResize:    (updates: Partial<Record<ColKey, number>>) => void
+  sortKey:     SortKey
+  sortDir:     SortDir
+  onSort:      (key: SortKey) => void
+  allSelected:  boolean
+  someSelected: boolean
+  onSelectAll:  () => void
 }
 
-function TableHeader({ colWidths, visibleCols, onResizeStart, sortKey, sortDir, onSort, allSelected, someSelected, onSelectAll }: TableHeaderProps) {
+function TableHeader({ colWidths, visibleCols, onResize, sortKey, sortDir, onSort, allSelected, someSelected, onSelectAll }: TableHeaderProps) {
   const cell = (key: ColKey, label: string, grow = false, resizable = true) => {
     if (!visibleCols[key]) return null
     const sk = COL_SORT_KEY[key]
@@ -672,7 +661,7 @@ function TableHeader({ colWidths, visibleCols, onResizeStart, sortKey, sortDir, 
     return (
       <div
         key={key}
-        className="relative flex items-center overflow-hidden group/th"
+        className="relative flex items-center overflow-hidden group/th hover:bg-muted transition-colors rounded-sm"
         style={grow
           ? { flex: 1, minWidth: colWidths[key] }
           : { width: colWidths[key], flexShrink: 0 }}
@@ -695,14 +684,46 @@ function TableHeader({ colWidths, visibleCols, onResizeStart, sortKey, sortDir, 
         ) : (
           <span className="text-xs font-normal text-muted-foreground truncate">{label}</span>
         )}
-        {resizable && <ResizeHandle colKey={key} onStart={onResizeStart} />}
+        {resizable && (
+          <ResizeHandle
+            onMouseDown={e => {
+              e.preventDefault()
+              e.stopPropagation()
+              const startX      = e.clientX
+              const startWidths = { ...colWidths }
+              // Following cols eligible for redistribution (in order, visible, excludes cover & monetisation)
+              const colIdx   = COL_ORDER.indexOf(key)
+              const following = colIdx >= 0
+                ? COL_ORDER.slice(colIdx + 1).filter(k => visibleCols[k])
+                : []
+              const onMove = (ev: MouseEvent) => {
+                const newW      = Math.max(MIN_WIDTHS[key], startWidths[key] + (ev.clientX - startX))
+                const actualDelta = newW - startWidths[key]
+                const updates: Partial<Record<ColKey, number>> = { [key]: newW }
+                if (following.length > 0) {
+                  const share = -actualDelta / following.length
+                  for (const k of following) {
+                    updates[k] = Math.max(MIN_WIDTHS[k], startWidths[k] + share)
+                  }
+                }
+                onResize(updates)
+              }
+              const onUp = () => {
+                document.removeEventListener("mousemove", onMove)
+                document.removeEventListener("mouseup",   onUp)
+              }
+              document.addEventListener("mousemove", onMove)
+              document.addEventListener("mouseup",   onUp)
+            }}
+          />
+        )}
       </div>
     )
   }
 
   return (
     <div
-      className="flex items-center w-full pb-1.5 border-b border-border"
+      className="flex items-center w-full h-11 border-b border-border"
       style={{ gap: COL_GAP, paddingLeft: 8, paddingRight: 8 }}
     >
       <div style={{ width: CHECKBOX_W, flexShrink: 0 }} className="flex items-center justify-center">
@@ -716,7 +737,7 @@ function TableHeader({ colWidths, visibleCols, onResizeStart, sortKey, sortDir, 
 
       {cell("id",          "ID")}
       {cell("cover",       "Cover", false, false)}
-      {cell("title",       "Title", true)}
+      {cell("title",       "Title")}
       {cell("artist",      "Main Artist")}
       {cell("band",        "Band")}
       {cell("year",        "Year")}
@@ -725,6 +746,7 @@ function TableHeader({ colWidths, visibleCols, onResizeStart, sortKey, sortDir, 
       {cell("uploaded",    "Uploaded")}
       {cell("type",        "Type")}
       {cell("state",       "State")}
+      <div style={{ flex: 1 }} />
       {cell("monetisation","Monetisation")}
     </div>
   )
@@ -750,7 +772,7 @@ function TableRow({ release, colWidths, visibleCols, isSelected, onSelect, statu
     <div
       className={cn(
         "flex items-center w-full rounded-lg transition-colors cursor-pointer",
-        isSelected ? "bg-muted" : hovered && "bg-muted",
+        (isSelected || hovered) && "bg-muted",
       )}
       style={{ gap: COL_GAP, paddingLeft: 8, paddingRight: 8, height: 56 }}
       onMouseEnter={() => setHovered(true)}
@@ -785,7 +807,7 @@ function TableRow({ release, colWidths, visibleCols, isSelected, onSelect, statu
       )}
 
       {vis.title && (
-        <span className="text-xs font-normal text-foreground truncate" style={{ flex: 1, minWidth: colWidths.title }}>
+        <span className="text-xs font-normal text-foreground truncate shrink-0" style={{ width: colWidths.title }}>
           {release.title}
         </span>
       )}
@@ -837,6 +859,8 @@ function TableRow({ release, colWidths, visibleCols, isSelected, onSelect, statu
           <StatusBadge status={status} onStatusChange={onStatusChange} />
         </div>
       )}
+
+      <div style={{ flex: 1 }} />
 
       {vis.monetisation && (
         <div className="relative shrink-0 flex items-center" style={{ width: colWidths.monetisation }}>
@@ -907,7 +931,6 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
   // Cover auto-hide driven by ResizeObserver (separate from user toggle)
   const [autoCoverHide, setAutoCoverHide] = useState(false)
 
-  const resizeRef      = useRef<{ col: ColKey; startX: number; startW: number } | null>(null)
   const tableWrapRef   = useRef<HTMLDivElement>(null)
 
   // Compute initial column widths to fill container evenly, then keep them fixed after user resizes
@@ -920,7 +943,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
       // Default visible: checkbox + cover + title + artist + label + uploaded + type + state + monetisation
       // = 9 flex children → 8 inter-item gaps
       const available = entry.contentRect.width
-        - 96                   // px-10 wrapper (40+40) + header pad (8+8)
+        - 144                  // px-16 wrapper (64+64) + header pad (8+8)
         - CHECKBOX_W
         - COL_GAP * 8
         - DEFAULT_WIDTHS.cover - DEFAULT_WIDTHS.label - DEFAULT_WIDTHS.uploaded
@@ -950,20 +973,8 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
     return () => ro.disconnect()
   }, [colWidthsReady])
 
-  function handleResizeStart(col: ColKey, e: React.MouseEvent) {
-    resizeRef.current = { col, startX: e.clientX, startW: colWidths[col] }
-    const onMove = (ev: MouseEvent) => {
-      if (!resizeRef.current) return
-      const { col, startX, startW } = resizeRef.current
-      setColWidths(prev => ({ ...prev, [col]: Math.max(MIN_WIDTHS[col], startW + (ev.clientX - startX)) }))
-    }
-    const onUp = () => {
-      resizeRef.current = null
-      document.removeEventListener("mousemove", onMove)
-      document.removeEventListener("mouseup", onUp)
-    }
-    document.addEventListener("mousemove", onMove)
-    document.addEventListener("mouseup", onUp)
+  function handleResize(updates: Partial<Record<ColKey, number>>) {
+    setColWidths(prev => ({ ...prev, ...updates }))
   }
 
   function toggleCol(key: ColKey) {
@@ -1025,7 +1036,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
     <div ref={tableWrapRef} className="relative flex flex-col h-full">
 
       {/* ── Page header ──────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-center justify-between gap-6 px-10 pt-8 pb-6">
+      <div className="shrink-0 flex items-center justify-between gap-6 px-16 pt-8 pb-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">My Music</h1>
           <p className="text-sm font-normal text-muted-foreground mt-1">
@@ -1041,16 +1052,10 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
       </div>
 
       {/* ── Toolbar ──────────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-start gap-3 px-10 pb-4">
+      <div className="shrink-0 flex items-start gap-3 px-16 pb-8">
 
         {/* LEFT — filters */}
         <div className="flex items-start gap-2 flex-1 flex-wrap">
-
-          {/* Content Type — multi-select */}
-          <ContentTypeMultiSelect
-            selected={typeFilters}
-            onChange={setTypeFilters}
-          />
 
           {/* Status — single-select, radio visual */}
           <FilterButton label="Status" active={statusFilter !== "all"}>
@@ -1072,6 +1077,12 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
             </DropdownMenuContent>
           </FilterButton>
 
+          {/* Monetisation — multi-select */}
+          <MonetisationMultiSelect
+            selected={monetisationFilters}
+            onChange={setMonetisationFilters}
+          />
+
           {/* Artist — multi-select combobox */}
           <ArtistMultiSelect
             options={artists}
@@ -1086,10 +1097,10 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
             onChange={setLabelFilters}
           />
 
-          {/* Monetisation — multi-select */}
-          <MonetisationMultiSelect
-            selected={monetisationFilters}
-            onChange={setMonetisationFilters}
+          {/* Content Type — multi-select */}
+          <ContentTypeMultiSelect
+            selected={typeFilters}
+            onChange={setTypeFilters}
           />
 
           {/* Keyword search */}
@@ -1125,8 +1136,8 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
           {/* Columns */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <Columns2 className="size-4" />
+              <Button variant="ghost" className="font-normal">
+                <Settings2 className="size-4" />
                 Set columns
               </Button>
             </DropdownMenuTrigger>
@@ -1173,7 +1184,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
 
       {/* ── Active filter chips ──────────────────────────────────────── */}
       {anyFilter && (
-        <div className="shrink-0 flex items-center gap-1.5 px-10 pb-3 flex-wrap">
+        <div className="shrink-0 flex items-center gap-1.5 px-16 pb-3 flex-wrap">
           <button
             onClick={() => { setTypeFilters(new Set()); setStatusFilter("all"); setArtistFilters(new Set()); setLabelFilters(new Set()); setMonetisationFilters(new Set()); setSearchQuery("") }}
             className="text-xs font-normal text-muted-foreground hover:text-foreground transition-colors mr-1 shrink-0"
@@ -1242,13 +1253,13 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
       )}
 
       {/* ── Table (header + rows share one scroll container so they always align) ── */}
-      <div className="flex-1 overflow-auto px-10">
+      <div className="flex-1 overflow-auto px-16">
         {/* Sticky header — scrolls horizontally with rows, stays fixed vertically */}
         <div className="sticky top-0 z-10 bg-background">
           <TableHeader
             colWidths={colWidths}
             visibleCols={effectiveVis}
-            onResizeStart={handleResizeStart}
+            onResize={handleResize}
             sortKey={sortKey}
             sortDir={sortDir}
             onSort={handleSortChange}
@@ -1302,14 +1313,15 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
 
       {selectedIds.size > 0 && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-popover border border-border shadow-xl">
-            <span className="text-sm font-medium text-foreground tabular-nums pr-2">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-foreground border border-foreground shadow-xl">
+            <span className="text-sm font-medium text-background tabular-nums pr-2">
               {selectedIds.size} selected
             </span>
-            <div className="w-px h-5 bg-border" />
+            <div className="w-px h-5 bg-background/20" />
             <Button
               size="sm"
               variant="secondary"
+              className="bg-background/15 hover:bg-background/25 text-background border-transparent"
               onClick={() => {
                 selectedIds.forEach(id => setReleaseStatus(id, "public"))
                 setSelectedIds(new Set())
@@ -1320,6 +1332,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
             <Button
               size="sm"
               variant="secondary"
+              className="bg-background/15 hover:bg-background/25 text-background border-transparent"
               onClick={() => {
                 selectedIds.forEach(id => setReleaseStatus(id, "private"))
                 setSelectedIds(new Set())
@@ -1329,7 +1342,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
             </Button>
             <button
               onClick={() => setSelectedIds(new Set())}
-              className="ml-1 text-muted-foreground hover:text-foreground transition-colors"
+              className="ml-1 text-background/50 hover:text-background transition-colors"
             >
               <X className="size-4" />
             </button>
