@@ -1290,7 +1290,7 @@ function StepTrackMatching({
   const type    = isNew ? newForm.type : (release?.type ?? "album")
 
   return (
-    <div className="flex flex-col gap-6 w-full mx-auto">
+    <div className="flex flex-col gap-6 w-full">
 
       <h1 className="text-xl font-medium">Track matching</h1>
 
@@ -1446,13 +1446,13 @@ function StepConfirmation({
   const year    = isNew ? (newForm.recordingDate || "—") : String(release?.year ?? "")
 
   return (
-    <div className="flex flex-col gap-8 w-full mx-auto">
+    <div className="flex flex-col gap-8 w-full">
 
       {/* Media header */}
-      <div className="flex gap-6 items-start py-4">
+      <div className="flex gap-6 items-start">
         <CoverPlaceholder size="lg" src={release?.coverUrl} />
 
-        <div className="flex flex-col justify-between h-56 flex-1 min-w-0 px-4">
+        <div className="flex flex-col justify-between h-56 flex-1 min-w-0">
           <div className="flex flex-col gap-3">
             <h1 className="text-2xl font-medium truncate">{title}</h1>
             <div className="flex items-center gap-4 flex-wrap">
@@ -1805,7 +1805,6 @@ export function UploadMusicDialog({
         {isFullWidth ? (
           /* Steps 3 & 4: full width, centered */
           <div className="flex-1 overflow-y-auto px-10 pt-6 pb-10">
-            <div className="max-w-6xl 3xl:max-w-[1600px] mx-auto w-full">
               {step === 3 && (
                 <StepTrackMatching
                   release={selectedRelease} isNew={isCreatingNew} newForm={newForm}
@@ -1819,7 +1818,6 @@ export function UploadMusicDialog({
                   tracks={tracks} onPublish={handleNext}
                 />
               )}
-            </div>
           </div>
         ) : (
           /* Steps 1 & 2: 50/50 split */
