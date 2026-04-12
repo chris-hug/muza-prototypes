@@ -1343,7 +1343,7 @@ function StepTrackMatching({
               <tr
                 key={track.id}
                 className="hover:bg-muted cursor-default transition-colors rounded-lg"
-                style={{ height: 56 }}
+                style={{ height: 64 }}
               >
                 {/* # */}
                 <td className="text-xs font-normal text-muted-foreground pl-2">{i + 1}</td>
@@ -1363,14 +1363,14 @@ function StepTrackMatching({
                       value={track.assignedFile}
                       onValueChange={fileId => onTracksChange(tracks.map((t, j) => j === i ? { ...t, assignedFile: fileId, fileName: files.find(f => f.id === fileId)?.name ?? t.fileName } : t))}
                     >
-                      <SelectTrigger data-size="sm" className="min-w-0 flex-1">
+                      <SelectTrigger className="min-w-0 flex-1">
                         <span className="truncate">
                           {files.find(f => f.id === track.assignedFile)?.name ?? "—"}
                         </span>
                       </SelectTrigger>
                       <SelectContent className="min-w-64 [--anchor-width:max-content]">
                         {files.map(f => (
-                          <SelectItem key={f.id} value={f.id} className="text-xs">
+                          <SelectItem key={f.id} value={f.id}>
                             {f.name}
                           </SelectItem>
                         ))}
@@ -1385,11 +1385,10 @@ function StepTrackMatching({
                     <Input
                       value={track.composer}
                       onChange={e => onTracksChange(tracks.map((t, j) => j === i ? { ...t, composer: e.target.value } : t))}
-                      className="h-8 text-xs font-normal"
                       placeholder="Composer"
                     />
                   ) : (
-                    <span className="text-xs font-normal text-muted-foreground truncate block">{track.composer}</span>
+                    <span className="text-sm font-normal text-muted-foreground truncate block">{track.composer}</span>
                   )}
                 </td>
 
@@ -1399,11 +1398,10 @@ function StepTrackMatching({
                     <Input
                       value={track.lyricist}
                       onChange={e => onTracksChange(tracks.map((t, j) => j === i ? { ...t, lyricist: e.target.value } : t))}
-                      className="h-8 text-xs font-normal"
                       placeholder="Lyricist"
                     />
                   ) : (
-                    <span className="text-xs font-normal text-muted-foreground truncate block">{track.lyricist}</span>
+                    <span className="text-sm font-normal text-muted-foreground truncate block">{track.lyricist}</span>
                   )}
                 </td>
 
@@ -1416,12 +1414,14 @@ function StepTrackMatching({
                 {/* Action */}
                 <td className="text-center">
                   {isNew && (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => onTracksChange(tracks.filter((_, j) => j !== i))}
-                      className="size-8 flex items-center justify-center rounded-full bg-secondary hover:bg-muted text-muted-foreground transition-colors mx-auto"
+                      className="mx-auto"
                     >
-                      <Trash2 className="size-3.5" />
-                    </button>
+                      <Trash2 />
+                    </Button>
                   )}
                 </td>
               </tr>
