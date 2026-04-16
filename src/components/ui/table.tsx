@@ -115,21 +115,33 @@ function TableHead({
       : []
     const siblingStarts = siblings.map(el => el.offsetWidth)
 
+    // Snapshot the total width of all columns OTHER than this one,
+    // used to cap growth when there is no resizable right sibling.
+    const wrapperWidth  = th.closest("table")?.parentElement?.clientWidth ?? Infinity
+    const othersWidth   = row
+      ? Array.from(row.children).reduce((sum, el) => sum + (el !== th ? (el as HTMLElement).offsetWidth : 0), 0)
+      : 0
+
     const onMove = (ev: MouseEvent) => {
-      const newW        = Math.max(minWidth, startWidth + (ev.clientX - startX))
-      const actualDelta = newW - startWidth
-
-      th.style.width    = `${newW}px`
-      th.style.minWidth = `${newW}px`
-
       if (siblings.length > 0) {
-        const share = -actualDelta / siblings.length
-        siblings.forEach((el, i) => {
-          const sibMin = parseInt(el.getAttribute("data-min-width") ?? "60", 10)
-          const newSibW = Math.max(sibMin, siblingStarts[i] + share)
-          el.style.width    = `${newSibW}px`
-          el.style.minWidth = `${newSibW}px`
-        })
+        // Has a resizable right neighbor — cap growth to what that neighbor can give up
+        const next   = siblings[0]
+        const sibMin = parseInt(next.getAttribute("data-min-width") ?? "60", 10)
+        const maxW   = startWidth + siblingStarts[0] - sibMin
+        const newW   = Math.min(maxW, Math.max(minWidth, startWidth + (ev.clientX - startX)))
+
+        th.style.width    = `${newW}px`
+        th.style.minWidth = `${newW}px`
+
+        const newSibW = Math.max(sibMin, siblingStarts[0] - (newW - startWidth))
+        next.style.width    = `${newSibW}px`
+        next.style.minWidth = `${newSibW}px`
+      } else {
+        // No resizable right sibling — cap growth so the table never exceeds its wrapper
+        const maxW = Math.max(minWidth, wrapperWidth - othersWidth)
+        const newW = Math.min(maxW, Math.max(minWidth, startWidth + (ev.clientX - startX)))
+        th.style.width    = `${newW}px`
+        th.style.minWidth = `${newW}px`
       }
     }
 
