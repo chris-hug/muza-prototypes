@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { LogoHorizontal, LogoMark } from "@/components/ui/logo"
 import {
   Home, Compass, ListMusic, Disc3, Mic, Music2,
-  Sliders, FileText, ShoppingBag, CreditCard, Library,
+  Sliders, FileText, Package, ShoppingCart, CreditCard, Library,
   Plus, PanelLeftClose, PanelLeftOpen, ChevronRight, BarChart2,
 } from "lucide-react"
 
@@ -45,7 +45,8 @@ const NAV_GROUPS: NavGroup[] = [
       { label: "Pages",     icon: <FileText    className="size-4" /> },
       { label: "Music",     icon: <Music2      className="size-4" /> },
       { label: "Analytics", icon: <BarChart2   className="size-4" /> },
-      { label: "Shop",      icon: <ShoppingBag className="size-4" /> },
+      { label: "Products",  icon: <Package      className="size-4" /> },
+      { label: "Orders",    icon: <ShoppingCart className="size-4" /> },
       { label: "Wallet",    icon: <CreditCard  className="size-4" /> },
     ],
   },

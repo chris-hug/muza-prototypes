@@ -128,10 +128,13 @@
   --color-muza-black:    var(--muza-black);
 
   /* ── Muza type scale ──────────────────────────────────────────────────── */
-  --text-xxs:  14px;
-  --text-xs:   16px;
-  --text-sm:   18px;
-  --text-base: 20px;
+  --text-xxs:        14px;
+  --text-xs:         16px;
+  --text-sm:         18px;
+  --text-base:       20px;
+  /* Semantic aliases matching Figma token names */
+  --text-small:      16px;   /* = typography/base-sizes/small  */
+  --text-large:      20px;   /* = typography/base-sizes/large  */
   --text-lg:   24px;
   --text-xl:   30px;
   --text-2xl:  36px;
