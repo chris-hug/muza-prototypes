@@ -66,6 +66,9 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { UploadMusicDialog } from "@/components/app/upload-music-dialog"
+import { ShopMyProductsView } from "@/components/app/shop-my-products"
+import { OrdersView } from "@/components/app/orders-view"
+import { filterTriggerCls, FilterChevron, FilterCount } from "@/components/ui/filter-button"
 
 // ─── Section heading component ────────────────────────────────────────────────
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
@@ -123,7 +126,8 @@ const STUDIO_TABS: Record<string, string[]> = {
   Pages:     ["Artists", "Label"],
   Music:     ["My Music", "Upload Music"],
   Analytics: [],
-  Shop:      ["My Products", "Orders", "Add Product"],
+  Products:  [],
+  Orders:    [],
   Wallet:    ["Dashboard", "Transfer", "Manage"],
 }
 
@@ -132,28 +136,24 @@ function toTabValue(label: string) {
 }
 
 function StudioView({ page, onOpenUpload }: { page: string; onOpenUpload?: () => void }) {
-  if (page === "Music")     return <StudioMusicView onOpenUpload={onOpenUpload} />
+  if (page === "Music")    return <StudioMusicView onOpenUpload={onOpenUpload} />
   if (page === "Analytics") return <ReportView />
+  if (page === "Products")  return <ShopMyProductsView />
+  if (page === "Orders")    return <OrdersView />
 
   const tabs = STUDIO_TABS[page] ?? []
 
   return (
     <Tabs defaultValue={toTabValue(tabs[0])} className="flex flex-col h-full gap-0">
 
-      {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="shrink-0 px-16 pt-8 pb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">{page}</h1>
-      </div>
-
-      {/* ── Tab list ───────────────────────────────────────────────────── */}
-      <div className="shrink-0 px-16 border-b border-border">
+      {/* ── Header + tabs ──────────────────────────────────────────────── */}
+      <div className="shrink-0 px-16 pt-8 border-b border-border">
+        <div className="flex items-start justify-between gap-6 mb-5">
+          <h1 className="text-2xl font-semibold tracking-tight">{page}</h1>
+        </div>
         <TabsList variant="line" className="w-auto justify-start gap-0 h-auto pb-0">
           {tabs.map((tab) => (
-            <TabsTrigger
-              key={tab}
-              value={toTabValue(tab)}
-              className="flex-none px-4 pb-3 text-sm"
-            >
+            <TabsTrigger key={tab} value={toTabValue(tab)} className="flex-none px-4 pb-3 text-sm">
               {tab}
             </TabsTrigger>
           ))}
@@ -163,14 +163,10 @@ function StudioView({ page, onOpenUpload }: { page: string; onOpenUpload?: () =>
       {/* ── Tab content ────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-auto">
         {tabs.map((tab) => (
-          <TabsContent
-            key={tab}
-            value={toTabValue(tab)}
-            className="h-full"
-          >
-            {page === "Wallet" && tab === "Dashboard" ? <WalletView /> :
+          <TabsContent key={tab} value={toTabValue(tab)} className="h-full">
+            {page === "Wallet" && tab === "Dashboard" ? <WalletView />   :
              page === "Wallet" && tab === "Transfer"  ? <TransferView /> :
-             page === "Wallet" && tab === "Manage"    ? <ManageV2 /> :
+             page === "Wallet" && tab === "Manage"    ? <ManageV2 />     :
              <div className="p-10"><p className="text-sm text-muted-foreground">{tab}</p></div>
             }
           </TabsContent>
@@ -694,47 +690,44 @@ function ExploreView() {
 
       {/* ══ TYPOGRAPHY ══ */}
       <Section id="typography" title="Typography — Founders Grotesk">
+        {/* column headers */}
+        <div className="flex gap-6 pb-2 border-b border-border">
+          <span className="w-32 shrink-0 text-xs text-muted-foreground">Token</span>
+          <span className="w-24 shrink-0 text-xs text-muted-foreground">Semantic</span>
+          <span className="w-48 shrink-0 text-xs text-muted-foreground">Usage</span>
+          <span className="flex-1 text-xs text-muted-foreground">Style</span>
+        </div>
         <div className="flex flex-col divide-y divide-border">
           {[
-            { label: "H1",        sub: "Semibold · 72px · text-5xl",
-              el: <p className="text-5xl font-semibold leading-none tracking-[-0.025em]">Discover Music</p> },
-            { label: "H2",        sub: "Semibold · 48px · text-3xl",
-              el: <p className="text-3xl font-semibold leading-none tracking-[-0.02em]">New Releases</p> },
-            { label: "H3",        sub: "Medium · 36px · text-2xl",
-              el: <p className="text-2xl font-medium leading-tight tracking-[-0.015em]">Featured Artists</p> },
-            { label: "H4",        sub: "Medium · 30px · text-xl",
-              el: <p className="text-xl font-medium leading-tight">Top Playlists</p> },
-            { label: "Large",     sub: "Regular · 24px · text-lg",
-              el: <p className="text-lg leading-normal">Stream independent artists directly.</p> },
-            { label: "Lead",      sub: "Regular · 20px · text-base",
-              el: <p className="text-base leading-normal">A platform built for artists who want to own their sound.</p> },
-            { label: "Body",      sub: "Regular · 18px · text-sm",
-              el: <p className="text-sm leading-normal">Upload your tracks, build your fanbase, and get paid fairly.</p> },
-            { label: "Small",     sub: "Regular · 16px · text-xs",
-              el: <p className="text-xs leading-snug text-muted-foreground">Last played 3 hours ago · 124 streams</p> },
-            { label: "Caption",   sub: "Regular · 14px · text-xxs",
-              el: <p className="text-xxs leading-snug text-muted-foreground">Chips · badges · button-sm · minimum size</p> },
-            { label: "Blockquote",sub: "Italic · 20px · text-base",
-              el: <blockquote className="text-base italic leading-normal text-muted-foreground border-l-[3px] border-border pl-4">Music is the shorthand of emotion.</blockquote> },
-          ].map(({ label, sub, el }) => (
-            <div key={label} className="flex items-baseline gap-6 py-4">
-              <div className="w-40 shrink-0">
-                <span className="text-sm font-normal">{label}</span>
-                <span className="block text-xs text-muted-foreground mt-0.5">{sub}</span>
-              </div>
+            { token: "text-5xl",   semantic: "H1",           usage: "Hero titles, landing pages",          el: <p className="text-5xl font-semibold leading-none tracking-[-0.025em]">Discover Music</p> },
+            { token: "text-4xl",   semantic: null,           usage: "Marketing headers, splash screens",    el: <p className="text-4xl font-semibold leading-none">Muza</p> },
+            { token: "text-3xl",   semantic: "H2",           usage: "Page section titles",                  el: <p className="text-3xl font-semibold leading-none tracking-[-0.02em]">New Releases</p> },
+            { token: "text-2xl",   semantic: "H3",           usage: "Card headings, dialog titles",         el: <p className="text-2xl font-medium leading-tight tracking-[-0.015em]">Featured Artists</p> },
+            { token: "text-xl",    semantic: "H4",           usage: "Sub-section labels",                   el: <p className="text-xl font-medium leading-tight">Top Playlists</p> },
+            { token: "text-lg",    semantic: null,           usage: "Nav items, sidebar, subheadings",      el: <p className="text-lg font-medium leading-tight">My Music</p> },
+            { token: "text-large", semantic: "Large",        usage: "Dialog titles, page headings, lead",   el: <p className="text-large font-normal leading-normal">Upload your tracks and get paid fairly.</p> },
+            { token: "text-sm",    semantic: null,           usage: "Body text, form labels",               el: <p className="text-sm font-normal leading-normal">A platform built for artists who want to own their sound.</p> },
+            { token: "text-small", semantic: "Small",        usage: "Subtitles, descriptions, table cells", el: <p className="text-small font-normal leading-normal text-muted-foreground">Choose what you want to sell.</p> },
+            { token: "text-xxs",   semantic: "Extra Small",  usage: "Badges, chips, captions, meta",        el: <p className="text-xxs font-normal leading-normal text-muted-foreground">Albums, EPs and special editions on CD.</p> },
+            { token: "text-large", semantic: "Blockquote",   usage: "Pull quotes, featured text",           el: <blockquote className="text-large italic leading-normal text-muted-foreground border-l-[3px] border-border pl-4">Music is the shorthand of emotion.</blockquote> },
+          ].map(({ token, semantic, usage, el }) => (
+            <div key={`${token}-${semantic}`} className="flex items-baseline gap-6 py-4">
+              <span className="w-32 shrink-0 text-sm font-normal">{token}</span>
+              <span className="w-24 shrink-0 text-xs text-muted-foreground">{semantic ?? "—"}</span>
+              <span className="w-48 shrink-0 text-xs text-muted-foreground">{usage}</span>
               <div className="flex-1">{el}</div>
             </div>
           ))}
         </div>
 
         {/* Font weights */}
-        <p className="text-xs font-normal text-muted-foreground mt-8 mb-4">Font weights — Founders Grotesk at text-base (20px)</p>
+        <p className="text-xs font-normal text-muted-foreground mt-10 mb-4">Font weights — Founders Grotesk at text-large (20px)</p>
         <div className="flex flex-col divide-y divide-border">
           {[
-            { label: "Regular",  cls: "font-normal",   val: "400", note: "default",             noteCls: "text-green-700 dark:text-green-400" },
-            { label: "Medium",   cls: "font-medium",   val: "500", note: "emphasis & headlines", noteCls: "text-green-700 dark:text-green-400" },
-            { label: "Semibold", cls: "font-semibold line-through", val: "600", note: "hardly ever",          noteCls: "text-yellow-700 dark:text-yellow-400" },
-            { label: "Bold",     cls: "font-bold line-through",     val: "700", note: "never",                 noteCls: "text-red-600 dark:text-red-400" },
+            { label: "Regular",  cls: "font-normal",               val: "400", note: "default",             noteCls: "text-green-700 dark:text-green-400" },
+            { label: "Medium",   cls: "font-medium",               val: "500", note: "emphasis & headlines", noteCls: "text-green-700 dark:text-green-400" },
+            { label: "Semibold", cls: "font-semibold line-through", val: "600", note: "hardly ever",         noteCls: "text-yellow-700 dark:text-yellow-400" },
+            { label: "Bold",     cls: "font-bold line-through",     val: "700", note: "never",               noteCls: "text-red-600 dark:text-red-400" },
           ].map(({ label, cls, val, note, noteCls }) => (
             <div key={label} className="flex items-center gap-6 py-3.5">
               <div className="w-40 shrink-0">
@@ -742,7 +735,7 @@ function ExploreView() {
                 <span className="block text-xs text-muted-foreground mt-0.5">font-weight: {val}</span>
                 <span className={`block text-xs mt-0.5 ${noteCls}`}>{note}</span>
               </div>
-              <p className={`text-base ${cls}`}>Upload your tracks and get paid fairly.</p>
+              <p className={`text-large ${cls}`}>Upload your tracks and get paid fairly.</p>
             </div>
           ))}
         </div>
@@ -996,6 +989,28 @@ function ExploreView() {
               </SelectContent>
             </Select>
           </div>
+        </div>
+      </Section>
+
+      {/* ══ FILTER BUTTON ══ */}
+      <Section id="filter-button" title="Filter Button">
+        <div className="flex flex-wrap gap-3 items-center">
+          {/* Inactive */}
+          <button className={filterTriggerCls(false)}>
+            Status <FilterChevron />
+          </button>
+          {/* Active with count */}
+          <button className={filterTriggerCls(true)}>
+            Type <FilterCount count={2} /> <FilterChevron />
+          </button>
+          {/* Active single */}
+          <button className={filterTriggerCls(true)}>
+            Artist <FilterCount count={1} /> <FilterChevron />
+          </button>
+          {/* Inactive longer label */}
+          <button className={filterTriggerCls(false)}>
+            Monetisation <FilterChevron />
+          </button>
         </div>
       </Section>
 

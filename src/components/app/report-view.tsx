@@ -6,6 +6,7 @@ import {
 } from "recharts"
 import { Users, Activity, DollarSign, Zap, TrendingUp, TrendingDown, TrendingUpIcon, BarChart2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -14,7 +15,7 @@ import { cn } from "@/lib/utils"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Period    = "day" | "week" | "month" | "year"
+type Period    = "day" | "week" | "month" | "year" | "all-time"
 type Metric    = "listeners" | "streams" | "earnings"
 type ChartView = "cumulative" | "per-period"
 type DataPoint = { label: string; listeners: number | null; streams: number | null; earnings: number | null; current?: boolean }
@@ -23,7 +24,11 @@ type DataPoint = { label: string; listeners: number | null; streams: number | nu
 
 // current = the label where data stops (today's granularity boundary)
 const CURRENT_LABEL: Record<Period, string> = {
-  day: "16h", week: "Sun", month: "Apr", year: "2026",
+  day:      "16h",
+  week:     "Sun",
+  month:    "Apr",
+  year:     "2026",
+  "all-time": "2026",
 }
 
 const CHART_DATA: Record<Period, DataPoint[]> = {
@@ -72,6 +77,17 @@ const CHART_DATA: Record<Period, DataPoint[]> = {
     { label: "2025", listeners: 310000, streams: 826000,  earnings: 82600  },
     { label: "2026", listeners: 480000, streams: 1280000, earnings: 128000, current: true },
   ],
+  "all-time": [
+    { label: "2018", listeners: 12000,  streams: 32000,   earnings: 3200   },
+    { label: "2019", listeners: 45000,  streams: 120000,  earnings: 12000  },
+    { label: "2020", listeners: 89000,  streams: 237000,  earnings: 23700  },
+    { label: "2021", listeners: 210000, streams: 560000,  earnings: 56000  },
+    { label: "2022", listeners: 390000, streams: 1040000, earnings: 104000 },
+    { label: "2023", listeners: 180000, streams: 480000,  earnings: 48000  },
+    { label: "2024", listeners: 620000, streams: 1650000, earnings: 165000 },
+    { label: "2025", listeners: 310000, streams: 826000,  earnings: 82600  },
+    { label: "2026", listeners: 480000, streams: 1280000, earnings: 128000, current: true },
+  ],
 }
 
 // ─── KPI data ─────────────────────────────────────────────────────────────────
@@ -82,10 +98,11 @@ interface KpiData {
 }
 
 const KPI: Record<Period, KpiData> = {
-  day:   { listeners: "3,360",     streams: "8,920",      earnings: "$892",     eps: "$0.10", listenersDelta:  8.2, streamsDelta: 12.4, earningsDelta: 12.4 },
-  week:  { listeners: "38,700",    streams: "103,100",    earnings: "$10,310",  eps: "$0.10", listenersDelta:  4.1, streamsDelta:  6.8, earningsDelta:  6.8 },
-  month: { listeners: "39,200",    streams: "104,600",    earnings: "$10,460",  eps: "$0.10", listenersDelta: -5.5, streamsDelta: -5.6, earningsDelta: -5.6 },
-  year:  { listeners: "480,000",   streams: "1,280,000",  earnings: "$128,000", eps: "$0.10", listenersDelta: 14.3, streamsDelta: 14.3, earningsDelta: 14.3 },
+  day:       { listeners: "3,360",     streams: "8,920",      earnings: "$892",     eps: "$0.10", listenersDelta:  8.2, streamsDelta: 12.4, earningsDelta: 12.4 },
+  week:      { listeners: "38,700",    streams: "103,100",    earnings: "$10,310",  eps: "$0.10", listenersDelta:  4.1, streamsDelta:  6.8, earningsDelta:  6.8 },
+  month:     { listeners: "39,200",    streams: "104,600",    earnings: "$10,460",  eps: "$0.10", listenersDelta: -5.5, streamsDelta: -5.6, earningsDelta: -5.6 },
+  year:      { listeners: "480,000",   streams: "1,280,000",  earnings: "$128,000", eps: "$0.10", listenersDelta: 14.3, streamsDelta: 14.3, earningsDelta: 14.3 },
+  "all-time":{ listeners: "2.3M",      streams: "6.2M",       earnings: "$620K",    eps: "$0.10", listenersDelta:  0,   streamsDelta:  0,   earningsDelta:  0   },
 }
 
 // ─── Rankings data ────────────────────────────────────────────────────────────
@@ -114,17 +131,19 @@ const PLAYLISTS = [
 ]
 
 const PERIOD_LABEL: Record<Period, string> = {
-  day:   "Today",
-  week:  "This week",
-  month: "This month",
-  year:  "This year",
+  day:       "Today",
+  week:      "This week",
+  month:     "This month",
+  year:      "This year",
+  "all-time":"All time",
 }
 
 const PERIODS: { label: string; value: Period }[] = [
-  { label: "Day",   value: "day"   },
-  { label: "Week",  value: "week"  },
-  { label: "Month", value: "month" },
-  { label: "Year",  value: "year"  },
+  { label: "Day",      value: "day"      },
+  { label: "Week",     value: "week"     },
+  { label: "Month",    value: "month"    },
+  { label: "Year",     value: "year"     },
+  { label: "All Time", value: "all-time" },
 ]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -218,32 +237,25 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
   const chartData  = chartView === "cumulative" ? cumulative(rawData) : rawData
 
   return (
-    <div className="flex flex-col gap-12 px-16 pb-40">
+    <div className="flex flex-col px-16 pb-40">
+
+      {/* ── Sticky period bar ────────────────────────────────────────────── */}
+      <div className="sticky top-0 z-20 -mx-16 px-16 bg-background/95 backdrop-blur-sm border-b border-border flex items-center justify-between py-3">
+        {!embedded
+          ? <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
+          : <span />
+        }
+        <Tabs value={period} onValueChange={v => setPeriod(v as Period)}>
+          <TabsList variant="pill">
+            {PERIODS.map(p => (
+              <TabsTrigger key={p.value} value={p.value}>{p.label}</TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
 
       {/* ── Analytics ────────────────────────────────────────────────────── */}
-      <section className="flex flex-col gap-6 bg-muted -mx-16 -mt-px px-16 pt-8 pb-16">
-
-        {/* Page heading + period tabs in one row */}
-        {embedded ? (
-          <Tabs value={period} onValueChange={v => setPeriod(v as Period)}>
-            <TabsList variant="pill">
-              {PERIODS.map(p => (
-                <TabsTrigger key={p.value} value={p.value}>{p.label}</TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        ) : (
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
-            <Tabs value={period} onValueChange={v => setPeriod(v as Period)}>
-              <TabsList variant="pill">
-                {PERIODS.map(p => (
-                  <TabsTrigger key={p.value} value={p.value}>{p.label}</TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          </div>
-        )}
+      <section className="flex flex-col gap-6 bg-muted -mx-16 px-16 pt-8 pb-16 mb-12">
 
         {/* Chart card */}
         <div className="relative mt-6">
@@ -260,7 +272,7 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
             </div>
           </div>
         <div className="bg-background border border-border rounded-xl overflow-hidden">
-          {/* ③ view toggle */}
+          {/* view toggle */}
           <div className="relative flex items-center justify-end px-4 pt-8 pb-2">
             <div className="absolute right-4 inline-flex items-center rounded-full bg-muted p-1 gap-0.5">
               <button onClick={() => setChartView("cumulative")} title="Cumulative"
@@ -330,9 +342,13 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
 
       {/* ── Rankings ─────────────────────────────────────────────────────── */}
       <section className="flex flex-col gap-16">
+
         {/* Track Ranking */}
         <div className="flex flex-col gap-2">
-          <h2 className="text-xl font-medium text-foreground px-1">Track Ranking</h2>
+          <div className="flex items-center gap-2 px-1">
+            <h2 className="text-xl font-medium text-foreground">Track Ranking</h2>
+            <Badge variant="outline" className="border-transparent bg-muted text-muted-foreground">{PERIOD_LABEL[period]}</Badge>
+          </div>
           <div className="bg-background border border-border rounded-xl overflow-hidden">
             <Table>
               <TableHeader>
@@ -363,7 +379,10 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
 
         {/* Album Ranking */}
         <div className="flex flex-col gap-2">
-          <h2 className="text-xl font-medium text-foreground px-1">Album Ranking</h2>
+          <div className="flex items-center gap-2 px-1">
+            <h2 className="text-xl font-medium text-foreground">Album Ranking</h2>
+            <Badge variant="outline" className="border-transparent bg-muted text-muted-foreground">{PERIOD_LABEL[period]}</Badge>
+          </div>
           <div className="bg-background border border-border rounded-xl overflow-hidden">
             <Table>
               <TableHeader>
@@ -390,9 +409,12 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
           </div>
         </div>
 
-        {/* Playlists */}
+        {/* Playlist Reach — always total, not period-filtered */}
         <div className="flex flex-col gap-2">
-          <h2 className="text-xl font-medium text-foreground px-1">Playlist Reach</h2>
+          <div className="flex items-center gap-2 px-1">
+            <h2 className="text-xl font-medium text-foreground">Playlist Reach</h2>
+            <Badge variant="outline" className="border-transparent bg-muted text-muted-foreground">Total</Badge>
+          </div>
           <div className="bg-background border border-border rounded-xl overflow-hidden">
             <Table>
               <TableHeader>
@@ -416,8 +438,8 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
             </Table>
           </div>
         </div>
-      </section>
 
+      </section>
     </div>
   )
 }

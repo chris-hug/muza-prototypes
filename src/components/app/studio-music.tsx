@@ -10,8 +10,8 @@ import {
   DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
-import { startColumnResize } from "@/lib/column-resize"
-import { ResizeHandle } from "@/components/ui/table"
+import { TableHead } from "@/components/ui/table"
+import { filterTriggerCls, FilterChevron, FilterCount } from "@/components/ui/filter-button"
 import {
   ArrowDown, ArrowUp, ArrowUpDown, Settings2, ChevronDown,
   Download, Pencil, Play, Search, Upload, X,
@@ -68,11 +68,6 @@ const COL_DEFS: { key: ColKey; label: string; required?: boolean }[] = [
   { key: "monetisation",label: "Monetisation", required: true },
 ]
 
-const CHECKBOX_W         = 24
-const COL_GAP            = 16
-
-// Ordered list of columns eligible for redistribution (excludes cover & monetisation)
-const COL_ORDER: ColKey[] = ["id", "title", "artist", "band", "year", "tracks", "label", "uploaded", "type", "state"]
 // When the table container shrinks below this width, cover auto-hides
 const COVER_HIDE_THRESHOLD = 800
 
@@ -235,24 +230,10 @@ const STATUS_LABELS: Record<ReleaseStatus, string> = {
 
 // ─── Shared filter UI primitives ──────────────────────────────────────────────
 
-const FILTER_TRIGGER_BASE = [
-  "inline-flex items-center gap-1.5 h-10 px-[18px] rounded-full border",
-  "text-sm font-normal whitespace-nowrap transition-colors select-none cursor-pointer",
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
-].join(" ")
-
-const filterTriggerCls = (active: boolean) => cn(
-  FILTER_TRIGGER_BASE,
-  active
-    ? "border-foreground/40 bg-muted text-foreground"
-    : "border-border bg-transparent text-foreground hover:border-foreground/30",
-)
-
 /** Pill trigger shared by ContentTypeMultiSelect and ArtistMultiSelect */
 function FilterTrigger({
   label,
   active,
-  open,
   count,
   onClick,
   onKeyDown,
@@ -273,12 +254,8 @@ function FilterTrigger({
       className={filterTriggerCls(active)}
     >
       <span>{label}</span>
-      {count != null && count > 0 && (
-        <span className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-foreground text-background text-[10px] font-medium leading-none">
-          {count}
-        </span>
-      )}
-      <ChevronDown className={cn("size-3 opacity-60 transition-transform duration-200", open && "rotate-180")} />
+      <FilterCount count={count ?? 0} />
+      <FilterChevron />
     </div>
   )
 }
@@ -418,7 +395,7 @@ function FilterButton({ label, active, children }: {
     <DropdownMenu>
       <DropdownMenuTrigger className={filterTriggerCls(active)}>
         {label}
-        <ChevronDown className="size-3 opacity-60 transition-transform duration-200 [[aria-expanded=true]_&]:rotate-180" />
+        <FilterChevron />
       </DropdownMenuTrigger>
       {children}
     </DropdownMenu>
@@ -639,231 +616,94 @@ function MonetisationMultiSelect({
   )
 }
 
-// ─── TableHeader ──────────────────────────────────────────────────────────────
 
-interface TableHeaderProps {
-  colWidths:   Record<ColKey, number>
-  visibleCols: Record<ColKey, boolean>
-  onResize:    (updates: Partial<Record<ColKey, number>>) => void
-  sortKey:     SortKey
-  sortDir:     SortDir
-  onSort:      (key: SortKey) => void
-  allSelected:  boolean
-  someSelected: boolean
-  onSelectAll:  () => void
-}
+// ─── MusicRow ─────────────────────────────────────────────────────────────────
 
-function TableHeader({ colWidths, visibleCols, onResize, sortKey, sortDir, onSort, allSelected, someSelected, onSelectAll }: TableHeaderProps) {
-  const cell = (key: ColKey, label: string, grow = false, resizable = true) => {
-    if (!visibleCols[key]) return null
-    const sk = COL_SORT_KEY[key]
-    const isActive = sk !== undefined && sk === sortKey
-    return (
-      <div
-        key={key}
-        className="relative flex items-center overflow-hidden group/th hover:bg-muted transition-colors rounded-sm"
-        style={grow
-          ? { flex: 1, minWidth: colWidths[key] }
-          : { width: colWidths[key], flexShrink: 0 }}
-      >
-        {sk ? (
-          <button
-            className="flex items-center gap-0.5 min-w-0 overflow-hidden cursor-pointer group/sort select-none"
-            onClick={() => onSort(sk)}
-          >
-            <span className={cn("text-xs font-normal truncate", isActive ? "text-foreground" : "text-muted-foreground")}>
-              {label}
-            </span>
-            {isActive
-              ? (sortDir === "asc"
-                  ? <ArrowUp   className="size-3 shrink-0 text-foreground" />
-                  : <ArrowDown className="size-3 shrink-0 text-foreground" />)
-              : <ArrowUpDown className="size-3 shrink-0 text-muted-foreground opacity-0 group-hover/sort:opacity-50 transition-opacity" />
-            }
-          </button>
-        ) : (
-          <span className="text-xs font-normal text-muted-foreground truncate">{label}</span>
-        )}
-        {resizable && (
-          <ResizeHandle
-            onMouseDown={e => {
-              e.preventDefault()
-              e.stopPropagation()
-              const startX      = e.clientX
-              const startWidths = { ...colWidths }
-              // Following cols eligible for redistribution (in order, visible, excludes cover & monetisation)
-              const colIdx   = COL_ORDER.indexOf(key)
-              const following = colIdx >= 0
-                ? COL_ORDER.slice(colIdx + 1).filter(k => visibleCols[k])
-                : []
-              const onMove = (ev: MouseEvent) => {
-                const newW      = Math.max(MIN_WIDTHS[key], startWidths[key] + (ev.clientX - startX))
-                const actualDelta = newW - startWidths[key]
-                const updates: Partial<Record<ColKey, number>> = { [key]: newW }
-                if (following.length > 0) {
-                  const share = -actualDelta / following.length
-                  for (const k of following) {
-                    updates[k] = Math.max(MIN_WIDTHS[k], startWidths[k] + share)
-                  }
-                }
-                onResize(updates)
-              }
-              const onUp = () => {
-                document.removeEventListener("mousemove", onMove)
-                document.removeEventListener("mouseup",   onUp)
-              }
-              document.addEventListener("mousemove", onMove)
-              document.addEventListener("mouseup",   onUp)
-            }}
-          />
-        )}
-      </div>
-    )
-  }
-
-  return (
-    <div
-      className="flex items-center w-full h-11 border-b border-border"
-      style={{ gap: COL_GAP, paddingLeft: 8, paddingRight: 8 }}
-    >
-      <div style={{ width: CHECKBOX_W, flexShrink: 0 }} className="flex items-center justify-center">
-        <Checkbox
-          checked={allSelected}
-          indeterminate={!allSelected && someSelected}
-          onCheckedChange={onSelectAll}
-          className="after:hidden"
-        />
-      </div>
-
-      {cell("id",          "ID")}
-      {cell("cover",       "Cover", false, false)}
-      {cell("title",       "Title")}
-      {cell("artist",      "Main Artist")}
-      {cell("band",        "Band")}
-      {cell("year",        "Year")}
-      {cell("tracks",      "Tracks")}
-      {cell("label",       "Label")}
-      {cell("uploaded",    "Uploaded")}
-      {cell("type",        "Type")}
-      {cell("state",       "State")}
-      <div style={{ flex: 1 }} />
-      {cell("monetisation","Monetisation")}
-    </div>
-  )
-}
-
-// ─── TableRow ─────────────────────────────────────────────────────────────────
-
-interface TableRowProps {
+function MusicRow({ release, visibleCols, isSelected, onSelect, status, onStatusChange }: {
   release:        Release
-  colWidths:      Record<ColKey, number>
   visibleCols:    Record<ColKey, boolean>
   isSelected:     boolean
   onSelect:       () => void
   status:         ReleaseStatus
   onStatusChange: (s: ReleaseStatus) => void
-}
-
-function TableRow({ release, colWidths, visibleCols, isSelected, onSelect, status, onStatusChange }: TableRowProps) {
+}) {
   const [hovered, setHovered] = useState(false)
   const vis = visibleCols
 
   return (
-    <div
-      className={cn(
-        "flex items-center w-full rounded-lg transition-colors cursor-pointer",
-        (isSelected || hovered) && "bg-muted",
-      )}
-      style={{ gap: COL_GAP, paddingLeft: 8, paddingRight: 8, height: 56 }}
+    <tr
+      className={cn("border-b border-border transition-colors cursor-pointer", hovered || isSelected ? "bg-muted" : "bg-background")}
+      style={{ height: 56 }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      onClick={() => { /* TODO: navigate to release edit page */ }}
     >
-      {/* Checkbox — always visible when selected, on hover otherwise */}
-      <div style={{ width: CHECKBOX_W, flexShrink: 0 }} className="flex items-center justify-center">
-        <div className={cn("transition-opacity", (hovered || isSelected) ? "opacity-100" : "opacity-0 pointer-events-none")}>
-          <Checkbox
-            checked={isSelected}
-            onCheckedChange={onSelect}
-            onClick={e => e.stopPropagation()}
-            className="after:hidden"
-          />
+      {/* Checkbox */}
+      <td className="px-2 py-0 text-center">
+        <div className={cn("flex items-center justify-center transition-opacity", hovered || isSelected ? "opacity-100" : "opacity-0 pointer-events-none")}>
+          <Checkbox checked={isSelected} onCheckedChange={onSelect} onClick={e => e.stopPropagation()} className="after:hidden" />
         </div>
-      </div>
+      </td>
 
-      {vis.id && (
-        <span className="text-xs font-normal text-muted-foreground truncate shrink-0" style={{ width: colWidths.id }}>
-          {release.catalog}
-        </span>
-      )}
+      {/* ID */}
+      <td className={cn("px-4 py-0 text-xs font-normal text-muted-foreground truncate", !vis.id && "hidden")}>
+        {release.catalog}
+      </td>
 
-      {vis.cover && (
-        <div
-          className="shrink-0 rounded-xs bg-neutral-200 overflow-hidden"
-          style={{ width: colWidths.cover, height: colWidths.cover }}
-        >
+      {/* Cover */}
+      <td className={cn("px-2 py-0", !vis.cover && "hidden")}>
+        <div className="rounded-xs bg-neutral-200 overflow-hidden" style={{ width: 44, height: 44 }}>
           <img src={release.cover} alt={release.title} className="size-full object-cover" draggable={false} />
         </div>
-      )}
+      </td>
 
-      {vis.title && (
-        <span className="text-xs font-normal text-foreground truncate shrink-0" style={{ width: colWidths.title }}>
-          {release.title}
-        </span>
-      )}
+      {/* Title */}
+      <td className="px-4 py-0 text-xs font-normal text-foreground truncate max-w-0">
+        <span className="block truncate">{release.title}</span>
+      </td>
 
-      {vis.artist && (
-        <span className="text-xs font-normal text-muted-foreground truncate shrink-0" style={{ width: colWidths.artist }}>
-          {release.artist}
-        </span>
-      )}
+      {/* Artist */}
+      <td className={cn("px-4 py-0 text-xs font-normal text-muted-foreground truncate", !vis.artist && "hidden")}>
+        {release.artist}
+      </td>
 
-      {vis.label && (
-        <span className="text-xs font-normal text-muted-foreground truncate shrink-0" style={{ width: colWidths.label }}>
-          {mockLabel(release.catalog)}
-        </span>
-      )}
+      {/* Band */}
+      <td className={cn("px-4 py-0 text-xs font-normal text-muted-foreground truncate", !vis.band && "hidden")}>
+        {release.band ?? "—"}
+      </td>
 
-      {vis.band && (
-        <span className="text-xs font-normal text-muted-foreground truncate shrink-0" style={{ width: colWidths.band }}>
-          {release.band ?? "—"}
-        </span>
-      )}
+      {/* Year */}
+      <td className={cn("px-4 py-0 text-xs font-normal text-muted-foreground tabular-nums", !vis.year && "hidden")}>
+        {release.year}
+      </td>
 
-      {vis.year && (
-        <span className="text-xs font-normal text-muted-foreground tabular-nums shrink-0" style={{ width: colWidths.year }}>
-          {release.year}
-        </span>
-      )}
+      {/* Tracks */}
+      <td className={cn("px-4 py-0 text-xs font-normal text-muted-foreground tabular-nums", !vis.tracks && "hidden")}>
+        {release.tracks}
+      </td>
 
-      {vis.tracks && (
-        <span className="text-xs font-normal text-muted-foreground tabular-nums shrink-0" style={{ width: colWidths.tracks }}>
-          {release.tracks}
-        </span>
-      )}
+      {/* Label */}
+      <td className={cn("px-4 py-0 text-xs font-normal text-muted-foreground truncate", !vis.label && "hidden")}>
+        {mockLabel(release.catalog)}
+      </td>
 
-      {vis.uploaded && (
-        <span className="text-xs font-normal text-muted-foreground tabular-nums shrink-0" style={{ width: colWidths.uploaded }}>
-          {mockUploadDate(release.id)}
-        </span>
-      )}
+      {/* Uploaded */}
+      <td className={cn("px-4 py-0 text-xs font-normal text-muted-foreground tabular-nums", !vis.uploaded && "hidden")}>
+        {mockUploadDate(release.id)}
+      </td>
 
-      {vis.type && (
-        <div className="shrink-0 overflow-hidden" style={{ width: colWidths.type }}>
-          <ContentTypeBadge type={release.type} />
-        </div>
-      )}
+      {/* Type */}
+      <td className={cn("px-4 py-0", !vis.type && "hidden")}>
+        <ContentTypeBadge type={release.type} />
+      </td>
 
-      {vis.state && (
-        <div className="shrink-0 flex" style={{ width: colWidths.state }}>
-          <StatusBadge status={status} onStatusChange={onStatusChange} />
-        </div>
-      )}
+      {/* State */}
+      <td className={cn("px-4 py-0", !vis.state && "hidden")}>
+        <StatusBadge status={status} onStatusChange={onStatusChange} />
+      </td>
 
-      <div style={{ flex: 1 }} />
-
-      {vis.monetisation && (
-        <div className="relative shrink-0 flex items-center" style={{ width: colWidths.monetisation }}>
+      {/* Monetisation */}
+      <td className={cn("px-4 py-0", !vis.monetisation && "hidden")}>
+        <div className="relative flex items-center">
           <div className={cn("transition-opacity duration-150", hovered ? "opacity-0" : "opacity-100")}>
             <MonetisationCell state={mockMonetisation(release.id)} dimmed={status === "private"} />
           </div>
@@ -881,8 +721,8 @@ function TableRow({ release, colWidths, visibleCols, isSelected, onSelect, statu
             </div>
           )}
         </div>
-      )}
-    </div>
+      </td>
+    </tr>
   )
 }
 
@@ -921,49 +761,17 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
   const [sortKey, setSortKey]         = useState<SortKey>("uploaded")
   const [sortDir, setSortDir]         = useState<SortDir>("desc")
 
-  const [colWidths,      setColWidths]      = useState<Record<ColKey, number>>(DEFAULT_WIDTHS)
-  const [colWidthsReady, setColWidthsReady] = useState(false)
   const [visibleCols,    setVisibleCols]    = useState<Record<ColKey, boolean>>({
     id: false, cover: true, title: true, artist: true, band: false,
     year: false, tracks: false, uploaded: true, type: true, state: true,
     label: true, monetisation: true,
   })
-  // Cover auto-hide driven by ResizeObserver (separate from user toggle)
+  // Cover auto-hide driven by ResizeObserver
   const [autoCoverHide, setAutoCoverHide] = useState(false)
 
-  const tableWrapRef   = useRef<HTMLDivElement>(null)
+  const tableWrapRef = useRef<HTMLDivElement>(null)
 
-  // Compute initial column widths to fill container evenly, then keep them fixed after user resizes
   useEffect(() => {
-    const el = tableWrapRef.current
-    if (!el || colWidthsReady) return
-    const ro = new ResizeObserver(([entry]) => {
-      setAutoCoverHide(entry.contentRect.width < COVER_HIDE_THRESHOLD)
-      if (colWidthsReady) return
-      // Default visible: checkbox + cover + title + artist + label + uploaded + type + state + monetisation
-      // = 9 flex children → 8 inter-item gaps
-      const available = entry.contentRect.width
-        - 144                  // px-16 wrapper (64+64) + header pad (8+8)
-        - CHECKBOX_W
-        - COL_GAP * 8
-        - DEFAULT_WIDTHS.cover - DEFAULT_WIDTHS.label - DEFAULT_WIDTHS.uploaded
-        - DEFAULT_WIDTHS.type  - DEFAULT_WIDTHS.state  - DEFAULT_WIDTHS.monetisation
-      // distribute remaining space across title (2) and artist (1)
-      const unit = Math.max(0, available / 3)
-      setColWidths(prev => ({
-        ...prev,
-        title:  Math.max(MIN_WIDTHS.title,  Math.round(unit * 2)),
-        artist: Math.max(MIN_WIDTHS.artist, Math.round(unit)),
-      }))
-      setColWidthsReady(true)
-    })
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [colWidthsReady])
-
-  // Separate observer just for auto-hide after widths are ready
-  useEffect(() => {
-    if (!colWidthsReady) return
     const el = tableWrapRef.current
     if (!el) return
     const ro = new ResizeObserver(([entry]) => {
@@ -971,11 +779,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
     })
     ro.observe(el)
     return () => ro.disconnect()
-  }, [colWidthsReady])
-
-  function handleResize(updates: Partial<Record<ColKey, number>>) {
-    setColWidths(prev => ({ ...prev, ...updates }))
-  }
+  }, [])
 
   function toggleCol(key: ColKey) {
     const def = COL_DEFS.find(c => c.key === key)
@@ -995,9 +799,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
     cover: visibleCols.cover && !autoCoverHide,
   }
 
-  const isColsModified =
-    COL_DEFS.some(({ key }) => !visibleCols[key]) ||
-    (Object.keys(DEFAULT_WIDTHS) as ColKey[]).some(k => colWidths[k] !== DEFAULT_WIDTHS[k])
+  const isColsModified = COL_DEFS.some(({ key }) => !visibleCols[key])
 
   const artists = Array.from(new Set(RELEASES.map(r => r.artist))).sort()
   const labels  = Array.from(new Set(RELEASES.map(r => mockLabel(r.catalog)))).sort()
@@ -1159,21 +961,18 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
                       className="pointer-events-none shrink-0 after:hidden"
                     />
                     {label}
-                    {required && <span className="ml-auto text-[10px] text-muted-foreground">required</span>}
+                    {required && <span className="ml-auto text-xxs text-muted-foreground">required</span>}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuGroup>
               {isColsModified && (
                 <FilterPopoverClearAll
                   label="Reset"
-                  onClear={() => {
-                    setColWidthsReady(false)
-                    setVisibleCols({
-                      id: false, cover: true, title: true, artist: true, band: false,
-                      year: false, tracks: false, uploaded: true, type: true, state: true,
-                      label: true, monetisation: true,
-                    })
-                  }}
+                  onClear={() => setVisibleCols({
+                    id: false, cover: true, title: true, artist: true, band: false,
+                    year: false, tracks: false, uploaded: true, type: true, state: true,
+                    label: true, monetisation: true,
+                  })}
                 />
               )}
             </DropdownMenuContent>
@@ -1252,63 +1051,98 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
         </div>
       )}
 
-      {/* ── Table (header + rows share one scroll container so they always align) ── */}
+      {/* ── Table ────────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-auto px-16">
-        {/* Sticky header — scrolls horizontally with rows, stays fixed vertically */}
-        <div className="sticky top-0 z-10 bg-background">
-          <TableHeader
-            colWidths={colWidths}
-            visibleCols={effectiveVis}
-            onResize={handleResize}
-            sortKey={sortKey}
-            sortDir={sortDir}
-            onSort={handleSortChange}
-            allSelected={allSelected}
-            someSelected={someSelected}
-            onSelectAll={toggleSelectAll}
-          />
-        </div>
+        <table className="w-full">
 
-        {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-40 gap-2">
-            <p className="text-sm font-normal text-muted-foreground">No releases match the current filters.</p>
-            {anyFilter && (
-              <button
-                onClick={() => { setTypeFilters(new Set()); setStatusFilter("all"); setArtistFilters(new Set()); setLabelFilters(new Set()); setMonetisationFilters(new Set()); setSearchQuery("") }}
-                className="text-xs font-normal text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
-              >
-                Clear filters
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-0.5 py-1">
-            {/* Upload row */}
-            <button
-              onClick={onOpenUpload}
-              className="flex items-center w-full rounded-lg hover:bg-muted transition-colors text-left group"
-              style={{ paddingLeft: 8, paddingRight: 8, gap: COL_GAP, height: 56 }}
-            >
-              <div style={{ width: CHECKBOX_W, flexShrink: 0 }} />
-              <div className="flex items-center justify-center shrink-0" style={{ width: 44, height: 44 }}>
-                <Upload className="size-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-              </div>
-              <span className="text-sm font-normal text-muted-foreground group-hover:text-foreground transition-colors">Upload music</span>
-            </button>
-            {filtered.map((r) => (
-              <TableRow
-                key={r.id}
-                release={r}
-                colWidths={colWidths}
-                visibleCols={effectiveVis}
-                isSelected={selectedIds.has(r.id)}
-                onSelect={() => toggleSelect(r.id)}
-                status={statuses[r.id] ?? r.status}
-                onStatusChange={s => setReleaseStatus(r.id, s)}
-              />
-            ))}
-          </div>
-        )}
+          {/* Sticky header */}
+          <thead className="sticky top-0 z-10 bg-background [&_tr]:border-b [&_tr]:border-border [&_tr]:hover:bg-transparent">
+            <tr>
+              <TableHead resizable={false} className="w-10 px-2 text-center">
+                <Checkbox checked={allSelected} indeterminate={!allSelected && someSelected} onCheckedChange={toggleSelectAll} className="after:hidden" />
+              </TableHead>
+              <TableHead className={cn(!effectiveVis.id && "hidden")} style={{ width: DEFAULT_WIDTHS.id }} minWidth={MIN_WIDTHS.id}>ID</TableHead>
+              <TableHead resizable={false} className={cn("px-2", !effectiveVis.cover && "hidden")} style={{ width: DEFAULT_WIDTHS.cover }} />
+              <TableHead style={{ width: DEFAULT_WIDTHS.title }} minWidth={MIN_WIDTHS.title}>
+                {(() => { const sk = COL_SORT_KEY["title"]!; const isActive = sk === sortKey; return (
+                  <button className="flex items-center gap-0.5 min-w-0 overflow-hidden cursor-pointer group/sort select-none" onClick={() => handleSortChange(sk)}>
+                    <span className={cn("text-xs font-normal truncate", isActive ? "text-foreground" : "text-muted-foreground")}>Title</span>
+                    {isActive ? (sortDir === "asc" ? <ArrowUp className="size-3 shrink-0 text-foreground" /> : <ArrowDown className="size-3 shrink-0 text-foreground" />) : <ArrowUpDown className="size-3 shrink-0 text-muted-foreground opacity-0 group-hover/sort:opacity-50 transition-opacity" />}
+                  </button>
+                ) })()}
+              </TableHead>
+              {(["artist", "band", "year", "tracks", "label", "uploaded", "type", "state", "monetisation"] as ColKey[]).map(key => {
+                const sk = COL_SORT_KEY[key]
+                const isActive = sk !== undefined && sk === sortKey
+                const labels: Record<string, string> = { artist: "Main Artist", band: "Band", year: "Year", tracks: "Tracks", label: "Label", uploaded: "Uploaded", type: "Type", state: "State", monetisation: "Monetisation" }
+                return (
+                  <TableHead
+                    key={key}
+                    className={cn(!effectiveVis[key] && "hidden")}
+                    style={{ width: DEFAULT_WIDTHS[key] }}
+                    minWidth={MIN_WIDTHS[key]}
+                  >
+                    {sk ? (
+                      <button className="flex items-center gap-0.5 min-w-0 overflow-hidden cursor-pointer group/sort select-none" onClick={() => handleSortChange(sk)}>
+                        <span className={cn("text-xs font-normal truncate", isActive ? "text-foreground" : "text-muted-foreground")}>{labels[key]}</span>
+                        {isActive ? (sortDir === "asc" ? <ArrowUp className="size-3 shrink-0 text-foreground" /> : <ArrowDown className="size-3 shrink-0 text-foreground" />) : <ArrowUpDown className="size-3 shrink-0 text-muted-foreground opacity-0 group-hover/sort:opacity-50 transition-opacity" />}
+                      </button>
+                    ) : (
+                      <span className="text-xs font-normal text-muted-foreground">{labels[key]}</span>
+                    )}
+                  </TableHead>
+                )
+              })}
+            </tr>
+          </thead>
+
+          {/* Empty state */}
+          {filtered.length === 0 ? (
+            <tbody>
+              <tr>
+                <td colSpan={13} className="h-40 text-center">
+                  <div className="flex flex-col items-center justify-center h-full gap-2">
+                    <p className="text-sm font-normal text-muted-foreground">No releases match the current filters.</p>
+                    {anyFilter && (
+                      <button
+                        onClick={() => { setTypeFilters(new Set()); setStatusFilter("all"); setArtistFilters(new Set()); setLabelFilters(new Set()); setMonetisationFilters(new Set()); setSearchQuery("") }}
+                        className="text-xs font-normal text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+                      >
+                        Clear filters
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          ) : (
+            <tbody className="[&_tr:last-child]:border-0">
+              {/* Upload row */}
+              <tr onClick={onOpenUpload} className="border-b border-border hover:bg-muted transition-colors cursor-pointer group" style={{ height: 56 }}>
+                <td className="px-2 py-0 w-10" />
+                <td className="px-2 py-0 text-center" colSpan={2}>
+                  <div className="flex items-center justify-center size-11 mx-auto">
+                    <Upload className="size-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  </div>
+                </td>
+                <td colSpan={10} className="px-4 py-0">
+                  <span className="text-sm font-normal text-muted-foreground group-hover:text-foreground transition-colors">Upload music</span>
+                </td>
+              </tr>
+              {filtered.map(r => (
+                <MusicRow
+                  key={r.id}
+                  release={r}
+                  visibleCols={effectiveVis}
+                  isSelected={selectedIds.has(r.id)}
+                  onSelect={() => toggleSelect(r.id)}
+                  status={statuses[r.id] ?? r.status}
+                  onStatusChange={s => setReleaseStatus(r.id, s)}
+                />
+              ))}
+            </tbody>
+          )}
+        </table>
       </div>
 
       {selectedIds.size > 0 && (
