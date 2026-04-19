@@ -160,7 +160,7 @@ function TableHead({
       data-resizable={resizable ? "true" : undefined}
       data-min-width={minWidth}
       className={cn(
-        "relative group/th h-11 px-4 text-left align-middle text-xs font-normal text-muted-foreground hover:bg-muted transition-colors [&:has([role=checkbox])]:pr-0",
+        "relative group/th h-11 px-4 text-left align-middle text-xs font-normal text-muted-foreground hover:bg-muted transition-colors",
         className
       )}
       {...props}

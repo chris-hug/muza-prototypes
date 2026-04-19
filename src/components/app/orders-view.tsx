@@ -77,7 +77,22 @@ const ORDERS: Order[] = [
   { id: "12", number: "#1047", customer: { name: "Santiago Gómez",    location: "Buenos Aires, AR"}, items: [{ productTitle: "Golden Hour Hoodie",     type: "Apparel",  image: PIC("hoodie77"),    quantity: 1 }, { productTitle: "Logo Tee",               type: "Apparel",  image: PIC("logotee"),    quantity: 1 }], date: "2026-04-05", total: 85,  status: "delivered"  },
   { id: "13", number: "#1046", customer: { name: "Amara Diallo",      location: "Dakar, SN"       }, items: [{ productTitle: "Tour Cap",               type: "Apparel",  image: PIC("tourcap"),     quantity: 1 }],                                                                          date: "2026-04-04", total: 25,  status: "processing" },
   { id: "14", number: "#1045", customer: { name: "Finn Larsen",       location: "Aarhus, DK"      }, items: [{ productTitle: "City Lights — LP",       type: "Vinyl",    image: PIC("citylights"),  quantity: 1 }],                                                                          date: "2026-04-03", total: 28,  status: "delivered"  },
-  { id: "15", number: "#1044", customer: { name: "Priya Sharma",      location: "Mumbai, IN"      }, items: [{ productTitle: "Enamel Pin Set",         type: "Other",    image: PIC("pinset"),      quantity: 2 }, { productTitle: "Limited Edition Poster", type: "Other",    image: PIC("poster99"),   quantity: 1 }], date: "2026-04-02", total: 42,  status: "delivered"  },
+  { id: "15", number: "#1044", customer: { name: "Priya Sharma",      location: "Mumbai, IN"      }, items: [{ productTitle: "Enamel Pin Set",              type: "Other",    image: PIC("pinset"),       quantity: 2 }, { productTitle: "Limited Edition Poster",  type: "Other",    image: PIC("poster99"),    quantity: 1 }], date: "2026-04-02", total: 42,  status: "delivered"  },
+  { id: "16", number: "#1043", customer: { name: "Kenji Watanabe",    location: "Osaka, JP"       }, items: [{ productTitle: "Kind of Blue — LP",           type: "Vinyl",    image: PIC("kindofblue"),   quantity: 1 }],                                                                           date: "2026-04-01", total: 34,  status: "delivered"  },
+  { id: "17", number: "#1042", customer: { name: "Isabelle Dupont",   location: "Lyon, FR"        }, items: [{ productTitle: "Modal Jazz — 7\" Single",     type: "Vinyl",    image: PIC("modaljazz"),    quantity: 1 }, { productTitle: "Jazz Notebook",           type: "Other",    image: PIC("notebook"),    quantity: 1 }], date: "2026-03-30", total: 34,  status: "delivered"  },
+  { id: "18", number: "#1041", customer: { name: "Oluwaseun Adeyemi", location: "Ibadan, NG"      }, items: [{ productTitle: "A Love Supreme — LP",         type: "Vinyl",    image: PIC("lovesupreme"),  quantity: 1 }],                                                                           date: "2026-03-29", total: 38,  status: "shipped"    },
+  { id: "19", number: "#1040", customer: { name: "Marta Kowalska",    location: "Warsaw, PL"      }, items: [{ productTitle: "Blue Note Crewneck",          type: "Apparel",  image: PIC("crewneck"),     quantity: 1 }],                                                                           date: "2026-03-28", total: 65,  status: "delivered"  },
+  { id: "20", number: "#1039", customer: { name: "Rafael Andrade",    location: "São Paulo, BR"   }, items: [{ productTitle: "Bossa Nova Midnight",         type: "CD",       image: PIC("bossanova"),    quantity: 1 }, { productTitle: "Vinyl Slipmat",           type: "Other",    image: PIC("slipmat"),     quantity: 1 }], date: "2026-03-27", total: 35,  status: "delivered"  },
+  { id: "21", number: "#1038", customer: { name: "Astrid Lindqvist",  location: "Stockholm, SE"   }, items: [{ productTitle: "Autumn Leaves — LP",         type: "Vinyl",    image: PIC("autumnleaves"), quantity: 1 }],                                                                           date: "2026-03-26", total: 30,  status: "delivered"  },
+  { id: "22", number: "#1037", customer: { name: "Kofi Mensah",       location: "Kumasi, GH"      }, items: [{ productTitle: "Wax Seal Sticker Set",        type: "Other",    image: PIC("stickers"),     quantity: 2 }],                                                                           date: "2026-03-25", total: 16,  status: "delivered"  },
+  { id: "23", number: "#1036", customer: { name: "Mei-Ling Chen",     location: "Taipei, TW"      }, items: [{ productTitle: "Kind of Blue — Cassette",    type: "Cassette", image: PIC("kobcassette"),  quantity: 1 }, { productTitle: "Blue Note Enamel Pin",    type: "Other",    image: PIC("bluenote"),    quantity: 1 }], date: "2026-03-24", total: 22,  status: "delivered"  },
+  { id: "24", number: "#1035", customer: { name: "Dmitri Sokolov",    location: "Moscow, RU"      }, items: [{ productTitle: "Giant Steps — LP",           type: "Vinyl",    image: PIC("giantsteps"),   quantity: 1 }],                                                                           date: "2026-03-22", total: 36,  status: "refunded"   },
+  { id: "25", number: "#1034", customer: { name: "Valentina Cruz",    location: "Mexico City, MX" }, items: [{ productTitle: "Jazz Club Tote Bag",          type: "Other",    image: PIC("totebag"),      quantity: 1 }, { productTitle: "Bebop Dad Hat",           type: "Apparel",  image: PIC("dadhat"),      quantity: 1 }], date: "2026-03-21", total: 50,  status: "delivered"  },
+  { id: "26", number: "#1033", customer: { name: "Emre Yılmaz",       location: "Istanbul, TR"    }, items: [{ productTitle: "Maiden Voyage — LP",         type: "Vinyl",    image: PIC("maidenvoyage"), quantity: 1 }],                                                                           date: "2026-03-20", total: 30,  status: "delivered"  },
+  { id: "27", number: "#1032", customer: { name: "Aiko Yamamoto",     location: "Kyoto, JP"       }, items: [{ productTitle: "Embroidered Jazz Patch",      type: "Other",    image: PIC("patch"),        quantity: 3 }, { productTitle: "Canvas Tote — City Lights", type: "Other", image: PIC("canvastote"),  quantity: 1 }], date: "2026-03-18", total: 55,  status: "delivered"  },
+  { id: "28", number: "#1031", customer: { name: "Sven Eriksson",     location: "Gothenburg, SE"  }, items: [{ productTitle: "Mingus Ah Um — LP",          type: "Vinyl",    image: PIC("mingus"),       quantity: 1 }],                                                                           date: "2026-03-16", total: 32,  status: "shipped"    },
+  { id: "29", number: "#1030", customer: { name: "Chiara Bianchi",    location: "Milan, IT"       }, items: [{ productTitle: "Blue Train — LP",            type: "Vinyl",    image: PIC("bluetrain"),    quantity: 1 }, { productTitle: "Modal Moods",             type: "CD",       image: PIC("modalmoods"),  quantity: 1 }], date: "2026-03-15", total: 49,  status: "delivered"  },
+  { id: "30", number: "#1029", customer: { name: "Fatou Diallo",      location: "Conakry, GN"     }, items: [{ productTitle: "Night Cap",                  type: "Apparel",  image: PIC("nightcap"),     quantity: 1 }, { productTitle: "Muza Jazz Scarf",         type: "Apparel",  image: PIC("scarf"),       quantity: 1 }], date: "2026-03-14", total: 57,  status: "processing" },
 ]
 
 // ─── Aggregated stats ─────────────────────────────────────────────────────────
@@ -336,7 +351,7 @@ function OrderRow({ order, isSelected, onSelect, status, onStatusChange, visible
       onMouseLeave={() => setHovered(false)}
     >
       {/* Checkbox */}
-      <td className="px-2 py-0 text-center">
+      <td className="w-10 px-2 py-0">
         <div className={cn("flex items-center justify-center transition-opacity", hovered || isSelected ? "opacity-100" : "opacity-0 pointer-events-none")}>
           <Checkbox checked={isSelected} onCheckedChange={onSelect} onClick={e => e.stopPropagation()} className="after:hidden" />
         </div>
@@ -640,8 +655,10 @@ export function OrdersView() {
           {/* Sticky header */}
           <thead className="sticky top-0 z-10 bg-background [&_tr]:border-b [&_tr]:border-border [&_tr]:hover:bg-transparent">
             <tr>
-              <TableHead resizable={false} className="w-10 px-2 text-center">
-                <Checkbox checked={allSelected} indeterminate={!allSelected && someSelected} onCheckedChange={toggleSelectAll} className="after:hidden" />
+              <TableHead resizable={false} className="w-10 px-2">
+                <div className="flex items-center justify-center">
+                  <Checkbox checked={allSelected} indeterminate={!allSelected && someSelected} onCheckedChange={toggleSelectAll} className="after:hidden" />
+                </div>
               </TableHead>
               <TableHead style={{ width: COL.number }}>
                 <SortHeader label="Order" sortKey="number" activeSortKey={sortKey} sortDir={sortDir} onSort={handleSortChange} />

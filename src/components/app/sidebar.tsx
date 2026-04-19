@@ -39,6 +39,16 @@ const NAV_TOP: NavItem[] = [
 
 const NAV_GROUPS: NavGroup[] = [
   {
+    label: "Library",
+    icon: <Library className="size-4" />,
+    children: [
+      { label: "Albums",    icon: <Disc3     className="size-4" /> },
+      { label: "Artists",   icon: <Mic       className="size-4" /> },
+      { label: "Songs",     icon: <Music2    className="size-4" /> },
+      { label: "Playlists", icon: <ListMusic className="size-4" /> },
+    ],
+  },
+  {
     label: "Studio",
     icon: <Sliders className="size-4" />,
     children: [
@@ -48,16 +58,6 @@ const NAV_GROUPS: NavGroup[] = [
       { label: "Products",  icon: <Package      className="size-4" /> },
       { label: "Orders",    icon: <ShoppingCart className="size-4" /> },
       { label: "Wallet",    icon: <CreditCard  className="size-4" /> },
-    ],
-  },
-  {
-    label: "Library",
-    icon: <Library className="size-4" />,
-    children: [
-      { label: "Albums",    icon: <Disc3     className="size-4" /> },
-      { label: "Artists",   icon: <Mic       className="size-4" /> },
-      { label: "Songs",     icon: <Music2    className="size-4" /> },
-      { label: "Playlists", icon: <ListMusic className="size-4" /> },
     ],
   },
 ]
@@ -216,7 +216,7 @@ export function Sidebar({
 }: SidebarProps) {
   const [internalCollapsed, setInternalCollapsed] = useState(false)
   const [activeItem, setActiveItem] = useState(activeNav)
-  const [openGroup,  setOpenGroup]  = useState<string>("")
+  const [openGroup,  setOpenGroup]  = useState<string>("Library")
   const [sidebarWidth, setSidebarWidth] = useState(MIN_W)
   const [resizing, setResizing] = useState(false)
 

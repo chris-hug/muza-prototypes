@@ -61,6 +61,36 @@ const PRODUCTS: Product[] = [
   { id: "8",  type: "Apparel",      status: "private", title: "Tour Cap",               image: PIC("tourcap"),      price: 25, priceMode: "min",   stock: 4,    sold: 38,  shippingRegions: 2, muzaLink: null,                 lastEdited: "2026-01-15", variants: 3 },
   { id: "9",  type: "Other",        status: "public",  title: "Limited Edition Poster", image: PIC("poster99"),     price: 18, priceMode: "fixed", stock: 3,    sold: 97,  shippingRegions: 2, muzaLink: null,                 lastEdited: "2026-04-10" },
   { id: "10", type: "Other",        status: "public",  title: "Enamel Pin Set",         image: PIC("pinset"),       price: 12, priceMode: "fixed", stock: 100,  sold: 183, shippingRegions: 3, muzaLink: null,                 lastEdited: "2026-02-05" },
+  { id: "11", type: "Vinyl",        status: "public",  title: "Autumn Leaves — LP",     image: PIC("autumnleaves"), price: 30, priceMode: "fixed", stock: 22,   sold: 67,  shippingRegions: 2, muzaLink: "Autumn Leaves",      lastEdited: "2026-03-15" },
+  { id: "12", type: "Apparel",      status: "public",  title: "Jazz Club Hoodie",       image: PIC("jazzclub"),     price: 60, priceMode: "fixed", stock: 8,    sold: 34,  shippingRegions: 1, muzaLink: null,                 lastEdited: "2026-02-28", variants: 3 },
+  { id: "13", type: "Other",        status: "public",  title: "Blue Note Enamel Pin",   image: PIC("bluenote"),     price: 10, priceMode: "fixed", stock: 150,  sold: 211, shippingRegions: 3, muzaLink: null,                 lastEdited: "2026-04-08" },
+
+  { id: "14", type: "Vinyl",        status: "public",  title: "Kind of Blue — LP",             image: PIC("kindofblue"),   price: 34, priceMode: "fixed", stock: 15,   sold: 94,  shippingRegions: 3, muzaLink: "Kind of Blue",        lastEdited: "2026-04-02" },
+  { id: "15", type: "Vinyl",        status: "public",  title: "Blue Train — LP",               image: PIC("bluetrain"),    price: 34, priceMode: "fixed", stock: 18,   sold: 78,  shippingRegions: 2, muzaLink: "Blue Train",          lastEdited: "2026-03-20" },
+  { id: "16", type: "Vinyl",        status: "public",  title: "Giant Steps — LP",              image: PIC("giantsteps"),   price: 36, priceMode: "fixed", stock: 10,   sold: 55,  shippingRegions: 2, muzaLink: "Giant Steps",         lastEdited: "2026-03-05" },
+  { id: "17", type: "Vinyl",        status: "public",  title: "A Love Supreme — LP",           image: PIC("lovesupreme"),  price: 38, priceMode: "fixed", stock: 5,    sold: 43,  shippingRegions: 2, muzaLink: "A Love Supreme",      lastEdited: "2026-02-14" },
+  { id: "18", type: "Vinyl",        status: "public",  title: "Mingus Ah Um — LP",             image: PIC("mingus"),       price: 32, priceMode: "fixed", stock: 12,   sold: 61,  shippingRegions: 3, muzaLink: "Mingus Ah Um",        lastEdited: "2026-02-08" },
+  { id: "19", type: "Vinyl",        status: "public",  title: "Maiden Voyage — LP",            image: PIC("maidenvoyage"), price: 30, priceMode: "fixed", stock: 9,    sold: 48,  shippingRegions: 2, muzaLink: "Maiden Voyage",       lastEdited: "2026-01-29" },
+  { id: "20", type: "Vinyl",        status: "public",  title: "Speak No Evil — LP",            image: PIC("speaknoevil"),  price: 34, priceMode: "fixed", stock: 14,   sold: 52,  shippingRegions: 2, muzaLink: "Speak No Evil",       lastEdited: "2026-01-12" },
+  { id: "21", type: "Vinyl",        status: "public",  title: "Moanin' — LP",                  image: PIC("moanin"),       price: 32, priceMode: "fixed", stock: 7,    sold: 37,  shippingRegions: 2, muzaLink: "Moanin'",             lastEdited: "2025-12-20" },
+  { id: "22", type: "Vinyl",        status: "public",  title: "Modal Jazz — 7\" Single",       image: PIC("modaljazz"),    price: 18, priceMode: "fixed", stock: 40,   sold: 129, shippingRegions: 2, muzaLink: "Modal Jazz",          lastEdited: "2026-04-11" },
+  { id: "23", type: "Cassette",     status: "public",  title: "Kind of Blue — Cassette",       image: PIC("kobcassette"),  price: 12, priceMode: "fixed", stock: 25,   sold: 72,  shippingRegions: 2, muzaLink: "Kind of Blue",        lastEdited: "2026-03-18" },
+  { id: "24", type: "Cassette",     status: "public",  title: "Autumn Leaves — Cassette",      image: PIC("alcassette"),   price: 12, priceMode: "fixed", stock: 20,   sold: 45,  shippingRegions: 2, muzaLink: "Autumn Leaves",       lastEdited: "2026-03-01" },
+  { id: "25", type: "Compact Disc", status: "public",  title: "Modal Moods",                   image: PIC("modalmoods"),   price: 15, priceMode: "fixed", stock: 40,   sold: 88,  shippingRegions: 3, muzaLink: "Modal Moods",         lastEdited: "2026-02-22" },
+  { id: "26", type: "Compact Disc", status: "public",  title: "Bossa Nova Midnight",           image: PIC("bossanova"),    price: 15, priceMode: "fixed", stock: 35,   sold: 102, shippingRegions: 3, muzaLink: "Bossa Nova Midnight",  lastEdited: "2026-02-10" },
+  { id: "27", type: "Apparel",      status: "public",  title: "Blue Note Crewneck",            image: PIC("crewneck"),     price: 65, priceMode: "fixed", stock: 6,    sold: 28,  shippingRegions: 2, muzaLink: null,                  lastEdited: "2026-03-30", variants: 4 },
+  { id: "28", type: "Apparel",      status: "public",  title: "Bebop Dad Hat",                 image: PIC("dadhat"),       price: 28, priceMode: "fixed", stock: 20,   sold: 59,  shippingRegions: 2, muzaLink: null,                  lastEdited: "2026-03-12", variants: 2 },
+  { id: "29", type: "Apparel",      status: "public",  title: "Muza Jazz Scarf",               image: PIC("scarf"),        price: 35, priceMode: "fixed", stock: 15,   sold: 41,  shippingRegions: 1, muzaLink: null,                  lastEdited: "2026-02-25" },
+  { id: "30", type: "Apparel",      status: "private", title: "Studio Fleece Jacket",          image: PIC("fleece"),       price: 90, priceMode: "fixed", stock: 4,    sold: 12,  shippingRegions: 1, muzaLink: null,                  lastEdited: "2026-01-08", variants: 3 },
+  { id: "31", type: "Apparel",      status: "public",  title: "Night Cap",                     image: PIC("nightcap"),     price: 22, priceMode: "fixed", stock: 18,   sold: 63,  shippingRegions: 2, muzaLink: null,                  lastEdited: "2026-03-08", variants: 2 },
+  { id: "32", type: "Other",        status: "public",  title: "Jazz Club Tote Bag",            image: PIC("totebag"),      price: 22, priceMode: "fixed", stock: 50,   sold: 134, shippingRegions: 2, muzaLink: null,                  lastEdited: "2026-04-06" },
+  { id: "33", type: "Other",        status: "public",  title: "Vinyl Slipmat",                 image: PIC("slipmat"),      price: 20, priceMode: "fixed", stock: 80,   sold: 167, shippingRegions: 3, muzaLink: null,                  lastEdited: "2026-03-25" },
+  { id: "34", type: "Other",        status: "public",  title: "Album Art Print — City Lights", image: PIC("printcl"),      price: 25, priceMode: "fixed", stock: 8,    sold: 73,  shippingRegions: 2, muzaLink: null,                  lastEdited: "2026-03-14" },
+  { id: "35", type: "Other",        status: "public",  title: "Album Art Print — Golden Hour", image: PIC("printgh"),      price: 25, priceMode: "fixed", stock: 5,    sold: 61,  shippingRegions: 2, muzaLink: null,                  lastEdited: "2026-03-14" },
+  { id: "36", type: "Other",        status: "public",  title: "Jazz Notebook",                 image: PIC("notebook"),     price: 16, priceMode: "fixed", stock: 200,  sold: 289, shippingRegions: 3, muzaLink: null,                  lastEdited: "2026-02-18" },
+  { id: "37", type: "Other",        status: "public",  title: "Wax Seal Sticker Set",          image: PIC("stickers"),     price: 8,  priceMode: "fixed", stock: 300,  sold: 412, shippingRegions: 3, muzaLink: null,                  lastEdited: "2026-02-01" },
+  { id: "38", type: "Other",        status: "public",  title: "Embroidered Jazz Patch",        image: PIC("patch"),        price: 9,  priceMode: "fixed", stock: 150,  sold: 188, shippingRegions: 3, muzaLink: null,                  lastEdited: "2026-01-20" },
+  { id: "39", type: "Other",        status: "public",  title: "Canvas Tote — City Lights",     image: PIC("canvastote"),   price: 28, priceMode: "fixed", stock: 30,   sold: 95,  shippingRegions: 2, muzaLink: null,                  lastEdited: "2026-04-09" },
 ]
 
 // ─── Aggregated stats (consumed by parent views) ──────────────────────────────
@@ -304,14 +334,14 @@ function ProductRow({ product, isSelected, onSelect, status, onStatusChange }: {
       onMouseLeave={() => setHovered(false)}
     >
       {/* Checkbox */}
-      <td className="px-2 py-0 text-center">
+      <td className="w-10 px-2 py-0">
         <div className={cn("flex items-center justify-center transition-opacity", hovered || isSelected ? "opacity-100" : "opacity-0 pointer-events-none")}>
           <Checkbox checked={isSelected} onCheckedChange={onSelect} onClick={e => e.stopPropagation()} className="after:hidden" />
         </div>
       </td>
 
       {/* Cover */}
-      <td className="px-2 py-0">
+      <td className="px-2 py-0" style={{ width: COL.cover }}>
         <div className={cn("rounded-xs bg-neutral-200 overflow-hidden transition-opacity", isDimmed && "opacity-50")} style={{ width: 44, height: 44 }}>
           <img src={product.image} alt={product.title} className="size-full object-cover" draggable={false} />
         </div>
@@ -619,8 +649,10 @@ export function ShopMyProductsView() {
           {/* Sticky header */}
           <thead className="sticky top-0 z-10 bg-background [&_tr]:border-b [&_tr]:border-border [&_tr]:hover:bg-transparent">
             <tr>
-              <TableHead resizable={false} className="w-10 px-2 text-center">
-                <Checkbox checked={allSelected} indeterminate={!allSelected && someSelected} onCheckedChange={toggleSelectAll} className="after:hidden" />
+              <TableHead resizable={false} className="w-10 px-2">
+                <div className="flex items-center justify-center">
+                  <Checkbox checked={allSelected} indeterminate={!allSelected && someSelected} onCheckedChange={toggleSelectAll} className="after:hidden" />
+                </div>
               </TableHead>
               <TableHead resizable={false} className="px-2" style={{ width: COL.cover }} />
               <TableHead style={{ width: COL.title }}>

@@ -245,7 +245,7 @@ function VolumeControl({
 // PlayerBar
 // ═══════════════════════════════════════════════════════════════════════════
 
-interface PlayerBarProps {
+interface PlayerBarBProps {
   className?: string
   track?: {
     title:  string
@@ -259,7 +259,7 @@ interface PlayerBarProps {
   totalTime?:   string
 }
 
-export function PlayerBar({
+export function PlayerBarB({
   className,
   track = {
     title:  "Chris Test Song",
@@ -270,7 +270,7 @@ export function PlayerBar({
   },
   currentTime = "2:24",
   totalTime   = "5:12",
-}: PlayerBarProps) {
+}: PlayerBarBProps) {
   // Playback
   const [playing,  setPlaying]   = useState(false)
   const [progress, setProgress]  = useState(0)  // 0–1, drives the mobile progress arc
@@ -352,8 +352,31 @@ export function PlayerBar({
           "min-w-[392px] @min-[688px]:min-w-[448px] @min-[800px]:min-w-[524px]",
         )}>
 
-          {/* Skip back / Play / Skip forward */}
+          {/* Shuffle / Skip back / Play / Skip forward / Repeat — Player B
+              folds Shuffle + Repeat into the transport row (outside the back
+              and forward buttons) instead of putting them on the far right. */}
           <div className="flex items-center gap-2 @min-[688px]:gap-4 shrink-0">
+            {toggles.map(({ Icon, label, active, onToggle }) => label === "Shuffle" && (
+              <button
+                key={label}
+                aria-label={label}
+                aria-pressed={active}
+                onClick={onToggle}
+                className={cn(
+                  ghostIconBtn,
+                  active && "bg-primary hover:bg-primary-hover active:bg-primary-hover",
+                )}
+              >
+                <Icon
+                  strokeWidth={1.5}
+                  className={cn(
+                    "size-5 transition-colors",
+                    active ? "text-primary-foreground" : "text-foreground",
+                  )}
+                />
+              </button>
+            ))}
+
             <button className={transportBtn} aria-label="Previous track">
               <SkipBackFilled className="size-[30px]" />
             </button>
@@ -372,6 +395,27 @@ export function PlayerBar({
             <button className={transportBtn} aria-label="Next track">
               <SkipForwardFilled className="size-[30px]" />
             </button>
+
+            {toggles.map(({ Icon, label, active, onToggle }) => label === "Repeat" && (
+              <button
+                key={label}
+                aria-label={label}
+                aria-pressed={active}
+                onClick={onToggle}
+                className={cn(
+                  ghostIconBtn,
+                  active && "bg-primary hover:bg-primary-hover active:bg-primary-hover",
+                )}
+              >
+                <Icon
+                  strokeWidth={1.5}
+                  className={cn(
+                    "size-5 transition-colors",
+                    active ? "text-primary-foreground" : "text-foreground",
+                  )}
+                />
+              </button>
+            ))}
           </div>
 
           {/* Timestamp + waveform — timestamps only show at ≥800px so the
@@ -399,29 +443,8 @@ export function PlayerBar({
             </span>
           </div>
 
-          {/* Shuffle / Repeat / Volume */}
-          <div className="flex items-center gap-0.5 shrink-0">
-            {toggles.map(({ Icon, label, active, onToggle }) => (
-              <button
-                key={label}
-                aria-label={label}
-                aria-pressed={active}
-                onClick={onToggle}
-                className={cn(
-                  ghostIconBtn,
-                  // Active state uses the solid primary brand colour.
-                  active && "bg-primary hover:bg-primary-hover active:bg-primary-hover",
-                )}
-              >
-                <Icon
-                  strokeWidth={1.5}
-                  className={cn(
-                    "size-5 transition-colors",
-                    active ? "text-primary-foreground" : "text-foreground",
-                  )}
-                />
-              </button>
-            ))}
+          {/* Volume only — Shuffle and Repeat moved into the transport row above. */}
+          <div className="flex items-center shrink-0">
             <VolumeControl volume={volume} onVolumeChange={setVolume} />
           </div>
         </div>

@@ -18,12 +18,15 @@ const buttonVariants = cva(
         // Secondary — light surface, always solid foreground text
         secondary:
           "border-transparent bg-secondary text-foreground hover:bg-secondary-hover",
-        // Outline — border only, primary text
+        // Outline — border + frosted-glass fill. On a solid background this
+        // is indistinguishable from the old solid-fill outline; on varied
+        // backdrops (photos, gradients) the 20% bg + backdrop-blur reveal a
+        // proper glass effect.
         outline:
-          "border-border bg-background text-foreground hover:bg-muted hover:border-foreground/30",
-        // Primary outline — border, primary text
+          "border-border bg-background/20 backdrop-blur-lg text-foreground hover:bg-muted hover:border-foreground/30",
+        // Primary outline — same glass treatment, primary text colour.
         "outline-primary":
-          "border-border bg-background text-primary hover:bg-muted hover:border-foreground/30",
+          "border-border bg-background/20 backdrop-blur-lg text-primary hover:bg-muted hover:border-foreground/30",
         // Ghost — bg-clip-border so fill reaches the outer edge
         ghost:
           "border-transparent hover:bg-accent text-foreground bg-clip-border",

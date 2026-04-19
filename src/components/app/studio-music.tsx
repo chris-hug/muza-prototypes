@@ -638,7 +638,7 @@ function MusicRow({ release, visibleCols, isSelected, onSelect, status, onStatus
       onMouseLeave={() => setHovered(false)}
     >
       {/* Checkbox */}
-      <td className="px-2 py-0 text-center">
+      <td className="w-10 px-2 py-0">
         <div className={cn("flex items-center justify-center transition-opacity", hovered || isSelected ? "opacity-100" : "opacity-0 pointer-events-none")}>
           <Checkbox checked={isSelected} onCheckedChange={onSelect} onClick={e => e.stopPropagation()} className="after:hidden" />
         </div>
@@ -1058,8 +1058,10 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
           {/* Sticky header */}
           <thead className="sticky top-0 z-10 bg-background [&_tr]:border-b [&_tr]:border-border [&_tr]:hover:bg-transparent">
             <tr>
-              <TableHead resizable={false} className="w-10 px-2 text-center">
-                <Checkbox checked={allSelected} indeterminate={!allSelected && someSelected} onCheckedChange={toggleSelectAll} className="after:hidden" />
+              <TableHead resizable={false} className="w-10 px-2">
+                <div className="flex items-center justify-center">
+                  <Checkbox checked={allSelected} indeterminate={!allSelected && someSelected} onCheckedChange={toggleSelectAll} className="after:hidden" />
+                </div>
               </TableHead>
               <TableHead className={cn(!effectiveVis.id && "hidden")} style={{ width: DEFAULT_WIDTHS.id }} minWidth={MIN_WIDTHS.id}>ID</TableHead>
               <TableHead resizable={false} className={cn("px-2", !effectiveVis.cover && "hidden")} style={{ width: DEFAULT_WIDTHS.cover }} />

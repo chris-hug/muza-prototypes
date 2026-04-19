@@ -70,7 +70,9 @@ import { UploadMusicDialog } from "@/components/app/upload-music-dialog"
 import { ShopMyProductsView } from "@/components/app/shop-my-products"
 import { OrdersView } from "@/components/app/orders-view"
 import { filterTriggerCls, FilterChevron, FilterCount } from "@/components/ui/filter-button"
-import { PlayerBar } from "@/components/ui/player-bar"
+import { PlayerBar }     from "@/components/ui/player-bar"
+import { PlayerBarB }    from "@/components/ui/player-bar-b"
+import { PlayerOverlay } from "@/components/ui/player-overlay"
 
 // ─── Section heading component ────────────────────────────────────────────────
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
@@ -465,7 +467,48 @@ function hexToOklch(hex: string): string {
   return `${(L * 100).toFixed(2)}% ${C.toFixed(4)} ${H.toFixed(1)}`
 }
 
-// ─── ResizableBox — drag the right edge to test responsive components ────────
+// ─── LazyOnView — renders children only once the wrapper enters the viewport.
+//   Useful for keeping heavy previews (blurred backdrops, WaveSurfer canvases,
+//   etc.) out of the paint/layout tree while they're scrolled off-screen —
+//   without the scroll-anchoring quirks of `content-visibility: auto`.
+function LazyOnView({
+  children,
+  fallbackClassName,
+  rootMargin = "200px",
+}: {
+  children:           React.ReactNode
+  fallbackClassName?: string
+  rootMargin?:        string
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el || mounted) return
+    const io = new IntersectionObserver(
+      entries => {
+        if (entries.some(e => e.isIntersecting)) {
+          setMounted(true)
+          io.disconnect()
+        }
+      },
+      { rootMargin },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [mounted, rootMargin])
+
+  return (
+    <div ref={ref} className="absolute inset-0">
+      {mounted ? children : fallbackClassName && <div className={fallbackClassName} />}
+    </div>
+  )
+}
+
+// ─── ResizableBox — drag the right edge to test responsive components.
+//    The box never grows wider than its own parent container (measured with
+//    a ResizeObserver), regardless of the `maxWidth` prop. ─────────────────
 function ResizableBox({
   initialWidth = 800,
   minWidth     = 280,
@@ -477,10 +520,30 @@ function ResizableBox({
   maxWidth?:     number
   children:      React.ReactNode
 }) {
-  const [width, setWidth] = useState(initialWidth)
-  const [dragging, setDragging] = useState(false)
+  const outerRef   = useRef<HTMLDivElement>(null)
+  const [width,       setWidth]       = useState(initialWidth)
+  const [parentWidth, setParentWidth] = useState(Infinity)
+  const [dragging,    setDragging]    = useState(false)
   const startX     = useRef(0)
   const startWidth = useRef(initialWidth)
+
+  // Track the parent container's width so we can cap the box to it.
+  useEffect(() => {
+    const el = outerRef.current
+    if (!el) return
+    const update = () => setParentWidth(el.clientWidth)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const effectiveMax = Math.min(maxWidth, parentWidth)
+
+  // Clamp state if the parent shrinks below the current width.
+  useEffect(() => {
+    setWidth(w => Math.min(w, effectiveMax))
+  }, [effectiveMax])
 
   const onMouseDown = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -493,9 +556,9 @@ function ResizableBox({
     if (!dragging) return
     const onMove = (ev: MouseEvent) => {
       const delta = ev.clientX - startX.current
-      // Right handle adds delta; we use 2× since the box is centred (mx-auto)
-      // so dragging right adds delta to the right and the same to the left.
-      setWidth(Math.min(maxWidth, Math.max(minWidth, startWidth.current + delta * 2)))
+      // Right handle adds delta; 2× because the box is centred (mx-auto), so
+      // dragging right adds delta to both sides symmetrically.
+      setWidth(Math.min(effectiveMax, Math.max(minWidth, startWidth.current + delta * 2)))
     }
     const onUp = () => setDragging(false)
     document.addEventListener("mousemove", onMove)
@@ -504,12 +567,12 @@ function ResizableBox({
       document.removeEventListener("mousemove", onMove)
       document.removeEventListener("mouseup",   onUp)
     }
-  }, [dragging, maxWidth, minWidth])
+  }, [dragging, effectiveMax, minWidth])
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div ref={outerRef} className="flex flex-col items-center gap-2 w-full">
       <div className="text-xs text-muted-foreground tabular-nums">{Math.round(width)}px</div>
-      <div className="relative mx-auto" style={{ width }}>
+      <div className="relative mx-auto max-w-full" style={{ width }}>
         {children}
         {/* Right resize handle */}
         <div
@@ -552,17 +615,25 @@ function ExploreView() {
       {/* Quick nav */}
       <nav className="flex flex-wrap gap-1.5 mb-12">
         {[
-          "Colors","Typography","Buttons","Badges","Chips","Input","Select","Combobox","Menu",
+          "Colors","Typography","Buttons","Badges","Chips","Input","Select","Filter Button","Combobox","Menu",
           "Date Picker","Checkbox","Switch & Slider","Avatar","Tabs","Cards","Alerts","Alert Dialog",
           "Dialogs","Toast","Skeleton",
           "Popover","Table","Pagination","Command","OTP Input","Form",
+          "Player Bar","Player Overlay",
         ].map((s) => {
-          const id = s.toLowerCase().replace(/\s+&\s+/g,"-").replace(/\s+/g,"-")
+          // Preserve `&` so "Switch & Slider" matches the section id
+          // "switch-&-slider". Just lowercase and turn whitespace into dashes.
+          const id = s.toLowerCase().replace(/\s+/g,"-")
           return (
             <button
               key={s}
               type="button"
-              onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              onClick={() => {
+                // Instant scroll — `behavior: smooth` races against the lazy
+                // mounts further down the page and leaves scroll anchoring
+                // confused when elements appear mid-animation.
+                document.getElementById(id)?.scrollIntoView({ block: "start" })
+              }}
               className="text-xs font-normal text-foreground px-3 py-1.5 rounded-full border border-border hover:bg-secondary transition-colors"
             >
               {s}
@@ -1694,19 +1765,78 @@ function ExploreView() {
 
       {/* ══ PLAYER BAR ══ */}
       <Section id="player-bar" title="Player Bar">
-        <ResizableBox initialWidth={1000} minWidth={368} maxWidth={1500}>
-          <div
-            className="relative flex items-end justify-center rounded-xl overflow-hidden p-10"
-            style={{
-              backgroundImage: "url(https://www.figma.com/api/mcp/asset/146ffdca-77f3-4008-8ff4-904d2b06ca52)",
-              backgroundSize: "cover",
-              backgroundPosition: "center top",
-              minHeight: 360,
-            }}
-          >
-            <PlayerBar className="relative z-10 w-full" />
-          </div>
-        </ResizableBox>
+        <div className="flex flex-col gap-8">
+          {/* Player A */}
+          <ResizableBox initialWidth={1000} minWidth={368} maxWidth={1500}>
+            <div
+              className="relative flex flex-col justify-center gap-4 rounded-xl overflow-hidden p-10"
+              style={{
+                backgroundImage: "url(https://www.figma.com/api/mcp/asset/146ffdca-77f3-4008-8ff4-904d2b06ca52)",
+                backgroundSize: "cover",
+                backgroundPosition: "center top",
+                minHeight: 360,
+              }}
+            >
+              <div className="relative z-10 flex flex-col gap-4">
+                <span className="self-start text-xxs font-medium text-foreground bg-background/70 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                  Player Bar A
+                </span>
+                <PlayerBar className="w-full" />
+              </div>
+            </div>
+          </ResizableBox>
+
+          {/* Player B */}
+          <ResizableBox initialWidth={1000} minWidth={368} maxWidth={1500}>
+            <div
+              className="relative flex flex-col justify-center gap-4 rounded-xl overflow-hidden p-10"
+              style={{
+                backgroundImage: "url(https://www.figma.com/api/mcp/asset/146ffdca-77f3-4008-8ff4-904d2b06ca52)",
+                backgroundSize: "cover",
+                backgroundPosition: "center top",
+                minHeight: 360,
+              }}
+            >
+              <div className="relative z-10 flex flex-col gap-4">
+                <span className="self-start text-xxs font-medium text-foreground bg-background/70 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                  Player Bar B
+                </span>
+                <PlayerBarB className="w-full" />
+              </div>
+            </div>
+          </ResizableBox>
+        </div>
+      </Section>
+
+      {/* ══ PLAYER OVERLAY (mobile full-screen "Now listening") ══ */}
+      <Section id="player-overlay" title="Player Overlay">
+        {/*
+          Reference frames covering the full spread of iPhones still in
+          common daily use — from the oldest 4" device up to the newest
+          6.9" Pro Max.
+        */}
+        <div className="flex flex-wrap items-start justify-center gap-10">
+          {[
+            { label: "iPhone SE (1st gen) · 4\"",        width: 320, height: 568 },
+            { label: "iPhone SE (2nd/3rd gen) · 4.7\"",  width: 375, height: 667 },
+            { label: "iPhone 13–16e · 6.1\"",            width: 390, height: 844 },
+            { label: "iPhone 17 Pro Max · 6.9\"",        width: 440, height: 956 },
+          ].map(({ label, width, height }) => (
+            <div key={label} className="flex flex-col items-center gap-3">
+              <span className="text-xxs text-muted-foreground tabular-nums">
+                {label} · {width}×{height}
+              </span>
+              <div
+                className="relative rounded-[48px] overflow-hidden ring-1 ring-border shadow-xl bg-background"
+                style={{ width, height }}
+              >
+                <LazyOnView fallbackClassName="absolute inset-0 bg-muted animate-pulse">
+                  <PlayerOverlay />
+                </LazyOnView>
+              </div>
+            </div>
+          ))}
+        </div>
       </Section>
 
     </div>
