@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import { cn } from "@/lib/utils"
 import { AnimatedLogo } from "@/components/app/animated-logo"
 import { Sidebar } from "@/components/app/sidebar"
 import { StudioMusicView } from "@/components/app/studio-music"
@@ -69,6 +70,7 @@ import { UploadMusicDialog } from "@/components/app/upload-music-dialog"
 import { ShopMyProductsView } from "@/components/app/shop-my-products"
 import { OrdersView } from "@/components/app/orders-view"
 import { filterTriggerCls, FilterChevron, FilterCount } from "@/components/ui/filter-button"
+import { PlayerBar } from "@/components/ui/player-bar"
 
 // ─── Section heading component ────────────────────────────────────────────────
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
@@ -103,7 +105,7 @@ function useViewportLogoSize() {
 function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
   const logoSize = useViewportLogoSize()
   return (
-    <div className="px-10 pt-30 pb-64 max-w-6xl 3xl:max-w-[1600px] mx-auto w-full flex flex-col gap-6">
+    <div className="pt-30 pb-64 max-w-[100rem] mx-auto w-full px-[clamp(1.5rem,5vw,5rem)] flex flex-col gap-6">
       <div className="flex flex-col items-center gap-28 min-h-[65vh] justify-center">
         <div className="flex flex-col items-center gap-6">
           <img src="/wordmark.svg" alt="muza" className="h-4 dark:invert" />
@@ -463,6 +465,70 @@ function hexToOklch(hex: string): string {
   return `${(L * 100).toFixed(2)}% ${C.toFixed(4)} ${H.toFixed(1)}`
 }
 
+// ─── ResizableBox — drag the right edge to test responsive components ────────
+function ResizableBox({
+  initialWidth = 800,
+  minWidth     = 280,
+  maxWidth     = 1400,
+  children,
+}: {
+  initialWidth?: number
+  minWidth?:     number
+  maxWidth?:     number
+  children:      React.ReactNode
+}) {
+  const [width, setWidth] = useState(initialWidth)
+  const [dragging, setDragging] = useState(false)
+  const startX     = useRef(0)
+  const startWidth = useRef(initialWidth)
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault()
+    startX.current     = e.clientX
+    startWidth.current = width
+    setDragging(true)
+  }
+
+  useEffect(() => {
+    if (!dragging) return
+    const onMove = (ev: MouseEvent) => {
+      const delta = ev.clientX - startX.current
+      // Right handle adds delta; we use 2× since the box is centred (mx-auto)
+      // so dragging right adds delta to the right and the same to the left.
+      setWidth(Math.min(maxWidth, Math.max(minWidth, startWidth.current + delta * 2)))
+    }
+    const onUp = () => setDragging(false)
+    document.addEventListener("mousemove", onMove)
+    document.addEventListener("mouseup",   onUp)
+    return () => {
+      document.removeEventListener("mousemove", onMove)
+      document.removeEventListener("mouseup",   onUp)
+    }
+  }, [dragging, maxWidth, minWidth])
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <div className="text-xs text-muted-foreground tabular-nums">{Math.round(width)}px</div>
+      <div className="relative mx-auto" style={{ width }}>
+        {children}
+        {/* Right resize handle */}
+        <div
+          onMouseDown={onMouseDown}
+          className={cn(
+            "absolute top-1/2 -right-2 -translate-y-1/2 z-30",
+            "flex items-center justify-center w-4 h-12 cursor-ew-resize select-none",
+            "rounded-full bg-foreground/80 hover:bg-foreground transition-colors shadow-md",
+            dragging && "bg-foreground",
+          )}
+          title="Drag to resize"
+        >
+          <div className="w-0.5 h-4 bg-background rounded-full" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Kitchen sink (Explore view) ──────────────────────────────────────────────
 function ExploreView() {
   const [inputSelectCurrency, setInputSelectCurrency] = useState("USD")
@@ -476,12 +542,12 @@ function ExploreView() {
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <div className="bg-muted border-b border-border pt-24 pb-[3.75rem]">
-        <div className="max-w-6xl 3xl:max-w-[1600px] mx-auto px-10">
+        <div className="max-w-[100rem] mx-auto px-[clamp(1.5rem,5vw,5rem)]">
           <h1 className="text-5xl font-semibold leading-none tracking-[-0.025em]">The muza design system</h1>
         </div>
       </div>
 
-    <div className="max-w-6xl 3xl:max-w-[1600px] mx-auto w-full px-10 py-10 pb-32">
+    <div className="max-w-[100rem] mx-auto w-full px-[clamp(1.5rem,5vw,5rem)] py-10 pb-32">
 
       {/* Quick nav */}
       <nav className="flex flex-wrap gap-1.5 mb-12">
@@ -1624,6 +1690,23 @@ function ExploreView() {
           <SubLabel>Controlled form with Zod validation — try submitting empty</SubLabel>
           <FormDemo />
         </div>
+      </Section>
+
+      {/* ══ PLAYER BAR ══ */}
+      <Section id="player-bar" title="Player Bar">
+        <ResizableBox initialWidth={1000} minWidth={368} maxWidth={1500}>
+          <div
+            className="relative flex items-end justify-center rounded-xl overflow-hidden p-10"
+            style={{
+              backgroundImage: "url(https://www.figma.com/api/mcp/asset/146ffdca-77f3-4008-8ff4-904d2b06ca52)",
+              backgroundSize: "cover",
+              backgroundPosition: "center top",
+              minHeight: 360,
+            }}
+          >
+            <PlayerBar className="relative z-10 w-full" />
+          </div>
+        </ResizableBox>
       </Section>
 
     </div>
