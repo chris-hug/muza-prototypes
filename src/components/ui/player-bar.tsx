@@ -68,6 +68,8 @@ export function PlayerBar({
   totalTime   = "5:12",
 }: PlayerBarProps) {
   const [playing, setPlaying] = useState(false)
+  const [shuffle, setShuffle] = useState(false)
+  const [repeat,  setRepeat]  = useState(false)
 
   return (
     <div
@@ -149,7 +151,7 @@ export function PlayerBar({
           </div>
           <button
             className={cn(
-              "shrink-0 flex items-center justify-center size-7 rounded-full pl-[6px] cursor-pointer",
+              "shrink-0 flex items-center justify-center p-1.5 rounded-full cursor-pointer",
               "hover:bg-muted active:bg-muted/80 active:scale-90 transition-all duration-150",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/30",
               // Hide on mobile: less essential
@@ -235,6 +237,7 @@ export function PlayerBar({
               playing={playing}
               currentTime={parseTime(currentTime)}
               duration={track.url ? undefined : parseTime(totalTime)}
+              onSeek={() => setPlaying(true)}
               height={24}
             />
           </div>
@@ -242,23 +245,35 @@ export function PlayerBar({
           <span className="hidden @min-[800px]:inline text-xxs text-foreground tabular-nums whitespace-nowrap leading-none">{totalTime}</span>
         </div>
 
-        {/* Shuffle / Repeat / Volume — hide on mobile */}
+        {/* Shuffle / Repeat / Volume — hide on mobile. Shuffle & Repeat are
+            togglable; Volume is a stateless icon-button for now. */}
         <div className="hidden @min-[640px]:flex items-center gap-0.5 shrink-0">
           {[
-            { Icon: Shuffle, label: "Shuffle" },
-            { Icon: Repeat2, label: "Repeat" },
-            { Icon: Volume2, label: "Volume" },
-          ].map(({ Icon, label }) => (
+            { Icon: Shuffle, label: "Shuffle", active: shuffle, onToggle: () => setShuffle(s => !s) },
+            { Icon: Repeat2, label: "Repeat",  active: repeat,  onToggle: () => setRepeat(r => !r)  },
+            { Icon: Volume2, label: "Volume",  active: false,   onToggle: undefined                 },
+          ].map(({ Icon, label, active, onToggle }) => (
             <button
               key={label}
               aria-label={label}
+              aria-pressed={onToggle ? active : undefined}
+              onClick={onToggle}
               className={cn(
                 "flex items-center justify-center p-1.5 rounded-full cursor-pointer",
-                "hover:bg-muted active:bg-muted/80 active:scale-90 transition-all duration-150",
+                "active:scale-90 transition-all duration-150",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/30",
+                active
+                  ? "bg-foreground/10 hover:bg-foreground/15"
+                  : "hover:bg-muted active:bg-muted/80",
               )}
             >
-              <Icon className="size-5 text-foreground" strokeWidth={1.5} />
+              <Icon
+                className={cn(
+                  "size-5 transition-colors",
+                  active ? "text-primary" : "text-foreground",
+                )}
+                strokeWidth={1.5}
+              />
             </button>
           ))}
         </div>

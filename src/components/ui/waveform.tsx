@@ -2,6 +2,7 @@
 
 import { useRef, useMemo, useEffect } from "react"
 import { useWavesurfer } from "@wavesurfer/react"
+import Hover from "wavesurfer.js/dist/plugins/hover.esm.js"
 import { cn } from "@/lib/utils"
 
 // ─── Default sample peaks ─────────────────────────────────────────────────────
@@ -80,6 +81,22 @@ export function Waveform({
 
   const resolvedDuration = duration ?? (resolvedPeaks ? 100 : undefined)
 
+  // Hover plugin — thin vertical line follows the cursor, labelled with the
+  // timestamp. Memoised as a stable array so useWavesurfer doesn't re-instance
+  // the player on every parent render (which would cause an infinite loop).
+  const plugins = useMemo(
+    () => [
+      Hover.create({
+        lineColor:       "var(--foreground)",
+        lineWidth:       1,
+        labelBackground: "var(--foreground)",
+        labelColor:      "var(--background)",
+        labelSize:       "10px",
+      }),
+    ],
+    [],
+  )
+
   const { wavesurfer, isReady } = useWavesurfer({
     container:    containerRef,
     url,
@@ -93,7 +110,8 @@ export function Waveform({
     barRadius,
     height,
     normalize:    true,
-    interact:     !!onSeek,
+    interact:     true,
+    plugins,
   })
 
   // Mirror external `currentTime` onto the wavesurfer instance. We only push
