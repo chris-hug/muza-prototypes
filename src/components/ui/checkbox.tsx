@@ -85,12 +85,12 @@ function CheckboxField({ id, label, description, className, ...props }: Checkbox
       <div className="flex flex-col gap-0.5">
         <label
           htmlFor={id}
-          className="text-sm font-normal text-foreground leading-snug cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-50"
+          className="text-small font-normal text-foreground leading-snug cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-50"
         >
           {label}
         </label>
         {description && (
-          <p className="text-xs text-muted-foreground leading-snug">{description}</p>
+          <p className="text-xsmall text-muted-foreground leading-snug">{description}</p>
         )}
       </div>
     </div>

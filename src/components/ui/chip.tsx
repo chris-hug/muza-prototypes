@@ -27,10 +27,10 @@ import { cn } from "@/lib/utils"
 
 const chipVariants = cva(
   [
-    // Figma: h-8 (32px) · px-3 (12px) · gap-2 (8px) · text-xxs (14px) · font-normal · rounded-full
+    // Figma: h-8 (32px) · px-3 (12px) · gap-2 (8px) · text-2xsmall (14px) · font-normal · rounded-full
     "inline-flex items-center gap-2",
     "rounded-full border px-3 h-8 pb-px",
-    "text-xxs font-normal whitespace-nowrap",
+    "text-2xsmall font-normal whitespace-nowrap",
     "transition-all cursor-pointer select-none outline-none",
     "focus-visible:ring-2 focus-visible:ring-ring/50",
     "disabled:pointer-events-none disabled:opacity-50",

@@ -162,7 +162,7 @@ function FilterClearAll({ onClear }: { onClear: () => void }) {
       <button
         type="button"
         onClick={e => { e.stopPropagation(); onClear() }}
-        className="flex w-full items-center justify-center rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+        className="flex w-full items-center justify-center rounded-lg px-2.5 py-1.5 text-xsmall text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
       >
         Clear all
       </button>
@@ -198,7 +198,7 @@ function StatusFilter({ selected, onChange }: {
             tabIndex={0}
             onClick={() => toggle(s)}
             onKeyDown={e => { if (e.key === "Enter" || e.key === " ") toggle(s) }}
-            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent transition-colors cursor-default select-none"
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xsmall text-foreground hover:bg-accent transition-colors cursor-default select-none"
           >
             <Checkbox checked={selected.has(s)} onCheckedChange={() => {}} tabIndex={-1} className="pointer-events-none shrink-0 after:hidden" />
             {STATUS_CONFIG[s].label}
@@ -238,7 +238,7 @@ function ProductTypeFilter({ selected, onChange }: {
             tabIndex={0}
             onClick={() => toggle(t)}
             onKeyDown={e => { if (e.key === "Enter" || e.key === " ") toggle(t) }}
-            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent transition-colors cursor-default select-none"
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xsmall text-foreground hover:bg-accent transition-colors cursor-default select-none"
           >
             <Checkbox checked={selected.has(t)} onCheckedChange={() => {}} tabIndex={-1} className="pointer-events-none shrink-0 after:hidden" />
             {t}
@@ -278,7 +278,7 @@ function ProductFilter({ selected, onChange }: {
             tabIndex={0}
             onClick={() => toggle(p)}
             onKeyDown={e => { if (e.key === "Enter" || e.key === " ") toggle(p) }}
-            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent transition-colors cursor-default select-none"
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xsmall text-foreground hover:bg-accent transition-colors cursor-default select-none"
           >
             <Checkbox checked={selected.has(p)} onCheckedChange={() => {}} tabIndex={-1} className="pointer-events-none shrink-0 after:hidden" />
             {p}
@@ -316,7 +316,7 @@ function SortHeader({ label, sortKey: sk, activeSortKey, sortDir, onSort, style,
       style={style}
       onClick={() => onSort(sk)}
     >
-      <span className={cn("text-xs font-normal truncate", isActive ? "text-foreground" : "text-muted-foreground")}>
+      <span className={cn("text-xsmall font-normal truncate", isActive ? "text-foreground" : "text-muted-foreground")}>
         {label}
       </span>
       {isActive
@@ -358,15 +358,15 @@ function OrderRow({ order, isSelected, onSelect, status, onStatusChange, visible
       </td>
 
       {/* Order number */}
-      <td className="px-4 py-0 text-xs font-normal text-muted-foreground tabular-nums">
+      <td className="px-4 py-0 text-xsmall font-normal text-muted-foreground tabular-nums">
         {order.number}
       </td>
 
       {/* Customer */}
       <td className="px-4 py-0">
         <div className="flex flex-col gap-0.5 min-w-0">
-          <span className="text-xs font-normal text-foreground truncate">{order.customer.name}</span>
-          <span className="text-xxs text-muted-foreground truncate">{order.customer.location}</span>
+          <span className="text-xsmall font-normal text-foreground truncate">{order.customer.name}</span>
+          <span className="text-2xsmall text-muted-foreground truncate">{order.customer.location}</span>
         </div>
       </td>
 
@@ -380,22 +380,22 @@ function OrderRow({ order, isSelected, onSelect, status, onStatusChange, visible
       {/* Product */}
       <td className="px-4 py-0">
         <div className="flex flex-col gap-0.5 min-w-0">
-          <span className="text-xs font-normal text-foreground truncate">
+          <span className="text-xsmall font-normal text-foreground truncate">
             {first.productTitle}{first.quantity > 1 && ` ×${first.quantity}`}
           </span>
           {extra > 0 && (
-            <span className="text-xxs text-muted-foreground">+{extra} more</span>
+            <span className="text-2xsmall text-muted-foreground">+{extra} more</span>
           )}
         </div>
       </td>
 
       {/* Date */}
-      <td className={cn("px-4 py-0 text-xs font-normal text-muted-foreground tabular-nums whitespace-nowrap", !visibleCols.date && "hidden")}>
+      <td className={cn("px-4 py-0 text-xsmall font-normal text-muted-foreground tabular-nums whitespace-nowrap", !visibleCols.date && "hidden")}>
         {formatDate(order.date)}
       </td>
 
       {/* Total */}
-      <td className={cn("px-4 py-0 text-xs font-normal text-foreground tabular-nums", !visibleCols.total && "hidden")}>
+      <td className={cn("px-4 py-0 text-xsmall font-normal text-foreground tabular-nums", !visibleCols.total && "hidden")}>
         {formatTotal(order.total)}
       </td>
 
@@ -523,8 +523,8 @@ export function OrdersView() {
       {/* ── Page header ──────────────────────────────────────────────── */}
       <div className="shrink-0 flex items-center justify-between gap-6 px-16 pt-8 pb-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Orders</h1>
-          <p className="text-sm font-normal text-muted-foreground mt-1">
+          <h1 className="text-2xlarge font-medium tracking-tight">Orders</h1>
+          <p className="text-small font-normal text-muted-foreground mt-1">
             {ORDER_STATS.count} orders · ${ORDER_STATS.revenue.toLocaleString()} revenue
           </p>
         </div>
@@ -545,7 +545,7 @@ export function OrdersView() {
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search orders"
             className={cn(
-              "h-10 pl-10 pr-[18px] rounded-full border text-sm font-normal bg-transparent transition-all",
+              "h-10 pl-10 pr-[18px] rounded-full border text-small font-normal bg-transparent transition-all",
               "text-foreground placeholder:text-muted-foreground focus:outline-none",
               searchQuery
                 ? "border-foreground/40 bg-muted text-foreground w-56"
@@ -580,7 +580,7 @@ export function OrdersView() {
                     key={key}
                     onClick={() => toggleCol(key)}
                     closeOnClick={false}
-                    className={cn("text-foreground text-xs", required && "opacity-40 pointer-events-none")}
+                    className={cn("text-foreground text-xsmall", required && "opacity-40 pointer-events-none")}
                   >
                     <Checkbox
                       checked={visibleCols[key]}
@@ -589,7 +589,7 @@ export function OrdersView() {
                       className="pointer-events-none shrink-0 after:hidden"
                     />
                     {label}
-                    {required && <span className="ml-auto text-xxs text-muted-foreground">required</span>}
+                    {required && <span className="ml-auto text-2xsmall text-muted-foreground">required</span>}
                   </DropdownMenuItem>
                 ))}
                 {isColsModified && (
@@ -598,7 +598,7 @@ export function OrdersView() {
                     <button
                       type="button"
                       onClick={() => setVisibleCols({ ...DEFAULT_VISIBLE })}
-                      className="flex w-full items-center justify-center rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                      className="flex w-full items-center justify-center rounded-lg px-2.5 py-1.5 text-xsmall text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                     >
                       Reset
                     </button>
@@ -615,7 +615,7 @@ export function OrdersView() {
         <div className="shrink-0 flex items-center gap-1.5 px-16 pb-3 flex-wrap">
           <button
             onClick={() => { setStatusFilters(new Set()); setProductFilters(new Set()); setProductTypeFilters(new Set()); setSearchQuery("") }}
-            className="text-xs font-normal text-muted-foreground hover:text-foreground transition-colors mr-1 shrink-0"
+            className="text-xsmall font-normal text-muted-foreground hover:text-foreground transition-colors mr-1 shrink-0"
           >
             Clear all
           </button>
@@ -687,8 +687,8 @@ export function OrdersView() {
                       <ShoppingCart className="size-6 text-muted-foreground" />
                     </div>
                     <div className="flex flex-col items-center gap-1 text-center">
-                      <p className="text-sm font-medium text-foreground">No orders found</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-small font-medium text-foreground">No orders found</p>
+                      <p className="text-small text-muted-foreground">
                         {anyFilter ? "Try adjusting your filters." : "Orders from your customers will appear here."}
                       </p>
                     </div>
@@ -723,7 +723,7 @@ export function OrdersView() {
       {selectedIds.size > 0 && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
           <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-foreground border border-foreground shadow-xl">
-            <span className="text-sm font-medium text-background tabular-nums pr-2">
+            <span className="text-small font-medium text-background tabular-nums pr-2">
               {selectedIds.size} selected
             </span>
             <div className="w-px h-5 bg-background/20" />

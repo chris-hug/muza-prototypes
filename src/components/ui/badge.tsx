@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils"
 //
 // Specs:
 //   rounded-sm · pt-[4px] pb-[6px] px-[6px] · gap-1
-//   text-xxs font-normal leading-none · icon slot: size-3 (12px)
+//   text-2xsmall font-normal leading-none · icon slot: size-3 (12px)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const badgeVariants = cva(
@@ -26,7 +26,7 @@ const badgeVariants = cva(
     "rounded-sm",
     "border border-transparent",           // always present — keeps height consistent
     "pt-[4px] pb-[6px] px-[6px]",
-    "text-xxs font-normal leading-none whitespace-nowrap",
+    "text-2xsmall font-normal leading-none whitespace-nowrap",
     "transition-colors",
     "[&>svg]:pointer-events-none [&>svg]:shrink-0 [&>svg]:size-3",
   ],
@@ -97,7 +97,7 @@ function ContentTypeBadge({ type, className, ...props }: ContentTypeBadgeProps) 
         "rounded-sm border border-border",
         "bg-muted text-foreground",
         "pt-[4px] pb-[6px] px-[6px]",
-        "text-xxs font-normal leading-none whitespace-nowrap",
+        "text-2xsmall font-normal leading-none whitespace-nowrap",
         "[&>svg]:pointer-events-none [&>svg]:shrink-0 [&>svg]:size-3",
         className,
       )}
@@ -137,7 +137,7 @@ const STATUS_TRIGGER_CLS = cn(
   "rounded-sm border border-border",
   "backdrop-blur-[8px] bg-background/50 text-muted-foreground",
   "pt-[4px] pb-[6px] px-[6px]",
-  "text-xxs font-normal leading-none whitespace-nowrap",
+  "text-2xsmall font-normal leading-none whitespace-nowrap",
   "transition-colors hover:border-foreground/40 hover:bg-muted hover:text-foreground",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
   "[&>svg]:pointer-events-none [&>svg]:shrink-0 [&>svg]:size-3",
@@ -169,7 +169,7 @@ function StatusBadge({ status, onStatusChange, className }: StatusBadgeProps) {
                   key={key}
                   className={cn(
                     "relative flex cursor-pointer select-none items-center gap-2 rounded-lg px-2.5 py-1.5",
-                    "text-xs outline-none transition-colors",
+                    "text-xsmall outline-none transition-colors",
                     "data-highlighted:bg-accent data-highlighted:text-accent-foreground",
                     "data-disabled:pointer-events-none data-disabled:opacity-50",
                   )}

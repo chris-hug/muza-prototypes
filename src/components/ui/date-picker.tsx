@@ -159,7 +159,7 @@ function DatePicker({
               >
                 <ChevronLeftIcon className="size-4" />
               </button>
-              <span className="text-sm font-medium text-foreground">
+              <span className="text-small font-medium text-foreground">
                 {MONTHS[viewMonth]} {viewYear}
               </span>
               <button
@@ -177,7 +177,7 @@ function DatePicker({
               {DAYS.map((d) => (
                 <div
                   key={d}
-                  className="flex items-center justify-center h-8 text-xs font-medium text-muted-foreground"
+                  className="flex items-center justify-center h-8 text-xsmall font-medium text-muted-foreground"
                 >
                   {d}
                 </div>
@@ -195,7 +195,7 @@ function DatePicker({
                     type="button"
                     onClick={() => selectDay(day)}
                     className={cn(
-                      "flex h-8 w-full items-center justify-center rounded-lg text-sm transition-colors",
+                      "flex h-8 w-full items-center justify-center rounded-lg text-small transition-colors",
                       isSelected(day)
                         ? "bg-primary text-primary-foreground font-medium"
                         : isToday(day)
@@ -214,7 +214,7 @@ function DatePicker({
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-xs"
+                className="text-xsmall"
                 onClick={() => {
                   const t = new Date()
                   setViewYear(t.getFullYear())
@@ -228,7 +228,7 @@ function DatePicker({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-xs text-muted-foreground"
+                  className="text-xsmall text-muted-foreground"
                   onClick={clearDate}
                 >
                   Clear

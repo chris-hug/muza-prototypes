@@ -1,11 +1,13 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Pause, Plus, MoreVertical, Info, Share, Radio, Shuffle, Repeat2 } from "lucide-react"
+import { Pause, Plus, MoreVertical, Info, Share, Radio } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Waveform } from "@/components/ui/waveform"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { SkipBackFilled, PlayFilledAlt, SkipForwardFilled } from "@/components/ui/transport-icons"
+import { ShuffleToggle, RepeatToggle } from "@/components/ui/transport-toggles"
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Shared utilities
@@ -15,50 +17,6 @@ const parseTime = (s: string) => {
   const [m, sec] = s.split(":").map(Number)
   return (m || 0) * 60 + (sec || 0)
 }
-
-const focusRing =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/30"
-
-// Plain icon button (no fill, just the icon) — used for the bottom-sheet
-// transport controls and the secondary action row.
-const plainIconBtn = cn(
-  "flex items-center justify-center text-foreground rounded-full cursor-pointer",
-  "hover:opacity-70 active:scale-90 transition-all duration-150",
-  focusRing, "focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-)
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Carbon-style transport icons (match the small player bar)
-// ═══════════════════════════════════════════════════════════════════════════
-
-const iconProps = {
-  xmlns:       "http://www.w3.org/2000/svg",
-  viewBox:     "0 0 24 24",
-  fill:        "currentColor",
-  "aria-hidden": true as const,
-}
-
-type IconProps = { className?: string; style?: React.CSSProperties }
-
-const SkipBackFilled = ({ className, style }: IconProps) => (
-  <svg {...iconProps} className={className} style={style}>
-    <path d="M3 3h2.5v18H3z" />
-    <path d="M22.5 3v18L7.5 12z" />
-  </svg>
-)
-
-const PlayFilledAlt = ({ className, style }: IconProps) => (
-  <svg {...iconProps} className={className} style={style}>
-    <path d="M4.5 3l16 9-16 9z" />
-  </svg>
-)
-
-const SkipForwardFilled = ({ className, style }: IconProps) => (
-  <svg {...iconProps} className={className} style={style}>
-    <path d="M1.5 3v18l15-9z" />
-    <path d="M18.5 3H21v18h-2.5z" />
-  </svg>
-)
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Props
@@ -126,15 +84,6 @@ function MarqueeText({ children, className }: { children: string; className?: st
       >
         {children}
       </span>
-      {overflow > 0 && (
-        <style>{`
-          @keyframes player-overlay-marquee {
-            0%, 12%   { transform: translateX(0); }
-            50%, 62%  { transform: translateX(var(--marquee-end)); }
-            100%      { transform: translateX(0); }
-          }
-        `}</style>
-      )}
     </div>
   )
 }
@@ -228,12 +177,14 @@ export function PlayerOverlay({
   const playSize    = lerp(48, 64)   // play / pause container
   const playIcon    = lerp(36, 48)
   const skipIcon    = lerp(20, 28)   // skip-back / forward
-  const toggleW     = lerp(40, 56)   // shuffle / repeat ellipse width
-  const toggleH     = lerp(32, 40)   // shuffle / repeat ellipse height
-  const toggleIcon  = lerp(16, 24)
+  // Shuffle / Repeat — promoted to "first-class transport control" footprint
+  // (closer to skip-icon size) so they read as primary, not secondary.
+  const toggleW     = lerp(48, 64)   // shuffle / repeat ellipse width
+  const toggleH     = lerp(40, 56)   // shuffle / repeat ellipse height
+  const toggleIcon  = lerp(20, 28)
 
   return (
-    <div ref={rootRef} className={cn("relative w-full h-full overflow-hidden", className)}>
+    <div ref={rootRef} className={cn("relative w-full h-full overflow-hidden bg-background", className)}>
       {/* Full-bleed cover as the backdrop, gently blurred so it reads as an
            atmospheric background yet is still clearly the album art. A light
            theme tint sits on top to keep foreground text legible, and the
@@ -252,21 +203,19 @@ export function PlayerOverlay({
       <div className="relative z-10 h-full flex flex-col items-center">
 
         {/* Drag handle — tap or swipe down dismisses the sheet. */}
-        <button
+        <Button
+          variant="ghost"
           onClick={onClose}
           aria-label="Close"
-          className={cn(
-            "shrink-0 flex items-center justify-center w-full py-4 cursor-pointer",
-            focusRing,
-          )}
+          className="shrink-0 w-full py-4 h-auto rounded-none"
         >
           <div className="h-1 w-8 rounded-full bg-foreground/80" />
-        </button>
+        </Button>
 
         {/* "Playing from" header — both lines left-aligned. */}
         <div className="shrink-0 w-full px-4 pb-4 flex flex-col items-start gap-1 text-left">
-          <p className="text-xxs leading-none text-muted-foreground">Playing from:</p>
-          <p className="text-xs leading-none font-medium text-muted-foreground truncate w-full">
+          <p className="text-2xsmall leading-none text-muted-foreground">Playing from:</p>
+          <p className="text-xsmall leading-none font-medium text-muted-foreground truncate w-full">
             {playingFrom}
           </p>
         </div>
@@ -279,7 +228,7 @@ export function PlayerOverlay({
           {/* Cover art — square, size computed from available height + width.
               `rounded-xs` (2px) matches the design system's image-corner spec. */}
           <div
-            className="shrink-0 rounded-xs overflow-hidden shadow-md"
+            className="rounded-xs overflow-hidden shadow-md"
             style={{ width: coverSize, height: coverSize }}
           >
             <img src={track.image} alt={track.title} className="size-full object-cover" draggable={false} />
@@ -289,7 +238,7 @@ export function PlayerOverlay({
               title (0 gap); the waveform gets its own mt-3. */}
           <div className="w-full flex flex-col">
             <div className="flex items-center gap-2">
-              <h2 className="flex-1 min-w-0 text-lg font-medium leading-tight text-foreground">
+              <h2 className="flex-1 min-w-0 text-large font-medium leading-tight text-foreground">
                 <MarqueeText>{track.title}</MarqueeText>
               </h2>
               <Button variant="outline" size="icon" aria-label="Add to library">
@@ -300,20 +249,21 @@ export function PlayerOverlay({
               </Button>
             </div>
 
-            <button className={cn("flex items-center gap-1.5 self-start rounded-full cursor-pointer", focusRing)}
-                    aria-label={`Open artist: ${track.artist}`}>
+            {/* Artist label — reads as a caption, not a button. No hover
+                 state; the avatar + name simply sit flush under the title. */}
+            <div className="self-start flex items-center gap-1.5">
               <img
                 src={artistAvatar}
                 alt=""
-                className="size-6 rounded-full object-cover ring-1 ring-black/10"
+                className="size-6 rounded-full object-cover ring-1 ring-border"
               />
-              <span className="text-xs leading-none font-medium text-muted-foreground">
+              <span className="text-xsmall font-medium text-muted-foreground">
                 {track.artist}
               </span>
-            </button>
+            </div>
 
             <div className="mt-3 flex items-center gap-3 w-full">
-              <span className="text-[12px] leading-none text-muted-foreground tabular-nums tracking-[0.48px]">
+              <span className="text-2xsmall leading-none text-muted-foreground tabular-nums">
                 {currentTime}
               </span>
               <div className="flex-1 min-w-0 flex items-center">
@@ -326,7 +276,7 @@ export function PlayerOverlay({
                   onSeek={() => setPlaying(true)}
                 />
               </div>
-              <span className="text-[12px] leading-none text-muted-foreground tabular-nums tracking-[0.48px]">
+              <span className="text-2xsmall leading-none text-muted-foreground tabular-nums">
                 {totalTime}
               </span>
             </div>
@@ -341,15 +291,15 @@ export function PlayerOverlay({
             sections even when the region shrinks on small screens. */}
         <div className="flex-1 min-h-0 w-full flex items-center justify-center py-2">
           <div className="flex items-center justify-center gap-8">
-            <button className={cn(plainIconBtn, "p-1.5")} aria-label="Info / credits">
+            <Button variant="ghost" size="icon-sm" aria-label="Info / credits">
               <Info className="size-5" strokeWidth={1.5} />
-            </button>
-            <button className={cn(plainIconBtn, "p-1.5")} aria-label="Share">
+            </Button>
+            <Button variant="ghost" size="icon-sm" aria-label="Share">
               <Share className="size-5" strokeWidth={1.5} />
-            </button>
-            <button className={cn(plainIconBtn, "p-1.5")} aria-label="Start radio">
+            </Button>
+            <Button variant="ghost" size="icon-sm" aria-label="Start radio">
               <Radio className="size-5" strokeWidth={1.5} />
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -358,72 +308,51 @@ export function PlayerOverlay({
             sits visually centred between the secondary-icons row above and
             the tabs row below — both regions get an equal share of the
             leftover vertical space. */}
-        <div className="flex-1 min-h-0 w-full flex items-center px-4 py-2">
-          <div className="flex items-center justify-between w-full">
-            <Button
-              variant="ghost"
-              onClick={() => setShuffle(s => !s)}
-              aria-label="Shuffle"
-              aria-pressed={shuffle}
-              // Ghost ellipse button — width/height scale with device size.
-              // Active state matches the player bar's toggle styling.
-              className={cn(
-                "p-0",
-                shuffle && "bg-primary hover:bg-primary-hover active:bg-primary-hover",
-              )}
-              style={{ width: toggleW, height: toggleH }}
-            >
-              <Shuffle
-                strokeWidth={1.5}
-                className={cn("transition-colors", shuffle && "text-primary-foreground")}
-                style={{ width: toggleIcon, height: toggleIcon }}
-              />
+        <div className="flex-1 min-h-0 w-full flex items-center justify-center px-4 py-2">
+          <div className="flex items-center gap-3">
+            <ShuffleToggle
+              active={shuffle}
+              onToggle={() => setShuffle(s => !s)}
+              w={toggleW}
+              h={toggleH}
+              iconSize={toggleIcon}
+            />
+
+            <Button variant="ghost" size="icon-sm" aria-label="Previous track" className="hover:bg-transparent">
+              <SkipBackFilled style={{ width: skipIcon, height: skipIcon }} />
             </Button>
 
-            <button className={plainIconBtn} aria-label="Previous track">
-              <SkipBackFilled className="" style={{ width: skipIcon, height: skipIcon }} />
-            </button>
-
-            <button
+            <Button
+              variant="ghost"
               onClick={() => setPlaying(p => !p)}
               aria-label={playing ? "Pause" : "Play"}
               aria-pressed={playing}
-              className={plainIconBtn}
+              className="p-0 hover:bg-transparent"
               style={{ width: playSize, height: playSize }}
             >
               {playing
                 ? <Pause         className="fill-current stroke-none" style={{ width: playIcon, height: playIcon }} />
-                : <PlayFilledAlt className=""                          style={{ width: playIcon, height: playIcon }} />
+                : <PlayFilledAlt style={{ width: playIcon, height: playIcon }} />
               }
-            </button>
-
-            <button className={plainIconBtn} aria-label="Next track">
-              <SkipForwardFilled className="" style={{ width: skipIcon, height: skipIcon }} />
-            </button>
-
-            <Button
-              variant="ghost"
-              onClick={() => setRepeat(r => !r)}
-              aria-label="Repeat"
-              aria-pressed={repeat}
-              className={cn(
-                "p-0",
-                repeat && "bg-primary hover:bg-primary-hover active:bg-primary-hover",
-              )}
-              style={{ width: toggleW, height: toggleH }}
-            >
-              <Repeat2
-                strokeWidth={1.5}
-                className={cn("transition-colors", repeat && "text-primary-foreground")}
-                style={{ width: toggleIcon, height: toggleIcon }}
-              />
             </Button>
+
+            <Button variant="ghost" size="icon-sm" aria-label="Next track" className="hover:bg-transparent">
+              <SkipForwardFilled style={{ width: skipIcon, height: skipIcon }} />
+            </Button>
+
+            <RepeatToggle
+              active={repeat}
+              onToggle={() => setRepeat(r => !r)}
+              w={toggleW}
+              h={toggleH}
+              iconSize={toggleIcon}
+            />
           </div>
         </div>
 
         {/* Tab switcher — Lyrics / Now listening / Up next.
             Uses the design-system Tabs (Pill variant). */}
-        <div className="shrink-0 w-full flex items-center justify-center px-4 pt-3 pb-6">
+        <div className="shrink-0 w-full flex items-center justify-center px-4 pt-5 pb-6">
           <Tabs value={tab} onValueChange={v => setTab(v as PlayerOverlayTab)}>
             <TabsList variant="pill">
               {/* font-normal! (important) — needed because the Pill variant's

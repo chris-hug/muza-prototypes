@@ -115,7 +115,7 @@ export function TopbarDefaultActions() {
     <div className="flex items-center gap-4">
       <ModeToggle />
       {/* Avatar */}
-      <div className="size-10 rounded-full bg-secondary flex items-center justify-center font-medium text-sm text-secondary-foreground shrink-0 overflow-hidden">
+      <div className="size-10 rounded-full bg-secondary flex items-center justify-center font-medium text-small text-secondary-foreground shrink-0 overflow-hidden">
         <span>N</span>
       </div>
     </div>

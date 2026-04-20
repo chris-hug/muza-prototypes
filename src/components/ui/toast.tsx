@@ -94,12 +94,12 @@ function ToastViewport({ className }: { className?: string }) {
 
             <div className="flex flex-1 flex-col gap-1 min-w-0">
               {t.title && (
-                <ToastPrimitive.Title className="text-sm font-medium leading-snug">
+                <ToastPrimitive.Title className="text-small font-medium leading-snug">
                   {t.title}
                 </ToastPrimitive.Title>
               )}
               {t.description && (
-                <ToastPrimitive.Description className="text-xs text-muted-foreground leading-relaxed">
+                <ToastPrimitive.Description className="text-xsmall text-muted-foreground leading-relaxed">
                   {t.description}
                 </ToastPrimitive.Description>
               )}

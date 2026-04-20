@@ -31,7 +31,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         // Transitions
         "transition-colors outline-none",
         // File input
-        "file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground",
+        "file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-small file:font-medium file:text-foreground",
         // Focus
         "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
         // Disabled

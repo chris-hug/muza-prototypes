@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select"
+import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
@@ -130,12 +133,59 @@ const PLAYLISTS = [
   { rank: 5, title: "Ocean Waves",     playlists: 15, reach: "118,000" },
 ]
 
+// Human-readable label for the current chart `Period`.
 const PERIOD_LABEL: Record<Period, string> = {
   day:       "Today",
   week:      "This week",
   month:     "This month",
   year:      "This year",
   "all-time":"All time",
+}
+
+// Table-level date range (independent from the chart-level `Period`).
+// `custom` is reserved for a future date-picker and rendered disabled.
+type TableRange =
+  | "today" | "this-week" | "this-month" | "last-month"
+  | "this-quarter" | "last-quarter" | "this-year" | "all-time" | "custom"
+
+const TABLE_RANGES: { value: TableRange; label: string; disabled?: boolean }[] = [
+  { value: "today",         label: "Today"         },
+  { value: "this-week",     label: "This week"     },
+  { value: "this-month",    label: "This month"    },
+  { value: "last-month",    label: "Last month"    },
+  { value: "this-quarter",  label: "This quarter"  },
+  { value: "last-quarter",  label: "Last quarter"  },
+  { value: "this-year",     label: "This year"     },
+  { value: "all-time",      label: "All time"      },
+  { value: "custom",        label: "Custom",       disabled: true },
+]
+
+const TABLE_RANGE_LABEL: Record<TableRange, string> =
+  TABLE_RANGES.reduce((acc, r) => ({ ...acc, [r.value]: r.label }),
+    {} as Record<TableRange, string>)
+
+// ─── RangeDropdown ─────────────────────────────────────────────────────────
+// Small pill trigger + menu that each ranking table renders next to its
+// heading. State is owned by the parent table section.
+
+function RangeDropdown({ value, onChange }: {
+  value:    TableRange
+  onChange: (v: TableRange) => void
+}) {
+  return (
+    <Select value={value} onValueChange={v => onChange(v as TableRange)}>
+      <SelectTrigger>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {TABLE_RANGES.map(r => (
+          <SelectItem key={r.value} value={r.value} disabled={r.disabled}>
+            {r.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  )
 }
 
 const PERIODS: { label: string; value: Period }[] = [
@@ -175,13 +225,13 @@ function KpiCard({ label, value, delta, icon }: {
   return (
     <div className="min-w-0 bg-background border border-border rounded-xl p-5 flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">{label}</span>
+        <span className="text-xsmall text-muted-foreground">{label}</span>
         <span className="text-muted-foreground">{icon}</span>
       </div>
-      <span className="text-xl font-medium text-foreground tabular-nums">{value}</span>
+      <span className="text-xlarge font-medium text-foreground tabular-nums">{value}</span>
       {delta !== undefined && delta !== 0 && (
         <div className={cn(
-          "flex items-center gap-1 text-xs",
+          "flex items-center gap-1 text-xsmall",
           delta > 0 ? "text-teal-600 dark:text-teal-400" : "text-red-500"
         )}>
           {delta > 0
@@ -218,7 +268,7 @@ function ChartTooltip({ active, payload, label, metric }: {
 }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-background border border-border rounded-lg px-3 py-2 shadow-sm text-xs">
+    <div className="bg-background border border-border rounded-lg px-3 py-2 shadow-sm text-xsmall">
       <p className="text-muted-foreground mb-0.5">{label}</p>
       <p className="font-medium text-foreground tabular-nums">{fmt(payload[0].value, metric)}</p>
     </div>
@@ -228,9 +278,17 @@ function ChartTooltip({ active, payload, label, metric }: {
 // ─── ReportView ───────────────────────────────────────────────────────────────
 
 export function ReportView({ embedded = false }: { embedded?: boolean }) {
+  // Period tabs (Day / Week / Month / Year / All time) drive the charts
+  // at the top of the page only.
   const [period,    setPeriod]    = useState<Period>("month")
   const [metric,    setMetric]    = useState<Metric>("listeners")
   const [chartView, setChartView] = useState<ChartView>("cumulative")
+
+  // Each ranking table has its own independent date range, defaulting
+  // to "This month". Kept separate from `period` so the chart and the
+  // tables can be inspected at different time resolutions.
+  const [trackRange, setTrackRange] = useState<TableRange>("this-month")
+  const [albumRange, setAlbumRange] = useState<TableRange>("this-month")
 
   const kpi        = KPI[period]
   const rawData    = CHART_DATA[period]
@@ -239,23 +297,26 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
   return (
     <div className="flex flex-col px-16 pb-40">
 
-      {/* ── Sticky period bar ────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-20 -mx-16 px-16 bg-background/95 backdrop-blur-sm border-b border-border flex items-center justify-between py-3">
-        {!embedded
-          ? <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
-          : <span />
-        }
-        <Tabs value={period} onValueChange={v => setPeriod(v as Period)}>
-          <TabsList variant="pill">
-            {PERIODS.map(p => (
-              <TabsTrigger key={p.value} value={p.value}>{p.label}</TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      </div>
+      {/* ── Page header + Analytics ───────────────────────────────────────
+           Both share the same `bg-muted` surface so the header reads as
+           the top of the analytics card, not a separate page bar. The
+           `-mx-16 px-16` bleed extends the fill to the viewport edges. */}
+      <div className="bg-muted -mx-16 px-16 pb-16 mb-12">
+        <div className="shrink-0 flex items-center justify-between gap-6 pt-8 pb-6">
+          {!embedded
+            ? <h1 className="text-2xlarge font-medium tracking-tight">Analytics</h1>
+            : <span />
+          }
+          <Tabs value={period} onValueChange={v => setPeriod(v as Period)}>
+            <TabsList variant="pill">
+              {PERIODS.map(p => (
+                <TabsTrigger key={p.value} value={p.value}>{p.label}</TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
 
-      {/* ── Analytics ────────────────────────────────────────────────────── */}
-      <section className="flex flex-col gap-6 bg-muted -mx-16 px-16 pt-8 pb-16 mb-12">
+        <section className="flex flex-col gap-6">
 
         {/* Chart card */}
         <div className="relative mt-6">
@@ -330,7 +391,7 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
 
         {/* KPI strip — open, no card */}
         <div className="flex flex-col gap-1 -mt-3">
-          <span className="text-xs text-muted-foreground px-1">{PERIOD_LABEL[period]}</span>
+          <span className="text-xsmall text-muted-foreground px-1">{PERIOD_LABEL[period]}</span>
           <div className="grid grid-cols-4 gap-4">
             <KpiCard label="Listeners"         value={kpi.listeners} delta={kpi.listenersDelta} icon={<Users      className="size-4" />} />
             <KpiCard label="Streams"           value={kpi.streams}   delta={kpi.streamsDelta}   icon={<Activity   className="size-4" />} />
@@ -338,7 +399,8 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
             <KpiCard label="Earnings / Stream" value={kpi.eps}                                  icon={<Zap        className="size-4" />} />
           </div>
         </div>
-      </section>
+        </section>
+      </div>
 
       {/* ── Rankings ─────────────────────────────────────────────────────── */}
       <section className="flex flex-col gap-16">
@@ -346,8 +408,8 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
         {/* Track Ranking */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 px-1">
-            <h2 className="text-xl font-medium text-foreground">Track Ranking</h2>
-            <Badge variant="outline" className="border-transparent bg-muted text-muted-foreground">{PERIOD_LABEL[period]}</Badge>
+            <h2 className="text-xlarge font-medium text-foreground">Track Ranking</h2>
+            <RangeDropdown value={trackRange} onChange={setTrackRange} />
           </div>
           <div className="bg-background border border-border rounded-xl overflow-hidden">
             <Table>
@@ -380,8 +442,8 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
         {/* Album Ranking */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 px-1">
-            <h2 className="text-xl font-medium text-foreground">Album Ranking</h2>
-            <Badge variant="outline" className="border-transparent bg-muted text-muted-foreground">{PERIOD_LABEL[period]}</Badge>
+            <h2 className="text-xlarge font-medium text-foreground">Album Ranking</h2>
+            <RangeDropdown value={albumRange} onChange={setAlbumRange} />
           </div>
           <div className="bg-background border border-border rounded-xl overflow-hidden">
             <Table>
@@ -412,8 +474,7 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
         {/* Playlist Reach — always total, not period-filtered */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 px-1">
-            <h2 className="text-xl font-medium text-foreground">Playlist Reach</h2>
-            <Badge variant="outline" className="border-transparent bg-muted text-muted-foreground">Total</Badge>
+            <h2 className="text-xlarge font-medium text-foreground">Playlist Reach</h2>
           </div>
           <div className="bg-background border border-border rounded-xl overflow-hidden">
             <Table>

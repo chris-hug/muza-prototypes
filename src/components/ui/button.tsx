@@ -17,7 +17,7 @@ const buttonVariants = cva(
           "border-transparent bg-primary text-primary-foreground hover:bg-primary-hover",
         // Secondary — light surface, always solid foreground text
         secondary:
-          "border-transparent bg-secondary text-foreground hover:bg-secondary-hover",
+          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary-hover",
         // Outline — border + frosted-glass fill. On a solid background this
         // is indistinguishable from the old solid-fill outline; on varied
         // backdrops (photos, gradients) the 20% bg + backdrop-blur reveal a
@@ -35,19 +35,19 @@ const buttonVariants = cva(
           "border-transparent text-primary underline-offset-4 hover:underline p-0 h-auto",
         // Destructive
         destructive:
-          "border-transparent bg-destructive text-white hover:bg-destructive/85",
+          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/85",
       },
       size: {
         // Figma node 37:931 — exact px values:
-        //   sm:      h-8  (32px) · px-3  · text-xs · font-normal
-        //   default: h-10 (40px) · px-[18px] · text-sm · font-medium  ← matches input/select/datepicker
-        //   lg:      h-12 (48px) · px-10 · text-sm · font-medium
+        //   sm:      h-8  (32px) · px-3  · text-xsmall · font-normal
+        //   default: h-10 (40px) · px-[18px] · text-small · font-medium  ← matches input/select/datepicker
+        //   lg:      h-12 (48px) · px-10 · text-small · font-medium
         //   icon:    size-10 (40px)
         //   icon-sm: size-8  (32px)
         //   icon-lg: size-12 (48px)
-        default:    "h-10 px-[18px] text-sm font-medium",
-        sm:         "h-8 px-3 text-xxs font-normal",
-        lg:         "h-12 px-10 text-sm font-medium",
+        default:    "h-10 px-[18px] text-small font-medium",
+        sm:         "h-8 px-3 text-2xsmall font-normal",
+        lg:         "h-12 px-10 text-small font-medium",
         icon:       "size-10",
         "icon-sm":  "size-8",
         "icon-lg":  "size-12",

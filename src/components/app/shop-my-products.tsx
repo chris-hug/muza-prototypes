@@ -18,6 +18,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
   DialogFooter, DialogClose,
 } from "@/components/ui/dialog"
+import { RadioCard, RadioCardGroup } from "@/components/ui/radio-card"
+import { VinylCreateListing, type VinylDraft } from "@/components/app/vinyl-create-listing"
 import { cn } from "@/lib/utils"
 import { filterTriggerCls, FilterChevron, FilterCount } from "@/components/ui/filter-button"
 import { TableHead } from "@/components/ui/table"
@@ -172,7 +174,7 @@ function FilterClearAll({ onClear, label = "Clear all" }: { onClear: () => void;
       <button
         type="button"
         onClick={e => { e.stopPropagation(); onClear() }}
-        className="flex w-full items-center justify-center rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+        className="flex w-full items-center justify-center rounded-lg px-2.5 py-1.5 text-xsmall text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
       >
         {label}
       </button>
@@ -213,7 +215,7 @@ function StatusFilter({ value, onChange }: {
             tabIndex={0}
             onClick={() => onChange(value === s ? "all" : s)}
             onKeyDown={e => { if (e.key === "Enter" || e.key === " ") onChange(value === s ? "all" : s) }}
-            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-default select-none"
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xsmall text-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-default select-none"
           >
             <RadioIndicator checked={value === s} />
             {s === "public" ? "Public" : "Private"}
@@ -253,7 +255,7 @@ function TypeMultiSelect({ selected, onChange }: {
             key={t}
             onClick={() => toggle(t)}
             closeOnClick={false}
-            className="text-foreground text-xs"
+            className="text-foreground text-xsmall"
           >
             <Checkbox
               checked={selected.has(t)}
@@ -300,7 +302,7 @@ function SortHeader({ label, sortKey: sk, activeSortKey, sortDir, onSort, style,
       style={style}
       onClick={() => onSort(sk)}
     >
-      <span className={cn("text-xs font-normal truncate", isActive ? "text-foreground" : "text-muted-foreground")}>
+      <span className={cn("text-xsmall font-normal truncate", isActive ? "text-foreground" : "text-muted-foreground")}>
         {label}
       </span>
       {isActive
@@ -315,12 +317,13 @@ function SortHeader({ label, sortKey: sk, activeSortKey, sortDir, onSort, style,
 
 // ─── ProductRow ───────────────────────────────────────────────────────────────
 
-function ProductRow({ product, isSelected, onSelect, status, onStatusChange }: {
+function ProductRow({ product, isSelected, onSelect, status, onStatusChange, onEdit }: {
   product:        Product
   isSelected:     boolean
   onSelect:       () => void
   status:         ProductStatus
   onStatusChange: (s: ProductStatus) => void
+  onEdit:         () => void
 }) {
   const [hovered, setHovered] = useState(false)
   const isLowStock = product.stock !== null && product.stock <= LOW_STOCK_THRESHOLD
@@ -350,8 +353,8 @@ function ProductRow({ product, isSelected, onSelect, status, onStatusChange }: {
       {/* Title + variants */}
       <td className="px-4 py-0">
         <div className="flex flex-col gap-0.5 min-w-0">
-          <span className={cn("text-xs font-normal truncate", isDimmed ? "text-muted-foreground" : "text-foreground")}>{product.title}</span>
-          {product.variants !== undefined && <span className="text-xxs text-muted-foreground">{product.variants} variants</span>}
+          <span className={cn("text-xsmall font-normal truncate", isDimmed ? "text-muted-foreground" : "text-foreground")}>{product.title}</span>
+          {product.variants !== undefined && <span className="text-2xsmall text-muted-foreground">{product.variants} variants</span>}
         </div>
       </td>
 
@@ -366,35 +369,35 @@ function ProductRow({ product, isSelected, onSelect, status, onStatusChange }: {
       </td>
 
       {/* Price */}
-      <td className={cn("px-4 py-0 text-xs font-normal tabular-nums", isDimmed ? "text-muted-foreground" : "text-foreground")}>
+      <td className={cn("px-4 py-0 text-xsmall font-normal tabular-nums", isDimmed ? "text-muted-foreground" : "text-foreground")}>
         {formatPrice(product)}
       </td>
 
       {/* Stock */}
       <td className="px-4 py-0">
         {product.stock === null ? (
-          <span className="text-xs font-normal text-muted-foreground tabular-nums">∞</span>
+          <span className="text-xsmall font-normal text-muted-foreground tabular-nums">∞</span>
         ) : isLowStock ? (
-          <span className="text-xs font-medium text-amber-600 dark:text-amber-400 tabular-nums">{product.stock}</span>
+          <span className="text-xsmall font-medium text-amber-600 dark:text-amber-400 tabular-nums">{product.stock}</span>
         ) : (
-          <span className="text-xs font-normal text-muted-foreground tabular-nums">{product.stock}</span>
+          <span className="text-xsmall font-normal text-muted-foreground tabular-nums">{product.stock}</span>
         )}
       </td>
 
       {/* Orders */}
-      <td className="px-4 py-0 text-xs font-normal text-muted-foreground tabular-nums">
+      <td className="px-4 py-0 text-xsmall font-normal text-muted-foreground tabular-nums">
         {product.sold > 0 ? product.sold.toLocaleString() : <span className="text-muted-foreground/40">—</span>}
       </td>
 
       {/* Muza link */}
-      <td className="px-4 py-0 text-xs text-muted-foreground max-w-0">
+      <td className="px-4 py-0 text-xsmall text-muted-foreground max-w-0">
         <span className="block truncate">
           {product.type !== "Apparel" && product.muzaLink ? product.muzaLink : <span className="text-muted-foreground/40">—</span>}
         </span>
       </td>
 
       {/* Last edited */}
-      <td className="px-4 py-0 text-xs font-normal text-muted-foreground tabular-nums whitespace-nowrap">
+      <td className="px-4 py-0 text-xsmall font-normal text-muted-foreground tabular-nums whitespace-nowrap">
         {formatDate(product.lastEdited)}
       </td>
 
@@ -407,7 +410,7 @@ function ProductRow({ product, isSelected, onSelect, status, onStatusChange }: {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem><Pencil className="size-4" />Edit</DropdownMenuItem>
+            <DropdownMenuItem onClick={onEdit}><Pencil className="size-4" />Edit</DropdownMenuItem>
             <DropdownMenuItem><Copy className="size-4" />Duplicate</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive focus:text-destructive"><Trash2 className="size-4" />Delete</DropdownMenuItem>
@@ -440,48 +443,28 @@ function AddProductDialog({ open, onOpenChange, onSelect }: {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-3">
+        <RadioCardGroup
+          value={selected}
+          onValueChange={v => setSelected(v as ProductType)}
+        >
           {PRODUCT_TYPE_OPTIONS.map(opt => {
-            const isSelected = selected === opt.type
             const Icon = opt.icon
             return (
-              <button
+              <RadioCard
                 key={opt.type}
-                onClick={() => setSelected(opt.type)}
-                className={cn(
-                  "flex items-center gap-4 px-4 py-5 rounded-lg border text-left transition-colors",
-                  isSelected
-                    ? "border-primary bg-background"
-                    : "border-border bg-background hover:border-foreground/30"
-                )}
-              >
-                <div className={cn(
-                  "shrink-0 size-4 rounded-full border-2 flex items-center justify-center transition-colors",
-                  isSelected ? "border-primary" : "border-border"
-                )}>
-                  {isSelected && <div className="size-2 rounded-full bg-primary" />}
-                </div>
-
-                <div className={cn(
-                  "shrink-0 size-10 rounded-full flex items-center justify-center transition-colors",
-                  isSelected ? "bg-primary" : "bg-secondary"
-                )}>
-                  <Icon className={cn(
-                    "size-4 transition-colors",
-                    isSelected ? "text-primary-foreground" : "text-secondary-foreground"
-                  )} />
-                </div>
-
-                <div className="flex flex-col gap-0.5 min-w-0">
-                  <span className="text-sm font-medium text-foreground leading-snug">{opt.type}</span>
-                  <span className="text-xs text-muted-foreground leading-snug">{opt.description}</span>
-                </div>
-              </button>
+                value={opt.type}
+                selected={selected === opt.type}
+                onSelect={() => setSelected(opt.type)}
+                icon={<Icon />}
+                title={opt.type}
+                description={opt.description}
+              />
             )
           })}
-        </div>
+        </RadioCardGroup>
 
-        <DialogFooter className="mt-8 border-0 bg-transparent p-0 -mx-0 -mb-0 rounded-none gap-2.5">
+        {/* Bigger dialog → footer padding scales up to match p-8 content. */}
+        <DialogFooter className="p-8 -mx-8 -mb-8">
           <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
           <Button onClick={handleConfirm}>Create Listing</Button>
         </DialogFooter>
@@ -503,6 +486,9 @@ export function ShopMyProductsView() {
   const [sortDir,      setSortDir]      = useState<SortDir>("desc")
   const [selectedIds,  setSelectedIds]  = useState<Set<string>>(new Set())
   const [dialogOpen,   setDialogOpen]   = useState(false)
+  // `editing` drives the full-page Vinyl create/edit flow. When non-null, the
+  // form replaces the table. `id` present ⇒ edit mode; `id` absent ⇒ create.
+  const [editing, setEditing] = useState<{ type: ProductType; product?: Product } | null>(null)
 
   function setProductStatus(id: string, s: ProductStatus) {
     setStatuses(prev => ({ ...prev, [id]: s }))
@@ -523,7 +509,26 @@ export function ShopMyProductsView() {
   }
 
   function handleProductTypeSelected(type: ProductType) {
-    console.log("Create product of type:", type)
+    // For now only Vinyl has a dedicated form; other types can be wired later.
+    if (type === "Vinyl") setEditing({ type })
+  }
+
+  function handleEditProduct(product: Product) {
+    if (product.type === "Vinyl") setEditing({ type: "Vinyl", product })
+  }
+
+  function handleCloseEditor() {
+    setEditing(null)
+  }
+
+  function handleSaveDraft(_draft: VinylDraft) {
+    // Stub: persist as draft. For now just close the editor.
+    setEditing(null)
+  }
+
+  function handlePublishDraft(_draft: VinylDraft) {
+    // Stub: publish. For now just close the editor.
+    setEditing(null)
   }
 
   const q = searchQuery.trim().toLowerCase()
@@ -553,14 +558,35 @@ export function ShopMyProductsView() {
     setSearchQuery("")
   }
 
+  // Full-page create/edit takes over when `editing` is set — the table
+  // stays mounted behind it so selection state and filters aren't lost.
+  if (editing && editing.type === "Vinyl") {
+    const p = editing.product
+    return (
+      <VinylCreateListing
+        mode={p ? "edit" : "create"}
+        initial={p ? {
+          id:      p.id,
+          title:   p.title,
+          type:    "Album",
+          year:    "",
+          variant: "",
+        } : undefined}
+        onCancel={handleCloseEditor}
+        onSave={handleSaveDraft}
+        onPublish={handlePublishDraft}
+      />
+    )
+  }
+
   return (
     <div className="relative flex flex-col h-full">
 
       {/* ── Page header ──────────────────────────────────────────────── */}
       <div className="shrink-0 flex items-center justify-between gap-6 px-16 pt-8 pb-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Products</h1>
-          <p className="text-sm font-normal text-muted-foreground mt-1">
+          <h1 className="text-2xlarge font-medium tracking-tight">Products</h1>
+          <p className="text-small font-normal text-muted-foreground mt-1">
             {SHOP_STATS.listings} listings · {SHOP_STATS.orders.toLocaleString()} orders
           </p>
         </div>
@@ -589,7 +615,7 @@ export function ShopMyProductsView() {
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search products"
               className={cn(
-                "h-10 pl-10 pr-[18px] rounded-full border text-sm font-normal bg-transparent transition-all",
+                "h-10 pl-10 pr-[18px] rounded-full border text-small font-normal bg-transparent transition-all",
                 "text-foreground placeholder:text-muted-foreground focus:outline-none",
                 searchQuery
                   ? "border-foreground/40 bg-muted text-foreground w-56"
@@ -613,7 +639,7 @@ export function ShopMyProductsView() {
         <div className="shrink-0 flex items-center gap-1.5 px-16 pb-3 flex-wrap">
           <button
             onClick={clearAllFilters}
-            className="text-xs font-normal text-muted-foreground hover:text-foreground transition-colors mr-1 shrink-0"
+            className="text-xsmall font-normal text-muted-foreground hover:text-foreground transition-colors mr-1 shrink-0"
           >
             Clear all
           </button>
@@ -687,8 +713,8 @@ export function ShopMyProductsView() {
                       <Package className="size-6 text-muted-foreground" />
                     </div>
                     <div className="flex flex-col items-center gap-1 text-center">
-                      <p className="text-sm font-medium text-foreground">No products yet</p>
-                      <p className="text-sm text-muted-foreground">Add your first listing to start selling.</p>
+                      <p className="text-small font-medium text-foreground">No products yet</p>
+                      <p className="text-small text-muted-foreground">Add your first listing to start selling.</p>
                     </div>
                     <Button size="sm" onClick={() => setDialogOpen(true)}>
                       <Plus className="size-4" />
@@ -705,10 +731,10 @@ export function ShopMyProductsView() {
               <tr>
                 <td colSpan={11} className="h-40 text-center">
                   <div className="flex flex-col items-center justify-center h-full gap-2">
-                    <p className="text-sm font-normal text-muted-foreground">No products match the current filters.</p>
+                    <p className="text-small font-normal text-muted-foreground">No products match the current filters.</p>
                     <button
                       onClick={clearAllFilters}
-                      className="text-xs font-normal text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+                      className="text-xsmall font-normal text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
                     >
                       Clear filters
                     </button>
@@ -728,6 +754,7 @@ export function ShopMyProductsView() {
                   onSelect={() => toggleSelect(product.id)}
                   status={statuses[product.id] ?? product.status}
                   onStatusChange={s => setProductStatus(product.id, s)}
+                  onEdit={() => handleEditProduct(product)}
                 />
               ))}
             </tbody>
@@ -739,7 +766,7 @@ export function ShopMyProductsView() {
       {selectedIds.size > 0 && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
           <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-foreground border border-foreground shadow-xl">
-            <span className="text-sm font-medium text-background tabular-nums pr-2">
+            <span className="text-small font-medium text-background tabular-nums pr-2">
               {selectedIds.size} selected
             </span>
             <div className="w-px h-5 bg-background/20" />

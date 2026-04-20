@@ -59,7 +59,7 @@ function ComboboxTrigger({ className, placeholder, showSearchIcon = true }: Comb
         className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
         tabIndex={-1}
       >
-        <ChevronDownIcon className="size-4 translate-y-[2px] transition-transform duration-200 [[aria-expanded=true]_&]:rotate-180" />
+        <ChevronDownIcon className="relative top-[2px] size-4 transition-transform duration-200 [[aria-expanded=true]_&]:rotate-180" />
       </ComboboxPrimitive.Trigger>
     </ComboboxPrimitive.InputGroup>
   )
@@ -93,7 +93,7 @@ function ComboboxContent({
           {...props}
         >
           <ComboboxPrimitive.List>{children}</ComboboxPrimitive.List>
-          <ComboboxPrimitive.Empty className="py-4 text-center text-sm text-muted-foreground">
+          <ComboboxPrimitive.Empty className="py-4 text-center text-small text-muted-foreground">
             No results found.
           </ComboboxPrimitive.Empty>
         </ComboboxPrimitive.Popup>
@@ -119,7 +119,7 @@ function ComboboxGroupLabel({
   return (
     <ComboboxPrimitive.GroupLabel
       data-slot="combobox-group-label"
-      className={cn("px-2.5 py-1.5 text-xs font-normal text-muted-foreground", className)}
+      className={cn("px-2.5 py-1.5 text-xsmall font-normal text-muted-foreground", className)}
       {...props}
     />
   )

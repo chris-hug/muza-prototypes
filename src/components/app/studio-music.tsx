@@ -11,12 +11,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import { TableHead } from "@/components/ui/table"
-import { filterTriggerCls, FilterChevron, FilterCount } from "@/components/ui/filter-button"
+import { filterTriggerCls, FilterChevron } from "@/components/ui/filter-button"
+import { FilterMenu } from "@/components/ui/filter-menu"
 import {
   ArrowDown, ArrowUp, ArrowUpDown, Settings2, ChevronDown,
   Download, Pencil, Play, Search, Upload, X,
 } from "lucide-react"
 import { UploadMusicDialog } from "@/components/app/upload-music-dialog"
+import { EditReleaseDialog } from "@/components/app/edit-release-dialog"
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -37,6 +39,9 @@ interface Release {
   tracks:  number
   type:    ContentType
   status:  ReleaseStatus
+  /** True when the user uploaded an original work with no MusicBrainz match.
+   *  Controls whether metadata fields in EditReleaseDialog are editable. */
+  isNew?:  boolean
 }
 
 // ─── Column configuration ──────────────────────────────────────────────────────
@@ -128,7 +133,7 @@ function PriceTag({ point, icon }: { point: PricePoint; icon?: React.ReactNode }
 }
 
 function MonetisationCell({ state, dimmed }: { state: MonetisationState; dimmed?: boolean }) {
-  const cls = cn("text-xs", dimmed ? "text-muted-foreground/50" : "text-muted-foreground")
+  const cls = cn("text-xsmall", dimmed ? "text-muted-foreground/50" : "text-muted-foreground")
   if (state.kind === "streaming") {
     return <span className={cls}>Streaming</span>
   }
@@ -137,7 +142,7 @@ function MonetisationCell({ state, dimmed }: { state: MonetisationState; dimmed?
   }
   // purchase+download
   return (
-    <span className={cn("flex items-center gap-1.5 text-xs", dimmed ? "text-muted-foreground/50" : "text-muted-foreground")}>
+    <span className={cn("flex items-center gap-1.5 text-xsmall", dimmed ? "text-muted-foreground/50" : "text-muted-foreground")}>
       <PriceTag point={state.purchase} />
       <span className="opacity-30">·</span>
       <PriceTag point={state.download} icon={<Download className="size-3 shrink-0" />} />
@@ -171,12 +176,12 @@ const COL_SORT_KEY: Partial<Record<ColKey, SortKey>> = {
 // ─── Jazz mock data (30 releases) ─────────────────────────────────────────────
 
 const RELEASES: Release[] = [
-  { id: "1",  catalog: "COL8163",  cover: "https://picsum.photos/seed/kob59/44/44",     title: "Kind of Blue",                        artist: "Miles Davis",         band: "Miles Davis Quintet",    year: 1959, tracks: 5,  type: "album",  status: "public"  },
+  { id: "1",  catalog: "COL8163",  cover: "https://picsum.photos/seed/kob59/44/44",     title: "Kind of Blue",                        artist: "Miles Davis",         band: "Miles Davis Quintet",    year: 1959, tracks: 5,  type: "album",  status: "public", isNew: true  },
   { id: "2",  catalog: "IMP77",    cover: "https://picsum.photos/seed/als64/44/44",     title: "A Love Supreme",                      artist: "John Coltrane",       band: "Coltrane Quartet",       year: 1964, tracks: 4,  type: "album",  status: "public"  },
   { id: "3",  catalog: "COL1397",  cover: "https://picsum.photos/seed/brub59/44/44",    title: "Time Out",                            artist: "Dave Brubeck",        band: "Brubeck Quartet",        year: 1959, tracks: 6,  type: "album",  status: "public"  },
   { id: "4",  catalog: "ATL1311",  cover: "https://picsum.photos/seed/gsteps60/44/44",  title: "Giant Steps",                         artist: "John Coltrane",                                       year: 1960, tracks: 8,  type: "album",  status: "public"  },
   { id: "5",  catalog: "COL32731", cover: "https://picsum.photos/seed/hh73/44/44",      title: "Head Hunters",                        artist: "Herbie Hancock",                                      year: 1973, tracks: 4,  type: "ep",     status: "public"  },
-  { id: "6",  catalog: "BN4195",   cover: "https://picsum.photos/seed/mv65/44/44",      title: "Maiden Voyage",                       artist: "Herbie Hancock",      band: "Hancock Quintet",        year: 1965, tracks: 6,  type: "album",  status: "private" },
+  { id: "6",  catalog: "BN4195",   cover: "https://picsum.photos/seed/mv65/44/44",      title: "Maiden Voyage",                       artist: "Herbie Hancock",      band: "Hancock Quintet",        year: 1965, tracks: 6,  type: "album",  status: "private", isNew: true },
   { id: "7",  catalog: "RVG12291", cover: "https://picsum.photos/seed/wfd61/44/44",     title: "Waltz for Debby",                     artist: "Bill Evans",          band: "Bill Evans Trio",        year: 1961, tracks: 11, type: "album",  status: "public"  },
   { id: "8",  catalog: "PR7079",   cover: "https://picsum.photos/seed/saxroll56/44/44", title: "Saxophone Colossus",                  artist: "Sonny Rollins",                                       year: 1956, tracks: 5,  type: "album",  status: "public"  },
   { id: "9",  catalog: "BN4003",   cover: "https://picsum.photos/seed/blakey58/44/44",  title: "Moanin'",                             artist: "Art Blakey",          band: "Jazz Messengers",        year: 1958, tracks: 8,  type: "album",  status: "private" },
@@ -230,75 +235,6 @@ const STATUS_LABELS: Record<ReleaseStatus, string> = {
 
 // ─── Shared filter UI primitives ──────────────────────────────────────────────
 
-/** Pill trigger shared by ContentTypeMultiSelect and ArtistMultiSelect */
-function FilterTrigger({
-  label,
-  active,
-  count,
-  onClick,
-  onKeyDown,
-}: {
-  label: string
-  active: boolean
-  open?: boolean
-  count?: number
-  onClick?: () => void
-  onKeyDown?: (e: React.KeyboardEvent) => void
-}) {
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={onKeyDown}
-      className={filterTriggerCls(active)}
-    >
-      <span>{label}</span>
-      <FilterCount count={count ?? 0} />
-      <FilterChevron />
-    </div>
-  )
-}
-
-/** Popover shell — absolute positioned below trigger */
-function FilterPopover({ children, minWidth = "min-w-44" }: { children: React.ReactNode; minWidth?: string }) {
-  return (
-    <div className={cn("absolute top-full left-0 mt-1.5 z-50 w-max rounded-xl bg-popover p-1 text-foreground ring-1 ring-foreground/10", minWidth)}>
-      {children}
-    </div>
-  )
-}
-
-/** Single checkbox row inside a popover */
-function FilterPopoverItem({
-  checked,
-  onToggle,
-  children,
-}: {
-  checked: boolean
-  onToggle: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <div
-      role="option"
-      aria-selected={checked}
-      tabIndex={0}
-      onClick={e => { e.stopPropagation(); onToggle() }}
-      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); onToggle() } }}
-      className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-default select-none"
-    >
-      <Checkbox
-        checked={checked}
-        onCheckedChange={() => {}}
-        tabIndex={-1}
-        className="pointer-events-none shrink-0 after:hidden"
-      />
-      {children}
-    </div>
-  )
-}
-
 /** Separator + action button shown at the bottom of a filter popover/dropdown */
 function FilterPopoverClearAll({ onClear, label = "Clear all" }: { onClear: () => void; label?: string }) {
   return (
@@ -307,7 +243,7 @@ function FilterPopoverClearAll({ onClear, label = "Clear all" }: { onClear: () =
       <button
         type="button"
         onClick={e => { e.stopPropagation(); onClear() }}
-        className="flex w-full items-center justify-center rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+        className="flex w-full items-center justify-center rounded-lg px-2.5 py-1.5 text-xsmall text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
       >
         {label}
       </button>
@@ -324,46 +260,16 @@ function ContentTypeMultiSelect({
   selected: Set<ContentType>
   onChange: (next: Set<ContentType>) => void
 }) {
-  const [open, setOpen] = useState(false)
-  const containerRef    = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    const handler = (e: MouseEvent) => {
-      if (!containerRef.current?.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
-  }, [open])
-
-  const toggle = (t: ContentType) => {
-    const next = new Set(selected)
-    if (next.has(t)) next.delete(t)
-    else next.add(t)
-    onChange(next)
-  }
-
   return (
-    <div ref={containerRef} className="relative">
-      <FilterTrigger
-        label="Type"
-        active={selected.size > 0}
-        open={open}
-        count={selected.size}
-        onClick={() => setOpen(v => !v)}
-        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setOpen(v => !v) }}
-      />
-      {open && (
-        <FilterPopover>
-          {(["album", "single", "ep"] as ContentType[]).map(t => (
-            <FilterPopoverItem key={t} checked={selected.has(t)} onToggle={() => toggle(t)}>
-              {CONTENT_TYPE_LABELS[t]}
-            </FilterPopoverItem>
-          ))}
-          {selected.size > 0 && <FilterPopoverClearAll onClear={() => onChange(new Set())} />}
-        </FilterPopover>
-      )}
-    </div>
+    <FilterMenu
+      label="Type"
+      options={(["album", "single", "ep"] as ContentType[]).map(t => ({
+        value: t,
+        label: CONTENT_TYPE_LABELS[t],
+      }))}
+      selected={selected as Set<string>}
+      onChange={next => onChange(next as Set<ContentType>)}
+    />
   )
 }
 
@@ -413,92 +319,16 @@ function ArtistMultiSelect({
   selected: Set<string>
   onChange: (next: Set<string>) => void
 }) {
-  const [open, setOpen]       = useState(false)
-  const [search, setSearch]   = useState("")
-  const containerRef          = useRef<HTMLDivElement>(null)
-  const searchRef             = useRef<HTMLInputElement>(null)
-
-  // Close on outside click
-  useEffect(() => {
-    if (!open) return
-    const handler = (e: MouseEvent) => {
-      if (!containerRef.current?.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
-  }, [open])
-
-  // Focus search when opened
-  useEffect(() => {
-    if (open) setTimeout(() => searchRef.current?.focus(), 0)
-    else setSearch("")
-  }, [open])
-
-  const filtered = options.filter(o => o.toLowerCase().includes(search.toLowerCase()))
-
-  const toggle = (artist: string) => {
-    const next = new Set(selected)
-    if (next.has(artist)) next.delete(artist)
-    else next.add(artist)
-    onChange(next)
-  }
-
-  const active = selected.size > 0
-
   return (
-    <div ref={containerRef} className="relative">
-      <FilterTrigger
-        label="Artist"
-        active={selected.size > 0}
-        open={open}
-        count={selected.size}
-        onClick={() => setOpen(v => !v)}
-        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setOpen(v => !v) }}
-      />
-
-      {open && (
-        <FilterPopover minWidth="min-w-52">
-          {/* Search */}
-          <div className="flex items-center gap-2 px-2.5 py-1.5 mb-1 border-b border-border">
-            <Search className="size-3.5 text-muted-foreground shrink-0" />
-            <input
-              ref={searchRef}
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search artists…"
-              className="flex-1 bg-transparent text-xs outline-none text-foreground placeholder:text-muted-foreground min-w-0"
-              onClick={e => e.stopPropagation()}
-            />
-            {search && (
-              <button
-                type="button"
-                onClick={e => { e.stopPropagation(); setSearch("") }}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <X className="size-3" />
-              </button>
-            )}
-          </div>
-
-          <div className="max-h-52 overflow-y-auto">
-            {filtered.length === 0 ? (
-              <p className="py-6 text-center text-xs text-muted-foreground">No results</p>
-            ) : (
-              filtered.map(artist => (
-                <FilterPopoverItem key={artist} checked={selected.has(artist)} onToggle={() => toggle(artist)}>
-                  {artist}
-                </FilterPopoverItem>
-              ))
-            )}
-          </div>
-
-          {selected.size > 0 && (
-            <FilterPopoverClearAll onClear={() => { onChange(new Set()); setSearch("") }} />
-          )}
-        </FilterPopover>
-      )}
-    </div>
+    <FilterMenu
+      label="Artist"
+      searchable
+      searchPlaceholder="Search artists…"
+      minWidth="min-w-52"
+      options={options.map(a => ({ value: a, label: a }))}
+      selected={selected}
+      onChange={onChange}
+    />
   )
 }
 
@@ -513,46 +343,13 @@ function LabelMultiSelect({
   selected: Set<string>
   onChange: (next: Set<string>) => void
 }) {
-  const [open, setOpen] = useState(false)
-  const containerRef    = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    const handler = (e: MouseEvent) => {
-      if (!containerRef.current?.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
-  }, [open])
-
-  const toggle = (label: string) => {
-    const next = new Set(selected)
-    if (next.has(label)) next.delete(label)
-    else next.add(label)
-    onChange(next)
-  }
-
   return (
-    <div ref={containerRef} className="relative">
-      <FilterTrigger
-        label="Label"
-        active={selected.size > 0}
-        open={open}
-        count={selected.size}
-        onClick={() => setOpen(v => !v)}
-        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setOpen(v => !v) }}
-      />
-      {open && (
-        <FilterPopover>
-          {options.map(label => (
-            <FilterPopoverItem key={label} checked={selected.has(label)} onToggle={() => toggle(label)}>
-              {label}
-            </FilterPopoverItem>
-          ))}
-          {selected.size > 0 && <FilterPopoverClearAll onClear={() => onChange(new Set())} />}
-        </FilterPopover>
-      )}
-    </div>
+    <FilterMenu
+      label="Label"
+      options={options.map(l => ({ value: l, label: l }))}
+      selected={selected}
+      onChange={onChange}
+    />
   )
 }
 
@@ -573,59 +370,30 @@ function MonetisationMultiSelect({
   selected: Set<MonetisationKind>
   onChange: (next: Set<MonetisationKind>) => void
 }) {
-  const [open, setOpen] = useState(false)
-  const containerRef    = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    const handler = (e: MouseEvent) => {
-      if (!containerRef.current?.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
-  }, [open])
-
-  const toggle = (kind: MonetisationKind) => {
-    const next = new Set(selected)
-    if (next.has(kind)) next.delete(kind)
-    else next.add(kind)
-    onChange(next)
-  }
-
   return (
-    <div ref={containerRef} className="relative">
-      <FilterTrigger
-        label="Monetisation"
-        active={selected.size > 0}
-        open={open}
-        count={selected.size}
-        onClick={() => setOpen(v => !v)}
-        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setOpen(v => !v) }}
-      />
-      {open && (
-        <FilterPopover>
-          {MONETISATION_KINDS.map(kind => (
-            <FilterPopoverItem key={kind} checked={selected.has(kind)} onToggle={() => toggle(kind)}>
-              {MONETISATION_KIND_LABELS[kind]}
-            </FilterPopoverItem>
-          ))}
-          {selected.size > 0 && <FilterPopoverClearAll onClear={() => onChange(new Set())} />}
-        </FilterPopover>
-      )}
-    </div>
+    <FilterMenu
+      label="Monetisation"
+      options={MONETISATION_KINDS.map(kind => ({
+        value: kind,
+        label: MONETISATION_KIND_LABELS[kind],
+      }))}
+      selected={selected as Set<string>}
+      onChange={next => onChange(next as Set<MonetisationKind>)}
+    />
   )
 }
 
 
 // ─── MusicRow ─────────────────────────────────────────────────────────────────
 
-function MusicRow({ release, visibleCols, isSelected, onSelect, status, onStatusChange }: {
+function MusicRow({ release, visibleCols, isSelected, onSelect, status, onStatusChange, onEdit }: {
   release:        Release
   visibleCols:    Record<ColKey, boolean>
   isSelected:     boolean
   onSelect:       () => void
   status:         ReleaseStatus
   onStatusChange: (s: ReleaseStatus) => void
+  onEdit:         (id: string) => void
 }) {
   const [hovered, setHovered] = useState(false)
   const vis = visibleCols
@@ -645,7 +413,7 @@ function MusicRow({ release, visibleCols, isSelected, onSelect, status, onStatus
       </td>
 
       {/* ID */}
-      <td className={cn("px-4 py-0 text-xs font-normal text-muted-foreground truncate", !vis.id && "hidden")}>
+      <td className={cn("px-4 py-0 text-xsmall font-normal text-muted-foreground truncate", !vis.id && "hidden")}>
         {release.catalog}
       </td>
 
@@ -657,37 +425,37 @@ function MusicRow({ release, visibleCols, isSelected, onSelect, status, onStatus
       </td>
 
       {/* Title */}
-      <td className="px-4 py-0 text-xs font-normal text-foreground truncate max-w-0">
+      <td className="px-4 py-0 text-xsmall font-normal text-foreground truncate max-w-0">
         <span className="block truncate">{release.title}</span>
       </td>
 
       {/* Artist */}
-      <td className={cn("px-4 py-0 text-xs font-normal text-muted-foreground truncate", !vis.artist && "hidden")}>
+      <td className={cn("px-4 py-0 text-xsmall font-normal text-muted-foreground truncate", !vis.artist && "hidden")}>
         {release.artist}
       </td>
 
       {/* Band */}
-      <td className={cn("px-4 py-0 text-xs font-normal text-muted-foreground truncate", !vis.band && "hidden")}>
+      <td className={cn("px-4 py-0 text-xsmall font-normal text-muted-foreground truncate", !vis.band && "hidden")}>
         {release.band ?? "—"}
       </td>
 
       {/* Year */}
-      <td className={cn("px-4 py-0 text-xs font-normal text-muted-foreground tabular-nums", !vis.year && "hidden")}>
+      <td className={cn("px-4 py-0 text-xsmall font-normal text-muted-foreground tabular-nums", !vis.year && "hidden")}>
         {release.year}
       </td>
 
       {/* Tracks */}
-      <td className={cn("px-4 py-0 text-xs font-normal text-muted-foreground tabular-nums", !vis.tracks && "hidden")}>
+      <td className={cn("px-4 py-0 text-xsmall font-normal text-muted-foreground tabular-nums", !vis.tracks && "hidden")}>
         {release.tracks}
       </td>
 
       {/* Label */}
-      <td className={cn("px-4 py-0 text-xs font-normal text-muted-foreground truncate", !vis.label && "hidden")}>
+      <td className={cn("px-4 py-0 text-xsmall font-normal text-muted-foreground truncate", !vis.label && "hidden")}>
         {mockLabel(release.catalog)}
       </td>
 
       {/* Uploaded */}
-      <td className={cn("px-4 py-0 text-xs font-normal text-muted-foreground tabular-nums", !vis.uploaded && "hidden")}>
+      <td className={cn("px-4 py-0 text-xsmall font-normal text-muted-foreground tabular-nums", !vis.uploaded && "hidden")}>
         {mockUploadDate(release.id)}
       </td>
 
@@ -712,8 +480,8 @@ function MusicRow({ release, visibleCols, isSelected, onSelect, status, onStatus
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 gap-1.5 text-xs px-2.5"
-                onClick={e => e.stopPropagation()}
+                className="h-7 gap-1.5 text-xsmall px-2.5"
+                onClick={e => { e.stopPropagation(); onEdit(release.id) }}
               >
                 <Pencil className="size-3" />
                 Edit
@@ -737,6 +505,15 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
   function setReleaseStatus(id: string, s: ReleaseStatus) {
     setStatuses(prev => ({ ...prev, [id]: s }))
   }
+
+  // Edit dialog — holds id of the release being edited (null = closed).
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const editingRelease = editingId
+    ? (() => {
+        const r = RELEASES.find(r => r.id === editingId)
+        return r ? { ...r, label: mockLabel(r.catalog) } : null
+      })()
+    : null
 
   // Row selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -840,8 +617,8 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
       {/* ── Page header ──────────────────────────────────────────────── */}
       <div className="shrink-0 flex items-center justify-between gap-6 px-16 pt-8 pb-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">My Music</h1>
-          <p className="text-sm font-normal text-muted-foreground mt-1">
+          <h1 className="text-2xlarge font-medium tracking-tight">My Music</h1>
+          <p className="text-small font-normal text-muted-foreground mt-1">
             {RELEASES.length} releases
           </p>
         </div>
@@ -870,7 +647,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
                   tabIndex={0}
                   onClick={() => setStatusFilter(prev => prev === s ? "all" : s)}
                   onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setStatusFilter(prev => prev === s ? "all" : s) }}
-                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-default select-none"
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xsmall text-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-default select-none"
                 >
                   <RadioIndicator checked={statusFilter === s} />
                   {STATUS_LABELS[s]}
@@ -914,7 +691,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search your music"
               className={cn(
-                "h-10 pl-10 pr-[18px] rounded-full border text-sm font-normal bg-transparent transition-all",
+                "h-10 pl-10 pr-[18px] rounded-full border text-small font-normal bg-transparent transition-all",
                 "text-foreground placeholder:text-muted-foreground focus:outline-none",
                 searchQuery
                   ? "border-foreground/40 bg-muted text-foreground w-56"
@@ -952,7 +729,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
                     key={key}
                     onClick={() => toggleCol(key)}
                     closeOnClick={false}
-                    className={cn("text-foreground text-xs", required && "opacity-40 pointer-events-none")}
+                    className={cn("text-foreground text-xsmall", required && "opacity-40 pointer-events-none")}
                   >
                     <Checkbox
                       checked={visibleCols[key]}
@@ -961,7 +738,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
                       className="pointer-events-none shrink-0 after:hidden"
                     />
                     {label}
-                    {required && <span className="ml-auto text-xxs text-muted-foreground">required</span>}
+                    {required && <span className="ml-auto text-2xsmall text-muted-foreground">required</span>}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuGroup>
@@ -986,7 +763,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
         <div className="shrink-0 flex items-center gap-1.5 px-16 pb-3 flex-wrap">
           <button
             onClick={() => { setTypeFilters(new Set()); setStatusFilter("all"); setArtistFilters(new Set()); setLabelFilters(new Set()); setMonetisationFilters(new Set()); setSearchQuery("") }}
-            className="text-xs font-normal text-muted-foreground hover:text-foreground transition-colors mr-1 shrink-0"
+            className="text-xsmall font-normal text-muted-foreground hover:text-foreground transition-colors mr-1 shrink-0"
           >
             Clear all
           </button>
@@ -1068,7 +845,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
               <TableHead style={{ width: DEFAULT_WIDTHS.title }} minWidth={MIN_WIDTHS.title}>
                 {(() => { const sk = COL_SORT_KEY["title"]!; const isActive = sk === sortKey; return (
                   <button className="flex items-center gap-0.5 min-w-0 overflow-hidden cursor-pointer group/sort select-none" onClick={() => handleSortChange(sk)}>
-                    <span className={cn("text-xs font-normal truncate", isActive ? "text-foreground" : "text-muted-foreground")}>Title</span>
+                    <span className={cn("text-xsmall font-normal truncate", isActive ? "text-foreground" : "text-muted-foreground")}>Title</span>
                     {isActive ? (sortDir === "asc" ? <ArrowUp className="size-3 shrink-0 text-foreground" /> : <ArrowDown className="size-3 shrink-0 text-foreground" />) : <ArrowUpDown className="size-3 shrink-0 text-muted-foreground opacity-0 group-hover/sort:opacity-50 transition-opacity" />}
                   </button>
                 ) })()}
@@ -1086,11 +863,11 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
                   >
                     {sk ? (
                       <button className="flex items-center gap-0.5 min-w-0 overflow-hidden cursor-pointer group/sort select-none" onClick={() => handleSortChange(sk)}>
-                        <span className={cn("text-xs font-normal truncate", isActive ? "text-foreground" : "text-muted-foreground")}>{labels[key]}</span>
+                        <span className={cn("text-xsmall font-normal truncate", isActive ? "text-foreground" : "text-muted-foreground")}>{labels[key]}</span>
                         {isActive ? (sortDir === "asc" ? <ArrowUp className="size-3 shrink-0 text-foreground" /> : <ArrowDown className="size-3 shrink-0 text-foreground" />) : <ArrowUpDown className="size-3 shrink-0 text-muted-foreground opacity-0 group-hover/sort:opacity-50 transition-opacity" />}
                       </button>
                     ) : (
-                      <span className="text-xs font-normal text-muted-foreground">{labels[key]}</span>
+                      <span className="text-xsmall font-normal text-muted-foreground">{labels[key]}</span>
                     )}
                   </TableHead>
                 )
@@ -1104,11 +881,11 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
               <tr>
                 <td colSpan={13} className="h-40 text-center">
                   <div className="flex flex-col items-center justify-center h-full gap-2">
-                    <p className="text-sm font-normal text-muted-foreground">No releases match the current filters.</p>
+                    <p className="text-small font-normal text-muted-foreground">No releases match the current filters.</p>
                     {anyFilter && (
                       <button
                         onClick={() => { setTypeFilters(new Set()); setStatusFilter("all"); setArtistFilters(new Set()); setLabelFilters(new Set()); setMonetisationFilters(new Set()); setSearchQuery("") }}
-                        className="text-xs font-normal text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+                        className="text-xsmall font-normal text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
                       >
                         Clear filters
                       </button>
@@ -1119,16 +896,18 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
             </tbody>
           ) : (
             <tbody className="[&_tr:last-child]:border-0">
-              {/* Upload row */}
+              {/* Upload row — empty cells for checkbox/id/cover so the icon
+                   + label start aligned with the Title column, then a single
+                   spanning cell for the remaining columns. */}
               <tr onClick={onOpenUpload} className="border-b border-border hover:bg-muted transition-colors cursor-pointer group" style={{ height: 56 }}>
-                <td className="px-2 py-0 w-10" />
-                <td className="px-2 py-0 text-center" colSpan={2}>
-                  <div className="flex items-center justify-center size-11 mx-auto">
-                    <Upload className="size-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  </div>
-                </td>
+                <td className="w-10 px-2 py-0" />
+                <td className={cn("px-4 py-0", !effectiveVis.id    && "hidden")} />
+                <td className={cn("px-2 py-0", !effectiveVis.cover && "hidden")} />
                 <td colSpan={10} className="px-4 py-0">
-                  <span className="text-sm font-normal text-muted-foreground group-hover:text-foreground transition-colors">Upload music</span>
+                  <div className="flex items-center gap-2.5">
+                    <Upload className="size-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    <span className="text-small font-normal text-muted-foreground group-hover:text-foreground transition-colors">Upload music</span>
+                  </div>
                 </td>
               </tr>
               {filtered.map(r => (
@@ -1140,6 +919,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
                   onSelect={() => toggleSelect(r.id)}
                   status={statuses[r.id] ?? r.status}
                   onStatusChange={s => setReleaseStatus(r.id, s)}
+                  onEdit={setEditingId}
                 />
               ))}
             </tbody>
@@ -1150,7 +930,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
       {selectedIds.size > 0 && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
           <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-foreground border border-foreground shadow-xl">
-            <span className="text-sm font-medium text-background tabular-nums pr-2">
+            <span className="text-small font-medium text-background tabular-nums pr-2">
               {selectedIds.size} selected
             </span>
             <div className="w-px h-5 bg-background/20" />
@@ -1185,6 +965,20 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
           </div>
         </div>
       )}
+
+      {/* Edit-release dialog — opens when `editingId` is set (triggered by
+          the Edit button on any release row). */}
+      <EditReleaseDialog
+        release={editingRelease}
+        open={editingRelease !== null}
+        onOpenChange={open => { if (!open) setEditingId(null) }}
+        onSave={patch => {
+          // Persist privacy change via the same lifted status store; the
+          // other fields are mock-demo and logged.
+          if (editingId) setReleaseStatus(editingId, patch.status)
+          console.log("EditReleaseDialog save", editingId, patch)
+        }}
+      />
 
     </div>
   )

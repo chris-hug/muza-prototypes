@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox, CheckboxField } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { RadioCard, RadioCardGroup } from "@/components/ui/radio-card"
 import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
 import { Progress } from "@/components/ui/progress"
@@ -46,6 +47,8 @@ import {
   SkipBack, SkipForward, Play, Pause, Shuffle, Repeat,
   Settings, User, LogOut, Upload, MoreHorizontal,
   Plus, Search, ChevronDown, Trash2, SlidersHorizontal, Maximize2,
+  Radio as RadioIcon, ShoppingBag, Disc3, Disc, CassetteTape, Shirt, Ghost,
+  ChevronLeft, ChevronRight, Globe,
 } from "lucide-react"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import {
@@ -69,16 +72,20 @@ import { z } from "zod"
 import { UploadMusicDialog } from "@/components/app/upload-music-dialog"
 import { ShopMyProductsView } from "@/components/app/shop-my-products"
 import { OrdersView } from "@/components/app/orders-view"
-import { filterTriggerCls, FilterChevron, FilterCount } from "@/components/ui/filter-button"
+import { FilterMenu } from "@/components/ui/filter-menu"
 import { PlayerBar }     from "@/components/ui/player-bar"
 import { PlayerBarB }    from "@/components/ui/player-bar-b"
 import { PlayerOverlay } from "@/components/ui/player-overlay"
+import { MobilePlayerShell } from "@/components/ui/mobile-player-shell"
+import { Wordmark }      from "@/components/ui/logo"
 
 // ─── Section heading component ────────────────────────────────────────────────
+// `scroll-mt-6` gives the section 24px of breathing room from the top of the
+// scroll container when the quick-nav scrolls to it.
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
-    <section id={id} className="mb-16">
-      <p className="text-sm font-normal text-foreground mb-5 pb-3 border-b border-border">
+    <section id={id} className="mb-16 scroll-mt-6">
+      <p className="text-small font-normal text-foreground mb-5 pb-3 border-b border-border">
         {title}
       </p>
       {children}
@@ -86,9 +93,243 @@ function Section({ id, title, children }: { id: string; title: string; children:
   )
 }
 
+// ─── Quick-nav helper ─────────────────────────────────────────────────────────
+// Finds the nearest scrollable ancestor and scrolls *it* directly to the target
+// element's offset. More deterministic than `scrollIntoView`, which can pick
+// the wrong ancestor when document height shifts (e.g. lazy-mounted overlays
+// further down the page).
+function scrollToSection(id: string) {
+  const target = document.getElementById(id)
+  if (!target) return
+  let scroller: HTMLElement | null = target.parentElement
+  while (scroller) {
+    const cs = getComputedStyle(scroller)
+    if (/(auto|scroll)/.test(cs.overflowY) && scroller.scrollHeight > scroller.clientHeight) {
+      break
+    }
+    scroller = scroller.parentElement
+  }
+  if (!scroller) {
+    target.scrollIntoView({ block: "start" })
+    return
+  }
+  const SCROLL_MARGIN = 24   // matches `scroll-mt-6` on the Section element
+  const top =
+    target.getBoundingClientRect().top
+    - scroller.getBoundingClientRect().top
+    + scroller.scrollTop
+    - SCROLL_MARGIN
+  scroller.scrollTo({ top, behavior: "auto" })
+}
+
 function SubLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-xs font-normal text-muted-foreground mb-3">{children}</p>
+    <p className="text-xsmall font-normal text-muted-foreground mb-3">{children}</p>
+  )
+}
+
+// ─── Dialogs kitchen sink ─────────────────────────────────────────────────────
+// Side-by-side static previews of every modal used in the product so the
+// design of titles, descriptions, bodies and footers can be compared at a
+// glance. Each preview uses the same classes as <DialogContent> but skips
+// the portal/overlay so they sit inline and comparable.
+
+function DialogFrame({
+  width = "sm:max-w-sm",
+  className,
+  children,
+}: { width?: string; className?: string; children: React.ReactNode }) {
+  return (
+    <div
+      className={cn(
+        // Shared DialogContent visual chrome (overlay/portal omitted).
+        "relative w-full rounded-xl sm:rounded-2xl bg-popover text-small text-popover-foreground",
+        "border border-border",
+        width,
+        className,
+      )}
+    >
+      {children}
+    </div>
+  )
+}
+
+function DialogsKitchenSink() {
+  return (
+    <div className="flex flex-wrap gap-8 items-start">
+
+      {/* ── 1. Confirm-destructive (manage-v2.tsx DeleteCard) ──────────── */}
+      <div className="flex flex-col gap-3">
+        <SubLabel>Confirm destructive</SubLabel>
+        <DialogFrame className="p-4 grid gap-4">
+          <div className="flex flex-col gap-2">
+            <p className="text-base font-medium text-foreground">Delete Chase Visa?</p>
+            <p className="text-small text-muted-foreground">
+              This will permanently remove this card from your account. This action cannot be undone.
+            </p>
+          </div>
+          <div className="-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl sm:rounded-b-2xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end">
+            <Button variant="outline">Cancel</Button>
+            <Button variant="destructive">Delete card</Button>
+          </div>
+        </DialogFrame>
+      </div>
+
+      {/* ── 2. Create Listing (shop-my-products AddProductDialog) ─────── */}
+      <div className="flex flex-col gap-3">
+        <SubLabel>Create Listing (Shop)</SubLabel>
+        <DialogFrame width="w-[600px] max-w-none" className="p-8 gap-0 shadow-none">
+          <div className="flex flex-col mb-8 gap-0.5">
+            <p className="text-large font-medium leading-none">Create Listing</p>
+            <p className="text-small text-muted-foreground">Choose what you want to sell.</p>
+          </div>
+          <RadioCardGroup value="vinyl" onValueChange={() => {}}>
+            {[
+              { v: "vinyl",    title: "Vinyl",        desc: "LPs, EPs, singles and limited pressings.",  icon: <Disc3 /> },
+              { v: "cd",       title: "Compact Disc", desc: "Albums, EPs and special editions on CD.",   icon: <Disc /> },
+              { v: "cassette", title: "Cassette",     desc: "Full releases and limited runs on tape.",   icon: <CassetteTape /> },
+            ].map(o => (
+              <RadioCard
+                key={o.v}
+                value={o.v}
+                selected={o.v === "vinyl"}
+                onSelect={() => {}}
+                icon={o.icon}
+                title={o.title}
+                description={o.desc}
+              />
+            ))}
+          </RadioCardGroup>
+          {/* Footer — shared DialogFooter visual, p-8 to match bigger
+              dialog's p-8 content padding. */}
+          <div className="-mx-8 -mb-8 mt-8 flex flex-col-reverse gap-2 rounded-b-xl sm:rounded-b-2xl border-t bg-muted/50 p-8 sm:flex-row sm:justify-end">
+            <Button variant="outline">Cancel</Button>
+            <Button>Create Listing</Button>
+          </div>
+        </DialogFrame>
+      </div>
+    </div>
+  )
+}
+
+// ─── Filter Menu kitchen sink ─────────────────────────────────────────────────
+// Live multi-select filters backed by <FilterMenu> so the buttons actually
+// open, toggle options, show a count badge, and expose a clear-all row.
+function FilterMenuKitchenSink() {
+  const [status,       setStatus]       = useState<Set<string>>(new Set())
+  const [type,         setType]         = useState<Set<string>>(new Set(["album", "single"]))
+  const [artist,       setArtist]       = useState<Set<string>>(new Set(["miles"]))
+  const [monetisation, setMonetisation] = useState<Set<string>>(new Set())
+
+  return (
+    <div className="flex flex-wrap gap-3 items-center">
+      <FilterMenu
+        label="Status"
+        selected={status}
+        onChange={setStatus}
+        options={[
+          { value: "public",  label: "Public" },
+          { value: "private", label: "Private" },
+        ]}
+      />
+      <FilterMenu
+        label="Type"
+        selected={type}
+        onChange={setType}
+        options={[
+          { value: "album",  label: "Album" },
+          { value: "single", label: "Single" },
+          { value: "ep",     label: "EP" },
+        ]}
+      />
+      <FilterMenu
+        label="Artist"
+        selected={artist}
+        onChange={setArtist}
+        options={[
+          { value: "miles",    label: "Miles Davis" },
+          { value: "coltrane", label: "John Coltrane" },
+          { value: "monk",     label: "Thelonious Monk" },
+          { value: "mingus",   label: "Charles Mingus" },
+        ]}
+      />
+      <FilterMenu
+        label="Monetisation"
+        selected={monetisation}
+        onChange={setMonetisation}
+        options={[
+          { value: "streaming", label: "Streaming" },
+          { value: "purchase",  label: "Purchase" },
+        ]}
+      />
+    </div>
+  )
+}
+
+// ─── Radio Card kitchen sink ──────────────────────────────────────────────────
+// Two demos:
+//   · Simple — icon + title + description only (product-type picker flavour)
+//   · With expanded content — a second card has children rendered below a
+//     divider so you can see the "Purchase card with price inputs" pattern.
+function RadioCardKitchenSink() {
+  const [productType, setProductType]   = useState("vinyl")
+  const [monetization, setMonetization] = useState("streaming")
+
+  const products: { value: string; icon: React.ReactNode; title: string; description: string }[] = [
+    { value: "vinyl",    icon: <Disc3 />,        title: "Vinyl",        description: "LPs, EPs, singles and limited pressings." },
+    { value: "cd",       icon: <Disc />,         title: "Compact Disc", description: "Albums, EPs and special editions on CD." },
+    { value: "cassette", icon: <CassetteTape />, title: "Cassette",     description: "Full releases and limited runs on tape." },
+    { value: "apparel",  icon: <Shirt />,        title: "Apparel",      description: "T-shirts, hoodies, longsleeves and more." },
+    { value: "other",    icon: <Ghost />,        title: "Other",        description: "Posters, zines, accessories or anything else." },
+  ]
+
+  return (
+    <div className="flex flex-col gap-10 max-w-2xl">
+      <div className="flex flex-col gap-3">
+        <SubLabel>Simple — icon · title · description</SubLabel>
+        <RadioCardGroup value={productType} onValueChange={setProductType}>
+          {products.map(p => (
+            <RadioCard
+              key={p.value}
+              value={p.value}
+              selected={productType === p.value}
+              onSelect={() => setProductType(p.value)}
+              icon={p.icon}
+              title={p.title}
+              description={p.description}
+            />
+          ))}
+        </RadioCardGroup>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <SubLabel>With expanded content — the "For purchase" card shows inputs below a divider</SubLabel>
+        <RadioCardGroup value={monetization} onValueChange={setMonetization}>
+          <RadioCard
+            value="streaming"
+            selected={monetization === "streaming"}
+            onSelect={() => setMonetization("streaming")}
+            icon={<RadioIcon />}
+            title="For streaming"
+            description="Anyone on Muza can listen · per-stream royalties distributed monthly"
+          />
+          <RadioCard
+            value="purchase"
+            selected={monetization === "purchase"}
+            onSelect={() => setMonetization("purchase")}
+            icon={<ShoppingBag />}
+            title="For purchase"
+            description="Fans pay to unlock · you set your price"
+          >
+            <p className="text-xsmall text-muted-foreground">
+              Children render below a full-width separator with generous padding.
+              Clicks inside are swallowed so they don't re-select the card.
+            </p>
+            <Input placeholder="e.g. pricing inputs, options, notes…" />
+          </RadioCard>
+        </RadioCardGroup>
+      </div>
+    </div>
   )
 }
 
@@ -110,7 +351,7 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
     <div className="pt-30 pb-64 max-w-[100rem] mx-auto w-full px-[clamp(1.5rem,5vw,5rem)] flex flex-col gap-6">
       <div className="flex flex-col items-center gap-28 min-h-[65vh] justify-center">
         <div className="flex flex-col items-center gap-6">
-          <img src="/wordmark.svg" alt="muza" className="h-4 dark:invert" />
+          <Wordmark className="h-4 w-auto" />
           <h1 className="text-[clamp(3.6rem,_5.4vw,_7.2rem)] leading-[1] font-medium text-foreground text-center">The Platform for<br />Independent Music.</h1>
         </div>
         <AnimatedLogo size={logoSize} />
@@ -153,11 +394,11 @@ function StudioView({ page, onOpenUpload }: { page: string; onOpenUpload?: () =>
       {/* ── Header + tabs ──────────────────────────────────────────────── */}
       <div className="shrink-0 px-16 pt-8 border-b border-border">
         <div className="flex items-start justify-between gap-6 mb-5">
-          <h1 className="text-2xl font-semibold tracking-tight">{page}</h1>
+          <h1 className="text-2xlarge font-medium tracking-tight">{page}</h1>
         </div>
         <TabsList variant="line" className="w-auto justify-start gap-0 h-auto pb-0">
           {tabs.map((tab) => (
-            <TabsTrigger key={tab} value={toTabValue(tab)} className="flex-none px-4 pb-3 text-sm">
+            <TabsTrigger key={tab} value={toTabValue(tab)} className="flex-none px-4 pb-3 text-small">
               {tab}
             </TabsTrigger>
           ))}
@@ -171,7 +412,7 @@ function StudioView({ page, onOpenUpload }: { page: string; onOpenUpload?: () =>
             {page === "Wallet" && tab === "Dashboard" ? <WalletView />   :
              page === "Wallet" && tab === "Transfer"  ? <TransferView /> :
              page === "Wallet" && tab === "Manage"    ? <ManageV2 />     :
-             <div className="p-10"><p className="text-sm text-muted-foreground">{tab}</p></div>
+             <div className="p-10"><p className="text-small text-muted-foreground">{tab}</p></div>
             }
           </TabsContent>
         ))}
@@ -259,7 +500,7 @@ function ChipDismissDemo() {
         <button
           type="button"
           onClick={() => setTags(["Hip-Hop", "Electronic", "Jazz", "Indie"])}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          className="text-xsmall text-muted-foreground hover:text-foreground transition-colors"
         >
           Reset
         </button>
@@ -316,22 +557,101 @@ function DatePickerDemo() {
   const [releaseDate, setReleaseDate] = useState<Date | undefined>()
 
   return (
-    <div className="flex flex-wrap gap-6 items-start">
-      <div className="flex flex-col gap-1.5 w-[240px]">
-        <Label>Release date</Label>
-        <DatePicker
-          value={releaseDate}
-          onChange={setReleaseDate}
-          placeholder="Pick a release date"
-        />
+    <div className="flex flex-wrap gap-10 items-start">
+      <div className="flex flex-col gap-4">
+        <SubLabel>Triggers (click to open)</SubLabel>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5 w-[240px]">
+            <Label>Release date</Label>
+            <DatePicker
+              value={releaseDate}
+              onChange={setReleaseDate}
+              placeholder="Pick a release date"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5 w-[240px]">
+            <Label>Start date</Label>
+            <DatePicker
+              value={date}
+              onChange={setDate}
+              placeholder="Pick a date"
+            />
+          </div>
+        </div>
       </div>
-      <div className="flex flex-col gap-1.5 w-[240px]">
-        <Label>Start date</Label>
-        <DatePicker
-          value={date}
-          onChange={setDate}
-          placeholder="Pick a date"
-        />
+
+      <div className="flex flex-col gap-4">
+        <SubLabel>Calendar popup (static preview)</SubLabel>
+        <DatePickerStaticPreview />
+      </div>
+    </div>
+  )
+}
+
+// Static snapshot of the DatePicker's popup face — uses the same tokens
+// and markup as the real calendar inside `DatePicker`, but skips the
+// PopoverPrimitive so it renders inline (no portal, no auto-positioning)
+// and is suitable as a visual preview in the kitchen sink.
+function DatePickerStaticPreview() {
+  // Fixed sample month — Apr 2026, with the 20th highlighted as "today"
+  // (matches the project's demo date) and the 14th marked as selected.
+  const days = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+  const firstDayOffset = 3    // Apr 2026 starts on Wednesday
+  const daysInMonth    = 30
+  const todayDay       = 20
+  const selectedDay    = 14
+
+  const cells: (number | null)[] = [
+    ...Array(firstDayOffset).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ]
+  while (cells.length % 7 !== 0) cells.push(null)
+
+  return (
+    <div className="w-72 rounded-xl bg-popover border border-border p-4 shadow-md ring-1 ring-foreground/10">
+      {/* Month navigation */}
+      <div className="flex items-center justify-between mb-3">
+        <button type="button" aria-label="Previous month" className="p-1 rounded-lg hover:bg-accent text-foreground transition-colors">
+          <ChevronLeft className="size-4" />
+        </button>
+        <span className="text-small font-medium text-foreground">April 2026</span>
+        <button type="button" aria-label="Next month" className="p-1 rounded-lg hover:bg-accent text-foreground transition-colors">
+          <ChevronRight className="size-4" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-7 mb-1">
+        {days.map(d => (
+          <div key={d} className="flex items-center justify-center h-8 text-xsmall font-medium text-muted-foreground">{d}</div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-y-0.5">
+        {cells.map((day, i) =>
+          day === null ? (
+            <div key={`blank-${i}`} />
+          ) : (
+            <button
+              key={day}
+              type="button"
+              className={cn(
+                "flex h-8 w-full items-center justify-center rounded-lg text-small transition-colors",
+                day === selectedDay
+                  ? "bg-primary text-primary-foreground font-medium"
+                  : day === todayDay
+                    ? "border border-border text-foreground hover:bg-accent"
+                    : "text-foreground hover:bg-accent",
+              )}
+            >
+              {day}
+            </button>
+          ),
+        )}
+      </div>
+
+      <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+        <Button variant="ghost" size="sm" className="text-xsmall">Today</Button>
+        <Button variant="ghost" size="sm" className="text-xsmall text-muted-foreground">Clear</Button>
       </div>
     </div>
   )
@@ -571,7 +891,7 @@ function ResizableBox({
 
   return (
     <div ref={outerRef} className="flex flex-col items-center gap-2 w-full">
-      <div className="text-xs text-muted-foreground tabular-nums">{Math.round(width)}px</div>
+      <div className="text-xsmall text-muted-foreground tabular-nums">{Math.round(width)}px</div>
       <div className="relative mx-auto max-w-full" style={{ width }}>
         {children}
         {/* Right resize handle */}
@@ -606,7 +926,7 @@ function ExploreView() {
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <div className="bg-muted border-b border-border pt-24 pb-[3.75rem]">
         <div className="max-w-[100rem] mx-auto px-[clamp(1.5rem,5vw,5rem)]">
-          <h1 className="text-5xl font-semibold leading-none tracking-[-0.025em]">The muza design system</h1>
+          <h1 className="text-5xl font-medium leading-none tracking-[-0.025em]">The muza design system</h1>
         </div>
       </div>
 
@@ -615,8 +935,8 @@ function ExploreView() {
       {/* Quick nav */}
       <nav className="flex flex-wrap gap-1.5 mb-12">
         {[
-          "Colors","Typography","Buttons","Badges","Chips","Input","Select","Filter Button","Combobox","Menu",
-          "Date Picker","Checkbox","Switch & Slider","Avatar","Tabs","Cards","Alerts","Alert Dialog",
+          "Colors","Typography","Buttons","Badges","Chips","Input","Select","Filter Menu","Combobox","Menu",
+          "Date Picker","Checkbox","Radio Card","Switch & Slider","Avatar","Tabs","Cards","Alerts","Alert Dialog",
           "Dialogs","Toast","Skeleton",
           "Popover","Table","Pagination","Command","OTP Input","Form",
           "Player Bar","Player Overlay",
@@ -628,13 +948,8 @@ function ExploreView() {
             <button
               key={s}
               type="button"
-              onClick={() => {
-                // Instant scroll — `behavior: smooth` races against the lazy
-                // mounts further down the page and leaves scroll anchoring
-                // confused when elements appear mid-animation.
-                document.getElementById(id)?.scrollIntoView({ block: "start" })
-              }}
-              className="text-xs font-normal text-foreground px-3 py-1.5 rounded-full border border-border hover:bg-secondary transition-colors"
+              onClick={() => scrollToSection(id)}
+              className="text-xsmall font-normal text-foreground px-3 py-1.5 rounded-full border border-border hover:bg-secondary transition-colors"
             >
               {s}
             </button>
@@ -645,7 +960,7 @@ function ExploreView() {
       {/* ══ COLORS ══ */}
       <Section id="colors" title="Colors">
         {/* oklch legend */}
-        <p className="text-xs text-muted-foreground mb-6 leading-relaxed">
+        <p className="text-xsmall text-muted-foreground mb-6 leading-relaxed">
           Colors are defined in <span className="text-foreground">oklch</span> — a perceptually uniform space where equal numeric steps look equal to the human eye.
           Each swatch shows three values: <span className="text-foreground">L</span> lightness (0–100%),{" "}
           <span className="text-foreground">C</span> chroma/saturation (0 = grey, ~0.37 = max), and{" "}
@@ -695,14 +1010,14 @@ function ExploreView() {
             },
           ].map((scale) => (
             <div key={scale.label}>
-              <p className="text-xs font-normal text-muted-foreground mb-2">{scale.label}</p>
+              <p className="text-xsmall font-normal text-muted-foreground mb-2">{scale.label}</p>
               <div className="flex gap-2">
                 {scale.stops.map((s) => (
                   <div key={s.name} className="flex-1 flex flex-col items-start gap-1">
                     <div className="w-full h-14 rounded-xl border border-border" style={{ background: s.hex }} />
-                    <span className="text-xxs text-foreground leading-tight">{s.name}</span>
+                    <span className="text-2xsmall text-foreground leading-tight">{s.name}</span>
                     {hexToOklch(s.hex).split(" ").map((v, i) => (
-                      <span key={i} className="text-xxs text-muted-foreground leading-tight">
+                      <span key={i} className="text-2xsmall text-muted-foreground leading-tight">
                         <span className="text-muted-foreground/40">{["L","C","H"][i]} </span>{v}
                       </span>
                     ))}
@@ -713,7 +1028,7 @@ function ExploreView() {
           ))}
         </div>
 
-        <table className="w-full text-xs border-collapse">
+        <table className="w-full text-xsmall border-collapse">
           <thead>
             <tr className="border-b border-border text-left">
               <th className="pb-2 pr-8 font-normal text-foreground">Token</th>
@@ -740,8 +1055,8 @@ function ExploreView() {
               },
               {
                 token: "--primary",
-                lHex: "#000DA2", lPrim: "--muza-blue-500",         lOklch: "33.02% 0.2175 264.2",
-                dHex: "#1121C2", dPrim: "--muza-blue-300",         dOklch: "39.43% 0.2371 266.1",
+                lHex: "#1E34D8", lPrim: "--muza-blue-200",         lOklch: "44.70% 0.2440 267.0",
+                dHex: "#1E34D8", dPrim: "--muza-blue-200",         dOklch: "44.70% 0.2440 267.0",
               },
               {
                 token: "--primary-foreground",
@@ -827,38 +1142,87 @@ function ExploreView() {
 
       {/* ══ TYPOGRAPHY ══ */}
       <Section id="typography" title="Typography — Founders Grotesk">
-        {/* column headers */}
+        {/* ── PRIMITIVES ─────────────────────────────────────────────────
+             Raw pixel values from Figma. Components should NOT reference
+             these directly — use the semantic alias table below when one
+             exists for the size you need. */}
+        <p className="text-small font-medium text-foreground mb-1">Primitives</p>
+        <p className="text-xsmall font-normal text-muted-foreground mb-5">
+          Raw font-size values. Used directly only when no semantic alias fits (large display headings).
+        </p>
         <div className="flex gap-6 pb-2 border-b border-border">
-          <span className="w-32 shrink-0 text-xs text-muted-foreground">Token</span>
-          <span className="w-24 shrink-0 text-xs text-muted-foreground">Semantic</span>
-          <span className="w-48 shrink-0 text-xs text-muted-foreground">Usage</span>
-          <span className="flex-1 text-xs text-muted-foreground">Style</span>
+          <span className="w-32 shrink-0 text-xsmall text-muted-foreground">Primitive</span>
+          <span className="w-20 shrink-0 text-xsmall text-muted-foreground">Value</span>
+          <span className="flex-1 text-xsmall text-muted-foreground">Example</span>
         </div>
         <div className="flex flex-col divide-y divide-border">
           {[
-            { token: "text-5xl",   semantic: "H1",           usage: "Hero titles, landing pages",          el: <p className="text-5xl font-semibold leading-none tracking-[-0.025em]">Discover Music</p> },
-            { token: "text-4xl",   semantic: null,           usage: "Marketing headers, splash screens",    el: <p className="text-4xl font-semibold leading-none">Muza</p> },
-            { token: "text-3xl",   semantic: "H2",           usage: "Page section titles",                  el: <p className="text-3xl font-semibold leading-none tracking-[-0.02em]">New Releases</p> },
-            { token: "text-2xl",   semantic: "H3",           usage: "Card headings, dialog titles",         el: <p className="text-2xl font-medium leading-tight tracking-[-0.015em]">Featured Artists</p> },
-            { token: "text-xl",    semantic: "H4",           usage: "Sub-section labels",                   el: <p className="text-xl font-medium leading-tight">Top Playlists</p> },
-            { token: "text-lg",    semantic: null,           usage: "Nav items, sidebar, subheadings",      el: <p className="text-lg font-medium leading-tight">My Music</p> },
-            { token: "text-large", semantic: "Large",        usage: "Dialog titles, page headings, lead",   el: <p className="text-large font-normal leading-normal">Upload your tracks and get paid fairly.</p> },
-            { token: "text-sm",    semantic: null,           usage: "Body text, form labels",               el: <p className="text-sm font-normal leading-normal">A platform built for artists who want to own their sound.</p> },
-            { token: "text-small", semantic: "Small",        usage: "Subtitles, descriptions, table cells", el: <p className="text-small font-normal leading-normal text-muted-foreground">Choose what you want to sell.</p> },
-            { token: "text-xxs",   semantic: "Extra Small",  usage: "Badges, chips, captions, meta",        el: <p className="text-xxs font-normal leading-normal text-muted-foreground">Albums, EPs and special editions on CD.</p> },
-            { token: "text-large", semantic: "Blockquote",   usage: "Pull quotes, featured text",           el: <blockquote className="text-large italic leading-normal text-muted-foreground border-l-[3px] border-border pl-4">Music is the shorthand of emotion.</blockquote> },
-          ].map(({ token, semantic, usage, el }) => (
-            <div key={`${token}-${semantic}`} className="flex items-baseline gap-6 py-4">
-              <span className="w-32 shrink-0 text-sm font-normal">{token}</span>
-              <span className="w-24 shrink-0 text-xs text-muted-foreground">{semantic ?? "—"}</span>
-              <span className="w-48 shrink-0 text-xs text-muted-foreground">{usage}</span>
-              <div className="flex-1">{el}</div>
+            { token: "text-9xl",  px: 200 },
+            { token: "text-8xl",  px: 160 },
+            { token: "text-7xl",  px: 128 },
+            { token: "text-6xl",  px: 96 },
+            { token: "text-5xl",  px: 72 },
+            { token: "text-4xl",  px: 60 },
+            { token: "text-3xl",  px: 48 },
+            { token: "text-2xl",  px: 36 },
+            { token: "text-xl",   px: 30 },
+            { token: "text-lg",   px: 24 },
+            { token: "text-base", px: 20 },
+            { token: "text-sm",   px: 18 },
+            { token: "text-xs",   px: 16 },
+            { token: "text-xxs",  px: 14 },
+          ].map(({ token, px }) => (
+            <div key={token} className="flex items-baseline gap-6 py-4">
+              <span className="w-32 shrink-0 text-small font-normal">{token}</span>
+              <span className="w-20 shrink-0 text-xsmall text-muted-foreground tabular-nums">{px}px</span>
+              <div className="flex-1 min-w-0">
+                <p className={`${token} font-normal leading-none truncate`}>Discover Music</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── SEMANTIC ALIASES ───────────────────────────────────────────
+             These are what product code should use by default. Each alias
+             is a `var(--text-*)` reference in app.css — never a raw px. */}
+        <p className="text-small font-medium text-foreground mt-10 mb-1">Semantic aliases</p>
+        <p className="text-xsmall font-normal text-muted-foreground mb-5">
+          Default choice in product code. Each alias resolves to a primitive via <code className="text-xsmall">var()</code> — never a hardcoded px.
+        </p>
+        <div className="flex gap-6 pb-2 border-b border-border">
+          <span className="w-32 shrink-0 text-xsmall text-muted-foreground">Alias</span>
+          <span className="w-32 shrink-0 text-xsmall text-muted-foreground">→ Primitive</span>
+          <span className="w-20 shrink-0 text-xsmall text-muted-foreground">Resolved</span>
+          <span className="flex-1 text-xsmall text-muted-foreground">Example</span>
+        </div>
+        <div className="flex flex-col divide-y divide-border">
+          {[
+            { alias: "text-4xlarge", primitive: "text-4xl",  px: 60, weight: "font-medium",   sample: "Discover Music" },
+            { alias: "text-3xlarge", primitive: "text-3xl",  px: 48, weight: "font-medium",   sample: "Featured Releases" },
+            { alias: "text-2xlarge", primitive: "text-2xl",  px: 36, weight: "font-medium",   sample: "Top Playlists" },
+            { alias: "text-xlarge",  primitive: "text-xl",   px: 30, weight: "font-medium",   sample: "Album of the Week" },
+            { alias: "text-large",   primitive: "text-lg",   px: 24, weight: "font-medium",   sample: "Dialog titles, lead paragraphs." },
+            { alias: "text-base",    primitive: "text-base", px: 20, weight: "font-normal",   sample: "Body copy, card content, default paragraphs.", note: "alias name = primitive name; use the primitive directly (no separate CSS variable)." },
+            { alias: "text-small",   primitive: "text-sm",   px: 18, weight: "font-normal",   sample: "Descriptions, table cells, body text." },
+            { alias: "text-xsmall",  primitive: "text-xs",   px: 16, weight: "font-normal",   sample: "Helper text, placeholder copy." },
+            { alias: "text-2xsmall", primitive: "text-xxs",  px: 14, weight: "font-normal",   sample: "Badges, chips, captions, meta." },
+          ].map(({ alias, primitive, px, weight, sample, note }) => (
+            <div key={alias} className="flex items-baseline gap-6 py-4">
+              <span className="w-32 shrink-0 text-small font-normal">{alias}</span>
+              <span className="w-32 shrink-0 text-xsmall text-muted-foreground">{primitive}</span>
+              <span className="w-20 shrink-0 text-xsmall text-muted-foreground tabular-nums">{px}px</span>
+              <div className="flex-1 min-w-0">
+                <p className={`${alias} ${weight} leading-normal text-foreground truncate`}>{sample}</p>
+                {note && (
+                  <p className="text-2xsmall text-muted-foreground/70 mt-1 italic truncate">{note}</p>
+                )}
+              </div>
             </div>
           ))}
         </div>
 
         {/* Font weights */}
-        <p className="text-xs font-normal text-muted-foreground mt-10 mb-4">Font weights — Founders Grotesk at text-large (20px)</p>
+        <p className="text-xsmall font-normal text-muted-foreground mt-10 mb-4">Font weights — Founders Grotesk at text-large (24px)</p>
         <div className="flex flex-col divide-y divide-border">
           {[
             { label: "Regular",  cls: "font-normal",               val: "400", note: "default",             noteCls: "text-green-700 dark:text-green-400" },
@@ -868,9 +1232,9 @@ function ExploreView() {
           ].map(({ label, cls, val, note, noteCls }) => (
             <div key={label} className="flex items-center gap-6 py-3.5">
               <div className="w-40 shrink-0">
-                <span className="text-sm font-normal">{label}</span>
-                <span className="block text-xs text-muted-foreground mt-0.5">font-weight: {val}</span>
-                <span className={`block text-xs mt-0.5 ${noteCls}`}>{note}</span>
+                <span className="text-small font-normal">{label}</span>
+                <span className="block text-xsmall text-muted-foreground mt-0.5">font-weight: {val}</span>
+                <span className={`block text-xsmall mt-0.5 ${noteCls}`}>{note}</span>
               </div>
               <p className={`text-large ${cls}`}>Upload your tracks and get paid fairly.</p>
             </div>
@@ -909,26 +1273,26 @@ function ExploreView() {
               <div className="flex flex-col">
                 <div className={GRID_TEXT + " pb-2"}>
                   <div />
-                  <p className="text-xxs text-muted-foreground pl-10">Large</p>
-                  <p className="text-xxs text-muted-foreground pl-[18px]">Default</p>
-                  <p className="text-xxs text-muted-foreground pl-3">Small</p>
+                  <p className="text-2xsmall text-muted-foreground pl-10">Large</p>
+                  <p className="text-2xsmall text-muted-foreground pl-[18px]">Default</p>
+                  <p className="text-2xsmall text-muted-foreground pl-3">Small</p>
                 </div>
                 {VARIANTS.map((v) => (
                   <div key={v.key} className={GRID_TEXT + " " + D}>
-                    <p className="text-xxs text-muted-foreground">{v.label}</p>
+                    <p className="text-2xsmall text-muted-foreground">{v.label}</p>
                     <div className="flex"><Button variant={v.key as any} size="lg">{v.label}</Button></div>
                     <div className="flex"><Button variant={v.key as any}>{v.label}</Button></div>
                     <div className="flex"><Button variant={v.key as any} size="sm">{v.label}</Button></div>
                   </div>
                 ))}
                 <div className={GRID_TEXT + " " + D}>
-                  <p className="text-xxs text-muted-foreground">Disabled</p>
+                  <p className="text-2xsmall text-muted-foreground">Disabled</p>
                   <div className="flex"><Button size="lg" disabled>Primary</Button></div>
                   <div className="flex"><Button disabled>Primary</Button></div>
                   <div className="flex"><Button size="sm" disabled>Primary</Button></div>
                 </div>
                 <div className={GRID_TEXT}>
-                  <p className="text-xxs text-muted-foreground">Loading</p>
+                  <p className="text-2xsmall text-muted-foreground">Loading</p>
                   <div className="flex"><Button size="lg" disabled><Spin />Primary</Button></div>
                   <div className="flex"><Button disabled><Spin />Primary</Button></div>
                   <div className="flex"><Button size="sm" disabled><Spin />Primary</Button></div>
@@ -939,26 +1303,26 @@ function ExploreView() {
               <div className="flex flex-col">
                 <div className={GRID_ICON + " pb-2"}>
                   <div />
-                  <p className="text-xxs text-muted-foreground">Large</p>
-                  <p className="text-xxs text-muted-foreground">Default</p>
-                  <p className="text-xxs text-muted-foreground">Small</p>
+                  <p className="text-2xsmall text-muted-foreground">Large</p>
+                  <p className="text-2xsmall text-muted-foreground">Default</p>
+                  <p className="text-2xsmall text-muted-foreground">Small</p>
                 </div>
                 {VARIANTS.map((v) => (
                   <div key={v.key} className={GRID_ICON + " " + D}>
-                    <p className="text-xxs text-muted-foreground">{v.label}</p>
+                    <p className="text-2xsmall text-muted-foreground">{v.label}</p>
                     <div className="flex"><Button variant={v.key as any} size="icon-lg"><Plus /></Button></div>
                     <div className="flex"><Button variant={v.key as any} size="icon"><Plus /></Button></div>
                     <div className="flex"><Button variant={v.key as any} size="icon-sm"><Plus /></Button></div>
                   </div>
                 ))}
                 <div className={GRID_ICON + " " + D}>
-                  <p className="text-xxs text-muted-foreground">Disabled</p>
+                  <p className="text-2xsmall text-muted-foreground">Disabled</p>
                   <div className="flex"><Button size="icon-lg" disabled><Plus /></Button></div>
                   <div className="flex"><Button size="icon" disabled><Plus /></Button></div>
                   <div className="flex"><Button size="icon-sm" disabled><Plus /></Button></div>
                 </div>
                 <div className={GRID_ICON}>
-                  <p className="text-xxs text-muted-foreground">Loading</p>
+                  <p className="text-2xsmall text-muted-foreground">Loading</p>
                   <div className="flex"><Button size="icon-lg" disabled><Spin /></Button></div>
                   <div className="flex"><Button size="icon" disabled><Spin /></Button></div>
                   <div className="flex"><Button size="icon-sm" disabled><Spin /></Button></div>
@@ -1031,7 +1395,7 @@ function ExploreView() {
           <div className="flex flex-col gap-1.5 min-w-[260px]">
             <Label htmlFor="artist">Default</Label>
             <Input id="artist" placeholder="e.g. Kendrick Lamar" />
-            <p className="text-xs text-muted-foreground">Your public display name on Muza.</p>
+            <p className="text-xsmall text-muted-foreground">Your public display name on Muza.</p>
           </div>
           <div className="flex flex-col gap-1.5 min-w-[260px]">
             <Label htmlFor="email">Email</Label>
@@ -1047,7 +1411,7 @@ function ExploreView() {
           <div className="flex flex-col gap-1.5 min-w-[320px]">
             <Label htmlFor="bio">Textarea</Label>
             <Textarea id="bio" placeholder="Tell listeners about yourself…" rows={3} />
-            <p className="text-xs text-muted-foreground">Max 280 characters.</p>
+            <p className="text-xsmall text-muted-foreground">Max 280 characters.</p>
           </div>
           <div className="flex flex-col gap-1.5 min-w-[300px]">
             <Label>With action</Label>
@@ -1129,26 +1493,11 @@ function ExploreView() {
         </div>
       </Section>
 
-      {/* ══ FILTER BUTTON ══ */}
-      <Section id="filter-button" title="Filter Button">
-        <div className="flex flex-wrap gap-3 items-center">
-          {/* Inactive */}
-          <button className={filterTriggerCls(false)}>
-            Status <FilterChevron />
-          </button>
-          {/* Active with count */}
-          <button className={filterTriggerCls(true)}>
-            Type <FilterCount count={2} /> <FilterChevron />
-          </button>
-          {/* Active single */}
-          <button className={filterTriggerCls(true)}>
-            Artist <FilterCount count={1} /> <FilterChevron />
-          </button>
-          {/* Inactive longer label */}
-          <button className={filterTriggerCls(false)}>
-            Monetisation <FilterChevron />
-          </button>
-        </div>
+      {/* ══ FILTER MENU ══
+           base-ui `Menu` with `CheckboxItem`s + pill trigger, count badge,
+           and a clear-all row. Single app-level API: <FilterMenu>. */}
+      <Section id="filter-menu" title="Filter Menu">
+        <FilterMenuKitchenSink />
       </Section>
 
       {/* ══ COMBOBOX ══ */}
@@ -1284,6 +1633,11 @@ function ExploreView() {
         </div>
       </Section>
 
+      {/* ══ RADIO CARD ══ */}
+      <Section id="radio-card" title="Radio Card">
+        <RadioCardKitchenSink />
+      </Section>
+
       {/* ══ SWITCH & SLIDER ══ */}
       <Section id="switch-&-slider" title="Switch & Slider & Progress">
         <div className="flex flex-wrap gap-12 items-start">
@@ -1317,21 +1671,21 @@ function ExploreView() {
       {/* ══ AVATAR ══ */}
       <Section id="avatar" title="Avatar">
         <div className="flex items-center gap-4 flex-wrap">
-          <Avatar className="size-7"><AvatarFallback className="text-xs">JD</AvatarFallback></Avatar>
+          <Avatar className="size-7"><AvatarFallback className="text-xsmall">JD</AvatarFallback></Avatar>
           <Avatar><AvatarFallback>MK</AvatarFallback></Avatar>
-          <Avatar className="size-12"><AvatarFallback className="text-lg">AL</AvatarFallback></Avatar>
-          <Avatar className="size-16"><AvatarFallback className="text-2xl">RS</AvatarFallback></Avatar>
+          <Avatar className="size-12"><AvatarFallback className="text-large">AL</AvatarFallback></Avatar>
+          <Avatar className="size-16"><AvatarFallback className="text-2xlarge">RS</AvatarFallback></Avatar>
           <Avatar className="size-10">
             <AvatarFallback className="bg-primary text-primary-foreground font-medium">M</AvatarFallback>
           </Avatar>
           <div className="flex -space-x-2">
             {["JD","AL","RS"].map((i) => (
               <Avatar key={i} className="ring-2 ring-background">
-                <AvatarFallback className="text-xs">{i}</AvatarFallback>
+                <AvatarFallback className="text-xsmall">{i}</AvatarFallback>
               </Avatar>
             ))}
             <Avatar className="ring-2 ring-background">
-              <AvatarFallback className="text-xs bg-neutral-800 text-neutral-100">+4</AvatarFallback>
+              <AvatarFallback className="text-xsmall bg-neutral-800 text-neutral-100">+4</AvatarFallback>
             </Avatar>
           </div>
         </div>
@@ -1378,7 +1732,7 @@ function ExploreView() {
                   <TabsTrigger key={t} value={t.toLowerCase()}>{t}</TabsTrigger>
                 ))}
               </TabsList>
-              <TabsContent value="overview" className="pt-4 text-sm text-muted-foreground">
+              <TabsContent value="overview" className="pt-4 text-small text-muted-foreground">
                 Artist overview content here.
               </TabsContent>
             </Tabs>
@@ -1436,8 +1790,8 @@ function ExploreView() {
               <CardDescription>Your stats for the last 7 days.</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-medium tracking-tight">12,430</p>
-              <p className="text-xs text-muted-foreground mt-1 mb-4">streams across all tracks</p>
+              <p className="text-4xlarge font-medium tracking-tight">12,430</p>
+              <p className="text-xsmall text-muted-foreground mt-1 mb-4">streams across all tracks</p>
               <Progress value={72} className="h-1.5" />
             </CardContent>
           </Card>
@@ -1445,11 +1799,11 @@ function ExploreView() {
           <Card className="w-64">
             <CardContent className="pt-6 flex items-center gap-4">
               <Avatar className="size-12">
-                <AvatarFallback className="bg-primary text-primary-foreground font-medium text-lg">RL</AvatarFallback>
+                <AvatarFallback className="bg-primary text-primary-foreground font-medium text-large">RL</AvatarFallback>
               </Avatar>
               <div>
                 <p className="font-medium leading-tight">River Lotus</p>
-                <p className="text-sm text-muted-foreground">Electronic · Berlin</p>
+                <p className="text-small text-muted-foreground">Electronic · Berlin</p>
                 <div className="flex gap-1.5 mt-2.5">
                   <Button size="sm">Follow</Button>
                   <Button variant="outline" size="icon-sm"><Share2 className="size-3.5" /></Button>
@@ -1524,33 +1878,7 @@ function ExploreView() {
 
       {/* ══ DIALOGS ══ */}
       <Section id="dialogs" title="Dialogs — static preview">
-        <div className="flex flex-wrap gap-5 items-start">
-          <div className="border border-border rounded-2xl bg-card p-6 max-w-sm">
-            <p className="text-lg font-medium tracking-tight mb-2">Delete track</p>
-            <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-              Are you sure you want to delete "Blue Afternoon"? This action cannot be undone.
-            </p>
-            <Separator className="mb-4" />
-            <div className="flex justify-end gap-2">
-              <Button variant="outline">Cancel</Button>
-              <Button variant="destructive">Delete track</Button>
-            </div>
-          </div>
-          <div className="border border-border rounded-2xl bg-card p-6 max-w-sm">
-            <p className="text-lg font-medium tracking-tight mb-2">Publish release</p>
-            <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-              Ready to go public? Your fans will be notified once it&apos;s live.
-            </p>
-            <div className="flex flex-col gap-1.5 mb-4">
-              <Label>Release date</Label>
-              <Input type="date" />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline">Save draft</Button>
-              <Button>Publish</Button>
-            </div>
-          </div>
-        </div>
+        <DialogsKitchenSink />
       </Section>
 
       {/* ══ TOAST ══ */}
@@ -1591,19 +1919,19 @@ function ExploreView() {
             </PopoverTrigger>
             <PopoverContent>
               <div className="flex flex-col gap-3">
-                <p className="text-sm font-medium leading-none">Blue Afternoon</p>
-                <p className="text-xs text-muted-foreground">River Lotus · Electronic · 2024</p>
+                <p className="text-small font-medium leading-none">Blue Afternoon</p>
+                <p className="text-xsmall text-muted-foreground">River Lotus · Electronic · 2024</p>
                 <Separator />
                 <div className="flex flex-col gap-1.5">
-                  <div className="flex justify-between text-xs">
+                  <div className="flex justify-between text-xsmall">
                     <span className="text-muted-foreground">Streams</span>
                     <span>12,430</span>
                   </div>
-                  <div className="flex justify-between text-xs">
+                  <div className="flex justify-between text-xsmall">
                     <span className="text-muted-foreground">Duration</span>
                     <span>3:42</span>
                   </div>
-                  <div className="flex justify-between text-xs">
+                  <div className="flex justify-between text-xsmall">
                     <span className="text-muted-foreground">Release</span>
                     <span>Mar 2024</span>
                   </div>
@@ -1618,11 +1946,11 @@ function ExploreView() {
               <SlidersHorizontal className="size-4" />
             </PopoverTrigger>
             <PopoverContent side="right">
-              <p className="text-sm font-medium mb-3">Equalizer</p>
+              <p className="text-small font-medium mb-3">Equalizer</p>
               <div className="flex flex-col gap-3">
                 {["Bass","Mid","Treble"].map((band) => (
                   <div key={band} className="flex items-center gap-3">
-                    <span className="text-xs text-muted-foreground w-12">{band}</span>
+                    <span className="text-xsmall text-muted-foreground w-12">{band}</span>
                     <Slider defaultValue={[50]} max={100} step={1} className="flex-1" />
                   </div>
                 ))}
@@ -1647,17 +1975,22 @@ function ExploreView() {
           </TableHeader>
           <TableBody>
             {[
-              { n: 1,  emoji: "🎵", title: "Blue Afternoon",   artist: "River Lotus",   genre: "Electronic", streams: "12,430", dur: "3:42" },
-              { n: 2,  emoji: "🎸", title: "Midnight Circuit",  artist: "Axon Fade",     genre: "Indie",       streams: "9,814",  dur: "4:15" },
-              { n: 3,  emoji: "🎤", title: "Haunt the Waves",   artist: "Dusk Ensemble", genre: "Jazz",        streams: "7,201",  dur: "5:01" },
-              { n: 4,  emoji: "🎹", title: "Static Memory",     artist: "Nora Voss",     genre: "Electronic",  streams: "5,588",  dur: "2:58" },
-              { n: 5,  emoji: "🥁", title: "Low Tide Prayer",   artist: "Coastal Rites", genre: "Indie",       streams: "3,112",  dur: "4:33" },
-            ].map(({ n, emoji, title, artist, genre, streams, dur }) => (
+              { n: 1, seed: "sonny",     title: "Blue Afternoon",    artist: "River Lotus",   genre: "Jazz",       streams: "12,430", dur: "3:42" },
+              { n: 2, seed: "miles",     title: "Midnight Circuit",  artist: "Axon Fade",     genre: "Jazz",       streams: "9,814",  dur: "4:15" },
+              { n: 3, seed: "coltrane",  title: "Haunt the Waves",   artist: "Dusk Ensemble", genre: "Jazz",       streams: "7,201",  dur: "5:01" },
+              { n: 4, seed: "monk",      title: "Static Memory",     artist: "Nora Voss",     genre: "Jazz",       streams: "5,588",  dur: "2:58" },
+              { n: 5, seed: "mingus",    title: "Low Tide Prayer",   artist: "Coastal Rites", genre: "Jazz",       streams: "3,112",  dur: "4:33" },
+            ].map(({ n, seed, title, artist, genre, streams, dur }) => (
               <TableRow key={n}>
                 <TableCell className="text-muted-foreground">{n}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2.5">
-                    <div className="size-8 rounded-md bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center text-base">{emoji}</div>
+                    {/* `rounded-xs` (2px) — design-system spec for image-containers. */}
+                    <img
+                      src={`https://picsum.photos/seed/${seed}/64/64`}
+                      alt=""
+                      className="size-8 rounded-xs object-cover shrink-0"
+                    />
                     <span className="font-normal">{title}</span>
                   </div>
                 </TableCell>
@@ -1778,7 +2111,7 @@ function ExploreView() {
               }}
             >
               <div className="relative z-10 flex flex-col gap-4">
-                <span className="self-start text-xxs font-medium text-foreground bg-background/70 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                <span className="self-start text-2xsmall font-medium text-foreground bg-background/70 backdrop-blur-sm px-2 py-0.5 rounded-full">
                   Player Bar A
                 </span>
                 <PlayerBar className="w-full" />
@@ -1798,7 +2131,7 @@ function ExploreView() {
               }}
             >
               <div className="relative z-10 flex flex-col gap-4">
-                <span className="self-start text-xxs font-medium text-foreground bg-background/70 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                <span className="self-start text-2xsmall font-medium text-foreground bg-background/70 backdrop-blur-sm px-2 py-0.5 rounded-full">
                   Player Bar B
                 </span>
                 <PlayerBarB className="w-full" />
@@ -1823,7 +2156,7 @@ function ExploreView() {
             { label: "iPhone 17 Pro Max · 6.9\"",        width: 440, height: 956 },
           ].map(({ label, width, height }) => (
             <div key={label} className="flex flex-col items-center gap-3">
-              <span className="text-xxs text-muted-foreground tabular-nums">
+              <span className="text-2xsmall text-muted-foreground tabular-nums">
                 {label} · {width}×{height}
               </span>
               <div
@@ -1831,7 +2164,7 @@ function ExploreView() {
                 style={{ width, height }}
               >
                 <LazyOnView fallbackClassName="absolute inset-0 bg-muted animate-pulse">
-                  <PlayerOverlay />
+                  <MobilePlayerShell />
                 </LazyOnView>
               </div>
             </div>
@@ -1885,7 +2218,7 @@ export default function Home() {
             />
           )}
           {["Playlists","Albums","Artists","Songs"].includes(activeNav) && (
-            <div className="p-10"><h1 className="text-2xl font-medium">{activeNav}</h1></div>
+            <div className="p-10"><h1 className="text-2xlarge font-medium">{activeNav}</h1></div>
           )}
         </div>
 
@@ -1906,8 +2239,8 @@ export default function Home() {
         <div className="fixed top-[86px] right-10 z-50 flex items-center gap-3 pl-3 pr-2 py-2 rounded-xl bg-background border border-border shadow-lg">
           <div className="flex flex-col gap-1 min-w-[160px]">
             <div className="flex items-center justify-between gap-4">
-              <span className="text-sm font-medium text-foreground leading-tight">Uploading music</span>
-              <span className="text-xs text-muted-foreground font-normal leading-tight">{uploadProgress}%</span>
+              <span className="text-small font-medium text-foreground leading-tight">Uploading music</span>
+              <span className="text-xsmall text-muted-foreground font-normal leading-tight">{uploadProgress}%</span>
             </div>
             <div className="h-1 rounded-full bg-secondary overflow-hidden">
               <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${uploadProgress}%` }} />

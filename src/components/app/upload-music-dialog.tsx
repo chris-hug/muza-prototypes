@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/combobox"
 import { useToast } from "@/components/ui/toast"
 import { Switch } from "@/components/ui/switch"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { RadioCard, RadioCardGroup } from "@/components/ui/radio-card"
 import { InputSelect } from "@/components/ui/input-select"
 import { cn } from "@/lib/utils"
 import {
@@ -21,6 +21,7 @@ import {
   Plus, GripVertical, FileAudio, Loader2, ChevronRight,
   AlertTriangle, Trash2, Minimize2, Play, Shuffle,
   Share2, Info, MoreHorizontal, CheckCircle2,
+  Radio as RadioIcon, ShoppingBag,
 } from "lucide-react"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -119,9 +120,9 @@ function EntityAvatar({ initials, size = "md" }: { initials: string; size?: "sm"
   return (
     <div className={cn(
       "rounded-full bg-secondary flex items-center justify-center shrink-0 font-medium text-secondary-foreground select-none",
-      size === "sm" ? "size-7 text-xs"
+      size === "sm" ? "size-7 text-xsmall"
         : size === "lg" ? "size-14 text-base"
-        : "size-11 text-sm"
+        : "size-11 text-small"
     )}>
       {initials}
     </div>
@@ -172,10 +173,10 @@ function ReleaseRow({ release }: { release: { title: string; mainArtists: string
     <>
       <CoverPlaceholder src={release.coverUrl} />
       <div className="flex flex-col gap-1 flex-1 min-w-0">
-        <p className="text-sm font-normal leading-none truncate">{release.title}</p>
+        <p className="text-small font-normal leading-none truncate">{release.title}</p>
         <div className="flex items-center gap-1.5">
           <ContentTypeBadge type={release.type} />
-          <span className="text-sm text-muted-foreground font-normal truncate">
+          <span className="text-small text-muted-foreground font-normal truncate">
             {release.mainArtists[0]} · {release.year}
           </span>
         </div>
@@ -187,8 +188,8 @@ function ReleaseRow({ release }: { release: { title: string; mainArtists: string
 function InfoField({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <p className="text-xs text-muted-foreground font-normal">{label}</p>
-      <p className="text-sm font-normal">{value}</p>
+      <p className="text-xsmall text-muted-foreground font-normal">{label}</p>
+      <p className="text-small font-normal">{value}</p>
     </div>
   )
 }
@@ -216,13 +217,13 @@ function TopNavBar({
                 {/* Step column */}
                 <div className="flex flex-col items-center gap-1 flex-1">
                   <div className={cn(
-                    "size-6 rounded-full flex items-center justify-center text-xs font-normal transition-colors shrink-0",
+                    "size-6 rounded-full flex items-center justify-center text-xsmall font-normal transition-colors shrink-0",
                     done || active ? "bg-foreground text-background" : "bg-secondary text-muted-foreground"
                   )}>
                     {done ? <Check className="size-3" /> : num}
                   </div>
                   <p className={cn(
-                    "text-sm font-normal text-center leading-tight whitespace-nowrap transition-colors",
+                    "text-small font-normal text-center leading-tight whitespace-nowrap transition-colors",
                     active ? "text-foreground" : "text-muted-foreground"
                   )}>
                     {label}
@@ -358,7 +359,7 @@ function ReleaseSearchDropdown({
             }}
             onKeyDown={handleKeyDown}
             placeholder="Enter title"
-            className="flex-1 bg-transparent text-sm font-normal outline-none text-foreground placeholder:text-muted-foreground"
+            className="flex-1 bg-transparent text-small font-normal outline-none text-foreground placeholder:text-muted-foreground"
           />
           {searchMode === "searching" && <Loader2 className="size-4 text-muted-foreground animate-spin shrink-0" />}
           {searchQuery && searchMode !== "searching" && (
@@ -383,7 +384,7 @@ function ReleaseSearchDropdown({
             ))}
 
             {searchMode === "not-found" && (
-              <div className="px-3 py-3 text-xs text-muted-foreground font-normal">
+              <div className="px-3 py-3 text-xsmall text-muted-foreground font-normal">
                 No releases found for "{searchQuery}"
               </div>
             )}
@@ -398,8 +399,8 @@ function ReleaseSearchDropdown({
                 <Plus className="size-4 text-primary-foreground" />
               </div>
               <div className="flex flex-col gap-0 min-w-0">
-                <p className="text-sm font-medium text-foreground">Create new release</p>
-                <p className="-mt-1 text-sm text-muted-foreground font-normal">
+                <p className="text-small font-medium text-foreground">Create new release</p>
+                <p className="-mt-1 text-small text-muted-foreground font-normal">
                   {searchQuery ? `Add "${searchQuery}" manually` : "Add a release manually"}
                 </p>
               </div>
@@ -411,11 +412,11 @@ function ReleaseSearchDropdown({
       {/* Inline results (after Enter) */}
       {showInlineResults && (
         <div className="flex flex-col">
-          <p className="px-2.5 pt-1 pb-2 text-xs text-muted-foreground font-normal">
+          <p className="px-2.5 pt-1 pb-2 text-xsmall text-muted-foreground font-normal">
             {searchMode === "searching" ? `Searching for "${searchQuery}"…` : `Results for "${searchQuery}"`}
           </p>
           {searchMode === "searching" && (
-            <div className="flex items-center gap-2 px-2.5 py-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 px-2.5 py-3 text-xsmall text-muted-foreground">
               <Loader2 className="size-3.5 animate-spin" /> Searching…
             </div>
           )}
@@ -430,7 +431,7 @@ function ReleaseSearchDropdown({
             </button>
           ))}
           {searchMode === "not-found" && (
-            <div className="px-2.5 py-3 text-xs text-muted-foreground font-normal">
+            <div className="px-2.5 py-3 text-xsmall text-muted-foreground font-normal">
               No releases found for "{searchQuery}"
             </div>
           )}
@@ -442,8 +443,8 @@ function ReleaseSearchDropdown({
               <Plus className="size-4 text-primary-foreground" />
             </div>
             <div className="flex flex-col gap-0 min-w-0">
-              <p className="text-sm font-medium text-foreground">Create new release</p>
-              <p className="-mt-1 text-sm text-muted-foreground font-normal">
+              <p className="text-small font-medium text-foreground">Create new release</p>
+              <p className="-mt-1 text-small text-muted-foreground font-normal">
                 {searchQuery ? `Add "${searchQuery}" manually` : "Add a release manually"}
               </p>
             </div>
@@ -453,7 +454,7 @@ function ReleaseSearchDropdown({
 
       {/* Idle hint */}
       {searchMode === "idle" && (
-        <p className="text-xs text-muted-foreground font-normal px-1">
+        <p className="text-xsmall text-muted-foreground font-normal px-1">
           Details looked up from MusicBrainz and Discogs
         </p>
       )}
@@ -486,7 +487,7 @@ function SelectedReleaseCard({
       {/* Release fields — always visible */}
       <div className="border-t border-border" />
       <div className="px-8 py-6 flex flex-col gap-4">
-        <p className="text-sm font-medium">General info</p>
+        <p className="text-small font-medium">General info</p>
         <div className="grid grid-cols-2 gap-x-8 gap-y-4">
           <InfoField label="Main Artist"     value={release.mainArtists.join(", ")} />
           <InfoField label="Band Name"       value={release.band ?? "—"} />
@@ -505,7 +506,7 @@ function SelectedReleaseCard({
         <>
           <div className="border-t border-border" />
           <div className="px-8 py-6 flex flex-col gap-6">
-            <p className="text-sm font-medium">Credits</p>
+            <p className="text-small font-medium">Credits</p>
             {/* Musicians */}
             {musicians.length > 0 && (
               <div className="grid grid-cols-2 gap-x-8 gap-y-4">
@@ -563,7 +564,7 @@ function CreditsSection({
 
   return (
     <div className="flex flex-col gap-5">
-      <h2 className="text-sm font-medium">Credits</h2>
+      <h2 className="text-small font-medium">Credits</h2>
 
       {/* Musicians */}
       <div className="flex flex-col gap-2">
@@ -572,10 +573,10 @@ function CreditsSection({
         {/* Committed musicians — read-only rows */}
         {musicians.map(m => (
           <div key={m.id} className="flex items-center gap-2">
-            <div className="h-10 flex-1 min-w-0 rounded-full border border-border bg-muted px-3 py-2 text-sm font-normal text-muted-foreground flex items-center truncate">
+            <div className="h-10 flex-1 min-w-0 rounded-full border border-border bg-muted px-3 py-2 text-small font-normal text-muted-foreground flex items-center truncate">
               {m.name}
             </div>
-            <div className="h-10 flex-1 min-w-0 rounded-full border border-border bg-muted px-3 py-2 text-sm font-normal text-muted-foreground flex items-center truncate">
+            <div className="h-10 flex-1 min-w-0 rounded-full border border-border bg-muted px-3 py-2 text-small font-normal text-muted-foreground flex items-center truncate">
               {m.instrument || <span className="opacity-50">Instrument</span>}
             </div>
             <button
@@ -595,14 +596,14 @@ function CreditsSection({
               onChange={e => setDrafts(prev => prev.map((x, j) => j === i ? { ...x, name: e.target.value } : x))}
               onKeyDown={e => { if (e.key === "Enter") commitDraft(i) }}
               placeholder="Name"
-              className="text-sm font-normal"
+              className="text-small font-normal"
             />
             <Input
               value={d.instrument}
               onChange={e => setDrafts(prev => prev.map((x, j) => j === i ? { ...x, instrument: e.target.value } : x))}
               onKeyDown={e => { if (e.key === "Enter") commitDraft(i) }}
               placeholder="Instrument"
-              className="text-sm font-normal"
+              className="text-small font-normal"
             />
             <button
               onClick={() => commitDraft(i)}
@@ -634,7 +635,7 @@ function CreditsSection({
                 value={additionalRoles[key]}
                 onChange={e => onAdditionalRolesChange({ ...additionalRoles, [key]: e.target.value })}
                 placeholder="Name"
-                className="h-9 text-sm font-normal"
+                className="h-9 text-small font-normal"
               />
             </div>
           ))}
@@ -645,7 +646,7 @@ function CreditsSection({
             value={additionalRoles.linerNotes}
             onChange={e => onAdditionalRolesChange({ ...additionalRoles, linerNotes: e.target.value })}
             placeholder="Liner notes text…"
-            className="resize-none min-h-[80px] text-sm font-normal"
+            className="resize-none min-h-[80px] text-small font-normal"
           />
         </div>
       </div>
@@ -662,12 +663,10 @@ function NewReleaseForm({ form, onChange, entityName }: { form: ReleaseForm; onC
       <div className="flex flex-col gap-1.5">
         <Label>Main Artist(s)</Label>
         <div className="flex flex-col gap-2">
-          {/* First artist — locked, pre-filled from entity */}
-          <div className="flex items-center gap-2">
-            <div className="h-10 w-full min-w-0 rounded-full border border-border bg-muted px-3 py-2 text-sm font-normal text-muted-foreground flex items-center truncate">
-              {entityName}
-            </div>
-            <div className="size-8 shrink-0" />
+          {/* First artist — locked, pre-filled from entity. Spans full
+              width since it has no remove button to align with. */}
+          <div className="h-10 w-full min-w-0 rounded-full border border-border bg-muted px-3 py-2 text-small font-normal text-muted-foreground flex items-center truncate">
+            {entityName}
           </div>
           {/* Additional artists — editable */}
           {form.mainArtists.map((a, i) => (
@@ -679,7 +678,7 @@ function NewReleaseForm({ form, onChange, entityName }: { form: ReleaseForm; onC
                   onChange({ ...form, mainArtists: next })
                 }}
                 placeholder="Artist name"
-                className="text-sm font-normal"
+                className="text-small font-normal"
               />
               <button
                 onClick={() => onChange({ ...form, mainArtists: form.mainArtists.filter((_, j) => j !== i) })}
@@ -706,7 +705,7 @@ function NewReleaseForm({ form, onChange, entityName }: { form: ReleaseForm; onC
           value={form.title}
           onChange={e => onChange({ ...form, title: e.target.value })}
           placeholder="Title"
-          className="text-sm font-normal"
+          className="text-small font-normal"
         />
       </div>
 
@@ -717,7 +716,7 @@ function NewReleaseForm({ form, onChange, entityName }: { form: ReleaseForm; onC
           value={form.band}
           onChange={e => onChange({ ...form, band: e.target.value })}
           placeholder="Band / ensemble"
-          className="text-sm font-normal"
+          className="text-small font-normal"
         />
       </div>
 
@@ -728,7 +727,7 @@ function NewReleaseForm({ form, onChange, entityName }: { form: ReleaseForm; onC
           value={form.label}
           onChange={e => onChange({ ...form, label: e.target.value })}
           placeholder="Record label"
-          className="text-sm font-normal"
+          className="text-small font-normal"
         />
       </div>
 
@@ -739,7 +738,7 @@ function NewReleaseForm({ form, onChange, entityName }: { form: ReleaseForm; onC
           value={form.catalogNumber}
           onChange={e => onChange({ ...form, catalogNumber: e.target.value })}
           placeholder="e.g. ABC-123"
-          className="text-sm font-normal"
+          className="text-small font-normal"
         />
       </div>
 
@@ -765,7 +764,7 @@ function NewReleaseForm({ form, onChange, entityName }: { form: ReleaseForm; onC
           value={form.recordingDate}
           onChange={e => onChange({ ...form, recordingDate: e.target.value })}
           placeholder="e.g. 1973"
-          className="text-sm font-normal"
+          className="text-small font-normal"
         />
       </div>
 
@@ -776,7 +775,7 @@ function NewReleaseForm({ form, onChange, entityName }: { form: ReleaseForm; onC
           value={form.tracks}
           onChange={e => onChange({ ...form, tracks: e.target.value })}
           placeholder="e.g. 12"
-          className="text-sm font-normal"
+          className="text-small font-normal"
         />
       </div>
 
@@ -787,7 +786,7 @@ function NewReleaseForm({ form, onChange, entityName }: { form: ReleaseForm; onC
           value={form.country}
           onChange={e => onChange({ ...form, country: e.target.value })}
           placeholder="e.g. US"
-          className="text-sm font-normal"
+          className="text-small font-normal"
         />
       </div>
     </div>
@@ -904,7 +903,7 @@ function StepRelease({
             <ComboboxGroupLabel>Upload as artist</ComboboxGroupLabel>
             {ENTITIES.filter(e => e.type === "artist").map(entity => (
               <ComboboxItem key={entity.id} value={entity.id} hideIndicator className="py-2.5 gap-3">
-                <div className="size-11 rounded-full bg-secondary flex items-center justify-center shrink-0 font-medium text-secondary-foreground text-xs shadow-sm select-none">{entity.initials}</div>
+                <div className="size-11 rounded-full bg-secondary flex items-center justify-center shrink-0 font-medium text-secondary-foreground text-xsmall shadow-sm select-none">{entity.initials}</div>
                 {entity.name}
               </ComboboxItem>
             ))}
@@ -914,7 +913,7 @@ function StepRelease({
             <ComboboxGroupLabel>Upload as label</ComboboxGroupLabel>
             {ENTITIES.filter(e => e.type === "label").map(entity => (
               <ComboboxItem key={entity.id} value={entity.id} hideIndicator className="py-2.5 gap-3">
-                <div className="size-11 rounded-full bg-secondary flex items-center justify-center shrink-0 font-medium text-secondary-foreground text-xs shadow-sm select-none">{entity.initials}</div>
+                <div className="size-11 rounded-full bg-secondary flex items-center justify-center shrink-0 font-medium text-secondary-foreground text-xsmall shadow-sm select-none">{entity.initials}</div>
                 {entity.name}
               </ComboboxItem>
             ))}
@@ -929,8 +928,8 @@ function StepRelease({
     <div className="overflow-y-auto flex-1 px-16 pt-6 pb-8">
     <div className="flex flex-col gap-6 w-full">
       <div>
-        <h1 className="text-xl font-medium">Release Info</h1>
-        <p className="text-sm text-muted-foreground font-normal mt-1">Details looked up from MusicBrainz and Discogs</p>
+        <h1 className="text-xlarge font-medium">Release Info</h1>
+        <p className="text-small text-muted-foreground font-normal mt-1">Details looked up from MusicBrainz and Discogs</p>
       </div>
       {EntityCombobox}
       <div className="flex flex-col gap-1.5">
@@ -946,7 +945,7 @@ function StepRelease({
               onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
               onKeyDown={handleKeyDown}
               placeholder="Enter your title"
-              className="flex-1 bg-transparent text-sm font-normal outline-none text-foreground placeholder:text-muted-foreground"
+              className="flex-1 bg-transparent text-small font-normal outline-none text-foreground placeholder:text-muted-foreground"
             />
             {searchMode === "searching" && <Loader2 className="size-4 text-muted-foreground animate-spin shrink-0" />}
             {searchQuery && <button onClick={() => { onSearchChange(""); setShowSuggestions(false) }} className="text-muted-foreground hover:text-foreground"><X className="size-4" /></button>}
@@ -991,8 +990,8 @@ function StepRelease({
       <div className="overflow-y-auto h-full px-8 pt-6 pb-32">
         <div className="flex flex-col gap-6 w-full">
           <div>
-            <h1 className="text-xl font-medium">Release Info</h1>
-            <p className="text-sm text-muted-foreground font-normal mt-1">Details looked up from MusicBrainz and Discogs</p>
+            <h1 className="text-xlarge font-medium">Release Info</h1>
+            <p className="text-small text-muted-foreground font-normal mt-1">Details looked up from MusicBrainz and Discogs</p>
           </div>
           {EntityCombobox}
           <div className="flex flex-col gap-1.5">
@@ -1003,16 +1002,16 @@ function StepRelease({
                 value={searchQuery}
                 onChange={e => { onSearchChange(e.target.value); if (!e.target.value) setStepMode("input") }}
                 placeholder="Enter your title"
-                className="flex-1 bg-transparent text-sm font-normal outline-none text-foreground placeholder:text-muted-foreground"
+                className="flex-1 bg-transparent text-small font-normal outline-none text-foreground placeholder:text-muted-foreground"
               />
               {searchMode === "searching" && <Loader2 className="size-4 text-muted-foreground animate-spin shrink-0" />}
               {searchQuery && <button onClick={() => { onSearchChange(""); setStepMode("input") }} className="text-muted-foreground hover:text-foreground"><X className="size-4" /></button>}
             </div>
           </div>
           <div className="flex flex-col">
-            <p className="px-1 pb-2 text-xs text-muted-foreground font-normal">Results for "{searchQuery}"</p>
+            <p className="px-1 pb-2 text-xsmall text-muted-foreground font-normal">Results for "{searchQuery}"</p>
             {searchMode === "searching" && (
-              <div className="flex items-center gap-2 px-2.5 py-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2 px-2.5 py-3 text-xsmall text-muted-foreground">
                 <Loader2 className="size-3.5 animate-spin" /> Searching…
               </div>
             )}
@@ -1028,7 +1027,7 @@ function StepRelease({
             ))}
             {searchMode === "not-found" && (
               <div className="flex flex-col gap-3 pt-1">
-                <p className="px-2.5 text-xs text-muted-foreground font-normal">No releases found for "{searchQuery}"</p>
+                <p className="px-2.5 text-xsmall text-muted-foreground font-normal">No releases found for "{searchQuery}"</p>
                 <Button size="lg" className="w-full" onClick={goCreate}>
                   <Plus className="size-4" /> Create new release
                 </Button>
@@ -1053,8 +1052,8 @@ function StepRelease({
     <div className="overflow-y-auto flex-1 px-16 pt-6 pb-8">
     <div className="flex flex-col gap-6 w-full">
       <div>
-        <h1 className="text-xl font-medium">Release Info</h1>
-        <p className="text-sm text-muted-foreground font-normal mt-1">Details looked up from MusicBrainz and Discogs</p>
+        <h1 className="text-xlarge font-medium">Release Info</h1>
+        <p className="text-small text-muted-foreground font-normal mt-1">Details looked up from MusicBrainz and Discogs</p>
       </div>
       <SelectedReleaseCard
         release={selectedRelease}
@@ -1074,8 +1073,8 @@ function StepRelease({
     <div className="overflow-y-auto flex-1 px-16 pt-6 pb-8">
     <div className="flex flex-col gap-6 w-full">
       <div>
-        <h1 className="text-xl font-medium">Release Info</h1>
-        <p className="text-sm text-muted-foreground font-normal mt-1">Fill in the details for your new release</p>
+        <h1 className="text-xlarge font-medium">Release Info</h1>
+        <p className="text-small text-muted-foreground font-normal mt-1">Fill in the details for your new release</p>
       </div>
       <div className="rounded-2xl border border-border overflow-hidden">
         <div className="flex items-center gap-2 px-8 py-4">
@@ -1083,10 +1082,10 @@ function StepRelease({
             <Music2 className="size-4 text-muted-foreground" />
           </div>
           <div className="flex flex-col gap-1 flex-1 min-w-0">
-            <p className="text-sm font-normal leading-none truncate">{newForm.title || "New release"}</p>
+            <p className="text-small font-normal leading-none truncate">{newForm.title || "New release"}</p>
             <div className="flex items-center gap-1.5">
               <ContentTypeBadge type={newForm.type} />
-              <span className="text-sm text-muted-foreground font-normal truncate">
+              <span className="text-small text-muted-foreground font-normal truncate">
                 {ENTITIES.find(e => e.id === entityId)?.name ?? ""}
               </span>
             </div>
@@ -1116,12 +1115,14 @@ function StepMonetisation({
   listenPrice, onListenPriceChange,
   downloadPrice, onDownloadPriceChange,
   nameYourPrice, onNameYourPriceChange,
+  nameYourPriceDownload, onNameYourPriceDownloadChange,
   onContinue,
 }: {
   monetization: MonetizationType; onMonetizationChange: (t: MonetizationType) => void
   listenPrice: string; onListenPriceChange: (v: string) => void
   downloadPrice: string; onDownloadPriceChange: (v: string) => void
   nameYourPrice: boolean; onNameYourPriceChange: (v: boolean) => void
+  nameYourPriceDownload: boolean; onNameYourPriceDownloadChange: (v: boolean) => void
   onContinue: () => void
 }) {
   const [currency, setCurrency] = useState("USD")
@@ -1129,103 +1130,79 @@ function StepMonetisation({
     <div className="overflow-y-auto flex-1 px-16 pt-6 pb-8">
     <div className="flex flex-col gap-6 w-full">
       <div>
-        <h1 className="text-xl font-medium">Monetisation</h1>
-        <p className="text-sm text-muted-foreground font-normal mt-1">Choose how listeners access this release</p>
+        <h1 className="text-xlarge font-medium">Monetisation</h1>
+        <p className="text-small text-muted-foreground font-normal mt-1">Choose how listeners access this release</p>
       </div>
 
-      <RadioGroup
+      <RadioCardGroup
         value={monetization}
         onValueChange={v => onMonetizationChange(v as MonetizationType)}
-        className="flex flex-col gap-4"
       >
-
-        {/* Streaming */}
-        <div
-          onClick={() => onMonetizationChange("streaming")}
-          className={cn(
-            "flex flex-col px-4 py-4 rounded-xl border transition-colors cursor-pointer",
-            monetization === "streaming" ? "border-foreground" : "border-border hover:border-foreground/30"
-          )}
+        <RadioCard
+          value="streaming"
+          selected={monetization === "streaming"}
+          onSelect={() => onMonetizationChange("streaming")}
+          icon={<RadioIcon />}
+          title="For streaming"
+          description="Anyone on Muza can listen · per-stream royalties distributed monthly"
+        />
+        <RadioCard
+          value="purchase"
+          selected={monetization === "purchase"}
+          onSelect={() => onMonetizationChange("purchase")}
+          icon={<ShoppingBag />}
+          title="For purchase"
+          description="Fans pay to unlock · you set your price"
         >
-          <div className="flex items-start gap-3">
-            <RadioGroupItem value="streaming" className="mt-[7px]" />
-            <div>
-              <p className="text-base font-medium">For streaming</p>
-              <ul className="mt-2 flex flex-col gap-1 list-disc list-inside marker:text-muted-foreground">
-                <li className="text-base font-normal text-muted-foreground">Anyone on Muza can listen</li>
-                <li className="text-base font-normal text-muted-foreground">You earn per-stream royalties (distributed monthly)</li>
-              </ul>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <Label>Price for listening</Label>
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <span className="text-xsmall text-muted-foreground font-normal">Let fans pay more if they want</span>
+                <Switch
+                  size="sm"
+                  checked={nameYourPrice}
+                  onCheckedChange={onNameYourPriceChange}
+                />
+              </label>
             </div>
-          </div>
-        </div>
-
-        {/* Purchase */}
-        <div
-          onClick={() => onMonetizationChange("purchase")}
-          className={cn(
-            "flex flex-col px-4 py-4 rounded-xl border transition-colors cursor-pointer",
-            monetization === "purchase" ? "border-foreground" : "border-border hover:border-foreground/30"
-          )}
-        >
-          <div className="flex items-start gap-3">
-            <RadioGroupItem value="purchase" className="mt-[7px]" />
-            <div>
-              <p className="text-base font-medium">For purchase</p>
-              <ul className="mt-2 flex flex-col gap-1 list-disc list-inside marker:text-muted-foreground">
-                <li className="text-base font-normal text-muted-foreground">Fans pay to unlock</li>
-                <li className="text-base font-normal text-muted-foreground">You set your price</li>
-              </ul>
-            </div>
+            <InputSelect
+              value={listenPrice}
+              onChange={e => onListenPriceChange((e.target as HTMLInputElement).value)}
+              placeholder={nameYourPrice ? "0.00 (leave blank for free)" : "1.00"}
+              className="text-small font-normal"
+              selectValue={currency}
+              onSelectChange={setCurrency}
+              options={CURRENCY_OPTIONS}
+            />
           </div>
 
-          <div className="border-t border-border mt-4" />
-
-          <div className="flex flex-col gap-4 mt-4 ml-8" onClick={e => e.stopPropagation()}>
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <Label>
-                  {nameYourPrice ? "Minimum price" : "Price for listening"}
-                </Label>
-                <label className="flex items-center gap-1.5 cursor-pointer" onClick={e => e.stopPropagation()}>
-                  <Switch
-                    size="sm"
-                    checked={nameYourPrice}
-                    onCheckedChange={onNameYourPriceChange}
-                  />
-                  <span className="text-xs text-muted-foreground font-normal">Name your price</span>
-                </label>
-              </div>
-              <InputSelect
-                value={listenPrice}
-                onChange={e => onListenPriceChange((e.target as HTMLInputElement).value)}
-                placeholder={nameYourPrice ? "0.00 (leave blank for free)" : "1.00"}
-                className="text-sm font-normal"
-                selectValue={currency}
-                onSelectChange={setCurrency}
-                options={CURRENCY_OPTIONS}
-                onClick={e => e.stopPropagation()}
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
               <Label>
                 Price for download <span className="opacity-60">(optional)</span>
               </Label>
-              <InputSelect
-                value={downloadPrice}
-                onChange={e => onDownloadPriceChange((e.target as HTMLInputElement).value)}
-                placeholder="Leave blank to skip"
-                className="text-sm font-normal"
-                selectValue={currency}
-                onSelectChange={setCurrency}
-                options={CURRENCY_OPTIONS}
-                onClick={e => e.stopPropagation()}
-              />
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <span className="text-xsmall text-muted-foreground font-normal">Let fans pay more if they want</span>
+                <Switch
+                  size="sm"
+                  checked={nameYourPriceDownload}
+                  onCheckedChange={onNameYourPriceDownloadChange}
+                />
+              </label>
             </div>
+            <InputSelect
+              value={downloadPrice}
+              onChange={e => onDownloadPriceChange((e.target as HTMLInputElement).value)}
+              placeholder="Leave blank to skip"
+              className="text-small font-normal"
+              selectValue={currency}
+              onSelectChange={setCurrency}
+              options={CURRENCY_OPTIONS}
+            />
           </div>
-        </div>
-
-      </RadioGroup>
+        </RadioCard>
+      </RadioCardGroup>
 
       <div className="flex justify-end">
         <Button size="default" onClick={onContinue}>Next</Button>
@@ -1272,7 +1249,7 @@ function StepTrackMatching({
   function ResizableTh({ col, label, align = "left" }: { col: TCol; label: string; align?: string }) {
     return (
       <th
-        className={`text-${align} text-xs font-normal text-muted-foreground pb-1.5 pl-2 relative overflow-hidden select-none group/th`}
+        className={`text-${align} text-xsmall font-normal text-muted-foreground pb-1.5 pl-2 relative overflow-hidden select-none group/th`}
         style={{ width: colW[col] }}
       >
         {label}
@@ -1291,7 +1268,7 @@ function StepTrackMatching({
   return (
     <div className="flex flex-col gap-6 w-full">
 
-      <h1 className="text-xl font-medium">Track matching</h1>
+      <h1 className="text-xlarge font-medium">Track matching</h1>
 
       {/* Release summary — variant 3 */}
       <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-muted">
@@ -1327,13 +1304,13 @@ function StepTrackMatching({
           </colgroup>
           <thead>
             <tr className="border-b border-border">
-              <th className="text-left text-xs font-normal text-muted-foreground pb-1.5 pl-2">#</th>
+              <th className="text-left text-xsmall font-normal text-muted-foreground pb-1.5 pl-2">#</th>
               <ResizableTh col="track" label="Track" />
               <ResizableTh col="file" label="File" />
               <ResizableTh col="composer" label="Composer" />
               <ResizableTh col="lyricist" label="Lyricist" />
-              <th className="text-right text-xs font-normal text-muted-foreground pb-1.5 pr-2">Time</th>
-              <th className="text-center text-xs font-normal text-muted-foreground pb-1.5">Match</th>
+              <th className="text-right text-xsmall font-normal text-muted-foreground pb-1.5 pr-2">Time</th>
+              <th className="text-center text-xsmall font-normal text-muted-foreground pb-1.5">Match</th>
               <th />
             </tr>
           </thead>
@@ -1345,11 +1322,11 @@ function StepTrackMatching({
                 style={{ height: 64 }}
               >
                 {/* # */}
-                <td className="text-xs font-normal text-muted-foreground pl-2">{i + 1}</td>
+                <td className="text-xsmall font-normal text-muted-foreground pl-2">{i + 1}</td>
 
                 {/* Track name */}
                 <td className="pl-2 pr-2">
-                  <span className="text-xs font-normal truncate block">{track.trackName}</span>
+                  <span className="text-xsmall font-normal truncate block">{track.trackName}</span>
                 </td>
 
                 {/* File */}
@@ -1387,7 +1364,7 @@ function StepTrackMatching({
                       placeholder="Composer"
                     />
                   ) : (
-                    <span className="text-sm font-normal text-muted-foreground truncate block">{track.composer}</span>
+                    <span className="text-small font-normal text-muted-foreground truncate block">{track.composer}</span>
                   )}
                 </td>
 
@@ -1400,12 +1377,12 @@ function StepTrackMatching({
                       placeholder="Lyricist"
                     />
                   ) : (
-                    <span className="text-sm font-normal text-muted-foreground truncate block">{track.lyricist}</span>
+                    <span className="text-small font-normal text-muted-foreground truncate block">{track.lyricist}</span>
                   )}
                 </td>
 
                 {/* Duration */}
-                <td className="text-xs font-normal text-muted-foreground text-right pr-2">{track.duration}</td>
+                <td className="text-xsmall font-normal text-muted-foreground text-right pr-2">{track.duration}</td>
 
                 {/* Match */}
                 <td className="text-center"><MatchBadge score={track.matchScore} /></td>
@@ -1454,7 +1431,7 @@ function StepConfirmation({
   return (
     <div className="flex flex-col gap-8 w-full">
 
-      <h1 className="text-xl font-medium">Preview</h1>
+      <h1 className="text-xlarge font-medium">Preview</h1>
 
       {/* Media header */}
       <div className="flex gap-6 items-start">
@@ -1462,17 +1439,17 @@ function StepConfirmation({
 
         <div className="flex flex-col justify-between h-56 flex-1 min-w-0">
           <div className="flex flex-col gap-3">
-            <h1 className="text-2xl font-medium truncate">{title}</h1>
+            <h1 className="text-2xlarge font-medium truncate">{title}</h1>
             <div className="flex items-center gap-4 flex-wrap">
               <div className="flex items-center gap-1.5">
                 <div className="size-6 rounded-full bg-secondary shrink-0" />
-                <span className="text-sm text-muted-foreground font-medium">{artists}</span>
+                <span className="text-small text-muted-foreground font-medium">{artists}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Disc3 className="size-3.5 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground font-normal">{TYPE_LABELS[type]}</span>
+                <span className="text-small text-muted-foreground font-normal">{TYPE_LABELS[type]}</span>
               </div>
-              <span className="text-sm text-muted-foreground font-normal">{year}</span>
+              <span className="text-small text-muted-foreground font-normal">{year}</span>
             </div>
           </div>
 
@@ -1514,13 +1491,13 @@ function StepConfirmation({
             <div className="size-11 flex items-center justify-center shrink-0">
               {hoveredTrack === track.id
                 ? <Play className="size-4 text-foreground" />
-                : <span className="text-lg text-muted-foreground font-normal">{i + 1}</span>
+                : <span className="text-large text-muted-foreground font-normal">{i + 1}</span>
               }
             </div>
 
             <div className="flex flex-col gap-1 flex-1 min-w-0 justify-center">
-              <p className="text-sm font-normal text-foreground truncate">{track.trackName}</p>
-              <p className="text-xs text-muted-foreground font-normal truncate">
+              <p className="text-small font-normal text-foreground truncate">{track.trackName}</p>
+              <p className="text-xsmall text-muted-foreground font-normal truncate">
                 {artists} · {title} · {year}
               </p>
             </div>
@@ -1539,7 +1516,7 @@ function StepConfirmation({
                   </button>
                 </>
               )}
-              <span className="text-xs text-muted-foreground font-normal w-9 text-right">{track.duration}</span>
+              <span className="text-xsmall text-muted-foreground font-normal w-9 text-right">{track.duration}</span>
             </div>
           </div>
         ))}
@@ -1560,14 +1537,14 @@ function FileRow({ file, onRemove }: { file: UploadFile; onRemove: () => void })
     <div className="flex items-center gap-3 py-2 px-1 group">
       <FileAudio className="size-4 text-muted-foreground shrink-0" />
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-normal truncate">{file.name}</p>
+        <p className="text-xsmall font-normal truncate">{file.name}</p>
         {!file.done && (
           <div className="mt-1 h-1 bg-secondary rounded-full overflow-hidden">
             <div className="h-full bg-primary rounded-full transition-all duration-300" style={{ width: `${file.progress}%` }} />
           </div>
         )}
       </div>
-      <span className="text-xs text-muted-foreground font-normal shrink-0">{file.size}</span>
+      <span className="text-xsmall text-muted-foreground font-normal shrink-0">{file.size}</span>
       {file.done
         ? <Check className="size-4 text-green-500 shrink-0" />
         : <Loader2 className="size-4 text-muted-foreground animate-spin shrink-0" />
@@ -1612,7 +1589,7 @@ function FilePanel({
         >
           <ImagePlus className="size-5 text-muted-foreground" />
         </div>
-        <p className="text-xs text-muted-foreground font-normal text-center">
+        <p className="text-xsmall text-muted-foreground font-normal text-center">
           Click to upload cover art<br />
           <span className="opacity-60">JPG · PNG · min. 1400×1400 px</span>
         </p>
@@ -1621,7 +1598,7 @@ function FilePanel({
 
       {/* Audio files */}
       <section className="flex flex-col gap-2">
-        <p className="text-xs font-medium">Audio files</p>
+        <p className="text-xsmall font-medium">Audio files</p>
 
         {files.length === 0 ? (
           <div
@@ -1635,11 +1612,11 @@ function FilePanel({
             )}
           >
             <CloudUpload className="size-5 text-muted-foreground" />
-            <p className="text-xs font-normal text-center text-muted-foreground">
+            <p className="text-xsmall font-normal text-center text-muted-foreground">
               Drag audio files here<br />
               or <span className="text-primary underline underline-offset-2">browse files</span>
             </p>
-            <p className="text-[10px] text-muted-foreground font-normal opacity-60">WAV · FLAC · AIFF · up to 2 GB</p>
+            <p className="text-2xsmall text-muted-foreground font-normal opacity-60">WAV · FLAC · AIFF · up to 2 GB</p>
           </div>
         ) : (
           <div className="flex flex-col">
@@ -1648,7 +1625,7 @@ function FilePanel({
             ))}
             <button
               onClick={() => fileRef.current?.click()}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground font-normal hover:text-foreground mt-2 px-1 transition-colors"
+              className="flex items-center gap-1.5 text-xsmall text-muted-foreground font-normal hover:text-foreground mt-2 px-1 transition-colors"
             >
               <Plus className="size-3.5" />Add more files
             </button>
@@ -1698,7 +1675,8 @@ export function UploadMusicDialog({
   const [monetization,  setMonetization]  = useState<MonetizationType>("streaming")
   const [listenPrice,   setListenPrice]   = useState("1.00")
   const [downloadPrice, setDownloadPrice] = useState("")
-  const [nameYourPrice, setNameYourPrice] = useState(false)
+  const [nameYourPrice,         setNameYourPrice]         = useState(false)
+  const [nameYourPriceDownload, setNameYourPriceDownload] = useState(false)
 
   // File panel
   const [files,      setFiles]      = useState<UploadFile[]>([])
@@ -1850,6 +1828,7 @@ export function UploadMusicDialog({
                   listenPrice={listenPrice} onListenPriceChange={setListenPrice}
                   downloadPrice={downloadPrice} onDownloadPriceChange={setDownloadPrice}
                   nameYourPrice={nameYourPrice} onNameYourPriceChange={setNameYourPrice}
+                  nameYourPriceDownload={nameYourPriceDownload} onNameYourPriceDownloadChange={setNameYourPriceDownload}
                   onContinue={handleNext}
                 />
               )}
@@ -1874,8 +1853,8 @@ export function UploadMusicDialog({
               <CheckCircle2 className="size-8 text-primary" />
             </div>
             <div className="flex flex-col gap-2">
-              <h2 className="text-xl font-semibold">Your release is live.</h2>
-              <p className="text-sm text-muted-foreground font-normal">
+              <h2 className="text-xlarge font-semibold">Your release is live.</h2>
+              <p className="text-small text-muted-foreground font-normal">
                 {publishedTitle}{publishedArtist ? ` by ${publishedArtist}` : ""} is now public on muza.
               </p>
             </div>

@@ -24,7 +24,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
     <div data-slot="table-wrapper" className="relative w-full overflow-auto">
       <table
         data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
+        className={cn("w-full caption-bottom text-small", className)}
         {...props}
       />
     </div>
@@ -160,7 +160,7 @@ function TableHead({
       data-resizable={resizable ? "true" : undefined}
       data-min-width={minWidth}
       className={cn(
-        "relative group/th h-11 px-4 text-left align-middle text-xs font-normal text-muted-foreground hover:bg-muted transition-colors",
+        "relative group/th h-11 px-4 text-left align-middle text-xsmall font-normal text-muted-foreground hover:bg-muted transition-colors",
         className
       )}
       {...props}
@@ -176,7 +176,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "p-4 align-middle text-sm [&:has([role=checkbox])]:pr-0",
+        "p-4 align-middle text-small [&:has([role=checkbox])]:pr-0",
         className
       )}
       {...props}
@@ -188,7 +188,7 @@ function TableCaption({ className, ...props }: React.ComponentProps<"caption">) 
   return (
     <caption
       data-slot="table-caption"
-      className={cn("mt-4 text-xs text-muted-foreground", className)}
+      className={cn("mt-4 text-xsmall text-muted-foreground", className)}
       {...props}
     />
   )

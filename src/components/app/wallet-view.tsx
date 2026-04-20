@@ -20,7 +20,7 @@ function StatCard({ label, value, icon }: StatCardProps) {
   return (
     <div className="flex-1 min-w-0 bg-background border border-border rounded-xl p-5 flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground whitespace-nowrap">{label}</span>
+        <span className="text-xsmall text-muted-foreground whitespace-nowrap">{label}</span>
         <span className="text-muted-foreground">{icon}</span>
       </div>
       <span className="text-base font-medium text-foreground whitespace-nowrap">{value}</span>

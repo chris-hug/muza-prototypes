@@ -18,7 +18,11 @@ import {
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface NavItem  { label: string; icon: React.ReactNode }
-interface NavGroup { label: string; icon: React.ReactNode; children: NavItem[] }
+/** Separator row — an inline divider between groups of children in the
+ *  accordion panel. Ignored in the collapsed flyout (items only). */
+interface NavSeparator { separator: true }
+type NavChild = NavItem | NavSeparator
+interface NavGroup { label: string; icon: React.ReactNode; children: NavChild[] }
 interface Playlist { id: string; title: string }
 
 interface SidebarProps {
@@ -55,6 +59,7 @@ const NAV_GROUPS: NavGroup[] = [
       { label: "Pages",     icon: <FileText    className="size-4" /> },
       { label: "Music",     icon: <Music2      className="size-4" /> },
       { label: "Analytics", icon: <BarChart2   className="size-4" /> },
+      { separator: true },
       { label: "Products",  icon: <Package      className="size-4" /> },
       { label: "Orders",    icon: <ShoppingCart className="size-4" /> },
       { label: "Wallet",    icon: <CreditCard  className="size-4" /> },
@@ -105,7 +110,7 @@ function NavButton({
       )}
     >
       <span className="shrink-0">{item.icon}</span>
-      {!collapsed && <span className="text-sm truncate">{item.label}</span>}
+      {!collapsed && <span className="text-small truncate">{item.label}</span>}
     </button>
   )
 }
@@ -123,7 +128,7 @@ function GroupTrigger({
       )}
     >
       <span className="shrink-0">{group.icon}</span>
-      <span className="text-sm truncate flex-1">{group.label}</span>
+      <span className="text-small truncate flex-1">{group.label}</span>
       <ChevronRight
         className={cn(
           "size-3.5 shrink-0 text-sidebar-foreground/50 transition-transform duration-200",
@@ -143,7 +148,8 @@ function CollapsedGroupFlyout({
   const [top,  setTop]  = useState(0)
   const btnRef          = useRef<HTMLButtonElement>(null)
   const hideTimer       = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const hasActive       = group.children.some(c => c.label === currentActive)
+  const items           = group.children.filter((c): c is NavItem => !("separator" in c))
+  const hasActive       = items.some(c => c.label === currentActive)
 
   const cancelHide = () => {
     if (hideTimer.current) { clearTimeout(hideTimer.current); hideTimer.current = null }
@@ -184,7 +190,7 @@ function CollapsedGroupFlyout({
         >
           <ContextMenu>
             <ContextMenuTitle>{group.label}</ContextMenuTitle>
-            {group.children.map(child => (
+            {items.map(child => (
               <ContextMenuItem
                 key={child.label}
                 icon={child.icon}
@@ -269,7 +275,7 @@ export function Sidebar({
   }
 
   const groupHasActive = (group: NavGroup) =>
-    group.children.some(c => c.label === currentActive)
+    group.children.some(c => !("separator" in c) && c.label === currentActive)
 
   return (
     <aside
@@ -337,18 +343,25 @@ export function Sidebar({
                 />
                 <Collapsible.Panel className="sidebar-panel overflow-hidden">
                   <div className="flex flex-col gap-0.5 pt-0.5 pb-1 pl-3">
-                    {group.children.map(child => (
-                      <button
-                        key={child.label}
-                        onClick={() => handleNavChange(child.label)}
-                        className={cn(
-                          "h-9 px-3 w-full text-left rounded-lg font-normal text-xs text-sidebar-foreground transition-colors",
-                          currentActive === child.label ? "bg-sidebar-primary" : "hover:bg-sidebar-accent",
-                        )}
-                      >
-                        {child.label}
-                      </button>
-                    ))}
+                    {group.children.map((child, i) =>
+                      "separator" in child ? (
+                        <div
+                          key={`sep-${i}`}
+                          className="my-1 mx-3 h-px bg-sidebar-border"
+                        />
+                      ) : (
+                        <button
+                          key={child.label}
+                          onClick={() => handleNavChange(child.label)}
+                          className={cn(
+                            "h-9 px-3 w-full text-left rounded-lg font-normal text-xsmall text-sidebar-foreground transition-colors",
+                            currentActive === child.label ? "bg-sidebar-primary" : "hover:bg-sidebar-accent",
+                          )}
+                        >
+                          {child.label}
+                        </button>
+                      ),
+                    )}
                   </div>
                 </Collapsible.Panel>
               </Collapsible.Root>
@@ -370,7 +383,7 @@ export function Sidebar({
           <div className="flex flex-col flex-1 min-h-0">
             {/* Header row: section label + create button */}
             <div className="flex items-center px-3 py-1.5 gap-2">
-              <span className="text-xs font-medium text-muted-foreground flex-1 truncate">
+              <span className="text-xsmall font-medium text-muted-foreground flex-1 truncate">
                 My Playlists
               </span>
               <Button variant="ghost" size="icon-sm" title="Create playlist" className="-mr-2">
@@ -387,7 +400,7 @@ export function Sidebar({
                       key={pl.id}
                       className="flex h-8 px-3 w-full text-left rounded-lg text-sidebar-foreground hover:bg-sidebar-accent transition-colors items-center"
                     >
-                      <span className="text-xs font-normal truncate">{pl.title}</span>
+                      <span className="text-xsmall font-normal truncate">{pl.title}</span>
                     </button>
                   ))}
                 </div>

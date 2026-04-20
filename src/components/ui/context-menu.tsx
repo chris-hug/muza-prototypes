@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
 //
 // Anatomy
 //   <ContextMenu>                — container: w-64 bg-popover border rounded-xl py-1 shadow-md
-//     <ContextMenuTitle>         — section label: text-xs font-medium, not interactive
+//     <ContextMenuTitle>         — section label: text-xsmall font-medium, not interactive
 //     <ContextMenuItem>          — action row: pl-8 pr-2, optional left icon + right shortcut
 //     <ContextMenuSubTrigger>    — same row but with ChevronRight on the right
 //     <ContextMenuSeparator>     — 1px divider
@@ -63,7 +63,7 @@ function ContextMenuTitle({ children, className }: ContextMenuTitleProps) {
   return (
     <div className={cn("px-1", className)}>
       <div className="pl-8 pr-2 py-[6px]">
-        <p className="text-xs font-normal text-muted-foreground leading-none truncate">{children}</p>
+        <p className="text-xsmall font-normal text-muted-foreground leading-none truncate">{children}</p>
       </div>
     </div>
   )
@@ -114,7 +114,7 @@ function ContextMenuItem({
         )}
         <span className="flex-1 truncate">{children}</span>
         {shortcut && (
-          <span className="ml-3 shrink-0 text-xs text-muted-foreground">{shortcut}</span>
+          <span className="ml-3 shrink-0 text-xsmall text-muted-foreground">{shortcut}</span>
         )}
       </button>
     </div>

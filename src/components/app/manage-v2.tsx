@@ -24,7 +24,7 @@ function PaymentLogo({ children, bg = "bg-white" }: { children: React.ReactNode;
 function ChaseLogo() {
   return (
     <PaymentLogo bg="bg-[#005eb8]">
-      <span className="text-white text-[9px] font-bold tracking-tight leading-none">CHASE</span>
+      <span className="text-white text-2xsmall font-bold tracking-tight leading-none">CHASE</span>
     </PaymentLogo>
   )
 }
@@ -44,7 +44,7 @@ function BankOfAmericaLogo() {
 function VisaLogo() {
   return (
     <PaymentLogo>
-      <span className="text-[#1a1f71] text-sm font-extrabold italic tracking-tight">VISA</span>
+      <span className="text-[#1a1f71] text-small font-extrabold italic tracking-tight">VISA</span>
     </PaymentLogo>
   )
 }
@@ -88,8 +88,8 @@ function AccountCard({ account, expanded, onEdit, onClose }: {
         <div className="p-4 flex items-center gap-4 h-[68px]">
           {account.logo}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground leading-snug">{account.name}</p>
-            <p className="text-xs text-muted-foreground leading-snug">{account.detail}</p>
+            <p className="text-small font-medium text-foreground leading-snug">{account.name}</p>
+            <p className="text-xsmall text-muted-foreground leading-snug">{account.detail}</p>
           </div>
           {expanded ? (
             <Button variant="ghost" size="icon-sm" onClick={onClose}>
@@ -177,7 +177,7 @@ function AddRow({ label }: { label: string }) {
   return (
     <button className="w-full bg-muted rounded-xl px-4 flex items-center gap-3 h-[68px] cursor-pointer hover:bg-accent transition-colors">
       <Plus className="size-4 shrink-0 text-foreground" />
-      <span className="text-sm text-foreground">{label}</span>
+      <span className="text-small text-foreground">{label}</span>
     </button>
   )
 }

@@ -7,8 +7,11 @@ import { cn } from "@/lib/utils"
 
 export const filterTriggerCls = (active: boolean) =>
   cn(
-    "inline-flex items-center gap-1.5 h-10 pl-4 pr-3 pt-[8px] pb-[8px] rounded-full border",
-    "text-sm font-normal whitespace-nowrap transition-colors select-none cursor-pointer",
+    // Asymmetric `pt-[6px] pb-[10px]` matches Input and SelectTrigger —
+    // Founders Grotesk's ascender/descender balance wants 4px extra at the
+    // bottom to sit visually centered in a 40px pill.
+    "inline-flex items-center gap-1.5 h-10 pl-4 pr-3 pt-[6px] pb-[10px] rounded-full border",
+    "text-small font-normal whitespace-nowrap transition-colors select-none cursor-pointer",
     "focus-visible:outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
     active
       ? "border-foreground/40 bg-muted text-foreground"
@@ -18,8 +21,11 @@ export const filterTriggerCls = (active: boolean) =>
 // ─── FilterChevron ────────────────────────────────────────────────────────────
 
 export function FilterChevron() {
+  // `relative top-[2px]` for optical alignment — kept separate from the
+  // `transform` used for the open-state rotation so the two don't compose
+  // into a rotated translate that visually jumps the icon mid-animation.
   return (
-    <ChevronDown className="pointer-events-none size-4 text-muted-foreground translate-y-[2px] transition-transform duration-200 [[aria-expanded=true]_&]:rotate-180" />
+    <ChevronDown className="pointer-events-none relative top-[2px] size-4 text-muted-foreground transition-transform duration-200 [[aria-expanded=true]_&]:rotate-180" />
   )
 }
 
@@ -28,7 +34,7 @@ export function FilterChevron() {
 export function FilterCount({ count }: { count: number }) {
   if (count <= 0) return null
   return (
-    <span className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-foreground text-background text-[10px] font-medium leading-none ">
+    <span className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-foreground text-background text-2xsmall font-medium leading-none ">
       {count}
     </span>
   )

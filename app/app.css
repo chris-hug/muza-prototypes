@@ -127,20 +127,36 @@
   /* Muza black + alpha */
   --color-muza-black:    var(--muza-black);
 
-  /* ── Muza type scale ──────────────────────────────────────────────────── */
-  --text-xxs:        14px;
-  --text-xs:         16px;
-  --text-sm:         18px;
-  --text-base:       20px;
-  /* Semantic aliases matching Figma token names */
-  --text-small:      16px;   /* = typography/base-sizes/small  */
-  --text-large:      20px;   /* = typography/base-sizes/large  */
+  /* ── Muza type scale ────────────────────────────────────────────────────
+   * Primitives — raw px values, 1:1 with Figma's updated scale.
+   * Semantic aliases (below) point at these via var() — never a raw value. */
+  --text-xxs:  14px;
+  --text-xs:   16px;
+  --text-sm:   18px;
+  --text-base: 20px;
   --text-lg:   24px;
   --text-xl:   30px;
   --text-2xl:  36px;
   --text-3xl:  48px;
   --text-4xl:  60px;
   --text-5xl:  72px;
+  --text-6xl:  96px;
+  --text-7xl:  128px;
+  --text-8xl:  160px;
+  --text-9xl:  200px;
+
+  /* Semantic aliases — always reference a primitive, never hardcode px.
+   * Full set, 1:1 name match with Figma's "base sizes" semantic family.
+   * "base" is omitted because the alias name equals the primitive name
+   * (`text-base`) — the primitive already serves that role. */
+  --text-2xsmall: var(--text-xxs);  /* 14px — Figma "2x small"     */
+  --text-xsmall:  var(--text-xs);   /* 16px — Figma "extra small"  */
+  --text-small:   var(--text-sm);   /* 18px — Figma "small"        */
+  --text-large:   var(--text-lg);   /* 24px — Figma "large"        */
+  --text-xlarge:  var(--text-xl);   /* 30px — Figma "xlarge"       */
+  --text-2xlarge: var(--text-2xl);  /* 36px — Figma "2x large"     */
+  --text-3xlarge: var(--text-3xl);  /* 48px — Figma "3x large"     */
+  --text-4xlarge: var(--text-4xl);  /* 60px — Figma "4x large"     */
 
   /* Border radius */
   --radius-xs:  calc(var(--radius) - 10px);
@@ -169,6 +185,29 @@
   0%, 70%, 100% { opacity: 1; }
   20%, 50%      { opacity: 0; }
 }
+/* Player overlay title marquee — scrolls overflowing text back and forth
+   with gentle pauses at each end. Distance is driven by `--marquee-end`
+   (set inline per instance). */
+@keyframes player-overlay-marquee {
+  0%, 12%   { transform: translateX(0); }
+  50%, 62%  { transform: translateX(var(--marquee-end)); }
+  100%      { transform: translateX(0); }
+}
+/* Shuffle toggle activation — icon pops + slight wobble. Re-triggered by
+   remounting the <svg> via React `key`. */
+@keyframes shuffle-pop {
+  0%   { transform: scale(1)    rotate(0deg);   }
+  35%  { transform: scale(1.35) rotate(-8deg);  }
+  70%  { transform: scale(0.92) rotate(4deg);   }
+  100% { transform: scale(1)    rotate(0deg);   }
+}
+/* Shuffle activation halo — coloured ring pulsing outward from the button. */
+@keyframes shuffle-halo {
+  0%   { transform: scale(1);   opacity: 0.45; }
+  100% { transform: scale(1.8); opacity: 0;    }
+}
+.animate-shuffle-pop  { animation: shuffle-pop  450ms cubic-bezier(.2,.9,.3,1.2) both; }
+.animate-shuffle-halo { animation: shuffle-halo 550ms ease-out both; }
 
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -182,10 +221,10 @@
   /* muza colors/blue (full scale — 300 + 500 active in semantic tokens; rest reserved) */
   --muza-blue-50:        #3E79FF;
   --muza-blue-100:       #3F66FF;
-  --muza-blue-200:       #1E34D8;
-  --muza-blue-300:       oklch(39.43% 0.2371 266.1);   /* #1121C2 — dark mode primary */
+  --muza-blue-200:       #1E34D8;                     /* primary brand blue (light + dark) */
+  --muza-blue-300:       oklch(39.43% 0.2371 266.1);   /* #1121C2 */
   --muza-blue-400:       #030AB1;
-  --muza-blue-500:       oklch(33.02% 0.2175 264.2);   /* #000DA2 — light mode primary */
+  --muza-blue-500:       oklch(33.02% 0.2175 264.2);   /* #000DA2 */
   --muza-blue-600:       #001183;
   --muza-blue-700:       #000E69;
   --muza-blue-800:       #000A4E;
@@ -232,8 +271,8 @@
   --popover:                 var(--muza-white);
   --popover-foreground:      var(--muza-neutrals-950);
 
-  --primary:                 var(--muza-blue-500);
-  --primary-hover:           color-mix(in srgb, black 20%, var(--muza-blue-500));
+  --primary:                 var(--muza-blue-200);
+  --primary-hover:           color-mix(in srgb, black 20%, var(--muza-blue-200));
   --primary-foreground:      var(--muza-neutrals-50);
 
   --secondary:               var(--muza-neutrals-200);
@@ -280,8 +319,8 @@
   --popover:                 var(--muza-neutrals-950);
   --popover-foreground:      var(--muza-neutrals-50);
 
-  --primary:                 var(--muza-blue-300);
-  --primary-hover:           color-mix(in srgb, black 20%, var(--muza-blue-300));
+  --primary:                 var(--muza-blue-200);
+  --primary-hover:           color-mix(in srgb, black 20%, var(--muza-blue-200));
   --primary-foreground:      var(--muza-neutrals-50);
 
   --secondary:               var(--muza-neutrals-800);

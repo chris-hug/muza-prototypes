@@ -1,10 +1,12 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Pause, Plus, Shuffle, Repeat2, Volume2, type LucideIcon } from "lucide-react"
+import { Pause, Plus, Volume2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Waveform } from "@/components/ui/waveform"
 import { Slider } from "@/components/ui/slider"
+import { SkipBackFilled, PlayFilledAlt, SkipForwardFilled } from "@/components/ui/transport-icons"
+import { ShuffleToggle, RepeatToggle } from "@/components/ui/transport-toggles"
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Shared constants
@@ -33,37 +35,6 @@ const transportBtn = cn(
   "hover:opacity-70 active:scale-90 transition-all duration-150",
   focusRing,
   "focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-)
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Carbon-style transport icons (match the Figma assets)
-// ═══════════════════════════════════════════════════════════════════════════
-
-const iconProps = {
-  xmlns:       "http://www.w3.org/2000/svg",
-  viewBox:     "0 0 24 24",
-  fill:        "currentColor",
-  "aria-hidden": true as const,
-}
-
-const SkipBackFilled = ({ className }: { className?: string }) => (
-  <svg {...iconProps} className={className}>
-    <path d="M3 3h2.5v18H3z" />
-    <path d="M22.5 3v18L7.5 12z" />
-  </svg>
-)
-
-const PlayFilledAlt = ({ className }: { className?: string }) => (
-  <svg {...iconProps} className={className}>
-    <path d="M4.5 3l16 9-16 9z" />
-  </svg>
-)
-
-const SkipForwardFilled = ({ className }: { className?: string }) => (
-  <svg {...iconProps} className={className}>
-    <path d="M1.5 3v18l15-9z" />
-    <path d="M18.5 3H21v18h-2.5z" />
-  </svg>
 )
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -125,11 +96,11 @@ function TrackText({
 }) {
   return (
     <div className={cn("flex flex-col min-w-0 flex-1", gap)}>
-      <p className="text-sm leading-none text-foreground truncate">{title}</p>
+      <p className="text-small leading-none text-foreground truncate">{title}</p>
       <div className="flex items-center gap-2 min-w-0">
-        <span className="text-xs leading-none text-muted-foreground truncate shrink-0">{artist}</span>
-        <span className="text-xs leading-none text-muted-foreground shrink-0">·</span>
-        <span className="text-xs leading-none text-muted-foreground truncate">{album}</span>
+        <span className="text-xsmall leading-none text-muted-foreground truncate shrink-0">{artist}</span>
+        <span className="text-xsmall leading-none text-muted-foreground shrink-0">·</span>
+        <span className="text-xsmall leading-none text-muted-foreground truncate">{album}</span>
       </div>
     </div>
   )
@@ -223,7 +194,7 @@ function VolumeControl({
             min={0}
             max={100}
             aria-label="Volume level"
-            className="h-[100px] min-h-0"
+            className="h-[75px]! min-h-0! [&_[data-slot=slider-control]]:min-h-0!"
           />
         )}
         <div
@@ -280,11 +251,6 @@ export function PlayerBarB({
   const [repeat,  setRepeat]     = useState(false)
   const [volume,  setVolume]     = useState(75)  // 0–100
 
-  // Secondary-control toggles for Shuffle / Repeat (rendered in a map below)
-  const toggles: { Icon: LucideIcon; label: string; active: boolean; onToggle: () => void }[] = [
-    { Icon: Shuffle, label: "Shuffle", active: shuffle, onToggle: () => setShuffle(s => !s) },
-    { Icon: Repeat2, label: "Repeat",  active: repeat,  onToggle: () => setRepeat(r => !r)  },
-  ]
 
   return (
     <div
@@ -356,26 +322,13 @@ export function PlayerBarB({
               folds Shuffle + Repeat into the transport row (outside the back
               and forward buttons) instead of putting them on the far right. */}
           <div className="flex items-center gap-2 @min-[688px]:gap-4 shrink-0">
-            {toggles.map(({ Icon, label, active, onToggle }) => label === "Shuffle" && (
-              <button
-                key={label}
-                aria-label={label}
-                aria-pressed={active}
-                onClick={onToggle}
-                className={cn(
-                  ghostIconBtn,
-                  active && "bg-primary hover:bg-primary-hover active:bg-primary-hover",
-                )}
-              >
-                <Icon
-                  strokeWidth={1.5}
-                  className={cn(
-                    "size-5 transition-colors",
-                    active ? "text-primary-foreground" : "text-foreground",
-                  )}
-                />
-              </button>
-            ))}
+            <ShuffleToggle
+              active={shuffle}
+              onToggle={() => setShuffle(s => !s)}
+              w={40}
+              h={32}
+              iconSize={18}
+            />
 
             <button className={transportBtn} aria-label="Previous track">
               <SkipBackFilled className="size-[30px]" />
@@ -396,32 +349,19 @@ export function PlayerBarB({
               <SkipForwardFilled className="size-[30px]" />
             </button>
 
-            {toggles.map(({ Icon, label, active, onToggle }) => label === "Repeat" && (
-              <button
-                key={label}
-                aria-label={label}
-                aria-pressed={active}
-                onClick={onToggle}
-                className={cn(
-                  ghostIconBtn,
-                  active && "bg-primary hover:bg-primary-hover active:bg-primary-hover",
-                )}
-              >
-                <Icon
-                  strokeWidth={1.5}
-                  className={cn(
-                    "size-5 transition-colors",
-                    active ? "text-primary-foreground" : "text-foreground",
-                  )}
-                />
-              </button>
-            ))}
+            <RepeatToggle
+              active={repeat}
+              onToggle={() => setRepeat(r => !r)}
+              w={40}
+              h={32}
+              iconSize={18}
+            />
           </div>
 
           {/* Timestamp + waveform — timestamps only show at ≥800px so the
               waveform keeps its 120px floor at tighter widths. */}
           <div className="flex flex-1 items-center justify-center gap-2 h-12 min-w-0">
-            <span className="hidden @min-[800px]:inline text-xxs text-foreground tabular-nums whitespace-nowrap leading-none">
+            <span className="hidden @min-[800px]:inline text-2xsmall text-foreground tabular-nums whitespace-nowrap leading-none">
               {currentTime}
             </span>
 
@@ -438,7 +378,7 @@ export function PlayerBarB({
               />
             </div>
 
-            <span className="hidden @min-[800px]:inline text-xxs text-foreground tabular-nums whitespace-nowrap leading-none">
+            <span className="hidden @min-[800px]:inline text-2xsmall text-foreground tabular-nums whitespace-nowrap leading-none">
               {totalTime}
             </span>
           </div>

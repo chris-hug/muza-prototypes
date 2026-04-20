@@ -20,7 +20,7 @@ function PaymentLogo({ children, bg = "bg-white" }: { children: React.ReactNode;
 function ChaseLogo() {
   return (
     <PaymentLogo bg="bg-[#005eb8]">
-      <span className="text-white text-[9px] font-bold tracking-tight leading-none">CHASE</span>
+      <span className="text-white text-2xsmall font-bold tracking-tight leading-none">CHASE</span>
     </PaymentLogo>
   )
 }
@@ -40,7 +40,7 @@ function BankOfAmericaLogo() {
 function VisaLogo() {
   return (
     <PaymentLogo>
-      <span className="text-[#1a1f71] text-sm font-extrabold italic tracking-tight">VISA</span>
+      <span className="text-[#1a1f71] text-small font-extrabold italic tracking-tight">VISA</span>
     </PaymentLogo>
   )
 }
@@ -85,8 +85,8 @@ function PaymentRow({ logo, name, detail, active, onEdit }: PaymentRowProps) {
     }`}>
       {logo}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground leading-snug">{name}</p>
-        <p className="text-xs text-muted-foreground leading-snug">{detail}</p>
+        <p className="text-small font-medium text-foreground leading-snug">{name}</p>
+        <p className="text-xsmall text-muted-foreground leading-snug">{detail}</p>
       </div>
       <Button variant="link" className="text-primary shrink-0 px-0" onClick={onEdit}>
         Edit
@@ -103,7 +103,7 @@ function AddRow({ label }: { label: string }) {
       <div className="shrink-0 size-[52px] rounded-full bg-foreground flex items-center justify-center">
         <Plus className="size-[18px] text-background" />
       </div>
-      <span className="text-sm text-foreground">{label}</span>
+      <span className="text-small text-foreground">{label}</span>
     </button>
   )
 }
@@ -125,8 +125,8 @@ function EditPanel({ name, detail, logo, onClose }: EditPanelProps) {
       <div className="flex items-center gap-4">
         {logo}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-foreground leading-snug">{name}</p>
-          <p className="text-xs text-muted-foreground leading-snug">{detail}</p>
+          <p className="text-small font-medium text-foreground leading-snug">{name}</p>
+          <p className="text-xsmall text-muted-foreground leading-snug">{detail}</p>
         </div>
         <Button variant="ghost" size="icon-sm" onClick={onClose}>
           <X className="size-4" />
