@@ -29,11 +29,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
-import { ChipDismiss } from "@/components/ui/chip"
+import { Chip, ChipDismiss, ChipGroup } from "@/components/ui/chip"
 import { InputSelect } from "@/components/ui/input-select"
 import { Separator } from "@/components/ui/separator"
 import { DatePicker } from "@/components/ui/date-picker"
-import { filterTriggerCls } from "@/components/ui/filter-button"
 import { cn } from "@/lib/utils"
 import {
   Tabs, TabsList, TabsTrigger, TabsContent,
@@ -281,23 +280,23 @@ function ReleaseInformationSection({
         label="Release Type"
         hint={linked ? "Pulled from the linked release — cannot be changed." : undefined}
       >
-        {/* Filter chips in toggle mode. When linked, the non-active chips are
-             hidden: the release type comes from the database and cannot be
-             changed without first unlinking. */}
-        <div className="flex flex-wrap gap-2">
+        {/* Uses the design-system Chip (filter outline toggle) — active chip
+             renders via `selected` + `activeStyle="outline"`. When linked,
+             only the active chip is shown since the release type is fixed. */}
+        <ChipGroup>
           {RELEASE_TYPES.filter(t => !linked || t === type).map(t => (
-            <button
+            <Chip
               key={t}
-              type="button"
-              aria-pressed={type === t}
+              selected={type === t}
+              activeStyle="outline"
               disabled={linked}
               onClick={() => !linked && onTypeChange(t)}
-              className={cn(filterTriggerCls(type === t), linked && "cursor-default opacity-80")}
+              className={cn(linked && "cursor-default opacity-80")}
             >
               {t}
-            </button>
+            </Chip>
           ))}
-        </div>
+        </ChipGroup>
       </Field>
 
       <Field label="Release Year">
@@ -383,67 +382,83 @@ function ArtistsCreditsSection({
     <FormSection title="Artists & Credits">
       <Field
         label="Main Artist(s)"
-        hint={linked ? "Pulled from the linked release." : undefined}
+        hint={
+          linked
+            ? "Pulled from the linked release."
+            : "You always appear as the primary artist. Add more if this release is by multiple artists."
+        }
       >
-        <div className={cn(
-          "min-h-10 border border-input rounded-full px-3 py-1.5 flex flex-wrap items-center gap-1.5",
-          linked && "bg-muted/50",
-        )}>
-          {mainArtists.map(a =>
-            linked ? (
-              <span
-                key={a}
-                className="inline-flex items-center rounded-full border border-border bg-muted px-3 h-8 text-2xsmall font-normal pb-px"
-              >
-                {a}
-              </span>
-            ) : (
-              <ChipDismiss
-                key={a}
-                onDismiss={() => setMainArtists(xs => xs.filter(x => x !== a))}
-              >
-                {a}
-              </ChipDismiss>
-            ),
-          )}
-          {!linked && (
-            <input
-              placeholder={mainArtists.length === 0 ? "Search artist name" : "Add another…"}
-              className="flex-1 bg-transparent outline-none text-small placeholder:text-muted-foreground min-w-[160px]"
-              onKeyDown={e => {
-                const v = (e.target as HTMLInputElement).value.trim()
-                if (e.key === "Enter" && v) {
-                  e.preventDefault()
-                  setMainArtists(xs => [...xs, v])
-                  ;(e.target as HTMLInputElement).value = ""
-                }
-              }}
-            />
-          )}
-        </div>
+        {/* Chips row — primary artist is always shown and is not dismissable
+             (it's the uploading account). Additional collaborators render as
+             dismissable chips. Row is hidden when nothing is present. */}
+        {mainArtists.length > 0 && (
+          <ChipGroup className="mb-1">
+            {mainArtists.map((a, i) =>
+              i === 0 ? (
+                <span
+                  key={a}
+                  className="inline-flex items-center rounded-full border border-border bg-muted px-3 h-8 text-2xsmall font-normal pb-px"
+                >
+                  {a}
+                </span>
+              ) : (
+                <ChipDismiss
+                  key={a}
+                  onDismiss={() => setMainArtists(xs => xs.filter((_, j) => j !== i))}
+                >
+                  {a}
+                </ChipDismiss>
+              ),
+            )}
+          </ChipGroup>
+        )}
+        {/* Separate input for adding collaborators. Disabled while linked. */}
+        {!linked && (
+          <Input
+            placeholder="Add another artist…"
+            onKeyDown={e => {
+              const v = (e.target as HTMLInputElement).value.trim()
+              if (e.key === "Enter" && v) {
+                e.preventDefault()
+                setMainArtists(xs => [...xs, v])
+                ;(e.target as HTMLInputElement).value = ""
+              }
+            }}
+          />
+        )}
       </Field>
 
-      <div className="flex flex-col gap-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="self-start -ml-3"
-          onClick={() => setFeatured(xs => [...xs, ""])}
-        >
-          <Plus className="size-4" />
-          Add featured Artist(s)
-        </Button>
-        {featured.map((name, i) => (
-          <Input
-            key={i}
-            placeholder="Featured artist name"
-            value={name}
-            onChange={e =>
-              setFeatured(xs => xs.map((x, j) => (j === i ? e.target.value : x)))
+      <Field
+        label="Featured Artist(s)"
+        hint="Optional — add guest performers or collaborators."
+      >
+        {/* Same pattern as Main Artist: chips above, input below. Featured
+             artists are optional, so no default chip — the row is hidden
+             until the user adds one. All chips are dismissable. */}
+        {featured.length > 0 && (
+          <ChipGroup className="mb-1">
+            {featured.map((name, i) => (
+              <ChipDismiss
+                key={i}
+                onDismiss={() => setFeatured(xs => xs.filter((_, j) => j !== i))}
+              >
+                {name}
+              </ChipDismiss>
+            ))}
+          </ChipGroup>
+        )}
+        <Input
+          placeholder="Add a featured artist…"
+          onKeyDown={e => {
+            const v = (e.target as HTMLInputElement).value.trim()
+            if (e.key === "Enter" && v) {
+              e.preventDefault()
+              setFeatured(xs => [...xs, v])
+              ;(e.target as HTMLInputElement).value = ""
             }
-          />
-        ))}
-      </div>
+          }}
+        />
+      </Field>
 
       <div className="flex flex-col gap-3">
         <Button
@@ -1008,7 +1023,10 @@ export function VinylCreateListing({
   const [type,    setType]    = useState<ReleaseType>(initial?.type ?? "Album")
   const [year,    setYear]    = useState(initial?.year ?? "")
   const [variant, setVariant] = useState(initial?.variant ?? "")
-  const [mainArtists, setMainArtists] = useState<string[]>(["Sun Ra"])
+  // The first entry is the account's primary artist — always visible and
+  // not dismissable. Additional entries are collaborators added via the
+  // input, or pulled from a linked release.
+  const [mainArtists, setMainArtists] = useState<string[]>(["Chris Test"])
   const [tracks,  setTracks]  = useState<Track[]>(DEFAULT_TRACKS)
   /** When the user picks an existing release from the dropdown, we lock the
    *  release-level fields (title, type, year, main artist, tracklist) since

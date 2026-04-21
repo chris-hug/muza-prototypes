@@ -7,10 +7,11 @@ import { cn } from "@/lib/utils"
 
 export const filterTriggerCls = (active: boolean) =>
   cn(
-    // Asymmetric `pt-[6px] pb-[10px]` matches Input and SelectTrigger —
-    // Founders Grotesk's ascender/descender balance wants 4px extra at the
-    // bottom to sit visually centered in a 40px pill.
-    "inline-flex items-center gap-1.5 h-10 pl-4 pr-3 pt-[6px] pb-[10px] rounded-full border",
+    // Matches Button / Tabs optical-center recipe (`pb-px` nudge, no
+    // explicit pt/pb). The Select + Input variant (`pt-[6px] pb-[10px]`)
+    // sits too high for chips because the lighter `font-normal` weight
+    // exposes more empty space above the glyphs than below.
+    "inline-flex items-center gap-1.5 h-10 pl-4 pr-3 rounded-full border pb-px",
     "text-small font-normal whitespace-nowrap transition-colors select-none cursor-pointer",
     "focus-visible:outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
     active
