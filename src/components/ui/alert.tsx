@@ -10,7 +10,7 @@ const alertVariants = cva(
   //  · Icon uses `self-start` + `mt-[3px]` so it optically aligns with the
   //    title's x-height center — `self-center` made the icon float between
   //    title and description when the description wraps.
-  "group/alert relative grid w-full gap-1 rounded-lg border px-3 pt-3 pb-[14px] text-left text-small has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2.5 *:[svg]:self-start *:[svg]:mt-[5px] *:[svg]:text-current *:[svg:not([class*='size-'])]:size-4",
+  "group/alert relative grid w-full gap-1 rounded-lg border px-3 pt-3 pb-[14px] text-left text-small has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2.5 *:[svg]:self-start *:[svg]:mt-[3px] *:[svg]:text-current *:[svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
