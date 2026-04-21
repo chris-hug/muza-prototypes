@@ -49,7 +49,7 @@ import {
   Settings, User, LogOut, Upload, MoreHorizontal,
   Plus, Search, ChevronDown, Trash2, SlidersHorizontal, Maximize2,
   Radio as RadioIcon, ShoppingBag, Disc3, Disc, CassetteTape, Shirt, Ghost,
-  ChevronLeft, ChevronRight, Globe,
+  ChevronLeft, ChevronRight, Globe, X,
 } from "lucide-react"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import {
@@ -111,7 +111,7 @@ function scrollToSection(id: string) {
     scroller = scroller.parentElement
   }
   if (!scroller) {
-    target.scrollIntoView({ block: "start" })
+    target.scrollIntoView({ block: "start", behavior: "smooth" })
     return
   }
   const SCROLL_MARGIN = 24   // matches `scroll-mt-6` on the Section element
@@ -120,7 +120,27 @@ function scrollToSection(id: string) {
     - scroller.getBoundingClientRect().top
     + scroller.scrollTop
     - SCROLL_MARGIN
-  scroller.scrollTo({ top, behavior: "auto" })
+  smoothScrollTo(scroller, top)
+}
+
+// ─── Snappy custom tween ──────────────────────────────────────────────────────
+// Native `scrollTo({ behavior: "smooth" })` is a bit sluggish (~500ms, slow
+// ease). This runs a short rAF-driven animation with an ease-out curve so the
+// jump feels responsive without teleporting.
+const SCROLL_DURATION_MS = 280
+function smoothScrollTo(scroller: Element, targetTop: number) {
+  const startTop = scroller.scrollTop
+  const delta    = targetTop - startTop
+  if (Math.abs(delta) < 1) return
+  const startAt  = performance.now()
+  // cubic ease-out: fast start, soft landing
+  const ease = (t: number) => 1 - Math.pow(1 - t, 3)
+  function step(now: number) {
+    const t = Math.min(1, (now - startAt) / SCROLL_DURATION_MS)
+    scroller.scrollTop = startTop + delta * ease(t)
+    if (t < 1) requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
 }
 
 function SubLabel({ children }: { children: React.ReactNode }) {
@@ -510,45 +530,101 @@ function ChipDismissDemo() {
   )
 }
 
+// Static visual replica of the portal toast — lets us show every variant
+// side-by-side as a gallery without relying on the timed portal viewport.
+// Mirrors classes in `src/components/ui/toast.tsx` (toastShell + ToastIcon).
+function StaticToast({
+  type = "default", title, description,
+}: {
+  type?: "default" | "success" | "error" | "warning" | "info" | "loading"
+  title: string
+  description?: string
+}) {
+  const iconCls = "size-4 shrink-0 self-start mt-[3px]"
+  const icon = {
+    default: <Info className={cn(iconCls, "text-muted-foreground")} />,
+    success: <CheckCircle2 className={cn(iconCls, "text-green-600 dark:text-green-400")} />,
+    error:   <AlertCircle className={cn(iconCls, "text-destructive")} />,
+    warning: <AlertCircle className={cn(iconCls, "text-yellow-600 dark:text-yellow-400")} />,
+    info:    <Info className={cn(iconCls, "text-blue-600 dark:text-blue-400")} />,
+    loading: (
+      <svg className={cn(iconCls, "animate-spin text-muted-foreground")} viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity=".25" strokeWidth="3" />
+        <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      </svg>
+    ),
+  }[type]
+  return (
+    <div className={cn(
+      "relative flex items-start gap-2.5 w-[380px] max-w-full",
+      "rounded-xl border border-border bg-popover px-4 pt-4 pb-[18px] shadow-lg text-popover-foreground",
+    )}>
+      {icon}
+      <div className="flex flex-1 flex-col gap-1 min-w-0">
+        <p className="text-small font-medium leading-5">{title}</p>
+        {description && <p className="text-small leading-5 text-muted-foreground">{description}</p>}
+      </div>
+      <button
+        aria-label="Dismiss"
+        className="ml-auto shrink-0 rounded-lg p-0.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+      >
+        <X className="size-3.5" />
+      </button>
+    </div>
+  )
+}
+
 function ToastDemo() {
   const { add } = useToast()
   return (
-    <div className="flex flex-wrap gap-3">
-      <Button
-        variant="secondary"
-        onClick={() => add({ title: "Blue Afternoon added to playlist" })}
-      >
-        Default
-      </Button>
-      <Button
-        onClick={() => add({ title: "Track saved!", description: "Your changes have been saved successfully.", type: "success" })}
-      >
-        Success
-      </Button>
-      <Button
-        variant="destructive"
-        onClick={() => add({ title: "Upload failed", description: "File format not supported. Please upload an MP3 or WAV file.", type: "error" })}
-      >
-        Error
-      </Button>
-      <Button
-        variant="outline"
-        onClick={() => add({ title: "Heads up", description: "Your storage is almost full. Upgrade your plan to continue uploading.", type: "warning" })}
-      >
-        Warning
-      </Button>
-      <Button
-        variant="outline"
-        onClick={() => add({ title: "New release alert", description: "River Lotus just dropped a new album.", type: "info" })}
-      >
-        Info
-      </Button>
-      <Button
-        variant="outline"
-        onClick={() => add({ title: "Processing track…", description: "Blue Afternoon is being transcoded. This may take a minute.", type: "loading" })}
-      >
-        Loading
-      </Button>
+    <div className="flex flex-col gap-8">
+      {/* Static gallery — every variant at a glance */}
+      <div className="flex flex-col gap-3">
+        <SubLabel>All variants — static preview</SubLabel>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <StaticToast
+            title="Blue Afternoon added to playlist"
+          />
+          <StaticToast
+            type="success"
+            title="Track saved!"
+            description="Your changes have been saved successfully."
+          />
+          <StaticToast
+            type="error"
+            title="Upload failed"
+            description="File format not supported. Please upload an MP3 or WAV file."
+          />
+          <StaticToast
+            type="warning"
+            title="Heads up"
+            description="Your storage is almost full. Upgrade your plan to continue uploading."
+          />
+          <StaticToast
+            type="info"
+            title="New release alert"
+            description="River Lotus just dropped a new album."
+          />
+          <StaticToast
+            type="loading"
+            title="Processing track…"
+            description="Blue Afternoon is being transcoded. This may take a minute."
+          />
+        </div>
+      </div>
+
+      {/* Live triggers — fire the real portal toast */}
+      <div className="flex flex-col gap-3">
+        <SubLabel>Trigger — live portal toast</SubLabel>
+        <div className="flex flex-wrap gap-3">
+          <Button variant="secondary"   onClick={() => add({ title: "Blue Afternoon added to playlist" })}>Default</Button>
+          <Button                       onClick={() => add({ title: "Track saved!", description: "Your changes have been saved successfully.", type: "success" })}>Success</Button>
+          <Button variant="destructive" onClick={() => add({ title: "Upload failed", description: "File format not supported. Please upload an MP3 or WAV file.", type: "error" })}>Error</Button>
+          <Button variant="outline"     onClick={() => add({ title: "Heads up", description: "Your storage is almost full. Upgrade your plan to continue uploading.", type: "warning" })}>Warning</Button>
+          <Button variant="outline"     onClick={() => add({ title: "New release alert", description: "River Lotus just dropped a new album.", type: "info" })}>Info</Button>
+          <Button variant="outline"     onClick={() => add({ title: "Processing track…", description: "Blue Afternoon is being transcoded. This may take a minute.", type: "loading" })}>Loading</Button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -937,13 +1013,12 @@ function ExploreView() {
       <nav className="flex flex-wrap gap-1.5 mb-12">
         {[
           "Colors","Typography","Buttons","Badges","Chips","Input","Select","Filter Menu","Combobox","Menu",
-          "Date Picker","Checkbox","Radio Card","Switch & Slider","Avatar","Tabs","Cards","Alerts","Alert Dialog",
+          "Date Picker","Checkbox","Radio Card","Switch","Slider","Avatar","Tabs","Cards","Alerts","Alert Dialog",
           "Dialogs","Toast","Skeleton",
           "Popover","Table","Pagination","Command","OTP Input","Form",
           "Player Bar","Player Overlay",
         ].map((s) => {
-          // Preserve `&` so "Switch & Slider" matches the section id
-          // "switch-&-slider". Just lowercase and turn whitespace into dashes.
+          // Lowercase + whitespace-to-dashes → matches each Section id.
           const id = s.toLowerCase().replace(/\s+/g,"-")
           return (
             <button
@@ -1639,32 +1714,38 @@ function ExploreView() {
         <RadioCardKitchenSink />
       </Section>
 
-      {/* ══ SWITCH & SLIDER ══ */}
-      <Section id="switch-&-slider" title="Switch & Slider & Progress">
-        <div className="flex flex-wrap gap-12 items-start">
-          <div className="flex flex-col gap-4">
-            <SubLabel>Switch</SubLabel>
-            {[
-              { id: "s1", label: "High quality audio", on: true },
-              { id: "s2", label: "Offline mode" },
-              { id: "s3", label: "Artist notifications", on: true },
-            ].map(({ id, label, on }) => (
-              <div key={id} className="flex items-center gap-3">
-                <Switch id={id} defaultChecked={on} />
-                <Label htmlFor={id} className="cursor-pointer">{label}</Label>
-              </div>
-            ))}
-          </div>
-          <div className="flex flex-col gap-4 min-w-[280px]">
-            <SubLabel>Slider</SubLabel>
-            <Slider value={volume} onValueChange={(v) => setVolume(Array.isArray(v) ? [...(v as number[])] : [v as number])} max={100} step={1} />
-            <Slider defaultValue={[30]} max={100} step={1} />
-            <SubLabel>Progress</SubLabel>
-            <div className="flex flex-col gap-2 max-w-sm">
-              {[100, 75, 50, 25, 0].map((v) => (
-                <Progress key={v} value={v} className="h-2" />
-              ))}
+      {/* ══ SWITCH ══ */}
+      <Section id="switch" title="Switch">
+        <div className="flex flex-col gap-4">
+          {[
+            { id: "s1", label: "High quality audio", on: true },
+            { id: "s2", label: "Offline mode" },
+            { id: "s3", label: "Artist notifications", on: true },
+          ].map(({ id, label, on }) => (
+            <div key={id} className="flex items-center gap-3">
+              <Switch id={id} defaultChecked={on} />
+              <Label htmlFor={id} className="cursor-pointer">{label}</Label>
             </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* ══ SLIDER ══ */}
+      <Section id="slider" title="Slider & Progress">
+        <div className="flex flex-col gap-4 min-w-[280px] max-w-md">
+          <SubLabel>Slider</SubLabel>
+          <Slider
+            value={volume}
+            onValueChange={(v) => setVolume(Array.isArray(v) ? [...(v as number[])] : [v as number])}
+            max={100}
+            step={1}
+          />
+          <Slider defaultValue={[30]} max={100} step={1} />
+          <SubLabel>Progress</SubLabel>
+          <div className="flex flex-col gap-2">
+            {[100, 75, 50, 25, 0].map((v) => (
+              <Progress key={v} value={v} className="h-2" />
+            ))}
           </div>
         </div>
       </Section>
@@ -1822,11 +1903,6 @@ function ExploreView() {
             <Info className="size-4" />
             <AlertTitle>Heads up</AlertTitle>
             <AlertDescription>Your track is processing. It may take up to 10 minutes to appear publicly.</AlertDescription>
-          </Alert>
-          <Alert className="border-primary/25 bg-primary/5">
-            <CheckCircle2 className="size-4 text-primary" />
-            <AlertTitle className="text-primary">Track uploaded successfully</AlertTitle>
-            <AlertDescription>Blue Afternoon is live and available to stream on your profile.</AlertDescription>
           </Alert>
           <Alert variant="destructive">
             <AlertCircle className="size-4" />
@@ -2221,11 +2297,9 @@ export default function Home() {
   useEffect(() => {
     const hash = window.location.hash.slice(1)
     if (!hash) return
-    const el = document.getElementById(hash)
-    if (el) {
-      // rAF ensures the target section is in the layout tree already.
-      requestAnimationFrame(() => el.scrollIntoView({ block: "start" }))
-    }
+    // Wait one frame so the target section is in the layout tree, then use
+    // the same snappy ease-out tween as the quick-nav chips.
+    requestAnimationFrame(() => scrollToSection(hash))
   }, [activeNav])
 
   return (

@@ -463,8 +463,9 @@ function AddProductDialog({ open, onOpenChange, onSelect }: {
           })}
         </RadioCardGroup>
 
-        {/* Bigger dialog → footer padding scales up to match p-8 content. */}
-        <DialogFooter className="p-8 -mx-8 -mb-8">
+        {/* Bigger dialog → footer padding scales up to match p-8 content.
+             `mt-8` keeps the last RadioCard off the footer edge. */}
+        <DialogFooter className="p-8 mt-8 -mx-8 -mb-8">
           <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
           <Button onClick={handleConfirm}>Create Listing</Button>
         </DialogFooter>

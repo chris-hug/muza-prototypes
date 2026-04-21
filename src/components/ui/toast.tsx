@@ -3,7 +3,6 @@
 import * as React from "react"
 import { Toast as ToastPrimitive } from "@base-ui/react/toast"
 import { XIcon, CheckCircleIcon, AlertCircleIcon, InfoIcon } from "lucide-react"
-import { cva } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
@@ -23,37 +22,27 @@ import { cn } from "@/lib/utils"
 
 type ToastType = "default" | "success" | "error" | "warning" | "info" | "loading"
 
-const toastVariants = cva(
-  [
-    "relative flex w-full items-start gap-3",
-    "rounded-xl border border-border bg-popover p-4 shadow-lg",
-    "text-popover-foreground",
-    "transition-all duration-200",
-  ],
-  {
-    variants: {
-      type: {
-        default: "",
-        success: "border-green-200 dark:border-green-800",
-        error:   "border-destructive/40",
-        warning: "border-yellow-200 dark:border-yellow-800",
-        info:    "border-blue-200 dark:border-blue-800",
-        loading: "",
-      },
-    },
-    defaultVariants: {
-      type: "default",
-    },
-  }
+// Single shared chrome — every toast uses `border-border` regardless of
+// type. The icon carries the semantic meaning; the surface stays neutral
+// so toasts don't visually duplicate alert styling.
+const toastShell = cn(
+  "relative flex w-full items-start gap-2.5",
+  "rounded-xl border border-border bg-popover px-4 pt-4 pb-[18px] shadow-lg",
+  "text-popover-foreground transition-all duration-200",
 )
 
+// Icons use the same `self-start mt-[5px]` optical-center nudge as the Alert
+// component so the icon sits on the title's x-height center, not floating
+// between title and description when the description wraps.
+const ICON_CLS = "size-4 shrink-0 self-start mt-[3px]"
 const ToastIcon: Record<string, React.ReactNode> = {
-  success: <CheckCircleIcon className="size-4 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />,
-  error:   <AlertCircleIcon className="size-4 text-destructive shrink-0 mt-0.5" />,
-  warning: <AlertCircleIcon className="size-4 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />,
-  info:    <InfoIcon className="size-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />,
+  default: <InfoIcon        className={cn(ICON_CLS, "text-muted-foreground")} />,
+  success: <CheckCircleIcon className={cn(ICON_CLS, "text-green-600 dark:text-green-400")} />,
+  error:   <AlertCircleIcon className={cn(ICON_CLS, "text-destructive")} />,
+  warning: <AlertCircleIcon className={cn(ICON_CLS, "text-yellow-600 dark:text-yellow-400")} />,
+  info:    <InfoIcon        className={cn(ICON_CLS, "text-blue-600 dark:text-blue-400")} />,
   loading: (
-    <svg className="size-4 animate-spin text-muted-foreground shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none">
+    <svg className={cn(ICON_CLS, "animate-spin text-muted-foreground")} viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity=".25" strokeWidth="3"/>
       <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
     </svg>
@@ -88,18 +77,18 @@ function ToastViewport({ className }: { className?: string }) {
           <ToastPrimitive.Root
             key={t.id}
             toast={t}
-            className={toastVariants({ type })}
+            className={toastShell}
           >
             {icon}
 
             <div className="flex flex-1 flex-col gap-1 min-w-0">
               {t.title && (
-                <ToastPrimitive.Title className="text-small font-medium leading-snug">
+                <ToastPrimitive.Title className="text-small font-medium leading-5">
                   {t.title}
                 </ToastPrimitive.Title>
               )}
               {t.description && (
-                <ToastPrimitive.Description className="text-xsmall text-muted-foreground leading-relaxed">
+                <ToastPrimitive.Description className="text-small leading-5 text-muted-foreground">
                   {t.description}
                 </ToastPrimitive.Description>
               )}
