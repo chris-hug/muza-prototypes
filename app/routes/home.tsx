@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import { useSearchParams } from "react-router"
 import { cn } from "@/lib/utils"
 import { AnimatedLogo } from "@/components/app/animated-logo"
 import { Sidebar } from "@/components/app/sidebar"
@@ -2179,23 +2180,52 @@ function ExploreView() {
 
 // ─── Root page — unified app shell ────────────────────────────────────────────
 export default function Home() {
-  const [activeNav, setActiveNav] = useState("Home")
+  // ── URL-backed navigation ──────────────────────────────────────────────
+  // Top-level page lives in the `?page=<View>` query param so links are
+  // shareable and survive reload. Anchor `#<section-id>` on the Explore
+  // page still works as expected (e.g. `?page=Explore#player-bar`).
+  const [params, setParams] = useSearchParams()
+  const activeNav = params.get("page") ?? "Home"
+
+  function navigate(view: string) {
+    // `replace: true` keeps the back button feeling like an app-shell nav
+    // rather than stacking a history entry for every sidebar click.
+    setParams(prev => {
+      const next = new URLSearchParams(prev)
+      if (view === "Home") next.delete("page")
+      else next.set("page", view)
+      return next
+    }, { replace: true })
+  }
+
   const [collapsed, setCollapsed] = useState(false)
   const [uploadOpen, setUploadOpen] = useState(false)
   const [uploadMinimized, setUploadMinimized] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  function navigate(view: string) {
-    setActiveNav(view)
-  }
-
   useEffect(() => {
-    // Run after all child mount effects (including Command's scrollIntoView) have fired
+    // Scroll-to-top on page change, but only when there's no hash — a hash
+    // means the user explicitly requested a section anchor, and the browser
+    // will handle that scroll itself.
+    if (window.location.hash) return
     const id = setTimeout(() => {
       scrollRef.current?.scrollTo({ top: 0, behavior: "instant" })
     }, 0)
     return () => clearTimeout(id)
+  }, [activeNav])
+
+  // Scroll anchors inside a scrollable container (scrollRef) don't fire
+  // browser auto-scroll on load. Re-run the anchor scroll whenever the
+  // page changes and a hash is present.
+  useEffect(() => {
+    const hash = window.location.hash.slice(1)
+    if (!hash) return
+    const el = document.getElementById(hash)
+    if (el) {
+      // rAF ensures the target section is in the layout tree already.
+      requestAnimationFrame(() => el.scrollIntoView({ block: "start" }))
+    }
   }, [activeNav])
 
   return (
