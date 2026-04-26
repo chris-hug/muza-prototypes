@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { UploadMusicDialog } from "@/components/app/upload-music-dialog"
 import { EditReleaseDialog } from "@/components/app/edit-release-dialog"
+import { useIsMobile } from "@/lib/use-media-query"
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -494,9 +495,67 @@ function MusicRow({ release, visibleCols, isSelected, onSelect, status, onStatus
   )
 }
 
+// ─── MusicCard — mobile representation of a release ──────────────────────────
+//
+// Shown below the `md` breakpoint instead of a table row. Picks the most
+// important metadata (title, artist, year, type, status, monetisation) and
+// stacks it into a tappable card. The whole card opens the edit dialog —
+// no hover-only affordances, no per-cell controls.
+function MusicCard({
+  release, status, onEdit,
+}: {
+  release: Release
+  status:  ReleaseStatus
+  onEdit:  (id: string) => void
+}) {
+  const dimmed = status === "private"
+  return (
+    <button
+      type="button"
+      onClick={() => onEdit(release.id)}
+      className={cn(
+        "w-full flex items-center gap-3 px-3 py-3 rounded-xl border border-border bg-background text-left",
+        "transition-colors hover:bg-muted active:bg-muted",
+      )}
+    >
+      <img
+        src={release.cover}
+        alt=""
+        draggable={false}
+        className={cn(
+          "size-14 shrink-0 rounded-xs object-cover transition-opacity",
+          dimmed && "opacity-50",
+        )}
+      />
+      <div className="flex-1 min-w-0 flex flex-col gap-1">
+        <p className={cn(
+          "text-small font-medium truncate",
+          dimmed ? "text-muted-foreground" : "text-foreground",
+        )}>
+          {release.title}
+        </p>
+        <p className="text-xsmall text-muted-foreground truncate">
+          {release.artist} · {release.year}
+        </p>
+        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+          <ContentTypeBadge type={release.type} />
+          <StatusBadge status={status} />
+          <span className="text-2xsmall text-muted-foreground">
+            <MonetisationCell state={mockMonetisation(release.id)} dimmed={dimmed} />
+          </span>
+        </div>
+      </div>
+    </button>
+  )
+}
+
 // ─── StudioMusicView ──────────────────────────────────────────────────────────
 
 export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void }) {
+  // Below `md` (768px) the table is unusable — switch to a card list with a
+  // simplified toolbar (no column manager, larger tap targets).
+  const isMobile = useIsMobile()
+
   // Lifted release statuses
   const [statuses, setStatuses] = useState<Record<string, ReleaseStatus>>(
     () => Object.fromEntries(RELEASES.map(r => [r.id, r.status]))
@@ -615,23 +674,29 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
     <div ref={tableWrapRef} className="relative flex flex-col h-full">
 
       {/* ── Page header ──────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-center justify-between gap-6 px-16 pt-8 pb-6">
-        <div>
+      <div className="shrink-0 flex items-center justify-between gap-3 px-4 md:px-16 pt-6 md:pt-8 pb-4 md:pb-6">
+        <div className="min-w-0">
           <h1 className="text-2xlarge font-medium tracking-tight">My Music</h1>
           <p className="text-small font-normal text-muted-foreground mt-1">
             {RELEASES.length} releases
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <Button size="lg" className="text-base px-8 h-14 gap-2.5" onClick={onOpenUpload}>
-            <Upload className="size-5" />
-            Upload music
+          {/* Compact icon-only Upload on mobile, full button on desktop */}
+          <Button
+            size={isMobile ? "icon-lg" : "lg"}
+            className={cn(!isMobile && "text-base px-8 h-14 gap-2.5")}
+            onClick={onOpenUpload}
+            aria-label="Upload music"
+          >
+            <Upload className={isMobile ? "size-5" : "size-5"} />
+            {!isMobile && "Upload music"}
           </Button>
         </div>
       </div>
 
       {/* ── Toolbar ──────────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-start gap-3 px-16 pb-8">
+      <div className="shrink-0 flex items-start gap-3 px-4 md:px-16 pb-6 md:pb-8">
 
         {/* LEFT — filters */}
         <div className="flex items-start gap-2 flex-1 flex-wrap">
@@ -710,8 +775,9 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
         </div>
 
 
-        {/* RIGHT — table controls */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* RIGHT — table controls (desktop only — Set columns has no purpose
+             on a card list with a fixed layout) */}
+        <div className="hidden md:flex items-center gap-2 shrink-0">
           {/* Columns */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -760,7 +826,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
 
       {/* ── Active filter chips ──────────────────────────────────────── */}
       {anyFilter && (
-        <div className="shrink-0 flex items-center gap-1.5 px-16 pb-3 flex-wrap">
+        <div className="shrink-0 flex items-center gap-1.5 px-4 md:px-16 pb-3 flex-wrap">
           <button
             onClick={() => { setTypeFilters(new Set()); setStatusFilter("all"); setArtistFilters(new Set()); setLabelFilters(new Set()); setMonetisationFilters(new Set()); setSearchQuery("") }}
             className="text-xsmall font-normal text-muted-foreground hover:text-foreground transition-colors mr-1 shrink-0"
@@ -828,7 +894,46 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
         </div>
       )}
 
-      {/* ── Table ────────────────────────────────────────────────────── */}
+      {/* ── Body — table on desktop, card list on mobile ─────────────── */}
+      {isMobile ? (
+        <div className="flex-1 overflow-auto px-4 pb-10">
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-2">
+              <p className="text-small font-normal text-muted-foreground">No releases match the current filters.</p>
+              {anyFilter && (
+                <button
+                  onClick={() => { setTypeFilters(new Set()); setStatusFilter("all"); setArtistFilters(new Set()); setLabelFilters(new Set()); setMonetisationFilters(new Set()); setSearchQuery("") }}
+                  className="text-xsmall font-normal text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {/* Upload card — first item, mirrors desktop's Upload row */}
+              <button
+                type="button"
+                onClick={onOpenUpload}
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl border border-dashed border-border bg-muted/30 hover:bg-muted transition-colors text-left"
+              >
+                <div className="size-14 shrink-0 rounded-xs bg-background border border-border flex items-center justify-center">
+                  <Upload className="size-4 text-muted-foreground" />
+                </div>
+                <span className="text-small font-medium text-foreground">Upload music</span>
+              </button>
+              {filtered.map(r => (
+                <MusicCard
+                  key={r.id}
+                  release={r}
+                  status={statuses[r.id] ?? r.status}
+                  onEdit={setEditingId}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
       <div className="flex-1 overflow-auto px-16">
         <table className="w-full">
 
@@ -926,6 +1031,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
           )}
         </table>
       </div>
+      )}
 
       {selectedIds.size > 0 && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
