@@ -1130,9 +1130,20 @@ function ExploreView() {
                 dHex: "#0D0D04", dPrim: "--muza-neutrals-950",     dOklch: "15.55% 0.0204 108.6",
               },
               {
+                token: "--card-foreground / --popover-foreground",
+                lHex: "#0D0D04", lPrim: "--muza-neutrals-950",     lOklch: "15.55% 0.0204 108.6",
+                dHex: "#F9FAF0", dPrim: "--muza-neutrals-50",      dOklch: "98.16% 0.0131 111.4",
+              },
+              {
                 token: "--primary",
                 lHex: "#1E34D8", lPrim: "--muza-blue-200",         lOklch: "44.70% 0.2440 267.0",
                 dHex: "#1E34D8", dPrim: "--muza-blue-200",         dOklch: "44.70% 0.2440 267.0",
+              },
+              {
+                token: "--primary-hover",
+                // Derived via `color-mix(in srgb, black 20%, var(--muza-blue-200))`
+                lHex: "#182AAD", lPrim: "color-mix(black 20%, primary)", lOklch: "derived",
+                dHex: "#182AAD", dPrim: "color-mix(black 20%, primary)", dOklch: "derived",
               },
               {
                 token: "--primary-foreground",
@@ -1143,6 +1154,11 @@ function ExploreView() {
                 token: "--secondary",
                 lHex: "#ECEEDF", lPrim: "--muza-neutrals-200",     lOklch: "94.35% 0.0199 113.1",
                 dHex: "#2E2C24", dPrim: "--muza-neutrals-800",     dOklch: "29.25% 0.0143 95.6",
+              },
+              {
+                token: "--secondary-foreground",
+                lHex: "#1D1C18", lPrim: "--muza-neutrals-900",     lOklch: "22.61% 0.0077 95.4",
+                dHex: "#F9FAF0", dPrim: "--muza-neutrals-50",      dOklch: "98.16% 0.0131 111.4",
               },
               {
                 token: "--secondary-hover",
@@ -1175,6 +1191,11 @@ function ExploreView() {
                 dHex: "#7F1D1D", dPrim: "--tw-red-900",            dOklch: "39.59% 0.1331 25.7",
               },
               {
+                token: "--destructive-foreground",
+                lHex: "#FEF2F2", lPrim: "--tw-red-50",             lOklch: "97.05% 0.0129 17",
+                dHex: "#FEF2F2", dPrim: "--tw-red-50",             dOklch: "97.05% 0.0129 17",
+              },
+              {
                 token: "--border",
                 lHex: "#DADDCD", lPrim: "--muza-neutrals-300",     lOklch: "89.08% 0.0217 115.6",
                 dHex: "#3C3D33", dPrim: "--muza-neutrals-700",     dOklch: "35.57% 0.0168 111.9",
@@ -1187,6 +1208,47 @@ function ExploreView() {
               {
                 token: "--ring",
                 lHex: "#1D1C18", lPrim: "--muza-neutrals-900",     lOklch: "22.61% 0.0077 95.4",
+                dHex: "#DADDCD", dPrim: "--muza-neutrals-300",     dOklch: "89.08% 0.0217 115.6",
+              },
+              // ── Sidebar tokens ─────────────────────────────────────────
+              {
+                token: "--sidebar-background",
+                lHex: "#FEFFFB", lPrim: "--muza-white",            lOklch: "99.81% 0.0053 118.5",
+                dHex: "#0D0D04", dPrim: "--muza-black",            dOklch: "15.55% 0.0204 108.6",
+              },
+              {
+                token: "--sidebar-foreground",
+                lHex: "#1D1C18", lPrim: "--muza-neutrals-900",     lOklch: "22.61% 0.0077 95.4",
+                dHex: "#F1F3E6", dPrim: "--muza-neutrals-100",     dOklch: "95.91% 0.0172 114",
+              },
+              {
+                token: "--sidebar-primary",
+                lHex: "#ECEEDF", lPrim: "--muza-neutrals-200",     lOklch: "94.35% 0.0199 113.1",
+                dHex: "#3C3D33", dPrim: "--muza-neutrals-700",     dOklch: "35.57% 0.0168 111.9",
+              },
+              {
+                token: "--sidebar-primary-foreground",
+                lHex: "#1D1C18", lPrim: "--muza-neutrals-900",     lOklch: "22.61% 0.0077 95.4",
+                dHex: "#F9FAF0", dPrim: "--muza-neutrals-50",      dOklch: "98.16% 0.0131 111.4",
+              },
+              {
+                token: "--sidebar-accent",
+                lHex: "#F9FAF0", lPrim: "--muza-neutrals-50",      lOklch: "98.16% 0.0131 111.4",
+                dHex: "#2E2C24", dPrim: "--muza-neutrals-800",     dOklch: "29.25% 0.0143 95.6",
+              },
+              {
+                token: "--sidebar-accent-foreground",
+                lHex: "#1D1C18", lPrim: "--muza-neutrals-900",     lOklch: "22.61% 0.0077 95.4",
+                dHex: "#F1F3E6", dPrim: "--muza-neutrals-100",     dOklch: "95.91% 0.0172 114",
+              },
+              {
+                token: "--sidebar-border",
+                lHex: "#ECEEDF", lPrim: "--muza-neutrals-200",     lOklch: "94.35% 0.0199 113.1",
+                dHex: "#2E2C24", dPrim: "--muza-neutrals-800",     dOklch: "29.25% 0.0143 95.6",
+              },
+              {
+                token: "--sidebar-ring",
+                lHex: "#B5B7A7", lPrim: "--muza-neutrals-400",     lOklch: "77.33% 0.0223 112.8",
                 dHex: "#DADDCD", dPrim: "--muza-neutrals-300",     dOklch: "89.08% 0.0217 115.6",
               },
             ].map((r) => (
