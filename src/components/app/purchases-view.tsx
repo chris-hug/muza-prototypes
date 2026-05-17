@@ -464,7 +464,7 @@ export function PurchasesView() {
 // one sub-row per fulfillment with its own thumbs · items · seller · status.
 // Sub-rows are individually clickable; the card outer is purely chrome.
 
-function CheckoutCard({ checkout, onOpenFulfillment, onProductClick, onUpdatePayment }: {
+export function CheckoutCard({ checkout, onOpenFulfillment, onProductClick, onUpdatePayment }: {
   checkout:           Checkout
   onOpenFulfillment:  (f: Fulfillment) => void
   onProductClick:     (title: string) => void

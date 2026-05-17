@@ -37,6 +37,17 @@ const badgeVariants = cva(
         // Glassmorphism outline (node 26:181) — used for status labels
         outline:
           "backdrop-blur-[8px] bg-background/50 border-border text-muted-foreground",
+        // Primary fill — uses the brand colour. Used for "active"
+        // pill chrome (e.g. selected Chip). Strong, but loud, so
+        // prefer `success` for low-stakes "new / beta" labels.
+        primary:
+          "bg-primary text-primary-foreground border-primary",
+        // Success — saturated mint fill (#00D5A3). Strong attention
+        // signal at a glance ("New", "Beta", "Recommended") without
+        // using brand-primary blue. Dark text + matching border for
+        // legibility in both themes.
+        success:
+          "bg-[#00D5A3] text-black border-[#00b889]",
         // Destructive (node 26:185)
         destructive:
           "bg-destructive text-white",

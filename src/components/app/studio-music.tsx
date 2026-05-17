@@ -12,7 +12,7 @@ import {
 import { cn } from "@/lib/utils"
 import { TableHead } from "@/components/ui/table"
 import { filterTriggerCls, FilterChevron } from "@/components/ui/filter-button"
-import { FilterMenu } from "@/components/ui/filter-menu"
+import { MultiSelect } from "@/components/ui/multi-select"
 import {
   ArrowDown, ArrowUp, ArrowUpDown, Settings2, ChevronDown,
   Download, Pencil, Play, Search, Upload, X,
@@ -262,7 +262,7 @@ function ContentTypeMultiSelect({
   onChange: (next: Set<ContentType>) => void
 }) {
   return (
-    <FilterMenu
+    <MultiSelect
       label="Type"
       options={(["album", "single", "ep"] as ContentType[]).map(t => ({
         value: t,
@@ -321,7 +321,7 @@ function ArtistMultiSelect({
   onChange: (next: Set<string>) => void
 }) {
   return (
-    <FilterMenu
+    <MultiSelect
       label="Artist"
       searchable
       searchPlaceholder="Search artists…"
@@ -345,7 +345,7 @@ function LabelMultiSelect({
   onChange: (next: Set<string>) => void
 }) {
   return (
-    <FilterMenu
+    <MultiSelect
       label="Label"
       options={options.map(l => ({ value: l, label: l }))}
       selected={selected}
@@ -372,7 +372,7 @@ function MonetisationMultiSelect({
   onChange: (next: Set<MonetisationKind>) => void
 }) {
   return (
-    <FilterMenu
+    <MultiSelect
       label="Monetisation"
       options={MONETISATION_KINDS.map(kind => ({
         value: kind,

@@ -12,13 +12,13 @@
  *   2. Sticky tab strip — Overview / Discography / Products.
  *   3. Content sections (in order):
  *        · Top Songs        (2-column SongListItem grid)
- *        · Top Albums       (HomeRow of AlbumCards)
- *        · Products         (HomeRow of ProductCardSmalls)
- *        · Curated Playlists (HomeRow of PlaylistCards)
- *        · Similar Artists   (HomeRow of ArtistCards)
+ *        · Top Albums       (CardRail of AlbumCards)
+ *        · Products         (CardRail of ProductCards)
+ *        · Curated Playlists (CardRail of PlaylistCards)
+ *        · Similar Artists   (CardRail of ArtistCards)
  *
  * Section header pattern matches the rest of the home: separator
- * line + title-left + ◀ ▶ + "Show all" right. HomeRow already
+ * line + title-left + ◀ ▶ + "Show all" right. CardRail already
  * delivers that exact treatment; we only render a manually-styled
  * header for the Top Songs section because its body is a grid, not
  * a horizontal scroll rail.
@@ -32,9 +32,9 @@ import { cn } from "@/lib/utils"
 import { ContentTypeBadge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { FilterMenu } from "@/components/ui/filter-menu"
+import { MultiSelect } from "@/components/ui/multi-select"
 import { Separator } from "@/components/ui/separator"
-import { SortButton } from "@/components/ui/sort-button"
+import { SingleSelect } from "@/components/ui/single-select"
 import { TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table"
 import {
   DropdownMenu,
@@ -48,10 +48,10 @@ import { Toggle } from "@/components/ui/toggle"
 import { AlbumCard } from "@/components/ui/album-card"
 import { ArtistCard } from "@/components/ui/artist-card"
 import { PlaylistCard } from "@/components/ui/playlist-card"
-import { ProductCardSmall } from "@/components/ui/product-card-small"
+import { ProductCard } from "@/components/ui/product-card"
 import { PlayingWave, SongListItem } from "@/components/ui/song-list-item"
 import { PauseFilledAlt, PlayFilledAlt } from "@/components/ui/transport-icons"
-import { HomeRow } from "@/components/app/home-row"
+import { CardRail } from "@/components/app/card-rail"
 
 // ─── Mock data ──────────────────────────────────────────────────────────────
 //
@@ -330,21 +330,21 @@ export function ArtistProfileView({ onBack }: { onBack?: () => void }) {
           <>
             <TopSongsRow songs={TOP_SONGS} />
 
-            <HomeRow title="Top Albums" showAllLabel="All albums">
+            <CardRail title="Top Albums" showAllLabel="All albums">
               {TOP_ALBUMS.map(a => (
                 <li key={a.id}><AlbumCard cover={a.cover} title={a.title} artist={a.artist} year={a.year} /></li>
               ))}
-            </HomeRow>
+            </CardRail>
 
-            <HomeRow title="Products" showAllLabel="All products">
+            <CardRail title="Products" showAllLabel="All products">
               {PRODUCTS.map(p => (
                 <li key={p.id}>
-                  <ProductCardSmall cover={p.cover} title={p.title} price={p.price} />
+                  <ProductCard cover={p.cover} title={p.title} price={p.price} />
                 </li>
               ))}
-            </HomeRow>
+            </CardRail>
 
-            <HomeRow title="Curated Playlists">
+            <CardRail title="Curated Playlists">
               {CURATED_PLAYLISTS.map(p => (
                 <li key={p.id}>
                   <PlaylistCard
@@ -356,13 +356,13 @@ export function ArtistProfileView({ onBack }: { onBack?: () => void }) {
                   />
                 </li>
               ))}
-            </HomeRow>
+            </CardRail>
 
-            <HomeRow title="Similar Artists">
+            <CardRail title="Similar Artists">
               {SIMILAR_ARTISTS.map(a => (
                 <li key={a.id}><ArtistCard name={a.name} image={a.image} /></li>
               ))}
-            </HomeRow>
+            </CardRail>
           </>
           </div>
         )}
@@ -382,7 +382,7 @@ export function ArtistProfileView({ onBack }: { onBack?: () => void }) {
             <ul className="grid grid-cols-[repeat(auto-fill,minmax(192px,1fr))] gap-x-4 gap-y-6">
               {PRODUCTS.map(p => (
                 <li key={p.id}>
-                  <ProductCardSmall cover={p.cover} title={p.title} price={p.price} />
+                  <ProductCard cover={p.cover} title={p.title} price={p.price} />
                 </li>
               ))}
             </ul>
@@ -497,20 +497,20 @@ function DiscographyView({
 
   return (
     <section className="flex flex-col gap-4">
-      {/* Header band — matches HomeRow / TopSongsRow rhythm: pt-6 +
+      {/* Header band — matches CardRail / TopSongsRow rhythm: pt-6 +
            separator + gap-2 to the row of controls below. That way
            Discography's first row sits at the same vertical offset
            below the tab strip as Overview's first section header. */}
       {/* One-row toolbar — separator on top, then [Filter] [Sort]
            on the left and the [Grid/List toggle] on the right. The
-           SortButton is hidden on list view because the table header
+           SingleSelect (the sort one) is hidden on list view because the table header
            itself carries sortable controls there (same pattern as
            Studio/Music). */}
       <div className="flex flex-col gap-2 pt-8">
         <Separator />
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <FilterMenu
+            <MultiSelect
               label="All releases"
               selected={filter as Set<string>}
               onChange={next => setFilter(next as Set<ReleaseKind>)}
@@ -525,7 +525,7 @@ function DiscographyView({
               }))}
             />
             {view === "grid" && (
-              <SortButton
+              <SingleSelect
                 value={sort}
                 onChange={setSort}
                 label="Recording date"
@@ -746,12 +746,12 @@ function DiscographyView({
 // ─── TopSongsRow ────────────────────────────────────────────────────────────
 //
 // Horizontally-scrolling rail of song columns (max 3 rows per column).
-// Header chrome (separator + title + ◀ ▶ + Show all) matches HomeRow so
+// Header chrome (separator + title + ◀ ▶ + Show all) matches CardRail so
 // the Artist page reads as one rhythm of section dividers.
 //
 // At default container width 1 column is visible; at @min-[692px] 2;
 // at @min-[1164px] 3. The arrows scroll by clientWidth + gap (one
-// page of visible columns) — same trick HomeRow uses to land cleanly
+// page of visible columns) — same trick CardRail uses to land cleanly
 // on a column boundary.
 
 const ROWS_PER_COLUMN = 3
@@ -797,7 +797,7 @@ function TopSongsRow({ songs }: { songs: typeof TOP_SONGS }) {
           "[&>li]:shrink-0 [&>li]:snap-start " +
           // 1 col default, 2 at ≥692, 3 at ≥1164 — column widths are
           // computed from the ul's own 100% so they line up with the
-          // HomeRow card columns sitting at the same page width.
+          // CardRail card columns sitting at the same page width.
           "[&>li]:w-full " +
           "@min-[692px]:[&>li]:w-[calc((100%-24px)/2)] " +
           "@min-[1164px]:[&>li]:w-[calc((100%-48px)/3)]"

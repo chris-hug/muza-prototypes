@@ -1,14 +1,18 @@
 "use client"
 
 /*
- * SortButton — secondary pill button that opens a DropdownMenu of
- * sort options. Used above any list/grid that needs to be re-ordered
- * (Discography, Library, Orders…).
+ * SingleSelect — outline pill button that opens a single-select
+ * DropdownMenu of options. The generic "pick one of N" pattern in
+ * the design system, distinct from the form-field `Select`.
  *
- * Anatomy: [↕ icon]  current-label  [⌄ icon]   →   menu of options
+ * Default use case: sort buttons above a list/grid (Discography,
+ * Library, Orders). With a different `icon` it also works for any
+ * other single-select trigger (filter mode, density, sort, …).
+ *
+ * Anatomy: [icon]  current-label  [⌄ chevron]   →   menu of options
  *
  * The trigger uses the project's <Button> via base-ui's `render`
- * prop so styling stays in lockstep with every other secondary pill.
+ * prop so styling stays in lockstep with every other outline pill.
  */
 
 import * as React from "react"
@@ -23,31 +27,35 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-export interface SortOption<V extends string = string> {
+export interface SingleSelectOption<V extends string = string> {
   value: V
   label: string
 }
 
-export interface SortButtonProps<V extends string = string> {
+export interface SingleSelectProps<V extends string = string> {
   value:    V
-  options:  ReadonlyArray<SortOption<V>>
+  options:  ReadonlyArray<SingleSelectOption<V>>
   onChange: (next: V) => void
   /** Optional override — defaults to the selected option's label. */
   label?:     string
+  /** Leading icon. Defaults to `ArrowUpDown` (the sort use case);
+   *  pass `null` to render no icon. */
+  icon?:      React.ReactNode | null
   className?: string
   align?:     "start" | "center" | "end"
 }
 
-export function SortButton<V extends string = string>({
-  value, options, onChange, label, className, align = "start",
-}: SortButtonProps<V>) {
+export function SingleSelect<V extends string = string>({
+  value, options, onChange, label, icon, className, align = "start",
+}: SingleSelectProps<V>) {
   const current = options.find(o => o.value === value)
-  const display = label ?? current?.label ?? "Sort"
+  const display = label ?? current?.label ?? ""
+  const leadingIcon = icon === undefined ? <ArrowUpDown strokeWidth={1.5} /> : icon
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger render={<Button variant="outline" className={cn("font-normal", className)} />}>
-        <ArrowUpDown strokeWidth={1.5} />
+        {leadingIcon}
         {display}
         <ChevronDown strokeWidth={1.5} />
       </DropdownMenuTrigger>

@@ -131,7 +131,10 @@ function FormMessage({ className, children, ...props }: React.ComponentProps<"p"
     <p
       data-slot="form-message"
       id={formMessageId}
-      className={cn("text-xsmall font-medium text-destructive", className)}
+      // Match the Input component's inline `data-slot="input-hint"`
+      // styling so error / hint text reads identically whether the
+      // field is wired through react-hook-form or used standalone.
+      className={cn("text-2xsmall font-normal leading-snug text-destructive", className)}
       {...props}
     >
       {body}

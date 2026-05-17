@@ -215,9 +215,26 @@ function ProfileMenu() {
 
 // ─── Default actions used in demo ─────────────────────────────────────────────
 
+// Text link to the dedicated `/design-system` route. Lives in the
+// topbar so it's reachable from every prototype page regardless of
+// the sidebar collapse state. Text label rather than an icon-only
+// button because the destination ("Design system") isn't a universal
+// symbol — spelling it out makes it discoverable without a tooltip.
+function DesignSystemButton() {
+  return (
+    <a
+      href="/design-system"
+      className="inline-flex items-center h-10 px-3 rounded-full text-small font-normal text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+    >
+      Design system
+    </a>
+  )
+}
+
 export function TopbarDefaultActions() {
   return (
     <div className="flex items-center gap-2">
+      <DesignSystemButton />
       <ModeToggle />
       <CartButton />
       <ProfileMenu />

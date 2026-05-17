@@ -77,7 +77,7 @@ import {
 import { Combobox, ComboboxTrigger, ComboboxContent, ComboboxItem } from "@/components/ui/combobox"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Chip, ChipDismiss, ChipGroup } from "@/components/ui/chip"
-import { SortButton } from "@/components/ui/sort-button"
+import { SingleSelect } from "@/components/ui/single-select"
 import { useToast, ToastPreview } from "@/components/ui/toast"
 import {
   AlertCircle, CheckCircle2, Info, Music2, Heart, Share2,
@@ -85,7 +85,7 @@ import {
   Settings, User, LogOut, Upload, MoreHorizontal,
   Plus, Search, ChevronDown, Trash2, SlidersHorizontal, Maximize2,
   Radio as RadioIcon, ShoppingBag, Disc3, Disc, CassetteTape, Shirt, Ghost,
-  ChevronLeft, ChevronRight, Globe, X, Sun, Moon,
+  ChevronLeft, ChevronRight, Globe, X, Sun, Moon, MapPin,
 } from "lucide-react"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import {
@@ -109,6 +109,7 @@ import { z } from "zod"
 import { UploadMusicDialog } from "@/components/app/upload-music-dialog"
 import { ShopMyProductsView } from "@/components/app/shop-my-products"
 import { OrdersView, OrderStatusBadge } from "@/components/app/orders-view"
+import { CheckoutCard, CHECKOUTS } from "@/components/app/purchases-view"
 import { ShopView } from "@/components/app/shop-view"
 import { LibraryAlbumsView } from "@/components/app/library-albums-view"
 import { ArtistProfileView } from "@/components/app/artist-profile-view"
@@ -117,18 +118,17 @@ import { LibraryPlaylistsView } from "@/components/app/library-playlists-view"
 import { AlbumCard } from "@/components/ui/album-card"
 import { ArtistCard } from "@/components/ui/artist-card"
 import { PlaylistCard } from "@/components/ui/playlist-card"
-import { ProductCardSmall } from "@/components/ui/product-card-small"
+import { ProductCard } from "@/components/ui/product-card"
 import { SongListItem } from "@/components/ui/song-list-item"
-import { TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table"
 import { AlbumCardMenuItems } from "@/components/ui/cover-card-menu"
 import { PlayFilledAlt as PlayFilledAltIcon } from "@/components/ui/transport-icons"
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
-import { HomeRow } from "@/components/app/home-row"
+import { CardRail } from "@/components/app/card-rail"
 import { PlaylistCreateCard } from "@/components/ui/playlist-create-card"
 import { Section as PageSection } from "@/components/app/section"
 import { ItemsSection as DetailItemsSection } from "@/components/app/items-section"
 import { COUNTRY_CODES, countryName } from "@/lib/countries"
-import { FilterMenu } from "@/components/ui/filter-menu"
+import { MultiSelect } from "@/components/ui/multi-select"
 import { PlayerBar }     from "@/components/ui/player-bar"
 import { PlayerBarB }    from "@/components/ui/player-bar-b"
 import { PlayerOverlay } from "@/components/ui/player-overlay"
@@ -138,12 +138,61 @@ import { Wordmark }      from "@/components/ui/logo"
 // ─── Section heading component ────────────────────────────────────────────────
 // `scroll-mt-6` gives the section 24px of breathing room from the top of the
 // scroll container when the quick-nav scrolls to it.
-function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
+type SectionStatus = "new" | "updated" | "concept"
+type SectionUsage  = ReadonlyArray<{ label: string; href: string }>
+
+function Section({
+  id, title, status, phase, usage, children,
+}: {
+  id:       string
+  title:    string
+  status?:  SectionStatus
+  /** `2` marks a component tied to the Shop / Products experience —
+   *  scheduled for Phase 2 and not in the day-one build. Lets devs
+   *  triage what's actively in scope vs deferred. */
+  phase?:   2
+  /** Where this component / pattern is used in the actual prototype.
+   *  Rendered as a small muted "Used in: a · b · c" line under the
+   *  title so a reader can jump straight from the docs into the
+   *  living context. */
+  usage?:   SectionUsage
+  children: React.ReactNode
+}) {
   return (
-    <section id={id} className="mb-16 scroll-mt-6">
-      <p className="text-small font-normal text-foreground mb-5 pb-3 border-b border-border">
-        {title}
-      </p>
+    <section
+      id={id}
+      data-phase={phase}
+      className="mb-16 scroll-mt-6"
+    >
+      <div className="flex flex-col gap-1.5 mb-5 pb-3 border-b border-border">
+        <div className="flex items-center gap-2">
+          <p className="text-small font-normal text-foreground">{title}</p>
+          {/* Status pill — primary fill for brand-new sections,
+               outline for components that got new variants/props.
+               Uses the design-system `Badge` (the docs eat their own
+               dog food). */}
+          {status === "new"     && <Badge variant="success">New</Badge>}
+          {status === "updated" && <Badge variant="outline">Updated</Badge>}
+          {/* `concept` = built but not yet wired into the prototype.
+               Keep visible so we can iterate, but make it clear it's
+               not actually in use. */}
+          {status === "concept" && <Badge variant="outline">Not used yet</Badge>}
+          {phase === 2          && <Badge variant="secondary">Phase 2 · Shop</Badge>}
+        </div>
+        {usage && usage.length > 0 && (
+          <p className="text-xsmall font-normal text-muted-foreground">
+            <span className="opacity-70">Used in: </span>
+            {usage.map((u, i) => (
+              <span key={u.label + u.href}>
+                {i > 0 && <span className="opacity-50"> · </span>}
+                <a href={u.href} className="hover:text-foreground hover:underline underline-offset-[3px] [text-decoration-thickness:1px] transition-colors">
+                  {u.label}
+                </a>
+              </span>
+            ))}
+          </p>
+        )}
+      </div>
       {children}
     </section>
   )
@@ -460,9 +509,9 @@ function DialogsKitchenSink() {
 }
 
 // ─── Filter Menu kitchen sink ─────────────────────────────────────────────────
-// Live multi-select filters backed by <FilterMenu> so the buttons actually
+// Live multi-select filters backed by <MultiSelect> so the buttons actually
 // open, toggle options, show a count badge, and expose a clear-all row.
-function FilterMenuKitchenSink() {
+function MultiSelectKitchenSink() {
   const [status,       setStatus]       = useState<Set<string>>(new Set())
   const [type,         setType]         = useState<Set<string>>(new Set(["album", "single"]))
   const [artist,       setArtist]       = useState<Set<string>>(new Set(["miles"]))
@@ -470,7 +519,7 @@ function FilterMenuKitchenSink() {
 
   return (
     <div className="flex flex-wrap gap-3 items-center">
-      <FilterMenu
+      <MultiSelect
         label="Status"
         selected={status}
         onChange={setStatus}
@@ -479,7 +528,7 @@ function FilterMenuKitchenSink() {
           { value: "private", label: "Private" },
         ]}
       />
-      <FilterMenu
+      <MultiSelect
         label="Type"
         selected={type}
         onChange={setType}
@@ -489,7 +538,7 @@ function FilterMenuKitchenSink() {
           { value: "ep",     label: "EP" },
         ]}
       />
-      <FilterMenu
+      <MultiSelect
         label="Artist"
         selected={artist}
         onChange={setArtist}
@@ -500,7 +549,7 @@ function FilterMenuKitchenSink() {
           { value: "mingus",   label: "Charles Mingus" },
         ]}
       />
-      <FilterMenu
+      <MultiSelect
         label="Monetisation"
         selected={monetisation}
         onChange={setMonetisation}
@@ -695,16 +744,16 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
       </div>
 
       {/* Discovery rails — four content rows below the call-to-action.
-           The outer `@container` lets HomeRow's grid step its column
+           The outer `@container` lets CardRail's grid step its column
            count off the row's own width, independent of viewport. */}
       <div className="@container mt-24 flex flex-col">
-        <HomeRow title="New Albums">
+        <CardRail title="New Albums">
           {HOME_NEW_ALBUMS.map(a => (
             <li key={a.id}><AlbumCard cover={a.cover} title={a.title} artist={a.artist} /></li>
           ))}
-        </HomeRow>
+        </CardRail>
 
-        <HomeRow title="Playlists of the week">
+        <CardRail title="Playlists of the week">
           {HOME_WEEKLY_PLAYLISTS.map(p => (
             <li key={p.id}>
               <PlaylistCard
@@ -716,19 +765,19 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
               />
             </li>
           ))}
-        </HomeRow>
+        </CardRail>
 
-        <HomeRow title="Artists of the week">
+        <CardRail title="Artists of the week">
           {HOME_WEEKLY_ARTISTS.map(a => (
             <li key={a.id}><ArtistCard name={a.name} image={a.image} /></li>
           ))}
-        </HomeRow>
+        </CardRail>
 
-        <HomeRow title="Albums of the week">
+        <CardRail title="Albums of the week">
           {HOME_WEEKLY_ALBUMS.map(a => (
             <li key={a.id}><AlbumCard cover={a.cover} title={a.title} artist={a.artist} /></li>
           ))}
-        </HomeRow>
+        </CardRail>
       </div>
     </div>
   )
@@ -930,31 +979,23 @@ function ListTableDemo() {
   )
 }
 
-function SortButtonDemo() {
+function SingleSelectDemo() {
   const [v, setV] = useState<"recent" | "popular" | "az" | "za">("recent")
+  const options = [
+    { value: "recent",  label: "Most recent" },
+    { value: "popular", label: "Most popular" },
+    { value: "az",      label: "A → Z" },
+    { value: "za",      label: "Z → A" },
+  ] as const
   return (
     <div className="flex flex-wrap gap-6 items-center">
-      <SortButton
-        value={v}
-        onChange={setV}
-        options={[
-          { value: "recent",  label: "Most recent" },
-          { value: "popular", label: "Most popular" },
-          { value: "az",      label: "A → Z" },
-          { value: "za",      label: "Z → A" },
-        ]}
-      />
-      <SortButton
-        value={v}
-        onChange={setV}
-        label="Sort"
-        options={[
-          { value: "recent",  label: "Most recent" },
-          { value: "popular", label: "Most popular" },
-          { value: "az",      label: "A → Z" },
-          { value: "za",      label: "Z → A" },
-        ]}
-      />
+      {/* Default — current-option label, ArrowUpDown icon (sort use). */}
+      <SingleSelect value={v} onChange={setV} options={[...options]} />
+      {/* Fixed label — useful when the trigger doubles as a category
+          ("Sort", "Density") and the menu carries the qualifier. */}
+      <SingleSelect value={v} onChange={setV} options={[...options]} label="Sort" />
+      {/* No icon — generic single-select trigger. */}
+      <SingleSelect value={v} onChange={setV} options={[...options]} icon={null} />
     </div>
   )
 }
@@ -1486,7 +1527,7 @@ function ResizableBox({
 }
 
 // ─── Kitchen sink (Explore view) ──────────────────────────────────────────────
-function ExploreView() {
+export function ExploreView({ showHero = true, showQuickNav = true }: { showHero?: boolean; showQuickNav?: boolean } = {}) {
   const [inputSelectCurrency, setInputSelectCurrency] = useState("USD")
   const [inputSelectTld, setInputSelectTld] = useState(".com")
   const [playing, setPlaying] = useState(false)
@@ -1497,11 +1538,13 @@ function ExploreView() {
     <div>
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
+      {showHero && (
       <div className="bg-muted border-b border-border pt-24 pb-[3.75rem]">
         <div className="max-w-[1528px] mx-auto px-10">
           <h1 className="text-5xl font-medium leading-none tracking-[-0.025em]">The muza design system</h1>
         </div>
       </div>
+      )}
 
     {/* `@container` is on the inner content wrapper (after the
          page's max-width + padding) so it matches the @container
@@ -1517,7 +1560,10 @@ function ExploreView() {
         third-party ones (Command, OTP Input) keep their descriptive name.
       </p>
 
-      {/* Quick nav */}
+      {/* Quick nav — hidden when a parent shell (e.g. the dedicated
+           `/design-system` route) already supplies its own sidebar
+           navigation. */}
+      {showQuickNav && (
       <nav className="flex flex-wrap gap-1.5 mb-12">
         {[
           // Section labels mirror the underlying base-ui primitive name where
@@ -1547,6 +1593,7 @@ function ExploreView() {
           )
         })}
       </nav>
+      )}
 
       {/* ══ COLORS ══ */}
       <Section id="colors" title="Colors">
@@ -1822,7 +1869,7 @@ function ExploreView() {
 
       {/* ══ BADGES ══ */}
       {/* ══ TOGGLE ══ */}
-      <Section id="toggle" title="Toggle">
+      <Section id="toggle" title="Toggle" status="new">
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-3">
             <Toggle defaultPressed>Pressed</Toggle>
@@ -1842,7 +1889,11 @@ function ExploreView() {
       </Section>
 
       {/* ══ TOGGLE GROUP ══ */}
-      <Section id="togglegroup" title="ToggleGroup">
+      <Section id="togglegroup" title="ToggleGroup" status="new"
+        usage={[
+          { label: "Topbar theme switcher",                href: "/" },
+          { label: "Artist › Discography grid/list toggle", href: "/?page=Artist" },
+        ]}>
         <div className="flex flex-col gap-6 max-w-md">
           <div>
             <SubLabel>Single-select — view modes</SubLabel>
@@ -1885,7 +1936,7 @@ function ExploreView() {
       </Section>
 
       {/* ══ TOOLBAR ══ */}
-      <Section id="toolbar" title="Toolbar">
+      <Section id="toolbar" title="Toolbar" status="new">
         <Toolbar>
           <ToolbarGroup>
             <ToolbarButton>Bold</ToolbarButton>
@@ -1905,7 +1956,12 @@ function ExploreView() {
         </p>
       </Section>
 
-      <Section id="badges" title="Badges">
+      <Section id="badges" title="Badges" status="updated"
+        usage={[
+          { label: "Order detail status",       href: "/?page=Orders" },
+          { label: "Studio › Music type column", href: "/?page=Music" },
+          { label: "Artist › Discography type", href: "/?page=Artist" },
+        ]}>
         <div className="flex flex-col gap-5">
           <div>
             <SubLabel>Base variants — design system primitives</SubLabel>
@@ -1932,8 +1988,16 @@ function ExploreView() {
               <StatusBadgeDemo />
             </div>
           </div>
-          <div>
-            <SubLabel>Lifecycle status — colored, optionally interactive</SubLabel>
+          {/* `data-phase="2"` so the Shop-toggle in the design-system
+               sidebar hides this whole subsection. The order
+               lifecycle status badge is purely a Shop / commerce
+               surface. */}
+          <div data-phase="2">
+            <SubLabel>
+              Order lifecycle status — colored, optionally interactive
+              <Badge variant="success"   className="ml-2">New</Badge>
+              <Badge variant="secondary" className="ml-1">Phase 2 · Shop</Badge>
+            </SubLabel>
             <div className="flex flex-wrap gap-2 items-center">
               <OrderStatusBadge status="payment_failed" />
               <OrderStatusBadge status="new" />
@@ -1955,7 +2019,8 @@ function ExploreView() {
       </Section>
 
       {/* ══ CHIPS ══ */}
-      <Section id="chips" title="Chips">
+      <Section id="chips" title="Chips" status="updated"
+        usage={[{ label: "Vinyl listing — genre tags",  href: "/?page=Music" }]}>
         <div className="flex flex-col gap-5">
           <div>
             <SubLabel>Filter chips — toggle</SubLabel>
@@ -1977,7 +2042,16 @@ function ExploreView() {
             <ChipDismissDemo />
           </div>
           <div>
-            <SubLabel>Filter chips — ghost + count badge (Discography toolbar)</SubLabel>
+            <SubLabel>
+              Filter chips — ghost + count badge
+              <Badge variant="outline" className="ml-2">Not used yet</Badge>
+            </SubLabel>
+            <p className="text-xsmall text-muted-foreground mb-3 max-w-2xl">
+              First built for the Discography toolbar; replaced with a
+              MultiSelect dropdown when the kind list grew past five
+              entries. Kept here for the next surface that needs an
+              inline single-select pill bar.
+            </p>
             <ChipCountDemo />
           </div>
         </div>
@@ -2136,11 +2210,44 @@ function ExploreView() {
         </div>
       </Section>
 
-      {/* ══ FILTER MENU ══
-           base-ui `Menu` with `CheckboxItem`s + pill trigger, count badge,
-           and a clear-all row. Single app-level API: <FilterMenu>. */}
-      <Section id="filter-menu" title="Filter Menu">
-        <FilterMenuKitchenSink />
+      {/* ══ MULTI SELECT ══
+           base-ui `Menu` with left-checkbox items + pill trigger,
+           count badge, and a clear-all row. */}
+      <Section id="multi-select" title="MultiSelect" status="updated"
+        usage={[
+          { label: "Studio › Music filters",   href: "/?page=Music" },
+          { label: "Artist › Discography",     href: "/?page=Artist" },
+        ]}>
+        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
+          Dropdown button with left-side checkboxes. Ticking an option
+          adds it to the selection, the menu stays open while you
+          toggle, and a count badge in the trigger reflects how many
+          are currently active. Pairs with <code className="text-xsmall font-normal font-sans px-1 mx-0.5 rounded-sm bg-muted">SingleSelect</code> (right-side ✓).
+          <br /><br />
+          <strong className="font-medium text-foreground">Mainly used for:</strong> filtering
+          a list/grid down to a subset (Studio › Music's Status / Type
+          / Artist / Label / Monetisation filters, Artist Discography's
+          release-kind filter). Searchable when the option list is
+          long; carries a "Clear all" row at the bottom.
+        </p>
+        <MultiSelectKitchenSink />
+      </Section>
+
+      {/* ══ PICKER ══ */}
+      <Section id="single-select" title="SingleSelect" status="new"
+        usage={[{ label: "Artist › Discography (sort)", href: "/?page=Artist" }]}>
+        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
+          Dropdown button that shows the current option with a
+          right-side ✓ — picking another option replaces it (only one
+          value at a time). Pairs with <code className="text-xsmall font-normal font-sans px-1 mx-0.5 rounded-sm bg-muted">MultiSelect</code> (left-side checkboxes).
+          <br /><br />
+          <strong className="font-medium text-foreground">Mainly used for:</strong> sort
+          (ArrowUpDown icon by default — Discography "Recording date /
+          Title / Tracks"). Also fits any other "pick one of N"
+          trigger sitting in a toolbar: view density, layout mode,
+          card size, etc. Distinct from the form-field <code className="text-xsmall font-normal font-sans px-1 mx-0.5 rounded-sm bg-muted">Select</code> (which lives inside forms).
+        </p>
+        <SingleSelectDemo />
       </Section>
 
       {/* ══ COMBOBOX ══ */}
@@ -2174,10 +2281,11 @@ function ExploreView() {
             </Combobox>
           </div>
 
-          {/* Filterable long-list configuration — pass `items` + a
-               function-child renderer to enable real type-to-filter
-               behaviour (vs. the static JSX-children form above). Same
-               Combobox primitive, different config. */}
+          {/* Filterable long-list configuration with a leading
+               item icon — same pattern Shop › Settings › Shipping
+               zones uses (each region prefixed with a MapPin). Pass
+               `items` + a function-child renderer to enable real
+               type-to-filter behaviour. */}
           <div className="flex flex-col gap-1.5 w-[280px]">
             <Label>Country</Label>
             <Combobox
@@ -2187,7 +2295,10 @@ function ExploreView() {
               <ComboboxTrigger placeholder="Search countries…" />
               <ComboboxContent className="max-h-[280px] overflow-y-auto">
                 {(code: string) => (
-                  <ComboboxItem key={code} value={code}>{countryName(code)}</ComboboxItem>
+                  <ComboboxItem key={code} value={code}>
+                    <MapPin className="size-4 text-muted-foreground shrink-0" />
+                    {countryName(code)}
+                  </ComboboxItem>
                 )}
               </ComboboxContent>
             </Combobox>
@@ -2235,20 +2346,8 @@ function ExploreView() {
         </div>
       </Section>
 
-      {/* ══ SORT BUTTON ══ */}
-      <Section id="sort-button" title="Sort Button">
-        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
-          Secondary pill that opens a sort menu — paired with any
-          list/grid that needs re-ordering (Discography, Library,
-          Orders). The label can either reflect the active option or
-          stay fixed (e.g. "Recording date") with the menu items
-          carrying the qualifier.
-        </p>
-        <SortButtonDemo />
-      </Section>
-
       {/* ══ NAVIGATION MENU ══ */}
-      <Section id="navigationmenu" title="NavigationMenu">
+      <Section id="navigationmenu" title="NavigationMenu" status="new">
         <NavigationMenu>
           <NavigationMenuList>
             <NavigationMenuItem>
@@ -2359,7 +2458,11 @@ function ExploreView() {
       </Section>
 
       {/* ══ RADIO CARD ══ */}
-      <Section id="radio-card" title="Radio Card">
+      <Section id="radio-card" title="Radio Card"
+        usage={[
+          { label: "Vinyl listing — format selector (Vinyl / CD / Cassette)", href: "/?page=Music" },
+          { label: "Upload music — distribution choices",                    href: "/?page=Music" },
+        ]}>
         <RadioCardKitchenSink />
       </Section>
 
@@ -2405,7 +2508,7 @@ function ExploreView() {
       </Section>
 
       {/* ══ METER ══ */}
-      <Section id="meter" title="Meter">
+      <Section id="meter" title="Meter" status="new">
         <div className="flex flex-col gap-5 max-w-md">
           {[
             { value: 12,  label: "Storage used", display: "12 GB / 100 GB" },
@@ -2478,7 +2581,12 @@ function ExploreView() {
       </Section>
 
       {/* ══ TABS ══ */}
-      <Section id="tabs" title="Tabs">
+      <Section id="tabs" title="Tabs"
+        usage={[
+          { label: "Artist profile (Overview / Discography / Shop)", href: "/?page=Artist" },
+          { label: "Library (Albums / Artists / Songs / Playlists)", href: "/?page=Albums" },
+          { label: "Studio sub-nav",                                 href: "/?page=Music" },
+        ]}>
         <div className="flex flex-col gap-20 max-w-xl">
           <div>
             <SubLabel>Segment — small</SubLabel>
@@ -2568,7 +2676,7 @@ function ExploreView() {
       </Section>
 
       {/* ══ SCROLL AREA ══ */}
-      <Section id="scrollarea" title="ScrollArea">
+      <Section id="scrollarea" title="ScrollArea" status="new">
         <div className="flex flex-wrap gap-6">
           <div>
             <SubLabel>Vertical</SubLabel>
@@ -2599,7 +2707,7 @@ function ExploreView() {
       </Section>
 
       {/* ══ COLLAPSIBLE ══ */}
-      <Section id="collapsible" title="Collapsible">
+      <Section id="collapsible" title="Collapsible" status="new">
         <div className="max-w-md">
           <Collapsible>
             <CollapsibleTrigger>
@@ -2618,7 +2726,7 @@ function ExploreView() {
       </Section>
 
       {/* ══ ACCORDION ══ */}
-      <Section id="accordion" title="Accordion">
+      <Section id="accordion" title="Accordion" status="new">
         <div className="max-w-md">
           <Accordion>
             <AccordionItem value="payments">
@@ -2652,7 +2760,13 @@ function ExploreView() {
           · Type=Album        (default + hover overlay)
           · Type=My Album     (owned variant — pencil instead of plus)
       */}
-      <Section id="album-card" title="Album Card">
+      <Section id="album-card" title="Album Card" status="new"
+        usage={[
+          { label: "Library › Albums",            href: "/?page=Albums" },
+          { label: "Artist › Top Albums",         href: "/?page=Artist" },
+          { label: "Artist › Discography (grid)", href: "/?page=Artist" },
+          { label: "Home › New Albums rail",      href: "/" },
+        ]}>
         <p className="text-small text-muted-foreground mb-5 max-w-2xl">
           Tap the cover to <em>play</em>; long-press for the action
           menu (touch). Hover surfaces the Add/Edit ⋯ Play cluster.
@@ -2700,7 +2814,11 @@ function ExploreView() {
         No hover overlay by design (per Figma Type=Artist) — clicking
         navigates to the artist profile.
       */}
-      <Section id="artist-card" title="Artist Card">
+      <Section id="artist-card" title="Artist Card" status="new"
+        usage={[
+          { label: "Library › Artists",          href: "/?page=Artists" },
+          { label: "Artist › Similar Artists",   href: "/?page=Artist" },
+        ]}>
         <p className="text-small text-muted-foreground mb-5 max-w-2xl">
           Circle is inset to ~80% of the track so the artist tile
           doesn't dominate when it shares a row with album/playlist
@@ -2728,7 +2846,11 @@ function ExploreView() {
           · Type=My Playlist  (owned — "1234 Songs", Edit instead of Add)
           · Type=Add          (PlaylistCreateCard — the "+" tile)
       */}
-      <Section id="playlist-card" title="Playlist Card">
+      <Section id="playlist-card" title="Playlist Card" status="new"
+        usage={[
+          { label: "Library › Playlists",         href: "/?page=Playlists" },
+          { label: "Artist › Curated Playlists",  href: "/?page=Artist" },
+        ]}>
         <p className="text-small text-muted-foreground mb-5 max-w-2xl">
           Same interaction model as AlbumCard: tap cover to play,
           long-press for the menu, hover surfaces Add/Edit ⋯ Play.
@@ -2796,7 +2918,8 @@ function ExploreView() {
         [+] always + [info] [⋯] on hover, then duration. Pass a
         `menuItems` slot to turn the kebab into a real DropdownMenu.
       */}
-      <Section id="song-list-item" title="Song List Item">
+      <Section id="song-list-item" title="Song List Item" status="new"
+        usage={[{ label: "Artist › Top Songs", href: "/?page=Artist" }]}>
         <ul className="flex flex-col gap-1 max-w-2xl">
           <li>
             <SongListItem
@@ -2843,7 +2966,11 @@ function ExploreView() {
         the row always lands on a clean N-card boundary; touch swipe
         is free-form for natural feel.
       */}
-      <Section id="home-row" title="Home Row">
+      <Section id="card-rail" title="Card Rail" status="new"
+        usage={[
+          { label: "Home › New Albums / Playlists / Artists rails", href: "/" },
+          { label: "Artist profile rails (Top Albums, Products, Curated Playlists, Similar Artists)", href: "/?page=Artist" },
+        ]}>
         <p className="text-small text-muted-foreground mb-5 max-w-2xl">
           Section divider with title + ◀ ▶ + ghost "Show all"
           button on top, scrollable card rail below. The row hides
@@ -2852,11 +2979,11 @@ function ExploreView() {
           so vertical wheel/swipe passes straight through to the
           page. Try clicking the arrows or swiping horizontally.
         </p>
-        <HomeRow title="New Albums">
+        <CardRail title="New Albums">
           {HOME_NEW_ALBUMS.map(a => (
             <li key={a.id}><AlbumCard cover={a.cover} title={a.title} artist={a.artist} /></li>
           ))}
-        </HomeRow>
+        </CardRail>
       </Section>
 
       {/* ══ PRODUCT CARD ══ */}
@@ -2866,7 +2993,11 @@ function ExploreView() {
         of tiles stays flush, price + price-label inline, full-width
         secondary "Add to cart" pill at the foot.
       */}
-      <Section id="product-card" title="Product Card">
+      <Section id="product-card" title="Product Card" status="new" phase={2}
+        usage={[
+          { label: "Artist › Shop tab",        href: "/?page=Artist" },
+          { label: "Artist › Products rail",   href: "/?page=Artist" },
+        ]}>
         <ul className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))] @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))] gap-x-4 gap-y-6">
           {[
             { id: "kp1", title: "Space Is the Place — Vinyl Reissue", price: "32 $", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
@@ -2875,10 +3006,38 @@ function ExploreView() {
             { id: "kp4", title: "Cosmic Equation Poster",              price: "18 $", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music49/v4/20/db/51/20db5143-be96-6741-6d70-08d9fc0d5605/Cosmos_art_1500.jpg/600x600bb.jpg" },
           ].map(p => (
             <li key={p.id}>
-              <ProductCardSmall cover={p.cover} title={p.title} price={p.price} />
+              <ProductCard cover={p.cover} title={p.title} price={p.price} />
             </li>
           ))}
         </ul>
+      </Section>
+
+      {/* ══ CHECKOUT CARD ══
+           Order/purchase row card from the buyer-side Purchases hub.
+           Date header strip + per-shop fulfillment rows (avatar, shop
+           name, products, status badge, total). One card per checkout
+           — can contain multiple fulfillments when the cart spanned
+           multiple shops. */}
+      <Section id="checkout-card" title="Checkout Card" status="new" phase={2}
+        usage={[
+          { label: "Purchases hub", href: "/?page=Purchases" },
+        ]}>
+        <p className="text-small text-muted-foreground mb-5 max-w-3xl">
+          Buyer-side receipt for one checkout. Wraps every shipment in
+          the same payment ("one charge, N fulfillments") under a
+          shared date + total header. Each fulfillment row links to
+          its detail page; a payment-failure on any sub-row promotes
+          a single recovery CTA up to the header strip so the user
+          doesn't have to hunt for it.
+        </p>
+        <div className="max-w-3xl">
+          <CheckoutCard
+            checkout={CHECKOUTS[0]}
+            onOpenFulfillment={() => {}}
+            onProductClick={() => {}}
+            onUpdatePayment={() => {}}
+          />
+        </div>
       </Section>
 
       {/* ══ PAGE SECTION ══ */}
@@ -2888,7 +3047,11 @@ function ExploreView() {
         and unboxed sections share the same hierarchy; vertical rhythm
         carries separation between adjacent flat sections.
       */}
-      <Section id="page-section" title="Page Section">
+      <Section id="page-section" title="Page Section" status="new"
+        usage={[
+          { label: "Order detail",     href: "/?page=Orders" },
+          { label: "Purchase detail",  href: "/?page=Purchases" },
+        ]}>
         <div className="flex flex-col gap-10 max-w-2xl">
           <PageSection title="Flat section">
             <p className="text-small text-muted-foreground">
@@ -2926,7 +3089,11 @@ function ExploreView() {
         labelled tax). Each line collapses to a single price at qty=1 and
         expands to muted "unit × qty" + line total at qty>1.
       */}
-      <Section id="items" title="Items">
+      <Section id="items" title="Items" status="new" phase={2}
+        usage={[
+          { label: "Order detail",     href: "/?page=Orders" },
+          { label: "Purchase detail",  href: "/?page=Purchases" },
+        ]}>
         <div className="flex flex-col gap-10">
           <div>
             <p className="text-small text-muted-foreground mb-3 max-w-2xl">
@@ -3056,7 +3223,11 @@ function ExploreView() {
       </Section>
 
       {/* ══ DRAWER (Sheet) ══ */}
-      <Section id="drawer" title="Drawer">
+      <Section id="drawer" title="Drawer"
+        usage={[
+          { label: "Cart drawer (topbar 🛒 button)", href: "/" },
+          { label: "Upload music dialog",            href: "/?page=Music" },
+        ]}>
         <div className="flex flex-col gap-3 max-w-md">
           <div className="flex flex-wrap gap-2">
             {(["right", "left", "bottom", "top"] as const).map(side => (
@@ -3174,7 +3345,8 @@ function ExploreView() {
       </Section>
 
       {/* ══ TABLE ══ */}
-      <Section id="table" title="Table">
+      <Section id="table" title="Table"
+        usage={[{ label: "Studio › Music releases", href: "/?page=Music" }]}>
         <Table>
           <TableHeader>
             <TableRow>
@@ -3237,7 +3409,8 @@ function ExploreView() {
           · Rightmost cell holds a kebab menu with the same items
             the AlbumCard cover-menu surfaces.
       */}
-      <Section id="list-table" title="List Table">
+      <Section id="list-table" title="List Table" status="new"
+        usage={[{ label: "Artist › Discography (list view)", href: "/?page=Artist" }]}>
         <p className="text-small text-muted-foreground mb-5 max-w-2xl">
           Single-line rows, no zebra borders. Title + Band are
           separate hover-underline click targets; Recorded and Tracks
@@ -3414,6 +3587,28 @@ function ExploreView() {
 }
 
 // ─── Root page — unified app shell ────────────────────────────────────────────
+// Placeholder for the prototype's Explore tab. The previous Explore
+// page doubled as the design-system kitchen sink, which has now
+// moved to its own `/design-system` route. The product's real
+// Explore (discover music) will replace this stub.
+function ExplorePlaceholder() {
+  return (
+    <div className="max-w-[1528px] mx-auto px-10 py-20">
+      <h1 className="text-2xlarge font-medium tracking-tight mb-3">Explore</h1>
+      <p className="text-small text-muted-foreground max-w-xl mb-6">
+        The discover-music surface lives here. Coming soon.
+      </p>
+      <p className="text-small text-muted-foreground max-w-xl">
+        Looking for the design system?{" "}
+        <a href="/design-system" className="text-foreground underline underline-offset-[3px] [text-decoration-thickness:1px]">
+          It moved to <code className="text-xsmall font-normal font-sans px-1 mx-0.5 rounded-sm bg-muted">/design-system</code>
+        </a>
+        .
+      </p>
+    </div>
+  )
+}
+
 export default function Home() {
   // ── URL-backed navigation ──────────────────────────────────────────────
   // Top-level page lives in the `?page=<View>` query param so links are
@@ -3479,7 +3674,7 @@ export default function Home() {
         <Topbar actions={<TopbarDefaultActions />} />
         <div ref={scrollRef} className="flex-1 overflow-auto">
           {activeNav === "Home"      && <HomeView onNavigate={navigate} />}
-          {activeNav === "Explore"   && <ExploreView />}
+          {activeNav === "Explore"   && <ExplorePlaceholder />}
           {activeNav === "Purchases" && <PurchasesView />}
           {activeNav === "Albums"    && <LibraryAlbumsView />}
           {activeNav === "Artists"   && <LibraryArtistsView />}

@@ -1,7 +1,7 @@
 "use client"
 
 /*
- * FilterMenu — pill trigger + base-ui `Menu` popup with CheckboxItems,
+ * MultiSelect — pill trigger + base-ui `Menu` popup with CheckboxItems,
  * optional search, and a clear-all row.
  *
  * Under the hood:
@@ -22,11 +22,12 @@ import { useRef, useState } from "react"
 import { Search, X } from "lucide-react"
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
-  DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuItem,
+  DropdownMenuItem, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
+import { Checkbox } from "@/components/ui/checkbox"
 import { filterTriggerCls, FilterChevron, FilterCount } from "@/components/ui/filter-button"
 
-export interface FilterOption {
+export interface MultiSelectOption {
   value:    string
   /** Option label. Accepts ReactNode so callers can render the label
    *  alongside trailing chrome (count badge, icon, …) on one row. */
@@ -34,9 +35,9 @@ export interface FilterOption {
   disabled?: boolean
 }
 
-interface FilterMenuProps {
+interface MultiSelectProps {
   label:    string
-  options:  FilterOption[]
+  options:  MultiSelectOption[]
   selected: Set<string>
   onChange: (next: Set<string>) => void
   /** Render a search input at the top; filters options client-side. */
@@ -53,7 +54,7 @@ interface FilterMenuProps {
   disabled?: boolean
 }
 
-export function FilterMenu({
+export function MultiSelect({
   label, options, selected, onChange,
   searchable,
   searchPlaceholder = "Search…",
@@ -61,7 +62,7 @@ export function FilterMenu({
   clearLabel = "Clear all",
   minWidth   = "min-w-44",
   disabled,
-}: FilterMenuProps) {
+}: MultiSelectProps) {
   const searchRef = useRef<HTMLInputElement>(null)
   const [search, setSearch] = useState("")
 
@@ -128,17 +129,29 @@ export function FilterMenu({
           {filtered.length === 0 ? (
             <p className="py-6 text-center text-xsmall text-muted-foreground">No results</p>
           ) : (
+            // Design-system rule: multi-select menus carry a left
+            // checkbox (matches the standard form checkbox visual);
+            // single-select menus use the right ✓. MultiSelect is
+            // always multi-select, so it always renders the left
+            // checkbox here.
             filtered.map(opt => (
-              <DropdownMenuCheckboxItem
+              <DropdownMenuItem
                 key={opt.value}
-                checked={selected.has(opt.value)}
                 disabled={opt.disabled}
-                // `closeOnClick={false}` keeps the menu open for multi-select.
                 closeOnClick={false}
-                onCheckedChange={() => toggle(opt.value)}
+                onClick={() => toggle(opt.value)}
+                className="gap-2"
               >
+                <Checkbox
+                  checked={selected.has(opt.value)}
+                  // Visual only — the row's onClick already toggles.
+                  // `pointer-events-none` so the underlying item
+                  // owns the click + hover affordance.
+                  className="pointer-events-none after:hidden"
+                  tabIndex={-1}
+                />
                 {opt.label}
-              </DropdownMenuCheckboxItem>
+              </DropdownMenuItem>
             ))
           )}
         </div>

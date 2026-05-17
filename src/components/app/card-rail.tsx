@@ -1,7 +1,7 @@
 "use client"
 
 /*
- * HomeRow — section divider (separator + title + ◀ ▶ + "Show all")
+ * CardRail — section divider (separator + title + ◀ ▶ + "Show all")
  * followed by a horizontally-scrolling rail of cards. Used on the
  * home page for "New Albums", "Playlists of the week", "Artists of
  * the week", "Albums of the week".
@@ -36,7 +36,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 
-interface HomeRowProps {
+interface CardRailProps {
   title:      string
   /** Label for the trailing "Show all" pill. Defaults to "Show all". */
   showAllLabel?: string
@@ -44,7 +44,7 @@ interface HomeRowProps {
   children:   React.ReactNode
 }
 
-export function HomeRow({ title, showAllLabel = "Show all", onShowAll, children }: HomeRowProps) {
+export function CardRail({ title, showAllLabel = "Show all", onShowAll, children }: CardRailProps) {
   const scrollRef = useRef<HTMLUListElement>(null)
 
   // Scroll by one "page" — the visible width PLUS one gap. The +gap

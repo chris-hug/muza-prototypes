@@ -1,7 +1,7 @@
 "use client"
 
 /*
- * ProductCardSmall — compact vertical product tile used on the
+ * ProductCard — compact vertical product tile used on the
  * Artist profile "Products" rail and Shop discovery feeds.
  *
  * Figma source: file dbSHgvquI2o4TFie2iAJxv › node 21054:5234 →
@@ -30,7 +30,7 @@ import { ShoppingCart } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
-export interface ProductCardSmallProps {
+export interface ProductCardProps {
   cover:        string
   title:        string
   /** Numeric amount — formatted with the trailing currency by the
@@ -44,10 +44,10 @@ export interface ProductCardSmallProps {
   className?: string
 }
 
-export function ProductCardSmall({
+export function ProductCard({
   cover, title, price, priceLabel = "or more",
   onClick, onAddToCart, className,
-}: ProductCardSmallProps) {
+}: ProductCardProps) {
   const stop = (fn?: () => void) => (e: React.MouseEvent) => {
     e.stopPropagation()
     fn?.()

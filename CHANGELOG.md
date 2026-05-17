@@ -6,6 +6,69 @@ the repo root, semantic groupings reflect the major themes.
 
 ---
 
+## 2026-05 — Dedicated `/design-system` route + component-naming pass
+
+### New surface
+
+**`/design-system`** route (`app/routes/design-system.tsx`)
+- Pulled the kitchen sink out of `?page=Explore` into its own route
+  with a sticky left sidebar grouped by category (Foundations /
+  Atoms / Inputs / Indicators / Containers / Cards & lists / Page
+  composition / Overlays / Utility / Player).
+- Back-to-prototype link at the top; scroll-spy keeps the active
+  section highlighted in the nav.
+- **Phase 2 toggle** in the sidebar hides Shop / Products
+  components (Product Card, Checkout Card, Items, Order lifecycle
+  status badges) so day-one work isn't visually crowded.
+- Prototype's Explore tab now shows a placeholder pointing at the
+  new route.
+- Topbar carries a "Design system" text link in the right cluster
+  so it's reachable from every prototype page.
+
+### Component renames (naming clarity)
+
+To eliminate semantic mismatches between docs labels and component
+exports:
+
+- `SortButton` → `Picker` → `SingleSelect` (file `single-select.tsx`)
+- `FilterMenu` → `MultiSelect` (file `multi-select.tsx`)
+- `HomeRow` → `CardRail` (file `card-rail.tsx`)
+- `ProductCardSmall` → `ProductCard` (file `product-card.tsx`)
+
+The Picker → SingleSelect / FilterMenu → MultiSelect pair now
+names by *what they are* (single-select dropdown button vs
+multi-select dropdown button) rather than the *use case* (sort /
+filter). MultiSelect renders left-side checkboxes (multi-select
+convention); SingleSelect renders right-side ✓ (single-select).
+
+### Design-system primitives
+
+**Badge** — added `primary` and `success` variants. `success` uses
+the saturated mint `#00D5A3` for "New" labels; reads as a strong
+attention signal without competing with brand-primary blue.
+
+**Section** (kitchen sink) — added `status` (`new` / `updated` /
+`concept`), `phase` (`2`), and `usage` props. Renders status pills
+inline with the title and a "Used in: a · b · c" line under it so
+a reader can jump straight from the docs into the living context.
+
+**FormMessage** styling aligned to `Input`'s `data-slot="input-hint"`
+(text-2xsmall + leading-snug) so validation errors read identical
+whether the field is wired through react-hook-form or used
+standalone.
+
+### Docs additions
+
+- **Checkout Card** showcase (the order/purchase row card from the
+  buyer-side Purchases hub). `CheckoutCard` exported from
+  `purchases-view.tsx`.
+- **Country combobox** demo now uses leading MapPin icons per item,
+  mirroring the Shop › Settings › Shipping zones region selector.
+- "Used in" + status / Phase 2 markers applied to every section
+  that's new or updated in this push.
+
+---
+
 ## 2026-05 — Artist profile, Discography, design-system unification
 
 ### New flows
