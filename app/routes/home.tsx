@@ -1959,9 +1959,9 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
 
       <Section id="badges" title="Badges" status="updated"
         usage={[
-          { label: "Order detail status",       href: "/?page=Orders" },
-          { label: "Studio › Music type column", href: "/?page=Music" },
-          { label: "Artist › Discography type", href: "/?page=Artist" },
+          { label: "Shop › Orders → order detail status", href: "/?page=Shop&shop-tab=orders" },
+          { label: "Studio › Music type column",          href: "/?page=Music" },
+          { label: "Artist › Discography type",           href: "/?page=Artist" },
         ]}>
         <div className="flex flex-col gap-5">
           <div>
@@ -2021,7 +2021,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
 
       {/* ══ CHIPS ══ */}
       <Section id="chips" title="Chips" status="updated"
-        usage={[{ label: "Vinyl listing — genre tags",  href: "/?page=Music" }]}>
+        usage={[{ label: "Shop › Products → Create listing (Release Type + artist chips)", href: "/?page=Shop&shop-tab=products" }]}>
         <div className="flex flex-col gap-5">
           <div>
             <SubLabel>Filter chips — toggle</SubLabel>
@@ -2461,7 +2461,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       {/* ══ RADIO CARD ══ */}
       <Section id="radio-card" title="Radio Card"
         usage={[
-          { label: "Vinyl listing — format selector (Vinyl / CD / Cassette)", href: "/?page=Music" },
+          { label: "Vinyl listing — format selector (Vinyl / CD / Cassette)", href: "/?page=Shop&shop-tab=products" },
           { label: "Upload music — distribution choices",                    href: "/?page=Music" },
         ]}>
         <RadioCardKitchenSink />
@@ -3050,8 +3050,8 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       */}
       <Section id="page-section" title="Page Section" status="new"
         usage={[
-          { label: "Order detail",     href: "/?page=Orders" },
-          { label: "Purchase detail",  href: "/?page=Purchases" },
+          { label: "Shop › Orders → order detail", href: "/?page=Shop&shop-tab=orders" },
+          { label: "Purchases → purchase detail",  href: "/?page=Purchases" },
         ]}>
         <div className="flex flex-col gap-10 max-w-2xl">
           <PageSection title="Flat section">
@@ -3092,8 +3092,8 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       */}
       <Section id="items" title="Items" status="new" phase={2}
         usage={[
-          { label: "Order detail",     href: "/?page=Orders" },
-          { label: "Purchase detail",  href: "/?page=Purchases" },
+          { label: "Shop › Orders → order detail", href: "/?page=Shop&shop-tab=orders" },
+          { label: "Purchases → purchase detail",  href: "/?page=Purchases" },
         ]}>
         <div className="flex flex-col gap-10">
           <div>
