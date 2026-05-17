@@ -6,6 +6,58 @@ the repo root, semantic groupings reflect the major themes.
 
 ---
 
+## TL;DR if you last looked in March / April
+
+Three big themes landed since you were last here:
+
+**1. End-to-end commerce flows (Phase 2 / Shop)**
+Whole new buyer and seller pillars. Buyers got the Purchases hub
+(checkout-grouped order history with inline refund flow) and the
+Purchase detail page. Sellers got the Shop hub under Studio with
+Products / Orders / Settings tabs, the Order detail page (status,
+fulfillment, timeline, refund), shop-onboarding flow, and the Vinyl
+listing creator. New shared building blocks behind it all: `Items`
+(line list + money breakdown), `PageSection` (boxed/flat detail
+section), `ShippingZoneEditor`, `CheckoutCard`, plus a global cart
+store + drawer. See the **Buyer + seller commerce build-out** entry
+below for the full breakdown.
+
+**2. Artist profile + Discography (Core)**
+Full artist landing page — full-bleed hero, tab strip (Overview /
+Discography / Shop), Top Songs rail, plus 4 horizontal card rails
+(Top Albums, Products, Curated Playlists, Similar Artists). The
+Discography tab ships both a grid view (32 real Sun Ra releases with
+iTunes artwork) and a borderless list table with sticky sortable
+headers, cover-as-play with the spinning wave animation, and a kebab
+menu sharing the AlbumCard items. See **Artist profile, Discography,
+design-system unification**.
+
+**3. Design system promoted to its own route + naming pass**
+The kitchen sink moved out of `?page=Explore` into a dedicated
+`/design-system` route with a sticky grouped sidebar, scroll-spy,
+back-to-prototype link, and a Phase 2 toggle that hides Shop
+components. A "Design system" link sits in the topbar across every
+prototype page. Component renames to align docs labels with code:
+`SortButton` → `SingleSelect`, `FilterMenu` → `MultiSelect`,
+`HomeRow` → `CardRail`, `ProductCardSmall` → `ProductCard`. New
+primitives that emerged: `Toggle`, `ToggleGroup`, `Toolbar`,
+`Accordion`, `Collapsible`, `Meter`, `ScrollArea`, `NavigationMenu`,
+all card types (Album/Artist/Playlist/Song/Product/Checkout/Card
+Rail). `Badge` gained `pill` shape + `primary` / `success` (mint
+`#00D5A3`) variants and unified at h-[26px] across every variant.
+Sidebar gutters trimmed `px-16` → `px-10` everywhere.
+
+**Quick links**
+- Live docs: <https://muza-prototypes.vercel.app/design-system>
+- Component tickets: [COMPONENT_TICKETS.md](COMPONENT_TICKETS.md) —
+  one block per new/updated component, Core vs Phase 2, copy
+  straight into a tracker.
+- Ops fix: added [`vercel.json`](vercel.json) so `/design-system`
+  and `/sidebar-demo` resolve in production (SPA rewrite — every
+  non-asset path falls through to `/`).
+
+---
+
 ## 2026-05 — Dedicated `/design-system` route + component-naming pass
 
 ### New surface
