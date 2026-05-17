@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react"
 import { useSearchParams } from "react-router"
 import { cn } from "@/lib/utils"
+import { useIsMobile } from "@/lib/use-media-query"
 import { AnimatedLogo } from "@/components/app/animated-logo"
 import { Sidebar } from "@/components/app/sidebar"
 import { StudioMusicView } from "@/components/app/studio-music"
@@ -3432,7 +3433,12 @@ export default function Home() {
     }, { replace: true })
   }
 
+  // Sidebar collapses automatically on mobile widths so the main view gets
+  // the full viewport. User can still toggle on top of that — the auto-
+  // collapse only fires when the viewport itself crosses the breakpoint.
+  const isMobile = useIsMobile()
   const [collapsed, setCollapsed] = useState(false)
+  useEffect(() => { setCollapsed(isMobile) }, [isMobile])
   const [uploadOpen, setUploadOpen] = useState(false)
   const [uploadMinimized, setUploadMinimized] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
