@@ -223,7 +223,7 @@ function ProfileMenu() {
 function DesignSystemButton() {
   return (
     <a
-      href="/design-system"
+      href="/?page=DesignSystem"
       className="inline-flex items-center h-10 px-3 rounded-full text-small font-normal text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
     >
       Design system

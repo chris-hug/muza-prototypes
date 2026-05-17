@@ -134,6 +134,7 @@ import { PlayerBarB }    from "@/components/ui/player-bar-b"
 import { PlayerOverlay } from "@/components/ui/player-overlay"
 import { MobilePlayerShell } from "@/components/ui/mobile-player-shell"
 import { Wordmark }      from "@/components/ui/logo"
+import DesignSystem      from "./design-system"
 
 // ─── Section heading component ────────────────────────────────────────────────
 // `scroll-mt-6` gives the section 24px of breathing room from the top of the
@@ -3660,6 +3661,11 @@ export default function Home() {
     // the same snappy ease-out tween as the quick-nav chips.
     requestAnimationFrame(() => scrollToSection(hash))
   }, [activeNav])
+
+  // Design system runs in its own full-bleed layout (its own
+  // sidebar, no product AppShell). Render it BEFORE the AppShell
+  // wrapper so it isn't nested inside the product sidebar/topbar.
+  if (activeNav === "DesignSystem") return <DesignSystem />
 
   return (
     <CartProvider>

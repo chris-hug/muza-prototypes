@@ -135,7 +135,7 @@ export default function DesignSystem() {
         {/* Top — wordmark + back-to-prototype link. */}
         <div className="shrink-0 px-5 pt-6 pb-4 flex flex-col gap-3 border-b border-border">
           <a
-            href="/"
+            href="/?page=Home"
             className="inline-flex items-center gap-1.5 text-xsmall font-normal text-muted-foreground hover:text-foreground transition-colors w-fit"
           >
             <ArrowLeft className="size-3.5" />
