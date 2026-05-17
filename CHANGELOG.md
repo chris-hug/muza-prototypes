@@ -34,7 +34,7 @@ design-system unification**.
 
 **3. Design system promoted to its own route + naming pass**
 The kitchen sink moved out of `?page=Explore` into a dedicated
-`/design-system` route with a sticky grouped sidebar, scroll-spy,
+`/?page=DesignSystem` route with a sticky grouped sidebar, scroll-spy,
 back-to-prototype link, and a Phase 2 toggle that hides Shop
 components. A "Design system" link sits in the topbar across every
 prototype page. Component renames to align docs labels with code:
@@ -48,21 +48,21 @@ Rail). `Badge` gained `pill` shape + `primary` / `success` (mint
 Sidebar gutters trimmed `px-16` → `px-10` everywhere.
 
 **Quick links**
-- Live docs: <https://muza-prototypes.vercel.app/design-system>
+- Live docs: <https://muza-prototypes.vercel.app/?page=DesignSystem>
 - Component tickets: [COMPONENT_TICKETS.md](COMPONENT_TICKETS.md) —
   one block per new/updated component, Core vs Phase 2, copy
   straight into a tracker.
-- Ops fix: added [`vercel.json`](vercel.json) so `/design-system`
-  and `/sidebar-demo` resolve in production (SPA rewrite — every
-  non-asset path falls through to `/`).
+- Routing fix: design system now goes through the same `?page=…`
+  search-param pattern every other view uses (no standalone route,
+  no SPA rewrite needed). See latest changelog entry.
 
 ---
 
-## 2026-05 — Dedicated `/design-system` route + component-naming pass
+## 2026-05 — Dedicated `/?page=DesignSystem` route + component-naming pass
 
 ### New surface
 
-**`/design-system`** route (`app/routes/design-system.tsx`)
+**`/?page=DesignSystem`** route (`app/routes/design-system.tsx`)
 - Pulled the kitchen sink out of `?page=Explore` into its own route
   with a sticky left sidebar grouped by category (Foundations /
   Atoms / Inputs / Indicators / Containers / Cards & lists / Page

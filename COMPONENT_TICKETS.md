@@ -7,7 +7,7 @@ digital music — day-one scope) and **Phase 2 / Shop** (physical
 merch, product listings, order fulfillment — deferred).
 
 Repo: <https://github.com/chris-hug/muza-prototypes>
-Design system route (local): `/design-system`
+Design system route (local): `/?page=DesignSystem`
 
 ---
 
@@ -23,7 +23,7 @@ inside a `ToggleGroup`.
 `Button` (sm / default / lg). Inside a `ToggleGroup` inherits the
 group's size automatically.
 
-- Design system: [/design-system#toggle](/design-system#toggle)
+- Design system: [/?page=DesignSystem#toggle](/?page=DesignSystem#toggle)
 - GitHub: <https://github.com/chris-hug/muza-prototypes/blob/main/src/components/ui/toggle.tsx>
 
 ### ToggleGroup  ·  *new*
@@ -39,7 +39,7 @@ multi-select (any combination). Same chrome and heights as
 - Topbar theme switcher
 - Artist › Discography grid/list toggle
 
-- Design system: [/design-system#togglegroup](/design-system#togglegroup)
+- Design system: [/?page=DesignSystem#togglegroup](/?page=DesignSystem#togglegroup)
 - GitHub: <https://github.com/chris-hug/muza-prototypes/blob/main/src/components/ui/toggle-group.tsx>
 
 ### Toolbar  ·  *new*
@@ -52,7 +52,7 @@ controls — Bold / Italic / Underline / Link / Code / Settings)
 with shared focus semantics. Single tab stop; arrows move between
 items.
 
-- Design system: [/design-system#toolbar](/design-system#toolbar)
+- Design system: [/?page=DesignSystem#toolbar](/?page=DesignSystem#toolbar)
 - GitHub: <https://github.com/chris-hug/muza-prototypes/blob/main/src/components/ui/toolbar.tsx>
 
 ### Meter  ·  *new*
@@ -63,7 +63,7 @@ items.
 storage used, password strength, profile completion. Distinct from
 `Progress`, which represents indeterminate or task-bound work.
 
-- Design system: [/design-system#meter](/design-system#meter)
+- Design system: [/?page=DesignSystem#meter](/?page=DesignSystem#meter)
 - GitHub: <https://github.com/chris-hug/muza-prototypes/blob/main/src/components/ui/meter.tsx>
 
 ### ScrollArea  ·  *new*
@@ -74,7 +74,7 @@ storage used, password strength, profile completion. Distinct from
 auto-hide when not in use, work consistently across browsers /
 platforms.
 
-- Design system: [/design-system#scrollarea](/design-system#scrollarea)
+- Design system: [/?page=DesignSystem#scrollarea](/?page=DesignSystem#scrollarea)
 - GitHub: <https://github.com/chris-hug/muza-prototypes/blob/main/src/components/ui/scroll-area.tsx>
 
 ### Collapsible  ·  *new*
@@ -86,7 +86,7 @@ platforms.
 primitive that `Accordion` is built on. Use directly when only one
 section needs to expand.
 
-- Design system: [/design-system#collapsible](/design-system#collapsible)
+- Design system: [/?page=DesignSystem#collapsible](/?page=DesignSystem#collapsible)
 - GitHub: <https://github.com/chris-hug/muza-prototypes/blob/main/src/components/ui/collapsible.tsx>
 
 ### Accordion  ·  *new*
@@ -99,7 +99,7 @@ expanded at a time (or `multiple` to allow several). Used for FAQ
 lists, settings groups, anything that benefits from progressive
 disclosure.
 
-- Design system: [/design-system#accordion](/design-system#accordion)
+- Design system: [/?page=DesignSystem#accordion](/?page=DesignSystem#accordion)
 - GitHub: <https://github.com/chris-hug/muza-prototypes/blob/main/src/components/ui/accordion.tsx>
 
 ### NavigationMenu  ·  *new*
@@ -111,7 +111,7 @@ disclosure.
 popups (mega-menu, category trees). Sliding between triggers keeps
 the popup open without a click.
 
-- Design system: [/design-system#navigationmenu](/design-system#navigationmenu)
+- Design system: [/?page=DesignSystem#navigationmenu](/?page=DesignSystem#navigationmenu)
 - GitHub: <https://github.com/chris-hug/muza-prototypes/blob/main/src/components/ui/navigation-menu.tsx>
 
 ### Badge  ·  *updated*
@@ -130,7 +130,7 @@ badges that nest inside chips.
 - Studio › Music type column
 - Artist › Discography type column
 
-- Design system: [/design-system#badges](/design-system#badges)
+- Design system: [/?page=DesignSystem#badges](/?page=DesignSystem#badges)
 - GitHub: <https://github.com/chris-hug/muza-prototypes/blob/main/src/components/ui/badge.tsx>
 
 ### Chip  ·  *updated*
@@ -145,7 +145,7 @@ a `Badge shape="pill"` for inline counts.
 **Used in:**
 - Vinyl listing — genre tags
 
-- Design system: [/design-system#chips](/design-system#chips)
+- Design system: [/?page=DesignSystem#chips](/?page=DesignSystem#chips)
 - GitHub: <https://github.com/chris-hug/muza-prototypes/blob/main/src/components/ui/chip.tsx>
 
 ### MultiSelect  ·  *updated*  *(renamed from `FilterMenu`)*
@@ -163,7 +163,7 @@ how many are currently active. Searchable for long option lists;
 - Studio › Music filters
 - Artist › Discography
 
-- Design system: [/design-system#multi-select](/design-system#multi-select)
+- Design system: [/?page=DesignSystem#multi-select](/?page=DesignSystem#multi-select)
 - GitHub: <https://github.com/chris-hug/muza-prototypes/blob/main/src/components/ui/multi-select.tsx>
 
 ### SingleSelect  ·  *new*  *(formerly `SortButton` / `Picker`)*
@@ -179,7 +179,7 @@ option replaces the current value. Distinct from the form-field
 **Used in:**
 - Artist › Discography (sort)
 
-- Design system: [/design-system#single-select](/design-system#single-select)
+- Design system: [/?page=DesignSystem#single-select](/?page=DesignSystem#single-select)
 - GitHub: <https://github.com/chris-hug/muza-prototypes/blob/main/src/components/ui/single-select.tsx>
 
 ### AlbumCard  ·  *new*
@@ -200,7 +200,7 @@ targets.
 - Artist › Discography (grid view)
 - Home › New Albums rail
 
-- Design system: [/design-system#album-card](/design-system#album-card)
+- Design system: [/?page=DesignSystem#album-card](/?page=DesignSystem#album-card)
 - GitHub: <https://github.com/chris-hug/muza-prototypes/blob/main/src/components/ui/album-card.tsx>
 
 ### ArtistCard  ·  *new*
@@ -216,7 +216,7 @@ square AlbumCards.
 - Library › Artists
 - Artist › Similar Artists
 
-- Design system: [/design-system#artist-card](/design-system#artist-card)
+- Design system: [/?page=DesignSystem#artist-card](/?page=DesignSystem#artist-card)
 - GitHub: <https://github.com/chris-hug/muza-prototypes/blob/main/src/components/ui/artist-card.tsx>
 
 ### PlaylistCard  ·  *new*
@@ -233,7 +233,7 @@ Report → Delete).
 - Library › Playlists
 - Artist › Curated Playlists
 
-- Design system: [/design-system#playlist-card](/design-system#playlist-card)
+- Design system: [/?page=DesignSystem#playlist-card](/?page=DesignSystem#playlist-card)
 - GitHub: <https://github.com/chris-hug/muza-prototypes/blob/main/src/components/ui/playlist-card.tsx>
 
 ### SongListItem  ·  *new*
@@ -251,7 +251,7 @@ to turn the kebab into a real DropdownMenu.
 **Used in:**
 - Artist › Top Songs
 
-- Design system: [/design-system#song-list-item](/design-system#song-list-item)
+- Design system: [/?page=DesignSystem#song-list-item](/?page=DesignSystem#song-list-item)
 - GitHub: <https://github.com/chris-hug/muza-prototypes/blob/main/src/components/ui/song-list-item.tsx>
 
 ### CardRail  ·  *new*  *(renamed from `HomeRow`)*
@@ -268,7 +268,7 @@ time. Scrollbar hidden.
 - Home › New Albums / Playlists / Artists rails
 - Artist profile rails (Top Albums, Products, Curated Playlists, Similar Artists)
 
-- Design system: [/design-system#card-rail](/design-system#card-rail)
+- Design system: [/?page=DesignSystem#card-rail](/?page=DesignSystem#card-rail)
 - GitHub: <https://github.com/chris-hug/muza-prototypes/blob/main/src/components/app/card-rail.tsx>
 
 ### PageSection  ·  *new*
@@ -286,7 +286,7 @@ the same hierarchy. `boxed` wraps children in a bordered card
 - Order detail
 - Purchase detail
 
-- Design system: [/design-system#page-section](/design-system#page-section)
+- Design system: [/?page=DesignSystem#page-section](/?page=DesignSystem#page-section)
 - GitHub: <https://github.com/chris-hug/muza-prototypes/blob/main/src/components/app/section.tsx>
 
 ### List Table (pattern)  ·  *new*
@@ -304,7 +304,7 @@ Rightmost cell holds a kebab menu sharing `AlbumCardMenuItems`.
 **Used in:**
 - Artist › Discography (list view)
 
-- Design system: [/design-system#list-table](/design-system#list-table)
+- Design system: [/?page=DesignSystem#list-table](/?page=DesignSystem#list-table)
 - GitHub: Pattern lives in [`artist-profile-view.tsx`](https://github.com/chris-hug/muza-prototypes/blob/main/src/components/app/artist-profile-view.tsx) (DiscographyView function) — promote to a shared component when a second consumer appears.
 
 ---
@@ -325,7 +325,7 @@ row stay flush regardless of title length. Full-width secondary
 - Artist › Shop tab
 - Artist › Products rail
 
-- Design system: [/design-system#product-card](/design-system#product-card)
+- Design system: [/?page=DesignSystem#product-card](/?page=DesignSystem#product-card)
 - GitHub: <https://github.com/chris-hug/muza-prototypes/blob/main/src/components/ui/product-card.tsx>
 
 ### CheckoutCard  ·  *new*
@@ -342,7 +342,7 @@ the user doesn't have to hunt for it.
 **Used in (Phase 2):**
 - Purchases hub
 
-- Design system: [/design-system#checkout-card](/design-system#checkout-card)
+- Design system: [/?page=DesignSystem#checkout-card](/?page=DesignSystem#checkout-card)
 - GitHub: Exported from [`purchases-view.tsx`](https://github.com/chris-hug/muza-prototypes/blob/main/src/components/app/purchases-view.tsx) (`CheckoutCard` + `CHECKOUTS` fixture).
 
 ### Items  ·  *new*  *(`DetailItemsSection`)*
@@ -359,7 +359,7 @@ total at qty > 1.
 - Order detail
 - Purchase detail
 
-- Design system: [/design-system#items](/design-system#items)
+- Design system: [/?page=DesignSystem#items](/?page=DesignSystem#items)
 - GitHub: <https://github.com/chris-hug/muza-prototypes/blob/main/src/components/app/items-section.tsx>
 
 ### Order lifecycle status badges  ·  *new*
@@ -378,5 +378,5 @@ machine).
 - Purchases hub
 - Purchase / Order detail header
 
-- Design system: [/design-system#badges](/design-system#badges) (section "Order lifecycle status")
+- Design system: [/?page=DesignSystem#badges](/?page=DesignSystem#badges) (section "Order lifecycle status")
 - GitHub: Exported from [`orders-view.tsx`](https://github.com/chris-hug/muza-prototypes/blob/main/src/components/app/orders-view.tsx) (`OrderStatusBadge`).
