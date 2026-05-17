@@ -25,14 +25,14 @@ const focusRing =
 /** Ghost icon button — same hover/active/focus as the project-wide Button[variant=ghost]. */
 const ghostIconBtn = cn(
   "flex items-center justify-center p-1.5 rounded-full cursor-pointer shrink-0",
-  "hover:bg-accent active:bg-accent/80 active:scale-90 transition-all duration-150",
+  "hover:bg-accent active:bg-accent/80 active:scale-90 transition-[colors,opacity,transform] duration-150",
   focusRing,
 )
 
 /** Transport button (skip/play) — opacity-based hover, no fill. */
 const transportBtn = cn(
   "flex items-center justify-center text-foreground rounded-full cursor-pointer",
-  "hover:opacity-70 active:scale-90 transition-all duration-150",
+  "hover:opacity-70 active:scale-90 transition-[colors,opacity,transform] duration-150",
   focusRing,
   "focus-visible:ring-offset-2 focus-visible:ring-offset-background",
 )
@@ -180,7 +180,7 @@ function VolumeControl({
         className={cn(
           "absolute bottom-0 left-0 w-8",
           "flex flex-col items-center justify-end rounded-full",
-          "transition-all duration-200 ease-out",
+          "transition-[transform,opacity] duration-200 ease-out",
           // Expanded pill. Using `ring` (box-shadow) instead of `border` so the
           // icon's vertical position is identical in both states.
           open && "ring-1 ring-inset ring-border bg-background pt-3 pb-0 gap-2.5 shadow-sm z-20",

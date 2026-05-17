@@ -65,7 +65,7 @@ const TRANSACTIONS: Transaction[] = [
 
 export function WalletView() {
   return (
-    <div className="flex flex-col gap-8 px-16 py-8 pb-40">
+    <div className="flex flex-col gap-8 px-10 py-8 pb-40">
 
       {/* ── Balance ─────────────────────────────────────────────────────── */}
       <section className="flex flex-col gap-4">

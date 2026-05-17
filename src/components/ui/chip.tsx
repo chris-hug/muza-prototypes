@@ -5,6 +5,7 @@ import { XIcon } from "lucide-react"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 
 // ─── Chip ─────────────────────────────────────────────────────────────────────
 //
@@ -27,11 +28,13 @@ import { cn } from "@/lib/utils"
 
 const chipVariants = cva(
   [
-    // Figma: h-8 (32px) · px-3 (12px) · gap-2 (8px) · text-2xsmall (14px) · font-normal · rounded-full
-    "inline-flex items-center gap-2",
-    "rounded-full border px-3 h-8 pb-px",
-    "text-2xsmall font-normal whitespace-nowrap",
-    "transition-all cursor-pointer select-none outline-none",
+    // Common: rounded pill, single-line, gap between label and any
+    // inner adornment (count badge, leading icon). Size-specific
+    // metrics live in the `size` variant below.
+    "group/chip inline-flex items-center gap-2",
+    "rounded-full border pb-px",
+    "font-normal whitespace-nowrap",
+    "transition-[colors,box-shadow] cursor-pointer select-none outline-none",
     "focus-visible:ring-2 focus-visible:ring-ring/50",
     "disabled:pointer-events-none disabled:opacity-50",
   ],
@@ -40,20 +43,35 @@ const chipVariants = cva(
       variant: {
         // Filter chip unselected — outline button style (node 4971:83324)
         default:
-          "border-border bg-background text-foreground hover:bg-secondary",
-        // Dismissable chip — muted fill, accent hover
+          "border-border bg-background text-foreground hover:bg-muted",
+        // Dismissable chip — muted fill, hover stays muted
         secondary:
-          "border-border bg-muted text-foreground hover:bg-accent",
+          "border-border bg-muted text-foreground hover:bg-muted",
         // Selected state — primary fill
         selected:
           "border-primary bg-primary text-primary-foreground",
         // Selected state — dark outline only (secondary toggle)
         "selected-outline":
           "border-foreground bg-muted text-foreground",
+        // Ghost — no border/fill, just text. Used in header filter
+        // bars (Discography) where the bar itself is visual chrome
+        // and individual chips should read as lightweight nav.
+        ghost:
+          "border-transparent bg-transparent text-foreground hover:bg-muted",
+      },
+      size: {
+        // sm — compact filter chip (default genres, tags). Figma: h-8 · px-3 · text-2xsmall.
+        sm: "h-8 px-3 text-2xsmall",
+        // md — header filter chip with count badge (Artist Discography,
+        //      Library filter bars). h-10 matches Button `default`
+        //      so it can sit in a toolbar next to a sort button +
+        //      view toggle and read as one row.
+        md: "h-10 px-4 text-small",
       },
     },
     defaultVariants: {
       variant: "default",
+      size:    "sm",
     },
   }
 )
@@ -63,9 +81,14 @@ interface ChipProps
     VariantProps<typeof chipVariants> {
   selected?: boolean
   activeStyle?: "fill" | "outline"
+  /** Optional count rendered as a pill `Badge` after the label. */
+  count?: number | string
 }
 
-function Chip({ className, variant, selected, activeStyle = "fill", children, ...props }: ChipProps) {
+function Chip({
+  className, variant, size, selected, activeStyle = "fill",
+  count, children, ...props
+}: ChipProps) {
   const resolvedVariant = selected
     ? (activeStyle === "outline" ? "selected-outline" : "selected")
     : (variant ?? "default")
@@ -75,10 +98,25 @@ function Chip({ className, variant, selected, activeStyle = "fill", children, ..
       type="button"
       data-slot="chip"
       data-selected={selected || undefined}
-      className={cn(chipVariants({ variant: resolvedVariant }), className)}
+      className={cn(chipVariants({ variant: resolvedVariant, size }), className)}
       {...props}
     >
       {children}
+      {count !== undefined && (
+        // Default + hover: `bg-accent` — the chip's hover bg (muted)
+        // wraps a slightly darker accent badge, so the count always
+        // reads above the chip surface without shifting under the
+        // cursor.
+        // Selected: borderless `bg-background` pill so the count
+        // stands out against the primary backdrop.
+        <Badge
+          shape="pill"
+          variant="secondary"
+          className="bg-accent group-data-[selected]/chip:bg-background/20 group-data-[selected]/chip:text-primary-foreground"
+        >
+          {count}
+        </Badge>
+      )}
     </button>
   )
 }

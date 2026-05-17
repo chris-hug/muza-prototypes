@@ -337,7 +337,7 @@
   --destructive-foreground:  var(--tw-red-50);
 
   --border:                  var(--muza-neutrals-700);
-  --input:                   var(--muza-neutrals-300);
+  --input:                   var(--muza-neutrals-800);
   --ring:                    var(--muza-neutrals-300);
 
   --chart-1: oklch(52.98% 0.1932 262.1);
@@ -356,6 +356,47 @@
   --sidebar-ring:                 var(--muza-neutrals-300);
 }
 
+/* ─── Forced-light scope ─────────────────────────────────────────────────
+ * Mirrors :root's semantic mappings exactly so a subtree can opt OUT of
+ * an ancestor's .dark scope (e.g. the design-system kitchen sink renders
+ * both light + dark token swatches side-by-side regardless of the page's
+ * current theme). Anywhere we'd otherwise have `.dark` overriding the
+ * :root defaults, this re-asserts them at a closer scope, so var() lookups
+ * inside this scope resolve to light-mode values.
+ *
+ * Keep this in sync with :root above. */
+.light {
+  --background:              var(--muza-white);
+  --foreground:              var(--muza-neutrals-950);
+
+  --card:                    var(--muza-white);
+  --card-foreground:         var(--muza-neutrals-950);
+
+  --popover:                 var(--muza-white);
+  --popover-foreground:      var(--muza-neutrals-950);
+
+  --primary:                 var(--muza-blue-200);
+  --primary-hover:           color-mix(in srgb, black 20%, var(--muza-blue-200));
+  --primary-foreground:      var(--muza-neutrals-50);
+
+  --secondary:               var(--muza-neutrals-200);
+  --secondary-foreground:    var(--muza-neutrals-900);
+  --secondary-hover:         var(--muza-neutrals-300);
+
+  --muted:                   var(--muza-neutrals-50);
+  --muted-foreground:        var(--muza-neutrals-a75-700);
+
+  --accent:                  var(--muza-neutrals-100);
+  --accent-foreground:       var(--muza-neutrals-900);
+
+  --destructive:             var(--tw-red-600);
+  --destructive-foreground:  var(--tw-red-50);
+
+  --border:                  var(--muza-neutrals-300);
+  --input:                   var(--muza-neutrals-200);
+  --ring:                    var(--muza-neutrals-900);
+}
+
 
 /* ═══════════════════════════════════════════════════════════════════════
  * BASE STYLES
@@ -368,6 +409,21 @@
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+}
+
+/* ── Image outline (skill: pure black/white, never a tinted neutral) ────────
+ * Subtle 1px inset edge for displayed photos — covers, product thumbnails,
+ * avatars, anything rendered as a real raster image. Targeting
+ * `img.object-cover` is the cleanest signal for "this is a real photo,
+ * not a decorative SVG" — every photo in the app uses object-cover.
+ * Pure black/white at 10% opacity per the design rule (a tinted neutral
+ * picks up the surface color beneath and reads as dirt on the edge). */
+img[class*="object-cover"] {
+  outline: 1px solid rgba(0, 0, 0, 0.1);
+  outline-offset: -1px;
+}
+.dark img[class*="object-cover"] {
+  outline-color: rgba(255, 255, 255, 0.1);
 }
 
 /* ── Sidebar collapsible panel animation ─────────────────────────────────── */
@@ -499,4 +555,74 @@
   65%  { transform: scale(1.03); }
   80%  { transform: scale(0.99); }
   100% { transform: scale(1);    }
+}
+
+/* ── Now-playing wave ─────────────────────────────────────────────────────────
+   Three logo shapes, each on its own 9s cycle. The cycle has three sub-beats
+   (3 × 3s); in each sub-beat exactly one of the shapes snaps while the other
+   two keep hovering in slow motion. So the wave "passes" left → centre →
+   right across the trio before repeating, instead of all three snapping in
+   unison.
+
+   · `muzaWaveLeft`  — snaps in the first  third (0–33% of the cycle)
+   · `muzaWaveCenter` — snaps in the second third (33–66%); range kept close
+                        to 1.0 so the centre shape stays mostly circular
+                        through the whole cycle.
+   · `muzaWaveRight` — snaps in the last  third (66–100%)
+
+   Per-stop `animation-timing-function` keeps the hover parts gentle and the
+   snap moments sharp; pass `linear` at the call site so these per-stop curves
+   take effect. */
+@keyframes muzaWaveLeft {
+  0%   { transform: scaleY(0.55); animation-timing-function: cubic-bezier(0.4, 0, 0.4, 1); }
+  15%  { transform: scaleY(0.55); animation-timing-function: cubic-bezier(0.2, 1.5, 0.4, 1); }
+  20%  { transform: scaleY(1.05); animation-timing-function: cubic-bezier(0.25, 0.2, 0.55, 0.85); }
+  25%  { transform: scaleY(0.4);  animation-timing-function: cubic-bezier(0.4, 0, 0.4, 1); }
+  40%  { transform: scaleY(0.65); animation-timing-function: cubic-bezier(0.4, 0, 0.4, 1); }
+  60%  { transform: scaleY(0.5);  animation-timing-function: cubic-bezier(0.4, 0, 0.4, 1); }
+  80%  { transform: scaleY(0.6);  animation-timing-function: cubic-bezier(0.4, 0, 0.4, 1); }
+  100% { transform: scaleY(0.55); }
+}
+@keyframes muzaWaveCenter {
+  0%   { transform: scaleY(0.92); animation-timing-function: cubic-bezier(0.4, 0, 0.4, 1); }
+  25%  { transform: scaleY(0.96); animation-timing-function: cubic-bezier(0.4, 0, 0.4, 1); }
+  45%  { transform: scaleY(0.88); animation-timing-function: cubic-bezier(0.2, 1.5, 0.4, 1); }
+  52%  { transform: scaleY(1.06); animation-timing-function: cubic-bezier(0.25, 0.2, 0.55, 0.85); }
+  58%  { transform: scaleY(0.82); animation-timing-function: cubic-bezier(0.4, 0, 0.4, 1); }
+  75%  { transform: scaleY(0.94); animation-timing-function: cubic-bezier(0.4, 0, 0.4, 1); }
+  100% { transform: scaleY(0.92); }
+}
+/* Carousel hover — subtle Y-translation applied to the outer wrapper
+   so the whole 3D ensemble floats up/down while the inner stage
+   rotates. Slow (3.5s) and small amplitude (1.5px) so it reads as
+   "alive" rather than active. */
+@keyframes muzaCarouselFloat {
+  0%, 100% { transform: translateY(0);        }
+  50%      { transform: translateY(-1.5px);   }
+}
+
+/* Carousel indicator — 4 dots positioned around a 3D Y-axis at 90°
+   intervals (same setup as the home page's `AnimatedLogo`: each item
+   sits at `rotateY(N) translateZ(depth)`). No literal pause at the
+   cardinal angles — instead each 90° segment uses a soft
+   `cubic-bezier(0.25, 0.2, 0.55, 0.85)` so the rotation decelerates as it
+   approaches every cardinal and accelerates back out, leaving a
+   brief moment where the centre/left/right silhouette is visible
+   without actually stopping. */
+@keyframes muzaCarousel {
+  0%   { transform: rotateY(0deg);   animation-timing-function: cubic-bezier(0.2, 0.5, 0.5, 0.9); }
+  25%  { transform: rotateY(90deg);  animation-timing-function: cubic-bezier(0.2, 0.5, 0.5, 0.9); }
+  50%  { transform: rotateY(180deg); animation-timing-function: cubic-bezier(0.2, 0.5, 0.5, 0.9); }
+  75%  { transform: rotateY(270deg); animation-timing-function: cubic-bezier(0.2, 0.5, 0.5, 0.9); }
+  100% { transform: rotateY(360deg); }
+}
+@keyframes muzaWaveRight {
+  0%   { transform: scaleY(0.55); animation-timing-function: cubic-bezier(0.4, 0, 0.4, 1); }
+  20%  { transform: scaleY(0.65); animation-timing-function: cubic-bezier(0.4, 0, 0.4, 1); }
+  40%  { transform: scaleY(0.55); animation-timing-function: cubic-bezier(0.4, 0, 0.4, 1); }
+  60%  { transform: scaleY(0.5);  animation-timing-function: cubic-bezier(0.4, 0, 0.4, 1); }
+  78%  { transform: scaleY(0.55); animation-timing-function: cubic-bezier(0.2, 1.5, 0.4, 1); }
+  85%  { transform: scaleY(1.05); animation-timing-function: cubic-bezier(0.25, 0.2, 0.55, 0.85); }
+  90%  { transform: scaleY(0.4);  animation-timing-function: cubic-bezier(0.4, 0, 0.4, 1); }
+  100% { transform: scaleY(0.55); }
 }

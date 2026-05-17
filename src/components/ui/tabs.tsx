@@ -92,7 +92,7 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
       className={cn(
         // Base — `pb-px` matches the optical-center nudge used on Button;
         // Founders Grotesk sits visually high in a flex-centered box without it.
-        "relative inline-flex items-center justify-center gap-1.5 whitespace-nowrap font-medium transition-all outline-none pb-px",
+        "relative inline-flex items-center justify-center gap-1.5 whitespace-nowrap font-medium transition-[colors,box-shadow,transform,opacity] outline-none pb-px",
         "disabled:pointer-events-none disabled:opacity-50",
         "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",

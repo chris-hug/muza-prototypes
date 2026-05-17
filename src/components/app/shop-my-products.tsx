@@ -6,6 +6,8 @@ import {
   Ghost, Disc3, Disc, CassetteTape, Shirt,
   Plus, Search, X, ArrowDown, ArrowUp, ArrowUpDown, Package,
 } from "lucide-react"
+import { AlertCircle } from "lucide-react"
+import { Alert, AlertTitle, AlertDescription, AlertAction } from "@/components/ui/alert"
 import { Badge, StatusBadge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -19,10 +21,12 @@ import {
   DialogFooter, DialogClose,
 } from "@/components/ui/dialog"
 import { RadioCard, RadioCardGroup } from "@/components/ui/radio-card"
-import { VinylCreateListing, type VinylDraft } from "@/components/app/vinyl-create-listing"
 import { cn } from "@/lib/utils"
 import { filterTriggerCls, FilterChevron, FilterCount } from "@/components/ui/filter-button"
 import { TableHead } from "@/components/ui/table"
+import { useShopSettings } from "@/lib/shop-settings"
+import { useToast } from "@/components/ui/toast"
+import { useSearchParams } from "react-router"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -487,11 +491,45 @@ export function ShopMyProductsView() {
   const [sortDir,      setSortDir]      = useState<SortDir>("desc")
   const [selectedIds,  setSelectedIds]  = useState<Set<string>>(new Set())
   const [dialogOpen,   setDialogOpen]   = useState(false)
-  // `editing` drives the full-page Vinyl create/edit flow. When non-null, the
-  // form replaces the table. `id` present ⇒ edit mode; `id` absent ⇒ create.
-  const [editing, setEditing] = useState<{ type: ProductType; product?: Product } | null>(null)
+  // Editing state is lifted to the Shop hub — when the seller starts a
+  // create/edit flow, the entire tab chrome above is swapped out for
+  // the form. Local state would keep tabs visible (and editable
+  // mid-form), which is what we explicitly don't want.
+
+  // Publishing gate: sellers can draft / edit products freely, but
+  // flipping a listing to `public` requires their shop to be live —
+  // i.e. the onboarding checklist (profile, legal ack, tax residency,
+  // shipping zones) must pass. Going PRIVATE is always allowed; only
+  // promotions to public are gated.
+  const { isShopLive, checklist, startEditing } = useShopSettings()
+  const { add: toast } = useToast()
+  const [, setParams] = useSearchParams()
+
+  const goToSettings = () => {
+    setParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set("page", "Shop")
+      next.set("shop-tab", "settings")
+      return next
+    }, { replace: true })
+  }
 
   function setProductStatus(id: string, s: ProductStatus) {
+    if (s === "public" && !isShopLive) {
+      const missing = [
+        !checklist.profile   && "profile",
+        !checklist.legalAck  && "legal acknowledgment",
+        !checklist.residency && "tax residency",
+        !checklist.shipping  && "shipping zones",
+      ].filter(Boolean).join(", ")
+      toast({
+        type: "warning",
+        title: "Finish shop setup before publishing",
+        description: `Missing: ${missing}. Open Settings to complete.`,
+        data: { actionLabel: "Open settings", onAction: goToSettings },
+      } as never)
+      return
+    }
     setStatuses(prev => ({ ...prev, [id]: s }))
   }
 
@@ -511,25 +549,11 @@ export function ShopMyProductsView() {
 
   function handleProductTypeSelected(type: ProductType) {
     // For now only Vinyl has a dedicated form; other types can be wired later.
-    if (type === "Vinyl") setEditing({ type })
+    if (type === "Vinyl") startEditing({ productType: type })
   }
 
   function handleEditProduct(product: Product) {
-    if (product.type === "Vinyl") setEditing({ type: "Vinyl", product })
-  }
-
-  function handleCloseEditor() {
-    setEditing(null)
-  }
-
-  function handleSaveDraft(_draft: VinylDraft) {
-    // Stub: persist as draft. For now just close the editor.
-    setEditing(null)
-  }
-
-  function handlePublishDraft(_draft: VinylDraft) {
-    // Stub: publish. For now just close the editor.
-    setEditing(null)
+    if (product.type === "Vinyl") startEditing({ productType: "Vinyl", productId: product.id })
   }
 
   const q = searchQuery.trim().toLowerCase()
@@ -559,46 +583,58 @@ export function ShopMyProductsView() {
     setSearchQuery("")
   }
 
-  // Full-page create/edit takes over when `editing` is set — the table
-  // stays mounted behind it so selection state and filters aren't lost.
-  if (editing && editing.type === "Vinyl") {
-    const p = editing.product
-    return (
-      <VinylCreateListing
-        mode={p ? "edit" : "create"}
-        initial={p ? {
-          id:      p.id,
-          title:   p.title,
-          type:    "Album",
-          year:    "",
-          variant: "",
-        } : undefined}
-        onCancel={handleCloseEditor}
-        onSave={handleSaveDraft}
-        onPublish={handlePublishDraft}
-      />
-    )
-  }
+  // Create/edit handled at the Shop-hub level — when `editing` is set
+  // up there, the entire tab chrome is swapped for the form. Nothing
+  // to render inline here.
 
   return (
     <div className="relative flex flex-col h-full">
 
       {/* ── Page header ──────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-center justify-between gap-6 px-16 pt-8 pb-6">
+      <div className="shrink-0 flex items-center justify-between gap-6 px-10 pt-8 pb-6">
         <div>
-          <h1 className="text-2xlarge font-medium tracking-tight">Products</h1>
+          <h1 className="text-2xlarge font-medium tracking-tight text-balance">Products</h1>
           <p className="text-small font-normal text-muted-foreground mt-1">
             {SHOP_STATS.listings} listings · {SHOP_STATS.orders.toLocaleString()} orders
           </p>
         </div>
-        <Button size="lg" className="text-base px-8 h-14 gap-2.5 shrink-0" onClick={() => setDialogOpen(true)}>
-          <Plus className="size-5" />
-          Add product
-        </Button>
+        {/* Add product — the only primary action on this tab. Shop
+             settings moved to its own tab (Studio → Shop → Settings)
+             once the surface grew past the 2-field drawer it used to
+             be. */}
+        <div className="flex items-center gap-3 shrink-0">
+          <Button size="lg" className="text-base px-8 h-14 gap-2.5" onClick={() => setDialogOpen(true)}>
+            <Plus className="size-5" />
+            Add product
+          </Button>
+        </div>
       </div>
 
+      {/* ── Setup-required alert ────────────────────────────────────────
+           Sits above the toolbar whenever the shop isn't live yet.
+           Sellers can still draft listings — the gate fires only when
+           they try to flip a row to public. Uses the design-system
+           Alert primitive in its destructive variant so it reads
+           consistently with every other "action required" surface. */}
+      {!isShopLive && (
+        <div className="shrink-0 px-10 pb-4">
+          <Alert variant="destructive">
+            <AlertCircle className="size-4" />
+            <AlertTitle>Shop not live yet</AlertTitle>
+            <AlertDescription>
+              You can draft listings, but publishing requires finishing setup.
+            </AlertDescription>
+            <AlertAction>
+              <Button variant="outline" size="sm" onClick={goToSettings}>
+                Open settings
+              </Button>
+            </AlertAction>
+          </Alert>
+        </div>
+      )}
+
       {/* ── Toolbar ──────────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-start gap-3 px-16 pb-8">
+      <div className="shrink-0 flex items-start gap-3 px-10 pb-8">
         <div className="flex items-start gap-2 flex-1 flex-wrap">
 
           {/* Status filter */}
@@ -616,7 +652,7 @@ export function ShopMyProductsView() {
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search products"
               className={cn(
-                "h-10 pl-10 pr-[18px] rounded-full border text-small font-normal bg-transparent transition-all",
+                "h-10 pl-10 pr-[18px] rounded-full border text-small font-normal bg-transparent transition-[colors,width,background-color]",
                 "text-foreground placeholder:text-muted-foreground focus:outline-none",
                 searchQuery
                   ? "border-foreground/40 bg-muted text-foreground w-56"
@@ -637,7 +673,7 @@ export function ShopMyProductsView() {
 
       {/* ── Active filter chips ───────────────────────────────────────── */}
       {anyFilter && (
-        <div className="shrink-0 flex items-center gap-1.5 px-16 pb-3 flex-wrap">
+        <div className="shrink-0 flex items-center gap-1.5 px-10 pb-3 flex-wrap">
           <button
             onClick={clearAllFilters}
             className="text-xsmall font-normal text-muted-foreground hover:text-foreground transition-colors mr-1 shrink-0"
@@ -670,7 +706,7 @@ export function ShopMyProductsView() {
       )}
 
       {/* ── Table ────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-auto px-16">
+      <div className="flex-1 overflow-auto px-10">
         <table className="w-full">
 
           {/* Sticky header */}

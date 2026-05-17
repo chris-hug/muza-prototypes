@@ -73,7 +73,11 @@ function AlertAction({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="alert-action"
-      className={cn("absolute top-2 right-2", className)}
+      // Vertically center on the full alert body (regardless of whether
+      // there's 1 or 2 lines of copy). `top-2 right-2` previously pinned
+      // the action to the corner, which floated above the description
+      // on any multi-line alert.
+      className={cn("absolute right-3 top-1/2 -translate-y-1/2", className)}
       {...props}
     />
   )

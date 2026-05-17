@@ -28,7 +28,9 @@ import { filterTriggerCls, FilterChevron, FilterCount } from "@/components/ui/fi
 
 export interface FilterOption {
   value:    string
-  label:    string
+  /** Option label. Accepts ReactNode so callers can render the label
+   *  alongside trailing chrome (count badge, icon, …) on one row. */
+  label:    React.ReactNode
   disabled?: boolean
 }
 
@@ -72,7 +74,10 @@ export function FilterMenu({
 
   const active   = selected.size > 0
   const filtered = searchable && search
-    ? options.filter(o => o.label.toLowerCase().includes(search.toLowerCase()))
+    ? options.filter(o =>
+        (typeof o.label === "string" ? o.label : o.value)
+          .toLowerCase()
+          .includes(search.toLowerCase()))
     : options
 
   // Focus + reset the search input whenever the menu opens / closes.

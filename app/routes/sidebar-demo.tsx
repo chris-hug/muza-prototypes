@@ -2,11 +2,13 @@ import { useState } from "react"
 import { Sidebar } from "@/components/app/sidebar"
 import { Topbar, TopbarDefaultActions } from "@/components/app/topbar"
 import { Music2 } from "lucide-react"
+import { CartProvider } from "@/lib/cart"
 
 export default function SidebarDemo() {
   const [collapsed, setCollapsed] = useState(false)
 
   return (
+    <CartProvider>
     <div className="flex h-screen bg-background">
 
       {/* Sidebar */}
@@ -59,5 +61,6 @@ export default function SidebarDemo() {
 
       </main>
     </div>
+    </CartProvider>
   )
 }

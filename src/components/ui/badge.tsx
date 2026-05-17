@@ -23,10 +23,8 @@ import { cn } from "@/lib/utils"
 const badgeVariants = cva(
   [
     "inline-flex w-fit shrink-0 items-center gap-1",
-    "rounded-sm",
     "border border-transparent",           // always present — keeps height consistent
-    "pt-[4px] pb-[6px] px-[6px]",
-    "text-2xsmall font-normal leading-none whitespace-nowrap",
+    "font-normal leading-none whitespace-nowrap",
     "transition-colors",
     "[&>svg]:pointer-events-none [&>svg]:shrink-0 [&>svg]:size-3",
   ],
@@ -43,9 +41,27 @@ const badgeVariants = cva(
         destructive:
           "bg-destructive text-white",
       },
+      // Shape: default square chip-style, or pill (rounded-full)
+      // count badge for filters / nav. The pill shape is intentionally
+      // tighter (h-5 · min-w-5 · 6px x-padding) so it sits inside
+      // another control (a Chip) without inflating the row height.
+      shape: {
+        // Default label badge — matches the icon-bearing variants
+        // (ContentTypeBadge / StatusBadge) exactly so badges read at
+        // one uniform height across the app whether or not they have
+        // an icon.
+        square: "rounded-sm h-[26px] px-[6px] pb-px text-2xsmall",
+        // `pb-px` mirrors the optical-center nudge Button/Tabs use —
+        // Founders Grotesk numerals sit low in a flex-centered box.
+        // `border-transparent` overrides the base border so the pill
+        // (typically a count inside another chip) reads as a fill,
+        // not a stroked badge.
+        pill:   "rounded-full justify-center h-5 min-w-5 px-1.5 pb-px text-xsmall border-transparent",
+      },
     },
     defaultVariants: {
       variant: "secondary",
+      shape:   "square",
     },
   }
 )
@@ -54,11 +70,11 @@ interface BadgeProps
   extends React.HTMLAttributes<HTMLSpanElement>,
     VariantProps<typeof badgeVariants> {}
 
-function Badge({ className, variant, ...props }: BadgeProps) {
+function Badge({ className, variant, shape, ...props }: BadgeProps) {
   return (
     <span
       data-slot="badge"
-      className={cn(badgeVariants({ variant }), className)}
+      className={cn(badgeVariants({ variant, shape }), className)}
       {...props}
     />
   )
@@ -96,7 +112,7 @@ function ContentTypeBadge({ type, className, ...props }: ContentTypeBadgeProps) 
         "inline-flex w-fit shrink-0 items-center gap-1",
         "rounded-sm border border-border",
         "bg-muted text-foreground",
-        "pt-[4px] pb-[6px] px-[6px]",
+        "h-[26px] px-[6px] pb-px",
         "text-2xsmall font-normal leading-none whitespace-nowrap",
         "[&>svg]:pointer-events-none [&>svg]:shrink-0 [&>svg]:size-3",
         className,

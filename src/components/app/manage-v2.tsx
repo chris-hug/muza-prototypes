@@ -80,7 +80,7 @@ function AccountCard({ account, expanded, onEdit, onClose }: {
 
   return (
     <>
-      <div className={`bg-background border rounded-xl overflow-hidden transition-all duration-200 ${
+      <div className={`bg-background border rounded-xl overflow-hidden transition-[colors,box-shadow] duration-200 ${
         expanded ? "border-foreground/20" : "border-border"
       }`}>
 
@@ -202,7 +202,7 @@ export function ManageV2() {
   const toggle = (id: string) => setEditingId(prev => prev === id ? null : id)
 
   return (
-    <div className="flex flex-col items-center pt-8 pb-40 px-16">
+    <div className="flex flex-col items-center pt-8 pb-40 px-10">
       <div className="flex flex-col gap-10 w-full max-w-[560px]">
 
         {/* Bank accounts */}

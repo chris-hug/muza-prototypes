@@ -1540,7 +1540,7 @@ function FileRow({ file, onRemove }: { file: UploadFile; onRemove: () => void })
         <p className="text-xsmall font-normal truncate">{file.name}</p>
         {!file.done && (
           <div className="mt-1 h-1 bg-secondary rounded-full overflow-hidden">
-            <div className="h-full bg-primary rounded-full transition-all duration-300" style={{ width: `${file.progress}%` }} />
+            <div className="h-full bg-primary rounded-full transition-[width] duration-300" style={{ width: `${file.progress}%` }} />
           </div>
         )}
       </div>

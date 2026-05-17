@@ -26,6 +26,12 @@ export const PlayFilledAlt = ({ className, style }: IconProps) => (
   </svg>
 )
 
+export const PauseFilledAlt = ({ className, style }: IconProps) => (
+  <svg {...svgProps} className={className} style={style}>
+    <path d="M8 4h3v16H8zM13 4h3v16h-3z" />
+  </svg>
+)
+
 export const SkipForwardFilled = ({ className, style }: IconProps) => (
   <svg {...svgProps} className={className} style={style}>
     <path d="M1.5 3v18l15-9z" />

@@ -295,16 +295,16 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
   const chartData  = chartView === "cumulative" ? cumulative(rawData) : rawData
 
   return (
-    <div className="flex flex-col px-16 pb-40">
+    <div className="flex flex-col px-10 pb-40">
 
       {/* ── Page header + Analytics ───────────────────────────────────────
            Both share the same `bg-muted` surface so the header reads as
            the top of the analytics card, not a separate page bar. The
-           `-mx-16 px-16` bleed extends the fill to the viewport edges. */}
-      <div className="bg-muted -mx-16 px-16 pb-16 mb-12">
+           `-mx-10 px-10` bleed extends the fill to the viewport edges. */}
+      <div className="bg-muted -mx-10 px-10 pb-16 mb-12">
         <div className="shrink-0 flex items-center justify-between gap-6 pt-8 pb-6">
           {!embedded
-            ? <h1 className="text-2xlarge font-medium tracking-tight">Analytics</h1>
+            ? <h1 className="text-2xlarge font-medium tracking-tight text-balance">Analytics</h1>
             : <span />
           }
           <Tabs value={period} onValueChange={v => setPeriod(v as Period)}>
@@ -337,12 +337,12 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
           <div className="relative flex items-center justify-end px-4 pt-8 pb-2">
             <div className="absolute right-4 inline-flex items-center rounded-full bg-muted p-1 gap-0.5">
               <button onClick={() => setChartView("cumulative")} title="Cumulative"
-                className={cn("inline-flex items-center justify-center rounded-full size-7 transition-all",
+                className={cn("inline-flex items-center justify-center rounded-full size-7 transition-[colors,box-shadow]",
                   chartView === "cumulative" ? "bg-background border border-border text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground")}>
                 <TrendingUpIcon className="size-3.5" />
               </button>
               <button onClick={() => setChartView("per-period")} title="Per period"
-                className={cn("inline-flex items-center justify-center rounded-full size-7 transition-all",
+                className={cn("inline-flex items-center justify-center rounded-full size-7 transition-[colors,box-shadow]",
                   chartView === "per-period" ? "bg-background border border-border text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground")}>
                 <BarChart2 className="size-3.5" />
               </button>
@@ -408,7 +408,7 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
         {/* Track Ranking */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 px-1">
-            <h2 className="text-xlarge font-medium text-foreground">Track Ranking</h2>
+            <h2 className="text-xlarge font-medium text-foreground text-balance">Track Ranking</h2>
             <RangeDropdown value={trackRange} onChange={setTrackRange} />
           </div>
           <div className="bg-background border border-border rounded-xl overflow-hidden">
@@ -442,7 +442,7 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
         {/* Album Ranking */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 px-1">
-            <h2 className="text-xlarge font-medium text-foreground">Album Ranking</h2>
+            <h2 className="text-xlarge font-medium text-foreground text-balance">Album Ranking</h2>
             <RangeDropdown value={albumRange} onChange={setAlbumRange} />
           </div>
           <div className="bg-background border border-border rounded-xl overflow-hidden">
@@ -474,7 +474,7 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
         {/* Playlist Reach — always total, not period-filtered */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 px-1">
-            <h2 className="text-xlarge font-medium text-foreground">Playlist Reach</h2>
+            <h2 className="text-xlarge font-medium text-foreground text-balance">Playlist Reach</h2>
           </div>
           <div className="bg-background border border-border rounded-xl overflow-hidden">
             <Table>

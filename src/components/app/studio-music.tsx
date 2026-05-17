@@ -615,9 +615,9 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
     <div ref={tableWrapRef} className="relative flex flex-col h-full">
 
       {/* ── Page header ──────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-center justify-between gap-6 px-16 pt-8 pb-6">
+      <div className="shrink-0 flex items-center justify-between gap-6 px-10 pt-8 pb-6">
         <div>
-          <h1 className="text-2xlarge font-medium tracking-tight">My Music</h1>
+          <h1 className="text-2xlarge font-medium tracking-tight text-balance">My Music</h1>
           <p className="text-small font-normal text-muted-foreground mt-1">
             {RELEASES.length} releases
           </p>
@@ -631,7 +631,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
       </div>
 
       {/* ── Toolbar ──────────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-start gap-3 px-16 pb-8">
+      <div className="shrink-0 flex items-start gap-3 px-10 pb-8">
 
         {/* LEFT — filters */}
         <div className="flex items-start gap-2 flex-1 flex-wrap">
@@ -691,7 +691,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search your music"
               className={cn(
-                "h-10 pl-10 pr-[18px] rounded-full border text-small font-normal bg-transparent transition-all",
+                "h-10 pl-10 pr-[18px] rounded-full border text-small font-normal bg-transparent transition-[colors,width,background-color]",
                 "text-foreground placeholder:text-muted-foreground focus:outline-none",
                 searchQuery
                   ? "border-foreground/40 bg-muted text-foreground w-56"
@@ -760,7 +760,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
 
       {/* ── Active filter chips ──────────────────────────────────────── */}
       {anyFilter && (
-        <div className="shrink-0 flex items-center gap-1.5 px-16 pb-3 flex-wrap">
+        <div className="shrink-0 flex items-center gap-1.5 px-10 pb-3 flex-wrap">
           <button
             onClick={() => { setTypeFilters(new Set()); setStatusFilter("all"); setArtistFilters(new Set()); setLabelFilters(new Set()); setMonetisationFilters(new Set()); setSearchQuery("") }}
             className="text-xsmall font-normal text-muted-foreground hover:text-foreground transition-colors mr-1 shrink-0"
@@ -829,7 +829,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
       )}
 
       {/* ── Table ────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-auto px-16">
+      <div className="flex-1 overflow-auto px-10">
         <table className="w-full">
 
           {/* Sticky header */}

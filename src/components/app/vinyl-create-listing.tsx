@@ -31,6 +31,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Chip, ChipDismiss, ChipGroup } from "@/components/ui/chip"
 import { InputSelect } from "@/components/ui/input-select"
+import {
+  ShippingZoneEditor, DEFAULT_ZONES, type ShippingZone,
+} from "@/components/app/shipping-zone-editor"
 import { Separator } from "@/components/ui/separator"
 import { DatePicker } from "@/components/ui/date-picker"
 import { cn } from "@/lib/utils"
@@ -41,6 +44,11 @@ import {
   Combobox, ComboboxTrigger, ComboboxContent,
   ComboboxItem, ComboboxSeparator, ComboboxGroup, ComboboxGroupLabel,
 } from "@/components/ui/combobox"
+import {
+  Tooltip, TooltipTrigger, TooltipContent, TooltipProvider,
+} from "@/components/ui/tooltip"
+import { useShopSettings } from "@/lib/shop-settings"
+import { ArrowLeft } from "lucide-react"
 
 // ─── Section wrapper ──────────────────────────────────────────────────────────
 
@@ -805,78 +813,35 @@ function PricingInventorySection() {
 
 // ─── Shipping ─────────────────────────────────────────────────────────────────
 
-interface ShippingZone {
-  id:       string
-  region:   string
-  price:    string
-  currency: string
-  free:     boolean
-}
-
 function ShippingSection() {
-  const [zones, setZones] = useState<ShippingZone[]>([
-    { id: "ww", region: "Worldwide", price: "1.00", currency: "USD", free: false },
-  ])
-
-  function updateZone(id: string, patch: Partial<ShippingZone>) {
-    setZones(xs => xs.map(z => (z.id === id ? { ...z, ...patch } : z)))
-  }
+  // Most listings use the shop-wide defaults configured under Products →
+  // Shop settings. Power-users (oversized item, special insurance) flip the
+  // switch to override per listing — same UI, scoped to this listing.
+  const [useShopDefaults, setUseShopDefaults] = useState(true)
+  const [zones, setZones] = useState<ShippingZone[]>(DEFAULT_ZONES)
 
   return (
     <FormSection title="Shipping">
-      <Label>Shipping Zones</Label>
-      <div className="flex flex-col gap-3">
-        {zones.map(z => (
-          <div key={z.id} className="flex items-center gap-3">
-            <Input
-              value={z.region}
-              onChange={e => updateZone(z.id, { region: e.target.value })}
-              className="w-40 shrink-0"
-            />
-            <InputSelect
-              value={z.price}
-              onChange={e => updateZone(z.id, { price: e.target.value })}
-              selectValue={z.currency}
-              onSelectChange={v => updateZone(z.id, { currency: v })}
-              options={CURRENCIES}
-              disabled={z.free}
-              className="flex-1"
-            />
-            <div className="flex items-center gap-2 shrink-0">
-              <Label htmlFor={`free-${z.id}`} className="cursor-pointer text-xsmall text-muted-foreground">
-                Free
-              </Label>
-              <Switch
-                id={`free-${z.id}`}
-                checked={z.free}
-                onCheckedChange={v => updateZone(z.id, { free: v })}
-              />
-            </div>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => setZones(xs => xs.filter(x => x.id !== z.id))}
-            >
-              <Trash2 className="size-4" />
-            </Button>
-          </div>
-        ))}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col gap-0.5">
+          <Label htmlFor="use-shop-defaults" className="cursor-pointer">
+            Use shop defaults
+          </Label>
+          <p className="text-xsmall text-muted-foreground">
+            Inherits shipping zones from your shop settings. Turn off to
+            customise rates for this listing.
+          </p>
+        </div>
+        <Switch
+          id="use-shop-defaults"
+          checked={useShopDefaults}
+          onCheckedChange={setUseShopDefaults}
+        />
       </div>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        className="self-start -ml-3"
-        onClick={() =>
-          setZones(xs => [
-            ...xs,
-            { id: crypto.randomUUID(), region: "", price: "1.00", currency: "USD", free: false },
-          ])
-        }
-      >
-        <Plus className="size-4" />
-        Add shipping zone
-      </Button>
+      {!useShopDefaults && (
+        <ShippingZoneEditor zones={zones} onChange={setZones} />
+      )}
     </FormSection>
   )
 }
@@ -1074,18 +1039,23 @@ export function VinylCreateListing({
   return (
     <div className="flex flex-col h-full overflow-hidden">
 
-      {/* ── Top bar ──────────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-center justify-between gap-6 px-16 pt-8 pb-6 border-b border-border bg-background">
+      {/* ── Top bar ──────────────────────────────────────────────────────
+           Back-arrow icon-button on the left replaces the old "Cancel"
+           button. The seller is in a focused sub-flow (tabs above are
+           intentionally hidden); the arrow communicates "step out and
+           go back" more clearly than a generic Cancel, and matches the
+           same affordance used on the buyer-side purchase-detail page. */}
+      <div className="shrink-0 flex items-center justify-between gap-6 px-10 pt-8 pb-6 border-b border-border bg-background">
         <div className="flex items-center gap-3">
-          <h1 className="text-xlarge font-medium text-foreground">{heading}</h1>
+          <Button variant="ghost" size="icon-sm" onClick={onCancel} aria-label="Back to products">
+            <ArrowLeft className="size-4" />
+          </Button>
+          <h1 className="text-xlarge font-medium text-foreground text-balance">{heading}</h1>
           <Badge variant="secondary"><Disc3 />Vinyl</Badge>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" onClick={onCancel}>Cancel</Button>
           <Button variant="outline" onClick={() => onSave(draft)}>Save Draft</Button>
-          <Button onClick={() => onPublish(draft)}>
-            {mode === "create" ? "Publish Listing" : "Save Changes"}
-          </Button>
+          <PublishButton mode={mode} onPublish={() => onPublish(draft)} />
         </div>
       </div>
 
@@ -1114,5 +1084,47 @@ export function VinylCreateListing({
         </div>
       </div>
     </div>
+  )
+}
+
+// ─── Publish button (gated on shop-live) ─────────────────────────────────────
+//
+// Wraps the primary submit button with the shop-live check so creating
+// a listing pre-onboarding gracefully degrades:
+//   · Edit mode ("Save Changes") — always enabled. Saving an existing
+//     listing doesn't promote it; status stays as-is.
+//   · Create mode ("Publish Listing") — disabled when the shop isn't
+//     live. A tooltip explains why and points back at the saved-draft
+//     path. The disabled button has pointer-events:none on the
+//     <button>, so we wrap it in a span trigger that captures hover.
+
+function PublishButton({ mode, onPublish }: {
+  mode:      "create" | "edit"
+  onPublish: () => void
+}) {
+  const { isShopLive } = useShopSettings()
+  const isCreate  = mode === "create"
+  const disabled  = isCreate && !isShopLive
+  const label     = isCreate ? "Publish Listing" : "Save Changes"
+
+  const button = (
+    <Button onClick={onPublish} disabled={disabled}>
+      {label}
+    </Button>
+  )
+
+  if (!disabled) return button
+
+  return (
+    <TooltipProvider delay={200}>
+      <Tooltip>
+        <TooltipTrigger render={<span className="inline-flex" />}>
+          {button}
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          Finish shop setup to publish. Save Draft in the meantime.
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   )
 }

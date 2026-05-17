@@ -3,7 +3,23 @@
 import { ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-// ─── ContextMenu ─────────────────────────────────────────────────────────────
+// ─── ContextMenu — styled panel surface ──────────────────────────────────────
+//
+// NOTE — this is NOT a behavioral primitive. It's the visual chrome (border,
+// shadow, padding, item rows) for a menu panel whose open/close state and
+// positioning are owned by the consumer. The sidebar uses it as a hover-
+// driven flyout anchored to icon buttons (see sidebar.tsx).
+//
+// Why not base-ui's `Menu` or `ContextMenu` primitives?
+//   · `Menu` requires a Trigger and uses its own Positioner — the sidebar
+//     manages position manually (`fixed left-[56px] top={iconY}`), which
+//     would fight the framework.
+//   · `ContextMenu` (base-ui) is bound to right-click, not hover.
+//   · `Popover` would work conceptually but requires an anchor ref pattern
+//     the sidebar doesn't currently expose.
+//
+// If we ever need a true triggered menu, use DropdownMenu (which IS base-ui
+// Menu under the hood) — this file is purely the styled surface.
 //
 // Figma source: L9yw4Yaec9YtAXGxP8q4fu › node 430:18718
 // Adaptation (Studio flyout): node 21349:17605
@@ -15,14 +31,6 @@ import { cn } from "@/lib/utils"
 //     <ContextMenuSubTrigger>    — same row but with ChevronRight on the right
 //     <ContextMenuSeparator>     — 1px divider
 //   </ContextMenu>
-//
-// Token mapping (light → dark)
-//   bg-popover              #FEFFFB → #0D0D04
-//   text-popover-foreground #0D0D04 → #FAFCF4
-//   border-border           #DADDCD → #545445
-//   bg-accent               rgba(246,248,238,0.75) → rgba(46,44,36,0.80)
-//   text-accent-foreground  #1D1C18 → #FAFCF4
-//   text-muted-foreground   rgba(84,84,69,0.75)   → rgba(250,252,244,0.50)
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── Container ─────────────────────────────────────────────────────────────────

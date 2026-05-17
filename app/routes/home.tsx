@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { useSearchParams } from "react-router"
 import { cn } from "@/lib/utils"
 import { AnimatedLogo } from "@/components/app/animated-logo"
@@ -10,10 +10,11 @@ import { ManageView } from "@/components/app/manage-view"
 import { ManageV2 } from "@/components/app/manage-v2"
 import { ReportView } from "@/components/app/report-view"
 import { Topbar, TopbarDefaultActions } from "@/components/app/topbar"
+import { PurchasesView } from "@/components/app/purchases-view"
+import { CartProvider } from "@/lib/cart"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Badge, ContentTypeBadge, StatusBadge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { InputSelect } from "@/components/ui/input-select"
 import { Textarea } from "@/components/ui/textarea"
@@ -23,11 +24,38 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { RadioCard, RadioCardGroup } from "@/components/ui/radio-card"
 import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
+import { QtyStepper } from "@/components/ui/qty-stepper"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+  SheetFooter, SheetTrigger, SheetClose,
+} from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Toggle } from "@/components/ui/toggle"
+import { ToggleGroup } from "@/components/ui/toggle-group"
+import {
+  Collapsible, CollapsibleTrigger, CollapsiblePanel,
+} from "@/components/ui/collapsible"
+import {
+  Accordion, AccordionItem, AccordionTrigger, AccordionPanel,
+} from "@/components/ui/accordion"
+import {
+  Meter, MeterLabel, MeterValue, MeterTrack, MeterIndicator,
+} from "@/components/ui/meter"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import {
+  Toolbar, ToolbarButton, ToolbarGroup, ToolbarSeparator,
+} from "@/components/ui/toolbar"
+import {
+  NavigationMenu, NavigationMenuList, NavigationMenuItem,
+  NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink,
+  NavigationMenuPopup, NavigationMenuViewport, NavigationMenuPortal,
+  NavigationMenuPositioner,
+} from "@/components/ui/navigation-menu"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -39,17 +67,24 @@ import {
   AlertDialogTitle, AlertDialogDescription,
   AlertDialogAction, AlertDialogCancel,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog, DialogTrigger, DialogContent, DialogHeader,
+  DialogTitle, DialogDescription, DialogFooter, DialogClose,
+  DialogPreview, DialogPreviewHeader, DialogPreviewTitle,
+  DialogPreviewDescription, DialogPreviewFooter,
+} from "@/components/ui/dialog"
 import { Combobox, ComboboxTrigger, ComboboxContent, ComboboxItem } from "@/components/ui/combobox"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Chip, ChipDismiss, ChipGroup } from "@/components/ui/chip"
-import { useToast } from "@/components/ui/toast"
+import { SortButton } from "@/components/ui/sort-button"
+import { useToast, ToastPreview } from "@/components/ui/toast"
 import {
   AlertCircle, CheckCircle2, Info, Music2, Heart, Share2,
   SkipBack, SkipForward, Play, Pause, Shuffle, Repeat,
   Settings, User, LogOut, Upload, MoreHorizontal,
   Plus, Search, ChevronDown, Trash2, SlidersHorizontal, Maximize2,
   Radio as RadioIcon, ShoppingBag, Disc3, Disc, CassetteTape, Shirt, Ghost,
-  ChevronLeft, ChevronRight, Globe, X,
+  ChevronLeft, ChevronRight, Globe, X, Sun, Moon,
 } from "lucide-react"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import {
@@ -72,7 +107,26 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { UploadMusicDialog } from "@/components/app/upload-music-dialog"
 import { ShopMyProductsView } from "@/components/app/shop-my-products"
-import { OrdersView } from "@/components/app/orders-view"
+import { OrdersView, OrderStatusBadge } from "@/components/app/orders-view"
+import { ShopView } from "@/components/app/shop-view"
+import { LibraryAlbumsView } from "@/components/app/library-albums-view"
+import { ArtistProfileView } from "@/components/app/artist-profile-view"
+import { LibraryArtistsView } from "@/components/app/library-artists-view"
+import { LibraryPlaylistsView } from "@/components/app/library-playlists-view"
+import { AlbumCard } from "@/components/ui/album-card"
+import { ArtistCard } from "@/components/ui/artist-card"
+import { PlaylistCard } from "@/components/ui/playlist-card"
+import { ProductCardSmall } from "@/components/ui/product-card-small"
+import { SongListItem } from "@/components/ui/song-list-item"
+import { TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table"
+import { AlbumCardMenuItems } from "@/components/ui/cover-card-menu"
+import { PlayFilledAlt as PlayFilledAltIcon } from "@/components/ui/transport-icons"
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
+import { HomeRow } from "@/components/app/home-row"
+import { PlaylistCreateCard } from "@/components/ui/playlist-create-card"
+import { Section as PageSection } from "@/components/app/section"
+import { ItemsSection as DetailItemsSection } from "@/components/app/items-section"
+import { COUNTRY_CODES, countryName } from "@/lib/countries"
 import { FilterMenu } from "@/components/ui/filter-menu"
 import { PlayerBar }     from "@/components/ui/player-bar"
 import { PlayerBarB }    from "@/components/ui/player-bar-b"
@@ -149,85 +203,256 @@ function SubLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-// ─── Dialogs kitchen sink ─────────────────────────────────────────────────────
-// Side-by-side static previews of every modal used in the product so the
-// design of titles, descriptions, bodies and footers can be compared at a
-// glance. Each preview uses the same classes as <DialogContent> but skips
-// the portal/overlay so they sit inline and comparable.
+// Tiny stateful wrapper so each kitchen-sink stepper has its own value
+// without the page having to track 5+ pieces of state.
+function QtyStepperDemo({
+  initial = 2, min, max, size,
+}: {
+  initial?: number
+  min?:     number
+  max?:     number
+  size?:    "sm" | "default"
+}) {
+  const [n, setN] = useState(initial)
+  return <QtyStepper value={n} onChange={setN} min={min} max={max} size={size} />
+}
 
-function DialogFrame({
-  width = "sm:max-w-sm",
-  className,
-  children,
-}: { width?: string; className?: string; children: React.ReactNode }) {
+// ─── Semantic token table ─────────────────────────────────────────────────────
+//
+// Renders every semantic CSS variable with its LIVE light + dark swatches.
+// Swatches use `var(--TOKEN)` inside scoped `<div class="light">` and
+// `<div class="dark">` wrappers, so they always reflect what app.css
+// currently defines. Hex values are derived from `getComputedStyle()` after
+// mount, so changes to the underlying tokens automatically flow through.
+//
+// The only thing kept hardcoded is the primitive-name label per row
+// (--muza-neutrals-X etc.) — that's documentation of which primitive each
+// semantic token currently maps to. Keep in sync with the var(...)
+// assignments in app.css's :root / .dark blocks.
+
+interface SemanticToken {
+  token:  string  // CSS variable name, e.g. "--background"
+  /** Display alias when the token is rendered (used when the token covers
+   *  multiple aliases like `--card / --popover`). Falls back to `token`. */
+  alias?: string
+  lPrim:  string  // light-mode primitive label
+  dPrim:  string  // dark-mode primitive label
+}
+
+const SEMANTIC_TOKENS: SemanticToken[] = [
+  { token: "--background",         lPrim: "--muza-white",            dPrim: "--muza-black"            },
+  { token: "--foreground",         lPrim: "--muza-neutrals-950",     dPrim: "--muza-neutrals-50"      },
+  { token: "--card",   alias: "--card / --popover",
+                                   lPrim: "--muza-white",            dPrim: "--muza-neutrals-950"     },
+  { token: "--primary",            lPrim: "--muza-blue-200",         dPrim: "--muza-blue-200"         },
+  { token: "--primary-foreground", lPrim: "--muza-neutrals-50",      dPrim: "--muza-neutrals-50"      },
+  { token: "--secondary",          lPrim: "--muza-neutrals-200",     dPrim: "--muza-neutrals-800"     },
+  { token: "--secondary-hover",    lPrim: "--muza-neutrals-300",     dPrim: "--muza-neutrals-700"     },
+  { token: "--muted",              lPrim: "--muza-neutrals-50",      dPrim: "--muza-neutrals-900"     },
+  { token: "--muted-foreground",   lPrim: "--muza-neutrals-a75-700", dPrim: "--muza-neutrals-a50-50"  },
+  { token: "--accent",             lPrim: "--muza-neutrals-100",     dPrim: "--muza-neutrals-800"     },
+  { token: "--accent-foreground",  lPrim: "--muza-neutrals-900",     dPrim: "--muza-neutrals-50"      },
+  { token: "--destructive",        lPrim: "--tw-red-600",            dPrim: "--tw-red-900"            },
+  { token: "--border",             lPrim: "--muza-neutrals-300",     dPrim: "--muza-neutrals-700"     },
+  { token: "--input",              lPrim: "--muza-neutrals-200",     dPrim: "--muza-neutrals-800"     },
+  { token: "--ring",               lPrim: "--muza-neutrals-900",     dPrim: "--muza-neutrals-300"     },
+]
+
+/** rgb(R, G, B[, A]) → "#RRGGBB" (alpha dropped) or pass-through for
+ *  values the browser doesn't normalise (e.g. "transparent"). */
+function rgbToHex(rgb: string): string {
+  const m = rgb.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+))?\)/)
+  if (!m) return rgb
+  const [, r, g, b, a] = m
+  const hex = "#" + [r, g, b].map(n => Number(n).toString(16).padStart(2, "0").toUpperCase()).join("")
+  return a && Number(a) < 1
+    ? `${hex} · ${Math.round(Number(a) * 100)}%`
+    : hex
+}
+
+function TokenSwatch({ token, mode, primLabel }: {
+  token:     string
+  mode:      "light" | "dark"
+  primLabel: string
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [hex, setHex] = useState("")
+
+  useEffect(() => {
+    if (!ref.current) return
+    const compute = () => {
+      const bg = getComputedStyle(ref.current!).backgroundColor
+      setHex(rgbToHex(bg))
+    }
+    compute()
+    // Re-read on theme toggle (so any computed values that depend on the
+    // page mode update — though our .light/.dark scopes pin them).
+    const observer = new MutationObserver(compute)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] })
+    return () => observer.disconnect()
+  }, [token])
+
+  // Only the SWATCH lives in the scoped .light / .dark wrapper — the
+  // text labels stay in the page's natural theme scope so they remain
+  // readable when the user's currently in the opposite mode.
   return (
-    <div
-      className={cn(
-        // Shared DialogContent visual chrome (overlay/portal omitted).
-        "relative w-full rounded-xl sm:rounded-2xl bg-popover text-small text-popover-foreground",
-        "border border-border",
-        width,
-        className,
-      )}
-    >
-      {children}
+    <div className="flex gap-2">
+      <div className={cn(mode, "shrink-0 self-center")}>
+        <div
+          ref={ref}
+          className="size-10 rounded-xl border border-border"
+          style={{ background: `var(${token})` }}
+        />
+      </div>
+      <div>
+        <span className="block text-foreground">{primLabel}</span>
+        <span className="text-muted-foreground tabular-nums">{hex || "…"}</span>
+      </div>
     </div>
   )
 }
 
+function SemanticTokenTable() {
+  return (
+    <table className="w-full text-xsmall border-collapse">
+      <thead>
+        <tr className="border-b border-border text-left">
+          <th className="pb-2 pr-8 font-normal text-foreground">Token</th>
+          <th className="pb-2 pr-8 font-normal text-foreground">Light</th>
+          <th className="pb-2 font-normal text-foreground">Dark</th>
+        </tr>
+      </thead>
+      <tbody>
+        {SEMANTIC_TOKENS.map(r => (
+          <tr key={r.token} className="border-b border-border">
+            <td className="py-2 pr-8 text-foreground whitespace-nowrap">{r.alias ?? r.token}</td>
+            <td className="py-2 pr-8">
+              <TokenSwatch token={r.token} mode="light" primLabel={r.lPrim} />
+            </td>
+            <td className="py-2">
+              <TokenSwatch token={r.token} mode="dark" primLabel={r.dPrim} />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
+// ─── Dialogs kitchen sink ─────────────────────────────────────────────────────
+
+// Kitchen sink shows BOTH a static visual preview (every variant at a
+// glance) AND a live trigger (real component, real behavior). Both share
+// the chrome class constants from `src/components/ui/dialog.tsx` —
+// chrome changes flow to both automatically.
 function DialogsKitchenSink() {
   return (
-    <div className="flex flex-wrap gap-8 items-start">
-
-      {/* ── 1. Confirm-destructive (manage-v2.tsx DeleteCard) ──────────── */}
+    <div className="flex flex-col gap-8">
+      {/* ── Static previews — all variants visible without clicking ───── */}
       <div className="flex flex-col gap-3">
-        <SubLabel>Confirm destructive</SubLabel>
-        <DialogFrame className="p-4 grid gap-4">
-          <div className="flex flex-col gap-2">
-            <p className="text-base font-medium text-foreground">Delete Chase Visa?</p>
-            <p className="text-small text-muted-foreground">
-              This will permanently remove this card from your account. This action cannot be undone.
-            </p>
-          </div>
-          <div className="-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl sm:rounded-b-2xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end">
-            <Button variant="outline">Cancel</Button>
-            <Button variant="destructive">Delete card</Button>
-          </div>
-        </DialogFrame>
+        <SubLabel>All variants (static preview — same chrome as the live Dialog)</SubLabel>
+        <div className="flex flex-wrap gap-6 items-start">
+
+          {/* 1. Confirm-destructive (manage-v2.tsx DeleteCard pattern) */}
+          <DialogPreview>
+            <DialogPreviewHeader>
+              <DialogPreviewTitle>Delete Chase Visa?</DialogPreviewTitle>
+              <DialogPreviewDescription>
+                This will permanently remove this card from your account. This action cannot be undone.
+              </DialogPreviewDescription>
+            </DialogPreviewHeader>
+            <DialogPreviewFooter>
+              <Button variant="outline">Cancel</Button>
+              <Button variant="destructive">Delete card</Button>
+            </DialogPreviewFooter>
+          </DialogPreview>
+
+          {/* 2. Create Listing (shop-my-products AddProductDialog pattern) */}
+          <DialogPreview className="sm:max-w-[600px]">
+            <DialogPreviewHeader>
+              <DialogPreviewTitle>Create Listing</DialogPreviewTitle>
+              <DialogPreviewDescription>Choose what you want to sell.</DialogPreviewDescription>
+            </DialogPreviewHeader>
+            <RadioCardGroup value="vinyl" onValueChange={() => {}}>
+              {[
+                { v: "vinyl",    title: "Vinyl",        desc: "LPs, EPs, singles and limited pressings.",  icon: <Disc3 /> },
+                { v: "cd",       title: "Compact Disc", desc: "Albums, EPs and special editions on CD.",   icon: <Disc /> },
+                { v: "cassette", title: "Cassette",     desc: "Full releases and limited runs on tape.",   icon: <CassetteTape /> },
+              ].map(o => (
+                <RadioCard
+                  key={o.v}
+                  value={o.v}
+                  selected={o.v === "vinyl"}
+                  onSelect={() => {}}
+                  icon={o.icon}
+                  title={o.title}
+                  description={o.desc}
+                />
+              ))}
+            </RadioCardGroup>
+            <DialogPreviewFooter>
+              <Button variant="outline">Cancel</Button>
+              <Button>Create Listing</Button>
+            </DialogPreviewFooter>
+          </DialogPreview>
+        </div>
       </div>
 
-      {/* ── 2. Create Listing (shop-my-products AddProductDialog) ─────── */}
+      {/* ── Live triggers — real Dialog with portal, focus trap, etc. ─── */}
       <div className="flex flex-col gap-3">
-        <SubLabel>Create Listing (Shop)</SubLabel>
-        <DialogFrame width="w-[600px] max-w-none" className="p-8 gap-0 shadow-none">
-          <div className="flex flex-col mb-8 gap-0.5">
-            <p className="text-large font-medium leading-none">Create Listing</p>
-            <p className="text-small text-muted-foreground">Choose what you want to sell.</p>
-          </div>
-          <RadioCardGroup value="vinyl" onValueChange={() => {}}>
-            {[
-              { v: "vinyl",    title: "Vinyl",        desc: "LPs, EPs, singles and limited pressings.",  icon: <Disc3 /> },
-              { v: "cd",       title: "Compact Disc", desc: "Albums, EPs and special editions on CD.",   icon: <Disc /> },
-              { v: "cassette", title: "Cassette",     desc: "Full releases and limited runs on tape.",   icon: <CassetteTape /> },
-            ].map(o => (
-              <RadioCard
-                key={o.v}
-                value={o.v}
-                selected={o.v === "vinyl"}
-                onSelect={() => {}}
-                icon={o.icon}
-                title={o.title}
-                description={o.desc}
-              />
-            ))}
-          </RadioCardGroup>
-          {/* Footer — shared DialogFooter visual, p-8 to match bigger
-              dialog's p-8 content padding. */}
-          <div className="-mx-8 -mb-8 mt-8 flex flex-col-reverse gap-2 rounded-b-xl sm:rounded-b-2xl border-t bg-muted/50 p-8 sm:flex-row sm:justify-end">
-            <Button variant="outline">Cancel</Button>
-            <Button>Create Listing</Button>
-          </div>
-        </DialogFrame>
+        <SubLabel>Trigger — open the real Dialog (portal, backdrop, focus trap)</SubLabel>
+        <div className="flex flex-wrap gap-3">
+          <Dialog>
+            <DialogTrigger render={<Button variant="outline" />}>
+              Open: Delete card
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Delete Chase Visa?</DialogTitle>
+                <DialogDescription>
+                  This will permanently remove this card from your account. This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+                <Button variant="destructive">Delete card</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog>
+            <DialogTrigger render={<Button variant="outline" />}>
+              Open: Create Listing
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Create Listing</DialogTitle>
+                <DialogDescription>Choose what you want to sell.</DialogDescription>
+              </DialogHeader>
+              <RadioCardGroup value="vinyl" onValueChange={() => {}}>
+                {[
+                  { v: "vinyl",    title: "Vinyl",        desc: "LPs, EPs, singles and limited pressings.",  icon: <Disc3 /> },
+                  { v: "cd",       title: "Compact Disc", desc: "Albums, EPs and special editions on CD.",   icon: <Disc /> },
+                  { v: "cassette", title: "Cassette",     desc: "Full releases and limited runs on tape.",   icon: <CassetteTape /> },
+                ].map(o => (
+                  <RadioCard
+                    key={o.v}
+                    value={o.v}
+                    selected={o.v === "vinyl"}
+                    onSelect={() => {}}
+                    icon={o.icon}
+                    title={o.title}
+                    description={o.desc}
+                  />
+                ))}
+              </RadioCardGroup>
+              <DialogFooter>
+                <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+                <Button>Create Listing</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
     </div>
   )
@@ -366,10 +591,95 @@ function useViewportLogoSize() {
   return size
 }
 
+// Curated picks for the Home content rows. Real wiring would pull
+// these from "new releases", "editorial picks", and "trending artist"
+// feeds — for now we hard-code six per row spanning the same label
+// universe as the Library views (Blue Note / Impulse! / Strata-East
+// / Justin Time / Evidence / contemporary jazz).
+const HOME_NEW_ALBUMS = [
+  { id: "h-na-1",  title: "Endlessness",                       artist: "Nala Sinephro",                  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/98/b8/46/98b84638-476a-ea68-151f-e844017594de/5056614798067.png/600x600bb.jpg" },
+  { id: "h-na-2",  title: "Promises",                          artist: "Floating Points",                cover: "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/af/dc/6b/afdc6b88-b275-de4e-3098-63dff171dffb/680899009720.jpg/600x600bb.jpg" },
+  { id: "h-na-3",  title: "Source",                            artist: "Nubya Garcia",                   cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/01/0b/96/010b9654-4059-150f-8650-38f94faa62cf/20CRGIM21278.rgb.jpg/600x600bb.jpg" },
+  { id: "h-na-4",  title: "In These Times",                    artist: "Makaya McCraven",                cover: "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/e8/e0/90/e8e090fb-10ba-a0f8-c719-ce347b658bbc/075597908541.jpg/600x600bb.jpg" },
+  { id: "h-na-5",  title: "Black Acid Soul",                   artist: "Lady Blackbird",                 cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/d9/8f/37/d98f3727-0c84-108d-a74e-0bcbf43928c3/4050538709391.jpg/600x600bb.jpg" },
+  { id: "h-na-6",  title: "Wisdom of Elders",                  artist: "Shabaka and the Ancestors",      cover: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/34/9c/a3/349ca34c-87b6-a0a3-874d-a9cb7209dbc3/5060180322892.jpg/600x600bb.jpg" },
+  { id: "h-na-7",  title: "Space 1.8",                         artist: "Nala Sinephro",                  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/e4/57/42/e45742d5-0ac5-a3a5-9840-a54b8648d182/0801061032432.png/600x600bb.jpg" },
+  { id: "h-na-8",  title: "Black Focus",                       artist: "Yussef Kamaal",                  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/7a/65/c2/7a65c212-d5b8-2e3c-4d08-77bc4e4a65ac/3614970930488.jpg/600x600bb.jpg" },
+  { id: "h-na-9",  title: "We Are Sent Here by History",       artist: "Shabaka and the Ancestors",      cover: "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/b0/90/1d/b0901d41-49bf-22b9-f7a2-a9e1c15e244b/20UMGIM01600.rgb.jpg/600x600bb.jpg" },
+  { id: "h-na-10", title: "Trust in the Lifeforce of the Deep Mystery", artist: "The Comet Is Coming",   cover: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/3d/9d/36/3d9d36ec-d86c-98ee-e0ea-601fc6e32504/00602577388385.rgb.jpg/600x600bb.jpg" },
+  { id: "h-na-11", title: "Black Radio",                       artist: "Robert Glasper",                 cover: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/cb/c7/1d/cbc71df4-e2b7-4ea4-7edb-563a9aaf7b31/00602537433919.rgb.jpg/600x600bb.jpg" },
+  { id: "h-na-12", title: "Under Tangled Silence",             artist: "Djrum",                          cover: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/4a/2d/6f/4a2d6f89-f204-8f91-9812-f9bd203e33b0/cover.jpg/600x600bb.jpg" },
+]
+
+const HOME_WEEKLY_ALBUMS = [
+  { id: "h-wa-1",  title: "Maiden Voyage",                     artist: "Herbie Hancock",                 cover: "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/23/49/49/234949c3-db74-f0eb-30f5-d715526e459b/19UMGIM73745.rgb.jpg/600x600bb.jpg" },
+  { id: "h-wa-2",  title: "A Love Supreme",                    artist: "John Coltrane",                  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/e5/24/aa/e524aacd-467b-66f3-8931-0fcd6750a4b9/08UMGIM07914.rgb.jpg/600x600bb.jpg" },
+  { id: "h-wa-3",  title: "Speak No Evil",                     artist: "Wayne Shorter",                  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/a8/ee/3c/a8ee3cc7-e694-f7e1-5208-2c67f9ae5ed5/13ULAIM49176.rgb.jpg/600x600bb.jpg" },
+  { id: "h-wa-4",  title: "Karma",                             artist: "Pharoah Sanders",                cover: "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/01/36/a6/0136a666-36d2-caf1-efb1-da77a646d104/06UMGIM03764.rgb.jpg/600x600bb.jpg" },
+  { id: "h-wa-5",  title: "Journey in Satchidananda",          artist: "Alice Coltrane",                 cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/af/5c/40/af5c40a1-54b1-855d-3da2-f875efbd8372/06UMGIM04169.rgb.jpg/600x600bb.jpg" },
+  { id: "h-wa-6",  title: "Winter in America",                 artist: "Gil Scott-Heron & Brian Jackson", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music/83/48/94/mzi.olnzcoeq.jpg/600x600bb.jpg" },
+  { id: "h-wa-7",  title: "Blue Train",                        artist: "John Coltrane",                  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/6e/1a/13/6e1a134d-8f6f-d90f-b855-ea69436a2e8b/17UM1IM45370.rgb.jpg/600x600bb.jpg" },
+  { id: "h-wa-8",  title: "Cool Struttin'",                    artist: "Sonny Clark",                    cover: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/d6/a3/1d/d6a31d82-038d-a73f-5452-0380d8bd9bae/00724349532755.jpg/600x600bb.jpg" },
+  { id: "h-wa-9",  title: "Out to Lunch",                      artist: "Eric Dolphy",                    cover: "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/d5/f1/41/d5f1417f-9c45-d013-392f-aa6c7c4b494c/13UABIM03210.rgb.jpg/600x600bb.jpg" },
+  { id: "h-wa-10", title: "Empyrean Isles",                    artist: "Herbie Hancock",                 cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/3b/30/51/3b305111-c28a-80ad-1f1d-6e89fb4fa2af/13ULAIM49306.rgb.jpg/600x600bb.jpg" },
+  { id: "h-wa-11", title: "Glass Bead Game",                   artist: "Clifford Jordan",                cover: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/19/b3/86/19b386e1-550c-0ec4-868b-542cd02bc382/118212.jpg/600x600bb.jpg" },
+  { id: "h-wa-12", title: "Musa: Ancestral Streams",           artist: "Stanley Cowell",                 cover: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/d5/21/70/d5217051-3c92-7ec6-790b-770833a01727/118206.jpg/600x600bb.jpg" },
+]
+
+// 2×2 composite covers — reuse a small pool of real album art so
+// playlists feel populated. Same labels as the album rows above.
+const COMPOSITE_POOL = [
+  "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/23/49/49/234949c3-db74-f0eb-30f5-d715526e459b/19UMGIM73745.rgb.jpg/200x200bb.jpg",
+  "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/e5/24/aa/e524aacd-467b-66f3-8931-0fcd6750a4b9/08UMGIM07914.rgb.jpg/200x200bb.jpg",
+  "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/01/36/a6/0136a666-36d2-caf1-efb1-da77a646d104/06UMGIM03764.rgb.jpg/200x200bb.jpg",
+  "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/6e/1a/13/6e1a134d-8f6f-d90f-b855-ea69436a2e8b/17UM1IM45370.rgb.jpg/200x200bb.jpg",
+  "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/d6/a3/1d/d6a31d82-038d-a73f-5452-0380d8bd9bae/00724349532755.jpg/200x200bb.jpg",
+  "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/a8/ee/3c/a8ee3cc7-e694-f7e1-5208-2c67f9ae5ed5/13ULAIM49176.rgb.jpg/200x200bb.jpg",
+  "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/af/5c/40/af5c40a1-54b1-855d-3da2-f875efbd8372/06UMGIM04169.rgb.jpg/200x200bb.jpg",
+  "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/98/b8/46/98b84638-476a-ea68-151f-e844017594de/5056614798067.png/200x200bb.jpg",
+  "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/e8/e0/90/e8e090fb-10ba-a0f8-c719-ce347b658bbc/075597908541.jpg/200x200bb.jpg",
+  "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/d5/21/70/d5217051-3c92-7ec6-790b-770833a01727/118206.jpg/200x200bb.jpg",
+]
+const composite = (offset: number) => [0, 3, 5, 7].map(i => COMPOSITE_POOL[(offset + i) % COMPOSITE_POOL.length])
+
+const HOME_WEEKLY_PLAYLISTS = [
+  { id: "h-wp-1",  title: "Spiritual Jazz Mornings",       songCount: 42, owned: true,        covers: composite(0) },
+  { id: "h-wp-2",  title: "Blue Note Essentials",          songCount: 64, owner: "Sarah K",   covers: composite(1) },
+  { id: "h-wp-3",  title: "Late Night Subway",             songCount: 31, owner: "Otto K",    covers: composite(2) },
+  { id: "h-wp-4",  title: "London Jazz Renaissance",       songCount: 48, owner: "Ari S",     covers: composite(3) },
+  { id: "h-wp-5",  title: "Boogaloo Boulevard",            songCount: 45, owner: "Dante M",   covers: composite(4) },
+  { id: "h-wp-6",  title: "Modal Jazz Meditations",        songCount: 51, owner: "Elena P",   covers: composite(5) },
+  { id: "h-wp-7",  title: "Impulse! Spiritual Jazz",       songCount: 47, owned: true,        covers: composite(6) },
+  { id: "h-wp-8",  title: "Coltrane Years on Impulse",     songCount: 52, owner: "Léa M",     covers: composite(7) },
+  { id: "h-wp-9",  title: "Strata-East Deep Cuts",         songCount: 31, owner: "Ingrid H",  covers: composite(8) },
+  { id: "h-wp-10", title: "Hard Bop Hustle",               songCount: 67, owner: "Niamh O",   covers: composite(9) },
+  { id: "h-wp-11", title: "Smoky Ballads",                 songCount: 34, owned: true,        covers: composite(2) },
+  { id: "h-wp-12", title: "Nubya & Friends",               songCount: 19, owner: "Caleb W",   covers: composite(4) },
+]
+
+// Artist portraits resolved from Wikipedia (REST page-summary API) by
+// `scripts/fetch-wikipedia-artist-images.mjs`. Cases without a
+// Wikipedia thumbnail (Nala Sinephro, Yussef Dayes) fall back to a
+// deterministic pravatar placeholder so the rail still renders.
+const HOME_WEEKLY_ARTISTS = [
+  { id: "h-ar-1",  name: "John Coltrane",       image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/John_Coltrane_1963_cropped_ver2.jpg/500px-John_Coltrane_1963_cropped_ver2.jpg" },
+  { id: "h-ar-2",  name: "Alice Coltrane",      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Alice_Coltrane_1972.jpg/500px-Alice_Coltrane_1972.jpg" },
+  { id: "h-ar-3",  name: "Pharoah Sanders",     image: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Pharoah_Sanders_photo.jpg/500px-Pharoah_Sanders_photo.jpg" },
+  { id: "h-ar-4",  name: "Nubya Garcia",        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Nubya_Garcia_INNt%C3%B6ne_01.jpg/500px-Nubya_Garcia_INNt%C3%B6ne_01.jpg" },
+  { id: "h-ar-5",  name: "Makaya McCraven",     image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Bobby_Broom_Trio_-_INNt%C3%B6ne_Jazzfestival_2013_Makaye_McCraven.jpg/500px-Bobby_Broom_Trio_-_INNt%C3%B6ne_Jazzfestival_2013_Makaye_McCraven.jpg" },
+  { id: "h-ar-6",  name: "Nala Sinephro",       image: "https://i.pravatar.cc/400?u=nala" },
+  { id: "h-ar-7",  name: "Floating Points",     image: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Floating_Points_at_Coachella_2017_%28cropped%29.jpg/500px-Floating_Points_at_Coachella_2017_%28cropped%29.jpg" },
+  { id: "h-ar-8",  name: "Shabaka Hutchings",   image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Shabaka_Hutchings_Sons_of_Kemet_Oslo_Jazzfestival_2018_%28223102%29.jpg/500px-Shabaka_Hutchings_Sons_of_Kemet_Oslo_Jazzfestival_2018_%28223102%29.jpg" },
+  { id: "h-ar-9",  name: "Yussef Dayes",        image: "https://i.pravatar.cc/400?u=yussef" },
+  { id: "h-ar-10", name: "Robert Glasper",      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/RG_Trio_3.jpg/500px-RG_Trio_3.jpg" },
+  { id: "h-ar-11", name: "Lady Blackbird",      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Lady_Blackbird_Paradiso_Amsterdam_26_maart_2022.jpg/500px-Lady_Blackbird_Paradiso_Amsterdam_26_maart_2022.jpg" },
+  { id: "h-ar-12", name: "Theon Cross",         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Theon_Cross_at_Ljubljana%2C_May_2015.jpg/500px-Theon_Cross_at_Ljubljana%2C_May_2015.jpg" },
+]
+
 function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
   const logoSize = useViewportLogoSize()
   return (
-    <div className="pt-30 pb-64 max-w-[100rem] mx-auto w-full px-[clamp(1.5rem,5vw,5rem)] flex flex-col gap-6">
+    <div className="pt-30 pb-64 max-w-[1528px] mx-auto w-full px-10 flex flex-col gap-6">
       <div className="flex flex-col items-center gap-28 min-h-[65vh] justify-center">
         <div className="flex flex-col items-center gap-6">
           <Wordmark className="h-4 w-auto" />
@@ -382,6 +692,43 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
       <div className="flex justify-center mt-24">
         <Button size="lg" className="text-[2rem] px-[5.5rem] h-[5.5rem] rounded-full transition-transform duration-300 ease-out hover:transition-transform hover:duration-250 hover:ease-[cubic-bezier(0.22,1.8,0.36,1)] hover:scale-[1.07]" onClick={() => onNavigate("Music")}>Join muza now</Button>
       </div>
+
+      {/* Discovery rails — four content rows below the call-to-action.
+           The outer `@container` lets HomeRow's grid step its column
+           count off the row's own width, independent of viewport. */}
+      <div className="@container mt-24 flex flex-col">
+        <HomeRow title="New Albums">
+          {HOME_NEW_ALBUMS.map(a => (
+            <li key={a.id}><AlbumCard cover={a.cover} title={a.title} artist={a.artist} /></li>
+          ))}
+        </HomeRow>
+
+        <HomeRow title="Playlists of the week">
+          {HOME_WEEKLY_PLAYLISTS.map(p => (
+            <li key={p.id}>
+              <PlaylistCard
+                title={p.title}
+                covers={p.covers}
+                songCount={p.songCount}
+                owner={p.owner}
+                owned={p.owned}
+              />
+            </li>
+          ))}
+        </HomeRow>
+
+        <HomeRow title="Artists of the week">
+          {HOME_WEEKLY_ARTISTS.map(a => (
+            <li key={a.id}><ArtistCard name={a.name} image={a.image} /></li>
+          ))}
+        </HomeRow>
+
+        <HomeRow title="Albums of the week">
+          {HOME_WEEKLY_ALBUMS.map(a => (
+            <li key={a.id}><AlbumCard cover={a.cover} title={a.title} artist={a.artist} /></li>
+          ))}
+        </HomeRow>
+      </div>
     </div>
   )
 }
@@ -392,8 +739,9 @@ const STUDIO_TABS: Record<string, string[]> = {
   Pages:     ["Artists", "Label"],
   Music:     ["My Music", "Upload Music"],
   Analytics: [],
-  Products:  [],
-  Orders:    [],
+  Shop:      [],
+  // Wallet is reachable from the avatar dropdown — kept in the routing
+  // table so the `?page=Wallet` URL still works.
   Wallet:    ["Dashboard", "Transfer", "Manage"],
 }
 
@@ -404,8 +752,7 @@ function toTabValue(label: string) {
 function StudioView({ page, onOpenUpload }: { page: string; onOpenUpload?: () => void }) {
   if (page === "Music")    return <StudioMusicView onOpenUpload={onOpenUpload} />
   if (page === "Analytics") return <ReportView />
-  if (page === "Products")  return <ShopMyProductsView />
-  if (page === "Orders")    return <OrdersView />
+  if (page === "Shop")     return <ShopView />
 
   const tabs = STUDIO_TABS[page] ?? []
 
@@ -413,9 +760,9 @@ function StudioView({ page, onOpenUpload }: { page: string; onOpenUpload?: () =>
     <Tabs defaultValue={toTabValue(tabs[0])} className="flex flex-col h-full gap-0">
 
       {/* ── Header + tabs ──────────────────────────────────────────────── */}
-      <div className="shrink-0 px-16 pt-8 border-b border-border">
+      <div className="shrink-0 px-10 pt-8 border-b border-border">
         <div className="flex items-start justify-between gap-6 mb-5">
-          <h1 className="text-2xlarge font-medium tracking-tight">{page}</h1>
+          <h1 className="text-2xlarge font-medium tracking-tight text-balance">{page}</h1>
         </div>
         <TabsList variant="line" className="w-auto justify-start gap-0 h-auto pb-0">
           {tabs.map((tab) => (
@@ -448,6 +795,167 @@ function StudioView({ page, onOpenUpload }: { page: string; onOpenUpload?: () =>
 function StatusBadgeDemo() {
   const [status, setStatus] = useState<"public" | "private">("public")
   return <StatusBadge status={status} onStatusChange={setStatus} />
+}
+
+// Borderless list table — pattern used by Artist › Discography list
+// view. Demo wires a small set of releases with hover + active-row
+// states + sortable headers + kebab menu.
+function ListTableDemo() {
+  type R = { id: string; title: string; band: string; year: number; tracks: number; type: "album" | "single" | "ep"; cover: string }
+  const rows: R[] = [
+    { id: "lt1", title: "Space Is the Place",  band: "Sun Ra and his Arkestra",        year: 1973, tracks: 4, type: "album",  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/200x200bb.jpg" },
+    { id: "lt2", title: "Lanquidity",          band: "Sun Ra and his Arkestra",        year: 1978, tracks: 4, type: "album",  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/b3/2a/5f/b32a5f91-5551-1ac0-17c6-e6dd4dcc0292/4062548021820_3000.jpg/200x200bb.jpg" },
+    { id: "lt3", title: "Door of the Cosmos",  band: "Sun Ra and his Arkestra",        year: 1979, tracks: 1, type: "single", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/a7/f2/b9/a7f2b9d7-3cd0-c092-d667-59dd10e11b6c/4062548112283.png/200x200bb.jpg" },
+    { id: "lt4", title: "Big John's Special",  band: "Sun Ra Arkestra",                year: 2024, tracks: 3, type: "ep",     cover: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/02/8e/1f/028e1fa4-9637-6097-2d74-e901087946ba/cover.jpg/200x200bb.jpg" },
+  ]
+  type SK = "year-desc" | "year-asc" | "title-az" | "title-za" | "tracks-desc" | "tracks-asc"
+  const [sort, setSort] = useState<SK>("year-desc")
+  const [playingId, setPlayingId] = useState<string | null>(null)
+  const sorted = useMemo(() => [...rows].sort((a, b) => {
+    if (sort === "year-desc")   return b.year - a.year
+    if (sort === "year-asc")    return a.year - b.year
+    if (sort === "tracks-desc") return b.tracks - a.tracks
+    if (sort === "tracks-asc")  return a.tracks - b.tracks
+    if (sort === "title-za")    return b.title.localeCompare(a.title)
+    return a.title.localeCompare(b.title)
+  }), [sort])
+
+  const SortHeader = ({ label, active, dir, onClick }: { label: string; active: boolean; dir: "asc" | "desc" | null; onClick: () => void }) => (
+    <button type="button" onClick={onClick} className="flex items-center gap-0.5 min-w-0 overflow-hidden cursor-pointer group/sort select-none">
+      <span className={cn("text-xsmall font-normal truncate", active ? "text-foreground" : "text-muted-foreground")}>{label}</span>
+      {active
+        ? (dir === "asc"
+            ? <ArrowUp   className="size-3 shrink-0 text-foreground" />
+            : <ArrowDown className="size-3 shrink-0 text-foreground" />)
+        : <ArrowUpDown className="size-3 shrink-0 text-muted-foreground opacity-0 group-hover/sort:opacity-50 transition-opacity" />}
+    </button>
+  )
+
+  return (
+    <table className="w-full table-fixed">
+      <colgroup>
+        <col style={{ width: 64 }} />
+        <col />
+        <col />
+        <col style={{ width: 112 }} />
+        <col style={{ width: 80 }} />
+        <col style={{ width: 128 }} />
+        <col style={{ width: 56 }} />
+      </colgroup>
+      <thead className="[&_tr]:border-b [&_tr]:border-border [&_th]:sticky [&_th]:top-0 [&_th]:z-10 [&_th]:bg-background">
+        <TableRow>
+          <TableHead resizable={false} className="px-2" />
+          <TableHead>
+            <SortHeader
+              label="Title"
+              active={sort === "title-az" || sort === "title-za"}
+              dir={sort === "title-az" ? "asc" : sort === "title-za" ? "desc" : null}
+              onClick={() => setSort(sort === "title-az" ? "title-za" : "title-az")}
+            />
+          </TableHead>
+          <TableHead>Band</TableHead>
+          <TableHead resizable={false}>
+            <SortHeader
+              label="Recorded"
+              active={sort === "year-desc" || sort === "year-asc"}
+              dir={sort === "year-desc" ? "desc" : sort === "year-asc" ? "asc" : null}
+              onClick={() => setSort(sort === "year-desc" ? "year-asc" : "year-desc")}
+            />
+          </TableHead>
+          <TableHead resizable={false}>
+            <SortHeader
+              label="Tracks"
+              active={sort === "tracks-desc" || sort === "tracks-asc"}
+              dir={sort === "tracks-desc" ? "desc" : sort === "tracks-asc" ? "asc" : null}
+              onClick={() => setSort(sort === "tracks-desc" ? "tracks-asc" : "tracks-desc")}
+            />
+          </TableHead>
+          <TableHead resizable={false} className="text-right">Type</TableHead>
+          <TableHead resizable={false} className="px-2" />
+        </TableRow>
+      </thead>
+      <TableBody>
+        {sorted.map(r => {
+          const playing = playingId === r.id
+          return (
+            <TableRow
+              key={r.id}
+              className={cn(
+                "group/row border-b-0 hover:bg-transparent",
+                "[&>td]:group-hover/row:bg-muted [&>td:first-child]:group-hover/row:rounded-l-md [&>td:last-child]:group-hover/row:rounded-r-md",
+                "[&_td]:py-1.5",
+                playing && "[&>td]:bg-muted [&>td:first-child]:rounded-l-md [&>td:last-child]:rounded-r-md",
+              )}
+            >
+              <TableCell className="px-2">
+                <button
+                  type="button"
+                  onClick={() => setPlayingId(prev => prev === r.id ? null : r.id)}
+                  aria-label={playing ? `Pause ${r.title}` : `Play ${r.title}`}
+                  className="relative size-12 shrink-0 overflow-hidden rounded-xs shadow-sm focus-visible:ring-3 focus-visible:ring-ring/50 outline-none cursor-pointer"
+                >
+                  <img src={r.cover} alt="" draggable={false} className="size-full object-cover" />
+                  <span aria-hidden="true" className={cn("absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity", playing ? "opacity-100" : "hidden md:flex opacity-0 group-hover/row:opacity-100")}>
+                    <PlayFilledAltIcon className="size-4 text-white" />
+                  </span>
+                </button>
+              </TableCell>
+              <TableCell className="text-small text-foreground whitespace-nowrap truncate">
+                <button type="button" className="text-left hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] outline-none cursor-pointer">{r.title}</button>
+              </TableCell>
+              <TableCell className="text-small text-muted-foreground whitespace-nowrap truncate">
+                <button type="button" className="text-left hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] outline-none cursor-pointer">{r.band}</button>
+              </TableCell>
+              <TableCell className="text-small text-muted-foreground tabular-nums whitespace-nowrap">{r.year}</TableCell>
+              <TableCell className="text-small text-muted-foreground tabular-nums whitespace-nowrap">{r.tracks}</TableCell>
+              <TableCell className="text-right">
+                <ContentTypeBadge type={r.type} />
+              </TableCell>
+              <TableCell className="px-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="More options" />}>
+                    <MoreHorizontal />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" sideOffset={6}>
+                    <AlbumCardMenuItems />
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          )
+        })}
+      </TableBody>
+    </table>
+  )
+}
+
+function SortButtonDemo() {
+  const [v, setV] = useState<"recent" | "popular" | "az" | "za">("recent")
+  return (
+    <div className="flex flex-wrap gap-6 items-center">
+      <SortButton
+        value={v}
+        onChange={setV}
+        options={[
+          { value: "recent",  label: "Most recent" },
+          { value: "popular", label: "Most popular" },
+          { value: "az",      label: "A → Z" },
+          { value: "za",      label: "Z → A" },
+        ]}
+      />
+      <SortButton
+        value={v}
+        onChange={setV}
+        label="Sort"
+        options={[
+          { value: "recent",  label: "Most recent" },
+          { value: "popular", label: "Most popular" },
+          { value: "az",      label: "A → Z" },
+          { value: "za",      label: "Z → A" },
+        ]}
+      />
+    </div>
+  )
 }
 
 function ChipFilterDemo() {
@@ -504,6 +1012,37 @@ function ChipFilterOutlineDemo() {
   )
 }
 
+function ChipCountDemo() {
+  // size="md" + count={n} renders the bigger header-style filter chip
+  // (Discography, library filter bars) with a pill count badge.
+  // Single-select example: clicking another chip swaps the selection.
+  const kinds = [
+    { id: "all",       label: "All Releases",   count: 32 },
+    { id: "album",     label: "Albums",         count: 10 },
+    { id: "single-ep", label: "Singles & EPs",  count: 8 },
+    { id: "ep",        label: "EPs",            count: 10 },
+    { id: "remix",     label: "Remixes",        count: 2 },
+    { id: "secondary", label: "Secondary Role", count: 2 },
+  ] as const
+  const [active, setActive] = useState<typeof kinds[number]["id"]>("all")
+  return (
+    <ChipGroup>
+      {kinds.map(k => (
+        <Chip
+          key={k.id}
+          size="md"
+          variant="ghost"
+          count={k.count}
+          selected={active === k.id}
+          onClick={() => setActive(k.id)}
+        >
+          {k.label}
+        </Chip>
+      ))}
+    </ChipGroup>
+  )
+}
+
 function ChipDismissDemo() {
   const [tags, setTags] = useState(["Hip-Hop", "Electronic", "Jazz", "Indie"])
 
@@ -530,82 +1069,38 @@ function ChipDismissDemo() {
   )
 }
 
-// Static visual replica of the portal toast — lets us show every variant
-// side-by-side as a gallery without relying on the timed portal viewport.
-// Mirrors classes in `src/components/ui/toast.tsx` (toastShell + ToastIcon).
-function StaticToast({
-  type = "default", title, description,
-}: {
-  type?: "default" | "success" | "error" | "warning" | "info" | "loading"
-  title: string
-  description?: string
-}) {
-  const iconCls = "size-4 shrink-0 self-start mt-[3px]"
-  const icon = {
-    default: <Info className={cn(iconCls, "text-muted-foreground")} />,
-    success: <CheckCircle2 className={cn(iconCls, "text-green-600 dark:text-green-400")} />,
-    error:   <AlertCircle className={cn(iconCls, "text-destructive")} />,
-    warning: <AlertCircle className={cn(iconCls, "text-yellow-600 dark:text-yellow-400")} />,
-    info:    <Info className={cn(iconCls, "text-blue-600 dark:text-blue-400")} />,
-    loading: (
-      <svg className={cn(iconCls, "animate-spin text-muted-foreground")} viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity=".25" strokeWidth="3" />
-        <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      </svg>
-    ),
-  }[type]
-  return (
-    <div className={cn(
-      "relative flex items-start gap-2.5 w-[380px] max-w-full",
-      "rounded-xl border border-border bg-popover px-4 pt-4 pb-[18px] shadow-lg text-popover-foreground",
-    )}>
-      {icon}
-      <div className="flex flex-1 flex-col gap-1 min-w-0">
-        <p className="text-small font-medium leading-5">{title}</p>
-        {description && <p className="text-small leading-5 text-muted-foreground">{description}</p>}
-      </div>
-      <button
-        aria-label="Dismiss"
-        className="ml-auto shrink-0 rounded-lg p-0.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-      >
-        <X className="size-3.5" />
-      </button>
-    </div>
-  )
-}
-
 function ToastDemo() {
   const { add } = useToast()
   return (
     <div className="flex flex-col gap-8">
       {/* Static gallery — every variant at a glance */}
       <div className="flex flex-col gap-3">
-        <SubLabel>All variants — static preview</SubLabel>
+        <SubLabel>All variants (real ToastPreview — shares chrome with the live toast)</SubLabel>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <StaticToast
+          <ToastPreview
             title="Blue Afternoon added to playlist"
           />
-          <StaticToast
+          <ToastPreview
             type="success"
             title="Track saved!"
             description="Your changes have been saved successfully."
           />
-          <StaticToast
+          <ToastPreview
             type="error"
             title="Upload failed"
             description="File format not supported. Please upload an MP3 or WAV file."
           />
-          <StaticToast
+          <ToastPreview
             type="warning"
             title="Heads up"
             description="Your storage is almost full. Upgrade your plan to continue uploading."
           />
-          <StaticToast
+          <ToastPreview
             type="info"
             title="New release alert"
             description="River Lotus just dropped a new album."
           />
-          <StaticToast
+          <ToastPreview
             type="loading"
             title="Processing track…"
             description="Blue Afternoon is being transcoded. This may take a minute."
@@ -1002,20 +1497,39 @@ function ExploreView() {
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <div className="bg-muted border-b border-border pt-24 pb-[3.75rem]">
-        <div className="max-w-[100rem] mx-auto px-[clamp(1.5rem,5vw,5rem)]">
+        <div className="max-w-[1528px] mx-auto px-10">
           <h1 className="text-5xl font-medium leading-none tracking-[-0.025em]">The muza design system</h1>
         </div>
       </div>
 
-    <div className="max-w-[100rem] mx-auto w-full px-[clamp(1.5rem,5vw,5rem)] py-10 pb-32">
+    {/* `@container` is on the inner content wrapper (after the
+         page's max-width + padding) so it matches the @container
+         scope used by the Library views — same rules, same query
+         container width, identical card sizing at any viewport. */}
+    <div className="@container max-w-[1528px] mx-auto w-full px-10 py-10 pb-32">
+
+      {/* Naming convention explainer — visible to readers (not a code comment) */}
+      <p className="text-small text-muted-foreground max-w-2xl mb-4 text-pretty">
+        Section labels mirror the underlying base-ui primitive name where one exists
+        (Button, Dialog, NumberField, …). Pure visual patterns that have no base-ui
+        primitive (Badges, Chips, Alerts, Skeleton, Table, Pagination) and
+        third-party ones (Command, OTP Input) keep their descriptive name.
+      </p>
 
       {/* Quick nav */}
       <nav className="flex flex-wrap gap-1.5 mb-12">
         {[
-          "Colors","Typography","Buttons","Badges","Chips","Input","Select","Filter Menu","Combobox","Menu",
-          "Date Picker","Checkbox","Radio Card","Switch","Slider","Avatar","Tabs","Cards","Alerts","Alert Dialog",
-          "Dialogs","Toast","Skeleton",
-          "Popover","Table","Pagination","Command","OTP Input","Form",
+          // Section labels mirror the underlying base-ui primitive name where
+          // applicable (Button, Dialog, NumberField, AlertDialog, …) so the
+          // showcase doubles as a quick lookup of which base-ui component
+          // backs each pattern. Custom (non-base-ui) patterns keep their
+          // descriptive name (Badges, Chips, etc.).
+          "Colors","Typography","Button","Toggle","ToggleGroup","Toolbar","Badges","Chips",
+          "Input","NumberField","Select","Filter Menu","Combobox","Menu","Sort Button","NavigationMenu",
+          "DatePicker","Checkbox","Radio Card","Switch","Slider","Meter","Progress","Separator",
+          "Avatar","Tabs","Tooltip","ScrollArea","Collapsible","Accordion",
+          "Album Card","Artist Card","Playlist Card","Song List Item","Product Card","Page Section","Items","Alerts","AlertDialog","Dialog","Drawer","Toast","Skeleton",
+          "Popover","Table","List Table","Pagination","Command","OTP Input","Form",
           "Player Bar","Player Overlay",
         ].map((s) => {
           // Lowercase + whitespace-to-dashes → matches each Section id.
@@ -1104,116 +1618,12 @@ function ExploreView() {
           ))}
         </div>
 
-        <table className="w-full text-xsmall border-collapse">
-          <thead>
-            <tr className="border-b border-border text-left">
-              <th className="pb-2 pr-8 font-normal text-foreground">Token</th>
-              <th className="pb-2 pr-8 font-normal text-foreground">Light</th>
-              <th className="pb-2 font-normal text-foreground">Dark</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              {
-                token: "--background",
-                lHex: "#FEFFFB", lPrim: "--muza-white",            lOklch: "99.81% 0.0053 118.5",
-                dHex: "#0D0D04", dPrim: "--muza-black",            dOklch: "15.55% 0.0204 108.6",
-              },
-              {
-                token: "--foreground",
-                lHex: "#0D0D04", lPrim: "--muza-neutrals-950",     lOklch: "15.55% 0.0204 108.6",
-                dHex: "#F9FAF0", dPrim: "--muza-neutrals-50",      dOklch: "98.16% 0.0131 111.4",
-              },
-              {
-                token: "--card / --popover",
-                lHex: "#FEFFFB", lPrim: "--muza-white",            lOklch: "99.81% 0.0053 118.5",
-                dHex: "#0D0D04", dPrim: "--muza-neutrals-950",     dOklch: "15.55% 0.0204 108.6",
-              },
-              {
-                token: "--primary",
-                lHex: "#1E34D8", lPrim: "--muza-blue-200",         lOklch: "44.70% 0.2440 267.0",
-                dHex: "#1E34D8", dPrim: "--muza-blue-200",         dOklch: "44.70% 0.2440 267.0",
-              },
-              {
-                token: "--primary-foreground",
-                lHex: "#F9FAF0", lPrim: "--muza-neutrals-50",      lOklch: "98.16% 0.0131 111.4",
-                dHex: "#F9FAF0", dPrim: "--muza-neutrals-50",      dOklch: "98.16% 0.0131 111.4",
-              },
-              {
-                token: "--secondary",
-                lHex: "#ECEEDF", lPrim: "--muza-neutrals-200",     lOklch: "94.35% 0.0199 113.1",
-                dHex: "#2E2C24", dPrim: "--muza-neutrals-800",     dOklch: "29.25% 0.0143 95.6",
-              },
-              {
-                token: "--secondary-hover",
-                lHex: "#DADDCD", lPrim: "--muza-neutrals-300",     lOklch: "89.08% 0.0217 115.6",
-                dHex: "#3C3D33", dPrim: "--muza-neutrals-700",     dOklch: "35.57% 0.0168 111.9",
-              },
-              {
-                token: "--muted",
-                lHex: "#F9FAF0", lPrim: "--muza-neutrals-50",      lOklch: "98.16% 0.0131 111.4",
-                dHex: "#1D1C18", dPrim: "--muza-neutrals-900",     dOklch: "22.61% 0.0077 95.4",
-              },
-              {
-                token: "--muted-foreground",
-                lHex: "rgba(84,84,69,.75)", lPrim: "--muza-neutrals-a75-700", lOklch: "44.13% 0.0237 107.4 / 0.75",
-                dHex: "rgba(249,250,240,.5)", dPrim: "--muza-neutrals-a50-50", dOklch: "98.16% 0.0131 111.4 / 0.5",
-              },
-              {
-                token: "--accent",
-                lHex: "#F1F3E6", lPrim: "--muza-neutrals-100",     lOklch: "95.91% 0.0172 114",
-                dHex: "#2E2C24", dPrim: "--muza-neutrals-800",     dOklch: "29.25% 0.0143 95.6",
-              },
-              {
-                token: "--accent-foreground",
-                lHex: "#1D1C18", lPrim: "--muza-neutrals-900",     lOklch: "22.61% 0.0077 95.4",
-                dHex: "#F9FAF0", dPrim: "--muza-neutrals-50",      dOklch: "98.16% 0.0131 111.4",
-              },
-              {
-                token: "--destructive",
-                lHex: "#DC2626", lPrim: "--tw-red-600",            lOklch: "57.71% 0.2151 27.3",
-                dHex: "#7F1D1D", dPrim: "--tw-red-900",            dOklch: "39.59% 0.1331 25.7",
-              },
-              {
-                token: "--border",
-                lHex: "#DADDCD", lPrim: "--muza-neutrals-300",     lOklch: "89.08% 0.0217 115.6",
-                dHex: "#3C3D33", dPrim: "--muza-neutrals-700",     dOklch: "35.57% 0.0168 111.9",
-              },
-              {
-                token: "--input",
-                lHex: "#ECEEDF", lPrim: "--muza-neutrals-200",     lOklch: "94.35% 0.0199 113.1",
-                dHex: "#DADDCD", dPrim: "--muza-neutrals-300",     dOklch: "89.08% 0.0217 115.6",
-              },
-              {
-                token: "--ring",
-                lHex: "#1D1C18", lPrim: "--muza-neutrals-900",     lOklch: "22.61% 0.0077 95.4",
-                dHex: "#DADDCD", dPrim: "--muza-neutrals-300",     dOklch: "89.08% 0.0217 115.6",
-              },
-            ].map((r) => (
-              <tr key={r.token} className="border-b border-border">
-                <td className="py-2 pr-8 text-foreground whitespace-nowrap">{r.token}</td>
-                <td className="py-2 pr-8">
-                  <div className="flex gap-2">
-                    <div className="size-10 rounded-xl border border-border shrink-0 self-center" style={{ background: r.lHex }} />
-                    <div>
-                      <span className="block text-foreground">{r.lPrim}</span>
-                      <span className="text-muted-foreground">oklch({r.lOklch})</span>
-                    </div>
-                  </div>
-                </td>
-                <td className="py-2">
-                  <div className="flex gap-2">
-                    <div className="size-10 rounded-xl border border-border shrink-0 self-center" style={{ background: r.dHex }} />
-                    <div>
-                      <span className="block text-foreground">{r.dPrim}</span>
-                      <span className="text-muted-foreground">oklch({r.dOklch})</span>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {/* Semantic token table — swatches + hex values are read LIVE from
+             the stylesheet (via .light / .dark scope wrappers + computed
+             style), so changing a token in app.css automatically updates
+             this table. Only the primitive-name labels are hand-mapped;
+             keep them in sync with the var(...) assignments in app.css. */}
+        <SemanticTokenTable />
       </Section>
 
       {/* ══ TYPOGRAPHY ══ */}
@@ -1320,7 +1730,7 @@ function ExploreView() {
       </Section>
 
       {/* ══ BUTTONS ══ */}
-      <Section id="buttons" title="Buttons">
+      <Section id="button" title="Button">
         {(() => {
           const VARIANTS = [
             { key: "default",         label: "Primary" },
@@ -1410,8 +1820,100 @@ function ExploreView() {
       </Section>
 
       {/* ══ BADGES ══ */}
+      {/* ══ TOGGLE ══ */}
+      <Section id="toggle" title="Toggle">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <Toggle defaultPressed>Pressed</Toggle>
+            <Toggle>Unpressed</Toggle>
+            <Toggle disabled>Disabled</Toggle>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Toggle size="sm">Small</Toggle>
+            <Toggle size="default" defaultPressed>Default</Toggle>
+            <Toggle size="lg" defaultPressed>Large</Toggle>
+          </div>
+          <p className="text-xsmall text-muted-foreground">
+            Standalone Toggle metrics mirror Button (sm/default/lg).
+            When nested in a ToggleGroup, sizing is inherited from the group.
+          </p>
+        </div>
+      </Section>
+
+      {/* ══ TOGGLE GROUP ══ */}
+      <Section id="togglegroup" title="ToggleGroup">
+        <div className="flex flex-col gap-6 max-w-md">
+          <div>
+            <SubLabel>Single-select — view modes</SubLabel>
+            <ToggleGroup defaultValue={["grid"]}>
+              <Toggle value="list">List</Toggle>
+              <Toggle value="grid">Grid</Toggle>
+              <Toggle value="compact">Compact</Toggle>
+            </ToggleGroup>
+          </div>
+          <div>
+            <SubLabel>Multi-select — formatting</SubLabel>
+            <ToggleGroup multiple defaultValue={["bold"]}>
+              <Toggle value="bold" className="aspect-square px-0 font-semibold">B</Toggle>
+              <Toggle value="italic" className="aspect-square px-0 italic">I</Toggle>
+              <Toggle value="underline" className="aspect-square px-0 underline">U</Toggle>
+            </ToggleGroup>
+          </div>
+          <div>
+            <SubLabel>Icon-only — same pattern as the topbar's theme picker</SubLabel>
+            <ToggleGroup defaultValue={["light"]}>
+              <Toggle value="light" className="aspect-square px-0" aria-label="Light"><Sun className="size-[14px]" /></Toggle>
+              <Toggle value="dark"  className="aspect-square px-0" aria-label="Dark"><Moon className="size-[14px]" /></Toggle>
+            </ToggleGroup>
+          </div>
+          <div>
+            <SubLabel>Larger sizes</SubLabel>
+            <div className="flex items-center gap-3">
+              <ToggleGroup size="default" defaultValue={["grid"]}>
+                <Toggle value="list">List</Toggle>
+                <Toggle value="grid">Grid</Toggle>
+                <Toggle value="compact">Compact</Toggle>
+              </ToggleGroup>
+              <ToggleGroup size="lg" defaultValue={["grid"]}>
+                <Toggle value="list">List</Toggle>
+                <Toggle value="grid">Grid</Toggle>
+              </ToggleGroup>
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* ══ TOOLBAR ══ */}
+      <Section id="toolbar" title="Toolbar">
+        <Toolbar>
+          <ToolbarGroup>
+            <ToolbarButton>Bold</ToolbarButton>
+            <ToolbarButton>Italic</ToolbarButton>
+            <ToolbarButton>Underline</ToolbarButton>
+          </ToolbarGroup>
+          <ToolbarSeparator />
+          <ToolbarGroup>
+            <ToolbarButton>Link</ToolbarButton>
+            <ToolbarButton>Code</ToolbarButton>
+          </ToolbarGroup>
+          <ToolbarSeparator />
+          <ToolbarButton>Settings</ToolbarButton>
+        </Toolbar>
+        <p className="text-xsmall text-muted-foreground mt-3">
+          Roving focus + arrow-key navigation between buttons.
+        </p>
+      </Section>
+
       <Section id="badges" title="Badges">
         <div className="flex flex-col gap-5">
+          <div>
+            <SubLabel>Base variants — design system primitives</SubLabel>
+            <div className="flex flex-wrap gap-2 items-center">
+              <Badge variant="secondary">Secondary</Badge>
+              <Badge variant="outline">Outline</Badge>
+              <Badge variant="destructive">Destructive</Badge>
+            </div>
+          </div>
           <div>
             <SubLabel>Content type — always secondary fill + icon</SubLabel>
             <div className="flex flex-wrap gap-2 items-center">
@@ -1424,17 +1926,28 @@ function ExploreView() {
             </div>
           </div>
           <div>
-            <SubLabel>Status — click to toggle public / private</SubLabel>
+            <SubLabel>Privacy status — click to toggle public / private</SubLabel>
             <div className="flex flex-wrap gap-2 items-center">
               <StatusBadgeDemo />
             </div>
           </div>
           <div>
-            <SubLabel>Base variants — design system primitives</SubLabel>
+            <SubLabel>Lifecycle status — colored, optionally interactive</SubLabel>
             <div className="flex flex-wrap gap-2 items-center">
-              <Badge variant="secondary">Secondary</Badge>
-              <Badge variant="outline">Outline</Badge>
-              <Badge variant="destructive">Destructive</Badge>
+              <OrderStatusBadge status="payment_failed" />
+              <OrderStatusBadge status="new" />
+              <OrderStatusBadge status="shipped" />
+              <OrderStatusBadge status="delivered" />
+              <OrderStatusBadge status="refunded" />
+              <OrderStatusBadge status="cancelled" />
+            </div>
+            <p className="text-xsmall font-normal text-muted-foreground mt-4 mb-3">
+              Interactive — pass an onStatusChange handler to make the badge a dropdown of allowed transitions.
+            </p>
+            <div className="flex flex-wrap gap-2 items-center">
+              <OrderStatusBadge status="new" onStatusChange={() => {}} />
+              <OrderStatusBadge status="shipped" onStatusChange={() => {}} />
+              <OrderStatusBadge status="delivered" onStatusChange={() => {}} />
             </div>
           </div>
         </div>
@@ -1462,6 +1975,10 @@ function ExploreView() {
             <SubLabel>Dismissible chips</SubLabel>
             <ChipDismissDemo />
           </div>
+          <div>
+            <SubLabel>Filter chips — ghost + count badge (Discography toolbar)</SubLabel>
+            <ChipCountDemo />
+          </div>
         </div>
       </Section>
 
@@ -1470,12 +1987,23 @@ function ExploreView() {
         <div className="flex flex-wrap gap-6 items-start">
           <div className="flex flex-col gap-1.5 min-w-[260px]">
             <Label htmlFor="artist">Default</Label>
-            <Input id="artist" placeholder="e.g. Kendrick Lamar" />
-            <p className="text-xsmall text-muted-foreground">Your public display name on Muza.</p>
+            <Input
+              id="artist"
+              placeholder="e.g. Kendrick Lamar"
+              hint="Your public display name on Muza."
+            />
           </div>
           <div className="flex flex-col gap-1.5 min-w-[260px]">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="you@muza.com" />
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@muza.com"
+              defaultValue="not-an-email"
+              aria-invalid="true"
+              hint="Enter a valid email address."
+              hintTone="error"
+            />
           </div>
           <div className="flex flex-col gap-1.5 min-w-[260px]">
             <Label htmlFor="search-input">With icon</Label>
@@ -1486,8 +2014,12 @@ function ExploreView() {
           </div>
           <div className="flex flex-col gap-1.5 min-w-[320px]">
             <Label htmlFor="bio">Textarea</Label>
-            <Textarea id="bio" placeholder="Tell listeners about yourself…" rows={3} />
-            <p className="text-xsmall text-muted-foreground">Max 280 characters.</p>
+            <Textarea
+              id="bio"
+              placeholder="Tell listeners about yourself…"
+              rows={3}
+              hint="Max 280 characters."
+            />
           </div>
           <div className="flex flex-col gap-1.5 min-w-[300px]">
             <Label>With action</Label>
@@ -1523,6 +2055,40 @@ function ExploreView() {
                 { value: ".org", label: ".org" },
               ]}
             />
+          </div>
+        </div>
+      </Section>
+
+      {/* ══ QTY STEPPER ══ */}
+      <Section id="numberfield" title="NumberField">
+        <div className="flex flex-col gap-6 max-w-md">
+          <div className="flex flex-col gap-2">
+            <SubLabel>Default (h-10) — pairs with Input / SelectTrigger</SubLabel>
+            <div className="flex items-center gap-3">
+              <QtyStepperDemo />
+              <QtyStepperDemo initial={1} />
+              <QtyStepperDemo initial={5} max={5} />
+              <QtyStepper value={2} onChange={() => {}} disabled />
+            </div>
+            <p className="text-xsmall text-muted-foreground">
+              Default size aligns with Input height. Auto-disables at min/max boundaries.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <SubLabel>Small (h-8) — for compact rows / sm SelectTrigger</SubLabel>
+            <div className="flex items-center gap-3">
+              <QtyStepperDemo size="sm" />
+              <QtyStepperDemo size="sm" initial={1} />
+              <QtyStepperDemo size="sm" initial={9} min={0} max={9} />
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <SubLabel>In a row with Input + Button</SubLabel>
+            <div className="flex items-center gap-2">
+              <Input placeholder="Tracking number" className="flex-1" />
+              <QtyStepperDemo initial={3} />
+              <Button variant="outline">Apply</Button>
+            </div>
           </div>
         </div>
       </Section>
@@ -1606,6 +2172,25 @@ function ExploreView() {
               </ComboboxContent>
             </Combobox>
           </div>
+
+          {/* Filterable long-list configuration — pass `items` + a
+               function-child renderer to enable real type-to-filter
+               behaviour (vs. the static JSX-children form above). Same
+               Combobox primitive, different config. */}
+          <div className="flex flex-col gap-1.5 w-[280px]">
+            <Label>Country</Label>
+            <Combobox
+              items={COUNTRY_CODES}
+              itemToStringLabel={(c) => countryName(String(c))}
+            >
+              <ComboboxTrigger placeholder="Search countries…" />
+              <ComboboxContent className="max-h-[280px] overflow-y-auto">
+                {(code: string) => (
+                  <ComboboxItem key={code} value={code}>{countryName(code)}</ComboboxItem>
+                )}
+              </ComboboxContent>
+            </Combobox>
+          </div>
         </div>
       </Section>
 
@@ -1649,8 +2234,71 @@ function ExploreView() {
         </div>
       </Section>
 
+      {/* ══ SORT BUTTON ══ */}
+      <Section id="sort-button" title="Sort Button">
+        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
+          Secondary pill that opens a sort menu — paired with any
+          list/grid that needs re-ordering (Discography, Library,
+          Orders). The label can either reflect the active option or
+          stay fixed (e.g. "Recording date") with the menu items
+          carrying the qualifier.
+        </p>
+        <SortButtonDemo />
+      </Section>
+
+      {/* ══ NAVIGATION MENU ══ */}
+      <Section id="navigationmenu" title="NavigationMenu">
+        <NavigationMenu>
+          <NavigationMenuList>
+            <NavigationMenuItem>
+              <NavigationMenuTrigger>Discover</NavigationMenuTrigger>
+              <NavigationMenuPortal>
+                <NavigationMenuPositioner>
+                  <NavigationMenuPopup>
+                    <NavigationMenuViewport>
+                      <NavigationMenuContent>
+                        <div className="grid grid-cols-2 gap-1 min-w-[320px]">
+                          <NavigationMenuLink href="#">New releases</NavigationMenuLink>
+                          <NavigationMenuLink href="#">Charts</NavigationMenuLink>
+                          <NavigationMenuLink href="#">Genres</NavigationMenuLink>
+                          <NavigationMenuLink href="#">Editorial</NavigationMenuLink>
+                          <NavigationMenuLink href="#">Live sessions</NavigationMenuLink>
+                          <NavigationMenuLink href="#">Independent</NavigationMenuLink>
+                        </div>
+                      </NavigationMenuContent>
+                    </NavigationMenuViewport>
+                  </NavigationMenuPopup>
+                </NavigationMenuPositioner>
+              </NavigationMenuPortal>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <NavigationMenuTrigger>Studio</NavigationMenuTrigger>
+              <NavigationMenuPortal>
+                <NavigationMenuPositioner>
+                  <NavigationMenuPopup>
+                    <NavigationMenuViewport>
+                      <NavigationMenuContent>
+                        <div className="flex flex-col gap-1 min-w-[240px]">
+                          <NavigationMenuLink href="#">Music</NavigationMenuLink>
+                          <NavigationMenuLink href="#">Wallet</NavigationMenuLink>
+                          <NavigationMenuLink href="#">Reports</NavigationMenuLink>
+                          <NavigationMenuLink href="#">Manage</NavigationMenuLink>
+                        </div>
+                      </NavigationMenuContent>
+                    </NavigationMenuViewport>
+                  </NavigationMenuPopup>
+                </NavigationMenuPositioner>
+              </NavigationMenuPortal>
+            </NavigationMenuItem>
+          </NavigationMenuList>
+        </NavigationMenu>
+        <p className="text-xsmall text-muted-foreground mt-3">
+          Hover or focus a trigger. Sliding between triggers keeps the popup open.
+        </p>
+      </Section>
+
       {/* ══ DATE PICKER ══ */}
-      <Section id="date-picker" title="Date Picker">
+      <Section id="datepicker" title="DatePicker">
         <DatePickerDemo />
       </Section>
 
@@ -1731,9 +2379,8 @@ function ExploreView() {
       </Section>
 
       {/* ══ SLIDER ══ */}
-      <Section id="slider" title="Slider & Progress">
+      <Section id="slider" title="Slider">
         <div className="flex flex-col gap-4 min-w-[280px] max-w-md">
-          <SubLabel>Slider</SubLabel>
           <Slider
             value={volume}
             onValueChange={(v) => setVolume(Array.isArray(v) ? [...(v as number[])] : [v as number])}
@@ -1741,11 +2388,67 @@ function ExploreView() {
             step={1}
           />
           <Slider defaultValue={[30]} max={100} step={1} />
-          <SubLabel>Progress</SubLabel>
-          <div className="flex flex-col gap-2">
-            {[100, 75, 50, 25, 0].map((v) => (
-              <Progress key={v} value={v} className="h-2" />
-            ))}
+        </div>
+      </Section>
+
+      {/* ══ PROGRESS ══ */}
+      <Section id="progress" title="Progress">
+        <div className="flex flex-col gap-2 min-w-[280px] max-w-md">
+          {[100, 75, 50, 25, 0].map((v) => (
+            <Progress key={v} value={v} className="h-2" />
+          ))}
+        </div>
+        <p className="text-xsmall text-muted-foreground mt-3">
+          Indeterminate work in flight (uploads, syncs). Use Meter for static measurements.
+        </p>
+      </Section>
+
+      {/* ══ METER ══ */}
+      <Section id="meter" title="Meter">
+        <div className="flex flex-col gap-5 max-w-md">
+          {[
+            { value: 12,  label: "Storage used", display: "12 GB / 100 GB" },
+            { value: 78,  label: "Password strength", display: "Strong" },
+            { value: 96,  label: "Capacity", display: "Almost full" },
+          ].map((m) => (
+            <Meter key={m.label} value={m.value}>
+              <div className="flex items-baseline gap-3">
+                <MeterLabel>{m.label}</MeterLabel>
+                <MeterValue>{() => m.display}</MeterValue>
+              </div>
+              <MeterTrack>
+                <MeterIndicator />
+              </MeterTrack>
+            </Meter>
+          ))}
+        </div>
+        <p className="text-xsmall text-muted-foreground mt-3">
+          Static measurement (vs. Progress, which is work in flight).
+        </p>
+      </Section>
+
+      {/* ══ SEPARATOR ══ */}
+      <Section id="separator" title="Separator">
+        <div className="flex flex-col gap-6 max-w-md">
+          <div>
+            <SubLabel>Horizontal — between stacked content</SubLabel>
+            <div className="flex flex-col gap-3 text-small">
+              <span>Recently played</span>
+              <Separator />
+              <span>Saved albums</span>
+              <Separator />
+              <span>Following</span>
+            </div>
+          </div>
+          <div>
+            <SubLabel>Vertical — inline divider in a row</SubLabel>
+            <div className="flex items-center gap-3 text-small h-6">
+              <span>Songs · 248</span>
+              <Separator orientation="vertical" />
+              <span>Albums · 32</span>
+              <Separator orientation="vertical" />
+              <span>Playlists · 14</span>
+            </div>
           </div>
         </div>
       </Section>
@@ -1834,65 +2537,458 @@ function ExploreView() {
       </Section>
 
       {/* ══ CARDS ══ */}
-      <Section id="cards" title="Cards">
-        <div className="flex flex-wrap gap-4 items-start">
-          <Card className="w-72">
-            <CardHeader>
-              <CardTitle>Upload Track</CardTitle>
-              <CardDescription>Add a new song to your Muza artist profile.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <Label>Track title</Label>
-                <Input placeholder="e.g. Blue Afternoon" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label>Genre</Label>
-                <Select>
-                  <SelectTrigger><SelectValue placeholder="Select genre" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="jazz">Jazz</SelectItem>
-                    <SelectItem value="electronic">Electronic</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-            <CardFooter className="gap-2 justify-end">
-              <Button variant="outline" size="sm">Cancel</Button>
-              <Button size="sm">Upload</Button>
-            </CardFooter>
-          </Card>
+      {/* ══ TOOLTIP ══ */}
+      <Section id="tooltip" title="Tooltip">
+        <TooltipProvider>
+          <div className="flex flex-wrap items-center gap-3">
+            <Tooltip>
+              <TooltipTrigger
+                render={<Button variant="outline">Hover me</Button>}
+              />
+              <TooltipContent>Default tooltip</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger
+                render={<Button variant="outline" size="icon"><Plus /></Button>}
+              />
+              <TooltipContent>Add a new track</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger
+                render={<Button variant="ghost" size="icon-sm"><Search /></Button>}
+              />
+              <TooltipContent side="bottom">Search · ⌘K</TooltipContent>
+            </Tooltip>
+          </div>
+          <p className="text-xsmall text-muted-foreground mt-3">
+            Hover or focus the trigger. Sides: <code className="font-mono">top</code> (default), <code className="font-mono">bottom</code>, <code className="font-mono">left</code>, <code className="font-mono">right</code>.
+          </p>
+        </TooltipProvider>
+      </Section>
 
-          <Card className="w-64">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Weekly Streams</CardTitle>
-                <Badge>+14%</Badge>
+      {/* ══ SCROLL AREA ══ */}
+      <Section id="scrollarea" title="ScrollArea">
+        <div className="flex flex-wrap gap-6">
+          <div>
+            <SubLabel>Vertical</SubLabel>
+            <ScrollArea className="h-[180px] w-[280px] rounded-xl border border-border p-4">
+              <div className="flex flex-col gap-2 text-small">
+                {Array.from({ length: 24 }, (_, i) => (
+                  <div key={i}>Tag #{i + 1} — example item in a scrollable list</div>
+                ))}
               </div>
-              <CardDescription>Your stats for the last 7 days.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-4xlarge font-medium tracking-tight">12,430</p>
-              <p className="text-xsmall text-muted-foreground mt-1 mb-4">streams across all tracks</p>
-              <Progress value={72} className="h-1.5" />
-            </CardContent>
-          </Card>
+            </ScrollArea>
+          </div>
+          <div>
+            <SubLabel>Horizontal</SubLabel>
+            <ScrollArea className="h-[100px] w-[320px] rounded-xl border border-border">
+              <div className="flex gap-3 p-4">
+                {Array.from({ length: 12 }, (_, i) => (
+                  <div key={i} className="size-16 shrink-0 rounded-lg bg-muted flex items-center justify-center text-xsmall text-muted-foreground">
+                    {i + 1}
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
+        <p className="text-xsmall text-muted-foreground mt-3">
+          Scrollbars only show on hover/scroll. Hover the panel to reveal them.
+        </p>
+      </Section>
 
-          <Card className="w-64">
-            <CardContent className="pt-6 flex items-center gap-4">
-              <Avatar className="size-12">
-                <AvatarFallback className="bg-primary text-primary-foreground font-medium text-large">RL</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-medium leading-tight">River Lotus</p>
-                <p className="text-small text-muted-foreground">Electronic · Berlin</p>
-                <div className="flex gap-1.5 mt-2.5">
-                  <Button size="sm">Follow</Button>
-                  <Button variant="outline" size="icon-sm"><Share2 className="size-3.5" /></Button>
-                </div>
+      {/* ══ COLLAPSIBLE ══ */}
+      <Section id="collapsible" title="Collapsible">
+        <div className="max-w-md">
+          <Collapsible>
+            <CollapsibleTrigger>
+              <span>Show advanced options</span>
+            </CollapsibleTrigger>
+            <CollapsiblePanel>
+              <div className="mt-3 flex flex-col gap-3 p-4 rounded-lg bg-muted text-small text-foreground">
+                <p>Advanced settings go here.</p>
+                <p className="text-muted-foreground">
+                  Single-region expand/collapse — the building block of Accordion when you only need one section.
+                </p>
               </div>
-            </CardContent>
-          </Card>
+            </CollapsiblePanel>
+          </Collapsible>
+        </div>
+      </Section>
+
+      {/* ══ ACCORDION ══ */}
+      <Section id="accordion" title="Accordion">
+        <div className="max-w-md">
+          <Accordion>
+            <AccordionItem value="payments">
+              <AccordionTrigger>How do I get paid?</AccordionTrigger>
+              <AccordionPanel>
+                Payouts arrive in your Muza wallet immediately on every sale. Withdraw to a connected bank account at any time.
+              </AccordionPanel>
+            </AccordionItem>
+            <AccordionItem value="rights">
+              <AccordionTrigger>Do I keep my rights?</AccordionTrigger>
+              <AccordionPanel>
+                Yes — you retain full ownership of your masters and compositions. Muza only handles distribution and storefront.
+              </AccordionPanel>
+            </AccordionItem>
+            <AccordionItem value="exclusive">
+              <AccordionTrigger>Is Muza exclusive?</AccordionTrigger>
+              <AccordionPanel>
+                No. You can release the same music on any other platform at any time.
+              </AccordionPanel>
+            </AccordionItem>
+          </Accordion>
+        </div>
+      </Section>
+
+      {/* ══ ALBUM CARD ══ */}
+      {/*
+        Reusable album tile — square cover + title + artist subtitle.
+        Hover reveals: Add (+) / More (⋯) bottom-left, Play (▶)
+        bottom-right. `owned` swaps Add for Edit (✏️) so artist-owned
+        listings get the right affordance. Figma:
+          · Type=Album        (default + hover overlay)
+          · Type=My Album     (owned variant — pencil instead of plus)
+      */}
+      <Section id="album-card" title="Album Card">
+        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
+          Tap the cover to <em>play</em>; long-press for the action
+          menu (touch). Hover surfaces the Add/Edit ⋯ Play cluster.
+          Click the title to open the album, click the artist to open
+          the artist. The kebab opens the full context menu (Share /
+          Add to library / Add to playlist / Go to artist / Go to album
+          / Report / Show info). The 4th card uses
+          <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">owned</code>
+          so the menu swaps Add → Edit and Report → Remove from library.
+          The 3rd card has a long title so you can see the 2-line clamp.
+        </p>
+        <div className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))] @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))] gap-x-4 gap-y-6">
+          <AlbumCard
+            cover="https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/13/07/89/1307897d-b463-5a49-0af9-d8d895259c84/D000000002855.jpg/600x600bb.jpg"
+            title="Scenery"
+            artist="Ryo Fukui"
+          />
+          <AlbumCard
+            cover="https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/01/36/a6/0136a666-36d2-caf1-efb1-da77a646d104/06UMGIM03764.rgb.jpg/600x600bb.jpg"
+            title="Karma"
+            artist="Pharoah Sanders"
+          />
+          <AlbumCard
+            cover="https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/cb/85/94/cb85949f-5a43-58d5-c866-d9d0292354bd/06UMGIM01616.rgb.jpg/600x600bb.jpg"
+            title="The Black Saint and the Sinner Lady"
+            artist="Charles Mingus"
+          />
+          <AlbumCard
+            owned
+            cover="https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/e8/e0/90/e8e090fb-10ba-a0f8-c719-ce347b658bbc/075597908541.jpg/600x600bb.jpg"
+            title="In These Times"
+            artist="Makaya McCraven"
+          />
+          <AlbumCard
+            cover="https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/01/0b/96/010b9654-4059-150f-8650-38f94faa62cf/20CRGIM21278.rgb.jpg/600x600bb.jpg"
+            title="Source"
+            artist="Nubya Garcia"
+          />
+        </div>
+      </Section>
+
+      {/* ══ ARTIST CARD ══ */}
+      {/*
+        Reusable artist tile — circular avatar + name centered below.
+        No hover overlay by design (per Figma Type=Artist) — clicking
+        navigates to the artist profile.
+      */}
+      <Section id="artist-card" title="Artist Card">
+        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
+          Circle is inset to ~80% of the track so the artist tile
+          doesn't dominate when it shares a row with album/playlist
+          cards (circles read visually heavier than squares at the
+          same diameter). No hover overlay by design — clicking the
+          card navigates to the artist profile.
+        </p>
+        <div className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))] @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))] gap-x-4 gap-y-6">
+          <ArtistCard name="John Coltrane"   image="https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/John_Coltrane_1963_cropped_ver2.jpg/500px-John_Coltrane_1963_cropped_ver2.jpg" />
+          <ArtistCard name="Alice Coltrane"  image="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Alice_Coltrane_1972.jpg/500px-Alice_Coltrane_1972.jpg" />
+          <ArtistCard name="Sun Ra"          image="https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Sun_Ra_%281973_publicity_photo_-_Impulse_ABC_Dunhill%29.jpg/500px-Sun_Ra_%281973_publicity_photo_-_Impulse_ABC_Dunhill%29.jpg" />
+          <ArtistCard name="Anthony Braxton" image="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Anthony_braxton_5268134w.jpg/500px-Anthony_braxton_5268134w.jpg" />
+          <ArtistCard name="Nubya Garcia"    image="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Nubya_Garcia_INNt%C3%B6ne_01.jpg/500px-Nubya_Garcia_INNt%C3%B6ne_01.jpg" />
+        </div>
+      </Section>
+
+      {/* ══ PLAYLIST CARD ══ */}
+      {/*
+        Reusable playlist tile — 2×2 composite cover + title + subtitle.
+        Hover overlay matches AlbumCard (Add/Edit, More, Play). Owner
+        line in subtitle hides when `owned` (the user's own playlists).
+        First tile uses the special "Create New Playlist" variant.
+        Figma:
+          · Type=Playlist     (default — "1234 Songs • User Name")
+          · Type=My Playlist  (owned — "1234 Songs", Edit instead of Add)
+          · Type=Add          (PlaylistCreateCard — the "+" tile)
+      */}
+      <Section id="playlist-card" title="Playlist Card">
+        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
+          Same interaction model as AlbumCard: tap cover to play,
+          long-press for the menu, hover surfaces Add/Edit ⋯ Play.
+          Owned playlists drop the owner name from the subtitle and
+          swap Save → Edit, Report → Delete in the menu. First tile
+          is the special <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">PlaylistCreateCard</code>
+          variant.
+        </p>
+        <div className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))] @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))] gap-x-4 gap-y-6">
+          <PlaylistCreateCard />
+          <PlaylistCard
+            title="Blue Train Late Night"
+            covers={[
+              "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/13/07/89/1307897d-b463-5a49-0af9-d8d895259c84/D000000002855.jpg/200x200bb.jpg",
+              "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/6e/0e/b4/6e0eb485-2cc8-f2d7-e123-eac40ec75f02/680899009027.jpg/200x200bb.jpg",
+              "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/54/ec/e9/54ece95f-de54-e6a7-0b1a-6a8eee947443/24UM1IM25320.rgb.jpg/200x200bb.jpg",
+              "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/e8/e0/90/e8e090fb-10ba-a0f8-c719-ce347b658bbc/075597908541.jpg/200x200bb.jpg",
+            ]}
+            songCount={42}
+            owned
+          />
+          <PlaylistCard
+            title="Coltrane & Coffee"
+            covers={[
+              "https://is1-ssl.mzstatic.com/image/thumb/Music128/v4/49/39/f6/4939f68e-00a5-49f4-9642-57020b789e19/00602547491763.rgb.jpg/200x200bb.jpg",
+              "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/cb/c7/1d/cbc71df4-e2b7-4ea4-7edb-563a9aaf7b31/00602537433919.rgb.jpg/200x200bb.jpg",
+              "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/d2/c6/ef/d2c6efa8-08f8-9486-57e1-c460fa2964af/cover.jpg/200x200bb.jpg",
+              "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/4a/2d/6f/4a2d6f89-f204-8f91-9812-f9bd203e33b0/cover.jpg/200x200bb.jpg",
+            ]}
+            songCount={28}
+            owner="Sarah K"
+          />
+          <PlaylistCard
+            title="Saturday Easygoing"
+            covers={[
+              "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/200x200bb.jpg",
+              "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/71/f2/e3/71f2e3e0-b799-3315-9f91-ea9bfebb58db/mzi.isjazqfb.jpg/200x200bb.jpg",
+              "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/01/0b/96/010b9654-4059-150f-8650-38f94faa62cf/20CRGIM21278.rgb.jpg/200x200bb.jpg",
+              "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/af/dc/6b/afdc6b88-b275-de4e-3098-63dff171dffb/680899009720.jpg/200x200bb.jpg",
+            ]}
+            songCount={67}
+            owner="Marcus W"
+          />
+          <PlaylistCard
+            title="Modal Jazz Meditations"
+            covers={[
+              "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/af/5c/40/af5c40a1-54b1-855d-3da2-f875efbd8372/06UMGIM04169.rgb.jpg/200x200bb.jpg",
+              "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/01/36/a6/0136a666-36d2-caf1-efb1-da77a646d104/06UMGIM03764.rgb.jpg/200x200bb.jpg",
+              "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/d5/21/70/d5217051-3c92-7ec6-790b-770833a01727/118206.jpg/200x200bb.jpg",
+              "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/3d/9d/36/3d9d36ec-d86c-98ee-e0ea-601fc6e32504/00602577388385.rgb.jpg/200x200bb.jpg",
+            ]}
+            songCount={51}
+            owner="Elena P"
+          />
+        </div>
+      </Section>
+
+      {/* ══ SONG LIST ITEM ══ */}
+      {/*
+        Single row in any song list (Top Songs on Artist, playlist
+        detail, search results). Cover acts as the play button —
+        idle hover shows ▶, playing state swaps to the spinning
+        carousel wave + Pause-on-hover. Title / album / artist all
+        independent hover-underline click targets; right cluster:
+        [+] always + [info] [⋯] on hover, then duration. Pass a
+        `menuItems` slot to turn the kebab into a real DropdownMenu.
+      */}
+      <Section id="song-list-item" title="Song List Item">
+        <ul className="flex flex-col gap-1 max-w-2xl">
+          <li>
+            <SongListItem
+              cover="https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/200x200bb.jpg"
+              title="Space Is the Place"
+              album="Space Is the Place"
+              year={1973}
+              duration="21:14"
+              badge="Demo"
+              menuItems={<AlbumCardMenuItems />}
+            />
+          </li>
+          <li>
+            <SongListItem
+              cover="https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/b3/2a/5f/b32a5f91-5551-1ac0-17c6-e6dd4dcc0292/4062548021820_3000.jpg/200x200bb.jpg"
+              title="Lanquidity"
+              artist="Sun Ra"
+              album="Lanquidity"
+              year={1978}
+              duration="9:11"
+              menuItems={<AlbumCardMenuItems />}
+            />
+          </li>
+          <li>
+            <SongListItem
+              cover="https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/a7/f2/b9/a7f2b9d7-3cd0-c092-d667-59dd10e11b6c/4062548112283.png/200x200bb.jpg"
+              title="Door of the Cosmos"
+              album="Sleeping Beauty"
+              year={1979}
+              duration="9:03"
+              menuItems={<AlbumCardMenuItems />}
+            />
+          </li>
+        </ul>
+      </Section>
+
+      {/* ══ HOME ROW ══ */}
+      {/*
+        Horizontally-scrolling rail used on the Home page for "New
+        Albums", "Playlists of the week", etc. Same column step map
+        as the Library views (2/3/4/5/6 cards visible at container
+        widths 304/464/692/928/1164) so the home density matches the
+        rest of the app. Arrow buttons scroll by one full page so
+        the row always lands on a clean N-card boundary; touch swipe
+        is free-form for natural feel.
+      */}
+      <Section id="home-row" title="Home Row">
+        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
+          Section divider with title + ◀ ▶ + ghost "Show all"
+          button on top, scrollable card rail below. The row hides
+          its scrollbar and uses
+          <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">touch-action: pan-x</code>
+          so vertical wheel/swipe passes straight through to the
+          page. Try clicking the arrows or swiping horizontally.
+        </p>
+        <HomeRow title="New Albums">
+          {HOME_NEW_ALBUMS.map(a => (
+            <li key={a.id}><AlbumCard cover={a.cover} title={a.title} artist={a.artist} /></li>
+          ))}
+        </HomeRow>
+      </Section>
+
+      {/* ══ PRODUCT CARD ══ */}
+      {/*
+        Compact product tile used on Artist › Shop and any product
+        rail. Title clamps at two lines + min-height reserved so a row
+        of tiles stays flush, price + price-label inline, full-width
+        secondary "Add to cart" pill at the foot.
+      */}
+      <Section id="product-card" title="Product Card">
+        <ul className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))] @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))] gap-x-4 gap-y-6">
+          {[
+            { id: "kp1", title: "Space Is the Place — Vinyl Reissue", price: "32 $", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
+            { id: "kp2", title: "Lanquidity (Deluxe 4LP Box)",         price: "120 $", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/b3/2a/5f/b32a5f91-5551-1ac0-17c6-e6dd4dcc0292/4062548021820_3000.jpg/600x600bb.jpg" },
+            { id: "kp3", title: "Saturn Records Cap",                  price: "28 $", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music62/v4/fd/56/b8/fd56b88e-1bb8-9be7-c945-61fbaf9da665/Astro_Black_2018_cover-300.jpg/600x600bb.jpg" },
+            { id: "kp4", title: "Cosmic Equation Poster",              price: "18 $", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music49/v4/20/db/51/20db5143-be96-6741-6d70-08d9fc0d5605/Cosmos_art_1500.jpg/600x600bb.jpg" },
+          ].map(p => (
+            <li key={p.id}>
+              <ProductCardSmall cover={p.cover} title={p.title} price={p.price} />
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      {/* ══ PAGE SECTION ══ */}
+      {/*
+        Page-section primitive shared by the buyer-side purchase detail and
+        the seller-side order detail. Heading sits OUT of the box so boxed
+        and unboxed sections share the same hierarchy; vertical rhythm
+        carries separation between adjacent flat sections.
+      */}
+      <Section id="page-section" title="Page Section">
+        <div className="flex flex-col gap-10 max-w-2xl">
+          <PageSection title="Flat section">
+            <p className="text-small text-muted-foreground">
+              The default. Heading + content with no chrome — vertical rhythm
+              between siblings does the visual separation. Used for fulfillment,
+              timeline, refund and communications surfaces.
+            </p>
+          </PageSection>
+
+          <PageSection
+            title="Flat with action"
+            action={<Button variant="outline">Action</Button>}
+          >
+            <p className="text-small text-muted-foreground">
+              An action slot right-aligns next to the heading. Use for the
+              "next forward step" on a section (e.g. Mark as shipped).
+            </p>
+          </PageSection>
+
+          <PageSection title="Boxed section" boxed>
+            <p className="text-small text-foreground">
+              <code className="text-xsmall text-muted-foreground">boxed</code> wraps
+              the children in a bordered card. Reserved for product / data lists
+              where the container reinforces the grouping (currently only Items).
+            </p>
+          </PageSection>
+        </div>
+      </Section>
+
+      {/* ══ ITEMS ══ */}
+      {/*
+        Shared product-list + money-breakdown card. Same component drives
+        both the buyer purchase-detail page (format/type subtitle, no SKU,
+        no tax) and the seller order-detail page (variant + SKU, discount,
+        labelled tax). Each line collapses to a single price at qty=1 and
+        expands to muted "unit × qty" + line total at qty>1.
+      */}
+      <Section id="items" title="Items">
+        <div className="flex flex-col gap-10">
+          <div>
+            <p className="text-small text-muted-foreground mb-3 max-w-2xl">
+              Seller side — variant + SKU + discount + labelled tax. Mixed
+              quantities exercise the unit-price expansion.
+            </p>
+            <div className="max-w-2xl">
+              <DetailItemsSection
+                items={[
+                  {
+                    image:     "https://picsum.photos/seed/goldenhour/80/80",
+                    title:     "Golden Hour — 12\"",
+                    subtitle:  "Translucent blue",
+                    meta:      "SKU · VIN-GOLDEN",
+                    unitPrice: 24,
+                    quantity:  1,
+                  },
+                  {
+                    image:     "https://picsum.photos/seed/tourtee/80/80",
+                    title:     "Tour Tee",
+                    subtitle:  "Heather grey · L",
+                    meta:      "SKU · APP-TEE-L",
+                    unitPrice: 22,
+                    quantity:  2,
+                  },
+                ]}
+                breakdown={{
+                  subtotal:     68,
+                  discount:     10,
+                  discountCode: "FAN10",
+                  shipping:     4,
+                  tax:          4.64,
+                  taxLabel:     "8% FR VAT",
+                  total:        66.64,
+                }}
+              />
+            </div>
+          </div>
+
+          <div>
+            <p className="text-small text-muted-foreground mb-3 max-w-2xl">
+              Buyer side — format/type subtitle, free shipping, no tax row.
+              Same component, less content.
+            </p>
+            <div className="max-w-2xl">
+              <DetailItemsSection
+                items={[
+                  {
+                    image:     "https://picsum.photos/seed/spaceisplace/80/80",
+                    title:     "Space Is The Place — Reissue LP",
+                    subtitle:  "Vinyl",
+                    unitPrice: 28,
+                    quantity:  1,
+                  },
+                ]}
+                breakdown={{
+                  subtotal: 28,
+                  shipping: 0,
+                  total:    28,
+                }}
+              />
+            </div>
+          </div>
         </div>
       </Section>
 
@@ -1913,7 +3009,7 @@ function ExploreView() {
       </Section>
 
       {/* ══ ALERT DIALOG ══ */}
-      <Section id="alert-dialog" title="Alert Dialog">
+      <Section id="alertdialog" title="AlertDialog">
         <div className="flex flex-wrap gap-3">
           <AlertDialog>
             <AlertDialogTrigger render={<Button variant="destructive" />}>
@@ -1954,8 +3050,47 @@ function ExploreView() {
       </Section>
 
       {/* ══ DIALOGS ══ */}
-      <Section id="dialogs" title="Dialogs — static preview">
+      <Section id="dialog" title="Dialog">
         <DialogsKitchenSink />
+      </Section>
+
+      {/* ══ DRAWER (Sheet) ══ */}
+      <Section id="drawer" title="Drawer">
+        <div className="flex flex-col gap-3 max-w-md">
+          <div className="flex flex-wrap gap-2">
+            {(["right", "left", "bottom", "top"] as const).map(side => (
+              <Sheet
+                key={side}
+                swipeDirection={side === "top" ? "up" : side === "bottom" ? "down" : side}
+              >
+                <SheetTrigger render={<Button variant="outline">Open from {side}</Button>} />
+                <SheetContent side={side} className={side === "right" || side === "left" ? "max-w-[420px]" : ""}>
+                  <SheetHeader>
+                    <SheetTitle>Drawer from {side}</SheetTitle>
+                    <SheetDescription>
+                      Built on base-ui's Drawer primitive — supports swipe-to-dismiss in
+                      the matching direction, focus trapping, scroll lock, and snap points.
+                    </SheetDescription>
+                  </SheetHeader>
+                  <div className="flex-1 overflow-y-auto px-6 py-4 text-small text-muted-foreground">
+                    <p>
+                      Drawer body content scrolls independently of the header and footer.
+                      Try dragging the {side} edge to dismiss.
+                    </p>
+                  </div>
+                  <SheetFooter>
+                    <SheetClose render={<Button variant="outline">Cancel</Button>} />
+                    <SheetClose render={<Button>Save</Button>} />
+                  </SheetFooter>
+                </SheetContent>
+              </Sheet>
+            ))}
+          </div>
+          <p className="text-xsmall text-muted-foreground">
+            Cart drawer is built on this. Anchored to any edge; swipe-to-dismiss matches
+            the anchor.
+          </p>
+        </div>
       </Section>
 
       {/* ══ TOAST ══ */}
@@ -2086,6 +3221,29 @@ function ExploreView() {
             </TableRow>
           </TableFooter>
         </Table>
+      </Section>
+
+      {/* ══ LIST TABLE ══ */}
+      {/*
+        Borderless list table — drives the Artist › Discography list
+        view. Pattern:
+          · No `border-b` on rows; hover paints `bg-muted` per-cell
+            with first/last cells rounding the outside corners.
+          · Cover cell is a play button with hover overlay + active
+            (playing) wave animation.
+          · Sortable column headers (label + arrow); sticky `<th>`s
+            so the header pins to the top of the page scroll.
+          · Rightmost cell holds a kebab menu with the same items
+            the AlbumCard cover-menu surfaces.
+      */}
+      <Section id="list-table" title="List Table">
+        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
+          Single-line rows, no zebra borders. Title + Band are
+          separate hover-underline click targets; Recorded and Tracks
+          are sortable; click the cover to play; the ⋯ button opens
+          the same menu as the AlbumCard.
+        </p>
+        <ListTableDemo />
       </Section>
 
       {/* ══ PAGINATION ══ */}
@@ -2303,6 +3461,7 @@ export default function Home() {
   }, [activeNav])
 
   return (
+    <CartProvider>
     <div className="flex h-screen bg-background">
       <Sidebar
         collapsed={collapsed}
@@ -2315,13 +3474,18 @@ export default function Home() {
         <div ref={scrollRef} className="flex-1 overflow-auto">
           {activeNav === "Home"      && <HomeView onNavigate={navigate} />}
           {activeNav === "Explore"   && <ExploreView />}
+          {activeNav === "Purchases" && <PurchasesView />}
+          {activeNav === "Albums"    && <LibraryAlbumsView />}
+          {activeNav === "Artists"   && <LibraryArtistsView />}
+          {activeNav === "Playlists" && <LibraryPlaylistsView />}
+          {activeNav === "Artist"    && <ArtistProfileView onBack={() => navigate("Home")} />}
           {Object.keys(STUDIO_TABS).includes(activeNav) && (
             <StudioView
               page={activeNav}
               onOpenUpload={() => { setUploadOpen(true); setUploadMinimized(false) }}
             />
           )}
-          {["Playlists","Albums","Artists","Songs"].includes(activeNav) && (
+          {activeNav === "Songs" && (
             <div className="p-10"><h1 className="text-2xlarge font-medium">{activeNav}</h1></div>
           )}
         </div>
@@ -2347,7 +3511,7 @@ export default function Home() {
               <span className="text-xsmall text-muted-foreground font-normal leading-tight">{uploadProgress}%</span>
             </div>
             <div className="h-1 rounded-full bg-secondary overflow-hidden">
-              <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+              <div className="h-full rounded-full bg-primary transition-[width] duration-300" style={{ width: `${uploadProgress}%` }} />
             </div>
           </div>
           <button
@@ -2359,5 +3523,6 @@ export default function Home() {
         </div>
       )}
     </div>
+    </CartProvider>
   )
 }

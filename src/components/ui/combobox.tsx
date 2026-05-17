@@ -65,13 +65,22 @@ function ComboboxTrigger({ className, placeholder, showSearchIcon = true }: Comb
   )
 }
 
+type ComboboxContentProps =
+  Omit<ComboboxPrimitive.Popup.Props, "children"> &
+  Pick<ComboboxPrimitive.Positioner.Props, "sideOffset"> & {
+    /** Either plain JSX (renders unfiltered — every child shown) or a
+     *  function `(item, index) => ReactNode`. The function-child form
+     *  is required for live filtering: base-ui only filters when the
+     *  parent Combobox has `items` set AND children is a function. */
+    children?: React.ReactNode | ((item: any, index: number) => React.ReactNode)
+  }
+
 function ComboboxContent({
   className,
   children,
   sideOffset = 4,
   ...props
-}: ComboboxPrimitive.Popup.Props &
-  Pick<ComboboxPrimitive.Positioner.Props, "sideOffset">) {
+}: ComboboxContentProps) {
   return (
     <ComboboxPrimitive.Portal keepMounted>
       <ComboboxPrimitive.Positioner

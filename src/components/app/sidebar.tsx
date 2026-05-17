@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { LogoHorizontal, LogoMark } from "@/components/ui/logo"
 import {
   Home, Compass, ListMusic, Disc3, Mic, Music2,
-  Sliders, FileText, Package, ShoppingCart, CreditCard, Library,
+  Sliders, FileText, ShoppingCart, Library,
   Plus, PanelLeftClose, PanelLeftOpen, ChevronRight, BarChart2,
 } from "lucide-react"
 
@@ -53,45 +53,51 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    // Studio sidebar trimmed to four top-level surfaces: Pages, Music,
+    // Analytics, Shop. Shop owns its own internal tabs for Products /
+    // Orders / Settings — keeping commerce concerns scoped inside the
+    // thing they configure. Wallet moved out of Studio into the avatar
+    // dropdown (it's a per-user concept, not per-shop).
     label: "Studio",
     icon: <Sliders className="size-4" />,
     children: [
       { label: "Pages",     icon: <FileText    className="size-4" /> },
       { label: "Music",     icon: <Music2      className="size-4" /> },
       { label: "Analytics", icon: <BarChart2   className="size-4" /> },
-      { separator: true },
-      { label: "Products",  icon: <Package      className="size-4" /> },
-      { label: "Orders",    icon: <ShoppingCart className="size-4" /> },
-      { label: "Wallet",    icon: <CreditCard  className="size-4" /> },
+      { label: "Shop",      icon: <ShoppingCart className="size-4" /> },
     ],
   },
 ]
 
+// Sidebar playlist list — themed around the five labels surfaced in
+// LibraryPlaylistsView (Blue Note, Impulse!, Strata-East, Justin Time,
+// Evidence) plus a few cross-label moods. Kept as a flat array since
+// the sidebar doesn't (yet) share state with the playlists view.
 const DEFAULT_PLAYLISTS: Playlist[] = [
-  { id: "1",  title: "Blue Train Late Night" },
-  { id: "2",  title: "Kind of Blue Mornings" },
-  { id: "3",  title: "Coltrane & Coffee" },
-  { id: "4",  title: "Hard Bop Hustle" },
-  { id: "5",  title: "Midnight at the Village Vanguard" },
-  { id: "6",  title: "Bossa Nova Sundays" },
-  { id: "7",  title: "Modal Jazz Meditations" },
-  { id: "8",  title: "Bird Lives: Parker Essentials" },
-  { id: "9",  title: "Monk's Moody Shuffles" },
-  { id: "10", title: "West Coast Cool Sessions" },
-  { id: "11", title: "Afro-Cuban Jazz Heat" },
-  { id: "12", title: "Smooth Sax Sundays" },
-  { id: "13", title: "Bebop After Midnight" },
-  { id: "14", title: "Soul Jazz Saturdays" },
+  // ── Blue Note ────────────────────────────────────────────────────────────
+  { id: "1",  title: "Blue Note Essentials" },
+  { id: "2",  title: "Blue Note Late Night" },
+  { id: "3",  title: "Hancock & Shorter Sessions" },
+  // ── Impulse! ─────────────────────────────────────────────────────────────
+  { id: "4",  title: "Impulse! Spiritual Jazz" },
+  { id: "5",  title: "Coltrane Years on Impulse" },
+  { id: "6",  title: "Pharoah & Alice — Impulse Era" },
+  // ── Strata-East ──────────────────────────────────────────────────────────
+  { id: "7",  title: "Strata-East Deep Cuts" },
+  { id: "8",  title: "Gil Scott-Heron Brian Jackson" },
+  // ── Justin Time ──────────────────────────────────────────────────────────
+  { id: "9",  title: "Justin Time — Canadian Jazz" },
+  { id: "10", title: "Diana Krall Early Years" },
+  // ── Evidence ─────────────────────────────────────────────────────────────
+  { id: "11", title: "Evidence Reissues" },
+  { id: "12", title: "Monk on Evidence" },
+  // ── Cross-label moods ────────────────────────────────────────────────────
+  { id: "13", title: "Modal Jazz Meditations" },
+  { id: "14", title: "Hard Bop Hustle" },
   { id: "15", title: "Late Night Improvisation" },
   { id: "16", title: "Modern Jazz Discoveries" },
   { id: "17", title: "Vibes for Stargazing" },
   { id: "18", title: "Chill Beats for Rainy Days" },
-  { id: "19", title: "Epic Road Trip Anthems" },
-  { id: "20", title: "Songs to Dance Like Nobody's Watching" },
-  { id: "21", title: "Melodies for Midnight Musing" },
-  { id: "22", title: "Harlem Renaissance Revisited" },
-  { id: "23", title: "Blue Note Classics" },
-  { id: "24", title: "Django & the Hot Club" },
 ]
 
 // ─── NavButton ────────────────────────────────────────────────────────────────

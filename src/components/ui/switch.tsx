@@ -28,7 +28,7 @@ function Switch({
       data-slot="switch"
       data-size={size}
       className={cn(
-        "peer group/switch relative inline-flex shrink-0 items-center rounded-full border border-transparent transition-all outline-none",
+        "peer group/switch relative inline-flex shrink-0 items-center rounded-full border border-transparent transition-[colors,transform] outline-none",
         // Touch target
         "after:absolute after:-inset-x-3 after:-inset-y-2",
         // Focus ring

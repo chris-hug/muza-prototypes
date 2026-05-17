@@ -8,7 +8,9 @@ import { cn } from "@/lib/utils"
 const buttonVariants = cva(
   // Base — pill shape, Founders Grotesk, smooth transitions
   // Note: font weight is set per-size (sm = font-normal, all others = font-medium)
-  "group/button inline-flex shrink-0 items-center justify-center gap-2 rounded-full border bg-clip-padding whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-45 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 pb-px",
+  // Property-specific transition (avoids `transition-all` which fights
+  // with active-state translates / nested transforms).
+  "group/button relative inline-flex shrink-0 items-center justify-center gap-2 rounded-full border bg-clip-padding whitespace-nowrap transition-[colors,box-shadow,transform,opacity] outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-45 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 pb-px",
   {
     variants: {
       variant: {
@@ -49,7 +51,10 @@ const buttonVariants = cva(
         sm:         "h-8 px-3 text-2xsmall font-normal",
         lg:         "h-12 px-10 text-small font-medium",
         icon:       "size-10",
-        "icon-sm":  "size-8",
+        // 32px visual, 40×40 hit area via pseudo-element (skill: 40×40 min).
+        // The `relative` on the base + `after:absolute -inset-1` extends the
+        // clickable region by 4px on each side without affecting layout.
+        "icon-sm":  "size-8 after:absolute after:-inset-1 after:content-['']",
         "icon-lg":  "size-12",
       },
     },

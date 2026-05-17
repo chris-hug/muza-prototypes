@@ -24,11 +24,27 @@ type ToastType = "default" | "success" | "error" | "warning" | "info" | "loading
 
 // Single shared chrome — every toast uses `border-border` regardless of
 // type. The icon carries the semantic meaning; the surface stays neutral
-// so toasts don't visually duplicate alert styling.
-const toastShell = cn(
+// so toasts don't visually duplicate alert styling. Exported so static
+// previews can render the same shell without forking the styles.
+export const toastShellClass = cn(
   "relative flex w-full items-start gap-2.5",
   "rounded-xl border border-border bg-popover px-4 pt-4 pb-[18px] shadow-lg",
-  "text-popover-foreground transition-all duration-200",
+  "text-popover-foreground transition-[transform,opacity] duration-200",
+)
+const toastShell = toastShellClass
+
+// Action-button + close-button class strings — extracted so ToastPreview
+// stays visually identical to the real Viewport-rendered toast.
+export const toastActionButtonClass = cn(
+  "shrink-0 self-start mt-[3px]",
+  "rounded-md px-2 py-1 text-xsmall font-medium text-foreground",
+  "border border-border hover:bg-accent transition-colors",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+)
+export const toastCloseButtonClass = cn(
+  "shrink-0 self-start mt-[3px] rounded-lg p-0.5 text-muted-foreground",
+  "hover:bg-accent hover:text-accent-foreground transition-colors",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
 )
 
 // Icons use the same `self-start mt-[5px]` optical-center nudge as the Alert
@@ -65,13 +81,16 @@ function ToastViewport({ className }: { className?: string }) {
   return (
     <ToastPrimitive.Viewport
       className={cn(
-        "fixed bottom-4 right-4 z-[100] flex flex-col gap-2 w-[380px] max-w-[calc(100vw-2rem)] outline-none",
+        "fixed top-4 right-4 z-[100] flex flex-col gap-2 w-[380px] max-w-[calc(100vw-2rem)] outline-none",
         className
       )}
     >
       {toasts.map((t) => {
-        const type = (t.type as ToastType) ?? "default"
-        const icon = ToastIcon[type]
+        const type    = (t.type as ToastType) ?? "default"
+        const icon    = ToastIcon[type]
+        // Action button is passed via toast.data: { actionLabel, onAction }.
+        // Used for undo affordances on irreversible-feeling actions.
+        const data    = (t.data ?? {}) as { actionLabel?: string; onAction?: () => void }
 
         return (
           <ToastPrimitive.Root
@@ -94,13 +113,19 @@ function ToastViewport({ className }: { className?: string }) {
               )}
             </div>
 
+            {data.actionLabel && data.onAction && (
+              <button
+                type="button"
+                onClick={() => { data.onAction!(); }}
+                className={toastActionButtonClass}
+              >
+                {data.actionLabel}
+              </button>
+            )}
+
             <ToastPrimitive.Close
               aria-label="Dismiss"
-              className={cn(
-                "ml-auto shrink-0 rounded-lg p-0.5 text-muted-foreground",
-                "hover:bg-accent hover:text-accent-foreground transition-colors",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
-              )}
+              className={toastCloseButtonClass}
             >
               <XIcon className="size-3.5" />
             </ToastPrimitive.Close>
@@ -117,5 +142,49 @@ function useToast() {
   return ToastPrimitive.useToastManager()
 }
 
-export { ToastProvider, ToastViewport, useToast }
-export type { ToastType }
+// ── Static preview (kitchen-sink + design docs) ────────────────────────────────
+//
+// Renders the same visual chrome as a live toast, but as a plain inline div.
+// Used to show every variant at a glance without firing real toasts. Shares
+// `toastShellClass` + `ToastIcon` + button class constants with the live
+// version, so any chrome change updates both — no drift.
+
+interface ToastPreviewProps {
+  type?:        ToastType
+  title:        string
+  description?: string
+  /** Optional inline action button (e.g. "Undo"). */
+  actionLabel?: string
+  className?:   string
+}
+
+function ToastPreview({
+  type = "default",
+  title,
+  description,
+  actionLabel,
+  className,
+}: ToastPreviewProps) {
+  return (
+    <div className={cn(toastShellClass, "w-[380px] max-w-full", className)}>
+      {ToastIcon[type]}
+      <div className="flex flex-1 flex-col gap-1 min-w-0">
+        <p className="text-small font-medium leading-5">{title}</p>
+        {description && (
+          <p className="text-small leading-5 text-muted-foreground">{description}</p>
+        )}
+      </div>
+      {actionLabel && (
+        <button type="button" className={toastActionButtonClass}>
+          {actionLabel}
+        </button>
+      )}
+      <button type="button" aria-label="Dismiss" className={toastCloseButtonClass}>
+        <XIcon className="size-3.5" />
+      </button>
+    </div>
+  )
+}
+
+export { ToastProvider, ToastViewport, useToast, ToastPreview }
+export type { ToastType, ToastPreviewProps }

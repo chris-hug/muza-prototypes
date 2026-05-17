@@ -203,7 +203,7 @@ export function ManageView() {
   const editingAccount = allAccounts.find(a => a.id === editingId) ?? null
 
   return (
-    <div className="flex gap-6 px-16 py-8 pb-40 items-start">
+    <div className="flex gap-6 px-10 py-8 pb-40 items-start">
 
       {/* Left column */}
       <div className="flex flex-col gap-10 w-1/2 min-w-0">
