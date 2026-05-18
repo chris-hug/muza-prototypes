@@ -12,6 +12,7 @@
  */
 
 import { useEffect, useState } from "react"
+import { useSearchParams } from "react-router"
 import { ArrowLeft } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -31,9 +32,9 @@ const GROUPS: ReadonlyArray<{ title: string; items: ReadonlyArray<string> }> = [
   { title: "Foundations",      items: ["Colors", "Typography"] },
   { title: "Atoms",            items: ["Button", "Toggle", "ToggleGroup", "Toolbar", "Badges", "Chips"] },
   { title: "Inputs",           items: ["Input", "NumberField", "Select", "MultiSelect", "SingleSelect", "Combobox", "Menu", "NavigationMenu", "DatePicker", "Checkbox & Radio", "Radio Card", "Switch", "Slider"] },
-  { title: "Indicators",       items: ["Progress", "Meter", "Separator", "Avatar"] },
+  { title: "Indicators",       items: ["Progress", "Meter", "Spinner", "Top Progress Bar", "Separator", "Avatar"] },
   { title: "Containers",       items: ["Tabs", "Tooltip", "ScrollArea", "Collapsible", "Accordion"] },
-  { title: "Cards & lists",    items: ["Album Card", "Artist Card", "Playlist Card", "Song List Item", "Card Rail", "Product Card", "Checkout Card"] },
+  { title: "Cards & lists",    items: ["Album Card", "Artist Card", "Playlist Card", "Cover Play Button", "Song List Item", "Card Rail", "Product Card", "Checkout Card"] },
   { title: "Page composition", items: ["Page Section", "Items"] },
   { title: "Overlays",         items: ["Alerts", "AlertDialog", "Dialog", "Drawer", "Toast"] },
   { title: "Utility",          items: ["Skeleton", "Popover", "Table", "List Table", "Pagination", "Command", "OTP Input", "Form"] },
@@ -70,6 +71,8 @@ const STATUS: Record<string, "new" | "updated"> = {
   ToggleGroup:      "new",
   Toolbar:          "new",
   Meter:            "new",
+  Spinner:          "new",
+  "Top Progress Bar": "new",
   ScrollArea:       "new",
   Collapsible:      "new",
   Accordion:        "new",
@@ -77,6 +80,7 @@ const STATUS: Record<string, "new" | "updated"> = {
   "Album Card":     "new",
   "Artist Card":    "new",
   "Playlist Card":  "new",
+  "Cover Play Button": "new",
   "Song List Item": "new",
   "Card Rail":      "new",
   "Product Card":   "new",
@@ -92,6 +96,18 @@ const STATUS: Record<string, "new" | "updated"> = {
 }
 
 export default function DesignSystem() {
+  const [, setParams] = useSearchParams()
+  // SPA-internal back navigation — a plain `<a href>` would trigger
+  // a full document reload (white screen while the JS bundle
+  // re-parses) and the TopProgressBar couldn't fire because React
+  // isn't running during that gap.
+  const goBackToPrototype = () => {
+    setParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.delete("page")
+      return next
+    }, { replace: true })
+  }
   const [activeId, setActiveId] = useState<string>(() =>
     typeof window === "undefined" ? "colors" : (new URL(window.location.href).hash.slice(1) || "colors")
   )
@@ -100,19 +116,34 @@ export default function DesignSystem() {
   // when working purely on day-one features.
   const [showPhase2, setShowPhase2] = useState(true)
 
-  // Sync scroll → URL hash via IntersectionObserver. Each <Section>
-  // gets `scroll-mt-6` (set inside home.tsx) so anchored scrolls
-  // don't tuck under the topbar.
+  // Sync scroll → active sidebar item via IntersectionObserver. Each
+  // <Section> gets `scroll-mt-6` (set inside home.tsx) so anchored
+  // scrolls don't tuck under the topbar.
+  //
+  // We track *all* currently-intersecting sections in a Set across
+  // callbacks. The observer only fires for sections whose state
+  // changed — so if Spinner is already in the band and Separator
+  // enters it, only Separator's entry arrives. Picking the topmost
+  // from just that callback would wrongly mark Separator active
+  // even though Spinner is still above it. Maintaining the Set lets
+  // us sort the full set of visible sections each time.
   useEffect(() => {
     const ids = GROUPS.flatMap(g => g.items.map(idFor))
     const els = ids.map(id => document.getElementById(id)).filter((x): x is HTMLElement => !!x)
     if (els.length === 0) return
+    const intersecting = new Set<string>()
     const io = new IntersectionObserver(
       entries => {
-        const visible = entries.filter(e => e.isIntersecting)
-        if (visible.length === 0) return
-        const top = visible.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
-        setActiveId(top.target.id)
+        for (const e of entries) {
+          if (e.isIntersecting) intersecting.add(e.target.id)
+          else intersecting.delete(e.target.id)
+        }
+        if (intersecting.size === 0) return
+        const top = [...intersecting]
+          .map(id => document.getElementById(id))
+          .filter((x): x is HTMLElement => !!x)
+          .sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top)[0]
+        if (top) setActiveId(top.id)
       },
       { rootMargin: "-80px 0px -60% 0px", threshold: [0, 1] },
     )
@@ -134,13 +165,14 @@ export default function DesignSystem() {
       <aside className="shrink-0 w-64 border-r border-border bg-background flex flex-col">
         {/* Top — wordmark + back-to-prototype link. */}
         <div className="shrink-0 px-5 pt-6 pb-4 flex flex-col gap-3 border-b border-border">
-          <a
-            href="/?page=Home"
-            className="inline-flex items-center gap-1.5 text-xsmall font-normal text-muted-foreground hover:text-foreground transition-colors w-fit"
+          <button
+            type="button"
+            onClick={goBackToPrototype}
+            className="inline-flex items-center gap-1.5 text-xsmall font-normal text-muted-foreground hover:text-foreground transition-colors w-fit cursor-pointer"
           >
             <ArrowLeft className="size-3.5" />
             Back to prototype
-          </a>
+          </button>
           <div>
             <h2 className="text-small font-medium text-foreground">Design system</h2>
             <p className="text-xsmall text-muted-foreground mt-0.5">Components & patterns</p>

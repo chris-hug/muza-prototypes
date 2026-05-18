@@ -26,9 +26,19 @@ export const PlayFilledAlt = ({ className, style }: IconProps) => (
   </svg>
 )
 
+// Official IBM Carbon `pause--filled--alt` path at its native
+// 32×32 viewBox — thicker bars + wider gap than the hand-rolled
+// approximation that used to live here.
 export const PauseFilledAlt = ({ className, style }: IconProps) => (
-  <svg {...svgProps} className={className} style={style}>
-    <path d="M8 4h3v16H8zM13 4h3v16h-3z" />
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 32 32"
+    fill="currentColor"
+    aria-hidden="true"
+    className={className}
+    style={style}
+  >
+    <path d="M6 4h6v24H6zM20 4h6v24h-6z" />
   </svg>
 )
 

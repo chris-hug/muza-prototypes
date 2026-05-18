@@ -7,6 +7,20 @@
       "runtimeArgs": ["run", "dev"],
       "port": 3001,
       "autoPort": true
+    },
+    {
+      "name": "budhabudhabing-api",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server.js"],
+      "cwd": "Budhabudhabing",
+      "port": 3000
+    },
+    {
+      "name": "budhabudhabing-frontend",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite"],
+      "cwd": "Budhabudhabing",
+      "port": 3001
     }
   ]
 }

@@ -120,8 +120,11 @@ import { ArtistCard } from "@/components/ui/artist-card"
 import { PlaylistCard } from "@/components/ui/playlist-card"
 import { ProductCard } from "@/components/ui/product-card"
 import { SongListItem } from "@/components/ui/song-list-item"
+import { CoverPlayButton } from "@/components/ui/cover-play-button"
+import { PlayingWave } from "@/components/ui/playing-wave"
+import { Spinner } from "@/components/ui/spinner"
+import { TopProgressBar } from "@/components/ui/top-progress-bar"
 import { AlbumCardMenuItems } from "@/components/ui/cover-card-menu"
-import { PlayFilledAlt as PlayFilledAltIcon } from "@/components/ui/transport-icons"
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
 import { CardRail } from "@/components/app/card-rail"
 import { PlaylistCreateCard } from "@/components/ui/playlist-create-card"
@@ -848,6 +851,42 @@ function StatusBadgeDemo() {
   return <StatusBadge status={status} onStatusChange={setStatus} />
 }
 
+
+// TopProgressBar — interactive demo. Click to flip loading=true for
+// 1.4s. The bar renders to the top edge of the viewport (not this
+// section), so the user should look up.
+function TopProgressBarDemo() {
+  const [loading, setLoading] = useState(false)
+  const trigger = () => {
+    setLoading(true)
+    setTimeout(() => setLoading(false), 1400)
+  }
+  return (
+    <div className="flex items-center gap-4">
+      <TopProgressBar loading={loading} />
+      <Button onClick={trigger} disabled={loading} variant="outline">
+        {loading ? "Loading…" : "Trigger 1.4s load"}
+      </Button>
+      <span className="text-2xsmall text-muted-foreground">
+        Watch the top edge of the window. Loads under 200ms stay invisible.
+      </span>
+    </div>
+  )
+}
+
+function CoverPlayButtonDemo() {
+  const [playing, setPlaying] = useState(false)
+  const cover = "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/200x200bb.jpg"
+  return (
+    <CoverPlayButton
+      src={cover}
+      title="Space Is the Place"
+      playing={playing}
+      onToggle={() => setPlaying(p => !p)}
+    />
+  )
+}
+
 // Borderless list table — pattern used by Artist › Discography list
 // view. Demo wires a small set of releases with hover + active-row
 // states + sortable headers + kebab menu.
@@ -939,17 +978,13 @@ function ListTableDemo() {
               )}
             >
               <TableCell className="px-2">
-                <button
-                  type="button"
-                  onClick={() => setPlayingId(prev => prev === r.id ? null : r.id)}
-                  aria-label={playing ? `Pause ${r.title}` : `Play ${r.title}`}
-                  className="relative size-12 shrink-0 overflow-hidden rounded-xs shadow-sm focus-visible:ring-3 focus-visible:ring-ring/50 outline-none cursor-pointer"
-                >
-                  <img src={r.cover} alt="" draggable={false} className="size-full object-cover" />
-                  <span aria-hidden="true" className={cn("absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity", playing ? "opacity-100" : "hidden md:flex opacity-0 group-hover/row:opacity-100")}>
-                    <PlayFilledAltIcon className="size-4 text-white" />
-                  </span>
-                </button>
+                <CoverPlayButton
+                  src={r.cover}
+                  title={r.title}
+                  playing={playing}
+                  onToggle={() => setPlayingId(prev => prev === r.id ? null : r.id)}
+                  hoverGroup="row"
+                />
               </TableCell>
               <TableCell className="text-small text-foreground whitespace-nowrap truncate">
                 <button type="button" className="text-left hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] outline-none cursor-pointer">{r.title}</button>
@@ -1791,12 +1826,11 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             { key: "destructive",     label: "Destructive" },
           ] as const
 
-          const Spin = () => (
-            <svg className="animate-spin size-4 shrink-0" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity=".25" strokeWidth="3"/>
-              <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-            </svg>
-          )
+          // Local alias — the brand `Spinner` at sm size (16px),
+          // inheriting text colour from its parent button so every
+          // variant gets the right contrast automatically.
+          const Spin = () => <Spinner size="sm" />
+
 
           const GRID_TEXT = "grid grid-cols-[120px_auto_auto_auto] gap-x-8 items-center py-3"
           const GRID_ICON = "grid grid-cols-[120px_auto_auto_auto] gap-x-6 items-center py-3"
@@ -2532,6 +2566,75 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         </p>
       </Section>
 
+      {/* ══ SPINNER ══ */}
+      {/*
+        The muza brand animation (`PlayingWave`) used as an "actively
+        working" indicator. Same dot carousel as the now-playing
+        indicator on purpose — the brand mark stays consistent;
+        meaning comes from context (label + placement). Use inline
+        beside a real wait (upload progress, payment processing,
+        search loading). Do NOT use for page nav — the built-in
+        page-crossfade already handles that.
+      */}
+      <Section id="spinner" title="Spinner" status="new">
+        <div className="flex flex-col gap-6">
+          <div className="flex items-end gap-10">
+            <div className="flex flex-col items-start gap-2">
+              <Spinner size="sm" />
+              <span className="text-2xsmall text-muted-foreground">sm · 16px — inline beside text</span>
+            </div>
+            <div className="flex flex-col items-start gap-2">
+              <Spinner size="md" />
+              <span className="text-2xsmall text-muted-foreground">md · 24px — content area</span>
+            </div>
+            <div className="flex flex-col items-start gap-2">
+              <Spinner size="lg" />
+              <span className="text-2xsmall text-muted-foreground">lg · 40px — full-section loader</span>
+            </div>
+          </div>
+
+          {/* Static composition examples — the Spinner is a
+               primitive; this is how it gets used in real surfaces.
+               No state toggling, no transitions — just shows the
+               composition pattern. Compose it into real surfaces
+               (upload progress, payment, search) with whatever
+               loading state those surfaces own. */}
+          <div className="flex flex-col gap-2 pt-2">
+            <SubLabel>Composition</SubLabel>
+            <div className="flex items-center gap-2 text-small text-muted-foreground">
+              <Spinner size="sm" label="Saving" />
+              <span>Saving changes…</span>
+            </div>
+            <div className="flex items-center gap-2 text-small text-muted-foreground">
+              <Spinner size="sm" label="Uploading" />
+              <span>Uploading music · 42%</span>
+            </div>
+          </div>
+
+          <p className="text-xsmall text-muted-foreground max-w-prose">
+            Use for genuinely slow surfaces (≥300ms). For page
+            navigation, rely on the built-in page-crossfade.
+          </p>
+        </div>
+      </Section>
+
+      {/* ══ TOP PROGRESS BAR ══ */}
+      {/*
+        Thin 2px bar pinned to the very top edge — appears only when
+        a load exceeds 200ms, climbs asymptotically to ~85%, snaps to
+        100% on completion and fades. Quiet and non-blocking. Reserve
+        for real fetches that fall into the awkward 200ms–3s window.
+        Loads <200ms stay invisible; loads >3s should switch to a
+        Spinner so the user gets a stronger signal.
+      */}
+      <Section id="top-progress-bar" title="Top Progress Bar" status="new">
+        <TopProgressBarDemo />
+        <p className="text-xsmall text-muted-foreground max-w-prose mt-4">
+          The bar attaches to the viewport, not this section — look at
+          the very top edge of the window when you trigger it.
+        </p>
+      </Section>
+
       {/* ══ SEPARATOR ══ */}
       <Section id="separator" title="Separator">
         <div className="flex flex-col gap-6 max-w-md">
@@ -2919,6 +3022,50 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         [+] always + [info] [⋯] on hover, then duration. Pass a
         `menuItems` slot to turn the kebab into a real DropdownMenu.
       */}
+      {/* ══ COVER PLAY BUTTON ══ */}
+      {/*
+        Cover-as-play button. Shared base behind every row that carries
+        a track or release — SongListItem, the discography list table,
+        and any future list/grid that wants the same affordance. Three
+        overlay states: idle/hover → Play icon; playing/rest → animated
+        muza wave; playing/hover → Pause icon. Pass `hoverGroup` to wire
+        the overlay to a parent `group/row` or `group/song`, or leave
+        as `self` for standalone use.
+      */}
+      <Section id="cover-play-button" title="Cover Play Button" status="new"
+        usage={[
+          { label: "Song List Item",                href: "/?page=DesignSystem#song-list-item" },
+          { label: "Artist › Discography (list view)", href: "/?page=Artist" },
+          { label: "Design system › List Table",   href: "/?page=DesignSystem#list-table" },
+        ]}>
+        <div className="flex flex-col gap-8">
+          {/* Live demo — click the cover to toggle playing state. */}
+          <CoverPlayButtonDemo />
+
+          {/* PlayingWave on its own — devs may want the wave outside
+               the cover button (e.g. inline "now playing" indicator
+               in a player bar or sidebar row). All internal lengths
+               scale off the `size` prop, so the dot ratio + orbit
+               stay locked across sizes. */}
+          <div className="flex flex-col gap-3">
+            <SubLabel>PlayingWave — the animation on its own</SubLabel>
+            <div className="flex items-center gap-6">
+              <PlayingWave size={28} className="text-foreground" />
+              <PlayingWave size={40} className="text-foreground" />
+              <PlayingWave size={56} className="text-foreground" />
+            </div>
+            <p className="text-xsmall text-muted-foreground max-w-prose">
+              A 3D carousel of four dots rotating around a Y-axis,
+              with a subtle Y-float on the outer wrapper. Scales to
+              any wrapper (the dots are sized in %). Tuned slow (8s
+              rotation, 3.5s float) so it reads as "alive" rather
+              than "working" — don't reuse it as a loading spinner.
+            </p>
+          </div>
+
+        </div>
+      </Section>
+
       <Section id="song-list-item" title="Song List Item" status="new"
         usage={[{ label: "Artist › Top Songs", href: "/?page=Artist" }]}>
         <ul className="flex flex-col gap-1 max-w-2xl">
@@ -3618,6 +3765,20 @@ export default function Home() {
   const [params, setParams] = useSearchParams()
   const activeNav = params.get("page") ?? "Home"
 
+  // Nav-driven loading state for the top progress bar.
+  // Flips true on every activeNav change and back to false after a
+  // short hold. The hold needs to exceed the bar's 200ms show-after
+  // threshold so the bar actually appears — without it the bar
+  // correctly stays hidden because navigation in this prototype is
+  // synchronous (<10ms). When real data fetching lands later, swap
+  // this fixed timeout for the actual `isFetching` flag.
+  const [navLoading, setNavLoading] = useState(false)
+  useEffect(() => {
+    setNavLoading(true)
+    const id = setTimeout(() => setNavLoading(false), 600)
+    return () => clearTimeout(id)
+  }, [activeNav])
+
   function navigate(view: string) {
     // `replace: true` keeps the back button feeling like an app-shell nav
     // rather than stacking a history entry for every sidebar click.
@@ -3665,11 +3826,40 @@ export default function Home() {
   // Design system runs in its own full-bleed layout (its own
   // sidebar, no product AppShell). Render it BEFORE the AppShell
   // wrapper so it isn't nested inside the product sidebar/topbar.
-  if (activeNav === "DesignSystem") return <DesignSystem />
+  // Wrapped in a keyed div so the DS↔prototype swap also gets the
+  // pageFadeIn transition (otherwise that boundary would be a hard
+  // visual cut — every other in-app nav fades, this one wouldn't).
+  // Always wrap in the same shape (Fragment > TopProgressBar +
+  // CartProvider), regardless of route — flipping between two
+  // different top-level structures (`<>` vs `<CartProvider>`) on
+  // the same activeNav change confuses React's reconciler and
+  // produces a `removeChild` crash. By keeping the outer tree
+  // stable, only the inner DS-or-AppShell node remounts.
+  // CartProvider runs even on the DS route — harmless, it's just
+  // a state holder.
+  if (activeNav === "DesignSystem") {
+    return (
+      <CartProvider>
+        <TopProgressBar loading={navLoading} />
+        <div key="ds" className="h-screen [animation:pageFadeIn_250ms_ease-out]">
+          <DesignSystem />
+        </div>
+      </CartProvider>
+    )
+  }
 
   return (
     <CartProvider>
-    <div className="flex h-screen bg-background">
+    {/* Top progress bar — fires on every activeNav change. Sits
+        outside the keyed AppShell wrapper so it isn't remounted
+        on internal nav. */}
+    <TopProgressBar loading={navLoading} />
+    {/* Outer keyed wrapper — stable key="app" while inside the
+        prototype, so internal navigation doesn't remount the
+        AppShell (which would kill sidebar state). The animation
+        only fires once when transitioning into the AppShell from
+        the DS route. */}
+    <div key="app" className="flex h-screen bg-background [animation:pageFadeIn_250ms_ease-out]">
       <Sidebar
         collapsed={collapsed}
         onCollapsedChange={setCollapsed}
@@ -3679,22 +3869,29 @@ export default function Home() {
       <main className="flex-1 min-w-0 flex flex-col relative">
         <Topbar actions={<TopbarDefaultActions />} />
         <div ref={scrollRef} className="flex-1 overflow-auto">
-          {activeNav === "Home"      && <HomeView onNavigate={navigate} />}
-          {activeNav === "Explore"   && <ExplorePlaceholder />}
-          {activeNav === "Purchases" && <PurchasesView />}
-          {activeNav === "Albums"    && <LibraryAlbumsView />}
-          {activeNav === "Artists"   && <LibraryArtistsView />}
-          {activeNav === "Playlists" && <LibraryPlaylistsView />}
-          {activeNav === "Artist"    && <ArtistProfileView onBack={() => navigate("Home")} />}
-          {Object.keys(STUDIO_TABS).includes(activeNav) && (
-            <StudioView
-              page={activeNav}
-              onOpenUpload={() => { setUploadOpen(true); setUploadMinimized(false) }}
-            />
-          )}
-          {activeNav === "Songs" && (
-            <div className="p-10"><h1 className="text-2xlarge font-medium">{activeNav}</h1></div>
-          )}
+          {/* `key={activeNav}` remounts the inner wrapper on every
+              navigation, which lets the pageFadeIn keyframe run once
+              per view swap. 250ms crossfade (opacity + 6px lift) —
+              perceivable enough to register as a transition without
+              ever feeling like "loading." */}
+          <div key={activeNav} className="[animation:pageFadeIn_250ms_ease-out]">
+            {activeNav === "Home"      && <HomeView onNavigate={navigate} />}
+            {activeNav === "Explore"   && <ExplorePlaceholder />}
+            {activeNav === "Purchases" && <PurchasesView />}
+            {activeNav === "Albums"    && <LibraryAlbumsView />}
+            {activeNav === "Artists"   && <LibraryArtistsView />}
+            {activeNav === "Playlists" && <LibraryPlaylistsView />}
+            {activeNav === "Artist"    && <ArtistProfileView onBack={() => navigate("Home")} />}
+            {Object.keys(STUDIO_TABS).includes(activeNav) && (
+              <StudioView
+                page={activeNav}
+                onOpenUpload={() => { setUploadOpen(true); setUploadMinimized(false) }}
+              />
+            )}
+            {activeNav === "Songs" && (
+              <div className="p-10"><h1 className="text-2xlarge font-medium">{activeNav}</h1></div>
+            )}
+          </div>
         </div>
 
         {/* Global upload dialog — absolute within main, sidebar stays visible */}

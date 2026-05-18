@@ -215,19 +215,28 @@ function ProfileMenu() {
 
 // ─── Default actions used in demo ─────────────────────────────────────────────
 
-// Text link to the dedicated `/design-system` route. Lives in the
-// topbar so it's reachable from every prototype page regardless of
-// the sidebar collapse state. Text label rather than an icon-only
-// button because the destination ("Design system") isn't a universal
-// symbol — spelling it out makes it discoverable without a tooltip.
+// Text link to the design-system view. Uses `setSearchParams`
+// instead of `<a href>` so the navigation stays SPA-internal — a
+// plain anchor would trigger a full document reload (white screen
+// while the JS bundle re-parses) and the in-app TopProgressBar
+// couldn't fire because React isn't running during that gap.
 function DesignSystemButton() {
+  const [, setParams] = useSearchParams()
+  const go = () => {
+    setParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set("page", "DesignSystem")
+      return next
+    }, { replace: true })
+  }
   return (
-    <a
-      href="/?page=DesignSystem"
-      className="inline-flex items-center h-10 px-3 rounded-full text-small font-normal text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+    <button
+      type="button"
+      onClick={go}
+      className="inline-flex items-center h-10 px-3 rounded-full text-small font-normal text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer"
     >
       Design system
-    </a>
+    </button>
   )
 }
 

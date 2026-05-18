@@ -49,8 +49,9 @@ import { AlbumCard } from "@/components/ui/album-card"
 import { ArtistCard } from "@/components/ui/artist-card"
 import { PlaylistCard } from "@/components/ui/playlist-card"
 import { ProductCard } from "@/components/ui/product-card"
-import { PlayingWave, SongListItem } from "@/components/ui/song-list-item"
-import { PauseFilledAlt, PlayFilledAlt } from "@/components/ui/transport-icons"
+import { SongListItem } from "@/components/ui/song-list-item"
+import { CoverPlayButton } from "@/components/ui/cover-play-button"
+import { PlayFilledAlt } from "@/components/ui/transport-icons"
 import { CardRail } from "@/components/app/card-rail"
 
 // ─── Mock data ──────────────────────────────────────────────────────────────
@@ -657,41 +658,13 @@ function DiscographyView({
                   )}
                 >
                   <TableCell className="px-2">
-                    {/* Cover-as-play button — same affordance as the
-                         SongListItem cover. Idle: hover shows the play
-                         icon. Playing: shows the wave at rest, pause
-                         on hover. */}
-                    <button
-                      type="button"
-                      onClick={() => togglePlay(r.id)}
-                      aria-label={playing ? `Pause ${r.title}` : `Play ${r.title}`}
-                      className="relative size-12 shrink-0 overflow-hidden rounded-xs shadow-sm focus-visible:ring-3 focus-visible:ring-ring/50 outline-none cursor-pointer"
-                    >
-                      <img
-                        src={r.cover}
-                        alt=""
-                        draggable={false}
-                        className="size-full object-cover"
-                      />
-                      <span
-                        aria-hidden="true"
-                        className={cn(
-                          "absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity",
-                          playing
-                            ? "opacity-100"
-                            : "hidden md:flex opacity-0 group-hover/row:opacity-100",
-                        )}
-                      >
-                        {playing ? (
-                          <>
-                            <PlayingWave className="absolute size-7 text-white transition-opacity group-hover/row:opacity-0" />
-                            <PauseFilledAlt className="absolute size-4 text-white opacity-0 transition-opacity group-hover/row:opacity-100" />
-                          </>
-                        ) : (
-                          <PlayFilledAlt className="size-4 text-white" />
-                        )}
-                      </span>
-                    </button>
+                    <CoverPlayButton
+                      src={r.cover}
+                      title={r.title}
+                      playing={playing}
+                      onToggle={() => togglePlay(r.id)}
+                      hoverGroup="row"
+                    />
                   </TableCell>
                   <TableCell className="text-small text-foreground whitespace-nowrap truncate">
                     <button

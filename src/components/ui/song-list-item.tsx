@@ -37,7 +37,12 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { PlayFilledAlt, PauseFilledAlt } from "@/components/ui/transport-icons"
+import { PlayingWave } from "@/components/ui/playing-wave"
+import { CoverPlayButton } from "@/components/ui/cover-play-button"
+
+// Re-export for callers still importing PlayingWave from the row
+// module (e.g. discography list view).
+export { PlayingWave }
 
 export interface SongListItemProps {
   cover:    string
@@ -104,49 +109,15 @@ export function SongListItem({
     >
       {/* Cover thumb — 48px. Cover button toggles play directly; the
            wrapping row also responds to clicks elsewhere (see
-           `onRowClick`). The cover overlay shows the animated muza
-           wave when `playing`, otherwise the static play icon on
-           desktop hover. */}
-      <button
-        type="button"
-        onClick={() => { setPlaying(p => !p); onPlay?.() }}
-        aria-label={playing ? `Pause ${title}` : `Play ${title}`}
-        className="relative size-12 shrink-0 overflow-hidden rounded-xs shadow-sm focus-visible:ring-3 focus-visible:ring-ring/50 outline-none cursor-pointer"
-      >
-        <img
-          src={cover}
-          alt=""
-          draggable={false}
-          className="size-full object-cover"
-        />
-        {/* Theme-agnostic cover overlay — `bg-black/40` + `text-white`
-             so the wash stays dark and the icon stays light in dark
-             mode too.
-             · Idle, hovered (desktop)  → Play icon.
-             · Playing, NOT hovered     → animated wave.
-             · Playing, hovered         → Pause icon (preview of the
-                                          action a click will trigger). */}
-        <span
-          aria-hidden="true"
-          className={cn(
-            "absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity",
-            playing
-              ? "opacity-100"
-              : "hidden md:flex opacity-0 group-hover/song:opacity-100",
-          )}
-        >
-          {playing ? (
-            <>
-              {/* Wave shows when playing & not hovered; fades out on hover. */}
-              <PlayingWave className="absolute size-7 text-white transition-opacity group-hover/song:opacity-0" />
-              {/* Pause icon shows on hover only. */}
-              <PauseFilledAlt className="absolute size-4 text-white opacity-0 transition-opacity group-hover/song:opacity-100" />
-            </>
-          ) : (
-            <PlayFilledAlt className="size-4 text-white" />
-          )}
-        </span>
-      </button>
+           `onRowClick`). All play/pause/wave logic lives in the
+           shared `CoverPlayButton`. */}
+      <CoverPlayButton
+        src={cover}
+        title={title}
+        playing={playing}
+        onToggle={() => { setPlaying(p => !p); onPlay?.() }}
+        hoverGroup="song"
+      />
 
       {/* Info — title row + meta row. min-w-0 so long titles can
            truncate inside flex. */}
@@ -261,50 +232,3 @@ export function SongListItem({
   )
 }
 
-/*
- * PlayingWave — miniature 3D carousel that echoes the home page's
- * `AnimatedLogo`: four dots arranged around a Y-axis (90° apart) on
- * a `transform-style: preserve-3d` stage. The outer wrapper sets the
- * perspective; the inner stage rotates Y on a linear loop. From the
- * camera's POV each dot orbits front → side → back → side, so the
- * trio reads as motion-through-depth rather than a flat circle
- * spinning.
- *
- * Sized via percentages so the same component works at any caller
- * box size — dots scale with the wrapper.
- */
-export function PlayingWave({ className }: { className?: string }) {
-  // Three layers of motion:
-  //   1. Outer wrapper — subtle Y-float (`muzaCarouselFloat`).
-  //   2. Inner stage  — rotates Y around the perspective axis
-  //                     (`muzaCarousel`), holding the dots on their
-  //                     orbit positions.
-  //   3. Per-dot snap — each dot wrapped in an `orbitPos` span that
-  //                     pins the orbit transform, then an inner
-  //                     `<span>` runs `muzaDotSnap` to pop briefly.
-  //                     Staggered delays so the pops roll round.
-  // Perspective 36 / translateZ 12 / dot 42% tuned together so the
-  // front-position dot reads notably larger than the back without
-  // overflowing the 40px wrapper.
-  // Four solid dots positioned around a 3D Y-axis. No per-dot
-  // snaps — just steady carousel rotation plus the outer wrapper's
-  // subtle float.
-  const dot = "absolute top-1/2 left-1/2 size-[42%] -mt-[21%] -ml-[21%] rounded-full bg-current"
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        "relative inline-block [perspective:25px] [transform-style:preserve-3d]",
-        "[animation:muzaCarouselFloat_3.5s_ease-in-out_infinite]",
-        className,
-      )}
-    >
-      <span className="absolute inset-0 [transform-style:preserve-3d] [animation:muzaCarousel_8s_linear_infinite]">
-        <span className={`${dot} [transform:rotateY(0deg)_translateZ(8px)]`} />
-        <span className={`${dot} [transform:rotateY(90deg)_translateZ(8px)]`} />
-        <span className={`${dot} [transform:rotateY(180deg)_translateZ(8px)]`} />
-        <span className={`${dot} [transform:rotateY(270deg)_translateZ(8px)]`} />
-      </span>
-    </span>
-  )
-}
