@@ -39,13 +39,23 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { PlayingWave } from "@/components/ui/playing-wave"
 import { CoverPlayButton } from "@/components/ui/cover-play-button"
+import { PlayFilledAlt, PauseFilledAlt } from "@/components/ui/transport-icons"
 
 // Re-export for callers still importing PlayingWave from the row
 // module (e.g. discography list view).
 export { PlayingWave }
 
 export interface SongListItemProps {
-  cover:    string
+  /** Either pass `cover` (Artist › Top Songs context — shows the
+   *  album art per row) OR `trackNumber` (album detail context —
+   *  the row is one track on a single album, so the cover is
+   *  redundant and a track number reads better). One or the other
+   *  must be provided. */
+  cover?:   string
+  /** Album-track variant — 1-based track number rendered in the
+   *  leading slot instead of a cover thumb. Same play/pause/wave
+   *  hover behaviour as the cover variant. */
+  trackNumber?: number
   title:    string
   artist?:  string
   album?:   string
@@ -74,7 +84,7 @@ export interface SongListItemProps {
 }
 
 export function SongListItem({
-  cover, title, artist, album, year, badge, duration,
+  cover, trackNumber, title, artist, album, year, badge, duration,
   onPlay, onAddToPlaylist, onMore, menuItems, onInfo,
   onTitleClick, onAlbumClick, onArtistClick, className,
 }: SongListItemProps) {
@@ -107,17 +117,26 @@ export function SongListItem({
         className,
       )}
     >
-      {/* Cover thumb — 48px. Cover button toggles play directly; the
-           wrapping row also responds to clicks elsewhere (see
-           `onRowClick`). All play/pause/wave logic lives in the
-           shared `CoverPlayButton`. */}
-      <CoverPlayButton
-        src={cover}
-        title={title}
-        playing={playing}
-        onToggle={() => { setPlaying(p => !p); onPlay?.() }}
-        hoverGroup="song"
-      />
+      {/* Leading slot — cover thumb (Top Songs / playlist context)
+           OR track number (album detail context). Both share the
+           same play / pause / wave behavior; only the idle visual
+           differs. */}
+      {trackNumber != null ? (
+        <TrackNumberPlayButton
+          number={trackNumber}
+          title={title}
+          playing={playing}
+          onToggle={() => { setPlaying(p => !p); onPlay?.() }}
+        />
+      ) : (
+        <CoverPlayButton
+          src={cover!}
+          title={title}
+          playing={playing}
+          onToggle={() => { setPlaying(p => !p); onPlay?.() }}
+          hoverGroup="song"
+        />
+      )}
 
       {/* Info — title row + meta row. min-w-0 so long titles can
            truncate inside flex. */}
@@ -229,6 +248,75 @@ export function SongListItem({
         )}
       </div>
     </div>
+  )
+}
+
+/*
+ * TrackNumberPlayButton — inline helper for the album-detail variant.
+ * Same hover / playing / hover-while-playing state machine as
+ * `CoverPlayButton`, but the idle state shows a track number
+ * instead of an image. Always-mounted icons + CSS opacity
+ * transitions (no JSX swaps) match the no-flicker pattern from
+ * `CoverPlayButton`. Lives here (not in its own file) because it's
+ * only ever used by `SongListItem` in the `trackNumber` mode.
+ */
+function TrackNumberPlayButton({
+  number,
+  title,
+  playing,
+  onToggle,
+}: {
+  number: number
+  title: string
+  playing: boolean
+  onToggle?: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label={playing ? `Pause ${title}` : `Play ${title}`}
+      data-playing={playing || undefined}
+      className={cn(
+        "group/tnpb relative shrink-0 size-12 flex items-center justify-center rounded-md cursor-pointer outline-none",
+        "focus-visible:ring-3 focus-visible:ring-ring/50",
+      )}
+    >
+      {/* Idle visual — track number. Fades out when playing OR on
+           hover (the play/pause/wave overlay takes over). */}
+      <span
+        aria-hidden="true"
+        className={cn(
+          "absolute text-base font-normal leading-none text-muted-foreground tabular-nums transition-opacity duration-150",
+          "group-hover/tnpb:opacity-0 group-data-[playing]/tnpb:opacity-0",
+        )}
+      >
+        {number}
+      </span>
+      {/* Idle + hover → Play icon */}
+      <PlayFilledAlt
+        className={cn(
+          "absolute size-4 text-foreground opacity-0 transition-opacity duration-150",
+          "group-hover/tnpb:opacity-100 group-data-[playing]/tnpb:opacity-0",
+        )}
+      />
+      {/* Playing + rest → 3D wave. Original pattern: opacity
+           transition lives directly on `PlayingWave`'s root. */}
+      <PlayingWave
+        size={28}
+        className={cn(
+          "absolute text-foreground opacity-0 transition-opacity duration-150",
+          "group-data-[playing]/tnpb:opacity-100 group-data-[playing]/tnpb:group-hover/tnpb:opacity-0",
+        )}
+      />
+      {/* Playing + hover → Pause icon */}
+      <PauseFilledAlt
+        className={cn(
+          "absolute size-4 text-foreground opacity-0 transition-opacity duration-150",
+          "group-data-[playing]/tnpb:group-hover/tnpb:opacity-100",
+        )}
+      />
+    </button>
   )
 }
 

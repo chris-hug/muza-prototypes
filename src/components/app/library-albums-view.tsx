@@ -10,6 +10,8 @@
  * Figma: 8950:97663 (Albums Feed) — 5-column grid on desktop.
  */
 
+import { useSearchParams } from "react-router"
+
 import { AlbumCard } from "@/components/ui/album-card"
 
 interface SavedAlbum {
@@ -104,6 +106,17 @@ const SAVED_ALBUMS: SavedAlbum[] = [
 ]
 
 export function LibraryAlbumsView() {
+  // SPA navigation: tapping an album → `?page=Album`. Mock-data view
+  // (`AlbumDetailView`) always renders the same album; real wiring
+  // would pass an `album-id` query param.
+  const [, setParams] = useSearchParams()
+  const openAlbum = () => {
+    setParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set("page", "Album")
+      return next
+    }, { replace: true })
+  }
   return (
     <div className="flex-1 overflow-auto">
       <div className="@container mx-auto max-w-[1528px] px-10 pt-8 pb-12">
@@ -138,6 +151,8 @@ export function LibraryAlbumsView() {
                 cover={a.cover}
                 title={a.title}
                 artist={a.artist}
+                onTitleClick={openAlbum}
+                onPlay={openAlbum}
                 className="w-full"
               />
             </li>

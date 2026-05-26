@@ -9,11 +9,20 @@
  * → back → side. Reads as motion-through-depth rather than a flat
  * spinner.
  *
- * Every length inside is expressed in `em`s so the entire shape
- * scales uniformly off a single `size` knob: the wrapper's
- * `font-size` is pinned to `size`, and every internal value
- * (perspective, dot size, orbit translateZ) is a fraction of that.
- * Change `size` and the proportions stay locked.
+ * Canonical size 28px (matches the list-item leading slot). All
+ * internal lengths are fixed pixel values tuned at this size:
+ *   · perspective 25px
+ *   · orbit radius (translateZ) 8px
+ *   · dot diameter 42% of the wrapper
+ *
+ * Earlier this file used em-based perspective + translateZ so the
+ * shape would scale with `font-size: size`. That produced
+ * fractional pixels (0.89em × 28 = 24.92, 0.29em × 28 = 8.12) which
+ * the browser anti-aliased differently each frame — the dots read
+ * as blurry / smeared in motion. Fixed pixels render crisp.
+ * If you need a non-canonical size, just pass `size`: the outer
+ * box scales but the perspective + orbit stay at their tuned
+ * values, which still reads acceptably down to ~20 and up to ~56.
  *
  * NOTE — `transform-style: preserve-3d` + `perspective` promote
  * this to its own compositing layer. Chromium resamples that layer
@@ -33,47 +42,31 @@
 import { cn } from "@/lib/utils"
 
 export interface PlayingWaveProps {
-  /** Outer box edge in px. All internal dimensions scale off this
-   *  one value — pass any number and the proportions are preserved.
-   *  Default 28 (the canonical Song-List-Item / Cover-Play-Button
-   *  size). */
+  /** Outer box edge in px. Default 28 (the canonical Song-List-Item /
+   *  Cover-Play-Button size). Internal perspective + orbit stay
+   *  fixed at the tuned 25 / 8 — the wrapper just scales. */
   size?: number
   className?: string
 }
-
-// Canonical proportions, derived from the size=28 design tuning:
-//   perspective  = 25/28 ≈ 0.89em
-//   orbit  (translateZ) = 8/28 ≈ 0.29em
-//   dot diameter = 42% of the wrapper
-// `em` works because we pin `font-size: <size>px` on the wrapper —
-// children inherit it, so `em` resolves to "fraction of `size`".
-const PERSPECTIVE_EM = "0.89em"
-const TRANSLATE_Z_EM = "0.29em"
 
 export function PlayingWave({ size = 28, className }: PlayingWaveProps) {
   const dot = "absolute top-1/2 left-1/2 size-[42%] -mt-[21%] -ml-[21%] rounded-full bg-current"
   return (
     <span
       aria-hidden="true"
-      style={{
-        width:      size,
-        height:     size,
-        fontSize:   size, // anchors `em` for every descendant
-        perspective: PERSPECTIVE_EM,
-      }}
+      style={{ width: size, height: size }}
       className={cn(
-        "relative inline-block [transform-style:preserve-3d]",
+        "relative inline-block [perspective:25px] [transform-style:preserve-3d]",
         "[animation:muzaCarouselFloat_3.5s_ease-in-out_infinite]",
         className,
       )}
     >
       <span className="absolute inset-0 [transform-style:preserve-3d] [animation:muzaCarousel_8s_linear_infinite]">
-        <span className={dot} style={{ transform: `rotateY(0deg)   translateZ(${TRANSLATE_Z_EM})` }} />
-        <span className={dot} style={{ transform: `rotateY(90deg)  translateZ(${TRANSLATE_Z_EM})` }} />
-        <span className={dot} style={{ transform: `rotateY(180deg) translateZ(${TRANSLATE_Z_EM})` }} />
-        <span className={dot} style={{ transform: `rotateY(270deg) translateZ(${TRANSLATE_Z_EM})` }} />
+        <span className={`${dot} [transform:rotateY(0deg)_translateZ(8px)]`} />
+        <span className={`${dot} [transform:rotateY(90deg)_translateZ(8px)]`} />
+        <span className={`${dot} [transform:rotateY(180deg)_translateZ(8px)]`} />
+        <span className={`${dot} [transform:rotateY(270deg)_translateZ(8px)]`} />
       </span>
     </span>
   )
 }
-

@@ -15,6 +15,8 @@ import { useToast } from "@/components/ui/toast"
 import { Switch } from "@/components/ui/switch"
 import { RadioCard, RadioCardGroup } from "@/components/ui/radio-card"
 import { InputSelect } from "@/components/ui/input-select"
+import { ChipDismiss, ChipGroup } from "@/components/ui/chip"
+import { ChipInput } from "@/components/ui/chip-input"
 import { cn } from "@/lib/utils"
 import {
   Search, X, Check, CloudUpload, ImagePlus, Music2, Disc3,
@@ -51,9 +53,15 @@ interface TrackRow {
 interface MusicianEntry {
   id: string; name: string; instrument: string; matched: boolean
 }
+// Each role can have multiple credits (e.g. two producers, three
+// recording engineers). `linerNotes` stays a single freeform block.
 interface AdditionalRoles {
-  producer: string; recording: string; mixing: string
-  mastering: string; coverArt: string; linerNotes: string
+  producer:   string[]
+  recording:  string[]
+  mixing:     string[]
+  mastering:  string[]
+  coverArt:   string[]
+  linerNotes: string
 }
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
@@ -517,11 +525,11 @@ function SelectedReleaseCard({
             )}
             {/* Additional roles */}
             <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-              <InfoField label="Producer"              value={additionalRoles.producer || "—"} />
-              <InfoField label="Recording engineer"    value={additionalRoles.recording || "—"} />
-              <InfoField label="Mixing engineer"       value={additionalRoles.mixing || "—"} />
-              <InfoField label="Mastering engineer"    value={additionalRoles.mastering || "—"} />
-              <InfoField label="Cover art"             value={additionalRoles.coverArt || "—"} />
+              <InfoField label="Producer"              value={additionalRoles.producer.join(", ")  || "—"} />
+              <InfoField label="Recording engineer"    value={additionalRoles.recording.join(", ") || "—"} />
+              <InfoField label="Mixing engineer"       value={additionalRoles.mixing.join(", ")    || "—"} />
+              <InfoField label="Mastering engineer"    value={additionalRoles.mastering.join(", ") || "—"} />
+              <InfoField label="Cover art"             value={additionalRoles.coverArt.join(", ")  || "—"} />
             </div>
             {additionalRoles.linerNotes && (
               <InfoField label="Liner notes" value={additionalRoles.linerNotes} />
@@ -540,6 +548,61 @@ function SelectedReleaseCard({
   )
 }
 
+// ─── AddMusicianRow ──────────────────────────────────────────────────────────
+//
+// Sticky add-row at the bottom of the musicians list. Two side-by-side
+// inputs + a trailing "+ Add" button. Both fields required before the
+// button enables; Enter on either also commits. Resets to empty on
+// commit and refocuses the name field so the user can rattle through
+// multiple musicians without grabbing the mouse.
+
+function AddMusicianRow({ onAdd }: { onAdd: (name: string, instrument: string) => void }) {
+  const [name,       setName]       = useState("")
+  const [instrument, setInstrument] = useState("")
+  const nameRef = useRef<HTMLInputElement>(null)
+  const ready   = name.trim().length > 0 && instrument.trim().length > 0
+
+  const commit = () => {
+    if (!ready) return
+    onAdd(name.trim(), instrument.trim())
+    setName(""); setInstrument("")
+    nameRef.current?.focus()
+  }
+  const onKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") { e.preventDefault(); commit() }
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <Input
+        ref={nameRef}
+        value={name}
+        onChange={e => setName(e.target.value)}
+        onKeyDown={onKey}
+        placeholder="Name"
+        className="text-small font-normal"
+      />
+      <Input
+        value={instrument}
+        onChange={e => setInstrument(e.target.value)}
+        onKeyDown={onKey}
+        placeholder="Instrument"
+        className="text-small font-normal"
+      />
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        onClick={commit}
+        disabled={!ready}
+      >
+        <Plus className="size-3.5" />
+        Add
+      </Button>
+    </div>
+  )
+}
+
 // ─── CreditsSection ───────────────────────────────────────────────────────────
 
 function CreditsSection({
@@ -552,94 +615,83 @@ function CreditsSection({
   additionalRoles: AdditionalRoles
   onAdditionalRolesChange: (r: AdditionalRoles) => void
 }) {
-  const [drafts, setDrafts] = useState<{ id: string; name: string; instrument: string }[]>([
-    { id: crypto.randomUUID(), name: "", instrument: "" },
-  ])
-
-  function commitDraft(i: number) {
-    const d = drafts[i]
-    if (d.name.trim()) onAddMusician(d.name.trim(), d.instrument.trim())
-    setDrafts(prev => prev.filter((_, j) => j !== i))
-  }
-
   return (
     <div className="flex flex-col gap-5">
       <h2 className="text-small font-medium">Credits</h2>
 
-      {/* Musicians */}
+      {/* Musicians — simple list of name + instrument rows. Committed
+           rows render as compact, muted pills so they read as "saved";
+           the bottom add-row stays a regular input pair. Enter on
+           either input (or clicking + Add) commits the pair when both
+           are filled. No chip / commit gymnastics — this is just a
+           table of musicians. */}
       <div className="flex flex-col gap-2">
         <Label>Musicians</Label>
 
-        {/* Committed musicians — read-only rows */}
+        {/* Committed musicians — flat rows. Read as "in the system". */}
         {musicians.map(m => (
           <div key={m.id} className="flex items-center gap-2">
-            <div className="h-10 flex-1 min-w-0 rounded-full border border-border bg-muted px-3 py-2 text-small font-normal text-muted-foreground flex items-center truncate">
+            <div className="flex-1 min-w-0 h-10 px-4 flex items-center text-small text-foreground truncate">
               {m.name}
             </div>
-            <div className="h-10 flex-1 min-w-0 rounded-full border border-border bg-muted px-3 py-2 text-small font-normal text-muted-foreground flex items-center truncate">
-              {m.instrument || <span className="opacity-50">Instrument</span>}
+            <div className="flex-1 min-w-0 h-10 px-4 flex items-center text-small text-muted-foreground truncate">
+              {m.instrument}
             </div>
             <button
+              type="button"
               onClick={() => onRemoveMusician(m.id)}
-              className="size-8 shrink-0 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground"
+              aria-label={`Remove ${m.name}`}
+              className="size-8 shrink-0 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
               <X className="size-3.5" />
             </button>
           </div>
         ))}
 
-        {/* Draft rows — editable */}
-        {drafts.map((d, i) => (
-          <div key={d.id} className="flex items-center gap-2">
-            <Input
-              value={d.name}
-              onChange={e => setDrafts(prev => prev.map((x, j) => j === i ? { ...x, name: e.target.value } : x))}
-              onKeyDown={e => { if (e.key === "Enter") commitDraft(i) }}
-              placeholder="Name"
-              className="text-small font-normal"
-            />
-            <Input
-              value={d.instrument}
-              onChange={e => setDrafts(prev => prev.map((x, j) => j === i ? { ...x, instrument: e.target.value } : x))}
-              onKeyDown={e => { if (e.key === "Enter") commitDraft(i) }}
-              placeholder="Instrument"
-              className="text-small font-normal"
-            />
-            <button
-              onClick={() => commitDraft(i)}
-              className="size-8 shrink-0 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground"
-            >
-              <X className="size-3.5" />
-            </button>
-          </div>
-        ))}
-
-        <Button
-          variant="secondary" size="sm" className="self-start gap-1.5"
-          onClick={() => setDrafts(prev => [...prev, { id: crypto.randomUUID(), name: "", instrument: "" }])}
-        >
-          <Plus className="size-3.5" />Add musician
-        </Button>
+        {/* Add row — always present, single source of input. */}
+        <AddMusicianRow onAdd={(name, instrument) => onAddMusician(name, instrument)} />
       </div>
 
-      {/* Additional credits */}
-      <div className="flex flex-col gap-3">
-        <Label>Additional credits</Label>
-        <div className="flex flex-col gap-4">
-          {(["producer", "recording", "mixing", "mastering", "coverArt"] as const).map(key => (
+      {/* Additional credits — each role accepts multiple names via the
+           same chip pattern as Main Artists. Producer might be two
+           people; recording could be split across studios. */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-small font-medium">Additional credits</h2>
+          <p className="text-2xsmall text-muted-foreground">
+            Everyone else involved in the record. Separate names with a comma, then press <span className="font-medium text-foreground">Enter</span> to add them.
+          </p>
+        </div>
+        {(["producer", "recording", "mixing", "mastering", "coverArt"] as const).map(key => {
+          const label = key === "coverArt" ? "Cover art" : key[0].toUpperCase() + key.slice(1)
+          return (
             <div key={key} className="flex flex-col gap-1.5">
-              <Label className="capitalize">
-                {key === "coverArt" ? "Cover art" : key.charAt(0).toUpperCase() + key.slice(1)}
-              </Label>
-              <Input
-                value={additionalRoles[key]}
-                onChange={e => onAdditionalRolesChange({ ...additionalRoles, [key]: e.target.value })}
-                placeholder="Name"
-                className="h-9 text-small font-normal"
+              <Label>{label}</Label>
+              {additionalRoles[key].length > 0 && (
+                <ChipGroup className="mb-1">
+                  {additionalRoles[key].map((name, i) => (
+                    <ChipDismiss
+                      key={`${name}-${i}`}
+                      onDismiss={() => onAdditionalRolesChange({
+                        ...additionalRoles,
+                        [key]: additionalRoles[key].filter((_, j) => j !== i),
+                      })}
+                    >
+                      {name}
+                    </ChipDismiss>
+                  ))}
+                </ChipGroup>
+              )}
+              <ChipInput
+                placeholder={`Add ${label.toLowerCase()}…`}
+                onCommit={(values) => onAdditionalRolesChange({
+                  ...additionalRoles,
+                  [key]: [...additionalRoles[key], ...values],
+                })}
               />
             </div>
-          ))}
-        </div>
+          )
+        })}
         <div className="flex flex-col gap-1.5">
           <Label>Liner notes</Label>
           <Textarea
@@ -659,45 +711,44 @@ function CreditsSection({
 function NewReleaseForm({ form, onChange, entityName }: { form: ReleaseForm; onChange: (f: ReleaseForm) => void; entityName: string }) {
   return (
     <div className="flex flex-col gap-4">
-      {/* 1. Main Artist(s) */}
+      {/* 1. Main Artist(s) — chip pattern (matches vinyl-create-listing
+           and Settings → Personal info). First chip is the uploading
+           entity, locked. Additional artists render as dismissable
+           chips; the single Input below accepts a name on Enter. */}
       <div className="flex flex-col gap-1.5">
         <Label>Main Artist(s)</Label>
-        <div className="flex flex-col gap-2">
-          {/* First artist — locked, pre-filled from entity. Spans full
-              width since it has no remove button to align with. */}
-          <div className="h-10 w-full min-w-0 rounded-full border border-border bg-muted px-3 py-2 text-small font-normal text-muted-foreground flex items-center truncate">
+        <ChipGroup className="mb-1">
+          <span className="inline-flex items-center rounded-full border border-border bg-muted px-3 h-8 text-2xsmall font-normal pb-px">
             {entityName}
-          </div>
-          {/* Additional artists — editable */}
-          {form.mainArtists.map((a, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <Input
-                value={a}
-                onChange={e => {
-                  const next = [...form.mainArtists]; next[i] = e.target.value
-                  onChange({ ...form, mainArtists: next })
-                }}
-                placeholder="Artist name"
-                className="text-small font-normal"
-              />
-              <button
-                onClick={() => onChange({ ...form, mainArtists: form.mainArtists.filter((_, j) => j !== i) })}
-                className="size-8 shrink-0 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground"
-              >
-                <X className="size-3.5" />
-              </button>
-            </div>
+          </span>
+          {form.mainArtists.filter(a => a.trim()).map((a, i) => (
+            <ChipDismiss
+              key={`${a}-${i}`}
+              onDismiss={() => onChange({
+                ...form,
+                mainArtists: form.mainArtists.filter((_, j) => {
+                  // Find the i-th non-empty entry and drop it
+                  const idxs = form.mainArtists
+                    .map((v, k) => v.trim() ? k : -1)
+                    .filter(k => k !== -1)
+                  return j !== idxs[i]
+                }),
+              })}
+            >
+              {a}
+            </ChipDismiss>
           ))}
-          <Button
-            variant="secondary" size="sm" className="self-start gap-1.5"
-            onClick={() => onChange({ ...form, mainArtists: [...form.mainArtists, ""] })}
-          >
-            <Plus className="size-3.5" />Add artist
-          </Button>
-        </div>
+        </ChipGroup>
+        <ChipInput
+          placeholder="Add a collaborator…"
+          onCommit={(values) => onChange({ ...form, mainArtists: [...form.mainArtists, ...values] })}
+        />
+        <p className="text-2xsmall text-muted-foreground">
+          You're the primary artist. Separate collaborators with a comma, then press <span className="font-medium text-foreground">Enter</span> to add them.
+        </p>
       </div>
 
-      {/* 2. Release title */}
+      {/* 2. Release title — free-form, no validation */}
       <div className="flex flex-col gap-1.5">
         <Label>Release title</Label>
         <Input
@@ -709,7 +760,7 @@ function NewReleaseForm({ form, onChange, entityName }: { form: ReleaseForm; onC
         />
       </div>
 
-      {/* 3. Band name */}
+      {/* 3. Band name — free-form */}
       <div className="flex flex-col gap-1.5">
         <Label>Band name</Label>
         <Input
@@ -720,7 +771,7 @@ function NewReleaseForm({ form, onChange, entityName }: { form: ReleaseForm; onC
         />
       </div>
 
-      {/* 4. Label */}
+      {/* 4. Label — free-form */}
       <div className="flex flex-col gap-1.5">
         <Label>Label</Label>
         <Input
@@ -731,7 +782,7 @@ function NewReleaseForm({ form, onChange, entityName }: { form: ReleaseForm; onC
         />
       </div>
 
-      {/* 5. Catalog number */}
+      {/* 5. Catalog number — per artist/label, no expected format */}
       <div className="flex flex-col gap-1.5">
         <Label>Catalog number</Label>
         <Input
@@ -757,24 +808,24 @@ function NewReleaseForm({ form, onChange, entityName }: { form: ReleaseForm; onC
         </Select>
       </div>
 
-      {/* 7. Recording date */}
+      {/* 7. Recording year */}
       <div className="flex flex-col gap-1.5">
-        <Label>Recording date</Label>
+        <Label>Recording year</Label>
         <Input
           value={form.recordingDate}
           onChange={e => onChange({ ...form, recordingDate: e.target.value })}
-          placeholder="e.g. 1973"
+          placeholder="1973"
           className="text-small font-normal"
         />
       </div>
 
       {/* 8. Tracks */}
       <div className="flex flex-col gap-1.5">
-        <Label>Tracks</Label>
+        <Label>Number of tracks</Label>
         <Input
           value={form.tracks}
           onChange={e => onChange({ ...form, tracks: e.target.value })}
-          placeholder="e.g. 12"
+          placeholder="12"
           className="text-small font-normal"
         />
       </div>
@@ -1668,7 +1719,7 @@ export function UploadMusicDialog({
   // Credits state
   const [musicians, setMusicians] = useState<MusicianEntry[]>([])
   const [additionalRoles, setAdditionalRoles] = useState<AdditionalRoles>({
-    producer: "", recording: "", mixing: "", mastering: "", coverArt: "", linerNotes: ""
+    producer: [], recording: [], mixing: [], mastering: [], coverArt: [], linerNotes: "",
   })
 
   // Step 2 state

@@ -30,7 +30,7 @@
  * snap target is always a clean N-card chunk, never mid-card.
  */
 
-import { useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -38,14 +38,51 @@ import { Separator } from "@/components/ui/separator"
 
 interface CardRailProps {
   title:      string
-  /** Label for the trailing "Show all" pill. Defaults to "Show all". */
-  showAllLabel?: string
+  /** Label for the trailing "Show all" pill. Defaults to "Show all".
+   *  Pass `null` to suppress the button entirely (e.g. when the rail
+   *  already shows every available item — like "Artists on this
+   *  Album"). */
+  showAllLabel?: string | null
   onShowAll?: () => void
   children:   React.ReactNode
 }
 
 export function CardRail({ title, showAllLabel = "Show all", onShowAll, children }: CardRailProps) {
   const scrollRef = useRef<HTMLUListElement>(null)
+  // Track whether the rail can scroll in either direction. When
+  // both are false the content fits the viewport entirely → hide
+  // the ◀ ▶ controls so they don't read as broken affordances.
+  // 1px tolerance because sub-pixel rounding can leave `scrollLeft`
+  // at e.g. 0.5 even when visually at the start.
+  const [canScrollLeft,  setCanScrollLeft]  = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const recalc = () => {
+      const maxScroll = el.scrollWidth - el.clientWidth
+      setCanScrollLeft(el.scrollLeft > 1)
+      setCanScrollRight(el.scrollLeft < maxScroll - 1)
+    }
+    recalc()
+    el.addEventListener("scroll", recalc, { passive: true })
+    // ResizeObserver covers both window resize and parent layout
+    // changes (e.g. sidebar collapse) — anything that affects the
+    // rail's clientWidth.
+    const ro = new ResizeObserver(recalc)
+    ro.observe(el)
+    // Also re-check when children change (e.g. mocked data loads
+    // a frame after mount). MutationObserver on the UL catches
+    // child list mutations.
+    const mo = new MutationObserver(recalc)
+    mo.observe(el, { childList: true, subtree: true })
+    return () => {
+      el.removeEventListener("scroll", recalc)
+      ro.disconnect()
+      mo.disconnect()
+    }
+  }, [])
+  const showArrows = canScrollLeft || canScrollRight
 
   // Scroll by one "page" — the visible width PLUS one gap. The +gap
   // matters: clientWidth covers N cards + (N-1) gaps; the NEXT page
@@ -87,22 +124,28 @@ export function CardRail({ title, showAllLabel = "Show all", onShowAll, children
                 {showAllLabel}
               </Button>
             )}
-            <Button
-              variant="outline"
-              size="icon-sm"
-              aria-label={`Scroll ${title} left`}
-              onClick={() => scrollPage(-1)}
-            >
-              <ChevronLeft />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon-sm"
-              aria-label={`Scroll ${title} right`}
-              onClick={() => scrollPage(1)}
-            >
-              <ChevronRight />
-            </Button>
+            {showArrows && (
+              <>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  aria-label={`Scroll ${title} left`}
+                  onClick={() => scrollPage(-1)}
+                  disabled={!canScrollLeft}
+                >
+                  <ChevronLeft />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  aria-label={`Scroll ${title} right`}
+                  onClick={() => scrollPage(1)}
+                  disabled={!canScrollRight}
+                >
+                  <ChevronRight />
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>

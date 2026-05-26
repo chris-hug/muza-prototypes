@@ -31,12 +31,12 @@ import { ExploreView } from "./home"
 const GROUPS: ReadonlyArray<{ title: string; items: ReadonlyArray<string> }> = [
   { title: "Foundations",      items: ["Colors", "Typography"] },
   { title: "Atoms",            items: ["Button", "Toggle", "ToggleGroup", "Toolbar", "Badges", "Chips"] },
-  { title: "Inputs",           items: ["Input", "NumberField", "Select", "MultiSelect", "SingleSelect", "Combobox", "Menu", "NavigationMenu", "DatePicker", "Checkbox & Radio", "Radio Card", "Switch", "Slider"] },
-  { title: "Indicators",       items: ["Progress", "Meter", "Spinner", "Top Progress Bar", "Separator", "Avatar"] },
+  { title: "Inputs",           items: ["Input", "Chip Input", "NumberField", "Select", "MultiSelect", "SingleSelect", "Combobox", "Menu", "NavigationMenu", "DatePicker", "Checkbox & Radio", "Radio Card", "Switch", "Slider"] },
+  { title: "Indicators",       items: ["Progress", "Meter", "Spinner", "Top Progress Bar", "Separator", "Avatar", "User Avatar"] },
   { title: "Containers",       items: ["Tabs", "Tooltip", "ScrollArea", "Collapsible", "Accordion"] },
   { title: "Cards & lists",    items: ["Album Card", "Artist Card", "Playlist Card", "Cover Play Button", "Song List Item", "Card Rail", "Product Card", "Checkout Card"] },
-  { title: "Page composition", items: ["Page Section", "Items"] },
-  { title: "Overlays",         items: ["Alerts", "AlertDialog", "Dialog", "Drawer", "Toast"] },
+  { title: "Page composition", items: ["Media Header", "Page Section", "Items"] },
+  { title: "Overlays",         items: ["Alerts", "AlertDialog", "Dialog", "Purchase Album Dialog", "Drawer", "Toast"] },
   { title: "Utility",          items: ["Skeleton", "Popover", "Table", "List Table", "Pagination", "Command", "OTP Input", "Form"] },
   { title: "Player",           items: ["Player Bar", "Player Overlay"] },
 ]
@@ -49,6 +49,7 @@ const ID_OVERRIDES: Record<string, string> = {
   "Card Rail":        "card-rail",
   "MultiSelect":      "multi-select",
   "SingleSelect":     "single-select",
+  "User Avatar":      "user-avatar",
 }
 const idFor = (label: string) =>
   ID_OVERRIDES[label] ?? label.toLowerCase().replace(/\s+/g, "-")
@@ -66,33 +67,15 @@ const PHASE_2 = new Set<string>([
 ])
 
 const STATUS: Record<string, "new" | "updated"> = {
-  // ── New components introduced in the last push ─────────────────
-  Toggle:           "new",
-  ToggleGroup:      "new",
-  Toolbar:          "new",
-  Meter:            "new",
-  Spinner:          "new",
-  "Top Progress Bar": "new",
-  ScrollArea:       "new",
-  Collapsible:      "new",
-  Accordion:        "new",
-  NavigationMenu:   "new",
-  "Album Card":     "new",
-  "Artist Card":    "new",
-  "Playlist Card":  "new",
-  "Cover Play Button": "new",
-  "Song List Item": "new",
-  "Card Rail":      "new",
-  "Product Card":   "new",
-  "Checkout Card":  "new",
-  SingleSelect:     "new",
-  MultiSelect:      "updated",
-  "List Table":     "new",
-  "Page Section":   "new",
-  Items:            "new",
-  // ── Updated — existing components that got new variants / props ─
-  Badges:           "updated",
-  Chips:            "updated",
+  // Reset before every push — only items genuinely changed in the
+  // current cycle stay flagged. Stale "New" labels from old pushes
+  // dilute the signal.
+  "Chip Input":            "new",
+  "Media Header":          "new",
+  "Purchase Album Dialog": "new",
+  "User Avatar":           "new",
+  "Song List Item":        "updated",
+  "Card Rail":             "updated",
 }
 
 export default function DesignSystem() {

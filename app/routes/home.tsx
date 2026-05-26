@@ -12,6 +12,11 @@ import { ManageV2 } from "@/components/app/manage-v2"
 import { ReportView } from "@/components/app/report-view"
 import { Topbar, TopbarDefaultActions } from "@/components/app/topbar"
 import { PurchasesView } from "@/components/app/purchases-view"
+import { SettingsView } from "@/components/app/settings-view"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { ChipInput } from "@/components/ui/chip-input"
+import { ChipDismiss, ChipGroup } from "@/components/ui/chip"
+import { AVATAR_PALETTE } from "@/lib/avatar"
 import { CartProvider } from "@/lib/cart"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Badge, ContentTypeBadge, StatusBadge } from "@/components/ui/badge"
@@ -113,6 +118,9 @@ import { CheckoutCard, CHECKOUTS } from "@/components/app/purchases-view"
 import { ShopView } from "@/components/app/shop-view"
 import { LibraryAlbumsView } from "@/components/app/library-albums-view"
 import { ArtistProfileView } from "@/components/app/artist-profile-view"
+import { AlbumDetailView } from "@/components/app/album-detail-view"
+import { PlaylistDetailView } from "@/components/app/playlist-detail-view"
+import { PurchaseAlbumDialog, PurchaseAlbumDialogPreview } from "@/components/app/purchase-album-dialog"
 import { LibraryArtistsView } from "@/components/app/library-artists-view"
 import { LibraryPlaylistsView } from "@/components/app/library-playlists-view"
 import { AlbumCard } from "@/components/ui/album-card"
@@ -128,6 +136,7 @@ import { AlbumCardMenuItems } from "@/components/ui/cover-card-menu"
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
 import { CardRail } from "@/components/app/card-rail"
 import { PlaylistCreateCard } from "@/components/ui/playlist-create-card"
+import { MediaHeader } from "@/components/ui/media-header"
 import { Section as PageSection } from "@/components/app/section"
 import { ItemsSection as DetailItemsSection } from "@/components/app/items-section"
 import { COUNTRY_CODES, countryName } from "@/lib/countries"
@@ -851,6 +860,59 @@ function StatusBadgeDemo() {
   return <StatusBadge status={status} onStatusChange={setStatus} />
 }
 
+// Standalone ChipInput — pure showcase, prints committed values below.
+function ChipInputDemo() {
+  const [log, setLog] = useState<string[][]>([])
+  return (
+    <div className="flex flex-col gap-3">
+      <ChipInput
+        placeholder="Type names, comma to chip, Enter to commit…"
+        onCommit={(values) => setLog((prev) => [values, ...prev].slice(0, 4))}
+      />
+      {log.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          {log.map((batch, i) => (
+            <div key={i} className="text-xsmall text-muted-foreground">
+              Commit #{log.length - i}: <span className="text-foreground">{batch.join(", ")}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-xsmall text-muted-foreground">Commits will print here.</p>
+      )}
+    </div>
+  )
+}
+
+// Full pattern — committed chips above, ChipInput below. Mirrors how
+// the upload flow's Main Artists & Additional Credits use it.
+function ChipInputPatternDemo() {
+  const [committed, setCommitted] = useState<string[]>(["Sun Ra"])
+  return (
+    <div className="flex flex-col gap-2">
+      {committed.length > 0 && (
+        <ChipGroup className="mb-1">
+          {committed.map((name, i) => (
+            <ChipDismiss
+              key={`${name}-${i}`}
+              onDismiss={() => setCommitted((prev) => prev.filter((_, j) => j !== i))}
+            >
+              {name}
+            </ChipDismiss>
+          ))}
+        </ChipGroup>
+      )}
+      <ChipInput
+        placeholder="Add a collaborator…"
+        onCommit={(values) => setCommitted((prev) => [...prev, ...values])}
+      />
+      <p className="text-2xsmall text-muted-foreground">
+        Separate names with a comma, then press <span className="font-medium text-foreground">Enter</span> to add them.
+      </p>
+    </div>
+  )
+}
+
 
 // TopProgressBar — interactive demo. Click to flip loading=true for
 // 1.4s. The bar renders to the top edge of the viewport (not this
@@ -890,6 +952,49 @@ function CoverPlayButtonDemo() {
 // Borderless list table — pattern used by Artist › Discography list
 // view. Demo wires a small set of releases with hover + active-row
 // states + sortable headers + kebab menu.
+// Static `<PurchaseAlbumDialogPreview>` so the dialog body is
+// always visible on the DS page (no click required). A trigger
+// button below opens the real `<PurchaseAlbumDialog>` modal for
+// live interaction. New-vs-existing-customer distinction sits
+// INSIDE Pay.com's universal form (saved-card detection +
+// brand-detection on new cards + Apple Pay / Google Pay / PayPal
+// express buttons all in one iframe) — the dialog only owns the
+// shell.
+function PurchaseDialogDemo() {
+  const [open, setOpen] = useState(false)
+  const album = {
+    cover:  "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/e5/24/aa/e524aacd-467b-66f3-8931-0fcd6750a4b9/08UMGIM07914.rgb.jpg/600x600bb.jpg",
+    title:  "A Love Supreme",
+    artist: "John Coltrane",
+    year:   1965,
+    format: "Album",
+  }
+  return (
+    <div className="flex flex-col gap-4">
+      <PurchaseAlbumDialogPreview
+        album={album}
+        streamPrice="$2.99"
+        downloadPrice="$4.99"
+      />
+      <div className="flex items-center gap-3">
+        <Button variant="outline" onClick={() => setOpen(true)}>
+          Open as modal
+        </Button>
+        <span className="text-xsmall text-muted-foreground">
+          Real dialog (with portal + focus trap + processing / success steps).
+        </span>
+      </div>
+      <PurchaseAlbumDialog
+        open={open}
+        onOpenChange={setOpen}
+        album={album}
+        streamPrice="$2.99"
+        downloadPrice="$4.99"
+      />
+    </div>
+  )
+}
+
 function ListTableDemo() {
   type R = { id: string; title: string; band: string; year: number; tracks: number; type: "album" | "single" | "ep"; cover: string }
   const rows: R[] = [
@@ -2169,6 +2274,27 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         </div>
       </Section>
 
+      {/* ══ CHIP INPUT ══ */}
+      <Section id="chip-input" title="Chip Input" status="new"
+        usage={[
+          { label: "Upload music → Main Artist(s)",     href: "/?page=Music" },
+          { label: "Upload music → Additional credits", href: "/?page=Music" },
+        ]}>
+        <p className="text-small text-muted-foreground mb-6 max-w-2xl">
+          Chip-aware text input. Typing a comma turns the preceding text into a pending chip inside the input; pressing <span className="font-medium text-foreground">Enter</span> promotes every pending chip (plus any trailing text) to the host's committed list. Backspace on an empty input pops the last chip; pasting comma-separated text creates multiple chips at once.
+        </p>
+
+        <SubLabel>Standalone</SubLabel>
+        <div className="max-w-xl mb-10">
+          <ChipInputDemo />
+        </div>
+
+        <SubLabel>Pattern — chips above, ChipInput below</SubLabel>
+        <div className="max-w-xl">
+          <ChipInputPatternDemo />
+        </div>
+      </Section>
+
       {/* ══ QTY STEPPER ══ */}
       <Section id="numberfield" title="NumberField">
         <div className="flex flex-col gap-6 max-w-md">
@@ -2684,6 +2810,57 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         </div>
       </Section>
 
+      {/* ══ USER AVATAR (placeholder palette) ══ */}
+      <Section id="user-avatar" title="User Avatar" status="new"
+        usage={[
+          { label: "Topbar profile menu trigger", href: "/?page=Home" },
+          { label: "Settings → Account hero",     href: "/?page=Settings" },
+        ]}>
+        <p className="text-small text-muted-foreground mb-6 max-w-2xl">
+          Deterministic placeholder avatar — initials derived from the username, color hashed from the same string so the same user always lands on the same swatch across sessions. Falls back to a soft, earthy palette of {AVATAR_PALETTE.length} tints designed to share Muza's warm-olive character.
+        </p>
+
+        <SubLabel>Sizes</SubLabel>
+        <div className="flex items-end gap-4 flex-wrap mb-10">
+          <UserAvatar username="naomi-smith" className="size-7 text-2xsmall" />
+          <UserAvatar username="naomi-smith" />
+          <UserAvatar username="naomi-smith" className="size-12" />
+          <UserAvatar username="naomi-smith" className="size-16 text-large" />
+          <UserAvatar username="naomi-smith" className="size-20 text-xlarge" />
+        </div>
+
+        <SubLabel>Palette — {AVATAR_PALETTE.length} colors</SubLabel>
+        <div className="grid grid-cols-5 gap-4 mb-10 max-w-2xl">
+          {AVATAR_PALETTE.map((c) => (
+            <div key={c.name} className="flex flex-col items-center gap-1.5">
+              <div
+                className="size-12 rounded-full flex items-center justify-center text-small font-medium leading-none"
+                style={{ backgroundColor: c.bg, color: c.fg }}
+              >
+                Aa
+              </div>
+              <span className="text-xsmall text-foreground">{c.name}</span>
+              <span className="text-2xsmall text-muted-foreground tabular-nums">{c.bg}</span>
+            </div>
+          ))}
+        </div>
+
+        <SubLabel>Username → initials + color</SubLabel>
+        <div className="flex flex-wrap gap-2 max-w-3xl">
+          {[
+            "Chris-123", "alex_99", "naomi-smith", "kira-92", "zoe",
+            "miles-d", "ellaR", "monk", "jordan", "kai",
+            "sun-ra", "pharoah_77", "ines_n", "yusef", "ophelia_3",
+            "hugo-2", "alice-c", "dee-dee", "cleo", "kofi",
+          ].map((u) => (
+            <div key={u} className="flex items-center gap-2 rounded-full border border-border bg-background pl-1 pr-3 py-1">
+              <UserAvatar username={u} className="size-7 text-2xsmall" />
+              <span className="text-2xsmall text-muted-foreground">{u}</span>
+            </div>
+          ))}
+        </div>
+      </Section>
+
       {/* ══ TABS ══ */}
       <Section id="tabs" title="Tabs"
         usage={[
@@ -3066,42 +3243,97 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         </div>
       </Section>
 
-      <Section id="song-list-item" title="Song List Item" status="new"
-        usage={[{ label: "Artist › Top Songs", href: "/?page=Artist" }]}>
-        <ul className="flex flex-col gap-1 max-w-2xl">
-          <li>
-            <SongListItem
-              cover="https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/200x200bb.jpg"
-              title="Space Is the Place"
-              album="Space Is the Place"
-              year={1973}
-              duration="21:14"
-              badge="Demo"
-              menuItems={<AlbumCardMenuItems />}
-            />
-          </li>
-          <li>
-            <SongListItem
-              cover="https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/b3/2a/5f/b32a5f91-5551-1ac0-17c6-e6dd4dcc0292/4062548021820_3000.jpg/200x200bb.jpg"
-              title="Lanquidity"
-              artist="Sun Ra"
-              album="Lanquidity"
-              year={1978}
-              duration="9:11"
-              menuItems={<AlbumCardMenuItems />}
-            />
-          </li>
-          <li>
-            <SongListItem
-              cover="https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/a7/f2/b9/a7f2b9d7-3cd0-c092-d667-59dd10e11b6c/4062548112283.png/200x200bb.jpg"
-              title="Door of the Cosmos"
-              album="Sleeping Beauty"
-              year={1979}
-              duration="9:03"
-              menuItems={<AlbumCardMenuItems />}
-            />
-          </li>
-        </ul>
+      <Section id="song-list-item" title="Song List Item" status="updated"
+        usage={[
+          { label: "Artist › Top Songs",        href: "/?page=Artist" },
+          { label: "Album detail (track list)", href: "/?page=Album" },
+        ]}>
+        {/* Variant 1 — `cover` mode. Used wherever a row of songs
+             pulls from different albums (Artist › Top Songs,
+             playlists, search results). Each row shows its album
+             art in the leading slot. */}
+        <div className="flex flex-col gap-2">
+          <SubLabel>cover mode — Artist › Top Songs, playlists, search</SubLabel>
+          <ul className="flex flex-col gap-1 max-w-2xl">
+            <li>
+              <SongListItem
+                cover="https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/200x200bb.jpg"
+                title="Space Is the Place"
+                album="Space Is the Place"
+                year={1973}
+                duration="21:14"
+                badge="Demo"
+                menuItems={<AlbumCardMenuItems />}
+              />
+            </li>
+            <li>
+              <SongListItem
+                cover="https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/b3/2a/5f/b32a5f91-5551-1ac0-17c6-e6dd4dcc0292/4062548021820_3000.jpg/200x200bb.jpg"
+                title="Lanquidity"
+                artist="Sun Ra"
+                album="Lanquidity"
+                year={1978}
+                duration="9:11"
+                menuItems={<AlbumCardMenuItems />}
+              />
+            </li>
+            <li>
+              <SongListItem
+                cover="https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/a7/f2/b9/a7f2b9d7-3cd0-c092-d667-59dd10e11b6c/4062548112283.png/200x200bb.jpg"
+                title="Door of the Cosmos"
+                album="Sleeping Beauty"
+                year={1979}
+                duration="9:03"
+                menuItems={<AlbumCardMenuItems />}
+              />
+            </li>
+          </ul>
+        </div>
+
+        {/* Variant 2 — `trackNumber` mode. Used on the Album detail
+             page where every track sits on the same album, so the
+             cover thumb is redundant and a track number reads
+             cleaner. Same play / pause / wave hover behaviour as
+             `cover` mode (number → play icon on hover → wave when
+             playing → pause icon on hover-while-playing). */}
+        <div className="flex flex-col gap-2 mt-8">
+          <SubLabel>trackNumber mode — Album detail page</SubLabel>
+          <ul className="flex flex-col gap-1 max-w-2xl">
+            <li>
+              <SongListItem
+                trackNumber={1}
+                title="Acknowledgement"
+                artist="John Coltrane"
+                album="A Love Supreme"
+                year={1965}
+                duration="7:47"
+                menuItems={<AlbumCardMenuItems />}
+              />
+            </li>
+            <li>
+              <SongListItem
+                trackNumber={2}
+                title="Resolution"
+                artist="John Coltrane"
+                album="A Love Supreme"
+                year={1965}
+                duration="7:21"
+                menuItems={<AlbumCardMenuItems />}
+              />
+            </li>
+            <li>
+              <SongListItem
+                trackNumber={3}
+                title="Pursuance"
+                artist="John Coltrane"
+                album="A Love Supreme"
+                year={1965}
+                duration="10:46"
+                menuItems={<AlbumCardMenuItems />}
+              />
+            </li>
+          </ul>
+        </div>
       </Section>
 
       {/* ══ HOME ROW ══ */}
@@ -3185,6 +3417,95 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             onProductClick={() => {}}
             onUpdatePayment={() => {}}
           />
+        </div>
+      </Section>
+
+      {/* ══ MEDIA HEADER ══ */}
+      {/*
+        Shared header for any media detail surface (album, playlist,
+        owned variants of both). Cover on the left + title / meta /
+        action row on the right. Four variants: `album`, `my-album`,
+        `playlist`, `my-playlist`. `hasBuyingOption` toggles the
+        "Unlock All Songs" CTA above the Play / Shuffle row. Back
+        navigation lives at the PAGE level, not in this component.
+      */}
+      <Section id="media-header" title="Media Header" status="new"
+        usage={[
+          { label: "Album detail",    href: "/?page=Album" },
+          { label: "Playlist detail", href: "/?page=Playlist" },
+        ]}>
+        <div className="flex flex-col gap-10">
+          <div className="flex flex-col gap-2">
+            <SubLabel>album — with buying option</SubLabel>
+            <MediaHeader
+              variant="album"
+              cover="https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/e5/24/aa/e524aacd-467b-66f3-8931-0fcd6750a4b9/08UMGIM07914.rgb.jpg/600x600bb.jpg"
+              title="A Love Supreme"
+              owner="John Coltrane"
+              ownerAvatar="https://picsum.photos/seed/coltrane-avatar/120/120"
+              format="Album"
+              year={1965}
+              hasBuyingOption
+              buyingPrice="$2.99"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <SubLabel>my-album — owner view (artist IS the user), Edit instead of Add</SubLabel>
+            {/* `my-album` means the logged-in user is also the
+                 artist of this release. Owner = artist. Picked a
+                 fictional release (matching the Figma reference for
+                 this variant — "Beneath the Surface" by Ezra Blue)
+                 because using a real Coltrane / Hancock album with
+                 a different-name "owner" reads as wrong. */}
+            <MediaHeader
+              variant="my-album"
+              cover="https://picsum.photos/seed/beneath-the-surface/600/600"
+              title="Beneath the Surface"
+              owner="Ezra Blue"
+              ownerAvatar="https://picsum.photos/seed/ezra-blue/120/120"
+              format="Single"
+              year={2026}
+              visibility="public"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <SubLabel>playlist — composite 2×2 cover, no format, no buy CTA, user as owner</SubLabel>
+            <MediaHeader
+              variant="playlist"
+              cover="https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/d6/a3/1d/d6a31d82-038d-a73f-5452-0380d8bd9bae/00724349532755.jpg/600x600bb.jpg"
+              covers={[
+                "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/e5/24/aa/e524aacd-467b-66f3-8931-0fcd6750a4b9/08UMGIM07914.rgb.jpg/600x600bb.jpg",
+                "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/6e/1a/13/6e1a134d-8f6f-d90f-b855-ea69436a2e8b/17UM1IM45370.rgb.jpg/600x600bb.jpg",
+                "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/cb/85/94/cb85949f-5a43-58d5-c866-d9d0292354bd/06UMGIM01616.rgb.jpg/600x600bb.jpg",
+                "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/01/36/a6/0136a666-36d2-caf1-efb1-da77a646d104/06UMGIM03764.rgb.jpg/600x600bb.jpg",
+              ]}
+              title="Late Night Improvisations"
+              owner="Jules"
+              ownerAvatar="https://picsum.photos/seed/jules/120/120"
+              year="42 tracks · 3h 12m"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <SubLabel>my-playlist — composite cover + visibility StatusBadge</SubLabel>
+            <MediaHeader
+              variant="my-playlist"
+              cover="https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/01/36/a6/0136a666-36d2-caf1-efb1-da77a646d104/06UMGIM03764.rgb.jpg/600x600bb.jpg"
+              covers={[
+                "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/01/36/a6/0136a666-36d2-caf1-efb1-da77a646d104/06UMGIM03764.rgb.jpg/600x600bb.jpg",
+                "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/23/49/49/234949c3-db74-f0eb-30f5-d715526e459b/19UMGIM73745.rgb.jpg/600x600bb.jpg",
+                "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/a8/ee/3c/a8ee3cc7-e694-f7e1-5208-2c67f9ae5ed5/13ULAIM49176.rgb.jpg/600x600bb.jpg",
+                "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/d6/a3/1d/d6a31d82-038d-a73f-5452-0380d8bd9bae/00724349532755.jpg/600x600bb.jpg",
+              ]}
+              title="Modal Jazz Meditations"
+              owner="You"
+              ownerAvatar="https://picsum.photos/seed/you/120/120"
+              year="28 tracks"
+              visibility="public"
+            />
+          </div>
         </div>
       </Section>
 
@@ -3368,6 +3689,25 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       {/* ══ DIALOGS ══ */}
       <Section id="dialog" title="Dialog">
         <DialogsKitchenSink />
+      </Section>
+
+      {/* ══ PURCHASE ALBUM DIALOG ══ */}
+      {/*
+        Buyer-side checkout modal for the "Unlock All Songs" CTA on
+        the album detail page. Four states (details → confirm →
+        processing → success) with two tier options (Listening /
+        Download) mirroring the seller-side Monetisation step.
+
+        Two triggers below cover both customer states: existing
+        customer with a saved card (opens on confirm step), and
+        first-time customer with no card on file (opens on details
+        step). Real prop: `hasSavedPayment={boolean}`.
+      */}
+      <Section id="purchase-album-dialog" title="Purchase Album Dialog" status="new"
+        usage={[
+          { label: "Album detail — Unlock All Songs CTA", href: "/?page=Album" },
+        ]}>
+        <PurchaseDialogDemo />
       </Section>
 
       {/* ══ DRAWER (Sheet) ══ */}
@@ -3878,10 +4218,13 @@ export default function Home() {
             {activeNav === "Home"      && <HomeView onNavigate={navigate} />}
             {activeNav === "Explore"   && <ExplorePlaceholder />}
             {activeNav === "Purchases" && <PurchasesView />}
+            {activeNav === "Settings"  && <SettingsView />}
             {activeNav === "Albums"    && <LibraryAlbumsView />}
             {activeNav === "Artists"   && <LibraryArtistsView />}
             {activeNav === "Playlists" && <LibraryPlaylistsView />}
             {activeNav === "Artist"    && <ArtistProfileView onBack={() => navigate("Home")} />}
+            {activeNav === "Album"     && <AlbumDetailView onBack={() => navigate("Albums")} />}
+            {activeNav === "Playlist"  && <PlaylistDetailView onBack={() => navigate("Playlists")} />}
             {Object.keys(STUDIO_TABS).includes(activeNav) && (
               <StudioView
                 page={activeNav}

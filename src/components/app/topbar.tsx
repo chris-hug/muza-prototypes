@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Toggle } from "@/components/ui/toggle"
 import { ToggleGroup } from "@/components/ui/toggle-group"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { CURRENT_USERNAME } from "@/components/app/settings-view"
 
 // ─── Figma source: L9yw4Yaec9YtAXGxP8q4fu node 20458:305 ─────────────────────
 // States: default | focus | filled
@@ -177,9 +179,9 @@ function ProfileMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label="Open profile menu"
-        className="size-10 rounded-full bg-secondary flex items-center justify-center font-medium text-small text-secondary-foreground shrink-0 overflow-hidden hover:opacity-90 transition-opacity outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="rounded-full shrink-0 hover:opacity-90 transition-opacity outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       >
-        <span>N</span>
+        <UserAvatar username={CURRENT_USERNAME} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={8} className="min-w-[200px]">
         <DropdownMenuItem>
@@ -199,7 +201,7 @@ function ProfileMenu() {
           Wallet
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => go("Settings")}>
           <Settings className="size-4" />
           Settings
         </DropdownMenuItem>

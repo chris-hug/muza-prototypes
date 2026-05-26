@@ -13,6 +13,8 @@
  *   · 2×2 composite covers using album art from the playlist's tracks
  */
 
+import { useSearchParams } from "react-router"
+
 import { PlaylistCard } from "@/components/ui/playlist-card"
 import { PlaylistCreateCard } from "@/components/ui/playlist-create-card"
 
@@ -165,6 +167,17 @@ const SAVED_PLAYLISTS: SavedPlaylist[] = [
 ]
 
 export function LibraryPlaylistsView() {
+  // SPA navigation: tapping a playlist → `?page=Playlist`. Mock-data
+  // view always shows the same playlist; real wiring would carry an
+  // `id=` query param.
+  const [, setParams] = useSearchParams()
+  const openPlaylist = () => {
+    setParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set("page", "Playlist")
+      return next
+    }, { replace: true })
+  }
   return (
     <div className="flex-1 overflow-auto">
       <div className="@container mx-auto max-w-[1528px] px-10 pt-8 pb-12">
@@ -184,6 +197,8 @@ export function LibraryPlaylistsView() {
                 songCount={p.songCount}
                 owner={p.owner}
                 owned={p.owned}
+                onTitleClick={openPlaylist}
+                onPlay={openPlaylist}
               />
             </li>
           ))}
