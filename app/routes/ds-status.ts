@@ -33,26 +33,15 @@ export interface SectionStatusEntry {
  *  Bump per push. Surfaces in each section header as the default
  *  "Pushed: …" date, and at the top of the design-system page as
  *  the global "Last pushed" marker. */
-export const LAST_GIT_PUSH = "2026-05-17"
+export const LAST_GIT_PUSH = "2026-05-27"
 
 /** Title → entry. Keys must match the sidebar `items` and section
  *  `title` props exactly. */
 export const SECTION_STATUS: Record<string, SectionStatusEntry> = {
-  // ── Current cycle: new (not yet pushed) ───────────────────────
-  // `pushed: null` because the component hasn't shipped yet — the
-  // "New" badge + local date carries all the info.
-  "Chip Input":            { status: "new",     date: "2026-05-27", pushed: null },
-  "Media Header":          { status: "new",     date: "2026-05-27", pushed: null },
-  "Purchase Album Dialog": { status: "new",     date: "2026-05-27", pushed: null },
-  "User Avatar":           { status: "new",     date: "2026-05-27", pushed: null },
-  "Purchased Badge":       { status: "new",     date: "2026-05-27", pushed: null },
-
-  // ── Current cycle: updated (was pushed before, changed since) ─
-  // `pushed` keeps the previous-cycle date; "Updated" badge + date
-  // marks the unshipped delta.
-  "Song List Item":        { status: "updated", date: "2026-05-27", pushed: "2026-05-17" },
-  "Card Rail":             { status: "updated", date: "2026-05-27", pushed: "2026-05-17" },
-  "Album Card":            { status: "updated", date: "2026-05-27", pushed: "2026-05-17" },
+  // ── Current cycle ──────────────────────────────────────────────
+  // Nothing flagged "new" or "updated" right after a push — the
+  // cycle clears when changes ship. Re-populate here as new work
+  // lands; everything else defaults to `pushed: LAST_GIT_PUSH`.
 
   // ── Built but not yet consumed in a live app surface ──────────
   // Renders the "Not used yet" badge. Keeps the section visible so
