@@ -30,7 +30,8 @@
  * container constrains width — header just stretches to fill.
  */
 
-import { Plus, Share, Info, MoreHorizontal, Shuffle, Disc3, ListMusic, Pencil } from "lucide-react"
+import { Plus, Share, Info, MoreHorizontal, Shuffle, Disc3, ListMusic, Pencil, Download } from "lucide-react"
+import { PurchasedBadge } from "@/components/ui/purchased-badge"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -71,6 +72,22 @@ export interface MediaHeaderProps {
    *  the Play / Shuffle row. */
   hasBuyingOption?: boolean
   buyingPrice?: string
+  /** Renders the inline "Purchased" badge in the meta line. The host
+   *  should set `hasBuyingOption=false` whenever this is true — no
+   *  point offering to buy something the user already owns. */
+  purchased?: boolean
+  /** True when the user bought the download tier — surfaces a
+   *  "Download" button in the slot the buy CTA used to occupy. The
+   *  streaming-tier purchase shows no CTA in that slot (the inline
+   *  Purchased badge is sufficient). */
+  downloadable?: boolean
+  onDownload?: () => void
+  /** Stream-tier purchases can upgrade to download for the price
+   *  delta. When this is set (and the user owns the album but not the
+   *  download tier), an "Add download — $X" outline-primary button
+   *  takes the freed CTA slot. */
+  addDownloadPrice?: string
+  onAddDownload?: () => void
 
   onPlay?:        () => void
   onShuffle?:     () => void
@@ -102,6 +119,11 @@ export function MediaHeader({
   onVisibilityChange,
   hasBuyingOption = false,
   buyingPrice = "$2.99",
+  purchased = false,
+  downloadable = false,
+  onDownload,
+  addDownloadPrice,
+  onAddDownload,
   onPlay, onShuffle, onAdd, onShare, onInfo, onMore, onEdit, onBuy, onOwnerClick,
   className,
 }: MediaHeaderProps) {
@@ -184,21 +206,21 @@ export function MediaHeader({
                   <span className="font-medium">{owner}</span>
                 </button>
               )}
-              {/* Format badge — same `<Badge variant="secondary">`
-                   chrome for both, swapping the leading icon. Album:
-                   Disc3 + the passed `format` ("Album" / "Single" /
-                   "EP"). Playlist: ListMusic + literal "Playlist"
-                   (the variant IS the format). */}
+              {/* Format glyph + label — flat inline meta (no pill
+                   chrome) so the line reads as one calm rhythm
+                   alongside owner / year / Owned. Album uses Disc3 +
+                   `format` ("Album" / "Single" / "EP"); playlist
+                   uses ListMusic + literal "Playlist". */}
               {isPlaylist ? (
-                <Badge variant="secondary">
-                  <ListMusic />
+                <span className="flex items-center gap-1">
+                  <ListMusic className="size-3.5 shrink-0" />
                   Playlist
-                </Badge>
+                </span>
               ) : format && (
-                <Badge variant="secondary">
-                  <Disc3 />
+                <span className="flex items-center gap-1">
+                  <Disc3 className="size-3.5 shrink-0" />
                   {format}
-                </Badge>
+                </span>
               )}
               {year && <span className="pb-px">{year}</span>}
               {isOwned && visibility && (
@@ -207,6 +229,10 @@ export function MediaHeader({
                   onStatusChange={onVisibilityChange}
                 />
               )}
+              {/* Purchased indicator — uses the shared
+                   `PurchasedBadge` so any tweak (icon, copy) lands
+                   here AND in `AlbumCard` in one edit. */}
+              {purchased && <PurchasedBadge />}
             </div>
           </div>
 
@@ -223,6 +249,39 @@ export function MediaHeader({
                   className="w-full"
                 >
                   Unlock All Songs – {buyingPrice}
+                </Button>
+              )}
+              {/* Download-tier purchase — surface the file action in
+                   the slot the buy CTA used to occupy. Streaming-tier
+                   purchases leave this slot empty (the inline
+                   Purchased badge in the meta line carries the
+                   ownership signal). */}
+              {downloadable && !hasBuyingOption && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={onDownload}
+                  className="w-full"
+                >
+                  <Download />
+                  Download MP3
+                </Button>
+              )}
+              {/* Pay-the-difference upgrade — stream-tier owners
+                   who can upgrade to download for the price delta.
+                   `outline-primary` matches the original "Unlock all
+                   songs" CTA chrome so the slot reads as a
+                   continuation of the original buy flow, just at the
+                   cheaper upgrade price. */}
+              {!downloadable && !hasBuyingOption && addDownloadPrice && (
+                <Button
+                  variant="outline-primary"
+                  size="lg"
+                  onClick={onAddDownload}
+                  className="w-full"
+                >
+                  <Download />
+                  Add download – {addDownloadPrice}
                 </Button>
               )}
               <div className="flex gap-3 w-full">

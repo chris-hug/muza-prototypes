@@ -21,6 +21,11 @@
  *   · ≥692  → 4 cols
  *   · ≥928  → 5 cols
  *   · ≥1164 → 6 cols
+ *   · ≥1500 → 7 cols  (tier-2 wide-screen step — kicks in once the
+ *                      page container expands to its 1716px ceiling
+ *                      at viewport ≥ 1920px; the 1500 threshold sits
+ *                      safely above tier-1's 1400 content width so
+ *                      tier-1 never collapses into 7 smaller cards)
  * Each card width = (container - (N-1)·16) / N via `cqw` arithmetic
  * so cards align to the same column tracks the library uses.
  *
@@ -189,12 +194,21 @@ export function CardRail({ title, showAllLabel = "Show all", onShowAll, children
           // reference, so visually the cards are identical. The
           // `@min-[Xpx]:` breakpoints still resolve against the
           // parent @container, so step thresholds match the grids.
-          // 2 cols (default, also covers ≥304)
-          "[&>li]:w-[calc((100%-16px)/2)] " +
+          //
+          // Mobile peek: at the smallest step (container < 304) we
+          // deliberately undersize so ~1.6 cards are visible, leaving
+          // a sliver of the second card as a scrollability cue. From
+          // 304 up, cards fit exactly N-per-row so the grid feels
+          // clean on tablet/desktop — desktop peek would just read as
+          // misaligned. Pattern is borrowed from Bandcamp / Apple Music
+          // Web's tablet+ behavior.
+          "[&>li]:w-[60%] " +
+          "@min-[304px]:[&>li]:w-[calc((100%-16px)/2)] " +
           "@min-[464px]:[&>li]:w-[calc((100%-32px)/3)] " +
           "@min-[692px]:[&>li]:w-[calc((100%-48px)/4)] " +
           "@min-[928px]:[&>li]:w-[calc((100%-64px)/5)] " +
-          "@min-[1164px]:[&>li]:w-[calc((100%-80px)/6)]"
+          "@min-[1164px]:[&>li]:w-[calc((100%-80px)/6)] " +
+          "@min-[1500px]:[&>li]:w-[calc((100%-96px)/7)]"
         }
       >
         {children}

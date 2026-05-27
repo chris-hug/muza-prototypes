@@ -59,12 +59,12 @@ export function LibraryArtistsView() {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="@container mx-auto max-w-[1528px] px-10 pt-8 pb-12">
+      <div className="@container mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] px-10 pt-8 pb-12">
         <h1 className="text-2xlarge font-medium text-foreground tracking-tight mb-6">
           Artists
         </h1>
 
-        <ul className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))] @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))] gap-x-4 gap-y-6">
+        <ul className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))] @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))] @min-[1500px]:grid-cols-[repeat(7,minmax(143px,220px))] gap-x-4 gap-y-6">
           {SAVED_ARTISTS.map(a => (
             <li key={a.id}>
               <ArtistCard

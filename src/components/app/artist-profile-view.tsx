@@ -42,6 +42,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { AlbumCardMenuItems } from "@/components/ui/cover-card-menu"
+import { useUserLibrary } from "@/lib/user-library"
+import { albumMetaFor, libraryIdForTitle } from "@/lib/album-meta"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ToggleGroup } from "@/components/ui/toggle-group"
 import { Toggle } from "@/components/ui/toggle"
@@ -198,6 +200,7 @@ const SIMILAR_ARTISTS = [
 export function ArtistProfileView({ onBack }: { onBack?: () => void }) {
   const [tab, setTab] = useState("overview")
   const [bioOpen, setBioOpen] = useState(false)
+  const library = useUserLibrary()
 
   // No `overflow-auto` here — the outer layout already owns the page
   // scroll. A second scroll container would break sticky positioning
@@ -211,7 +214,15 @@ export function ArtistProfileView({ onBack }: { onBack?: () => void }) {
            Button outline variant (border-border + bg-background/20 +
            backdrop-blur) renders correctly on the dark photo backdrop
            without any per-button colour overrides. */}
-      <section className="dark relative w-full aspect-[1072/400] min-h-[320px] overflow-hidden text-foreground">
+      {/* Hero height is locked to the same growth ceilings as the
+           inner content wrappers (the page-wide
+           `max-w-[1480px] min-[1920px]:max-w-[1716px]` pattern).
+           At each ceiling the natural aspect-[1072/400] gives:
+             ·  tier 1: 1480 × 400/1072 ≈ 552px
+             ·  tier 2: 1716 × 400/1072 ≈ 640px
+           So the hero stops growing taller at exactly the same
+           viewport widths where the rails stop growing wider. */}
+      <section className="dark relative w-full aspect-[1072/400] min-h-[320px] max-h-[552px] min-[1920px]:max-h-[640px] overflow-hidden text-foreground">
         <img
           src={ARTIST.cover}
           alt={ARTIST.name}
@@ -238,7 +249,7 @@ export function ArtistProfileView({ onBack }: { onBack?: () => void }) {
         </Button>
 
         {/* Name + bio — pinned to bottom-left of the hero. */}
-        <div className="absolute inset-x-0 bottom-0 mx-auto max-w-[1528px] w-full px-10 pb-8 flex flex-col gap-4">
+        <div className="absolute inset-x-0 bottom-0 mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] w-full px-10 pb-8 flex flex-col gap-4">
           <div className="max-w-3xl flex flex-col gap-3">
             <h1 className="text-[clamp(2.5rem,5vw,4rem)] font-medium leading-[1.05] tracking-tight">
               {ARTIST.name}
@@ -325,16 +336,30 @@ export function ArtistProfileView({ onBack }: { onBack?: () => void }) {
            rather than on this outer div because container-type breaks
            position: sticky for descendants (the discography list view
            needs a sticky table head against the page scroll). */}
-      <div className="mx-auto max-w-[1528px] w-full px-10">
+      <div className="mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] w-full px-10">
         {tab === "overview" && (
           <div className="@container">
           <>
             <TopSongsRow songs={TOP_SONGS} />
 
             <CardRail title="Top Albums" showAllLabel="All albums">
-              {TOP_ALBUMS.map(a => (
-                <li key={a.id}><AlbumCard cover={a.cover} title={a.title} artist={a.artist} year={a.year} /></li>
-              ))}
+              {TOP_ALBUMS.map(a => {
+                const meta  = albumMetaFor(a.title)
+                const libId = libraryIdForTitle(a.title)
+                return (
+                  <li key={a.id}>
+                    <AlbumCard
+                      cover={a.cover}
+                      title={a.title}
+                      artist={a.artist}
+                      year={meta.year ?? a.year}
+                      streamPrice={meta.streamPrice}
+                      downloadPrice={meta.downloadPrice}
+                      purchased={libId ? library.isPurchased(libId) : false}
+                    />
+                  </li>
+                )
+              })}
             </CardRail>
 
             <CardRail title="Products" showAllLabel="All products">
@@ -453,6 +478,7 @@ function SortableHeader({
 function DiscographyView({
   releases, artistName,
 }: { releases: typeof DISCOGRAPHY; artistName: string }) {
+  const library = useUserLibrary()
   // Multi-select kind filter. Empty set means "no filter applied"
   // (i.e. show all releases) — keeps the menu's `Clear all` row in
   // sync with the visible-everything default.
@@ -560,16 +586,23 @@ function DiscographyView({
         // Releases grid — same auto-fill template as Library/Albums so
         // card widths stay flush with the rest of the app.
         <ul className="grid grid-cols-[repeat(auto-fill,minmax(192px,1fr))] gap-x-4 gap-y-6 pt-2">
-          {visible.map(r => (
-            <li key={r.id}>
-              <AlbumCard
-                cover={r.cover}
-                title={r.title}
-                artist={artistName}
-                year={r.year}
-              />
-            </li>
-          ))}
+          {visible.map(r => {
+            const meta  = albumMetaFor(r.title)
+            const libId = libraryIdForTitle(r.title)
+            return (
+              <li key={r.id}>
+                <AlbumCard
+                  cover={r.cover}
+                  title={r.title}
+                  artist={artistName}
+                  year={meta.year ?? r.year}
+                  streamPrice={meta.streamPrice}
+                  downloadPrice={meta.downloadPrice}
+                  purchased={libId ? library.isPurchased(libId) : false}
+                />
+              </li>
+            )
+          })}
         </ul>
       ) : (
         // List view — table with the columns the user asked for:

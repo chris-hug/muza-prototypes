@@ -19,12 +19,13 @@
  * cover buttons stay readable in either light or dark mode.
  */
 
-import { Plus, Pencil } from "lucide-react"
+import { Plus, Pencil, Download } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { PlayFilledAlt } from "@/components/ui/transport-icons"
 import { AlbumCardMenu } from "@/components/ui/cover-card-menu"
+import { PurchasedBadge } from "@/components/ui/purchased-badge"
 import { useLongPress } from "@/lib/use-long-press"
 
 // Cover-button base — translucent muted fill + light backdrop blur,
@@ -43,6 +44,19 @@ export interface AlbumCardProps {
    *  second text line, separated by a `·`. */
   year?:          number | string
   owned?:         boolean
+  /** True when this album was paid for. Surfaces the "Owned" pill in
+   *  the pricing row at the bottom of the card. Independent of
+   *  `owned` (owned = uploaded by this user; purchased = bought). */
+  purchased?:     boolean
+  /** Stream-unlock price (e.g. "$2.99"). When set, the album requires
+   *  purchase to stream — the pricing row shows the prices instead of
+   *  "Free". Omit when the album streams freely under the Muza
+   *  subscription. */
+  streamPrice?:   string
+  /** Download-license price (e.g. "$4.99"). Only meaningful when
+   *  `streamPrice` is also set. Pricing row renders as
+   *  `streamPrice stream · downloadPrice download`. */
+  downloadPrice?: string
   /** Cover area: tap to play, long-press to call `onMore` (touch). */
   onPlay?:          () => void
   onMore?:          () => void
@@ -63,7 +77,7 @@ export interface AlbumCardProps {
 }
 
 export function AlbumCard({
-  cover, title, artist, year, owned,
+  cover, title, artist, year, owned, purchased, streamPrice, downloadPrice,
   onPlay, onMore, onAdd, onEdit, onShare, onAddToPlaylist,
   onGoToArtist, onGoToAlbum, onRemove, onReport, onShowInfo,
   onTitleClick, onArtistClick, className,
@@ -159,8 +173,10 @@ export function AlbumCard({
       </div>
 
       <div className="flex flex-col gap-0.5 min-w-0">
-        {/* Title — 2-line clamp (Spotify-style) so longer release
-             names wrap instead of getting truncated mid-word. */}
+        {/* Title — clean text row, 2-line clamp (Spotify-style) so
+             longer release names wrap instead of getting truncated
+             mid-word. The "Owned" pill / pricing meta both live in
+             the third row below, not here. */}
         <button
           type="button"
           onClick={onTitleClick}
@@ -168,8 +184,8 @@ export function AlbumCard({
         >
           {title}
         </button>
-        {/* Subtitle row — artist + optional year, on one line with
-             the artist text taking the underline-on-hover affordance
+        {/* Artist row — artist + optional year, on one line with the
+             artist text taking the underline-on-hover affordance
              (independent click target) and the year as plain meta
              after a `·` separator. */}
         <div className="flex items-center gap-1.5 min-w-0 text-small font-normal leading-5 text-muted-foreground">
@@ -185,6 +201,33 @@ export function AlbumCard({
               <span aria-hidden="true" className="shrink-0">·</span>
               <span className="shrink-0">{year}</span>
             </>
+          )}
+        </div>
+        {/* Status / pricing row. Mirrors the Studio music table's
+             monetisation cell: prices in tabular nums, faded `·`
+             separator, download icon glyph next to the download
+             price. Fixed 18px height so the pill-rendering case and
+             the text-rendering case occupy identical vertical space —
+             without the lock, the pill's bg fill makes the Owned
+             row "feel" different from the Free / priced rows. */}
+        <div className="flex items-center h-[18px]">
+          {purchased ? (
+            <PurchasedBadge className="text-2xsmall [&_svg]:size-3" />
+          ) : streamPrice ? (
+            <span className="flex items-center gap-1.5 text-2xsmall text-muted-foreground tabular-nums">
+              <span>{streamPrice}</span>
+              {downloadPrice && (
+                <>
+                  <span className="opacity-30" aria-hidden>·</span>
+                  <span className="flex items-center gap-0.5">
+                    <span>{downloadPrice}</span>
+                    <Download className="size-3 shrink-0" aria-hidden />
+                  </span>
+                </>
+              )}
+            </span>
+          ) : (
+            <p className="text-2xsmall text-muted-foreground">Free</p>
           )}
         </div>
       </div>

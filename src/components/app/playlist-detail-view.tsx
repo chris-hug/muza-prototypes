@@ -24,6 +24,8 @@ import { AlbumCard } from "@/components/ui/album-card"
 import { ArtistCard } from "@/components/ui/artist-card"
 import { CardRail } from "@/components/app/card-rail"
 import { AlbumCardMenuItems } from "@/components/ui/cover-card-menu"
+import { useUserLibrary } from "@/lib/user-library"
+import { albumMetaFor, libraryIdForTitle } from "@/lib/album-meta"
 
 interface PlaylistDetailViewProps {
   onBack?: () => void
@@ -89,8 +91,9 @@ const FEATURED_ARTISTS = [
 const TRACK_META = "8 tracks · 1h 31m"
 
 export function PlaylistDetailView({ onBack }: PlaylistDetailViewProps) {
+  const library = useUserLibrary()
   return (
-    <div className="@container relative w-full px-10 pt-6 pb-24 max-w-[1528px] mx-auto flex flex-col gap-10">
+    <div className="@container relative w-full px-10 pt-6 pb-24 max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto flex flex-col gap-10">
       {/* Back chevron — same gutter pattern as AlbumDetailView. */}
       {onBack && (
         <Button
@@ -135,11 +138,23 @@ export function PlaylistDetailView({ onBack }: PlaylistDetailViewProps) {
       </ul>
 
       <CardRail title={`More from ${PLAYLIST.owner}`} showAllLabel="All playlists">
-        {MORE_FROM_CURATOR.map(p => (
-          <li key={p.id}>
-            <AlbumCard cover={p.cover} title={p.title} artist={PLAYLIST.owner} year={p.year} />
-          </li>
-        ))}
+        {MORE_FROM_CURATOR.map(p => {
+          const meta  = albumMetaFor(p.title)
+          const libId = libraryIdForTitle(p.title)
+          return (
+            <li key={p.id}>
+              <AlbumCard
+                cover={p.cover}
+                title={p.title}
+                artist={PLAYLIST.owner}
+                year={meta.year ?? p.year}
+                streamPrice={meta.streamPrice}
+                downloadPrice={meta.downloadPrice}
+                purchased={libId ? library.isPurchased(libId) : false}
+              />
+            </li>
+          )
+        })}
       </CardRail>
 
       <CardRail title="Featured Artists" showAllLabel="All artists">

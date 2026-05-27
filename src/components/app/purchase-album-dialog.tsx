@@ -63,7 +63,7 @@
  */
 
 import { useEffect, useState } from "react"
-import { CircleCheck, Disc3, Download, Mail, Radio as RadioIcon, ShieldCheck } from "lucide-react"
+import { CircleCheck, CircleCheckBig, Disc3, Download, Mail, Radio as RadioIcon, ShieldCheck } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import {
@@ -72,6 +72,7 @@ import {
   DialogPreview, DialogPreviewHeader, DialogPreviewTitle, DialogPreviewDescription, DialogPreviewFooter,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { PlayFilledAlt } from "@/components/ui/transport-icons"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Spinner } from "@/components/ui/spinner"
@@ -98,6 +99,18 @@ export interface PurchaseAlbumDialogProps {
    *  context. */
   userEmail?: string
   onPurchased?: (tier: PurchaseTier) => void
+  /** Upgrade flow — when set, dialog opens in "add download" mode:
+   *  tier picker is hidden (only download is bought), cart shows the
+   *  passed delta price, success calls `onUpgraded` instead of
+   *  `onPurchased`. Use for stream-tier owners adding the download
+   *  tier for the price delta. */
+  upgradeMode?: boolean
+  upgradePrice?: string
+  onUpgraded?: () => void
+  /** Fires from the success step's "Go to library" button. Host
+   *  navigates the user to the Albums page. The dialog closes on its
+   *  own once the success state has played out. */
+  onGoToLibrary?: () => void
 }
 
 type Step = "summary" | "processing" | "success"
@@ -107,27 +120,46 @@ const MOCK_USER_EMAIL = "naomi@example.com"
 
 export function PurchaseAlbumDialog({
   open, onOpenChange, album, streamPrice, downloadPrice,
-  userEmail = MOCK_USER_EMAIL, onPurchased,
+  userEmail = MOCK_USER_EMAIL, onPurchased, onGoToLibrary,
+  upgradeMode = false, upgradePrice, onUpgraded,
 }: PurchaseAlbumDialogProps) {
   const [step, setStep]   = useState<Step>("summary")
-  const [tier, setTier]   = useState<PurchaseTier>("stream")
+  // In upgrade mode tier is forced to "download" — the user already
+  // owns the stream tier so the upgrade IS the download license.
+  const [tier, setTier]   = useState<PurchaseTier>(upgradeMode ? "download" : "stream")
   const [email, setEmail] = useState(userEmail)
-  const price = tier === "download" && downloadPrice ? downloadPrice : streamPrice
+  // Optional tip to Muza — strings keep the input controlled and
+  // parsing tolerant (e.g. "1.50", "1.5", ""). `null` = explicit
+  // "No contribution" pick (zeroes the row + suppresses the
+  // thank-you banner). Default $1 preselected as the cheap-anchor
+  // nudge — preferred over $0 because the non-profit framing only
+  // works if the default makes the user opt OUT, not opt IN.
+  const [contribution, setContribution] = useState<string | null>("1")
+
+  // In upgrade mode the cart line is the price delta, not the full
+  // download price (user already paid for the stream tier).
+  const itemPriceStr = upgradeMode && upgradePrice
+    ? upgradePrice
+    : tier === "download" && downloadPrice ? downloadPrice : streamPrice
+  const itemPrice    = parsePrice(itemPriceStr)
+  const contribAmt   = contribution === null ? 0 : Math.max(0, Number(contribution) || 0)
+  const total        = itemPrice + contribAmt
+  const price        = formatPrice(total)
 
   // Reset on each open.
   useEffect(() => {
     if (!open) return
     setStep("summary")
-    setTier("stream")
+    setTier(upgradeMode ? "download" : "stream")
     setEmail(userEmail)
-  }, [open, userEmail])
+    setContribution("1")
+  }, [open, userEmail, upgradeMode])
 
-  // Auto-close 1.5s after success.
-  useEffect(() => {
-    if (step !== "success") return
-    const id = setTimeout(() => onOpenChange(false), 1500)
-    return () => clearTimeout(id)
-  }, [step, onOpenChange])
+  // Success state stays open until the user picks an action. The
+  // album's already been added to the library by `onPurchased` —
+  // dismissing the dialog or hitting either CTA is a deliberate move,
+  // not a timer. (Previously we auto-closed after 1.5s which felt
+  // abrupt — the buyer barely got to register the success.)
 
   // Pay button enables once we have a valid email. Real wiring
   // would also require `checkout.validate()` to return ok before
@@ -141,7 +173,8 @@ export function PurchaseAlbumDialog({
     // `checkout.submit()` flow.
     setTimeout(() => {
       setStep("success")
-      onPurchased?.(tier)
+      if (upgradeMode) onUpgraded?.()
+      else             onPurchased?.(tier)
     }, 1400)
   }
 
@@ -166,36 +199,38 @@ export function PurchaseAlbumDialog({
                  buyer-side reads as the mirror of the seller-side
                  release step. No "Change" button — buyer can't
                  swap which album they're purchasing. */}
-            <div className="shrink-0 flex flex-col gap-3 px-6 pt-6 pb-4 border-b border-border">
+            <div className="shrink-0 flex flex-col gap-4 px-6 pt-6 pb-4 border-b border-border">
               <DialogHeader>
-                <DialogTitle>Unlock all songs</DialogTitle>
+                <DialogTitle>
+                  {upgradeMode ? `Add download to ${album.title}` : "Review and pay"}
+                </DialogTitle>
                 <DialogDescription>
-                  One-time purchase. Yours forever, no subscription.
+                  {upgradeMode
+                    ? "Upgrade your purchase to include the lossless download files. You've already paid the artist — this covers the difference."
+                    : "One-time purchase. Yours forever, no subscription."}
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="rounded-2xl border border-border overflow-hidden">
-                <div className="flex items-center gap-3 px-4 py-3">
-                  <img
-                    src={album.cover}
-                    alt=""
-                    draggable={false}
-                    className="size-12 rounded-xs shrink-0 object-cover shadow-sm"
-                  />
-                  <div className="flex flex-col gap-1 flex-1 min-w-0">
-                    <p className="text-small font-normal leading-none truncate">
-                      {album.title}
-                    </p>
-                    {/* `min-w-0` so `truncate` on the artist span
-                         can fire at narrow viewports — without it
-                         the row takes natural content width and
-                         the parent `overflow-hidden` clips it. */}
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <Badge variant="secondary">
-                        <Disc3 />
-                        {album.format ?? "Album"}
-                      </Badge>
-                      <span className="text-small text-muted-foreground font-normal truncate min-w-0">
+              {/* In cart — single-item summary row. Cart framing
+                   matches transactional checkout patterns (Subvert,
+                   Bandcamp). The "Remove" link is functionally
+                   identical to Cancel but reads as a cart-line
+                   action, which feels right next to the item. */}
+              <div className="flex flex-col gap-2">
+                <SectionLabel className="text-xsmall text-muted-foreground font-normal">In cart</SectionLabel>
+                <div className="rounded-2xl border border-border overflow-hidden">
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <img
+                      src={album.cover}
+                      alt=""
+                      draggable={false}
+                      className="size-12 rounded-xs shrink-0 object-cover shadow-sm"
+                    />
+                    <div className="flex flex-col gap-1 flex-1 min-w-0">
+                      <p className="text-small font-medium leading-none truncate">
+                        {album.title}
+                      </p>
+                      <p className="text-small text-muted-foreground font-normal truncate min-w-0">
                         {album.artist}
                         {album.year && (
                           <>
@@ -203,7 +238,19 @@ export function PurchaseAlbumDialog({
                             <span>{album.year}</span>
                           </>
                         )}
-                      </span>
+                        <span aria-hidden="true"> · </span>
+                        <span>{album.format ?? "Album"}</span>
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-0.5 shrink-0">
+                      <span className="text-small font-medium tabular-nums">{itemPriceStr}</span>
+                      <button
+                        type="button"
+                        onClick={() => onOpenChange(false)}
+                        className="text-2xsmall text-muted-foreground hover:text-foreground hover:underline underline-offset-2 cursor-pointer"
+                      >
+                        Remove
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -212,35 +259,42 @@ export function PurchaseAlbumDialog({
 
             <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-5">
 
-              {/* ── Tier picker ────────────────────────────────── */}
-              <div className="flex flex-col gap-2">
-                <SectionLabel>Tier</SectionLabel>
-                <RadioCardGroup
-                  value={tier}
-                  onValueChange={v => setTier(v as PurchaseTier)}
-                >
-                  <RadioCard
-                    value="stream"
-                    selected={tier === "stream"}
-                    onSelect={() => setTier("stream")}
-                    icon={<RadioIcon />}
-                    title="Listening"
-                    description={`Stream on any device · ${streamPrice}`}
-                  />
-                  {downloadPrice && (
-                    <RadioCard
-                      value="download"
-                      selected={tier === "download"}
-                      onSelect={() => setTier("download")}
-                      icon={<Download />}
-                      title="Download"
-                      description={`Lossless files + listening · ${downloadPrice}`}
-                    />
-                  )}
-                </RadioCardGroup>
-              </div>
+              {/* ── Tier picker ──────────────────────────────────
+                   Hidden in upgrade mode — user already owns the
+                   stream tier, the only thing to buy is the
+                   download upgrade. */}
+              {!upgradeMode && (
+                <>
+                  <div className="flex flex-col gap-2">
+                    <SectionLabel>Tier</SectionLabel>
+                    <RadioCardGroup
+                      value={tier}
+                      onValueChange={v => setTier(v as PurchaseTier)}
+                    >
+                      <RadioCard
+                        value="stream"
+                        selected={tier === "stream"}
+                        onSelect={() => setTier("stream")}
+                        icon={<RadioIcon />}
+                        title="Listening"
+                        description={`Stream on any device · ${streamPrice}`}
+                      />
+                      {downloadPrice && (
+                        <RadioCard
+                          value="download"
+                          selected={tier === "download"}
+                          onSelect={() => setTier("download")}
+                          icon={<Download />}
+                          title="Download"
+                          description={`Lossless files + listening · ${downloadPrice}`}
+                        />
+                      )}
+                    </RadioCardGroup>
+                  </div>
 
-              <Separator />
+                  <Separator />
+                </>
+              )}
 
               {/* ── Contact (email for receipt) ────────────────── */}
               <div className="flex flex-col gap-2">
@@ -275,15 +329,54 @@ export function PurchaseAlbumDialog({
 
               <Separator />
 
-              {/* Total + trust signal — part of the scrolling body
-                   (not the sticky footer). Total stays visually
-                   near the Pay button, but if the dialog overflows
-                   they scroll with the rest; only the action row
-                   below sticks. */}
-              <div className="flex items-center justify-between py-1">
-                <span className="text-small text-muted-foreground">Total</span>
-                <span className="text-large font-medium tabular-nums">{price}</span>
+              {/* ── Contribute to Muza ────────────────────────────
+                   Optional tip jar — Muza is non-profit and 100% of
+                   subscription revenue already goes to artists, so
+                   the contribution explicitly funds the platform
+                   (infra, dev, ops) rather than artist payouts.
+                   Preset amounts + custom field + "No contribution"
+                   escape hatch. Default $1 preselected as a quiet
+                   nudge; opting out is one click. */}
+              <div className="flex flex-col gap-2">
+                <SectionLabel>Contribute to Muza</SectionLabel>
+                <p className="text-2xsmall text-muted-foreground">
+                  100% of {itemPriceStr} goes directly to the artist. Add a small contribution to keep Muza non-profit and community-owned.
+                </p>
+                <ContributionPicker
+                  value={contribution}
+                  onChange={setContribution}
+                />
+                {contribAmt > 0 && (
+                  <div className="rounded-lg bg-muted/60 px-3 py-2 text-xsmall text-foreground mt-1">
+                    Thank you for your contribution.
+                  </div>
+                )}
               </div>
+
+              <Separator />
+
+              {/* ── Itemized totals ───────────────────────────────
+                   Three lines: subtotal (the album), contribution,
+                   total. Hides the contribution row entirely when
+                   set to "No contribution" so the row doesn't sit
+                   there as a faded $0 distraction. */}
+              <dl className="flex flex-col gap-1.5 py-1">
+                <div className="flex items-center justify-between">
+                  <dt className="text-small text-muted-foreground">Subtotal</dt>
+                  <dd className="text-small tabular-nums">{itemPriceStr}</dd>
+                </div>
+                {contribAmt > 0 && (
+                  <div className="flex items-center justify-between">
+                    <dt className="text-small text-muted-foreground">Contribution to Muza</dt>
+                    <dd className="text-small tabular-nums">{formatPrice(contribAmt)}</dd>
+                  </div>
+                )}
+                <div className="flex items-center justify-between pt-1.5 border-t border-border">
+                  <dt className="text-small font-medium text-foreground">Total</dt>
+                  <dd className="text-large font-medium tabular-nums">{price}</dd>
+                </div>
+              </dl>
+
               <div className="flex items-center gap-2 text-2xsmall text-muted-foreground">
                 <ShieldCheck className="size-3.5" />
                 <span>
@@ -304,7 +397,7 @@ export function PurchaseAlbumDialog({
                 Cancel
               </DialogClose>
               <Button onClick={handlePay} disabled={!canPay}>
-                Pay {price}
+                Confirm and pay {price}
               </Button>
             </DialogFooter>
           </>
@@ -319,15 +412,141 @@ export function PurchaseAlbumDialog({
         )}
 
         {step === "success" && (
-          <div className="flex flex-col items-center justify-center gap-3 py-10 min-h-[280px]">
+          <div className="flex flex-col gap-6 px-6 py-8">
             <DialogTitle className="sr-only">Purchase successful</DialogTitle>
-            <CircleCheck className="size-12 text-primary" strokeWidth={1.5} />
-            <p className="text-large font-medium text-foreground">Unlocked!</p>
-            <p className="text-small text-muted-foreground text-center max-w-[280px]">
-              {tier === "download"
-                ? `Files ready for ${album.title} — and listening is unlocked too.`
-                : `${album.title} is unlocked for listening on any device.`}
-            </p>
+
+            {/* Page-style headline — reads as a confirmation page even
+                 though it's in a dialog. Centered icon + bold "You
+                 own X" + soft confirmation line below. */}
+            <div className="flex flex-col items-center gap-3 text-center">
+              <CircleCheck className="size-10 text-primary" strokeWidth={1.5} />
+              <p className="text-xlarge font-medium text-foreground">
+                {upgradeMode
+                  ? `Download added to ${album.title}`
+                  : `You own ${album.title}`}
+              </p>
+            </div>
+
+            {/* ── Your impact ─────────────────────────────────────
+                 Subvert-style breakdown — shows the buyer exactly
+                 where their money went. Reinforces the muza non-profit
+                 / artist-first story at the moment of highest
+                 emotional payoff (right after the buyer paid). */}
+            {(itemPrice > 0 || contribAmt > 0) && (
+              <div className="rounded-2xl border border-border bg-muted/40 px-5 py-4 flex flex-col gap-3">
+                <p className="text-small text-foreground">
+                  Thank you. Your purchase supports {album.artist}.
+                </p>
+                <ul className="flex flex-col gap-2">
+                  {itemPrice > 0 && (
+                    <li className="flex items-start gap-2">
+                      <CircleCheckBig className="size-4 mt-px shrink-0 text-foreground" />
+                      <span className="text-small text-foreground leading-5">
+                        <span className="font-medium">{album.artist}</span>
+                        {" received "}
+                        <span className="tabular-nums">{itemPriceStr}</span>
+                        {upgradeMode
+                          ? " — 100% of your upgrade."
+                          : " — 100% of your purchase."}
+                      </span>
+                    </li>
+                  )}
+                  {contribAmt > 0 && (
+                    <li className="flex items-start gap-2">
+                      <CircleCheckBig className="size-4 mt-px shrink-0 text-foreground" />
+                      <span className="text-small text-foreground leading-5">
+                        <span className="font-medium">Muza</span>
+                        {" received your "}
+                        <span className="tabular-nums">{formatPrice(contribAmt)}</span>
+                        {" contribution — keeps the platform non-profit and community-owned."}
+                      </span>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            )}
+
+            {/* Confirmation + receipt — quiet meta lines under the
+                 impact block. Receipt email mirrors the cart email
+                 field so the user immediately sees where to look. */}
+            <div className="flex flex-col gap-1 text-small text-muted-foreground">
+              <p>Your order is confirmed.</p>
+              <p>
+                Receipt sent to{" "}
+                <span className="text-foreground">{email}</span>.
+              </p>
+            </div>
+
+            {/* Item recap with optional Download — the buyer can
+                 download their files right from this confirmation
+                 (download tier only) without having to navigate
+                 back into the library to find them. */}
+            <div className="rounded-2xl border border-border overflow-hidden">
+              <div className="flex items-center gap-3 px-4 py-3">
+                <img
+                  src={album.cover}
+                  alt=""
+                  draggable={false}
+                  className="size-12 rounded-xs shrink-0 object-cover shadow-sm"
+                />
+                <div className="flex flex-col gap-1 flex-1 min-w-0">
+                  <p className="text-small font-medium leading-none truncate">
+                    {album.title}
+                  </p>
+                  <p className="text-small text-muted-foreground font-normal truncate min-w-0">
+                    {album.artist}
+                    {album.year && (
+                      <>
+                        <span aria-hidden="true"> · </span>
+                        <span>{album.year}</span>
+                      </>
+                    )}
+                    <span aria-hidden="true"> · </span>
+                    <span>{album.format ?? "Album"}</span>
+                  </p>
+                </div>
+                {tier === "download" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0"
+                    onClick={() => {
+                      // Real wiring would open a download-format
+                      // picker (MP3 / FLAC / WAV). For now noop —
+                      // the visual presence of the affordance is
+                      // the message.
+                    }}
+                  >
+                    <Download className="size-3.5" />
+                    Download
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Twin CTAs — See in library (outline) takes the user
+                 to their owned items, Play album (primary) drops
+                 them straight into the listening experience. */}
+            <div className="flex items-center gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  onOpenChange(false)
+                  onGoToLibrary?.()
+                }}
+              >
+                See in library
+              </Button>
+              <Button
+                onClick={() => {
+                  onOpenChange(false)
+                  // Real wiring would call player.play(album.id).
+                }}
+              >
+                <PlayFilledAlt className="size-3.5" />
+                Play album
+              </Button>
+            </div>
           </div>
         )}
       </DialogContent>
@@ -337,12 +556,90 @@ export function PurchaseAlbumDialog({
 
 // Small section-label primitive — sentence-case, never uppercase
 // (matches the muza typography rule).
-function SectionLabel({ children }: { children: React.ReactNode }) {
+function SectionLabel({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <p className="text-small font-medium text-foreground">
+    <p className={cn("text-small font-medium text-foreground", className)}>
       {children}
     </p>
   )
+}
+
+// Tip-jar picker — preset amounts as a segmented row plus a custom
+// numeric field. `null` is the explicit "No contribution" selection;
+// it zeroes the contribution row and suppresses the thank-you banner.
+const PRESETS = ["1", "2", "5"] as const
+function ContributionPicker({
+  value, onChange,
+}: {
+  value: string | null
+  onChange: (next: string | null) => void
+}) {
+  const isPreset = value !== null && (PRESETS as readonly string[]).includes(value)
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-stretch gap-1.5">
+        {PRESETS.map(p => {
+          const active = value === p
+          return (
+            <button
+              key={p}
+              type="button"
+              onClick={() => onChange(p)}
+              aria-pressed={active}
+              className={cn(
+                "flex-1 h-10 rounded-full text-small font-medium tabular-nums transition-colors border",
+                active
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background text-foreground border-border hover:bg-muted",
+              )}
+            >
+              ${p}.00
+            </button>
+          )
+        })}
+        <button
+          type="button"
+          onClick={() => onChange(null)}
+          aria-pressed={value === null}
+          className={cn(
+            "flex-1 h-10 rounded-full text-small font-medium transition-colors border whitespace-nowrap px-3",
+            value === null
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-background text-foreground border-border hover:bg-muted",
+          )}
+        >
+          No contribution
+        </button>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-xsmall text-muted-foreground">Custom</span>
+        <div className="relative flex-1">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base text-muted-foreground pointer-events-none">$</span>
+          <Input
+            type="text"
+            inputMode="decimal"
+            value={isPreset ? "" : (value ?? "")}
+            onChange={e => {
+              const raw = e.target.value.replace(/[^0-9.]/g, "")
+              onChange(raw === "" ? null : raw)
+            }}
+            placeholder="0.00"
+            className="pl-8"
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Convert "$2.99" → 2.99. Tolerant of stripped currency, spaces, etc.
+function parsePrice(input: string | undefined | null): number {
+  if (!input) return 0
+  const n = Number(input.replace(/[^0-9.]/g, ""))
+  return Number.isFinite(n) ? n : 0
+}
+function formatPrice(amount: number): string {
+  return `$${amount.toFixed(2)}`
 }
 
 /*
@@ -406,11 +703,16 @@ export function PurchaseAlbumDialogPreview({
   userEmail = MOCK_USER_EMAIL, className,
 }: PurchaseAlbumDialogPreviewProps) {
   // Local state so the preview is interactive even though it's
-  // static-mounted — devs can flip the tier picker / type in the
-  // email field to feel the chrome.
+  // static-mounted — devs can flip the tier picker / contribution /
+  // email and see the breakdown react.
   const [tier, setTier]   = useState<PurchaseTier>("stream")
   const [email, setEmail] = useState(userEmail)
-  const price = tier === "download" && downloadPrice ? downloadPrice : streamPrice
+  const [contribution, setContribution] = useState<string | null>("1")
+  const itemPriceStr = tier === "download" && downloadPrice ? downloadPrice : streamPrice
+  const itemPrice    = parsePrice(itemPriceStr)
+  const contribAmt   = contribution === null ? 0 : Math.max(0, Number(contribution) || 0)
+  const total        = itemPrice + contribAmt
+  const price        = formatPrice(total)
 
   return (
     <DialogPreview
@@ -418,32 +720,29 @@ export function PurchaseAlbumDialogPreview({
       className={cn("sm:max-w-xl max-h-[600px] p-0 gap-0 flex flex-col", className)}
     >
       {/* Sticky header */}
-      <div className="shrink-0 flex flex-col gap-3 px-6 pt-6 pb-4 border-b border-border">
+      <div className="shrink-0 flex flex-col gap-4 px-6 pt-6 pb-4 border-b border-border">
         <DialogPreviewHeader>
-          <DialogPreviewTitle>Unlock all songs</DialogPreviewTitle>
+          <DialogPreviewTitle>Review and pay</DialogPreviewTitle>
           <DialogPreviewDescription>
             One-time purchase. Yours forever, no subscription.
           </DialogPreviewDescription>
         </DialogPreviewHeader>
 
-        <div className="rounded-2xl border border-border overflow-hidden">
-          <div className="flex items-center gap-3 px-4 py-3">
-            <img
-              src={album.cover}
-              alt=""
-              draggable={false}
-              className="size-12 rounded-xs shrink-0 object-cover shadow-sm"
-            />
-            <div className="flex flex-col gap-1 flex-1 min-w-0">
-              <p className="text-small font-normal leading-none truncate">
-                {album.title}
-              </p>
-              <div className="flex items-center gap-1.5 min-w-0">
-                <Badge variant="secondary">
-                  <Disc3 />
-                  {album.format ?? "Album"}
-                </Badge>
-                <span className="text-small text-muted-foreground font-normal truncate min-w-0">
+        <div className="flex flex-col gap-2">
+          <SectionLabel className="text-xsmall text-muted-foreground font-normal">In cart</SectionLabel>
+          <div className="rounded-2xl border border-border overflow-hidden">
+            <div className="flex items-center gap-3 px-4 py-3">
+              <img
+                src={album.cover}
+                alt=""
+                draggable={false}
+                className="size-12 rounded-xs shrink-0 object-cover shadow-sm"
+              />
+              <div className="flex flex-col gap-1 flex-1 min-w-0">
+                <p className="text-small font-medium leading-none truncate">
+                  {album.title}
+                </p>
+                <p className="text-small text-muted-foreground font-normal truncate min-w-0">
                   {album.artist}
                   {album.year && (
                     <>
@@ -451,7 +750,13 @@ export function PurchaseAlbumDialogPreview({
                       <span>{album.year}</span>
                     </>
                   )}
-                </span>
+                  <span aria-hidden="true"> · </span>
+                  <span>{album.format ?? "Album"}</span>
+                </p>
+              </div>
+              <div className="flex flex-col items-end gap-0.5 shrink-0">
+                <span className="text-small font-medium tabular-nums">{itemPriceStr}</span>
+                <span className="text-2xsmall text-muted-foreground">Remove</span>
               </div>
             </div>
           </div>
@@ -520,10 +825,41 @@ export function PurchaseAlbumDialogPreview({
 
         <Separator />
 
-        <div className="flex items-center justify-between py-1">
-          <span className="text-small text-muted-foreground">Total</span>
-          <span className="text-large font-medium tabular-nums">{price}</span>
+        <div className="flex flex-col gap-2">
+          <SectionLabel>Contribute to Muza</SectionLabel>
+          <p className="text-2xsmall text-muted-foreground">
+            100% of {itemPriceStr} goes directly to the artist. Add a small contribution to keep Muza non-profit and community-owned.
+          </p>
+          <ContributionPicker
+            value={contribution}
+            onChange={setContribution}
+          />
+          {contribAmt > 0 && (
+            <div className="rounded-lg bg-muted/60 px-3 py-2 text-xsmall text-foreground mt-1">
+              Thank you for your contribution.
+            </div>
+          )}
         </div>
+
+        <Separator />
+
+        <dl className="flex flex-col gap-1.5 py-1">
+          <div className="flex items-center justify-between">
+            <dt className="text-small text-muted-foreground">Subtotal</dt>
+            <dd className="text-small tabular-nums">{itemPriceStr}</dd>
+          </div>
+          {contribAmt > 0 && (
+            <div className="flex items-center justify-between">
+              <dt className="text-small text-muted-foreground">Contribution to Muza</dt>
+              <dd className="text-small tabular-nums">{formatPrice(contribAmt)}</dd>
+            </div>
+          )}
+          <div className="flex items-center justify-between pt-1.5 border-t border-border">
+            <dt className="text-small font-medium text-foreground">Total</dt>
+            <dd className="text-large font-medium tabular-nums">{price}</dd>
+          </div>
+        </dl>
+
         <div className="flex items-center gap-2 text-2xsmall text-muted-foreground">
           <ShieldCheck className="size-3.5" />
           <span>
@@ -536,7 +872,7 @@ export function PurchaseAlbumDialogPreview({
       {/* Sticky footer (preview chrome — no real submit) */}
       <DialogPreviewFooter className="m-0 shrink-0 border-t border-border bg-muted px-6 py-4 rounded-b-xl sm:rounded-b-2xl">
         <Button variant="ghost">Cancel</Button>
-        <Button>Pay {price}</Button>
+        <Button>Confirm and pay {price}</Button>
       </DialogPreviewFooter>
     </DialogPreview>
   )

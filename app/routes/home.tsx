@@ -14,10 +14,14 @@ import { Topbar, TopbarDefaultActions } from "@/components/app/topbar"
 import { PurchasesView } from "@/components/app/purchases-view"
 import { SettingsView } from "@/components/app/settings-view"
 import { UserAvatar } from "@/components/ui/user-avatar"
+import { PurchasedBadge } from "@/components/ui/purchased-badge"
 import { ChipInput } from "@/components/ui/chip-input"
 import { ChipDismiss, ChipGroup } from "@/components/ui/chip"
 import { AVATAR_PALETTE } from "@/lib/avatar"
 import { CartProvider } from "@/lib/cart"
+import { UserLibraryProvider, useUserLibrary } from "@/lib/user-library"
+import { albumMetaFor, libraryIdForTitle } from "@/lib/album-meta"
+import { SECTION_STATUS_BY_ID, LAST_GIT_PUSH, formatStatusDate, type SectionStatus } from "./ds-status"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Badge, ContentTypeBadge, StatusBadge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -90,7 +94,7 @@ import {
   Settings, User, LogOut, Upload, MoreHorizontal,
   Plus, Search, ChevronDown, Trash2, SlidersHorizontal, Maximize2,
   Radio as RadioIcon, ShoppingBag, Disc3, Disc, CassetteTape, Shirt, Ghost,
-  ChevronLeft, ChevronRight, Globe, X, Sun, Moon, MapPin,
+  ChevronLeft, ChevronRight, Globe, X, Sun, Moon, MapPin, CircleCheckBig,
 } from "lucide-react"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import {
@@ -151,7 +155,6 @@ import DesignSystem      from "./design-system"
 // ─── Section heading component ────────────────────────────────────────────────
 // `scroll-mt-6` gives the section 24px of breathing room from the top of the
 // scroll container when the quick-nav scrolls to it.
-type SectionStatus = "new" | "updated" | "concept"
 type SectionUsage  = ReadonlyArray<{ label: string; href: string }>
 
 function Section({
@@ -159,6 +162,10 @@ function Section({
 }: {
   id:       string
   title:    string
+  /** Optional override. When omitted, falls back to the central
+   *  `SECTION_STATUS_BY_ID` map so adding/removing badges is a
+   *  one-place edit. Pass an explicit value only when a specific
+   *  showcase wants to deviate from the cycle-wide flag. */
   status?:  SectionStatus
   /** `2` marks a component tied to the Shop / Products experience —
    *  scheduled for Phase 2 and not in the day-one build. Lets devs
@@ -171,6 +178,19 @@ function Section({
   usage?:   SectionUsage
   children: React.ReactNode
 }) {
+  // Fall back to the cycle's central status map when no explicit
+  // prop is passed. Lets the prop API stay flexible while keeping
+  // 99% of usages driven by the single source of truth.
+  const entry           = SECTION_STATUS_BY_ID[id]
+  const resolvedStatus  = status ?? entry?.status
+  const resolvedDate    = !status ? entry?.date : undefined
+  // `Pushed: …` date. Falls back to `LAST_GIT_PUSH` for sections
+  // without an explicit entry (they're presumed to have shipped in
+  // the last cycle, unchanged since). Explicit `pushed: null` in
+  // the map suppresses the stamp (used for components that haven't
+  // shipped at all yet).
+  const pushedRaw       = entry?.pushed !== undefined ? entry.pushed : LAST_GIT_PUSH
+  const pushedDate      = pushedRaw === null ? null : pushedRaw
   return (
     <section
       id={id}
@@ -184,12 +204,40 @@ function Section({
                outline for components that got new variants/props.
                Uses the design-system `Badge` (the docs eat their own
                dog food). */}
-          {status === "new"     && <Badge variant="success">New</Badge>}
-          {status === "updated" && <Badge variant="outline">Updated</Badge>}
-          {/* `concept` = built but not yet wired into the prototype.
-               Keep visible so we can iterate, but make it clear it's
-               not actually in use. */}
-          {status === "concept" && <Badge variant="outline">Not used yet</Badge>}
+          {/* Right-aligned status + push cluster. Pushed stamp anchors
+               the right edge across every section so the eye can
+               vertically scan a column of "Pushed: …" dates without
+               jitter. The status badge + its local-change date sit
+               just to the left of the Pushed stamp, separated by a
+               larger gap, so both groups read as their own beat. */}
+          <div className="ml-auto flex items-center gap-4">
+            {(resolvedStatus || resolvedDate) && (
+              <div className="flex items-center gap-2">
+                {resolvedStatus === "new"     && <Badge variant="success">New</Badge>}
+                {resolvedStatus === "updated" && <Badge variant="outline">Updated</Badge>}
+                {/* `concept` = built but not yet wired into the
+                     prototype. Keep visible so we can iterate, but
+                     make it clear it's not actually in use. */}
+                {resolvedStatus === "concept" && <Badge variant="outline">Not used yet</Badge>}
+                {/* Status date — marks the unshipped local-change date
+                     for `new` / `updated`. Skipped for `concept`. */}
+                {resolvedDate && (
+                  <span className="text-2xsmall text-muted-foreground tabular-nums">
+                    {formatStatusDate(resolvedDate)}
+                  </span>
+                )}
+              </div>
+            )}
+            {/* Pushed-to-git stamp — every section that's ever shipped
+                 carries this. `null` suppresses for components that
+                 haven't shipped at all (status="new" or just-built
+                 concepts). */}
+            {pushedDate && (
+              <span className="text-2xsmall text-muted-foreground tabular-nums">
+                Pushed{" "}<span className="text-foreground">{formatStatusDate(pushedDate)}</span>
+              </span>
+            )}
+          </div>
           {phase === 2          && <Badge variant="secondary">Phase 2 · Shop</Badge>}
         </div>
         {usage && usage.length > 0 && (
@@ -741,8 +789,27 @@ const HOME_WEEKLY_ARTISTS = [
 
 function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
   const logoSize = useViewportLogoSize()
+  const library  = useUserLibrary()
+  // Wrap an album catalog entry into a fully-propped AlbumCard via
+  // the shared album-meta lookup. Same helper is reused in album /
+  // playlist / artist detail rails so cards render consistently.
+  const renderAlbum = (a: { id: string; title: string; artist: string; cover: string }) => {
+    const meta  = albumMetaFor(a.title)
+    const libId = libraryIdForTitle(a.title)
+    return (
+      <AlbumCard
+        cover={a.cover}
+        title={a.title}
+        artist={a.artist}
+        year={meta.year}
+        streamPrice={meta.streamPrice}
+        downloadPrice={meta.downloadPrice}
+        purchased={libId ? library.isPurchased(libId) : false}
+      />
+    )
+  }
   return (
-    <div className="pt-30 pb-64 max-w-[1528px] mx-auto w-full px-10 flex flex-col gap-6">
+    <div className="pt-30 pb-64 max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto w-full px-10 flex flex-col gap-6">
       <div className="flex flex-col items-center gap-28 min-h-[65vh] justify-center">
         <div className="flex flex-col items-center gap-6">
           <Wordmark className="h-4 w-auto" />
@@ -762,7 +829,7 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
       <div className="@container mt-24 flex flex-col">
         <CardRail title="New Albums">
           {HOME_NEW_ALBUMS.map(a => (
-            <li key={a.id}><AlbumCard cover={a.cover} title={a.title} artist={a.artist} /></li>
+            <li key={a.id}>{renderAlbum(a)}</li>
           ))}
         </CardRail>
 
@@ -788,7 +855,7 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
 
         <CardRail title="Albums of the week">
           {HOME_WEEKLY_ALBUMS.map(a => (
-            <li key={a.id}><AlbumCard cover={a.cover} title={a.title} artist={a.artist} /></li>
+            <li key={a.id}>{renderAlbum(a)}</li>
           ))}
         </CardRail>
       </div>
@@ -797,6 +864,27 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
 }
 
 // ─── Studio pages ─────────────────────────────────────────────────────────────
+
+// Demo seed for the UserLibraryProvider — first 12 SAVED_ALBUMS ids
+// are in the library; a04 + a14 + a18 are flagged as purchased so the
+// "Purchased" badge has a few examples to ride on out of the box.
+// a07 (A Love Supreme) is intentionally absent so the buy → purchase
+// flow on the album detail page demonstrates the auto-add behavior.
+const LIBRARY_SEED = {
+  a01: { added: true, purchased: false },
+  a02: { added: true, purchased: false },
+  a03: { added: true, purchased: false },
+  a04: { added: true, purchased: false },
+  a05: { added: true, purchased: false },
+  a06: { added: true, purchased: false },
+  a08: { added: true, purchased: false },
+  a09: { added: true, purchased: false },
+  a10: { added: true, purchased: false },
+  a11: { added: true, purchased: false },
+  a12: { added: true, purchased: false },
+  a14: { added: true, purchased: true, tier: "stream" as const },
+  a18: { added: true, purchased: true, tier: "stream" as const },
+}
 
 const STUDIO_TABS: Record<string, string[]> = {
   Pages:     ["Artists", "Label"],
@@ -1681,8 +1769,13 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       {showHero && (
       <div className="bg-muted border-b border-border pt-24 pb-[3.75rem]">
-        <div className="max-w-[1528px] mx-auto px-10">
+        <div className="max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto px-10 flex flex-col gap-3">
           <h1 className="text-5xl font-medium leading-none tracking-[-0.025em]">The muza design system</h1>
+          <p className="text-small text-muted-foreground">
+            Last pushed to git:{" "}
+            <span className="text-foreground tabular-nums">{formatStatusDate(LAST_GIT_PUSH)}</span>.
+            {" "}Sections with a <span className="text-foreground">New</span> or <span className="text-foreground">Updated</span> badge changed after this date.
+          </p>
         </div>
       </div>
       )}
@@ -1691,7 +1784,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
          page's max-width + padding) so it matches the @container
          scope used by the Library views — same rules, same query
          container width, identical card sizing at any viewport. */}
-    <div className="@container max-w-[1528px] mx-auto w-full px-10 py-10 pb-32">
+    <div className="@container max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto w-full px-10 py-10 pb-32">
 
       {/* Naming convention explainer — visible to readers (not a code comment) */}
       <p className="text-small text-muted-foreground max-w-2xl mb-4 text-pretty">
@@ -2009,7 +2102,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
 
       {/* ══ BADGES ══ */}
       {/* ══ TOGGLE ══ */}
-      <Section id="toggle" title="Toggle" status="new">
+      <Section id="toggle" title="Toggle">
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-3">
             <Toggle defaultPressed>Pressed</Toggle>
@@ -2029,7 +2122,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       </Section>
 
       {/* ══ TOGGLE GROUP ══ */}
-      <Section id="togglegroup" title="ToggleGroup" status="new"
+      <Section id="togglegroup" title="ToggleGroup"
         usage={[
           { label: "Topbar theme switcher",                href: "/" },
           { label: "Artist › Discography grid/list toggle", href: "/?page=Artist" },
@@ -2076,7 +2169,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       </Section>
 
       {/* ══ TOOLBAR ══ */}
-      <Section id="toolbar" title="Toolbar" status="new">
+      <Section id="toolbar" title="Toolbar">
         <Toolbar>
           <ToolbarGroup>
             <ToolbarButton>Bold</ToolbarButton>
@@ -2096,7 +2189,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         </p>
       </Section>
 
-      <Section id="badges" title="Badges" status="updated"
+      <Section id="badges" title="Badges"
         usage={[
           { label: "Shop › Orders → order detail status", href: "/?page=Shop&shop-tab=orders" },
           { label: "Studio › Music type column",          href: "/?page=Music" },
@@ -2158,8 +2251,31 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         </div>
       </Section>
 
+      {/* ══ PURCHASED BADGE ══ */}
+      <Section id="purchased-badge" title="Purchased Badge"
+        usage={[
+          { label: "Album card pricing row", href: "/?page=Albums" },
+          { label: "Media Header meta line", href: "/?page=Album" },
+        ]}>
+        <p className="text-small text-muted-foreground mb-6 max-w-2xl">
+          Inline "Owned" marker — plain <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">CircleCheckBig</code> glyph + label, foreground color, no pill chrome. Sits alongside body text as quiet ownership info. Used everywhere an owned album appears.
+        </p>
+
+        <SubLabel>Default</SubLabel>
+        <div className="flex items-center gap-4 mb-10">
+          <PurchasedBadge />
+          <span className="text-xsmall text-muted-foreground">As rendered in MediaHeader meta line.</span>
+        </div>
+
+        <SubLabel>Smaller — fits inside an Album Card row</SubLabel>
+        <div className="flex items-center gap-4">
+          <PurchasedBadge className="text-2xsmall [&_svg]:size-3" />
+          <span className="text-xsmall text-muted-foreground">As rendered in AlbumCard's pricing row. Pass any text-size class to scale.</span>
+        </div>
+      </Section>
+
       {/* ══ CHIPS ══ */}
-      <Section id="chips" title="Chips" status="updated"
+      <Section id="chips" title="Chips"
         usage={[{ label: "Shop › Products → Create listing (Release Type + artist chips)", href: "/?page=Shop&shop-tab=products" }]}>
         <div className="flex flex-col gap-5">
           <div>
@@ -2275,7 +2391,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       </Section>
 
       {/* ══ CHIP INPUT ══ */}
-      <Section id="chip-input" title="Chip Input" status="new"
+      <Section id="chip-input" title="Chip Input"
         usage={[
           { label: "Upload music → Main Artist(s)",     href: "/?page=Music" },
           { label: "Upload music → Additional credits", href: "/?page=Music" },
@@ -2374,7 +2490,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       {/* ══ MULTI SELECT ══
            base-ui `Menu` with left-checkbox items + pill trigger,
            count badge, and a clear-all row. */}
-      <Section id="multi-select" title="MultiSelect" status="updated"
+      <Section id="multi-select" title="MultiSelect"
         usage={[
           { label: "Studio › Music filters",   href: "/?page=Music" },
           { label: "Artist › Discography",     href: "/?page=Artist" },
@@ -2395,7 +2511,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       </Section>
 
       {/* ══ PICKER ══ */}
-      <Section id="single-select" title="SingleSelect" status="new"
+      <Section id="single-select" title="SingleSelect"
         usage={[{ label: "Artist › Discography (sort)", href: "/?page=Artist" }]}>
         <p className="text-small text-muted-foreground mb-5 max-w-2xl">
           Dropdown button that shows the current option with a
@@ -2508,7 +2624,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       </Section>
 
       {/* ══ NAVIGATION MENU ══ */}
-      <Section id="navigationmenu" title="NavigationMenu" status="new">
+      <Section id="navigationmenu" title="NavigationMenu">
         <NavigationMenu>
           <NavigationMenuList>
             <NavigationMenuItem>
@@ -2669,7 +2785,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       </Section>
 
       {/* ══ METER ══ */}
-      <Section id="meter" title="Meter" status="new">
+      <Section id="meter" title="Meter">
         <div className="flex flex-col gap-5 max-w-md">
           {[
             { value: 12,  label: "Storage used", display: "12 GB / 100 GB" },
@@ -2702,7 +2818,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         search loading). Do NOT use for page nav — the built-in
         page-crossfade already handles that.
       */}
-      <Section id="spinner" title="Spinner" status="new">
+      <Section id="spinner" title="Spinner">
         <div className="flex flex-col gap-6">
           <div className="flex items-end gap-10">
             <div className="flex flex-col items-start gap-2">
@@ -2753,7 +2869,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         Loads <200ms stay invisible; loads >3s should switch to a
         Spinner so the user gets a stronger signal.
       */}
-      <Section id="top-progress-bar" title="Top Progress Bar" status="new">
+      <Section id="top-progress-bar" title="Top Progress Bar">
         <TopProgressBarDemo />
         <p className="text-xsmall text-muted-foreground max-w-prose mt-4">
           The bar attaches to the viewport, not this section — look at
@@ -2811,7 +2927,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       </Section>
 
       {/* ══ USER AVATAR (placeholder palette) ══ */}
-      <Section id="user-avatar" title="User Avatar" status="new"
+      <Section id="user-avatar" title="User Avatar"
         usage={[
           { label: "Topbar profile menu trigger", href: "/?page=Home" },
           { label: "Settings → Account hero",     href: "/?page=Settings" },
@@ -2957,7 +3073,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       </Section>
 
       {/* ══ SCROLL AREA ══ */}
-      <Section id="scrollarea" title="ScrollArea" status="new">
+      <Section id="scrollarea" title="ScrollArea">
         <div className="flex flex-wrap gap-6">
           <div>
             <SubLabel>Vertical</SubLabel>
@@ -2988,7 +3104,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       </Section>
 
       {/* ══ COLLAPSIBLE ══ */}
-      <Section id="collapsible" title="Collapsible" status="new">
+      <Section id="collapsible" title="Collapsible">
         <div className="max-w-md">
           <Collapsible>
             <CollapsibleTrigger>
@@ -3007,7 +3123,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       </Section>
 
       {/* ══ ACCORDION ══ */}
-      <Section id="accordion" title="Accordion" status="new">
+      <Section id="accordion" title="Accordion">
         <div className="max-w-md">
           <Accordion>
             <AccordionItem value="payments">
@@ -3041,50 +3157,95 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           · Type=Album        (default + hover overlay)
           · Type=My Album     (owned variant — pencil instead of plus)
       */}
-      <Section id="album-card" title="Album Card" status="new"
+      <Section id="album-card" title="Album Card"
         usage={[
           { label: "Library › Albums",            href: "/?page=Albums" },
           { label: "Artist › Top Albums",         href: "/?page=Artist" },
           { label: "Artist › Discography (grid)", href: "/?page=Artist" },
           { label: "Home › New Albums rail",      href: "/" },
         ]}>
-        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
+        <p className="text-small text-muted-foreground mb-8 max-w-2xl">
           Tap the cover to <em>play</em>; long-press for the action
           menu (touch). Hover surfaces the Add/Edit ⋯ Play cluster.
           Click the title to open the album, click the artist to open
           the artist. The kebab opens the full context menu (Share /
           Add to library / Add to playlist / Go to artist / Go to album
-          / Report / Show info). The 4th card uses
+          / Report / Show info). The
           <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">owned</code>
-          so the menu swaps Add → Edit and Report → Remove from library.
-          The 3rd card has a long title so you can see the 2-line clamp.
+          prop swaps the menu (Add → Edit, Report → Remove from library).
         </p>
-        <div className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))] @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))] gap-x-4 gap-y-6">
+
+        <SubLabel>Monetisation states — Free · Stream-only · Stream + Download · Owned</SubLabel>
+        <p className="text-xsmall text-muted-foreground mb-5 max-w-2xl">
+          The card's third row shows the album's monetisation state.
+          Free streams under the Muza subscription;
+          <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">streamPrice</code>
+          alone marks stream-only purchase albums; adding
+          <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">downloadPrice</code>
+          appends the download tier with a download icon glyph; the
+          <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">purchased</code>
+          prop wins over everything and renders the "Owned" label.
+        </p>
+        <div className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] gap-x-4 gap-y-6 mb-10">
           <AlbumCard
-            cover="https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/13/07/89/1307897d-b463-5a49-0af9-d8d895259c84/D000000002855.jpg/600x600bb.jpg"
-            title="Scenery"
-            artist="Ryo Fukui"
+            cover="https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/23/49/49/234949c3-db74-f0eb-30f5-d715526e459b/19UMGIM73745.rgb.jpg/600x600bb.jpg"
+            title="Maiden Voyage"
+            artist="Herbie Hancock"
+            year={1965}
           />
           <AlbumCard
             cover="https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/01/36/a6/0136a666-36d2-caf1-efb1-da77a646d104/06UMGIM03764.rgb.jpg/600x600bb.jpg"
             title="Karma"
             artist="Pharoah Sanders"
+            year={1969}
+            streamPrice="$1.99"
           />
+          <AlbumCard
+            cover="https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/e5/24/aa/e524aacd-467b-66f3-8931-0fcd6750a4b9/08UMGIM07914.rgb.jpg/600x600bb.jpg"
+            title="A Love Supreme"
+            artist="John Coltrane"
+            year={1965}
+            streamPrice="$2.99"
+            downloadPrice="$4.99"
+          />
+          <AlbumCard
+            cover="https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/19/b3/86/19b386e1-550c-0ec4-868b-542cd02bc382/118212.jpg/600x600bb.jpg"
+            title="Glass Bead Game"
+            artist="Clifford Jordan"
+            year={1973}
+            purchased
+          />
+        </div>
+
+        <SubLabel>Title clamp · owned-by-user variant</SubLabel>
+        <p className="text-xsmall text-muted-foreground mb-5 max-w-2xl">
+          Long titles wrap to a 2-line clamp (Spotify-style) so the
+          card height stays predictable. The
+          <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">owned</code>
+          variant (separate concept from <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">purchased</code>)
+          means the user uploaded this release as an artist; hover
+          shows an Edit button instead of Add, and the menu adds
+          Remove-from-library.
+        </p>
+        <div className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] gap-x-4 gap-y-6">
           <AlbumCard
             cover="https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/cb/85/94/cb85949f-5a43-58d5-c866-d9d0292354bd/06UMGIM01616.rgb.jpg/600x600bb.jpg"
             title="The Black Saint and the Sinner Lady"
             artist="Charles Mingus"
+            year={1963}
           />
           <AlbumCard
             owned
             cover="https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/e8/e0/90/e8e090fb-10ba-a0f8-c719-ce347b658bbc/075597908541.jpg/600x600bb.jpg"
             title="In These Times"
             artist="Makaya McCraven"
+            year={2022}
           />
           <AlbumCard
             cover="https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/01/0b/96/010b9654-4059-150f-8650-38f94faa62cf/20CRGIM21278.rgb.jpg/600x600bb.jpg"
             title="Source"
             artist="Nubya Garcia"
+            year={2020}
           />
         </div>
       </Section>
@@ -3095,7 +3256,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         No hover overlay by design (per Figma Type=Artist) — clicking
         navigates to the artist profile.
       */}
-      <Section id="artist-card" title="Artist Card" status="new"
+      <Section id="artist-card" title="Artist Card"
         usage={[
           { label: "Library › Artists",          href: "/?page=Artists" },
           { label: "Artist › Similar Artists",   href: "/?page=Artist" },
@@ -3107,7 +3268,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           same diameter). No hover overlay by design — clicking the
           card navigates to the artist profile.
         </p>
-        <div className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))] @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))] gap-x-4 gap-y-6">
+        <div className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))] @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))] @min-[1500px]:grid-cols-[repeat(7,minmax(143px,220px))] gap-x-4 gap-y-6">
           <ArtistCard name="John Coltrane"   image="https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/John_Coltrane_1963_cropped_ver2.jpg/500px-John_Coltrane_1963_cropped_ver2.jpg" />
           <ArtistCard name="Alice Coltrane"  image="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Alice_Coltrane_1972.jpg/500px-Alice_Coltrane_1972.jpg" />
           <ArtistCard name="Sun Ra"          image="https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Sun_Ra_%281973_publicity_photo_-_Impulse_ABC_Dunhill%29.jpg/500px-Sun_Ra_%281973_publicity_photo_-_Impulse_ABC_Dunhill%29.jpg" />
@@ -3127,7 +3288,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           · Type=My Playlist  (owned — "1234 Songs", Edit instead of Add)
           · Type=Add          (PlaylistCreateCard — the "+" tile)
       */}
-      <Section id="playlist-card" title="Playlist Card" status="new"
+      <Section id="playlist-card" title="Playlist Card"
         usage={[
           { label: "Library › Playlists",         href: "/?page=Playlists" },
           { label: "Artist › Curated Playlists",  href: "/?page=Artist" },
@@ -3140,7 +3301,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           is the special <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">PlaylistCreateCard</code>
           variant.
         </p>
-        <div className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))] @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))] gap-x-4 gap-y-6">
+        <div className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))] @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))] @min-[1500px]:grid-cols-[repeat(7,minmax(143px,220px))] gap-x-4 gap-y-6">
           <PlaylistCreateCard />
           <PlaylistCard
             title="Blue Train Late Night"
@@ -3209,7 +3370,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         the overlay to a parent `group/row` or `group/song`, or leave
         as `self` for standalone use.
       */}
-      <Section id="cover-play-button" title="Cover Play Button" status="new"
+      <Section id="cover-play-button" title="Cover Play Button"
         usage={[
           { label: "Song List Item",                href: "/?page=DesignSystem#song-list-item" },
           { label: "Artist › Discography (list view)", href: "/?page=Artist" },
@@ -3243,7 +3404,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         </div>
       </Section>
 
-      <Section id="song-list-item" title="Song List Item" status="updated"
+      <Section id="song-list-item" title="Song List Item"
         usage={[
           { label: "Artist › Top Songs",        href: "/?page=Artist" },
           { label: "Album detail (track list)", href: "/?page=Album" },
@@ -3346,7 +3507,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         the row always lands on a clean N-card boundary; touch swipe
         is free-form for natural feel.
       */}
-      <Section id="card-rail" title="Card Rail" status="new"
+      <Section id="card-rail" title="Card Rail"
         usage={[
           { label: "Home › New Albums / Playlists / Artists rails", href: "/" },
           { label: "Artist profile rails (Top Albums, Products, Curated Playlists, Similar Artists)", href: "/?page=Artist" },
@@ -3361,7 +3522,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         </p>
         <CardRail title="New Albums">
           {HOME_NEW_ALBUMS.map(a => (
-            <li key={a.id}><AlbumCard cover={a.cover} title={a.title} artist={a.artist} /></li>
+            <li key={a.id}><AlbumCard cover={a.cover} title={a.title} artist={a.artist} year={albumMetaFor(a.title).year} streamPrice={albumMetaFor(a.title).streamPrice} downloadPrice={albumMetaFor(a.title).downloadPrice} /></li>
           ))}
         </CardRail>
       </Section>
@@ -3373,12 +3534,12 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         of tiles stays flush, price + price-label inline, full-width
         secondary "Add to cart" pill at the foot.
       */}
-      <Section id="product-card" title="Product Card" status="new" phase={2}
+      <Section id="product-card" title="Product Card" phase={2}
         usage={[
           { label: "Artist › Shop tab",        href: "/?page=Artist" },
           { label: "Artist › Products rail",   href: "/?page=Artist" },
         ]}>
-        <ul className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))] @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))] gap-x-4 gap-y-6">
+        <ul className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))] @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))] @min-[1500px]:grid-cols-[repeat(7,minmax(143px,220px))] gap-x-4 gap-y-6">
           {[
             { id: "kp1", title: "Space Is the Place — Vinyl Reissue", price: "32 $", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
             { id: "kp2", title: "Lanquidity (Deluxe 4LP Box)",         price: "120 $", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/b3/2a/5f/b32a5f91-5551-1ac0-17c6-e6dd4dcc0292/4062548021820_3000.jpg/600x600bb.jpg" },
@@ -3398,7 +3559,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
            name, products, status badge, total). One card per checkout
            — can contain multiple fulfillments when the cart spanned
            multiple shops. */}
-      <Section id="checkout-card" title="Checkout Card" status="new" phase={2}
+      <Section id="checkout-card" title="Checkout Card" phase={2}
         usage={[
           { label: "Purchases hub", href: "/?page=Purchases" },
         ]}>
@@ -3429,7 +3590,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         "Unlock All Songs" CTA above the Play / Shuffle row. Back
         navigation lives at the PAGE level, not in this component.
       */}
-      <Section id="media-header" title="Media Header" status="new"
+      <Section id="media-header" title="Media Header"
         usage={[
           { label: "Album detail",    href: "/?page=Album" },
           { label: "Playlist detail", href: "/?page=Playlist" },
@@ -3447,6 +3608,35 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
               year={1965}
               hasBuyingOption
               buyingPrice="$2.99"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <SubLabel>album — purchased, streaming tier (buy CTA dropped, inline Purchased badge in meta)</SubLabel>
+            <MediaHeader
+              variant="album"
+              cover="https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/e5/24/aa/e524aacd-467b-66f3-8931-0fcd6750a4b9/08UMGIM07914.rgb.jpg/600x600bb.jpg"
+              title="A Love Supreme"
+              owner="John Coltrane"
+              ownerAvatar="https://picsum.photos/seed/coltrane-avatar/120/120"
+              format="Album"
+              year={1965}
+              purchased
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <SubLabel>album — purchased, download tier (Download MP3 takes the freed slot)</SubLabel>
+            <MediaHeader
+              variant="album"
+              cover="https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/d6/a3/1d/d6a31d82-038d-a73f-5452-0380d8bd9bae/00724349532755.jpg/600x600bb.jpg"
+              title="Cool Struttin'"
+              owner="Sonny Clark"
+              ownerAvatar="https://picsum.photos/seed/sonny-clark/120/120"
+              format="Album"
+              year={1958}
+              purchased
+              downloadable
             />
           </div>
 
@@ -3516,7 +3706,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         and unboxed sections share the same hierarchy; vertical rhythm
         carries separation between adjacent flat sections.
       */}
-      <Section id="page-section" title="Page Section" status="new"
+      <Section id="page-section" title="Page Section"
         usage={[
           { label: "Shop › Orders → order detail", href: "/?page=Shop&shop-tab=orders" },
           { label: "Purchases → purchase detail",  href: "/?page=Purchases" },
@@ -3558,7 +3748,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         labelled tax). Each line collapses to a single price at qty=1 and
         expands to muted "unit × qty" + line total at qty>1.
       */}
-      <Section id="items" title="Items" status="new" phase={2}
+      <Section id="items" title="Items" phase={2}
         usage={[
           { label: "Shop › Orders → order detail", href: "/?page=Shop&shop-tab=orders" },
           { label: "Purchases → purchase detail",  href: "/?page=Purchases" },
@@ -3703,10 +3893,69 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         first-time customer with no card on file (opens on details
         step). Real prop: `hasSavedPayment={boolean}`.
       */}
-      <Section id="purchase-album-dialog" title="Purchase Album Dialog" status="new"
+      <Section id="purchase-album-dialog" title="Purchase Album Dialog"
         usage={[
           { label: "Album detail — Unlock All Songs CTA", href: "/?page=Album" },
         ]}>
+        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
+          The full one-time checkout. Wraps Pay.com's universal form
+          and reads as a transactional cart, not a generic dialog.
+          Sticky-header layout: title + cart item pinned at the top,
+          scrolling body for selections + payment + breakdown, sticky
+          action row at the bottom so <span className="font-medium text-foreground">Confirm and pay</span> is always reachable.
+        </p>
+        <ul className="text-small text-muted-foreground flex flex-col gap-1.5 mb-5 max-w-2xl list-disc pl-5">
+          <li>
+            <span className="text-foreground">In cart</span> — single
+            album row with cover, title, artist · year · format, price,
+            and a Remove link (same effect as Cancel; reads as cart UX).
+          </li>
+          <li>
+            <span className="text-foreground">Tier picker</span> —
+            Listening vs Download, only rendered when both prices are
+            set. Hidden in upgrade mode (stream-tier owner adding
+            download for the price delta).
+          </li>
+          <li>
+            <span className="text-foreground">Contact</span> — receipt
+            email, pre-filled from the auth context (mocked here).
+          </li>
+          <li>
+            <span className="text-foreground">Payment</span> — Pay.com
+            universal-form placeholder. Mounts the real iframe once
+            wired up.
+          </li>
+          <li>
+            <span className="text-foreground">Contribute to Muza</span>
+            {" "}— optional tip jar with $1 / $2 / $5 / No contribution
+            + custom amount. Default $1 selected as a soft nudge;
+            opting out is one click. Thank-you banner appears when
+            contribution &gt; 0.
+          </li>
+          <li>
+            <span className="text-foreground">Itemized breakdown</span>
+            {" "}— Subtotal · Contribution · Total. Contribution row
+            hides when set to No contribution.
+          </li>
+          <li>
+            <span className="text-foreground">Success page</span> —
+            ✓ <span className="text-foreground">You own [Album]</span>,
+            "Your impact" lines (artist received X, Muza received Y),
+            order confirmation, receipt-sent line, item recap with
+            optional Download button (download tier only), and twin
+            CTAs: <span className="text-foreground">See in library</span> /
+            <span className="text-foreground"> Play album</span>.
+          </li>
+          <li>
+            <span className="text-foreground">Upgrade mode</span> —
+            pass <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">upgradeMode</code>
+            + <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">upgradePrice</code>
+            for the pay-the-difference "add download" flow. Tier
+            picker is hidden, cart shows just the delta, success
+            calls <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">onUpgraded</code>
+            instead of <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">onPurchased</code>.
+          </li>
+        </ul>
         <PurchaseDialogDemo />
       </Section>
 
@@ -3897,7 +4146,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           · Rightmost cell holds a kebab menu with the same items
             the AlbumCard cover-menu surfaces.
       */}
-      <Section id="list-table" title="List Table" status="new"
+      <Section id="list-table" title="List Table"
         usage={[{ label: "Artist › Discography (list view)", href: "/?page=Artist" }]}>
         <p className="text-small text-muted-foreground mb-5 max-w-2xl">
           Single-line rows, no zebra borders. Title + Band are
@@ -4081,7 +4330,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
 // Explore (discover music) will replace this stub.
 function ExplorePlaceholder() {
   return (
-    <div className="max-w-[1528px] mx-auto px-10 py-20">
+    <div className="max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto px-10 py-20">
       <h1 className="text-2xlarge font-medium tracking-tight mb-3">Explore</h1>
       <p className="text-small text-muted-foreground max-w-xl mb-6">
         The discover-music surface lives here. Coming soon.
@@ -4180,16 +4429,19 @@ export default function Home() {
   if (activeNav === "DesignSystem") {
     return (
       <CartProvider>
-        <TopProgressBar loading={navLoading} />
-        <div key="ds" className="h-screen [animation:pageFadeIn_250ms_ease-out]">
-          <DesignSystem />
-        </div>
+        <UserLibraryProvider seed={LIBRARY_SEED}>
+          <TopProgressBar loading={navLoading} />
+          <div key="ds" className="h-screen [animation:pageFadeIn_250ms_ease-out]">
+            <DesignSystem />
+          </div>
+        </UserLibraryProvider>
       </CartProvider>
     )
   }
 
   return (
     <CartProvider>
+    <UserLibraryProvider seed={LIBRARY_SEED}>
     {/* Top progress bar — fires on every activeNav change. Sits
         outside the keyed AppShell wrapper so it isn't remounted
         on internal nav. */}
@@ -4270,6 +4522,7 @@ export default function Home() {
         </div>
       )}
     </div>
+    </UserLibraryProvider>
     </CartProvider>
   )
 }

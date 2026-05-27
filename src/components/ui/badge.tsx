@@ -62,6 +62,12 @@ const badgeVariants = cva(
         // one uniform height across the app whether or not they have
         // an icon.
         square: "rounded-sm h-[26px] px-[6px] pb-px text-2xsmall",
+        // Tiny inline badge for use INSIDE other text rows (e.g. an
+        // album card title line). 18px tall · 4px x-padding · tighter
+        // icon. Drops below the 26px chip height so it doesn't push
+        // the surrounding line-box and stays optically right-sized
+        // next to body text.
+        "square-xs": "rounded-[1px] border-0 h-[18px] px-1 pb-px text-2xsmall gap-0.5 [&>svg]:size-2.5",
         // `pb-px` mirrors the optical-center nudge Button/Tabs use —
         // Founders Grotesk numerals sit low in a flex-centered box.
         // `border-transparent` overrides the base border so the pill

@@ -131,6 +131,42 @@ Raw numeric values that the semantic aliases resolve to. These are the **source 
 ### Breakpoints
 `sm` 640 · `md` 768 · `lg` 1024 · `xl` 1280 · `2xl` 1536
 
+### Layout — page max-width tiers
+
+The app uses **two content-growth tiers** so very wide viewports don't leave gaping white margins, while medium widths stay grid-aligned and the artist hero never dominates the page.
+
+| Tier | Trigger | Container `max-w` | Content area (px-10) | Grid cards | Hero `max-h` |
+|---|---|---|---|---|---|
+| 1 (default) | viewport < 1920px | `1480px` | 1400px | 6 × 220 | 552px (= 1480 × 400/1072) |
+| 2 (wide screen) | viewport ≥ **1920px** | `1716px` | 1636px | 7 × 220 | 640px (= 1716 × 400/1072) |
+
+**Apply the tier-aware cap on every top-level page wrapper:**
+```tsx
+<div className="@container mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] px-10 …">
+```
+
+**Grids step from 6 → 7 cards** at `@container` width ≥ `1500px` (intentionally above tier-1's 1400 cap so the 6-card layout never collapses into 7 smaller cards):
+```tsx
+<ul className="grid grid-cols-[repeat(1,minmax(143px,220px))]
+  @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))]
+  @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))]
+  @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))]
+  @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))]
+  @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))]
+  @min-[1500px]:grid-cols-[repeat(7,minmax(143px,220px))]
+  gap-x-4 gap-y-6">
+```
+
+`CardRail` mirrors the same step map — see [`src/components/app/card-rail.tsx`](src/components/app/card-rail.tsx).
+
+**Artist hero (`artist-profile-view.tsx`)** uses the same dual cap:
+```tsx
+<section className="aspect-[1072/400] min-h-[320px] max-h-[552px] min-[1920px]:max-h-[640px] …">
+```
+Past each ceiling the photo crops horizontally via `object-cover` rather than inflating the hero.
+
+**Keep all three caps in sync.** If you change the tier-1 max-w, you must also recompute the tier-1 hero `max-h` (`max-w × 400/1072`) and the tier-2 mirror.
+
 ### Border-radius (primitives, px)
 `rounded-none` 0 · `rounded-sm` 2 · `rounded` 4 · `rounded-md` 6 · `rounded-lg` 8 · `rounded-xl` 12 · `rounded-2xl` 16 · `rounded-3xl` 24 · `rounded-4xl` 32 · `rounded-full` 9999
 

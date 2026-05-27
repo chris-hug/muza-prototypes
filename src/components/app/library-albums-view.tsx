@@ -10,15 +10,28 @@
  * Figma: 8950:97663 (Albums Feed) — 5-column grid on desktop.
  */
 
+import { useState } from "react"
 import { useSearchParams } from "react-router"
 
 import { AlbumCard } from "@/components/ui/album-card"
+import { useUserLibrary } from "@/lib/user-library"
+import { Toggle } from "@/components/ui/toggle"
+import { ToggleGroup } from "@/components/ui/toggle-group"
+import { CircleCheckBig } from "lucide-react"
 
 interface SavedAlbum {
-  id:     string
-  cover:  string
-  title:  string
-  artist: string
+  id:           string
+  cover:        string
+  title:        string
+  artist:       string
+  /** Release year — rendered on the artist line after a `·`. */
+  year?:        number
+  /** When set, the album requires purchase. Card pricing row shows
+   *  stream / download prices; once `purchased` flips in the user
+   *  library store, that row swaps to the "Owned" pill. Albums
+   *  without `streamPrice` are free under the Muza subscription. */
+  streamPrice?: string
+  downloadPrice?: string
 }
 
 const COVER = (seed: string) => `https://picsum.photos/seed/${seed}/400/400`
@@ -30,27 +43,27 @@ const COVER = (seed: string) => `https://picsum.photos/seed/${seed}/400/400`
 // picsum so the array still renders.
 const SAVED_ALBUMS: SavedAlbum[] = [
   // ── Blue Note ────────────────────────────────────────────────────────────
-  { id: "a01", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/23/49/49/234949c3-db74-f0eb-30f5-d715526e459b/19UMGIM73745.rgb.jpg/600x600bb.jpg",        title: "Maiden Voyage",                       artist: "Herbie Hancock"                  },
-  { id: "a02", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/a8/ee/3c/a8ee3cc7-e694-f7e1-5208-2c67f9ae5ed5/13ULAIM49176.rgb.jpg/600x600bb.jpg",        title: "Speak No Evil",                       artist: "Wayne Shorter"                   },
-  { id: "a03", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/6e/1a/13/6e1a134d-8f6f-d90f-b855-ea69436a2e8b/17UM1IM45370.rgb.jpg/600x600bb.jpg",        title: "Blue Train",                          artist: "John Coltrane"                   },
-  { id: "a04", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/d6/a3/1d/d6a31d82-038d-a73f-5452-0380d8bd9bae/00724349532755.jpg/600x600bb.jpg",          title: "Cool Struttin'",                      artist: "Sonny Clark"                     },
-  { id: "a05", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/3b/30/51/3b305111-c28a-80ad-1f1d-6e89fb4fa2af/13ULAIM49306.rgb.jpg/600x600bb.jpg",        title: "Empyrean Isles",                      artist: "Herbie Hancock"                  },
-  { id: "a06", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/d5/f1/41/d5f1417f-9c45-d013-392f-aa6c7c4b494c/13UABIM03210.rgb.jpg/600x600bb.jpg",        title: "Out to Lunch",                        artist: "Eric Dolphy"                     },
+  { id: "a01", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/23/49/49/234949c3-db74-f0eb-30f5-d715526e459b/19UMGIM73745.rgb.jpg/600x600bb.jpg",        title: "Maiden Voyage",                       artist: "Herbie Hancock",                  year: 1965 },
+  { id: "a02", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/a8/ee/3c/a8ee3cc7-e694-f7e1-5208-2c67f9ae5ed5/13ULAIM49176.rgb.jpg/600x600bb.jpg",        title: "Speak No Evil",                       artist: "Wayne Shorter",                   year: 1966, streamPrice: "$2.99", downloadPrice: "$5.99" },
+  { id: "a03", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/6e/1a/13/6e1a134d-8f6f-d90f-b855-ea69436a2e8b/17UM1IM45370.rgb.jpg/600x600bb.jpg",        title: "Blue Train",                          artist: "John Coltrane",                   year: 1958 },
+  { id: "a04", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/d6/a3/1d/d6a31d82-038d-a73f-5452-0380d8bd9bae/00724349532755.jpg/600x600bb.jpg",          title: "Cool Struttin'",                      artist: "Sonny Clark",                     year: 1958, streamPrice: "$2.49", downloadPrice: "$4.99" },
+  { id: "a05", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/3b/30/51/3b305111-c28a-80ad-1f1d-6e89fb4fa2af/13ULAIM49306.rgb.jpg/600x600bb.jpg",        title: "Empyrean Isles",                      artist: "Herbie Hancock",                  year: 1964, streamPrice: "$1.49" },
+  { id: "a06", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/d5/f1/41/d5f1417f-9c45-d013-392f-aa6c7c4b494c/13UABIM03210.rgb.jpg/600x600bb.jpg",        title: "Out to Lunch",                        artist: "Eric Dolphy",                     year: 1964 },
   // ── Impulse! ─────────────────────────────────────────────────────────────
-  { id: "a07", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/e5/24/aa/e524aacd-467b-66f3-8931-0fcd6750a4b9/08UMGIM07914.rgb.jpg/600x600bb.jpg",        title: "A Love Supreme",                      artist: "John Coltrane"                   },
-  { id: "a08", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/01/36/a6/0136a666-36d2-caf1-efb1-da77a646d104/06UMGIM03764.rgb.jpg/600x600bb.jpg",        title: "Karma",                               artist: "Pharoah Sanders"                 },
-  { id: "a09", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/cb/85/94/cb85949f-5a43-58d5-c866-d9d0292354bd/06UMGIM01616.rgb.jpg/600x600bb.jpg",        title: "The Black Saint and the Sinner Lady", artist: "Charles Mingus"                  },
-  { id: "a10", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/12/1a/de/121adeea-7628-bbac-93ca-ac147822f5db/25UM1IM86773.rgb.jpg/600x600bb.jpg",        title: "Africa/Brass",                        artist: "John Coltrane"                   },
-  { id: "a11", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/91/b6/bb/91b6bb11-26ab-13fb-95aa-67abec45aa5d/15UMGIM36230.rgb.jpg/600x600bb.jpg",        title: "Crescent",                            artist: "John Coltrane"                   },
-  { id: "a12", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/af/5c/40/af5c40a1-54b1-855d-3da2-f875efbd8372/06UMGIM04169.rgb.jpg/600x600bb.jpg",        title: "Journey in Satchidananda",            artist: "Alice Coltrane"                  },
+  { id: "a07", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/e5/24/aa/e524aacd-467b-66f3-8931-0fcd6750a4b9/08UMGIM07914.rgb.jpg/600x600bb.jpg",        title: "A Love Supreme",                      artist: "John Coltrane",                   year: 1965, streamPrice: "$2.99", downloadPrice: "$4.99" },
+  { id: "a08", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/01/36/a6/0136a666-36d2-caf1-efb1-da77a646d104/06UMGIM03764.rgb.jpg/600x600bb.jpg",        title: "Karma",                               artist: "Pharoah Sanders",                 year: 1969, streamPrice: "$1.99" },
+  { id: "a09", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/cb/85/94/cb85949f-5a43-58d5-c866-d9d0292354bd/06UMGIM01616.rgb.jpg/600x600bb.jpg",        title: "The Black Saint and the Sinner Lady", artist: "Charles Mingus",                  year: 1963 },
+  { id: "a10", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/12/1a/de/121adeea-7628-bbac-93ca-ac147822f5db/25UM1IM86773.rgb.jpg/600x600bb.jpg",        title: "Africa/Brass",                        artist: "John Coltrane",                   year: 1961 },
+  { id: "a11", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/91/b6/bb/91b6bb11-26ab-13fb-95aa-67abec45aa5d/15UMGIM36230.rgb.jpg/600x600bb.jpg",        title: "Crescent",                            artist: "John Coltrane",                   year: 1964 },
+  { id: "a12", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/af/5c/40/af5c40a1-54b1-855d-3da2-f875efbd8372/06UMGIM04169.rgb.jpg/600x600bb.jpg",        title: "Journey in Satchidananda",            artist: "Alice Coltrane",                  year: 1971 },
   // ── Strata-East ──────────────────────────────────────────────────────────
-  { id: "a13", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music/83/48/94/mzi.olnzcoeq.jpg/600x600bb.jpg",                                                       title: "Winter in America",                   artist: "Gil Scott-Heron & Brian Jackson" },
-  { id: "a14", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/19/b3/86/19b386e1-550c-0ec4-868b-542cd02bc382/118212.jpg/600x600bb.jpg",                  title: "Glass Bead Game",                     artist: "Clifford Jordan"                 },
+  { id: "a13", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music/83/48/94/mzi.olnzcoeq.jpg/600x600bb.jpg",                                                       title: "Winter in America",                   artist: "Gil Scott-Heron & Brian Jackson", year: 1974 },
+  { id: "a14", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/19/b3/86/19b386e1-550c-0ec4-868b-542cd02bc382/118212.jpg/600x600bb.jpg",                  title: "Glass Bead Game",                     artist: "Clifford Jordan",                 year: 1973, streamPrice: "$1.99", downloadPrice: "$3.99" },
   { id: "a15", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/d5/21/70/d5217051-3c92-7ec6-790b-770833a01727/118206.jpg/600x600bb.jpg",                  title: "Musa: Ancestral Streams",             artist: "Stanley Cowell"                  },
   { id: "a16", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/85/5b/7c/855b7cfe-30f7-5b6c-26bb-4dbfc2eeeca9/118214.jpg/600x600bb.jpg",                  title: "Izipho Zam",                          artist: "Pharoah Sanders"                 },
   // ── Justin Time ──────────────────────────────────────────────────────────
   { id: "a17", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/2f/fb/76/2ffb766d-f6f0-9ff1-ac5b-2ec8d4537f26/068944820054.png/600x600bb.jpg",            title: "Stepping Out",                        artist: "Diana Krall"                     },
-  { id: "a18", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/9a/8b/e4/9a8be477-c9e9-aab6-feba-eda6af96a4c1/068944003150.png/600x600bb.jpg",            title: "Just Friends",                        artist: "Oliver Jones"                    },
+  { id: "a18", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/9a/8b/e4/9a8be477-c9e9-aab6-feba-eda6af96a4c1/068944003150.png/600x600bb.jpg",            title: "Just Friends",                        artist: "Oliver Jones",                    year: 1998, streamPrice: "$2.49", downloadPrice: "$3.99" },
   // ↓ Maple Groove + Live at Birdland missed the iTunes lookup —
   //   keep picsum fallback so the grid still renders.
   { id: "a19", cover: COVER("maple-groove"),                                                                                                                          title: "Maple Groove",                        artist: "Ranee Lee"                       },
@@ -110,6 +123,10 @@ export function LibraryAlbumsView() {
   // (`AlbumDetailView`) always renders the same album; real wiring
   // would pass an `album-id` query param.
   const [, setParams] = useSearchParams()
+  const library = useUserLibrary()
+  // Single-state toggle filter — flick "Purchased only" on to hide
+  // free-added entries. Cheap to reset, no commitment.
+  const [purchasedOnly, setPurchasedOnly] = useState(false)
   const openAlbum = () => {
     setParams(prev => {
       const next = new URLSearchParams(prev)
@@ -119,10 +136,33 @@ export function LibraryAlbumsView() {
   }
   return (
     <div className="flex-1 overflow-auto">
-      <div className="@container mx-auto max-w-[1528px] px-10 pt-8 pb-12">
-        <h1 className="text-2xlarge font-medium text-foreground tracking-tight mb-6">
-          Albums
-        </h1>
+      {/* Max width fits exactly N×220 + (N-1)×16 + 2×40 padding at
+           the 6-col step (=1480). Anything wider leaves a "leftover"
+           strip on the right that makes the toggle on the header
+           appear to float past the grid's edge. */}
+      <div className="@container mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] px-10 pt-8 pb-12">
+        <div className="flex items-end justify-between gap-4 mb-6">
+          <h1 className="text-2xlarge font-medium text-foreground tracking-tight">
+            Albums
+          </h1>
+          {/* Two-state segmented filter — All / Purchased. Reads as
+               a standard tab-style switch the user already knows from
+               toolbars elsewhere in the app. */}
+          <ToggleGroup
+            size="sm"
+            value={[purchasedOnly ? "purchased" : "all"]}
+            onValueChange={(v) => setPurchasedOnly(v[0] === "purchased")}
+            aria-label="Library filter"
+          >
+            <Toggle value="all" aria-label="All albums">
+              All
+            </Toggle>
+            <Toggle value="purchased" aria-label="Owned only">
+              <CircleCheckBig className="size-3.5" />
+              Owned
+            </Toggle>
+          </ToggleGroup>
+        </div>
 
         {/* Responsive grid driven by CONTAINER queries (not viewport)
              so column count reacts to the actual grid width regardless
@@ -144,19 +184,30 @@ export function LibraryAlbumsView() {
              Each track is `minmax(143px, 220px)` — cards are clamped
              to a 143 floor and 220 ceiling. Below the 2-col threshold
              the grid drops to a single column. */}
-        <ul className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))] @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))] gap-x-4 gap-y-6">
-          {SAVED_ALBUMS.map(a => (
-            <li key={a.id}>
-              <AlbumCard
-                cover={a.cover}
-                title={a.title}
-                artist={a.artist}
-                onTitleClick={openAlbum}
-                onPlay={openAlbum}
-                className="w-full"
-              />
-            </li>
-          ))}
+        <ul className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))] @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))] @min-[1500px]:grid-cols-[repeat(7,minmax(143px,220px))] gap-x-4 gap-y-6">
+          {SAVED_ALBUMS
+            // Library only shows albums actually in the user's library.
+            // SAVED_ALBUMS is a global catalog seed; the per-user store
+            // decides which are "in my library" via `isAdded`. The
+            // `purchasedOnly` toggle narrows further to paid items.
+            .filter(a => library.isAdded(a.id))
+            .filter(a => !purchasedOnly || library.isPurchased(a.id))
+            .map(a => (
+              <li key={a.id}>
+                <AlbumCard
+                  cover={a.cover}
+                  title={a.title}
+                  artist={a.artist}
+                  year={a.year}
+                  streamPrice={a.streamPrice}
+                  downloadPrice={a.downloadPrice}
+                  purchased={library.isPurchased(a.id)}
+                  onTitleClick={openAlbum}
+                  onPlay={openAlbum}
+                  className="w-full"
+                />
+              </li>
+            ))}
         </ul>
       </div>
     </div>

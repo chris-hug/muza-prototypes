@@ -800,10 +800,11 @@ import { CardRail } from "@/components/app/card-rail"
 ```
 
 **Behavior.**
-- Visible card count steps at the same container widths as the
-  Library grids (2 / 3 / 4 / 5 / 6 cards at 304 / 464 / 692 / 928
-  / 1164 px). Don't hand-tune breakpoints; rely on the container
-  queries baked in.
+- Visible card count steps off the rail's own width via `@container`
+  (independent of viewport). The step map is the shared **Pattern B**
+  rule — see [`FOUNDATION_TICKETS.md › Page layout — responsive
+  container & growth tiers`](FOUNDATION_TICKETS.md#page-layout--responsive-container--growth-tiers)
+  for the full table including the tier-2 7-card step.
 - Touch-pan-x for swipe; arrow buttons scroll one page at a time.
 - Scrollbar hidden — paging is the only intended affordance.
 
@@ -811,6 +812,10 @@ import { CardRail } from "@/components/app/card-rail"
 - Children must be `<li>` wrappers around a card. Cards inside go full-width of the rail slot.
 - Outer parent must be a `@container` so the rail can read its width — Library views already do this; Home does it explicitly.
 - Don't replace the ◀ ▶ chrome — it ships built-in and disables when scroll position is at min / max.
+- The rail's card sizing only resolves correctly inside a page
+  wrapper that follows the **Page layout** foundation ticket — i.e.
+  `max-w-[1480px] min-[1920px]:max-w-[1716px]`. Without that, the
+  7-card tier-2 step won't have room to fire.
 
 ### PageSection  ·  *new*
 

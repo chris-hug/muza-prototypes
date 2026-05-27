@@ -134,7 +134,11 @@ function PriceTag({ point, icon }: { point: PricePoint; icon?: React.ReactNode }
 }
 
 function MonetisationCell({ state, dimmed }: { state: MonetisationState; dimmed?: boolean }) {
-  const cls = cn("text-xsmall", dimmed ? "text-muted-foreground/50" : "text-muted-foreground")
+  // One notch darker than `muted-foreground` (which is opacity-based
+  // and reads as a very light gray over the warm-olive background).
+  // The solid neutral-600/dark:neutral-400 sits in the same family
+  // but with full opacity, matching the album card pricing row.
+  const cls = cn("text-xsmall", dimmed ? "text-muted-foreground/50" : "text-neutral-600 dark:text-neutral-400")
   if (state.kind === "streaming") {
     return <span className={cls}>Streaming</span>
   }
@@ -143,7 +147,7 @@ function MonetisationCell({ state, dimmed }: { state: MonetisationState; dimmed?
   }
   // purchase+download
   return (
-    <span className={cn("flex items-center gap-1.5 text-xsmall", dimmed ? "text-muted-foreground/50" : "text-muted-foreground")}>
+    <span className={cn("flex items-center gap-1.5 text-xsmall", dimmed ? "text-muted-foreground/50" : "text-neutral-600 dark:text-neutral-400")}>
       <PriceTag point={state.purchase} />
       <span className="opacity-30">·</span>
       <PriceTag point={state.download} icon={<Download className="size-3 shrink-0" />} />

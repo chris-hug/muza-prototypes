@@ -30,7 +30,7 @@ import { ExploreView } from "./home"
 // inaccurately.
 const GROUPS: ReadonlyArray<{ title: string; items: ReadonlyArray<string> }> = [
   { title: "Foundations",      items: ["Colors", "Typography"] },
-  { title: "Atoms",            items: ["Button", "Toggle", "ToggleGroup", "Toolbar", "Badges", "Chips"] },
+  { title: "Atoms",            items: ["Button", "Toggle", "ToggleGroup", "Toolbar", "Badges", "Purchased Badge", "Chips"] },
   { title: "Inputs",           items: ["Input", "Chip Input", "NumberField", "Select", "MultiSelect", "SingleSelect", "Combobox", "Menu", "NavigationMenu", "DatePicker", "Checkbox & Radio", "Radio Card", "Switch", "Slider"] },
   { title: "Indicators",       items: ["Progress", "Meter", "Spinner", "Top Progress Bar", "Separator", "Avatar", "User Avatar"] },
   { title: "Containers",       items: ["Tabs", "Tooltip", "ScrollArea", "Collapsible", "Accordion"] },
@@ -50,6 +50,7 @@ const ID_OVERRIDES: Record<string, string> = {
   "MultiSelect":      "multi-select",
   "SingleSelect":     "single-select",
   "User Avatar":      "user-avatar",
+  "Purchased Badge":  "purchased-badge",
 }
 const idFor = (label: string) =>
   ID_OVERRIDES[label] ?? label.toLowerCase().replace(/\s+/g, "-")
@@ -66,17 +67,18 @@ const PHASE_2 = new Set<string>([
   "Items",
 ])
 
-const STATUS: Record<string, "new" | "updated"> = {
-  // Reset before every push — only items genuinely changed in the
-  // current cycle stay flagged. Stale "New" labels from old pushes
-  // dilute the signal.
-  "Chip Input":            "new",
-  "Media Header":          "new",
-  "Purchase Album Dialog": "new",
-  "User Avatar":           "new",
-  "Song List Item":        "updated",
-  "Card Rail":             "updated",
-}
+// Sidebar badges. Sourced from the shared `SECTION_STATUS` map so the
+// sidebar and the in-content section header always render the same
+// label — no two places to keep in sync. The sidebar only surfaces
+// "new" / "updated" (not "concept") because "Not used yet" reads
+// fine inside a section header but adds noise as a nav-list chip.
+import { SECTION_STATUS } from "./ds-status"
+const STATUS: Record<string, "new" | "updated"> = Object.fromEntries(
+  Object.entries(SECTION_STATUS)
+    .filter(([, entry]) => entry.status === "new" || entry.status === "updated")
+    .map(([title, entry]) => [title, entry.status])
+) as Record<string, "new" | "updated">
+
 
 export default function DesignSystem() {
   const [, setParams] = useSearchParams()

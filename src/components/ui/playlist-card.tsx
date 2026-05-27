@@ -149,11 +149,11 @@ export function PlaylistCard({
         >
           {title}
         </button>
-        <div className="flex items-baseline gap-1 min-w-0 text-small font-normal leading-5 text-muted-foreground">
+        <div className="flex items-center gap-1.5 min-w-0 text-small font-normal leading-5 text-muted-foreground">
           <span className="shrink-0">{songsLabel}</span>
           {showOwner && (
             <>
-              <span className="shrink-0" aria-hidden="true">•</span>
+              <span className="shrink-0" aria-hidden="true">·</span>
               <button
                 type="button"
                 onClick={onOwnerClick}

@@ -39,14 +39,37 @@ Used for every static card list — Library pages, Studio › Music
 grid, Shop › Products grid, Artist › Products tab, Artist ›
 Discography grid page.
 
+> The user-facing Library grids (`library-albums-view`,
+> `library-artists-view`, `library-playlists-view`) actually use
+> Pattern B's **container-query stepped grid** (matching the rails
+> on the same page) rather than the freeform `auto-fill` — keeps
+> card sizes locked to the same column tracks as the rails. See
+> [`DESIGN_SYSTEM.md` › Layout — page max-width tiers](DESIGN_SYSTEM.md#layout--page-max-width-tiers).
 
-### Pattern B — **Container-query rail**
-Horizontally scrolling rail. Card count steps off the rail's OWN
-width (via `@container`), independent of viewport — 2/3/4/5/6 cards
-at 304/464/692/928/1164 px. Used on Home (the four discovery
-rails) and Artist profile (Top Albums, Products, Curated Playlists,
-Similar Artists). Wrap consumers in an `@container` parent so the
-rail can read its width.
+
+### Pattern B — **Container-query rail / grid**
+Horizontally scrolling rail (CardRail) or stepped grid (Library
+views). Card count steps off the container's OWN width via
+`@container`, independent of viewport:
+- 2 / 3 / 4 / 5 / 6 cards at 304 / 464 / 692 / 928 / 1164 px
+- **7 cards at 1500 px** — tier-2 wide-screen step; activates once
+  the page wrapper hits its tier-2 cap (see below).
+
+Used on Home (the four discovery rails), Library views (Albums /
+Artists / Playlists grids), Artist profile (Top Albums, Products,
+Curated Playlists, Similar Artists). Wrap consumers in an
+`@container` parent so the rail can read its width.
+
+
+### Layout — page max-width tiers
+Two content-growth tiers keep medium widths grid-aligned without
+leaving white margins at very wide viewports. Every top-level page
+wrapper uses:
+```tsx
+<div className="@container mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] px-10 …">
+```
+Full table, math, and rules in
+[`FOUNDATION_TICKETS.md › Page layout — responsive container & growth tiers`](FOUNDATION_TICKETS.md#page-layout--responsive-container--growth-tiers).
 
 
 ### Pattern C — **Detail two-column**
@@ -78,7 +101,7 @@ hero, call-to-action, then four discovery rails of cards.
 
 **Composition.**
 - AppShell (sidebar + topbar).
-- Scroll container — single column, `max-w-[1528px] mx-auto`.
+- Scroll container — single column, `max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto (two-tier — see Layout patterns above)`.
 
 **Sections.**
 - Hero: wordmark + headline + AnimatedLogo trio.

@@ -24,6 +24,8 @@ import { PlaylistCard } from "@/components/ui/playlist-card"
 import { CardRail } from "@/components/app/card-rail"
 import { AlbumCardMenuItems } from "@/components/ui/cover-card-menu"
 import { PurchaseAlbumDialog } from "@/components/app/purchase-album-dialog"
+import { useUserLibrary } from "@/lib/user-library"
+import { albumMetaFor, libraryIdForTitle } from "@/lib/album-meta"
 
 interface AlbumDetailViewProps {
   /** Back handler — wired to `navigate("Home")` (or wherever) by
@@ -35,6 +37,11 @@ interface AlbumDetailViewProps {
 // known-working URLs from `LibraryAlbumsView` so the prototype
 // always shows real artwork (random made-up mzstatic IDs would 404).
 const ALBUM = {
+  // ID maps into the user-library store + the SAVED_ALBUMS fixture
+  // (a07). When the buyer completes a purchase, this id flips to
+  // `purchased: true` and every surface that lists this album picks
+  // up the badge automatically.
+  id:           "a07",
   cover:        "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/e5/24/aa/e524aacd-467b-66f3-8931-0fcd6750a4b9/08UMGIM07914.rgb.jpg/600x600bb.jpg",
   title:        "A Love Supreme",
   artist:       "John Coltrane",
@@ -124,9 +131,29 @@ export function AlbumDetailView({ onBack }: AlbumDetailViewProps) {
   // Purchase dialog open state — the MediaHeader's `onBuy` flips
   // this true; `PurchaseAlbumDialog` flips it back via
   // `onOpenChange` (Cancel / Close / post-success auto-close).
-  const [buyOpen, setBuyOpen] = useState(false)
+  // `buyOpen` = standard purchase flow (album not yet owned).
+  // `upgradeOpen` = pay-the-difference "add download" flow (stream-
+  // tier owner adding the download license).
+  const [buyOpen,     setBuyOpen]     = useState(false)
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
+  const library  = useUserLibrary()
+  const isPurchased    = library.isPurchased(ALBUM.id)
+  const isDownloadable = library.entryFor(ALBUM.id)?.tier === "download"
+  // Delta between stream and download prices — surfaces as the
+  // upgrade CTA when the user owns the stream tier but not download.
+  // Only show the affordance when the delta is actually positive; a
+  // $0 delta means the tiers are priced the same, no upgrade fee.
+  const rawUpgradeDelta = ALBUM.downloadPrice
+    ? Math.max(
+        0,
+        Number((ALBUM.downloadPrice).replace(/[^0-9.]/g, "")) -
+        Number((ALBUM.buyingPrice ?? "").replace(/[^0-9.]/g, "")),
+      )
+    : 0
+  const canUpgradeToDownload = isPurchased && !isDownloadable && !!ALBUM.downloadPrice && rawUpgradeDelta > 0
+  const upgradePriceStr = `$${rawUpgradeDelta.toFixed(2)}`
   return (
-    <div className="@container relative w-full px-10 pt-6 pb-24 max-w-[1528px] mx-auto flex flex-col gap-10">
+    <div className="@container relative w-full px-10 pt-6 pb-24 max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto flex flex-col gap-10">
       {/* Back chevron — sits in the page gutter to the LEFT of the
            content. `ghost` variant (no border, no backdrop-blur) so
            the 32px button reads as a quiet glyph in the tight 40px
@@ -146,7 +173,10 @@ export function AlbumDetailView({ onBack }: AlbumDetailViewProps) {
         </Button>
       )}
 
-      {/* Header (300px tall) — the new component. */}
+      {/* Header (300px tall) — the new component. When the user has
+           already purchased this album the buy CTA is dropped (no
+           dead disabled button) and the inline "Purchased" badge in
+           the meta line carries the status instead. */}
       <MediaHeader
         variant="album"
         cover={ALBUM.cover}
@@ -155,14 +185,24 @@ export function AlbumDetailView({ onBack }: AlbumDetailViewProps) {
         ownerAvatar={ALBUM.artistAvatar}
         format={ALBUM.format}
         year={ALBUM.year}
-        hasBuyingOption
+        hasBuyingOption={!isPurchased}
         buyingPrice={ALBUM.buyingPrice}
         onBuy={() => setBuyOpen(true)}
+        purchased={isPurchased}
+        downloadable={isDownloadable}
+        onDownload={() => {
+          // Real wiring would trigger the download flow / signed URL
+          // request. For the prototype we noop — UI presence is what
+          // we're communicating.
+        }}
+        addDownloadPrice={canUpgradeToDownload ? upgradePriceStr : undefined}
+        onAddDownload={() => setUpgradeOpen(true)}
       />
 
       {/* Mounted alongside the header so it can be opened by the
-           "Unlock All Songs" CTA. Real wiring would replace the
-           mocked checkout in the dialog with a checkout call. */}
+           "Unlock All Songs" CTA. On purchase the library store is
+           mutated (auto-add + mark purchased) so every surface that
+           lists this album picks up the badge automatically. */}
       <PurchaseAlbumDialog
         open={buyOpen}
         onOpenChange={setBuyOpen}
@@ -175,6 +215,46 @@ export function AlbumDetailView({ onBack }: AlbumDetailViewProps) {
         }}
         streamPrice={ALBUM.buyingPrice}
         downloadPrice={ALBUM.downloadPrice}
+        onPurchased={(tier) => library.purchase(ALBUM.id, tier)}
+        onGoToLibrary={() => {
+          setBuyOpen(false)
+          // Navigate via the route shell's nav handler isn't wired
+          // here, so just bounce through the search param.
+          const url = new URL(window.location.href)
+          url.searchParams.set("page", "Albums")
+          window.history.replaceState(null, "", url.toString())
+          window.dispatchEvent(new PopStateEvent("popstate"))
+        }}
+      />
+
+      {/* Upgrade dialog — pay-the-difference add-download flow. Same
+           dialog shell as the regular purchase, but in `upgradeMode`
+           the tier picker is hidden and the cart line shows just the
+           delta. Success → library.upgradeToDownload, which flips
+           every surface (header CTA → "Download MP3", item meta
+           remains "Owned"). */}
+      <PurchaseAlbumDialog
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        album={{
+          cover:  ALBUM.cover,
+          title:  ALBUM.title,
+          artist: ALBUM.artist,
+          year:   ALBUM.year,
+          format: ALBUM.format,
+        }}
+        streamPrice={ALBUM.buyingPrice}
+        downloadPrice={ALBUM.downloadPrice}
+        upgradeMode
+        upgradePrice={upgradePriceStr}
+        onUpgraded={() => library.upgradeToDownload(ALBUM.id)}
+        onGoToLibrary={() => {
+          setUpgradeOpen(false)
+          const url = new URL(window.location.href)
+          url.searchParams.set("page", "Albums")
+          window.history.replaceState(null, "", url.toString())
+          window.dispatchEvent(new PopStateEvent("popstate"))
+        }}
       />
 
       {/* Track list — SongListItem in trackNumber mode. 8px gap
@@ -197,11 +277,23 @@ export function AlbumDetailView({ onBack }: AlbumDetailViewProps) {
 
       {/* "More from this artist" rail */}
       <CardRail title={`More from ${ALBUM.artist}`} showAllLabel="All albums">
-        {MORE_FROM_ARTIST.map(a => (
-          <li key={a.id}>
-            <AlbumCard cover={a.cover} title={a.title} artist={ALBUM.artist} year={a.year} />
-          </li>
-        ))}
+        {MORE_FROM_ARTIST.map(a => {
+          const meta  = albumMetaFor(a.title)
+          const libId = libraryIdForTitle(a.title)
+          return (
+            <li key={a.id}>
+              <AlbumCard
+                cover={a.cover}
+                title={a.title}
+                artist={ALBUM.artist}
+                year={meta.year ?? a.year}
+                streamPrice={meta.streamPrice}
+                downloadPrice={meta.downloadPrice}
+                purchased={libId ? library.isPurchased(libId) : false}
+              />
+            </li>
+          )
+        })}
       </CardRail>
 
       {/* Playlists that feature this artist */}

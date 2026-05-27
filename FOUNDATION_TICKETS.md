@@ -57,3 +57,86 @@ the why for each; this ticket is the punch-list of what's in scope.
 - The image-outline rule targets `[class*="object-cover"]` — works because every photo in the app uses `object-cover`. Photos that need to opt out should override with their own `outline: none`.
 - Tokens: if anything in your code relied on the OLD dark `--input` value (`--muza-neutrals-300`), bump it; in practice the only consumer is the `Input` component itself.
 - Motion curves: don't override `animation-timing-function` at the call site — the keyframes carry per-stop curves that produce the "snap on the cardinal, hover between" feel. Set `linear` at the call site, let the keyframe do the easing.
+
+---
+
+### Page layout — responsive container & growth tiers  ·  *new*
+
+> **Resources**
+> - DS docs: [DESIGN_SYSTEM.md › Layout — page max-width tiers](DESIGN_SYSTEM.md#layout--page-max-width-tiers)
+> - PAGE_TICKETS rule: [Pattern B — Container-query rail / grid](PAGE_TICKETS.md#pattern-b--container-query-rail--grid)
+> - Touched pages: Home, Library × 3, Album detail, Playlist detail, Artist profile, Settings, Design system kitchen sink
+> - Touched primitives: `CardRail`, every Library grid `<ul>`, `MediaHeader` (artist hero)
+
+**Affects.** Every top-level page wrapper, every card grid, every
+CardRail, and the artist-profile hero. This is a foundation-level
+rule — once you adopt the wrapper class, the rails, grids, and
+hero all step together at the right viewport widths.
+
+**Summary.** Pages used to cap at `max-w-[1528px]` with no second
+tier — so a 27"+ monitor showed huge white margins, and a half-card
+peeked off the right edge of every rail at max width (1528 content
+≈ 1448, but grids capped at 1400 → 48px leftover). Replaced with a
+**two-tier growth model**: tier 1 caps at 1480 (content area =
+exactly 6 cards × 220 + 5 × 16 = 1400, no leftover), tier 2 kicks
+in at viewport ≥ 1920px and bumps to 1716 (content area = exactly
+7 cards × 220 + 6 × 16 = 1636).
+
+| Tier | Viewport | Page wrapper `max-w` | Content area | Grid / rail cards |
+|---|---|---|---|---|
+| 1 (default) | < 1920px | `1480px` | 1400px | 6 × 220 |
+| 2 (wide screen) | ≥ **1920px** | `1716px` | 1636px | 7 × 220 |
+
+**Apply to every top-level page wrapper:**
+```tsx
+<div className="@container mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] px-10 …">
+```
+
+**Grids step from 6 → 7 cards at `@container` width ≥ 1500px**
+(intentionally above tier-1's 1400 content cap so tier-1 never
+collapses 6 big cards into 7 small ones):
+```tsx
+<ul className="grid grid-cols-[repeat(1,minmax(143px,220px))]
+  @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))]
+  @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))]
+  @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))]
+  @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))]
+  @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))]
+  @min-[1500px]:grid-cols-[repeat(7,minmax(143px,220px))]
+  gap-x-4 gap-y-6">
+```
+
+**Artist hero (`MediaHeader`-adjacent `<section>`) uses the same
+dual cap.** Heights are derived from the page wrapper widths via
+the hero's intrinsic aspect ratio (`1072/400`):
+
+| Tier | Page wrapper | Hero `max-h` (calc) |
+|---|---|---|
+| 1 | 1480 | `552px` (= 1480 × 400/1072 ≈ 552) |
+| 2 | 1716 | `640px` (= 1716 × 400/1072 ≈ 640) |
+
+```tsx
+<section className="aspect-[1072/400] min-h-[320px] max-h-[552px] min-[1920px]:max-h-[640px] …">
+```
+
+Past each ceiling the photo crops horizontally via `object-cover`
+instead of inflating the hero further.
+
+**Rules.**
+- **Three numbers stay in lockstep**: page wrapper `max-w`, hero
+  `max-h`, and grid 7-col threshold. Change one → recompute the
+  other two. The math is spelled out in the inline comment on the
+  hero in `artist-profile-view.tsx`.
+- **Every page wrapper that ever shows a CardRail or stepped grid
+  must use the dual cap.** Including the Design System kitchen
+  sink — otherwise the showcase CardRail behaves differently from
+  every real surface that uses it.
+- **Don't add a `max-w-[1528px]` wrapper anywhere new.** It's the
+  old single-tier value and breaks the grid-step math.
+- **Don't hand-tune the 7-col threshold below 1500.** Anything ≤ 1400
+  fires during tier 1 and collapses the 6-card layout. Anything
+  above ~1600 misses the tier-2 content area.
+- **Mobile peek** on the smallest CardRail step (container < 304) is
+  intentional — cards are sized to ~60% so a sliver of the next
+  card is visible, signaling scrollability. Don't widen them to
+  exactly N cards at that breakpoint.
