@@ -20,6 +20,7 @@ import { ChipDismiss, ChipGroup } from "@/components/ui/chip"
 import { AVATAR_PALETTE } from "@/lib/avatar"
 import { CartProvider } from "@/lib/cart"
 import { UserLibraryProvider, useUserLibrary } from "@/lib/user-library"
+import { UserAccountProvider } from "@/lib/user-account"
 import { albumMetaFor, libraryIdForTitle } from "@/lib/album-meta"
 import { SECTION_STATUS_BY_ID, LAST_GIT_PUSH, formatStatusDate, type SectionStatus } from "./ds-status"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -125,6 +126,7 @@ import { ArtistProfileView } from "@/components/app/artist-profile-view"
 import { AlbumDetailView } from "@/components/app/album-detail-view"
 import { PlaylistDetailView } from "@/components/app/playlist-detail-view"
 import { PurchaseAlbumDialog, PurchaseAlbumDialogPreview } from "@/components/app/purchase-album-dialog"
+import { SubscriptionPromptDialog, SubscriptionPromptDialogPreview, SubscriptionCheckoutDialog } from "@/components/app/subscription-dialogs"
 import { LibraryArtistsView } from "@/components/app/library-artists-view"
 import { LibraryPlaylistsView } from "@/components/app/library-playlists-view"
 import { AlbumCard } from "@/components/ui/album-card"
@@ -886,6 +888,15 @@ const LIBRARY_SEED = {
   a18: { added: true, purchased: true, tier: "stream" as const },
 }
 
+// Demo seed for the UserAccountProvider — pre-fills two of the
+// A Love Supreme tracks so the "X plays left" affordance has
+// something to show. Real wiring would persist these per-account.
+const DEMO_PLAY_COUNTS = {
+  // Track ids in album-detail-view's ALBUM constant.
+  "1": 2,  // Acknowledgement — 2/3 used → "1 play left"
+  "2": 3,  // Resolution — already capped → next press paywall
+}
+
 const STUDIO_TABS: Record<string, string[]> = {
   Pages:     ["Artists", "Label"],
   Music:     ["My Music", "Upload Music"],
@@ -1078,6 +1089,43 @@ function PurchaseDialogDemo() {
         album={album}
         streamPrice="$2.99"
         downloadPrice="$4.99"
+      />
+    </div>
+  )
+}
+
+// Paywall demo — non-profit subscription prompt that fires when an
+// anonymous user trips the 3-play cap. The static
+// `SubscriptionPromptDialogPreview` renders inline so devs see the
+// full dialog body without clicking. Buttons below open the real
+// modal + a direct checkout hand-off.
+function SubscriptionPromptDemo() {
+  const [promptOpen, setPromptOpen]       = useState(false)
+  const [checkoutOpen, setCheckoutOpen]   = useState(false)
+  const [amount, setAmount]               = useState<string>("10")
+  return (
+    <div className="flex flex-col gap-4">
+      <SubscriptionPromptDialogPreview />
+      <div className="flex items-center gap-3 flex-wrap">
+        <Button variant="outline" onClick={() => setPromptOpen(true)}>
+          Open as modal
+        </Button>
+        <Button variant="outline" onClick={() => setCheckoutOpen(true)}>
+          Open checkout directly
+        </Button>
+        <span className="text-xsmall text-muted-foreground">
+          Real dialog (with portal + focus trap). Paywall hands its picked amount through to the checkout.
+        </span>
+      </div>
+      <SubscriptionPromptDialog
+        open={promptOpen}
+        onOpenChange={setPromptOpen}
+        onSubscribe={(a) => { setAmount(a); setCheckoutOpen(true) }}
+      />
+      <SubscriptionCheckoutDialog
+        open={checkoutOpen}
+        onOpenChange={setCheckoutOpen}
+        initialAmount={amount}
       />
     </div>
   )
@@ -1774,7 +1822,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           <p className="text-small text-muted-foreground">
             Last pushed to git:{" "}
             <span className="text-foreground tabular-nums">{formatStatusDate(LAST_GIT_PUSH)}</span>.
-            {" "}Sections with a <span className="text-foreground">New</span> or <span className="text-foreground">Updated</span> badge changed after this date.
+            {" "}Sections with a <span className="text-foreground">New</span> or <span className="text-foreground">Updated</span> badge landed in this release.
           </p>
         </div>
       </div>
@@ -1809,7 +1857,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           "Input","NumberField","Select","Filter Menu","Combobox","Menu","Sort Button","NavigationMenu",
           "DatePicker","Checkbox","Radio Card","Switch","Slider","Meter","Progress","Separator",
           "Avatar","Tabs","Tooltip","ScrollArea","Collapsible","Accordion",
-          "Album Card","Artist Card","Playlist Card","Song List Item","Product Card","Page Section","Items","Alerts","AlertDialog","Dialog","Drawer","Toast","Skeleton",
+          "Album Card","Artist Card","Playlist Card","Song List Item","Product Card","Page Section","Items","Alerts","AlertDialog","Dialog","Paywall","Drawer","Toast","Skeleton",
           "Popover","Table","List Table","Pagination","Command","OTP Input","Form",
           "Player Bar","Player Overlay",
         ].map((s) => {
@@ -3959,6 +4007,43 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         <PurchaseDialogDemo />
       </Section>
 
+      {/* ══ PAYWALL ══ */}
+      <Section id="paywall" title="Paywall"
+        usage={[
+          { label: "Anonymous user trips the 3-play cap (any track)", href: "/?page=Album" },
+          { label: "Settings → Subscription → 'Subscribe' (re-trigger)", href: "/?page=Settings" },
+        ]}>
+        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
+          The non-profit paywall. Fires when an anonymous account trips
+          the 3-play cap (or as a re-entry from Settings). Built as a
+          mini landing page, not a generic dialog — one continuous
+          muted surface, stacked muza lockup, bold headline, the
+          amount picker IS in the hero so subscribing is one click.
+        </p>
+        <ul className="text-small text-muted-foreground flex flex-col gap-1.5 mb-5 max-w-2xl list-disc pl-5">
+          <li>
+            <span className="text-foreground">Inline amount picker</span>
+            {" "}— 5 preset pills (<code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">$0 / $5 / $10 / $15 / $30</code>)
+            + a 6th <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">$ _</code>
+            input pill that's always typeable (no click-to-reveal
+            step). Pre-selected at $10. Active pill = dark outline.
+          </li>
+          <li>
+            <span className="text-foreground">Single primary CTA</span>
+            {" "}— oversized Subscribe (150% of <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">size=lg</code>)
+            centered. Label morphs: <em>"Subscribe — $10.00/mo"</em> or
+            <em> "Start free"</em> when amount = $0.
+          </li>
+          <li>
+            <span className="text-foreground">Subscribe hand-off</span>
+            {" "}— <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">onSubscribe(amount)</code>
+            passes the picked amount to the host so the checkout
+            opens with it pre-filled. No re-picking.
+          </li>
+        </ul>
+        <SubscriptionPromptDemo />
+      </Section>
+
       {/* ══ DRAWER (Sheet) ══ */}
       <Section id="drawer" title="Drawer"
         usage={[
@@ -4430,10 +4515,12 @@ export default function Home() {
     return (
       <CartProvider>
         <UserLibraryProvider seed={LIBRARY_SEED}>
-          <TopProgressBar loading={navLoading} />
-          <div key="ds" className="h-screen [animation:pageFadeIn_250ms_ease-out]">
-            <DesignSystem />
-          </div>
+          <UserAccountProvider initialTier="anonymous" initialPlayCounts={DEMO_PLAY_COUNTS}>
+            <TopProgressBar loading={navLoading} />
+            <div key="ds" className="h-screen [animation:pageFadeIn_250ms_ease-out]">
+              <DesignSystem />
+            </div>
+          </UserAccountProvider>
         </UserLibraryProvider>
       </CartProvider>
     )
@@ -4442,6 +4529,7 @@ export default function Home() {
   return (
     <CartProvider>
     <UserLibraryProvider seed={LIBRARY_SEED}>
+    <UserAccountProvider initialTier="anonymous" initialPlayCounts={DEMO_PLAY_COUNTS}>
     {/* Top progress bar — fires on every activeNav change. Sits
         outside the keyed AppShell wrapper so it isn't remounted
         on internal nav. */}
@@ -4522,6 +4610,7 @@ export default function Home() {
         </div>
       )}
     </div>
+    </UserAccountProvider>
     </UserLibraryProvider>
     </CartProvider>
   )

@@ -38,6 +38,8 @@ import { ToggleGroup } from "@/components/ui/toggle-group"
 import { Toggle } from "@/components/ui/toggle"
 import { Sun, Moon } from "lucide-react"
 import { useTheme } from "@/components/app/theme-provider"
+import { useUserAccount } from "@/lib/user-account"
+import { SubscriptionCheckoutDialog } from "@/components/app/subscription-dialogs"
 
 // Mock current user — shared so the topbar trigger and the Account
 // hero render the same identity. Real wiring would come from auth.
@@ -185,12 +187,8 @@ function AccountTab() {
         </div>
       </SettingsSection>
 
-      <SettingsSection title="Account info">
-        <MetaRow
-          label="Current subscription"
-          value={<>muza <span className="text-muted-foreground">free</span></>}
-          action={<Button variant="outline" size="sm">Manage</Button>}
-        />
+      <SettingsSection title="Subscription">
+        <SubscriptionRow />
         <div className="h-px bg-border/60" />
         <MetaRow
           label="Default payment"
@@ -214,6 +212,47 @@ function AccountTab() {
         />
       </SettingsSection>
     </div>
+  )
+}
+
+// Subscription row — surfaces current tier and the affordance to
+// re-trigger the checkout (when not subscribed) or cancel back to
+// anonymous (when subscribed). The cancel path is also the dev hook
+// for re-seeing the paywall after a test subscribe.
+function SubscriptionRow() {
+  const { tier, setTier, resetPlayCounts } = useUserAccount()
+  const [checkoutOpen, setCheckoutOpen] = useState(false)
+  const isPremium = tier === "premium"
+  return (
+    <>
+      <MetaRow
+        label="Current subscription"
+        value={
+          isPremium
+            ? <>muza <span className="text-foreground">member</span></>
+            : <>muza <span className="text-muted-foreground">free</span></>
+        }
+        action={
+          isPremium ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { setTier("cancelled"); resetPlayCounts() }}
+            >
+              Cancel subscription
+            </Button>
+          ) : (
+            <Button size="sm" onClick={() => setCheckoutOpen(true)}>
+              Subscribe
+            </Button>
+          )
+        }
+      />
+      <SubscriptionCheckoutDialog
+        open={checkoutOpen}
+        onOpenChange={setCheckoutOpen}
+      />
+    </>
   )
 }
 

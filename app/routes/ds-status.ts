@@ -43,17 +43,16 @@ export const SECTION_STATUS: Record<string, SectionStatusEntry> = {
   // in the latest release. Graduate (delete the entry) once the
   // badges have done their job — typically when a new cycle starts
   // and the next round of changes is being flagged.
-  "Chip Input":            { status: "new",     date: "2026-05-27", pushed: "2026-05-27" },
-  "Media Header":          { status: "new",     date: "2026-05-27", pushed: "2026-05-27" },
-  "Purchase Album Dialog": { status: "new",     date: "2026-05-27", pushed: "2026-05-27" },
-  "User Avatar":           { status: "new",     date: "2026-05-27", pushed: "2026-05-27" },
-  "Purchased Badge":       { status: "new",     date: "2026-05-27", pushed: "2026-05-27" },
-
+  "Chip Input": { status: "new", date: "2026-05-27", pushed: "2026-05-27" },
+  "Media Header": { status: "new", date: "2026-05-27", pushed: "2026-05-27" },
+  "Purchase Album Dialog": { status: "new", date: "2026-05-27", pushed: "2026-05-27" },
+  "Paywall": { status: "new", date: "2026-05-27", pushed: "2026-05-27" },
+  "User Avatar": { status: "new", date: "2026-05-27", pushed: "2026-05-27" },
+  "Purchased Badge": { status: "new", date: "2026-05-27", pushed: "2026-05-27" },
   // ── Most recent push: updated ──────────────────────────────────
-  "Song List Item":        { status: "updated", date: "2026-05-27", pushed: "2026-05-27" },
-  "Card Rail":             { status: "updated", date: "2026-05-27", pushed: "2026-05-27" },
-  "Album Card":            { status: "updated", date: "2026-05-27", pushed: "2026-05-27" },
-
+  "Song List Item": { status: "updated", date: "2026-05-27", pushed: "2026-05-27" },
+  "Card Rail": { status: "updated", date: "2026-05-27", pushed: "2026-05-27" },
+  "Album Card": { status: "updated", date: "2026-05-27", pushed: "2026-05-27" },
   // ── Built but not yet consumed in a live app surface ──────────
   // Renders the "Not used yet" badge. Keeps the section visible so
   // devs can iterate, but signals it's design-system inventory, not

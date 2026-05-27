@@ -829,6 +829,37 @@ function ComposeEmailDialog({
 
 // ─── Customer / addresses / notes ─────────────────────────────────────────────
 
+// Robust clipboard copy — falls back to a hidden textarea + execCommand
+// when the async Clipboard API is unavailable (insecure context, iframe
+// preview, or a Permissions-Policy block). Either path resolves to a
+// boolean so the caller can drive UI feedback without ever surfacing a
+// browser error.
+async function copyToClipboard(value: string): Promise<boolean> {
+  try {
+    if (typeof navigator !== "undefined" && navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(value)
+      return true
+    }
+  } catch {
+    // fall through to the textarea fallback
+  }
+  try {
+    const ta = document.createElement("textarea")
+    ta.value = value
+    ta.setAttribute("readonly", "")
+    ta.style.position = "fixed"
+    ta.style.top = "-1000px"
+    ta.style.opacity = "0"
+    document.body.appendChild(ta)
+    ta.select()
+    const ok = document.execCommand("copy")
+    document.body.removeChild(ta)
+    return ok
+  } catch {
+    return false
+  }
+}
+
 function CopyButton({ value }: { value: string }) {
   const [copied, setCopied] = useState(false)
   return (
@@ -836,7 +867,8 @@ function CopyButton({ value }: { value: string }) {
       type="button"
       onClick={(e) => {
         e.stopPropagation()
-        navigator.clipboard.writeText(value).then(() => {
+        void copyToClipboard(value).then(ok => {
+          if (!ok) return
           setCopied(true)
           setTimeout(() => setCopied(false), 1200)
         })

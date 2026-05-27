@@ -36,7 +36,7 @@ const GROUPS: ReadonlyArray<{ title: string; items: ReadonlyArray<string> }> = [
   { title: "Containers",       items: ["Tabs", "Tooltip", "ScrollArea", "Collapsible", "Accordion"] },
   { title: "Cards & lists",    items: ["Album Card", "Artist Card", "Playlist Card", "Cover Play Button", "Song List Item", "Card Rail", "Product Card", "Checkout Card"] },
   { title: "Page composition", items: ["Media Header", "Page Section", "Items"] },
-  { title: "Overlays",         items: ["Alerts", "AlertDialog", "Dialog", "Purchase Album Dialog", "Drawer", "Toast"] },
+  { title: "Overlays",         items: ["Alerts", "AlertDialog", "Dialog", "Purchase Album Dialog", "Paywall", "Drawer", "Toast"] },
   { title: "Utility",          items: ["Skeleton", "Popover", "Table", "List Table", "Pagination", "Command", "OTP Input", "Form"] },
   { title: "Player",           items: ["Player Bar", "Player Overlay"] },
 ]

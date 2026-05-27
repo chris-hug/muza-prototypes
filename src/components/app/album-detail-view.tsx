@@ -25,7 +25,12 @@ import { CardRail } from "@/components/app/card-rail"
 import { AlbumCardMenuItems } from "@/components/ui/cover-card-menu"
 import { PurchaseAlbumDialog } from "@/components/app/purchase-album-dialog"
 import { useUserLibrary } from "@/lib/user-library"
+import { useUserAccount } from "@/lib/user-account"
 import { albumMetaFor, libraryIdForTitle } from "@/lib/album-meta"
+import {
+  SubscriptionPromptDialog,
+  SubscriptionCheckoutDialog,
+} from "@/components/app/subscription-dialogs"
 
 interface AlbumDetailViewProps {
   /** Back handler — wired to `navigate("Home")` (or wherever) by
@@ -134,9 +139,25 @@ export function AlbumDetailView({ onBack }: AlbumDetailViewProps) {
   // `buyOpen` = standard purchase flow (album not yet owned).
   // `upgradeOpen` = pay-the-difference "add download" flow (stream-
   // tier owner adding the download license).
-  const [buyOpen,     setBuyOpen]     = useState(false)
-  const [upgradeOpen, setUpgradeOpen] = useState(false)
+  const [buyOpen,           setBuyOpen]           = useState(false)
+  const [upgradeOpen,       setUpgradeOpen]       = useState(false)
+  const [paywallOpen,       setPaywallOpen]       = useState(false)
+  const [subscribeOpen,     setSubscribeOpen]     = useState(false)
+  const [subscribeAmount,   setSubscribeAmount]   = useState<string>("10")
   const library  = useUserLibrary()
+  const account  = useUserAccount()
+  // Gate a track-play attempt through the subscription cap. Anonymous
+  // users get up to ANONYMOUS_PLAY_LIMIT plays per track; past that
+  // the paywall opens instead of starting playback.
+  const tryPlayTrack = (trackId: string) => {
+    const result = account.canListen(trackId)
+    if (!result.allowed) {
+      setPaywallOpen(true)
+      return
+    }
+    account.recordPlay(trackId)
+    // Real wiring would call player.play(trackId) here.
+  }
   const isPurchased    = library.isPurchased(ALBUM.id)
   const isDownloadable = library.entryFor(ALBUM.id)?.tier === "download"
   // Delta between stream and download prices — surfaces as the
@@ -257,6 +278,21 @@ export function AlbumDetailView({ onBack }: AlbumDetailViewProps) {
         }}
       />
 
+      {/* Subscription gating — fires when an anonymous user trips
+           the 3-play cap. The prompt's "See plans" handoff opens the
+           checkout dialog; success flips tier="premium" and resets
+           play counts so listening resumes cleanly. */}
+      <SubscriptionPromptDialog
+        open={paywallOpen}
+        onOpenChange={setPaywallOpen}
+        onSubscribe={(amount) => { setSubscribeAmount(amount); setSubscribeOpen(true) }}
+      />
+      <SubscriptionCheckoutDialog
+        open={subscribeOpen}
+        onOpenChange={setSubscribeOpen}
+        initialAmount={subscribeAmount}
+      />
+
       {/* Track list — SongListItem in trackNumber mode. 8px gap
            matches the Figma's 8px row gap (66 − 58 = 8). */}
       <ul className="flex flex-col gap-2">
@@ -270,6 +306,7 @@ export function AlbumDetailView({ onBack }: AlbumDetailViewProps) {
               year={ALBUM.year}
               duration={t.duration}
               menuItems={<AlbumCardMenuItems />}
+              onPlay={() => tryPlayTrack(t.id)}
             />
           </li>
         ))}
