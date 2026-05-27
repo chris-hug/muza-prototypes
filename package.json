@@ -7,7 +7,8 @@
     "dev": "react-router dev",
     "build": "react-router build && cp -r dist/client/* dist/",
     "start": "react-router-serve ./build/server/index.js",
-    "lint": "eslint"
+    "lint": "eslint",
+    "release": "node scripts/release.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
