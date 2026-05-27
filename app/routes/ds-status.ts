@@ -38,10 +38,21 @@ export const LAST_GIT_PUSH = "2026-05-27"
 /** Title → entry. Keys must match the sidebar `items` and section
  *  `title` props exactly. */
 export const SECTION_STATUS: Record<string, SectionStatusEntry> = {
-  // ── Current cycle ──────────────────────────────────────────────
-  // Nothing flagged "new" or "updated" right after a push — the
-  // cycle clears when changes ship. Re-populate here as new work
-  // lands; everything else defaults to `pushed: LAST_GIT_PUSH`.
+  // ── Most recent push: new ──────────────────────────────────────
+  // Status persists past the push so collaborators see what landed
+  // in the latest release. Graduate (delete the entry) once the
+  // badges have done their job — typically when a new cycle starts
+  // and the next round of changes is being flagged.
+  "Chip Input":            { status: "new",     date: "2026-05-27", pushed: "2026-05-27" },
+  "Media Header":          { status: "new",     date: "2026-05-27", pushed: "2026-05-27" },
+  "Purchase Album Dialog": { status: "new",     date: "2026-05-27", pushed: "2026-05-27" },
+  "User Avatar":           { status: "new",     date: "2026-05-27", pushed: "2026-05-27" },
+  "Purchased Badge":       { status: "new",     date: "2026-05-27", pushed: "2026-05-27" },
+
+  // ── Most recent push: updated ──────────────────────────────────
+  "Song List Item":        { status: "updated", date: "2026-05-27", pushed: "2026-05-27" },
+  "Card Rail":             { status: "updated", date: "2026-05-27", pushed: "2026-05-27" },
+  "Album Card":            { status: "updated", date: "2026-05-27", pushed: "2026-05-27" },
 
   // ── Built but not yet consumed in a live app surface ──────────
   // Renders the "Not used yet" badge. Keeps the section visible so
