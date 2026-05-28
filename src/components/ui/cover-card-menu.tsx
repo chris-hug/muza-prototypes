@@ -20,10 +20,9 @@
  *                         ─ Go to playlist
  *                         ─ Delete / Show Info
  *
- * Trigger renders as a styled native button rather than asChild +
- * `<Button>` to avoid the nested-<button> hydration errors that
- * surface from base-ui's MenuPrimitive.Trigger when wrapping the
- * project's Button primitive.
+ * Trigger renders as a styled native button rather than delegating to
+ * the project's `<Button>` via base-ui's `render` prop — keeps this
+ * menu self-contained and sidesteps any nested-<button> edge cases.
  */
 
 import * as React from "react"

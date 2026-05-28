@@ -8,7 +8,8 @@ import {
 } from "lucide-react"
 import { AlertCircle } from "lucide-react"
 import { Alert, AlertTitle, AlertDescription, AlertAction } from "@/components/ui/alert"
-import { Badge, StatusBadge } from "@/components/ui/badge"
+import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/ui/status-badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ChipDismiss } from "@/components/ui/chip"
@@ -408,10 +409,8 @@ function ProductRow({ product, isSelected, onSelect, status, onStatusChange, onE
       {/* Actions */}
       <td className="px-2 py-0 text-right">
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className={cn("size-8 transition-opacity", hovered ? "opacity-100" : "opacity-0")}>
-              <MoreHorizontal className="size-4" />
-            </Button>
+          <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className={cn("size-8 transition-opacity", hovered ? "opacity-100" : "opacity-0")} />}>
+            <MoreHorizontal className="size-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={onEdit}><Pencil className="size-4" />Edit</DropdownMenuItem>

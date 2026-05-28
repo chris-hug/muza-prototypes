@@ -32,9 +32,12 @@ import { ToggleGroup } from "@/components/ui/toggle-group"
 import { Toggle } from "@/components/ui/toggle"
 import { cn } from "@/lib/utils"
 import {
-  OrderStatus, OrderStatusBadge, formatDate, formatTotal,
+  formatDate, formatTotal,
   type ProductType, type OrderItem,
 } from "@/components/app/orders-view"
+import {
+  OrderStatusBadge, type OrderStatus,
+} from "@/components/ui/order-status-badge"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

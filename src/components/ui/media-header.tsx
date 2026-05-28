@@ -35,7 +35,8 @@ import { PurchasedBadge } from "@/components/ui/purchased-badge"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Badge, StatusBadge, type StatusBadgeStatus } from "@/components/ui/badge"
+import { Badge } from "@/components/ui/badge"
+import { StatusBadge, type StatusBadgeStatus } from "@/components/ui/status-badge"
 import { PlayFilledAlt } from "@/components/ui/transport-icons"
 
 export type MediaHeaderVariant = "album" | "my-album" | "playlist" | "my-playlist"

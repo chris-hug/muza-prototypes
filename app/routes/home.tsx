@@ -22,9 +22,10 @@ import { CartProvider } from "@/lib/cart"
 import { UserLibraryProvider, useUserLibrary } from "@/lib/user-library"
 import { UserAccountProvider } from "@/lib/user-account"
 import { albumMetaFor, libraryIdForTitle } from "@/lib/album-meta"
-import { SECTION_STATUS_BY_ID, LAST_GIT_PUSH, formatStatusDate, type SectionStatus } from "./ds-status"
+import { SECTION_STATUS_BY_ID, LAST_GIT_PUSH, sectionLastChanged, sectionSourceUrl, formatStatusDate, type SectionStatus } from "./ds-status"
 import { Button, buttonVariants } from "@/components/ui/button"
-import { Badge, ContentTypeBadge, StatusBadge } from "@/components/ui/badge"
+import { Badge, ContentTypeBadge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/ui/status-badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { InputSelect } from "@/components/ui/input-select"
@@ -96,6 +97,7 @@ import {
   Plus, Search, ChevronDown, Trash2, SlidersHorizontal, Maximize2,
   Radio as RadioIcon, ShoppingBag, Disc3, Disc, CassetteTape, Shirt, Ghost,
   ChevronLeft, ChevronRight, Globe, X, Sun, Moon, MapPin, CircleCheckBig,
+  Code, ArrowUpRight,
 } from "lucide-react"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import {
@@ -118,7 +120,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { UploadMusicDialog } from "@/components/app/upload-music-dialog"
 import { ShopMyProductsView } from "@/components/app/shop-my-products"
-import { OrdersView, OrderStatusBadge } from "@/components/app/orders-view"
+import { OrdersView } from "@/components/app/orders-view"
+import { OrderStatusBadge } from "@/components/ui/order-status-badge"
 import { CheckoutCard, CHECKOUTS } from "@/components/app/purchases-view"
 import { ShopView } from "@/components/app/shop-view"
 import { LibraryAlbumsView } from "@/components/app/library-albums-view"
@@ -185,15 +188,12 @@ function Section({
   // 99% of usages driven by the single source of truth.
   const entry           = SECTION_STATUS_BY_ID[id]
   const resolvedStatus  = status ?? entry?.status
-  const resolvedDate    = !status ? entry?.date : undefined
-  // `Pushed: …` date. Falls back to `LAST_GIT_PUSH` for sections
-  // without an explicit entry (they're presumed to have shipped in
-  // the last cycle, unchanged since). Explicit `pushed: null` in
-  // the map suppresses the stamp (used for components that haven't
-  // shipped at all yet).
-  const pushedRaw       = entry?.pushed !== undefined ? entry.pushed : LAST_GIT_PUSH
-  // Treat null AND "" (git unavailable at build) as "no stamp".
-  const pushedDate      = pushedRaw ? pushedRaw : null
+  // "Changed …" date — auto-derived from git (last commit that
+  // touched this section's backing file, per `ds-sources.ts`). null
+  // when the section has no mapped file / git was missing at build.
+  const changedDate     = sectionLastChanged(id)
+  // Deep link to this component's source on GitHub (auto-derived).
+  const sourceUrl       = sectionSourceUrl(id)
   return (
     <section
       id={id}
@@ -207,38 +207,42 @@ function Section({
                outline for components that got new variants/props.
                Uses the design-system `Badge` (the docs eat their own
                dog food). */}
-          {/* Right-aligned status + push cluster. Pushed stamp anchors
-               the right edge across every section so the eye can
-               vertically scan a column of "Pushed: …" dates without
-               jitter. The status badge + its local-change date sit
-               just to the left of the Pushed stamp, separated by a
-               larger gap, so both groups read as their own beat. */}
+          {/* Right-aligned cluster: hand-rolled status badge +
+               auto-derived "Changed …" date. The date anchors the
+               right edge across every section so the eye can scan a
+               column of dates without jitter; the badge sits just to
+               its left, separated by a larger gap. */}
           <div className="ml-auto flex items-center gap-4">
-            {(resolvedStatus || resolvedDate) && (
-              <div className="flex items-center gap-2">
+            {resolvedStatus && (
+              <>
                 {resolvedStatus === "new"     && <Badge variant="success">New</Badge>}
                 {resolvedStatus === "updated" && <Badge variant="outline">Updated</Badge>}
                 {/* `concept` = built but not yet wired into the
                      prototype. Keep visible so we can iterate, but
                      make it clear it's not actually in use. */}
                 {resolvedStatus === "concept" && <Badge variant="outline">Not used yet</Badge>}
-                {/* Status date — marks the unshipped local-change date
-                     for `new` / `updated`. Skipped for `concept`. */}
-                {resolvedDate && (
-                  <span className="text-2xsmall text-muted-foreground tabular-nums">
-                    {formatStatusDate(resolvedDate)}
-                  </span>
-                )}
-              </div>
+              </>
             )}
-            {/* Pushed-to-git stamp — every section that's ever shipped
-                 carries this. `null` suppresses for components that
-                 haven't shipped at all (status="new" or just-built
-                 concepts). */}
-            {pushedDate && (
+            {/* "Changed …" stamp — auto from git history. Suppressed
+                 for sections with no mapped source file. */}
+            {changedDate && (
               <span className="text-2xsmall text-muted-foreground tabular-nums">
-                Pushed{" "}<span className="text-foreground">{formatStatusDate(pushedDate)}</span>
+                Changed{" "}<span className="text-foreground">{formatStatusDate(changedDate)}</span>
               </span>
+            )}
+            {/* Deep link to the component source on GitHub — auto from
+                 the section→file map + git remote. */}
+            {sourceUrl && (
+              <a
+                href={sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-2xsmall text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Code className="size-3.5" />
+                Source
+                <ArrowUpRight className="size-3" />
+              </a>
             )}
           </div>
           {phase === 2          && <Badge variant="secondary">Phase 2 · Shop</Badge>}
@@ -1858,7 +1862,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           // showcase doubles as a quick lookup of which base-ui component
           // backs each pattern. Custom (non-base-ui) patterns keep their
           // descriptive name (Badges, Chips, etc.).
-          "Colors","Typography","Button","Toggle","ToggleGroup","Toolbar","Badges","Chips",
+          "Colors","Typography","Button","Toggle","ToggleGroup","Toolbar","Badge","Status Badge","Order Status Badge","Chips",
           "Input","NumberField","Select","Filter Menu","Combobox","Menu","Sort Button","NavigationMenu",
           "DatePicker","Checkbox","Radio Card","Switch","Slider","Meter","Progress","Separator",
           "Avatar","Tabs","Tooltip","ScrollArea","Collapsible","Accordion",
@@ -2242,11 +2246,11 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         </p>
       </Section>
 
-      <Section id="badges" title="Badges"
+      {/* ══ BADGE (base + content type) ══ */}
+      <Section id="badge" title="Badge"
         usage={[
-          { label: "Shop › Orders → order detail status", href: "/?page=Shop&shop-tab=orders" },
-          { label: "Studio › Music type column",          href: "/?page=Music" },
-          { label: "Artist › Discography type",           href: "/?page=Artist" },
+          { label: "Studio › Music type column", href: "/?page=Music" },
+          { label: "Artist › Discography type",  href: "/?page=Artist" },
         ]}>
         <div className="flex flex-col gap-5">
           <div>
@@ -2268,22 +2272,35 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
               <ContentTypeBadge type="playlist" />
             </div>
           </div>
+        </div>
+      </Section>
+
+      {/* ══ STATUS BADGE (privacy) ══ */}
+      <Section id="status-badge" title="Status Badge"
+        usage={[
+          { label: "Studio › Music visibility column", href: "/?page=Music" },
+        ]}>
+        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
+          Track / release visibility. Self-contained dropdown — click to toggle
+          public / private in place. Pass <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">onStatusChange</code> to be notified.
+        </p>
+        <div className="flex flex-wrap gap-2 items-center">
+          <StatusBadgeDemo />
+        </div>
+      </Section>
+
+      {/* ══ ORDER STATUS BADGE (shop) ══ */}
+      <Section id="order-status-badge" title="Order Status Badge" phase={2}
+        usage={[
+          { label: "Shop › Orders → order detail status", href: "/?page=Shop&shop-tab=orders" },
+        ]}>
+        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
+          Shop order lifecycle. Colored per status; read-only by default, or pass
+          an <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">onStatusChange</code> handler to make it a dropdown of allowed forward transitions.
+        </p>
+        <div className="flex flex-col gap-5">
           <div>
-            <SubLabel>Privacy status — click to toggle public / private</SubLabel>
-            <div className="flex flex-wrap gap-2 items-center">
-              <StatusBadgeDemo />
-            </div>
-          </div>
-          {/* `data-phase="2"` so the Shop-toggle in the design-system
-               sidebar hides this whole subsection. The order
-               lifecycle status badge is purely a Shop / commerce
-               surface. */}
-          <div data-phase="2">
-            <SubLabel>
-              Order lifecycle status — colored, optionally interactive
-              <Badge variant="success"   className="ml-2">New</Badge>
-              <Badge variant="secondary" className="ml-1">Phase 2 · Shop</Badge>
-            </SubLabel>
+            <SubLabel>All statuses — read-only</SubLabel>
             <div className="flex flex-wrap gap-2 items-center">
               <OrderStatusBadge status="payment_failed" />
               <OrderStatusBadge status="new" />
@@ -2292,9 +2309,9 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
               <OrderStatusBadge status="refunded" />
               <OrderStatusBadge status="cancelled" />
             </div>
-            <p className="text-xsmall font-normal text-muted-foreground mt-4 mb-3">
-              Interactive — pass an onStatusChange handler to make the badge a dropdown of allowed transitions.
-            </p>
+          </div>
+          <div>
+            <SubLabel>Interactive — dropdown of allowed transitions</SubLabel>
             <div className="flex flex-wrap gap-2 items-center">
               <OrderStatusBadge status="new" onStatusChange={() => {}} />
               <OrderStatusBadge status="shipped" onStatusChange={() => {}} />

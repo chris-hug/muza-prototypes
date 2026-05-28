@@ -30,7 +30,7 @@ import { ExploreView } from "./home"
 // inaccurately.
 const GROUPS: ReadonlyArray<{ title: string; items: ReadonlyArray<string> }> = [
   { title: "Foundations",      items: ["Colors", "Typography"] },
-  { title: "Atoms",            items: ["Button", "Toggle", "ToggleGroup", "Toolbar", "Badges", "Purchased Badge", "Chips"] },
+  { title: "Atoms",            items: ["Button", "Toggle", "ToggleGroup", "Toolbar", "Badge", "Status Badge", "Order Status Badge", "Purchased Badge", "Chips"] },
   { title: "Inputs",           items: ["Input", "Chip Input", "NumberField", "Select", "MultiSelect", "SingleSelect", "Combobox", "Menu", "NavigationMenu", "DatePicker", "Checkbox & Radio", "Radio Card", "Switch", "Slider"] },
   { title: "Indicators",       items: ["Progress", "Meter", "Spinner", "Top Progress Bar", "Separator", "Avatar", "User Avatar"] },
   { title: "Containers",       items: ["Tabs", "Tooltip", "ScrollArea", "Collapsible", "Accordion"] },
@@ -65,6 +65,7 @@ const PHASE_2 = new Set<string>([
   "Product Card",
   "Checkout Card",
   "Items",
+  "Order Status Badge",
 ])
 
 // Sidebar badges. Sourced from the shared `SECTION_STATUS` map so the

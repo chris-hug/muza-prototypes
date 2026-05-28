@@ -36,8 +36,11 @@ import { useIsMobile } from "@/lib/use-media-query"
 import { useToast } from "@/components/ui/toast"
 import { cn } from "@/lib/utils"
 import {
-  Order, OrderStatus, OrderStatusBadge, formatDate, formatTotal, STATUS_CONFIG,
+  Order, formatDate, formatTotal,
 } from "@/components/app/orders-view"
+import {
+  OrderStatusBadge, STATUS_CONFIG, type OrderStatus,
+} from "@/components/ui/order-status-badge"
 import { Section } from "@/components/app/section"
 import { ItemsSection as SharedItemsSection } from "@/components/app/items-section"
 import { RefundFlow as SharedRefundFlow } from "@/components/app/refund-flow"

@@ -1,94 +1,102 @@
 /*
  * Single source of truth for design-system section status badges.
  *
- * Both the sidebar (`design-system.tsx`) and the in-content section
- * header (`Section` in `home.tsx`) read from this map. Badges stay
- * frozen across same-release pushes; graduate them (drop the entries)
- * only when starting a NEW release — run `npm run release -- --clear`.
- * Stale "New" labels from old cycles dilute the signal otherwise.
+ * Two kinds of metadata, kept deliberately separate:
  *
- * `date` is the YYYY-MM-DD when the status was set (added or last
- * updated) — a curated, hand-authored signal rendered next to the
- * badge. `LAST_GIT_PUSH` (below) is the page-level "last shipped"
- * timestamp and auto-derives from git at build time.
+ *   1. STATUS badge (hand-rolled) — `new` / `updated` / `concept`.
+ *      An editorial decision: "this is a meaningful change worth
+ *      flagging." Lives in `SECTION_STATUS` below. Frozen across
+ *      same-release pushes; graduate with `npm run release -- --clear`
+ *      when starting a new cycle.
+ *
+ *   2. "Last changed" date (auto) — derived from git at build time
+ *      (`__SECTION_LAST_CHANGED__`, injected by `vite.config.ts` =
+ *      the date of the last commit that touched each section's backing
+ *      file, per `ds-sources.ts`). Never hand-maintained; updates
+ *      itself from history. Read via `sectionLastChanged(id)`.
+ *
+ * `LAST_GIT_PUSH` (the global "last pushed" marker) also auto-derives
+ * from git — it's HEAD's commit date.
  */
+
+import { SECTION_SOURCE } from "./ds-sources"
 
 export type SectionStatus = "new" | "updated" | "concept"
 
 export interface SectionStatusEntry {
-  /** Optional status badge. Omit to mean "unchanged since last push" —
-   *  the section just shows its `Pushed: …` timestamp with no badge. */
-  status?: SectionStatus
-  /** YYYY-MM-DD of the unshipped local change (only meaningful when
-   *  `status` is `new` or `updated`). Rendered next to the badge. */
-  date?:   string
-  /** YYYY-MM-DD when this section's component was last included in a
-   *  push to `main`. Defaults to `LAST_GIT_PUSH` for sections not in
-   *  the map (they're presumed to have been part of the last push,
-   *  unchanged since). Set to `null` for brand-new components that
-   *  haven't shipped yet ("new" status). */
-  pushed?: string | null
+  /** Hand-rolled badge. `new` / `updated` flag a meaningful change
+   *  this cycle; `concept` = built but not wired into the app yet
+   *  ("Not used yet"). Omit an entry entirely for stable components. */
+  status: SectionStatus
 }
 
-/** YYYY-MM-DD of the last push to the prototype's `main` branch.
- *  Auto-derived from git at build time (`__LAST_GIT_PUSH__` injected
- *  by `vite.config.ts` = HEAD's commit date). In CI the deployed
- *  build runs from the just-pushed commit, so this IS the push date —
- *  no hand-maintenance. Falls back to "" if git was unavailable at
- *  build (the DS header hides the label when empty).
- *
- *  Surfaces in each section header as the default "Pushed: …" date,
- *  and at the top of the design-system page as the global "Last
- *  pushed" marker. */
+/** YYYY-MM-DD of the last push to `main`. Auto-derived from git at
+ *  build time (`__LAST_GIT_PUSH__` = HEAD's commit date). In CI the
+ *  deployed build runs from the just-pushed commit, so this IS the
+ *  push date — no hand-maintenance. Falls back to "" if git was
+ *  unavailable at build (the DS header hides the label when empty). */
 declare const __LAST_GIT_PUSH__: string
 export const LAST_GIT_PUSH: string =
   typeof __LAST_GIT_PUSH__ !== "undefined" ? __LAST_GIT_PUSH__ : ""
 
-/** Title → entry. Keys must match the sidebar `items` and section
- *  `title` props exactly. */
+/** Section id → "last changed" date (YYYY-MM-DD), auto-derived from
+ *  git per `ds-sources.ts`. Injected at build time. */
+declare const __SECTION_LAST_CHANGED__: Record<string, string>
+const SECTION_LAST_CHANGED: Record<string, string> =
+  typeof __SECTION_LAST_CHANGED__ !== "undefined" ? __SECTION_LAST_CHANGED__ : {}
+
+/** When did this section's component last change? Auto from git, or
+ *  null if the section has no mapped source file / git was missing. */
+export function sectionLastChanged(id: string): string | null {
+  return SECTION_LAST_CHANGED[id] ?? null
+}
+
+/** GitHub "blob" base (origin remote + branch), injected at build. */
+declare const __REPO_BLOB_BASE__: string
+const REPO_BLOB_BASE: string =
+  typeof __REPO_BLOB_BASE__ !== "undefined" ? __REPO_BLOB_BASE__ : ""
+
+/** Deep link to this section's component source on GitHub, or null if
+ *  the section has no mapped file / the repo base couldn't be derived
+ *  at build. */
+export function sectionSourceUrl(id: string): string | null {
+  const file = SECTION_SOURCE[id]
+  if (!file || !REPO_BLOB_BASE) return null
+  return `${REPO_BLOB_BASE}/${file}`
+}
+
+/** Title → status entry. Keys must match the sidebar `items` and
+ *  section `title` props exactly. Only sections with a badge live
+ *  here; everything else just shows its auto "changed" date. */
 export const SECTION_STATUS: Record<string, SectionStatusEntry> = {
-  // ── Most recent push: new ──────────────────────────────────────
-  // Status persists past the push so collaborators see what landed
-  // in the latest release. Graduate (delete the entry) once the
-  // badges have done their job — typically when a new cycle starts
-  // and the next round of changes is being flagged.
-  // `pushed` is omitted on current-cycle entries so they inherit the
-  // auto-derived `LAST_GIT_PUSH` (git HEAD date) — no hand-maintained
-  // stamps to go stale. `date` is the curated "when this meaningfully
-  // changed" signal and stays authored by hand.
-  "Chip Input":            { status: "new",     date: "2026-05-27" },
-  "Media Header":          { status: "new",     date: "2026-05-27" },
-  "Purchase Album Dialog": { status: "new",     date: "2026-05-27" },
-  "Paywall":               { status: "new",     date: "2026-05-27" },
-  "User Avatar":           { status: "new",     date: "2026-05-27" },
-  "Purchased Badge":       { status: "new",     date: "2026-05-27" },
-  // ── Most recent push: updated ──────────────────────────────────
-  "Song List Item":        { status: "updated", date: "2026-05-27" },
-  "Card Rail":             { status: "updated", date: "2026-05-27" },
-  "Album Card":            { status: "updated", date: "2026-05-27" },
+  // ── This cycle: new ───────────────────────────────────────────
+  "Chip Input":            { status: "new" },
+  "Media Header":          { status: "new" },
+  "Purchase Album Dialog": { status: "new" },
+  "Paywall":               { status: "new" },
+  "User Avatar":           { status: "new" },
+  "Purchased Badge":       { status: "new" },
+
+  // ── This cycle: updated ───────────────────────────────────────
+  "Song List Item":        { status: "updated" },
+  "Card Rail":             { status: "updated" },
+  "Album Card":            { status: "updated" },
+
   // ── Built but not yet consumed in a live app surface ──────────
-  // Renders the "Not used yet" badge. Keeps the section visible so
-  // devs can iterate, but signals it's design-system inventory, not
-  // shipped UI. `pushed` is the date the component first shipped
-  // (it's in production, just not consumed yet).
-  //
-  // `Purchased Badge` lives here because the live `AlbumCard` and
-  // `MediaHeader` inline a plain check + "Owned" text pattern rather
-  // than calling the component. Keep the component around in case
-  // we want a richer pill treatment later, but don't claim it's in
-  // active use.
-  "Form":            { status: "concept", pushed: "2026-04-20" },
-  "Pagination":      { status: "concept", pushed: "2026-04-20" },
-  "Command":         { status: "concept", pushed: "2026-04-20" },
-  "Accordion":       { status: "concept", pushed: "2026-05-17" },
-  "ScrollArea":      { status: "concept", pushed: "2026-05-17" },
-  "NavigationMenu":  { status: "concept", pushed: "2026-05-17" },
-  "OTP Input":       { status: "concept", pushed: "2026-04-20" },
-  "Popover":         { status: "concept", pushed: "2026-04-20" },
-  "Collapsible":     { status: "concept", pushed: "2026-05-17" },
-  "Meter":           { status: "concept", pushed: "2026-05-17" },
-  "Skeleton":        { status: "concept", pushed: "2026-04-20" },
-  "Toolbar":         { status: "concept", pushed: "2026-05-17" },
+  // Renders the "Not used yet" badge. The "changed" date still
+  // auto-derives from each file's git history.
+  "Form":            { status: "concept" },
+  "Pagination":      { status: "concept" },
+  "Command":         { status: "concept" },
+  "Accordion":       { status: "concept" },
+  "ScrollArea":      { status: "concept" },
+  "NavigationMenu":  { status: "concept" },
+  "OTP Input":       { status: "concept" },
+  "Popover":         { status: "concept" },
+  "Collapsible":     { status: "concept" },
+  "Meter":           { status: "concept" },
+  "Skeleton":        { status: "concept" },
+  "Toolbar":         { status: "concept" },
 }
 
 /** Same map keyed by Section `id` (post-`idFor` lowercasing) so the

@@ -2,7 +2,8 @@
 
 import React, { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { ContentTypeBadge, StatusBadge } from "@/components/ui/badge"
+import { ContentTypeBadge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/ui/status-badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ChipDismiss } from "@/components/ui/chip"
 import {
@@ -784,11 +785,9 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
         <div className="hidden md:flex items-center gap-2 shrink-0">
           {/* Columns */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="font-normal">
-                <Settings2 className="size-4" />
-                Set columns
-              </Button>
+            <DropdownMenuTrigger render={<Button variant="ghost" className="font-normal" />}>
+              <Settings2 className="size-4" />
+              Set columns
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuGroup>

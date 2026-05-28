@@ -25,9 +25,10 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import {
-  OrderStatusBadge, formatDate, formatTotal,
+  formatDate, formatTotal,
   type OrderItem,
 } from "@/components/app/orders-view"
+import { OrderStatusBadge } from "@/components/ui/order-status-badge"
 import { ItemsSection as SharedItemsSection } from "@/components/app/items-section"
 import { RefundFlow } from "@/components/app/refund-flow"
 import type { Checkout, Fulfillment } from "@/components/app/purchases-view"
