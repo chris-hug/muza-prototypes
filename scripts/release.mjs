@@ -1,32 +1,27 @@
 #!/usr/bin/env node
 /*
- * Release script — preps the design-system status map for a fresh push.
+ * Release helper for the design-system status map.
  *
- * Run BEFORE `git push`:
- *   npm run release                      # uses today's date
- *   npm run release -- 2026-06-01        # explicit date (YYYY-MM-DD)
- *   npm run release -- --clear           # also graduate badges
- *   npm run release -- 2026-06-01 --clear
+ * `LAST_GIT_PUSH` is NO LONGER managed here — it auto-derives from
+ * git at build time (see `vite.config.ts` → `__LAST_GIT_PUSH__`). So
+ * a normal "push as same release" needs NO script run at all: just
+ * commit + push. The deployed build stamps the page with HEAD's
+ * commit date automatically, and every `New` / `Updated` badge stays
+ * frozen exactly as authored.
  *
- * Default behavior (no --clear):
- *   1. Bumps `LAST_GIT_PUSH` in `app/routes/ds-status.ts`.
- *   2. For every `new` / `updated` entry: bumps `pushed` to the new
- *      date so the section header shows the badge AND the up-to-date
- *      "Pushed: <today>" stamp. Status persists past the push so
- *      collaborators can see what landed in the latest release.
+ * This script does ONE thing: graduate badges when you start a NEW
+ * release cycle.
  *
- * With --clear:
- *   1. Bumps `LAST_GIT_PUSH`.
- *   2. Strips every `new` / `updated` entry from the map — for when
- *      the previous cycle's badges have done their job and you're
- *      starting a fresh round.
+ *   npm run release -- --clear     # drop every New/Updated entry
  *
- * Concept entries are always left untouched (they didn't ship in
- * this cycle; their own pushed dates stay accurate).
+ * Graduating strips the `new` / `updated` entries from the map so the
+ * badges disappear — they've done their job, and the next cycle's
+ * changes start flagging fresh. `concept` ("Not used yet") entries are
+ * always left untouched.
  *
- * The script edits the file in place and prints a summary. Stage +
- * commit afterwards (the script intentionally doesn't auto-commit so
- * you can review the diff first).
+ * The script edits `ds-status.ts` in place and prints a summary. Stage
+ * + commit afterwards (it intentionally doesn't auto-commit so you can
+ * review the diff first).
  */
 
 import { readFile, writeFile } from "node:fs/promises"
@@ -36,76 +31,52 @@ import { dirname, resolve }    from "node:path"
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const FILE      = resolve(__dirname, "..", "app", "routes", "ds-status.ts")
 
-function todayISO() {
-  const d = new Date()
-  return [
-    d.getFullYear(),
-    String(d.getMonth() + 1).padStart(2, "0"),
-    String(d.getDate()).padStart(2, "0"),
-  ].join("-")
-}
-
 const args      = process.argv.slice(2)
 const clearFlag = args.includes("--clear")
-const dateArg   = args.find(a => /^\d{4}-\d{2}-\d{2}$/.test(a))
-const newDate   = dateArg ?? todayISO()
-if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
-  console.error(`✗ Invalid date: ${newDate}. Use YYYY-MM-DD.`)
-  process.exit(1)
+
+if (!clearFlag) {
+  console.log(`
+ℹ  Nothing to do.
+
+   "Last pushed" auto-derives from git now, and New/Updated badges
+   stay frozen within a release. To push as the SAME release, just:
+
+       git add … && git commit && git push
+
+   To START A NEW RELEASE (graduate the current badges), run:
+
+       npm run release -- --clear
+`)
+  process.exit(0)
 }
 
 const source = await readFile(FILE, "utf8")
 
-// ── 1. Bump LAST_GIT_PUSH ────────────────────────────────────────
-const pushRegex  = /(export\s+const\s+LAST_GIT_PUSH\s*=\s*")(\d{4}-\d{2}-\d{2})(")/
-const pushMatch  = source.match(pushRegex)
-if (!pushMatch) {
-  console.error("✗ Couldn't find LAST_GIT_PUSH declaration.")
-  process.exit(1)
-}
-const prevPush = pushMatch[2]
-let updated = source.replace(pushRegex, `$1${newDate}$3`)
-
-// ── 2. Process new / updated entries ─────────────────────────────
-// Matches lines like:  "Album Card": { status: "updated", date: "...", pushed: "..." },
+// Strip every `new` / `updated` entry. Matches lines like:
+//   "Album Card": { status: "updated", date: "...", pushed: "..." },
 const entryRegex = /^(\s*)"([^"]+)":\s*\{\s*status:\s*"(new|updated)"[^}]*\},?\s*\n/gm
-const touched    = []
+const graduated  = []
 
-updated = updated.replace(entryRegex, (match, indent, title, status) => {
-  touched.push({ title, status })
-  if (clearFlag) {
-    // Graduate — drop the line entirely.
-    return ""
-  }
-  // Preserve badge but bump pushed date so the "Pushed: …" stamp
-  // reflects this release. `date` stays as the original change date.
-  // Pull the `date` value if present (otherwise reuse the push date).
-  const dateMatch = match.match(/date:\s*"([^"]+)"/)
-  const dateVal   = dateMatch?.[1] ?? newDate
-  return `${indent}"${title}": { status: "${status}", date: "${dateVal}", pushed: "${newDate}" },\n`
+const updated = source.replace(entryRegex, (_match, _indent, title, status) => {
+  graduated.push({ title, status })
+  return ""
 })
 
-// ── Persist ──────────────────────────────────────────────────────
+if (graduated.length === 0) {
+  console.log("✓ No New/Updated entries to graduate — already a clean slate.")
+  process.exit(0)
+}
+
 await writeFile(FILE, updated, "utf8")
 
-// ── Report ───────────────────────────────────────────────────────
-console.log(`✓ LAST_GIT_PUSH:  ${prevPush}  →  ${newDate}`)
-if (touched.length === 0) {
-  console.log("✓ No new/updated entries to process.")
-} else if (clearFlag) {
-  console.log(`✓ Graduated ${touched.length} entr${touched.length === 1 ? "y" : "ies"} (badges removed):`)
-  for (const { title, status } of touched) {
-    console.log(`    · ${title}  (was ${status})`)
-  }
-} else {
-  console.log(`✓ Bumped pushed date on ${touched.length} entr${touched.length === 1 ? "y" : "ies"} (badges kept):`)
-  for (const { title, status } of touched) {
-    console.log(`    · ${title}  (${status})`)
-  }
-  console.log("\n   Run with --clear next cycle to drop these badges entirely.")
+console.log(`✓ Graduated ${graduated.length} entr${graduated.length === 1 ? "y" : "ies"} (badges removed):`)
+for (const { title, status } of graduated) {
+  console.log(`    · ${title}  (was ${status})`)
 }
-console.log("\nNext steps:")
-console.log("  git diff app/routes/ds-status.ts   # review the edit")
-console.log("  git add app/routes/ds-status.ts")
-console.log("  git commit -m \"cycle: <message>\"")
-console.log("  git push")
+console.log(`
+Next steps:
+  git diff app/routes/ds-status.ts   # review the edit
+  git add app/routes/ds-status.ts
+  git commit -m "release: graduate <cycle> badges"
+  git push
+`)

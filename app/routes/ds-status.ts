@@ -2,14 +2,15 @@
  * Single source of truth for design-system section status badges.
  *
  * Both the sidebar (`design-system.tsx`) and the in-content section
- * header (`Section` in `home.tsx`) read from this map. Reset before
- * every push so badges only flag what genuinely changed this cycle —
- * stale "New" labels from old pushes dilute the signal otherwise.
+ * header (`Section` in `home.tsx`) read from this map. Badges stay
+ * frozen across same-release pushes; graduate them (drop the entries)
+ * only when starting a NEW release — run `npm run release -- --clear`.
+ * Stale "New" labels from old cycles dilute the signal otherwise.
  *
  * `date` is the YYYY-MM-DD when the status was set (added or last
- * updated). Rendered next to the badge so readers can see how recent
- * a change is at a glance. `LAST_GIT_PUSH` (below) is the page-level
- * "last shipped" timestamp.
+ * updated) — a curated, hand-authored signal rendered next to the
+ * badge. `LAST_GIT_PUSH` (below) is the page-level "last shipped"
+ * timestamp and auto-derives from git at build time.
  */
 
 export type SectionStatus = "new" | "updated" | "concept"
@@ -30,10 +31,18 @@ export interface SectionStatusEntry {
 }
 
 /** YYYY-MM-DD of the last push to the prototype's `main` branch.
- *  Bump per push. Surfaces in each section header as the default
- *  "Pushed: …" date, and at the top of the design-system page as
- *  the global "Last pushed" marker. */
-export const LAST_GIT_PUSH = "2026-05-27"
+ *  Auto-derived from git at build time (`__LAST_GIT_PUSH__` injected
+ *  by `vite.config.ts` = HEAD's commit date). In CI the deployed
+ *  build runs from the just-pushed commit, so this IS the push date —
+ *  no hand-maintenance. Falls back to "" if git was unavailable at
+ *  build (the DS header hides the label when empty).
+ *
+ *  Surfaces in each section header as the default "Pushed: …" date,
+ *  and at the top of the design-system page as the global "Last
+ *  pushed" marker. */
+declare const __LAST_GIT_PUSH__: string
+export const LAST_GIT_PUSH: string =
+  typeof __LAST_GIT_PUSH__ !== "undefined" ? __LAST_GIT_PUSH__ : ""
 
 /** Title → entry. Keys must match the sidebar `items` and section
  *  `title` props exactly. */
@@ -43,16 +52,20 @@ export const SECTION_STATUS: Record<string, SectionStatusEntry> = {
   // in the latest release. Graduate (delete the entry) once the
   // badges have done their job — typically when a new cycle starts
   // and the next round of changes is being flagged.
-  "Chip Input": { status: "new", date: "2026-05-27", pushed: "2026-05-27" },
-  "Media Header": { status: "new", date: "2026-05-27", pushed: "2026-05-27" },
-  "Purchase Album Dialog": { status: "new", date: "2026-05-27", pushed: "2026-05-27" },
-  "Paywall": { status: "new", date: "2026-05-27", pushed: "2026-05-27" },
-  "User Avatar": { status: "new", date: "2026-05-27", pushed: "2026-05-27" },
-  "Purchased Badge": { status: "new", date: "2026-05-27", pushed: "2026-05-27" },
+  // `pushed` is omitted on current-cycle entries so they inherit the
+  // auto-derived `LAST_GIT_PUSH` (git HEAD date) — no hand-maintained
+  // stamps to go stale. `date` is the curated "when this meaningfully
+  // changed" signal and stays authored by hand.
+  "Chip Input":            { status: "new",     date: "2026-05-27" },
+  "Media Header":          { status: "new",     date: "2026-05-27" },
+  "Purchase Album Dialog": { status: "new",     date: "2026-05-27" },
+  "Paywall":               { status: "new",     date: "2026-05-27" },
+  "User Avatar":           { status: "new",     date: "2026-05-27" },
+  "Purchased Badge":       { status: "new",     date: "2026-05-27" },
   // ── Most recent push: updated ──────────────────────────────────
-  "Song List Item": { status: "updated", date: "2026-05-27", pushed: "2026-05-27" },
-  "Card Rail": { status: "updated", date: "2026-05-27", pushed: "2026-05-27" },
-  "Album Card": { status: "updated", date: "2026-05-27", pushed: "2026-05-27" },
+  "Song List Item":        { status: "updated", date: "2026-05-27" },
+  "Card Rail":             { status: "updated", date: "2026-05-27" },
+  "Album Card":            { status: "updated", date: "2026-05-27" },
   // ── Built but not yet consumed in a live app surface ──────────
   // Renders the "Not used yet" badge. Keeps the section visible so
   // devs can iterate, but signals it's design-system inventory, not

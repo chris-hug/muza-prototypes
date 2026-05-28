@@ -192,7 +192,8 @@ function Section({
   // the map suppresses the stamp (used for components that haven't
   // shipped at all yet).
   const pushedRaw       = entry?.pushed !== undefined ? entry.pushed : LAST_GIT_PUSH
-  const pushedDate      = pushedRaw === null ? null : pushedRaw
+  // Treat null AND "" (git unavailable at build) as "no stamp".
+  const pushedDate      = pushedRaw ? pushedRaw : null
   return (
     <section
       id={id}
@@ -1820,9 +1821,13 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         <div className="max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto px-10 flex flex-col gap-3">
           <h1 className="text-5xl font-medium leading-none tracking-[-0.025em]">The muza design system</h1>
           <p className="text-small text-muted-foreground">
-            Last pushed to git:{" "}
-            <span className="text-foreground tabular-nums">{formatStatusDate(LAST_GIT_PUSH)}</span>.
-            {" "}Sections with a <span className="text-foreground">New</span> or <span className="text-foreground">Updated</span> badge landed in this release.
+            {LAST_GIT_PUSH && (
+              <>
+                Last pushed to git:{" "}
+                <span className="text-foreground tabular-nums">{formatStatusDate(LAST_GIT_PUSH)}</span>.{" "}
+              </>
+            )}
+            Sections with a <span className="text-foreground">New</span> or <span className="text-foreground">Updated</span> badge landed in this release.
           </p>
         </div>
       </div>

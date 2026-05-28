@@ -81,7 +81,7 @@ export function SubscriptionPromptDialog({
               The Platform for Independent Music
             </p>
             <DialogTitle className="text-3xl sm:text-4xl leading-[1.05] font-medium text-foreground tracking-[-0.02em] max-w-[16ch]">
-              Turn your listening into direct artist&nbsp;support.
+              Support your artists.
             </DialogTitle>
             <DialogDescription className="sr-only">
               Choose what you pay monthly to support the artists you listen to. As a non-profit, muza distributes 100% of your subscription to artists by your actual listening time.
@@ -188,7 +188,7 @@ export function SubscriptionPromptDialogPreview({
             The Platform for Independent Music
           </p>
           <h2 className="text-3xl sm:text-4xl leading-[1.05] font-medium text-foreground tracking-[-0.02em] max-w-[16ch]">
-            Turn your listening into direct artist&nbsp;support.
+            Support your artists.
           </h2>
           <ul className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-small pt-2">
             <ImpactRow>Unlimited streaming</ImpactRow>
