@@ -11,15 +11,20 @@
  */
 
 import { useState } from "react"
-import { useSearchParams } from "react-router"
 
 import { AlbumCard } from "@/components/ui/album-card"
+import { AlbumListTable, AlbumMobileList, LibrarySortMenu } from "@/components/app/media-list-table"
 import { useUserLibrary } from "@/lib/user-library"
+import { useMediaNav, slugify } from "@/lib/media-nav"
+import { useLibraryView } from "@/lib/use-library-view"
+import { useLibrarySort, compareLibrary } from "@/lib/use-library-sort"
+import { useFooterNav } from "@/lib/use-media-query"
 import { Toggle } from "@/components/ui/toggle"
 import { ToggleGroup } from "@/components/ui/toggle-group"
-import { CircleCheckBig } from "lucide-react"
+import { SingleSelect } from "@/components/ui/single-select"
+import { LayoutGrid, List, ListFilter } from "lucide-react"
 
-interface SavedAlbum {
+export interface SavedAlbum {
   id:           string
   cover:        string
   title:        string
@@ -41,7 +46,7 @@ const COVER = (seed: string) => `https://picsum.photos/seed/${seed}/400/400`
 // artist pairs target real releases so `scripts/fetch-itunes-artwork.mjs`
 // can populate covers on demand; on a lookup miss we fall back to
 // picsum so the array still renders.
-const SAVED_ALBUMS: SavedAlbum[] = [
+export const SAVED_ALBUMS: SavedAlbum[] = [
   // ── Blue Note ────────────────────────────────────────────────────────────
   { id: "a01", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/23/49/49/234949c3-db74-f0eb-30f5-d715526e459b/19UMGIM73745.rgb.jpg/600x600bb.jpg",        title: "Maiden Voyage",                       artist: "Herbie Hancock",                  year: 1965 },
   { id: "a02", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/a8/ee/3c/a8ee3cc7-e694-f7e1-5208-2c67f9ae5ed5/13ULAIM49176.rgb.jpg/600x600bb.jpg",        title: "Speak No Evil",                       artist: "Wayne Shorter",                   year: 1966, streamPrice: "$2.99", downloadPrice: "$5.99" },
@@ -119,47 +124,89 @@ const SAVED_ALBUMS: SavedAlbum[] = [
 ]
 
 export function LibraryAlbumsView() {
-  // SPA navigation: tapping an album → `?page=Album`. Mock-data view
-  // (`AlbumDetailView`) always renders the same album; real wiring
-  // would pass an `album-id` query param.
-  const [, setParams] = useSearchParams()
+  // SPA navigation: tapping an album → `?page=Album&album=<slug>`. The
+  // slug threads into AlbumDetailView, which resolves it via the album
+  // catalog (rich detail for a01–a08; synthesized for the rest).
+  const { openAlbum } = useMediaNav()
   const library = useUserLibrary()
-  // Single-state toggle filter — flick "Purchased only" on to hide
-  // free-added entries. Cheap to reset, no commitment.
-  const [purchasedOnly, setPurchasedOnly] = useState(false)
-  const openAlbum = () => {
-    setParams(prev => {
-      const next = new URLSearchParams(prev)
-      next.set("page", "Album")
-      return next
-    }, { replace: true })
-  }
+  // Status filter — a scalable dropdown (room for more lenses later)
+  // rather than a binary segment. "all" = everything in the library.
+  const [status, setStatus] = useState<"all" | "owned" | "downloaded">("all")
+  // Tile (default) vs list mode — remembered + shared across library pages.
+  const [view, setView] = useLibraryView()
+  // Below the footer-nav breakpoint the wide sortable table doesn't fit;
+  // list mode renders a stack of MediaListItem nav rows instead.
+  const footerNav = useFooterNav()
+  // Mobile sort (the desktop table sorts via its own column headers).
+  const [sort] = useLibrarySort()
+
+  const filtered = SAVED_ALBUMS
+    .filter(a => library.isAdded(a.id))
+    .filter(a => {
+      if (status === "owned")      return library.isPurchased(a.id)
+      if (status === "downloaded") return library.entryFor(a.id)?.tier === "download"
+      return true
+    })
+  // On mobile the sort menu drives the order (grid + list both); on
+  // desktop the order is the table's job, so leave it untouched.
+  const albums = footerNav
+    ? [...filtered].sort(compareLibrary(sort, a => a.title))
+    : filtered
   return (
     <div className="flex-1 overflow-auto">
       {/* Max width fits exactly N×220 + (N-1)×16 + 2×40 padding at
            the 6-col step (=1480). Anything wider leaves a "leftover"
            strip on the right that makes the toggle on the header
-           appear to float past the grid's edge. */}
-      <div className="@container mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] px-10 pt-8 pb-12">
-        <div className="flex items-end justify-between gap-4 mb-6">
-          <h1 className="text-2xlarge font-medium text-foreground tracking-tight">
+           appear to float past the grid's edge.
+           NOTE: `@container` is NOT on this wrapper — a query container
+           also becomes the containing block for absolutely-positioned
+           descendants, which would trap the list table's floating bulk
+           bar. It lives on the grid wrapper below instead. */}
+      <div className="mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] px-page pt-8 pb-12">
+        {/* On mobile the frosted header already shows "Library" + the
+             active filter pill, so the page heading is redundant. */}
+        {!footerNav && (
+          <h1 className="text-2xlarge font-medium text-foreground tracking-tight mb-4">
             Albums
           </h1>
-          {/* Two-state segmented filter — All / Purchased. Reads as
-               a standard tab-style switch the user already knows from
-               toolbars elsewhere in the app. */}
+        )}
+        {/* Toolbar — filters on the LEFT (distinct from the view
+             switch on the RIGHT). Filter = "what", view = "how": two
+             different roles, so they live on opposite ends rather than
+             reading as one 4-segment control. Mirrors the Discography /
+             Studio toolbars. */}
+        <div className="flex items-center justify-between gap-4 mb-6">
+          {/* Left control: desktop = status filter; mobile = sort menu
+               (the header's filter pills replace the status filter
+               there). */}
+          <div className="flex items-center gap-2 min-w-0">
+            {footerNav ? (
+              <LibrarySortMenu />
+            ) : (
+              <SingleSelect
+                value={status}
+                onChange={setStatus}
+                icon={<ListFilter className="size-4" />}
+                options={[
+                  { value: "all",        label: "All albums" },
+                  { value: "owned",      label: "Owned" },
+                  { value: "downloaded", label: "Downloaded" },
+                ]}
+              />
+            )}
+          </div>
+          {/* Tile / list view switch. */}
           <ToggleGroup
             size="sm"
-            value={[purchasedOnly ? "purchased" : "all"]}
-            onValueChange={(v) => setPurchasedOnly(v[0] === "purchased")}
-            aria-label="Library filter"
+            value={[view]}
+            onValueChange={(v) => { if (v[0]) setView(v[0] as "grid" | "list") }}
+            aria-label="View mode"
           >
-            <Toggle value="all" aria-label="All albums">
-              All
+            <Toggle value="grid" aria-label="Tile view">
+              <LayoutGrid className="size-3.5" />
             </Toggle>
-            <Toggle value="purchased" aria-label="Owned only">
-              <CircleCheckBig className="size-3.5" />
-              Owned
+            <Toggle value="list" aria-label="List view">
+              <List className="size-3.5" />
             </Toggle>
           </ToggleGroup>
         </div>
@@ -184,31 +231,34 @@ export function LibraryAlbumsView() {
              Each track is `minmax(143px, 220px)` — cards are clamped
              to a 143 floor and 220 ceiling. Below the 2-col threshold
              the grid drops to a single column. */}
-        <ul className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))] @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))] @min-[1500px]:grid-cols-[repeat(7,minmax(143px,220px))] gap-x-4 gap-y-6">
-          {SAVED_ALBUMS
-            // Library only shows albums actually in the user's library.
-            // SAVED_ALBUMS is a global catalog seed; the per-user store
-            // decides which are "in my library" via `isAdded`. The
-            // `purchasedOnly` toggle narrows further to paid items.
-            .filter(a => library.isAdded(a.id))
-            .filter(a => !purchasedOnly || library.isPurchased(a.id))
-            .map(a => (
-              <li key={a.id}>
-                <AlbumCard
-                  cover={a.cover}
-                  title={a.title}
-                  artist={a.artist}
-                  year={a.year}
-                  streamPrice={a.streamPrice}
-                  downloadPrice={a.downloadPrice}
-                  purchased={library.isPurchased(a.id)}
-                  onTitleClick={openAlbum}
-                  onPlay={openAlbum}
-                  className="w-full"
-                />
-              </li>
-            ))}
-        </ul>
+        {view === "grid" ? (
+          <div className="@container">
+            <ul className="grid-cards">
+              {albums.map(a => (
+                <li key={a.id}>
+                  <AlbumCard
+                    cover={a.cover}
+                    title={a.title}
+                    artist={a.artist}
+                    year={a.year}
+                    streamPrice={a.streamPrice}
+                    downloadPrice={a.downloadPrice}
+                    purchased={library.isPurchased(a.id)}
+                    inLibrary
+                    onRemove={() => library.remove(a.id)}
+                    onTitleClick={() => openAlbum(slugify(a.title))}
+                    onPlay={() => openAlbum(slugify(a.title))}
+                    className="w-full"
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : footerNav ? (
+          <AlbumMobileList albums={albums} />
+        ) : (
+          <AlbumListTable albums={albums} />
+        )}
       </div>
     </div>
   )

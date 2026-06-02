@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-import { Disc3, ListMusic, Mic, Music2 } from "lucide-react"
+import { Disc3, ListMusic, Mic, Music2, Building2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -42,11 +42,22 @@ const badgeVariants = cva(
         primary:
           "bg-primary text-primary-foreground border-primary",
         // Success — saturated mint fill (#00D5A3). Strong attention
-        // signal at a glance ("New", "Beta", "Recommended") without
-        // using brand-primary blue. Dark text + matching border for
-        // legibility in both themes.
+        // signal at a glance ("Beta", "Recommended") without using
+        // brand-primary blue. Dark text + matching border.
         success:
           "bg-[#00D5A3] text-black border-[#00b889]",
+        // New / Updated — soft tinted pills borrowed from the
+        // user-avatar palette (`src/lib/avatar.ts`) so the DS status
+        // flags feel part of the same warm family. `new` = Mint,
+        // `updated` = Honey. Mode-aware: pale bg + dark fg in light
+        // mode, flipped (dark bg + pale fg) in dark mode. Both ways
+        // clear ≥4.5:1.
+        new:
+          "bg-[#F4FAF6] text-[#27563F] border-[#27563F]/15 " +
+          "dark:bg-[#27563F] dark:text-[#F4FAF6] dark:border-[#F4FAF6]/15",
+        updated:
+          "bg-[#FEF8E0] text-[#5C4612] border-[#5C4612]/15 " +
+          "dark:bg-[#5C4612] dark:text-[#FEF8E0] dark:border-[#FEF8E0]/15",
         // Destructive (node 26:185)
         destructive:
           "bg-destructive text-white",
@@ -104,7 +115,7 @@ function Badge({ className, variant, shape, ...props }: BadgeProps) {
 // Always: bg-accent + left Lucide icon (12px) + label text.
 // ─────────────────────────────────────────────────────────────────────────────
 
-type ContentType = "song" | "album" | "single" | "ep" | "artist" | "playlist"
+type ContentType = "song" | "album" | "single" | "ep" | "artist" | "playlist" | "label"
 
 const contentTypeConfig: Record<ContentType, { label: string; icon: React.ElementType }> = {
   song:     { label: "Song",     icon: Music2 },
@@ -113,6 +124,7 @@ const contentTypeConfig: Record<ContentType, { label: string; icon: React.Elemen
   ep:       { label: "EP",       icon: Disc3 },
   artist:   { label: "Artist",   icon: Mic },
   playlist: { label: "Playlist", icon: ListMusic },
+  label:    { label: "Label",    icon: Building2 },
 }
 
 interface ContentTypeBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {

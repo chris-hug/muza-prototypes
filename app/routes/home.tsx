@@ -1,7 +1,17 @@
 import { useState, useEffect, useMemo, useRef } from "react"
 import { useSearchParams } from "react-router"
 import { cn } from "@/lib/utils"
-import { useIsMobile } from "@/lib/use-media-query"
+import { useSidebarAutoCollapsed, useFooterNav } from "@/lib/use-media-query"
+import { FooterNav } from "@/components/app/footer-nav"
+import { MobileAppHeader } from "@/components/app/mobile-app-header"
+import { MediaListItem } from "@/components/ui/media-list-item"
+import { SearchResultsView } from "@/components/app/search-results-view"
+import { useMediaNav, slugify } from "@/lib/media-nav"
+import { registerAlbums } from "@/lib/album-catalog"
+import { CreditsProvider, CreditsDialogPreview, useCredits } from "@/components/app/credits-dialog"
+import { BulkActionBarContent, BulkActionButton } from "@/components/ui/bulk-action-bar"
+import { ResponsiveDiagram } from "@/components/app/responsive-diagram"
+import { registerPlaylists } from "@/lib/playlist-catalog"
 import { AnimatedLogo } from "@/components/app/animated-logo"
 import { Sidebar } from "@/components/app/sidebar"
 import { StudioMusicView } from "@/components/app/studio-music"
@@ -91,14 +101,17 @@ import { Chip, ChipDismiss, ChipGroup } from "@/components/ui/chip"
 import { SingleSelect } from "@/components/ui/single-select"
 import { useToast, ToastPreview } from "@/components/ui/toast"
 import {
-  AlertCircle, CheckCircle2, Info, Music2, Heart, Share2,
+  AlertCircle, CheckCircle2, Info, Music2, Heart, Share,
   SkipBack, SkipForward, Play, Pause, Shuffle, Repeat,
   Settings, User, LogOut, Upload, MoreHorizontal,
   Plus, Search, ChevronDown, Trash2, SlidersHorizontal, Maximize2,
   Radio as RadioIcon, ShoppingBag, Disc3, Disc, CassetteTape, Shirt, Ghost,
   ChevronLeft, ChevronRight, Globe, X, Sun, Moon, MapPin, CircleCheckBig,
-  Code, ArrowUpRight,
+  Code, ArrowUpRight, Truck, Mail,
+  ListPlus, ListStart, ListEnd, Mic, Flag, Clock,
 } from "lucide-react"
+import { DetailMoreButton } from "@/components/ui/detail-more-button"
+import { SearchPanel } from "@/components/ui/search-panel"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import {
   Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow,
@@ -130,8 +143,14 @@ import { AlbumDetailView } from "@/components/app/album-detail-view"
 import { PlaylistDetailView } from "@/components/app/playlist-detail-view"
 import { PurchaseAlbumDialog, PurchaseAlbumDialogPreview } from "@/components/app/purchase-album-dialog"
 import { SubscriptionPromptDialog, SubscriptionPromptDialogPreview, SubscriptionCheckoutDialog } from "@/components/app/subscription-dialogs"
-import { LibraryArtistsView } from "@/components/app/library-artists-view"
-import { LibraryPlaylistsView } from "@/components/app/library-playlists-view"
+import { LibraryArtistsView, SAVED_ARTISTS } from "@/components/app/library-artists-view"
+import { LibraryPlaylistsView, SAVED_PLAYLISTS } from "@/components/app/library-playlists-view"
+import { LibrarySongsView, SAVED_SONGS_SEED } from "@/components/app/library-songs-view"
+// Imported after the per-type views so the SAVED_* data modules they
+// own are initialised before this combined view (which reads them)
+// enters the playlist-catalog import cycle.
+import { LibraryAllView } from "@/components/app/library-all-view"
+import { DetailActionsProvider } from "@/lib/detail-actions"
 import { AlbumCard } from "@/components/ui/album-card"
 import { ArtistCard } from "@/components/ui/artist-card"
 import { PlaylistCard } from "@/components/ui/playlist-card"
@@ -141,11 +160,15 @@ import { CoverPlayButton } from "@/components/ui/cover-play-button"
 import { PlayingWave } from "@/components/ui/playing-wave"
 import { Spinner } from "@/components/ui/spinner"
 import { TopProgressBar } from "@/components/ui/top-progress-bar"
-import { AlbumCardMenuItems } from "@/components/ui/cover-card-menu"
+import { AlbumCardMenuItems, PlaylistCardMenuItems } from "@/components/ui/cover-card-menu"
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
 import { CardRail } from "@/components/app/card-rail"
 import { PlaylistCreateCard } from "@/components/ui/playlist-create-card"
 import { MediaHeader } from "@/components/ui/media-header"
+import {
+  MobileHeader, MobileTitleRow, MobileIconButton, MobileAvatar,
+  MobileSearchBar, MobilePillTabs, MobileScopeToggle,
+} from "@/components/ui/mobile-header"
 import { Section as PageSection } from "@/components/app/section"
 import { ItemsSection as DetailItemsSection } from "@/components/app/items-section"
 import { COUNTRY_CODES, countryName } from "@/lib/countries"
@@ -153,6 +176,8 @@ import { MultiSelect } from "@/components/ui/multi-select"
 import { PlayerBar }     from "@/components/ui/player-bar"
 import { PlayerBarB }    from "@/components/ui/player-bar-b"
 import { PlayerOverlay } from "@/components/ui/player-overlay"
+import { PlayerProvider } from "@/lib/player"
+import { AppPlayer }     from "@/components/app/app-player"
 import { MobilePlayerShell } from "@/components/ui/mobile-player-shell"
 import { Wordmark }      from "@/components/ui/logo"
 import DesignSystem      from "./design-system"
@@ -198,57 +223,46 @@ function Section({
     <section
       id={id}
       data-phase={phase}
-      className="mb-16 scroll-mt-6"
+      className="mb-36 scroll-mt-6"
     >
-      <div className="flex flex-col gap-1.5 mb-5 pb-3 border-b border-border">
-        <div className="flex items-center gap-2">
-          <p className="text-small font-normal text-foreground">{title}</p>
-          {/* Status pill — primary fill for brand-new sections,
-               outline for components that got new variants/props.
-               Uses the design-system `Badge` (the docs eat their own
-               dog food). */}
-          {/* Right-aligned cluster: hand-rolled status badge +
-               auto-derived "Changed …" date. The date anchors the
-               right edge across every section so the eye can scan a
-               column of dates without jitter; the badge sits just to
-               its left, separated by a larger gap. */}
-          <div className="ml-auto flex items-center gap-4">
-            {resolvedStatus && (
-              <>
-                {resolvedStatus === "new"     && <Badge variant="success">New</Badge>}
-                {resolvedStatus === "updated" && <Badge variant="outline">Updated</Badge>}
-                {/* `concept` = built but not yet wired into the
-                     prototype. Keep visible so we can iterate, but
-                     make it clear it's not actually in use. */}
-                {resolvedStatus === "concept" && <Badge variant="outline">Not used yet</Badge>}
-              </>
-            )}
-            {/* "Changed …" stamp — auto from git history. Suppressed
-                 for sections with no mapped source file. */}
-            {changedDate && (
-              <span className="text-2xsmall text-muted-foreground tabular-nums">
-                Changed{" "}<span className="text-foreground">{formatStatusDate(changedDate)}</span>
-              </span>
-            )}
-            {/* Deep link to the component source on GitHub — auto from
-                 the section→file map + git remote. */}
-            {sourceUrl && (
-              <a
-                href={sourceUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 text-2xsmall text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Code className="size-3.5" />
-                Source
-                <ArrowUpRight className="size-3" />
-              </a>
-            )}
-          </div>
-          {phase === 2          && <Badge variant="secondary">Phase 2 · Shop</Badge>}
+      <div className="mb-5">
+        {/* One line — name, status labels (New / Updated / Not used
+             yet / Phase 2), then the auto "Changed …" date + GitHub
+             source button pushed to the right. The border sits under
+             this row; the "Used in" annotation drops below the line. */}
+        <div className="flex items-center gap-2 flex-wrap pb-3 border-b border-border">
+          <p className="text-base font-medium text-foreground">{title}</p>
+          {resolvedStatus === "new"     && <Badge variant="new">New</Badge>}
+          {resolvedStatus === "updated" && <Badge variant="updated">Updated</Badge>}
+          {/* `concept` = built but not yet wired into the prototype.
+               Keep visible so we can iterate, but make it clear it's
+               not actually in use. */}
+          {resolvedStatus === "concept" && <Badge variant="outline">Not used yet</Badge>}
+          {phase === 2                  && <Badge variant="secondary">Phase 2 · Shop</Badge>}
+
+          {(changedDate || sourceUrl) && (
+            <div className="ml-auto flex items-center gap-2">
+              {changedDate && (
+                <span className="text-small text-muted-foreground tabular-nums">
+                  Changed{" "}<span className="text-foreground">{formatStatusDate(changedDate)}</span>
+                </span>
+              )}
+              {sourceUrl && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  render={<a href={sourceUrl} target="_blank" rel="noreferrer" />}
+                >
+                  <Code className="size-3.5" />
+                  Source
+                  <ArrowUpRight className="size-3" />
+                </Button>
+              )}
+            </div>
+          )}
         </div>
         {usage && usage.length > 0 && (
-          <p className="text-xsmall font-normal text-muted-foreground">
+          <p className="text-xsmall font-normal text-muted-foreground mt-3">
             <span className="opacity-70">Used in: </span>
             {usage.map((u, i) => (
               <span key={u.label + u.href}>
@@ -321,6 +335,39 @@ function SubLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
+// Phone-shaped frame for the MobileHeader showcase. The header sticks
+// to the top while faux content scrolls under it, so the frosted-glass
+// tint + blur actually reads (a flat backdrop would show nothing). The
+// frame is a fixed 320px so the 12px gutter + pill proportions match a
+// real phone regardless of the DS page's own viewport.
+function PhoneHeaderFrame({ header }: { header: React.ReactNode }) {
+  return (
+    <div className="w-[320px] shrink-0 rounded-[28px] border border-border overflow-hidden bg-background shadow-[0_1px_2px_rgba(13,13,4,0.06)]">
+      <div className="relative h-[300px] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="sticky top-0 z-10">{header}</div>
+        {/* Faux content so the glass has something to blur over. */}
+        <ul className="px-3 py-3 flex flex-col gap-3">
+          {[
+            { c: "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/01/36/a6/0136a666-36d2-caf1-efb1-da77a646d104/06UMGIM03764.rgb.jpg/120x120bb.jpg", t: "Kind of Blue", s: "Miles Davis" },
+            { c: "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/23/49/49/234949c3-db74-f0eb-30f5-d715526e459b/19UMGIM73745.rgb.jpg/120x120bb.jpg", t: "A Love Supreme", s: "John Coltrane" },
+            { c: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/a8/ee/3c/a8ee3cc7-e694-f7e1-5208-2c67f9ae5ed5/13ULAIM49176.rgb.jpg/120x120bb.jpg", t: "Mingus Ah Um", s: "Charles Mingus" },
+            { c: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/d6/a3/1d/d6a31d82-038d-a73f-5452-0380d8bd9bae/00724349532755.jpg/120x120bb.jpg", t: "Time Out", s: "The Dave Brubeck Quartet" },
+            { c: "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/01/36/a6/0136a666-36d2-caf1-efb1-da77a646d104/06UMGIM03764.rgb.jpg/120x120bb.jpg", t: "Blue Train", s: "John Coltrane" },
+          ].map((r, i) => (
+            <li key={i} className="flex items-center gap-3">
+              <img src={r.c} alt="" className="size-11 rounded-xs object-cover bg-secondary" />
+              <div className="min-w-0">
+                <p className="text-small font-medium text-foreground truncate">{r.t}</p>
+                <p className="text-xsmall text-muted-foreground truncate">{r.s}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  )
+}
+
 // Tiny stateful wrapper so each kitchen-sink stepper has its own value
 // without the page having to track 5+ pieces of state.
 function QtyStepperDemo({
@@ -364,6 +411,7 @@ const SEMANTIC_TOKENS: SemanticToken[] = [
                                    lPrim: "--muza-white",            dPrim: "--muza-neutrals-950"     },
   { token: "--primary",            lPrim: "--muza-blue-200",         dPrim: "--muza-blue-200"         },
   { token: "--primary-foreground", lPrim: "--muza-neutrals-50",      dPrim: "--muza-neutrals-50"      },
+  { token: "--primary-text",       lPrim: "--muza-blue-200",         dPrim: "--muza-blue-100"         },
   { token: "--secondary",          lPrim: "--muza-neutrals-200",     dPrim: "--muza-neutrals-800"     },
   { token: "--secondary-hover",    lPrim: "--muza-neutrals-300",     dPrim: "--muza-neutrals-700"     },
   { token: "--muted",              lPrim: "--muza-neutrals-50",      dPrim: "--muza-neutrals-900"     },
@@ -794,15 +842,34 @@ const HOME_WEEKLY_ARTISTS = [
   { id: "h-ar-12", name: "Theon Cross",         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Theon_Cross_at_Ljubljana%2C_May_2015.jpg/500px-Theon_Cross_at_Ljubljana%2C_May_2015.jpg" },
 ]
 
+// Register home-rail albums + playlists so their cards resolve to real
+// synthesized detail pages. Runs once at module load.
+registerAlbums(
+  [...HOME_NEW_ALBUMS, ...HOME_WEEKLY_ALBUMS].map(a => ({
+    id: a.id, title: a.title, cover: a.cover, artist: a.artist,
+    year: albumMetaFor(a.title).year,
+    streamPrice: albumMetaFor(a.title).streamPrice,
+    downloadPrice: albumMetaFor(a.title).downloadPrice,
+  })),
+)
+registerPlaylists(
+  HOME_WEEKLY_PLAYLISTS.map(p => ({
+    id: p.id, title: p.title, covers: p.covers,
+    songCount: p.songCount, owner: p.owner, owned: p.owned,
+  })),
+)
+
 function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
   const logoSize = useViewportLogoSize()
   const library  = useUserLibrary()
+  const { openAlbum, openPlaylist, openArtist } = useMediaNav()
   // Wrap an album catalog entry into a fully-propped AlbumCard via
   // the shared album-meta lookup. Same helper is reused in album /
   // playlist / artist detail rails so cards render consistently.
   const renderAlbum = (a: { id: string; title: string; artist: string; cover: string }) => {
     const meta  = albumMetaFor(a.title)
     const libId = libraryIdForTitle(a.title)
+    const key   = slugify(a.title)
     return (
       <AlbumCard
         cover={a.cover}
@@ -812,11 +879,13 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
         streamPrice={meta.streamPrice}
         downloadPrice={meta.downloadPrice}
         purchased={libId ? library.isPurchased(libId) : false}
+        onTitleClick={() => openAlbum(key)}
+        onPlay={() => openAlbum(key)}
       />
     )
   }
   return (
-    <div className="pt-30 pb-64 max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto w-full px-10 flex flex-col gap-6">
+    <div className="pt-30 pb-64 max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto w-full px-page flex flex-col gap-6">
       <div className="flex flex-col items-center gap-28 min-h-[65vh] justify-center">
         <div className="flex flex-col items-center gap-6">
           <Wordmark className="h-4 w-auto" />
@@ -849,6 +918,8 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
                 songCount={p.songCount}
                 owner={p.owner}
                 owned={p.owned}
+                onTitleClick={() => openPlaylist(slugify(p.title))}
+                onPlay={() => openPlaylist(slugify(p.title))}
               />
             </li>
           ))}
@@ -856,7 +927,7 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
 
         <CardRail title="Artists of the week">
           {HOME_WEEKLY_ARTISTS.map(a => (
-            <li key={a.id}><ArtistCard name={a.name} image={a.image} /></li>
+            <li key={a.id}><ArtistCard name={a.name} image={a.image} onClick={() => openArtist(slugify(a.name))} /></li>
           ))}
         </CardRail>
 
@@ -893,6 +964,15 @@ const LIBRARY_SEED = {
   a18: { added: true, purchased: true, tier: "stream" as const },
 }
 
+// Seed for the non-album saved sets so the Artists / Playlists library
+// grids open populated. Keyed by slug (same key the detail-page hearts
+// use) so toggling a heart off on a detail page removes it from the grid.
+const LIBRARY_SAVED_SEED = {
+  artist:   Object.fromEntries(SAVED_ARTISTS.map(a => [slugify(a.name), true as const])),
+  playlist: Object.fromEntries(SAVED_PLAYLISTS.map(p => [slugify(p.title), true as const])),
+  song:     Object.fromEntries(SAVED_SONGS_SEED.map(s => [s.id, s])),
+}
+
 // Demo seed for the UserAccountProvider — pre-fills two of the
 // A Love Supreme tracks so the "X plays left" affordance has
 // something to show. Real wiring would persist these per-account.
@@ -927,8 +1007,11 @@ function StudioView({ page, onOpenUpload }: { page: string; onOpenUpload?: () =>
     <Tabs defaultValue={toTabValue(tabs[0])} className="flex flex-col h-full gap-0">
 
       {/* ── Header + tabs ──────────────────────────────────────────────── */}
-      <div className="shrink-0 px-10 pt-8 border-b border-border">
-        <div className="flex items-start justify-between gap-6 mb-5">
+      {/* On mobile the frosted MobileAppHeader already shows the page name,
+           so the in-page <h1> is hidden to avoid a redundant double title;
+           the tab strip stays. */}
+      <div className="shrink-0 px-page pt-4 sm:pt-8 border-b border-border">
+        <div className="hidden sm:flex items-start justify-between gap-6 mb-5">
           <h1 className="text-2xlarge font-medium tracking-tight text-balance">{page}</h1>
         </div>
         <TabsList variant="line" className="w-auto justify-start gap-0 h-auto pb-0">
@@ -1011,7 +1094,7 @@ function ChipInputPatternDemo() {
         onCommit={(values) => setCommitted((prev) => [...prev, ...values])}
       />
       <p className="text-2xsmall text-muted-foreground">
-        Separate names with a comma, then press <span className="font-medium text-foreground">Enter</span> to add them.
+        Separate names with a comma, then press <span className="font-medium text-muted-foreground">Enter</span> to add them.
       </p>
     </div>
   )
@@ -1095,6 +1178,25 @@ function PurchaseDialogDemo() {
         streamPrice="$2.99"
         downloadPrice="$4.99"
       />
+    </div>
+  )
+}
+
+// Credits dialog demo — static preview of the body inline, plus
+// triggers that open the real modal (via useCredits) for two different
+// releases so the data variety is visible.
+function CreditsDialogDemo() {
+  const credits = useCredits()
+  return (
+    <div className="flex flex-col gap-4">
+      <CreditsDialogPreview albumKey="a07" />
+      <div className="flex items-center gap-3 flex-wrap">
+        <Button variant="outline" onClick={() => credits.open("a07")}>Open as modal</Button>
+        <Button variant="outline" onClick={() => credits.open("out-to-lunch")}>Another release</Button>
+        <span className="text-xsmall text-muted-foreground">
+          Real dialog (portal + focus trap). Artist / album / performers navigate and dismiss it.
+        </span>
+      </div>
     </div>
   )
 }
@@ -1822,7 +1924,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       {showHero && (
       <div className="bg-muted border-b border-border pt-24 pb-[3.75rem]">
-        <div className="max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto px-10 flex flex-col gap-3">
+        <div className="max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto px-page flex flex-col gap-3">
           <h1 className="text-5xl font-medium leading-none tracking-[-0.025em]">The muza design system</h1>
           <p className="text-small text-muted-foreground">
             {LAST_GIT_PUSH && (
@@ -1841,10 +1943,10 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
          page's max-width + padding) so it matches the @container
          scope used by the Library views — same rules, same query
          container width, identical card sizing at any viewport. */}
-    <div className="@container max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto w-full px-10 py-10 pb-32">
+    <div className="@container max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto w-full px-page py-10 pb-32">
 
       {/* Naming convention explainer — visible to readers (not a code comment) */}
-      <p className="text-small text-muted-foreground max-w-2xl mb-4 text-pretty">
+      <p className="text-base text-muted-foreground max-w-2xl mb-4 text-pretty">
         Section labels mirror the underlying base-ui primitive name where one exists
         (Button, Dialog, NumberField, …). Pure visual patterns that have no base-ui
         primitive (Badges, Chips, Alerts, Skeleton, Table, Pagination) and
@@ -1862,7 +1964,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           // showcase doubles as a quick lookup of which base-ui component
           // backs each pattern. Custom (non-base-ui) patterns keep their
           // descriptive name (Badges, Chips, etc.).
-          "Colors","Typography","Button","Toggle","ToggleGroup","Toolbar","Badge","Status Badge","Order Status Badge","Chips",
+          "Colors","Typography","Responsive","Button","Toggle","ToggleGroup","Toolbar","Badge","Status Badge","Order Status Badge","Chips",
           "Input","NumberField","Select","Filter Menu","Combobox","Menu","Sort Button","NavigationMenu",
           "DatePicker","Checkbox","Radio Card","Switch","Slider","Meter","Progress","Separator",
           "Avatar","Tabs","Tooltip","ScrollArea","Collapsible","Accordion",
@@ -1885,6 +1987,76 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         })}
       </nav>
       )}
+
+      {/* ══ RESPONSIVE & POINTER ══ */}
+      <Section id="responsive" title="Responsive & Pointer">
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
+          The shared foundations for how Muza components adapt to <span className="text-foreground">viewport / container width</span> and <span className="text-foreground">pointer type</span> (mouse vs touch). Each component documents its own specific behaviour in its own section — this is just the common ground they all build on.
+        </p>
+
+        {/* The responsive ladder, visualised — three layout tiers + the
+             container column steps. Source of truth: app.css. */}
+        <p className="text-base text-muted-foreground mb-3 max-w-2xl">
+          <span className="text-foreground font-medium">The responsive ladder</span> — the page steps through three layouts as it narrows; the nav chrome, page gutter and card columns all change together:
+        </p>
+        <div className="mb-6">
+          <ResponsiveDiagram />
+        </div>
+
+        <ul className="text-base text-muted-foreground flex flex-col gap-2 mb-2 max-w-2xl list-disc pl-5">
+          <li>
+            <span className="text-foreground">Hover is pointer-only.</span> Every
+            {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">hover:</code> /
+            {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">group-hover:</code>
+            {" "}utility is auto-wrapped in <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">@media (hover: hover)</code> (Tailwind v4 default), so hover states never fire on touch — and there's no sticky-hover after a tap.
+          </li>
+          <li>
+            <span className="text-foreground">Cosmetic device gating.</span> To
+            merely show/hide a control by pointer we use
+            {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">[@media(hover:none)]:!hidden</code> (hide on touch) /
+            {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">[@media(hover:hover)]:!hidden</code> (hide on pointer).
+            The <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">!</code> is required — Tailwind v4 sorts the
+            {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">pointer-*</code> / hover variant rules before base
+            {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">flex</code>/<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">hidden</code>, so without it the base wins and the gate is a silent no-op.
+          </li>
+          <li>
+            <span className="text-foreground">Swap components by viewport, not hover.</span>{" "}
+            When a phone needs a <span className="text-foreground">different component</span> (dropdown ⇄ bottom sheet, inline toggle ⇄ full-width header toggle), gate on
+            {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useIsMobile()</code> (&lt; 768px) — e.g.{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">{`if (isMobile) return <Sheet>… ; return <DropdownMenu>…`}</code>.
+            Don't use <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">hover:</code> for this: the headless preview reports{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">hover: hover</code> at phone width (a hover-gated sheet never shows there) and hybrid touch-laptops do too. Breakpoint hooks:{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useFooterNav</code> (608 — sidebar⇄tab bar, Topbar⇄MobileAppHeader),{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useIsMobile</code> (768).
+          </li>
+          <li>
+            <span className="text-foreground">Mobile surfaces escalate to sheets.</span>{" "}
+            Dialogs become bottom sheets (one responsive <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogContent</code>, growing to{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">max-h-[92vh]</code> with a <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">min-h-0</code> scroll body);
+            simple "…" lists use the auto-sheet <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DropdownMenu</code>; rich "…" actions use the advanced{" "}
+            <a href="/?page=DesignSystem#detail-more-button" className="text-primary-text hover:underline underline-offset-2">bottom-sheet menu</a>.
+            Panels that open under the sticky header (search suggestions) are <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">absolute</code> (out of flow) so they overlay rather than push content.
+          </li>
+          <li>
+            <span className="text-foreground">Touch gestures.</span> Cards use
+            {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useLongPress</code> (tap = primary action, long-press = bottom sheet). Rails use <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">touch-pan-x</code> + <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">overscroll-x-contain</code> + scroll-snap.
+          </li>
+          <li>
+            <span className="text-foreground">Shared column steps.</span> Library
+            grids, Card Rail and Top Songs step columns at the same container widths —{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">304→2</code>,{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">464→3</code>,{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">692→4</code>,{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">928→5</code>,{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">1164→6</code>,{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">1500→7</code>.
+            {" "}These are column-<span className="text-foreground">count</span> steps. The mobile↔desktop boundary for <span className="text-foreground">behaviours</span> (rail swipe-peek, MediaHeader stacking) is <span className="text-foreground">560px</span> container — and the sidebar auto-collapses below <span className="text-foreground">~1069px</span> viewport so that boundary lands at the same point across the app.
+          </li>
+        </ul>
+        <p className="text-small text-muted-foreground max-w-2xl">
+          Per-component specifics live in each component's section (e.g. <a href="/?page=DesignSystem#card-rail" className="text-primary-text hover:underline underline-offset-2">Card Rail</a>, <a href="/?page=DesignSystem#song-list-item" className="text-primary-text hover:underline underline-offset-2">Song List Item</a>).
+        </p>
+      </Section>
 
       {/* ══ COLORS ══ */}
       <Section id="colors" title="Colors">
@@ -1971,7 +2143,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
              Raw pixel values from Figma. Components should NOT reference
              these directly — use the semantic alias table below when one
              exists for the size you need. */}
-        <p className="text-small font-medium text-foreground mb-1">Primitives</p>
+        <p className="text-small font-medium text-muted-foreground mb-1">Primitives</p>
         <p className="text-xsmall font-normal text-muted-foreground mb-5">
           Raw font-size values. Used directly only when no semantic alias fits (large display headings).
         </p>
@@ -2010,7 +2182,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         {/* ── SEMANTIC ALIASES ───────────────────────────────────────────
              These are what product code should use by default. Each alias
              is a `var(--text-*)` reference in app.css — never a raw px. */}
-        <p className="text-small font-medium text-foreground mt-10 mb-1">Semantic aliases</p>
+        <p className="text-small font-medium text-muted-foreground mt-10 mb-1">Semantic aliases</p>
         <p className="text-xsmall font-normal text-muted-foreground mb-5">
           Default choice in product code. Each alias resolves to a primitive via <code className="text-xsmall">var()</code> — never a hardcoded px.
         </p>
@@ -2270,6 +2442,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
               <ContentTypeBadge type="ep" />
               <ContentTypeBadge type="artist" />
               <ContentTypeBadge type="playlist" />
+              <ContentTypeBadge type="label" />
             </div>
           </div>
         </div>
@@ -2280,7 +2453,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         usage={[
           { label: "Studio › Music visibility column", href: "/?page=Music" },
         ]}>
-        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
           Track / release visibility. Self-contained dropdown — click to toggle
           public / private in place. Pass <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">onStatusChange</code> to be notified.
         </p>
@@ -2294,7 +2467,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         usage={[
           { label: "Shop › Orders → order detail status", href: "/?page=Shop&shop-tab=orders" },
         ]}>
-        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
           Shop order lifecycle. Colored per status; read-only by default, or pass
           an <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">onStatusChange</code> handler to make it a dropdown of allowed forward transitions.
         </p>
@@ -2327,7 +2500,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           { label: "Album card pricing row", href: "/?page=Albums" },
           { label: "Media Header meta line", href: "/?page=Album" },
         ]}>
-        <p className="text-small text-muted-foreground mb-6 max-w-2xl">
+        <p className="text-base text-muted-foreground mb-6 max-w-2xl">
           Inline "Owned" marker — plain <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">CircleCheckBig</code> glyph + label, foreground color, no pill chrome. Sits alongside body text as quiet ownership info. Used everywhere an owned album appears.
         </p>
 
@@ -2466,8 +2639,8 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           { label: "Upload music → Main Artist(s)",     href: "/?page=Music" },
           { label: "Upload music → Additional credits", href: "/?page=Music" },
         ]}>
-        <p className="text-small text-muted-foreground mb-6 max-w-2xl">
-          Chip-aware text input. Typing a comma turns the preceding text into a pending chip inside the input; pressing <span className="font-medium text-foreground">Enter</span> promotes every pending chip (plus any trailing text) to the host's committed list. Backspace on an empty input pops the last chip; pasting comma-separated text creates multiple chips at once.
+        <p className="text-base text-muted-foreground mb-6 max-w-2xl">
+          Chip-aware text input. Typing a comma turns the preceding text into a pending chip inside the input; pressing <span className="font-medium text-muted-foreground">Enter</span> promotes every pending chip (plus any trailing text) to the host's committed list. Backspace on an empty input pops the last chip; pasting comma-separated text creates multiple chips at once.
         </p>
 
         <SubLabel>Standalone</SubLabel>
@@ -2565,13 +2738,13 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           { label: "Studio › Music filters",   href: "/?page=Music" },
           { label: "Artist › Discography",     href: "/?page=Artist" },
         ]}>
-        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
           Dropdown button with left-side checkboxes. Ticking an option
           adds it to the selection, the menu stays open while you
           toggle, and a count badge in the trigger reflects how many
           are currently active. Pairs with <code className="text-xsmall font-normal font-sans px-1 mx-0.5 rounded-sm bg-muted">SingleSelect</code> (right-side ✓).
           <br /><br />
-          <strong className="font-medium text-foreground">Mainly used for:</strong> filtering
+          <strong className="font-medium text-muted-foreground">Mainly used for:</strong> filtering
           a list/grid down to a subset (Studio › Music's Status / Type
           / Artist / Label / Monetisation filters, Artist Discography's
           release-kind filter). Searchable when the option list is
@@ -2583,12 +2756,12 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       {/* ══ PICKER ══ */}
       <Section id="single-select" title="SingleSelect"
         usage={[{ label: "Artist › Discography (sort)", href: "/?page=Artist" }]}>
-        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
           Dropdown button that shows the current option with a
           right-side ✓ — picking another option replaces it (only one
           value at a time). Pairs with <code className="text-xsmall font-normal font-sans px-1 mx-0.5 rounded-sm bg-muted">MultiSelect</code> (left-side checkboxes).
           <br /><br />
-          <strong className="font-medium text-foreground">Mainly used for:</strong> sort
+          <strong className="font-medium text-muted-foreground">Mainly used for:</strong> sort
           (ArrowUpDown icon by default — Discography "Recording date /
           Title / Tracks"). Also fits any other "pick one of N"
           trigger sitting in a toolbar: view density, layout mode,
@@ -2683,13 +2856,88 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-44">
               <DropdownMenuItem><Upload className="size-4" />Upload track</DropdownMenuItem>
-              <DropdownMenuItem><Share2 className="size-4" />Share profile</DropdownMenuItem>
+              <DropdownMenuItem><Share className="size-4" />Share profile</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem variant="destructive">
                 <Trash2 className="size-4" />Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+        </div>
+      </Section>
+
+      {/* ══ DETAIL "…" MENU — advanced bottom sheet ══ */}
+      <Section id="detail-more-button" title="Detail Menu"
+        usage={[
+          { label: "Album / Playlist / Artist detail — header “…”", href: "/?page=Album" },
+        ]}>
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
+          <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DetailMoreButton</code> — the
+          overflow affordance on media detail pages. <span className="text-foreground">Viewport-aware</span>{" "}
+          (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useIsMobile</code>, &lt; 768):
+          desktop opens an anchored <a href="/?page=DesignSystem#menu" className="text-primary-text hover:underline underline-offset-2">dropdown</a>;
+          phones open an <span className="text-foreground">advanced bottom sheet</span> — one action model, two surfaces.
+        </p>
+        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-6 max-w-2xl list-disc pl-5">
+          <li><span className="text-foreground">Rich header</span> — <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">MenuCover</code> (square cover · 2×2 playlist collage · round artist avatar, 72px ≈ the three text lines) + title + <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">ContentTypeBadge</code> + meta.</li>
+          <li><span className="text-foreground">Quick actions</span> — icon-over-label pills (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">flex-1 rounded-2xl bg-secondary</code>): Share · <span className="text-foreground">Save</span> · (Edit / Play radio …).</li>
+          <li><span className="text-foreground">Grouped rows</span> — 44px tap targets split by <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">h-px bg-border</code> dividers; the destructive row (Delete) is last.</li>
+          <li><span className="text-foreground">Store-bound Save.</span> The Save pill reads the live library and flips to <span className="text-foreground">Remove</span> (filled heart) — in sync with the header/card hearts. See <a href="/?page=DesignSystem#song-list-item" className="text-primary-text hover:underline underline-offset-2">Save to library</a>.</li>
+        </ul>
+
+        <div className="flex flex-wrap items-start gap-8">
+          {/* Live trigger — desktop dropdown variant. */}
+          <div className="flex flex-col gap-2">
+            <SubLabel>Live · desktop dropdown</SubLabel>
+            <div className="flex items-center gap-2 rounded-xl border border-border p-3">
+              <DetailMoreButton kind="album" title="A Love Supreme" subtitle="John Coltrane" meta="1965"
+                cover="https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/e5/24/aa/e524aacd-467b-66f3-8931-0fcd6750a4b9/08UMGIM07914.rgb.jpg/120x120bb.jpg"
+                triggerVariant="outline" triggerSize="icon" />
+              <span className="text-2xsmall text-muted-foreground">open me →</span>
+            </div>
+          </div>
+
+          {/* Static preview — the phone sheet (the live one only renders < 768). */}
+          <div className="flex flex-col gap-2">
+            <SubLabel>Static preview · phone bottom sheet</SubLabel>
+            <div className="w-[340px] rounded-t-2xl border border-border border-b-0 bg-popover overflow-hidden shadow-xl">
+              {/* header */}
+              <div className="flex items-center gap-3 px-5 pt-5 pb-6">
+                <div className="size-[72px] shrink-0 grid grid-cols-2 grid-rows-2 overflow-hidden rounded-xs">
+                  {[
+                    "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/01/36/a6/0136a666-36d2-caf1-efb1-da77a646d104/06UMGIM03764.rgb.jpg/120x120bb.jpg",
+                    "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/23/49/49/234949c3-db74-f0eb-30f5-d715526e459b/19UMGIM73745.rgb.jpg/120x120bb.jpg",
+                    "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/a8/ee/3c/a8ee3cc7-e694-f7e1-5208-2c67f9ae5ed5/13ULAIM49176.rgb.jpg/120x120bb.jpg",
+                    "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/d6/a3/1d/d6a31d82-038d-a73f-5452-0380d8bd9bae/00724349532755.jpg/120x120bb.jpg",
+                  ].map((src, i) => <img key={i} src={src} alt="" draggable={false} className="size-full object-cover" />)}
+                </div>
+                <div className="min-w-0 flex flex-col gap-1">
+                  <p className="truncate text-base font-medium leading-tight text-foreground">Late Night Improvisations</p>
+                  <p className="truncate text-small text-muted-foreground leading-none">by Jules</p>
+                  <div className="flex items-center gap-2"><ContentTypeBadge type="playlist" /><span className="text-xsmall text-muted-foreground">8 tracks</span></div>
+                </div>
+              </div>
+              {/* quick actions */}
+              <div className="flex items-stretch gap-2 px-5 pb-2">
+                {[{ icon: <Share />, label: "Share" }, { icon: <Heart />, label: "Save" }, { icon: <RadioIcon />, label: "Play radio" }].map(a => (
+                  <div key={a.label} className="flex-1 flex flex-col items-center justify-center gap-2 rounded-2xl bg-secondary px-2 py-3.5 text-foreground [&_svg]:size-5">
+                    {a.icon}<span className="text-xsmall">{a.label}</span>
+                  </div>
+                ))}
+              </div>
+              {/* grouped rows */}
+              <div className="flex flex-col px-4 pb-4">
+                {[{ icon: <ListPlus />, label: "Add to a playlist" }, { icon: <ListStart />, label: "Play next" }, { icon: <ListEnd />, label: "Add to queue" }].map(a => (
+                  <div key={a.label} className="flex items-center gap-3 rounded-lg px-3 py-3 text-base text-foreground [&_svg]:size-5 [&_svg]:text-muted-foreground">{a.icon}{a.label}</div>
+                ))}
+                <div className="mx-2 my-1 h-px bg-border" />
+                <div className="flex items-center gap-3 rounded-lg px-3 py-3 text-base text-foreground [&_svg]:size-5 [&_svg]:text-muted-foreground"><Info />Credits</div>
+                <div className="flex items-center gap-3 rounded-lg px-3 py-3 text-base text-foreground [&_svg]:size-5 [&_svg]:text-muted-foreground"><Mic />Go to artist</div>
+                <div className="mx-2 my-1 h-px bg-border" />
+                <div className="flex items-center gap-3 rounded-lg px-3 py-3 text-base text-destructive [&_svg]:size-5"><Flag />Report</div>
+              </div>
+            </div>
+          </div>
         </div>
       </Section>
 
@@ -3002,7 +3250,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           { label: "Topbar profile menu trigger", href: "/?page=Home" },
           { label: "Settings → Account hero",     href: "/?page=Settings" },
         ]}>
-        <p className="text-small text-muted-foreground mb-6 max-w-2xl">
+        <p className="text-base text-muted-foreground mb-6 max-w-2xl">
           Deterministic placeholder avatar — initials derived from the username, color hashed from the same string so the same user always lands on the same swatch across sessions. Falls back to a soft, earthy palette of {AVATAR_PALETTE.length} tints designed to share Muza's warm-olive character.
         </p>
 
@@ -3234,15 +3482,21 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           { label: "Artist › Discography (grid)", href: "/?page=Artist" },
           { label: "Home › New Albums rail",      href: "/" },
         ]}>
-        <p className="text-small text-muted-foreground mb-8 max-w-2xl">
-          Tap the cover to <em>play</em>; long-press for the action
-          menu (touch). Hover surfaces the Add/Edit ⋯ Play cluster.
-          Click the title to open the album, click the artist to open
-          the artist. The kebab opens the full context menu (Share /
-          Add to library / Add to playlist / Go to artist / Go to album
-          / Report / Show info). The
+        <p className="text-base text-muted-foreground mb-8 max-w-2xl">
+          The card is a <span className="text-foreground">nav surface</span>:
+          tap the cover (or click the title) to <em>open the album</em>;
+          long-press for the action menu (touch). The hover cluster carries
+          the card's own actions — the <span className="text-foreground">Play</span> button
+          plays the album (self-contained, never navigates) and the
+          <span className="text-foreground"> Heart</span> saves it to the library
+          (store-bound, flips to Remove). Click the artist to open the artist.
+          The kebab opens the full context menu (Share / Save to library /
+          Add to playlist / Go to artist / Go to album / Report / Show info). The
           <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">owned</code>
           prop swaps the menu (Add → Edit, Report → Remove from library).
+        </p>
+        <p className="text-base text-muted-foreground mb-8 max-w-2xl">
+          <span className="text-foreground font-medium">Responsive &amp; pointer</span> — hover cluster is mouse-only (auto-gated); touch gets the same actions via long-press → bottom sheet. Inside dense rails (Card Rail's <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">mobileGrid</code>) the year is hidden via <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">data-card-year</code>. See <a href="/?page=DesignSystem#responsive" className="text-primary-text hover:underline underline-offset-2">Responsive &amp; Pointer</a>.
         </p>
 
         <SubLabel>Monetisation states — Free · Stream-only · Stream + Download · Owned</SubLabel>
@@ -3331,14 +3585,14 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           { label: "Library › Artists",          href: "/?page=Artists" },
           { label: "Artist › Similar Artists",   href: "/?page=Artist" },
         ]}>
-        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
           Circle is inset to ~80% of the track so the artist tile
           doesn't dominate when it shares a row with album/playlist
           cards (circles read visually heavier than squares at the
           same diameter). No hover overlay by design — clicking the
           card navigates to the artist profile.
         </p>
-        <div className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))] @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))] @min-[1500px]:grid-cols-[repeat(7,minmax(143px,220px))] gap-x-4 gap-y-6">
+        <div className="grid-cards">
           <ArtistCard name="John Coltrane"   image="https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/John_Coltrane_1963_cropped_ver2.jpg/500px-John_Coltrane_1963_cropped_ver2.jpg" />
           <ArtistCard name="Alice Coltrane"  image="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Alice_Coltrane_1972.jpg/500px-Alice_Coltrane_1972.jpg" />
           <ArtistCard name="Sun Ra"          image="https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Sun_Ra_%281973_publicity_photo_-_Impulse_ABC_Dunhill%29.jpg/500px-Sun_Ra_%281973_publicity_photo_-_Impulse_ABC_Dunhill%29.jpg" />
@@ -3363,15 +3617,16 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           { label: "Library › Playlists",         href: "/?page=Playlists" },
           { label: "Artist › Curated Playlists",  href: "/?page=Artist" },
         ]}>
-        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
-          Same interaction model as AlbumCard: tap cover to play,
-          long-press for the menu, hover surfaces Add/Edit ⋯ Play.
-          Owned playlists drop the owner name from the subtitle and
-          swap Save → Edit, Report → Delete in the menu. First tile
-          is the special <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">PlaylistCreateCard</code>
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
+          Same nav-surface model as <a href="/?page=DesignSystem#album-card" className="text-primary-text hover:underline underline-offset-2">Album Card</a>:
+          tap cover (or title) to <em>open the playlist</em>, long-press for
+          the menu; the hover Play button plays it and the Heart saves it —
+          neither navigates. Owned playlists drop the owner name from the
+          subtitle and swap Save → Edit, Report → Delete in the menu. First
+          tile is the special <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">PlaylistCreateCard</code>
           variant.
         </p>
-        <div className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))] @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))] @min-[1500px]:grid-cols-[repeat(7,minmax(143px,220px))] gap-x-4 gap-y-6">
+        <div className="grid-cards">
           <PlaylistCreateCard />
           <PlaylistCard
             title="Blue Train Late Night"
@@ -3446,6 +3701,9 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           { label: "Artist › Discography (list view)", href: "/?page=Artist" },
           { label: "Design system › List Table",   href: "/?page=DesignSystem#list-table" },
         ]}>
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
+          <span className="text-foreground font-medium">Responsive &amp; pointer</span> — the dark-wash overlay (Play / Pause / 3D wave) is hover-gated, so it only appears on mouse devices; a tap toggles playback everywhere. The wave layer renders outside the cover's clip and supersamples 2× so it stays crisp at any size. See <a href="/?page=DesignSystem#responsive" className="text-primary-text hover:underline underline-offset-2">Responsive &amp; Pointer</a>.
+        </p>
         <div className="flex flex-col gap-8">
           {/* Live demo — click the cover to toggle playing state. */}
           <CoverPlayButtonDemo />
@@ -3479,6 +3737,32 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           { label: "Artist › Top Songs",        href: "/?page=Artist" },
           { label: "Album detail (track list)", href: "/?page=Album" },
         ]}>
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
+          One row in a song list — a single component with two leading-slot variants, driven by props (not separate components). Pass <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">cover</code> for album art (<span className="text-foreground">cover mode</span> — Top Songs, playlists, search) or <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">trackNumber</code> for a number (<span className="text-foreground">trackNumber mode</span> — album detail). Row tap toggles play; title / artist / album are independent links.
+        </p>
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
+          <span className="text-foreground font-medium">Meta line is optional.</span> When no artist / album / year / badge is passed, the meta row is omitted and the title sits as a single centred line. That's the album-detail case: every track shares the same artist / album / year (already in the header), so repeating it per row is noise — pass just <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">trackNumber</code> + <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">title</code> + <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">duration</code>. A meta line is only worth showing when a track differs (e.g. guest artists).
+        </p>
+        <p className="text-base text-muted-foreground mb-2 max-w-2xl">
+          <span className="text-foreground font-medium">Priority disclosure</span> — the row is a <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">@container</code>, so meta fields shed by the row's <em>own</em> width (works in any context — full list, narrow rail, etc.), keeping the most important last:
+        </p>
+        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-3 max-w-2xl list-disc pl-5">
+          <li><span className="text-foreground">≥ 380</span> — artist · album · year + duration</li>
+          <li><span className="text-foreground">300–379</span> — year drops</li>
+          <li><span className="text-foreground">260–299</span> — duration drops</li>
+          <li><span className="text-foreground">&lt; 260</span> — album drops (artist always stays)</li>
+        </ul>
+        <p className="text-base text-muted-foreground mb-6 max-w-2xl">
+          When both show, album shrinks 2× faster than artist (artist truncates last), and a left-fading veil dissolves the meta into the row bg before the action icons rather than hard-clipping.
+        </p>
+        <p className="text-base text-muted-foreground mb-2 max-w-2xl">
+          <span className="text-foreground font-medium">Pointer</span> (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">compact</code> prop — used in swipeable rails like Top Songs):
+        </p>
+        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-6 max-w-2xl list-disc pl-5">
+          <li><span className="text-foreground">Mouse / desktop</span> (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">hover: hover</code>): the <span className="text-foreground">♥ (Save to library)</span> is always visible, More + Info fade in on hover (3 icons).</li>
+          <li><span className="text-foreground">Touch</span> (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">hover: none</code>): no hover, so a single <span className="text-foreground">“…”</span> button opens a <span className="text-foreground">bottom sheet</span> with the full action set.</li>
+          <li>Compact also drops the duration unconditionally (swipe rails are tight). Default rows keep the in-flow heart + duration. See <a href="/?page=DesignSystem#responsive" className="text-primary-text hover:underline underline-offset-2">Responsive &amp; Pointer</a> for the shared conventions.</li>
+        </ul>
         {/* Variant 1 — `cover` mode. Used wherever a row of songs
              pulls from different albums (Artist › Top Songs,
              playlists, search results). Each row shows its album
@@ -3521,49 +3805,152 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           </ul>
         </div>
 
-        {/* Variant 2 — `trackNumber` mode. Used on the Album detail
-             page where every track sits on the same album, so the
-             cover thumb is redundant and a track number reads
-             cleaner. Same play / pause / wave hover behaviour as
-             `cover` mode (number → play icon on hover → wave when
-             playing → pause icon on hover-while-playing). */}
+        {/* Variant 2 — `trackNumber` mode, album-detail usage. Every
+             track sits on the same album, so the cover thumb AND the
+             artist / album / year meta are redundant (all in the
+             header). Pass only number + title + duration → a clean
+             single-line row. Same play / pause / wave hover behaviour
+             as `cover` mode. */}
         <div className="flex flex-col gap-2 mt-8">
-          <SubLabel>trackNumber mode — Album detail page</SubLabel>
+          <SubLabel>trackNumber mode — Album detail (single line, no meta)</SubLabel>
+          <ul className="flex flex-col gap-1 max-w-2xl">
+            <li>
+              <SongListItem trackNumber={1} title="Acknowledgement" duration="7:47" menuItems={<AlbumCardMenuItems />} />
+            </li>
+            <li>
+              <SongListItem trackNumber={2} title="Resolution" duration="7:21" menuItems={<AlbumCardMenuItems />} />
+            </li>
+            <li>
+              <SongListItem trackNumber={3} title="Pursuance" duration="10:46" menuItems={<AlbumCardMenuItems />} />
+            </li>
+          </ul>
+        </div>
+
+        {/* Variant 3 — `trackNumber` mode WITH a meta line, for the
+             rarer case where a track differs from the album (a guest /
+             featured artist). Shows the meta line is still available in
+             trackNumber mode when it actually carries new info. */}
+        <div className="flex flex-col gap-2 mt-8">
+          <SubLabel>trackNumber mode — with guest-artist meta (when a track differs)</SubLabel>
           <ul className="flex flex-col gap-1 max-w-2xl">
             <li>
               <SongListItem
-                trackNumber={1}
-                title="Acknowledgement"
-                artist="John Coltrane"
-                album="A Love Supreme"
-                year={1965}
-                duration="7:47"
-                menuItems={<AlbumCardMenuItems />}
-              />
-            </li>
-            <li>
-              <SongListItem
-                trackNumber={2}
-                title="Resolution"
-                artist="John Coltrane"
-                album="A Love Supreme"
-                year={1965}
-                duration="7:21"
-                menuItems={<AlbumCardMenuItems />}
-              />
-            </li>
-            <li>
-              <SongListItem
-                trackNumber={3}
-                title="Pursuance"
-                artist="John Coltrane"
-                album="A Love Supreme"
-                year={1965}
-                duration="10:46"
+                trackNumber={4}
+                title="Dancing in Your Head"
+                artist="Sun Ra feat. Ornette Coleman"
+                duration="8:24"
+                onArtistClick={() => {}}
                 menuItems={<AlbumCardMenuItems />}
               />
             </li>
           </ul>
+        </div>
+      </Section>
+
+      {/* ══ MEDIA LIST ITEM ══ */}
+      <Section id="media-list-item" title="Media List Item"
+        usage={[
+          { label: "Library / search — mixed result list (mobile)", href: "/?page=Albums" },
+        ]}>
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
+          A row for <span className="text-foreground">mixed</span> lists — albums,
+          playlists, tracks and artists together (library, search results).
+          Same anatomy as <a href="/?page=DesignSystem#song-list-item" className="text-primary-text hover:underline underline-offset-2">Song List Item</a>,
+          but a <span className="text-foreground">nav</span> row, not a player
+          row.
+        </p>
+        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-6 max-w-2xl list-disc pl-5">
+          <li>
+            <span className="text-foreground">Primary action per type.</span>{" "}
+            Album / Playlist / Artist <span className="text-foreground">open</span> the
+            detail page. A Song row also <span className="text-foreground">opens its
+            release</span> (the album) when an <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">onOpen</code> is given —
+            the <span className="text-foreground">cover button</span> is what plays
+            (and shows the now-playing state). With no <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">onOpen</code>, the whole song row plays.
+          </li>
+          <li>
+            <span className="text-foreground">Type badge + adaptive thumb.</span>{" "}
+            A <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">ContentTypeBadge</code> labels
+            each row; the leading slot is a square cover, a 2×2 collage
+            (playlist) or a circle (artist / <span className="text-foreground">label</span>). No heart, no duration — just
+            the <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">⋯</code> menu.
+          </li>
+        </ul>
+        <div className="max-w-[420px] flex flex-col gap-1 rounded-xl border border-border p-2">
+          <MediaListItem
+            type="album"
+            cover="https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/d6/a3/1d/d6a31d82-038d-a73f-5452-0380d8bd9bae/00724349532755.jpg/120x120bb.jpg"
+            title="Time Out"
+            subtitle="The Dave Brubeck Quartet"
+            meta="1959"
+            menuItems={<AlbumCardMenuItems />}
+          />
+          <MediaListItem
+            type="playlist"
+            covers={[
+              "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/01/36/a6/0136a666-36d2-caf1-efb1-da77a646d104/06UMGIM03764.rgb.jpg/120x120bb.jpg",
+              "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/23/49/49/234949c3-db74-f0eb-30f5-d715526e459b/19UMGIM73745.rgb.jpg/120x120bb.jpg",
+              "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/a8/ee/3c/a8ee3cc7-e694-f7e1-5208-2c67f9ae5ed5/13ULAIM49176.rgb.jpg/120x120bb.jpg",
+              "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/d6/a3/1d/d6a31d82-038d-a73f-5452-0380d8bd9bae/00724349532755.jpg/120x120bb.jpg",
+            ]}
+            title="Modal Jazz Meditations"
+            subtitle="You"
+            meta="123 Songs"
+            menuItems={<PlaylistCardMenuItems />}
+          />
+          <MediaListItem
+            type="song"
+            cover="https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/23/49/49/234949c3-db74-f0eb-30f5-d715526e459b/19UMGIM73745.rgb.jpg/120x120bb.jpg"
+            title="A Love Supreme, Pt. 1: Acknowledgement"
+            subtitle="John Coltrane"
+            meta="1965"
+            menuItems={<AlbumCardMenuItems />}
+          />
+          <MediaListItem
+            type="artist"
+            cover="https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/a8/ee/3c/a8ee3cc7-e694-f7e1-5208-2c67f9ae5ed5/13ULAIM49176.rgb.jpg/120x120bb.jpg"
+            title="Charles Mingus"
+            menuItems={<AlbumCardMenuItems />}
+          />
+          <MediaListItem
+            type="label"
+            cover="https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/e5/24/aa/e524aacd-467b-66f3-8931-0fcd6750a4b9/08UMGIM07914.rgb.jpg/120x120bb.jpg"
+            title="Impulse!"
+            subtitle="12 albums"
+          />
+        </div>
+        <p className="text-small text-muted-foreground mt-5 max-w-2xl">
+          (Song row opens its album; the rest navigate. Container clicks are
+          inert here — wired to real routes in the app.)
+        </p>
+      </Section>
+
+      {/* ══ SEARCH ══ */}
+      <Section id="search" title="Search"
+        usage={[
+          { label: "Topbar / mobile header search → Explore results", href: "/?page=Explore&q=coltrane" },
+        ]}>
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
+          The Explore page <span className="text-foreground">is</span> the search surface. Focusing the search field opens a{" "}
+          <span className="text-foreground">panel</span> (recent searches → suggestions); Enter routes to URL-backed results
+          (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">?page=Explore&amp;q=…&amp;scope=…</code>) that are identical on desktop and mobile.
+        </p>
+        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-6 max-w-2xl list-disc pl-5">
+          <li><span className="text-foreground">Panel</span> — empty query → “Your recent searches” (clock rows, removable); typing → plain-text suggestions.</li>
+          <li><span className="text-foreground">Scope</span> — a <a href="/?page=DesignSystem#togglegroup" className="text-primary-text hover:underline underline-offset-2">ToggleGroup</a> (Muza Catalog / My Library); full-width in the mobile header, inline on desktop.</li>
+          <li><span className="text-foreground">Category filter</span> — underlined <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">Tabs variant="line"</code> on desktop, <a href="/?page=DesignSystem#mobile-header" className="text-primary-text hover:underline underline-offset-2">MobilePillTabs</a> on mobile.</li>
+          <li><span className="text-foreground">Top result</span> — under <span className="text-foreground">All</span>, the best-ranked match is promoted to an oversized hero card; the rest stay as <a href="/?page=DesignSystem#media-list-item" className="text-primary-text hover:underline underline-offset-2">Media List Item</a> rows under “More results”.</li>
+        </ul>
+
+        <SubLabel>Panel — recent searches / suggestions</SubLabel>
+        <div className="flex flex-wrap gap-6 mb-8">
+          <div className="w-[320px]"><SearchPanel query="" onPick={() => {}} /></div>
+          <div className="w-[320px]"><SearchPanel query="col" onPick={() => {}} /></div>
+        </div>
+
+        <SubLabel>Results — live (interactive: rows navigate, scope/tabs filter)</SubLabel>
+        <div className="rounded-xl border border-border overflow-hidden">
+          <SearchResultsView query="coltrane" />
         </div>
       </Section>
 
@@ -3582,7 +3969,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           { label: "Home › New Albums / Playlists / Artists rails", href: "/" },
           { label: "Artist profile rails (Top Albums, Products, Curated Playlists, Similar Artists)", href: "/?page=Artist" },
         ]}>
-        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
           Section divider with title + ◀ ▶ + ghost "Show all"
           button on top, scrollable card rail below. The row hides
           its scrollbar and uses
@@ -3590,7 +3977,60 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           so vertical wheel/swipe passes straight through to the
           page. Try clicking the arrows or swiping horizontally.
         </p>
+        <p className="text-base text-muted-foreground mb-2 max-w-2xl">
+          <span className="text-foreground font-medium">Responsive behaviour</span> — the rail has two distinct modes, split at a <span className="text-foreground">560px</span> container width (synced to the <a href="/?page=DesignSystem#media-header" className="text-primary-text hover:underline underline-offset-2">MediaHeader</a>'s stacked breakpoint):
+        </p>
+        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-5 max-w-2xl list-disc pl-5">
+          <li>
+            <span className="text-foreground">Column steps</span> — visible
+            cards step with container width on the same thresholds as
+            the Library grids:{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">304→2</code>,{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">464→3</code>,{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">692→4</code>,{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">928→5</code>,{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">1164→6</code>,{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">1500→7</code>.
+          </li>
+          <li>
+            <span className="text-foreground">Mobile (&lt; 560px) — swipe mode.</span>{" "}
+            Cards are floored at the <span className="text-foreground">220px</span> max width
+            (min = max), so they lock to one/two big cards with a <span className="text-foreground">~24px peek</span> of
+            the next at the right edge — a clear "this row scrolls" cue
+            on touch. This is the same point the MediaHeader stacks, so
+            the whole page flips to its mobile read together. The ghost
+            "Show all" also firms up into a <span className="text-foreground">secondary pill</span> here,
+            since the chevrons are gone.
+          </li>
+          <li>
+            <span className="text-foreground">Desktop (≥ 560px) — grid mode.</span>{" "}
+            Cards fit exactly N-per-row (no peek), aligned to the Library
+            grids; the ◀ ▶ arrows carry the scroll affordance.
+          </li>
+          <li>
+            <span className="text-foreground">Arrows</span> — a pointer
+            affordance for <span className="text-foreground">grid mode (≥ 560)</span> only.
+            Below 560 the swipe peek is the scroll cue, so the arrows would
+            be redundant and are hidden. On touch
+            (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">hover: none</code>)
+            they're always hidden — the peek / native swipe is the cue.
+          </li>
+          <li>
+            <span className="text-foreground">Scroll</span> — scroll-snap
+            re-aligns cards after a swipe; arrows page by one viewport +
+            one gap. Native scrollbar hidden.
+          </li>
+        </ul>
         <CardRail title="New Albums">
+          {HOME_NEW_ALBUMS.map(a => (
+            <li key={a.id}><AlbumCard cover={a.cover} title={a.title} artist={a.artist} year={albumMetaFor(a.title).year} streamPrice={albumMetaFor(a.title).streamPrice} downloadPrice={albumMetaFor(a.title).downloadPrice} /></li>
+          ))}
+        </CardRail>
+
+        <p className="text-base text-muted-foreground mt-8 mb-2 max-w-2xl">
+          <span className="text-foreground font-medium">Swipeable grid variant</span> (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">mobileGrid</code>) — opt-in denser layout for shelves with <span className="text-foreground">12+ entries</span>. On mobile (&lt; 560px) cards lay out as a <span className="text-foreground">2-row, column-major</span> grid you swipe across columns (~2× the cards per screen); desktop is unchanged. Enabling it is the host/editor's call — pass the boolean only when the shelf is long enough and an editor opted in. <span className="text-foreground">Narrow your window below 560px</span> to see the two rows.
+        </p>
+        <CardRail title="Swipeable Grid Section" mobileGrid>
           {HOME_NEW_ALBUMS.map(a => (
             <li key={a.id}><AlbumCard cover={a.cover} title={a.title} artist={a.artist} year={albumMetaFor(a.title).year} streamPrice={albumMetaFor(a.title).streamPrice} downloadPrice={albumMetaFor(a.title).downloadPrice} /></li>
           ))}
@@ -3609,7 +4049,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           { label: "Artist › Shop tab",        href: "/?page=Artist" },
           { label: "Artist › Products rail",   href: "/?page=Artist" },
         ]}>
-        <ul className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))] @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))] @min-[1500px]:grid-cols-[repeat(7,minmax(143px,220px))] gap-x-4 gap-y-6">
+        <ul className="grid-cards">
           {[
             { id: "kp1", title: "Space Is the Place — Vinyl Reissue", price: "32 $", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
             { id: "kp2", title: "Lanquidity (Deluxe 4LP Box)",         price: "120 $", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/b3/2a/5f/b32a5f91-5551-1ac0-17c6-e6dd4dcc0292/4062548021820_3000.jpg/600x600bb.jpg" },
@@ -3633,7 +4073,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         usage={[
           { label: "Purchases hub", href: "/?page=Purchases" },
         ]}>
-        <p className="text-small text-muted-foreground mb-5 max-w-3xl">
+        <p className="text-base text-muted-foreground mb-5 max-w-3xl">
           Buyer-side receipt for one checkout. Wraps every shipment in
           the same payment ("one charge, N fulfillments") under a
           shared date + total header. Each fulfillment row links to
@@ -3665,6 +4105,19 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           { label: "Album detail",    href: "/?page=Album" },
           { label: "Playlist detail", href: "/?page=Playlist" },
         ]}>
+        <p className="text-base text-muted-foreground mb-2 max-w-2xl">
+          <span className="text-foreground font-medium">Responsive</span> — the header is a <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">@container</code> with three tiers by its own width:
+        </p>
+        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-3 max-w-2xl list-disc pl-5">
+          <li><span className="text-foreground">≥ 780 — full</span>: cover left, title/meta right, Play + Shuffle and the full icon cluster (Add/Share/Info + a persistent "…").</li>
+          <li><span className="text-foreground">560–779 — compact</span>: still horizontal, but Add/Share/Info drop; the "…" <span className="text-foreground">stays put</span> and carries them via its bottom sheet. Play/Shuffle can shrink toward square.</li>
+          <li><span className="text-foreground">&lt; 560 — stacked</span>: full-width cover on top, title/meta, then a Play/Shuffle/Add/Share row; Info/More live in the page-gutter "…".</li>
+          <li><span className="text-foreground">Title</span> stays on one line; if it's too long to fit it slowly scrolls back and forth (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">MarqueeText</code>) so the full name is readable, rather than wrapping or truncating.</li>
+          <li><span className="text-foreground">Meta line</span> is priority-ordered against its own width: year/duration drops first (&lt; 320), then type (&lt; 240), and the owner only <span className="text-foreground">truncates as a last resort</span> once both are gone — so the owner stays readable as long as possible.</li>
+        </ul>
+        <p className="text-base text-muted-foreground mb-8 max-w-2xl">
+          The header's own "…" persists across both horizontal tiers; the <span className="text-foreground">page-gutter</span> "…" (mirroring the back chevron) only appears in the stacked tier (&lt; 560), where there's no cluster. The full-cluster floor of <span className="text-foreground">780px</span> is what the sidebar auto-collapse and the <a href="/?page=DesignSystem#card-rail" className="text-primary-text hover:underline underline-offset-2">Card Rail</a> peek boundary are synced to. See <a href="/?page=DesignSystem#responsive" className="text-primary-text hover:underline underline-offset-2">Responsive &amp; Pointer</a>.
+        </p>
         <div className="flex flex-col gap-10">
           <div className="flex flex-col gap-2">
             <SubLabel>album — with buying option</SubLabel>
@@ -3769,6 +4222,190 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         </div>
       </Section>
 
+      {/* ══ MOBILE HEADER ══ */}
+      <Section id="mobile-header" title="Mobile Header"
+        usage={[
+          { label: "Phone layouts (< 768px) — Home",     href: "/?page=Home" },
+          { label: "Library (Albums / Artists / …)",      href: "/?page=Albums" },
+          { label: "Explore search",                       href: "/?page=Explore" },
+        ]}>
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
+          The frosted top bar for phone layouts. It shares the exact same
+          glass material as the bottom <span className="text-foreground">FooterNav</span> —{" "}
+          <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">.frosted-glass</code> with
+          a hairline border — just flipped to the top edge, so the two
+          bookend the screen with one continuous surface as content scrolls
+          under them.
+        </p>
+        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-8 max-w-2xl list-disc pl-5">
+          <li>
+            <span className="text-foreground">Composed, not configured.</span> Each
+            context is just an arrangement of five primitives —{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">MobileTitleRow</code>,{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">MobileSearchBar</code>,{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">MobilePillTabs</code>,{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">MobileScopeToggle</code>,{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">MobileIconButton</code>.
+          </li>
+          <li>
+            <span className="text-foreground">Sticky &amp; safe-area aware.</span>{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">sticky top-0</code> with
+            a <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">12px</code> gutter
+            matching the phone page padding and a top inset for the status bar.
+          </li>
+        </ul>
+
+        <div className="flex flex-wrap gap-x-10 gap-y-8">
+          {/* Home — title + avatar */}
+          <div className="flex flex-col gap-2">
+            <SubLabel>Home — title + avatar</SubLabel>
+            <PhoneHeaderFrame header={
+              <MobileHeader>
+                <MobileTitleRow title="Home" trailing={<MobileAvatar src="https://picsum.photos/seed/muza-you/120/120" />} />
+              </MobileHeader>
+            } />
+          </div>
+
+          {/* Library — title + icon actions + pill tabs */}
+          <div className="flex flex-col gap-2">
+            <SubLabel>Library — actions + filter tabs</SubLabel>
+            <PhoneHeaderFrame header={
+              <MobileHeader>
+                <MobileTitleRow title="Library" trailing={<>
+                  <MobileIconButton label="Add"><Plus /></MobileIconButton>
+                  <MobileIconButton label="Search"><Search /></MobileIconButton>
+                </>} />
+                <MobilePillTabs
+                  value="all"
+                  tabs={[
+                    { value: "all", label: "All" },
+                    { value: "albums", label: "Albums" },
+                    { value: "songs", label: "Songs" },
+                    { value: "playlists", label: "Playlists" },
+                  ]}
+                />
+              </MobileHeader>
+            } />
+          </div>
+
+          {/* Library — search mode */}
+          <div className="flex flex-col gap-2">
+            <SubLabel>Library — search mode (Cancel + tabs)</SubLabel>
+            <PhoneHeaderFrame header={
+              <MobileHeader>
+                <MobileSearchBar placeholder="Search your library" autoFocus={false} onCancel={() => {}} />
+                <MobilePillTabs
+                  value="all"
+                  tabs={[
+                    { value: "all", label: "All" },
+                    { value: "albums", label: "Albums" },
+                    { value: "songs", label: "Songs" },
+                    { value: "playlists", label: "Playlists" },
+                  ]}
+                />
+              </MobileHeader>
+            } />
+          </div>
+
+          {/* Explore — title + avatar + search */}
+          <div className="flex flex-col gap-2">
+            <SubLabel>Explore — title + search field</SubLabel>
+            <PhoneHeaderFrame header={
+              <MobileHeader>
+                <MobileTitleRow title="Explore" trailing={<MobileAvatar src="https://picsum.photos/seed/muza-you/120/120" />} />
+                <MobileSearchBar placeholder="Search Artists, Albums, Songs or Playlists" />
+              </MobileHeader>
+            } />
+          </div>
+
+          {/* Explore — scrolled (search only) */}
+          <div className="flex flex-col gap-2">
+            <SubLabel>Explore — scrolled (search collapses up)</SubLabel>
+            <PhoneHeaderFrame header={
+              <MobileHeader>
+                <MobileSearchBar placeholder="Explore Artists, Albums, Songs or Playlists" />
+              </MobileHeader>
+            } />
+          </div>
+
+          {/* Explore — focused (scope toggle) */}
+          <div className="flex flex-col gap-2">
+            <SubLabel>Explore — focused (catalog scope)</SubLabel>
+            <PhoneHeaderFrame header={
+              <MobileHeader>
+                <MobileSearchBar placeholder="Search" autoFocus={false} onCancel={() => {}} />
+                <MobileScopeToggle
+                  value="catalog"
+                  options={[
+                    { value: "catalog", label: "Muza Catalog" },
+                    { value: "library", label: "My Library" },
+                  ]}
+                />
+              </MobileHeader>
+            } />
+          </div>
+
+          {/* Explore — submitted (filter pills) */}
+          <div className="flex flex-col gap-2">
+            <SubLabel>Explore — submitted (result filters)</SubLabel>
+            <PhoneHeaderFrame header={
+              <MobileHeader>
+                <MobileSearchBar value="miles" onChange={() => {}} onClear={() => {}} onCancel={() => {}} />
+                <MobilePillTabs
+                  value="all"
+                  tabs={[
+                    { value: "all", label: "All results" },
+                    { value: "albums", label: "Albums" },
+                    { value: "songs", label: "Songs" },
+                    { value: "playlists", label: "Playlists" },
+                  ]}
+                />
+              </MobileHeader>
+            } />
+          </div>
+        </div>
+
+        <p className="text-small text-muted-foreground mt-8 max-w-2xl">
+          (The faux list scrolls under each header so the glass tint + blur
+          read — same surface as the live <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">FooterNav</code>.)
+        </p>
+      </Section>
+
+      {/* ══ FOOTER NAV ══ */}
+      <Section id="footer-nav" title="Footer Nav"
+        usage={[
+          { label: "Phone layouts (< 608px) — replaces the sidebar", href: "/?page=Home" },
+        ]}>
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
+          The mobile bottom tab bar that replaces the sidebar below the
+          footer-nav breakpoint (synced to the <a href="/?page=DesignSystem#media-header" className="text-primary-text hover:underline underline-offset-2">Media Header</a>'s
+          stacking point). Three tabs — Home · Library · Search — on the
+          same <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">.frosted-glass</code> surface
+          as the <span className="text-foreground">Mobile Header</span>, so the two bookend the screen.
+        </p>
+        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-6 max-w-2xl list-disc pl-5">
+          <li>
+            <span className="text-foreground">Active = elevated pill.</span> The
+            current tab lifts off the bar as an opaque chip with a soft
+            shadow; inactive tabs are muted glyphs.
+          </li>
+          <li>
+            <span className="text-foreground">Deep-page aware.</span> The
+            Library tab stays lit on album / playlist / artist detail pages,
+            not just the library list.
+          </li>
+        </ul>
+        <div className="max-w-[420px] rounded-xl border border-border bg-muted/30 p-4">
+          <div className="relative rounded-lg overflow-hidden">
+            <FooterNav activeNav="Albums" onNavChange={() => {}} className="!static" />
+          </div>
+        </div>
+        <p className="text-small text-muted-foreground mt-5 max-w-2xl">
+          (Static preview — the live bar pins to the bottom of the content
+          area below 608px. Library tab shown active.)
+        </p>
+      </Section>
+
       {/* ══ PAGE SECTION ══ */}
       {/*
         Page-section primitive shared by the buyer-side purchase detail and
@@ -3825,7 +4462,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         ]}>
         <div className="flex flex-col gap-10">
           <div>
-            <p className="text-small text-muted-foreground mb-3 max-w-2xl">
+            <p className="text-base text-muted-foreground mb-3 max-w-2xl">
               Seller side — variant + SKU + discount + labelled tax. Mixed
               quantities exercise the unit-price expansion.
             </p>
@@ -3863,7 +4500,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           </div>
 
           <div>
-            <p className="text-small text-muted-foreground mb-3 max-w-2xl">
+            <p className="text-base text-muted-foreground mb-3 max-w-2xl">
               Buyer side — format/type subtitle, free shipping, no tax row.
               Same component, less content.
             </p>
@@ -3967,63 +4604,18 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         usage={[
           { label: "Album detail — Unlock All Songs CTA", href: "/?page=Album" },
         ]}>
-        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
-          The full one-time checkout. Wraps Pay.com's universal form
-          and reads as a transactional cart, not a generic dialog.
-          Sticky-header layout: title + cart item pinned at the top,
-          scrolling body for selections + payment + breakdown, sticky
-          action row at the bottom so <span className="font-medium text-foreground">Confirm and pay</span> is always reachable.
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
+          The one-time checkout — wraps Pay.com's universal form and reads as a transactional cart. The non-obvious bits:
         </p>
-        <ul className="text-small text-muted-foreground flex flex-col gap-1.5 mb-5 max-w-2xl list-disc pl-5">
+        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-5 max-w-2xl list-disc pl-5">
           <li>
-            <span className="text-foreground">In cart</span> — single
-            album row with cover, title, artist · year · format, price,
-            and a Remove link (same effect as Cancel; reads as cart UX).
+            <span className="text-foreground">Tier picker</span> (Listening vs Download) only shows when both prices are set.
           </li>
           <li>
-            <span className="text-foreground">Tier picker</span> —
-            Listening vs Download, only rendered when both prices are
-            set. Hidden in upgrade mode (stream-tier owner adding
-            download for the price delta).
+            <span className="text-foreground">Contribute to Muza</span> — optional tip jar, default $1, one-click opt-out.
           </li>
           <li>
-            <span className="text-foreground">Contact</span> — receipt
-            email, pre-filled from the auth context (mocked here).
-          </li>
-          <li>
-            <span className="text-foreground">Payment</span> — Pay.com
-            universal-form placeholder. Mounts the real iframe once
-            wired up.
-          </li>
-          <li>
-            <span className="text-foreground">Contribute to Muza</span>
-            {" "}— optional tip jar with $1 / $2 / $5 / No contribution
-            + custom amount. Default $1 selected as a soft nudge;
-            opting out is one click. Thank-you banner appears when
-            contribution &gt; 0.
-          </li>
-          <li>
-            <span className="text-foreground">Itemized breakdown</span>
-            {" "}— Subtotal · Contribution · Total. Contribution row
-            hides when set to No contribution.
-          </li>
-          <li>
-            <span className="text-foreground">Success page</span> —
-            ✓ <span className="text-foreground">You own [Album]</span>,
-            "Your impact" lines (artist received X, Muza received Y),
-            order confirmation, receipt-sent line, item recap with
-            optional Download button (download tier only), and twin
-            CTAs: <span className="text-foreground">See in library</span> /
-            <span className="text-foreground"> Play album</span>.
-          </li>
-          <li>
-            <span className="text-foreground">Upgrade mode</span> —
-            pass <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">upgradeMode</code>
-            + <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">upgradePrice</code>
-            for the pay-the-difference "add download" flow. Tier
-            picker is hidden, cart shows just the delta, success
-            calls <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">onUpgraded</code>
-            instead of <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">onPurchased</code>.
+            <span className="text-foreground">Upgrade mode</span> (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">upgradeMode</code> + <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">upgradePrice</code>) — pay-the-difference "add download" flow: tier picker hidden, cart shows just the delta, success fires <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">onUpgraded</code>.
           </li>
         </ul>
         <PurchaseDialogDemo />
@@ -4035,14 +4627,14 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           { label: "Anonymous user trips the 3-play cap (any track)", href: "/?page=Album" },
           { label: "Settings → Subscription → 'Subscribe' (re-trigger)", href: "/?page=Settings" },
         ]}>
-        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
           The non-profit paywall. Fires when an anonymous account trips
           the 3-play cap (or as a re-entry from Settings). Built as a
           mini landing page, not a generic dialog — one continuous
           muted surface, stacked muza lockup, bold headline, the
           amount picker IS in the hero so subscribing is one click.
         </p>
-        <ul className="text-small text-muted-foreground flex flex-col gap-1.5 mb-5 max-w-2xl list-disc pl-5">
+        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-5 max-w-2xl list-disc pl-5">
           <li>
             <span className="text-foreground">Inline amount picker</span>
             {" "}— 5 preset pills (<code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">$0 / $5 / $10 / $15 / $30</code>)
@@ -4064,6 +4656,29 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           </li>
         </ul>
         <SubscriptionPromptDemo />
+      </Section>
+
+      {/* ══ CREDITS DIALOG ══ */}
+      <Section id="credits-dialog" title="Credits Dialog"
+        usage={[
+          { label: "Album detail › ⓘ button / “…” → Show credits", href: "/?page=Album" },
+          { label: "Any album card / song row → Show credits", href: "/?page=Albums" },
+        ]}>
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
+          Release metadata, opened by every <span className="text-foreground">“Show credits”</span> action and the MediaHeader <span className="text-foreground">ⓘ</span> button. <span className="text-foreground">Albums only</span> — playlists have no release credits.
+        </p>
+        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-5 max-w-2xl list-disc pl-5">
+          <li>
+            <span className="text-foreground">3:2 cover header</span> — the square artwork floats over a blurred, stretched copy of itself, so non-square frames fill cleanly with no letterboxing.
+          </li>
+          <li>
+            <span className="text-foreground">Metadata</span> — main artist, album, label, recording date, then per-instrument performers (role → name). Main artist, album, and every performer are <span className="text-foreground">navigable links</span> (clicking dismisses the dialog).
+          </li>
+          <li>
+            Mounted once via <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">CreditsProvider</code>; any component opens it with <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useCredits().open(albumKey)</code>. Data is hand-curated in <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">album-catalog</code> (production would source MusicBrainz / Discogs).
+          </li>
+        </ul>
+        <CreditsDialogDemo />
       </Section>
 
       {/* ══ DRAWER (Sheet) ══ */}
@@ -4255,13 +4870,68 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       */}
       <Section id="list-table" title="List Table"
         usage={[{ label: "Artist › Discography (list view)", href: "/?page=Artist" }]}>
-        <p className="text-small text-muted-foreground mb-5 max-w-2xl">
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
           Single-line rows, no zebra borders. Title + Band are
           separate hover-underline click targets; Recorded and Tracks
           are sortable; click the cover to play; the ⋯ button opens
           the same menu as the AlbumCard.
         </p>
         <ListTableDemo />
+      </Section>
+
+      {/* ══ BULK ACTION BAR ══ */}
+      <Section id="bulk-action-bar" title="Bulk Action Bar"
+        usage={[
+          { label: "Studio › Music (select rows)",     href: "/?page=Music" },
+          { label: "Shop › Orders / Products",         href: "/?page=Orders" },
+          { label: "Library › Albums / Playlists (list view)", href: "/?page=Albums" },
+        ]}>
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
+          The floating pill that appears when a list/table has a
+          multi-row selection: a count, a divider, one or more action
+          buttons, and a clear (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">✕</code>).
+        </p>
+        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-6 max-w-2xl list-disc pl-5">
+          <li>
+            <span className="text-foreground">Always in view.</span> The live
+            bar <span className="text-foreground">portals into the content area</span> (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">#app-content</code>)
+            and pins to its bottom — so it stays on-screen, centred over the
+            content (clear of the sidebar), no matter how far the list
+            scrolls. Rendering it inline in a tall table would park it below
+            the fold.
+          </li>
+          <li>
+            <span className="text-foreground">Composable actions.</span> Pass
+            any number of <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">BulkActionButton</code>s
+            as children (each a light chip on the dark pill). They can carry
+            icons and inline counts.
+          </li>
+        </ul>
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <SubLabel>Single action</SubLabel>
+            <div className="flex"><BulkActionBarContent count={3} onClear={() => {}}>
+              <BulkActionButton>Remove from library</BulkActionButton>
+            </BulkActionBarContent></div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <SubLabel>Multiple actions (Studio / Music)</SubLabel>
+            <div className="flex"><BulkActionBarContent count={12} onClear={() => {}}>
+              <BulkActionButton>Make public</BulkActionButton>
+              <BulkActionButton>Make private</BulkActionButton>
+            </BulkActionBarContent></div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <SubLabel>Actions with icons + inline counts (Orders)</SubLabel>
+            <div className="flex"><BulkActionBarContent count={8} onClear={() => {}}>
+              <BulkActionButton><Truck className="size-4" />Mark shipped<span className="text-background/60 tabular-nums">(5)</span></BulkActionButton>
+              <BulkActionButton><Mail className="size-4" />Email<span className="text-background/60 tabular-nums">(8)</span></BulkActionButton>
+            </BulkActionBarContent></div>
+          </div>
+        </div>
+        <p className="text-small text-muted-foreground mt-5 max-w-2xl">
+          (Static previews — the live <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">BulkActionBar</code> portals + auto-hides at count 0.)
+        </p>
       </Section>
 
       {/* ══ PAGINATION ══ */}
@@ -4351,8 +5021,31 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
 
       {/* ══ PLAYER BAR ══ */}
       <Section id="player-bar" title="Player Bar">
+        <p className="text-base text-muted-foreground mb-4 max-w-2xl">
+          The persistent glass transport. Two layouts were explored;{" "}
+          <span className="text-foreground">Variant B</span> is the one wired
+          into the app (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">AppPlayer</code> →{" "}
+          <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">player-bar-b.tsx</code>);
+          variant A is kept here for reference only.
+        </p>
+        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-6 max-w-2xl list-disc pl-5">
+          <li>
+            <span className="text-foreground">Track info grows with the bar.</span>{" "}
+            The left section floors at 240px then keeps growing uncapped
+            (~24% of the bar width), so wide screens show more of the title /
+            artist / album. The title <span className="text-foreground">marquees</span> with
+            soft edge-fades when it overflows; artist + album are links.
+          </li>
+          <li>
+            <span className="text-foreground">State-bound.</span> Play/pause,
+            the simulated progress (waveform fill + mobile arc), and{" "}
+            <span className="text-foreground">Shuffle</span> are driven by the
+            global player store, so they stay in sync with the Media Header
+            and the overlay. Shuffle uses the shared pop / halo animation.
+          </li>
+        </ul>
         <div className="flex flex-col gap-8">
-          {/* Player A */}
+          {/* Player B — the LIVE variant (wired into AppPlayer). */}
           <ResizableBox initialWidth={1000} minWidth={368} maxWidth={1500}>
             <div
               className="relative flex flex-col justify-center gap-4 rounded-xl overflow-hidden p-10"
@@ -4364,15 +5057,20 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
               }}
             >
               <div className="relative z-10 flex flex-col gap-4">
-                <span className="self-start text-2xsmall font-medium text-foreground bg-background/70 backdrop-blur-sm px-2 py-0.5 rounded-full">
-                  Player Bar A
-                </span>
-                <PlayerBar className="w-full" />
+                <div className="self-start flex items-center gap-2">
+                  <span className="text-2xsmall font-medium text-foreground bg-background/70 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                    Player Bar B
+                  </span>
+                  <span className="text-2xsmall font-medium text-primary-foreground bg-primary px-2 py-0.5 rounded-full">
+                    In use
+                  </span>
+                </div>
+                <PlayerBarB className="w-full" />
               </div>
             </div>
           </ResizableBox>
 
-          {/* Player B */}
+          {/* Player A — kept for reference only; NOT used in the app. */}
           <ResizableBox initialWidth={1000} minWidth={368} maxWidth={1500}>
             <div
               className="relative flex flex-col justify-center gap-4 rounded-xl overflow-hidden p-10"
@@ -4384,10 +5082,15 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
               }}
             >
               <div className="relative z-10 flex flex-col gap-4">
-                <span className="self-start text-2xsmall font-medium text-foreground bg-background/70 backdrop-blur-sm px-2 py-0.5 rounded-full">
-                  Player Bar B
-                </span>
-                <PlayerBarB className="w-full" />
+                <div className="self-start flex items-center gap-2">
+                  <span className="text-2xsmall font-medium text-foreground bg-background/70 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                    Player Bar A
+                  </span>
+                  <span className="text-2xsmall font-medium text-muted-foreground bg-muted border border-border px-2 py-0.5 rounded-full">
+                    Not used
+                  </span>
+                </div>
+                <PlayerBar className="w-full" />
               </div>
             </div>
           </ResizableBox>
@@ -4396,6 +5099,16 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
 
       {/* ══ PLAYER OVERLAY (mobile full-screen "Now listening") ══ */}
       <Section id="player-overlay" title="Player Overlay">
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
+          The full mobile playback chrome via{" "}
+          <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">MobilePlayerShell</code>:
+          the <a href="/?page=DesignSystem#footer-nav" className="text-primary-text hover:underline underline-offset-2">Footer Nav</a> pinned
+          to the bottom, the mini <span className="text-foreground">Player Bar</span> resting
+          flush on top of it, and the full-screen "Now listening" overlay.
+          Tap the mini bar to slide the overlay up; tap its drag handle to
+          dismiss. The waveform shows played / unplayed progress and
+          Shuffle stays in sync with the rest of the player.
+        </p>
         {/*
           Reference frames covering the full spread of iPhones still in
           common daily use — from the oldest 4" device up to the newest
@@ -4437,8 +5150,9 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
 // Explore (discover music) will replace this stub.
 function ExplorePlaceholder() {
   return (
-    <div className="max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto px-10 py-20">
-      <h1 className="text-2xlarge font-medium tracking-tight mb-3">Explore</h1>
+    <div className="max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto px-page py-20">
+      {/* Mobile header already shows "Explore" (with the search field). */}
+      <h1 className="hidden sm:block text-2xlarge font-medium tracking-tight mb-3">Explore</h1>
       <p className="text-small text-muted-foreground max-w-xl mb-6">
         The discover-music surface lives here. Coming soon.
       </p>
@@ -4453,6 +5167,23 @@ function ExplorePlaceholder() {
   )
 }
 
+// Media-detail pages → the list they return "back" to. Drives the top
+// bar's back chevron (which replaces the old in-gutter back button).
+const DETAIL_BACK: Record<string, string> = {
+  Album:    "Albums",
+  Playlist: "Playlists",
+  Artist:   "Home",
+}
+
+// Pages where the persistent player makes sense — the music "listening"
+// surfaces. Studio (seller tools), Settings, Wallet, Shop and Purchases
+// are intentionally excluded; playback isn't their context.
+const LISTENING_PAGES = new Set<string>([
+  "Home", "Explore",
+  "Library", "Albums", "Artists", "Playlists", "Songs",
+  "Album", "Playlist", "Artist",
+])
+
 export default function Home() {
   // ── URL-backed navigation ──────────────────────────────────────────────
   // Top-level page lives in the `?page=<View>` query param so links are
@@ -4460,6 +5191,7 @@ export default function Home() {
   // page still works as expected (e.g. `?page=Explore#player-bar`).
   const [params, setParams] = useSearchParams()
   const activeNav = params.get("page") ?? "Home"
+  const searchQuery = params.get("q") ?? ""
 
   // Nav-driven loading state for the top progress bar.
   // Flips true on every activeNav change and back to false after a
@@ -4486,12 +5218,17 @@ export default function Home() {
     }, { replace: true })
   }
 
-  // Sidebar collapses automatically on mobile widths so the main view gets
-  // the full viewport. User can still toggle on top of that — the auto-
-  // collapse only fires when the viewport itself crosses the breakpoint.
-  const isMobile = useIsMobile()
+  // Sidebar auto-collapses at a breakpoint synced to the MediaHeader's
+  // full-cluster tier (see `useSidebarAutoCollapsed`): below ~1169px the
+  // expanded 208px sidebar would push the detail-page header out of its
+  // richest layout, so we collapse it to reclaim that width. "Auto wins
+  // on resize" — the effect only fires when the threshold is crossed, so
+  // a manual toggle is respected until the next crossing.
+  const autoCollapsed = useSidebarAutoCollapsed()
   const [collapsed, setCollapsed] = useState(false)
-  useEffect(() => { setCollapsed(isMobile) }, [isMobile])
+  useEffect(() => { setCollapsed(autoCollapsed) }, [autoCollapsed])
+  // Below the phone breakpoint the sidebar is swapped for a bottom tab bar.
+  const footerNav = useFooterNav()
   const [uploadOpen, setUploadOpen] = useState(false)
   const [uploadMinimized, setUploadMinimized] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -4536,12 +5273,16 @@ export default function Home() {
   if (activeNav === "DesignSystem") {
     return (
       <CartProvider>
-        <UserLibraryProvider seed={LIBRARY_SEED}>
+        <UserLibraryProvider seed={LIBRARY_SEED} savedSeed={LIBRARY_SAVED_SEED}>
           <UserAccountProvider initialTier="anonymous" initialPlayCounts={DEMO_PLAY_COUNTS}>
-            <TopProgressBar loading={navLoading} />
-            <div key="ds" className="h-screen [animation:pageFadeIn_250ms_ease-out]">
-              <DesignSystem />
-            </div>
+            <CreditsProvider>
+              <PlayerProvider>
+                <TopProgressBar loading={navLoading} />
+                <div key="ds" className="h-screen [animation:pageFadeIn_250ms_ease-out]">
+                  <DesignSystem />
+                </div>
+              </PlayerProvider>
+            </CreditsProvider>
           </UserAccountProvider>
         </UserLibraryProvider>
       </CartProvider>
@@ -4550,8 +5291,11 @@ export default function Home() {
 
   return (
     <CartProvider>
-    <UserLibraryProvider seed={LIBRARY_SEED}>
+    <UserLibraryProvider seed={LIBRARY_SEED} savedSeed={LIBRARY_SAVED_SEED}>
     <UserAccountProvider initialTier="anonymous" initialPlayCounts={DEMO_PLAY_COUNTS}>
+    <CreditsProvider>
+    <PlayerProvider>
+    <DetailActionsProvider>
     {/* Top progress bar — fires on every activeNav change. Sits
         outside the keyed AppShell wrapper so it isn't remounted
         on internal nav. */}
@@ -4562,15 +5306,49 @@ export default function Home() {
         only fires once when transitioning into the AppShell from
         the DS route. */}
     <div key="app" className="flex h-screen bg-background [animation:pageFadeIn_250ms_ease-out]">
-      <Sidebar
-        collapsed={collapsed}
-        onCollapsedChange={setCollapsed}
-        activeNav={activeNav}
-        onNavChange={navigate}
-      />
-      <main className="flex-1 min-w-0 flex flex-col relative">
-        <Topbar actions={<TopbarDefaultActions />} />
-        <div ref={scrollRef} className="flex-1 overflow-auto">
+      {/* On phones the sidebar is dropped for a bottom tab bar; the
+          content takes the full width. */}
+      {!footerNav && (
+        <Sidebar
+          collapsed={collapsed}
+          onCollapsedChange={setCollapsed}
+          activeNav={activeNav}
+          onNavChange={navigate}
+        />
+      )}
+      {/* `id="app-content"` is the portal target for the floating
+          BulkActionBar — it pins to this fixed-height, content-area box
+          (relative, excludes the sidebar) so it stays at the bottom of
+          the viewport regardless of how far the list scrolls. */}
+      <main id="app-content" className="flex-1 min-w-0 flex flex-col relative">
+        {/* Back lives in the chrome (top bar), not a page gutter — so it's
+            unaffected by the responsive px-page gutter. Shown on the
+            media-detail pages, returning to their list. On phones the
+            desktop Topbar is swapped for the frosted MobileAppHeader,
+            which lives INSIDE the scroll container below (sticky) so page
+            content scrolls under its glass. */}
+        {/* Frosted topbar overlays the scroll area (absolute, not in
+            flow) so page content scrolls UNDER its glass — same as the
+            mobile FooterNav. The scroll area gets `pt-[54px]` to start
+            content below it, preserving the original layout. */}
+        {!footerNav && (
+          <Topbar
+            onBack={DETAIL_BACK[activeNav] ? () => navigate(DETAIL_BACK[activeNav]) : undefined}
+            actions={<TopbarDefaultActions />}
+            className="absolute inset-x-0 top-0 z-30"
+          />
+        )}
+        <div ref={scrollRef} className={cn("flex-1 overflow-auto", !footerNav && "pt-[54px]", footerNav && "pb-24")}>
+          {/* Phone header — sticky top of the scroll area so the frosted
+              glass reads against scrolling content. Sits OUTSIDE the
+              keyed fade wrapper so it doesn't re-fade on every nav. */}
+          {footerNav && (
+            <MobileAppHeader
+              activeNav={activeNav}
+              onNavChange={navigate}
+              onBack={DETAIL_BACK[activeNav] ? () => navigate(DETAIL_BACK[activeNav]) : undefined}
+            />
+          )}
           {/* `key={activeNav}` remounts the inner wrapper on every
               navigation, which lets the pageFadeIn keyframe run once
               per view swap. 250ms crossfade (opacity + 6px lift) —
@@ -4578,26 +5356,38 @@ export default function Home() {
               ever feeling like "loading." */}
           <div key={activeNav} className="[animation:pageFadeIn_250ms_ease-out]">
             {activeNav === "Home"      && <HomeView onNavigate={navigate} />}
-            {activeNav === "Explore"   && <ExplorePlaceholder />}
+            {activeNav === "Explore"   && (
+              searchQuery ? <SearchResultsView query={searchQuery} /> : <ExplorePlaceholder />
+            )}
             {activeNav === "Purchases" && <PurchasesView />}
             {activeNav === "Settings"  && <SettingsView />}
+            {activeNav === "Library"   && <LibraryAllView />}
             {activeNav === "Albums"    && <LibraryAlbumsView />}
             {activeNav === "Artists"   && <LibraryArtistsView />}
             {activeNav === "Playlists" && <LibraryPlaylistsView />}
-            {activeNav === "Artist"    && <ArtistProfileView onBack={() => navigate("Home")} />}
-            {activeNav === "Album"     && <AlbumDetailView onBack={() => navigate("Albums")} />}
-            {activeNav === "Playlist"  && <PlaylistDetailView onBack={() => navigate("Playlists")} />}
+            {activeNav === "Artist"    && <ArtistProfileView />}
+            {activeNav === "Album"     && <AlbumDetailView />}
+            {activeNav === "Playlist"  && <PlaylistDetailView />}
             {Object.keys(STUDIO_TABS).includes(activeNav) && (
               <StudioView
                 page={activeNav}
                 onOpenUpload={() => { setUploadOpen(true); setUploadMinimized(false) }}
               />
             )}
-            {activeNav === "Songs" && (
-              <div className="p-10"><h1 className="text-2xlarge font-medium">{activeNav}</h1></div>
-            )}
+            {activeNav === "Songs"     && <LibrarySongsView />}
           </div>
         </div>
+
+        {/* Persistent player — one instance, shown only on the music
+            "listening" surfaces (not Studio / Settings / Wallet / Shop /
+            Purchases, where playback isn't the context). Reads the global
+            player store; renders nothing until a track is played. */}
+        {LISTENING_PAGES.has(activeNav) && <AppPlayer footerNav={footerNav} />}
+
+        {/* Mobile bottom tab bar — replaces the sidebar below the
+            footer-nav breakpoint. Absolute within main so it overlays
+            the (full-width) content. */}
+        {footerNav && <FooterNav activeNav={activeNav} onNavChange={navigate} />}
 
         {/* Global upload dialog — absolute within main, sidebar stays visible */}
         {uploadOpen && (
@@ -4632,6 +5422,9 @@ export default function Home() {
         </div>
       )}
     </div>
+    </DetailActionsProvider>
+    </PlayerProvider>
+    </CreditsProvider>
     </UserAccountProvider>
     </UserLibraryProvider>
     </CartProvider>

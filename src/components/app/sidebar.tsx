@@ -298,10 +298,12 @@ export function Sidebar({
         collapsed ? "px-1 items-center" : "px-3",
       )}>
 
-        {/* Logo */}
-        <div className={cn("mb-6 flex items-center", collapsed ? "justify-center" : "px-1")}>
+        {/* Logo — collapsed mark nudged up (`-mt-1.5`) so it reads as
+             vertically centred against the 54px topbar's search text, and
+             shrunk to ~98% (h-7 → h-[27px]). */}
+        <div className={cn("mb-6 flex items-center", collapsed ? "justify-center -mt-1.5" : "px-1")}>
           {collapsed
-            ? <LogoMark className="h-7 w-auto" />
+            ? <LogoMark className="h-[27px] w-auto" />
             : <LogoHorizontal className="h-[22px] w-auto" />
           }
         </div>
@@ -401,6 +403,19 @@ export function Sidebar({
             <div className="relative flex-1 min-h-0 pl-3">
               <div className="h-full overflow-y-auto pr-1 -mr-1 pb-10">
                 <div className="flex flex-col gap-0.5">
+                  {/* Design system — lives as the first "playlist" entry
+                       (moved out of the top bar). Routes to the DS view. */}
+                  <button
+                    onClick={() => handleNavChange("DesignSystem")}
+                    className={cn(
+                      "flex h-8 px-3 w-full text-left rounded-lg transition-colors items-center",
+                      currentActive === "DesignSystem"
+                        ? "bg-sidebar-primary text-sidebar-foreground"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent",
+                    )}
+                  >
+                    <span className="text-xsmall font-normal truncate">Design system</span>
+                  </button>
                   {playlists.map(pl => (
                     <button
                       key={pl.id}

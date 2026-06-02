@@ -13,12 +13,22 @@
  *   · 2×2 composite covers using album art from the playlist's tracks
  */
 
-import { useSearchParams } from "react-router"
+import { useState } from "react"
 
 import { PlaylistCard } from "@/components/ui/playlist-card"
 import { PlaylistCreateCard } from "@/components/ui/playlist-create-card"
+import { PlaylistListTable, PlaylistMobileList, LibrarySortMenu } from "@/components/app/media-list-table"
+import { Toggle } from "@/components/ui/toggle"
+import { ToggleGroup } from "@/components/ui/toggle-group"
+import { SingleSelect } from "@/components/ui/single-select"
+import { LayoutGrid, List, ListFilter } from "lucide-react"
+import { useMediaNav, slugify } from "@/lib/media-nav"
+import { useUserLibrary } from "@/lib/user-library"
+import { useLibraryView } from "@/lib/use-library-view"
+import { useLibrarySort, compareLibrary } from "@/lib/use-library-sort"
+import { useFooterNav } from "@/lib/use-media-query"
 
-interface SavedPlaylist {
+export interface SavedPlaylist {
   id:        string
   title:     string
   /** 4 album-cover URLs assembled into the 2×2 composite. */
@@ -87,7 +97,7 @@ function pickCovers(seed: string): string[] {
   ]
 }
 
-const SAVED_PLAYLISTS: SavedPlaylist[] = [
+export const SAVED_PLAYLISTS: SavedPlaylist[] = [
   // ── Blue Note ────────────────────────────────────────────────────────────
   { id: "p01", title: "Blue Note Essentials",          covers: pickCovers("bn-essentials"),    songCount: 64, owned: true       },
   { id: "p02", title: "Blue Note Late Night",          covers: pickCovers("bn-late-night"),    songCount: 28, owner: "Sarah K"  },
@@ -167,42 +177,107 @@ const SAVED_PLAYLISTS: SavedPlaylist[] = [
 ]
 
 export function LibraryPlaylistsView() {
-  // SPA navigation: tapping a playlist → `?page=Playlist`. Mock-data
-  // view always shows the same playlist; real wiring would carry an
-  // `id=` query param.
-  const [, setParams] = useSearchParams()
-  const openPlaylist = () => {
-    setParams(prev => {
-      const next = new URLSearchParams(prev)
-      next.set("page", "Playlist")
-      return next
-    }, { replace: true })
-  }
+  // SPA navigation: tapping a playlist → `?page=Playlist&playlist=<slug>`.
+  // The slug threads into PlaylistDetailView, which resolves it via the
+  // playlist catalog (rich for the demo, synthesized for the rest).
+  const { openPlaylist } = useMediaNav()
+  // Status filter (scalable dropdown) + persisted/shared view.
+  const [status, setStatus] = useState<"all" | "yours" | "saved">("all")
+  const [view, setView] = useLibraryView()
+  const footerNav = useFooterNav()
+  const [sort] = useLibrarySort()
+  const library = useUserLibrary()
+
+  const filtered = SAVED_PLAYLISTS.filter(p => {
+    // In the library if it's yours (owned) or saved in the store. Toggling
+    // a playlist's heart off on its detail page removes it here.
+    const inLib = p.owned || library.inLibrary("playlist", slugify(p.title))
+    if (!inLib) return false
+    if (status === "yours") return !!p.owned
+    if (status === "saved") return !p.owned
+    return true
+  })
+  // Mobile sort drives the order; desktop keeps source/table order.
+  const playlists = footerNav
+    ? [...filtered].sort(compareLibrary(sort, p => p.title))
+    : filtered
   return (
     <div className="flex-1 overflow-auto">
-      <div className="@container mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] px-10 pt-8 pb-12">
-        <h1 className="text-2xlarge font-medium text-foreground tracking-tight mb-6">
-          Playlists
-        </h1>
-
-        <ul className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))] @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))] @min-[928px]:grid-cols-[repeat(5,minmax(143px,220px))] @min-[1164px]:grid-cols-[repeat(6,minmax(143px,220px))] @min-[1500px]:grid-cols-[repeat(7,minmax(143px,220px))] gap-x-4 gap-y-6">
-          <li>
-            <PlaylistCreateCard />
-          </li>
-          {SAVED_PLAYLISTS.map(p => (
-            <li key={p.id}>
-              <PlaylistCard
-                title={p.title}
-                covers={p.covers}
-                songCount={p.songCount}
-                owner={p.owner}
-                owned={p.owned}
-                onTitleClick={openPlaylist}
-                onPlay={openPlaylist}
+      {/* `@container` lives on the grid wrapper below, not here — see
+           the Albums view: a query container traps absolutely-positioned
+           descendants (the list table's floating bulk bar). */}
+      <div className="mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] px-page pt-8 pb-12">
+        {/* Mobile: header already shows "Library" + active pill. */}
+        {!footerNav && (
+          <h1 className="text-2xlarge font-medium text-foreground tracking-tight mb-4">
+            Playlists
+          </h1>
+        )}
+        {/* Toolbar — filters left, view switch right (see Albums). */}
+        <div className="flex items-center justify-between gap-4 mb-6">
+          {/* Desktop = status filter; mobile = sort menu. */}
+          <div className="flex items-center gap-2 min-w-0">
+            {footerNav ? (
+              <LibrarySortMenu />
+            ) : (
+              <SingleSelect
+                value={status}
+                onChange={setStatus}
+                icon={<ListFilter className="size-4" />}
+                options={[
+                  { value: "all",   label: "All playlists" },
+                  { value: "yours", label: "Created by you" },
+                  { value: "saved", label: "Saved" },
+                ]}
               />
-            </li>
-          ))}
-        </ul>
+            )}
+          </div>
+          {/* Tile / list view switch. */}
+          <ToggleGroup
+            size="sm"
+            value={[view]}
+            onValueChange={(v) => { if (v[0]) setView(v[0] as "grid" | "list") }}
+            aria-label="View mode"
+          >
+            <Toggle value="grid" aria-label="Tile view">
+              <LayoutGrid className="size-3.5" />
+            </Toggle>
+            <Toggle value="list" aria-label="List view">
+              <List className="size-3.5" />
+            </Toggle>
+          </ToggleGroup>
+        </div>
+
+        {view === "grid" ? (
+          <div className="@container">
+            <ul className="grid-cards">
+              {/* Create card only shows in the unfiltered / "yours" views. */}
+              {status !== "saved" && (
+                <li>
+                  <PlaylistCreateCard />
+                </li>
+              )}
+              {playlists.map(p => (
+                <li key={p.id}>
+                  <PlaylistCard
+                    title={p.title}
+                    covers={p.covers}
+                    songCount={p.songCount}
+                    owner={p.owner}
+                    owned={p.owned}
+                    inLibrary={!p.owned}
+                    onTitleClick={() => openPlaylist(slugify(p.title))}
+                    onPlay={() => openPlaylist(slugify(p.title))}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : footerNav ? (
+          <PlaylistMobileList playlists={playlists} />
+        ) : (
+          <PlaylistListTable playlists={playlists} />
+        )}
       </div>
     </div>
   )

@@ -1,9 +1,12 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Pause, Plus, Volume2 } from "lucide-react"
+import { Pause, Volume2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Waveform } from "@/components/ui/waveform"
+import { MarqueeText } from "@/components/ui/marquee-text"
+import { LibraryHeartButton } from "@/components/ui/library-heart-button"
+import { slugify } from "@/lib/media-nav"
 import { Slider } from "@/components/ui/slider"
 import { SkipBackFilled, PlayFilledAlt, SkipForwardFilled } from "@/components/ui/transport-icons"
 import { ShuffleToggle, RepeatToggle } from "@/components/ui/transport-toggles"
@@ -21,13 +24,6 @@ const parseTime = (s: string) => {
 /** Common focus-ring utility (matches the global design system). */
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/30"
-
-/** Ghost icon button — same hover/active/focus as the project-wide Button[variant=ghost]. */
-const ghostIconBtn = cn(
-  "flex items-center justify-center p-1.5 rounded-full cursor-pointer shrink-0",
-  "hover:bg-accent active:bg-accent/80 active:scale-90 transition-[colors,opacity,transform] duration-150",
-  focusRing,
-)
 
 /** Transport button (skip/play) — opacity-based hover, no fill. */
 const transportBtn = cn(
@@ -87,20 +83,48 @@ function Disc({
 // ═══════════════════════════════════════════════════════════════════════════
 
 function TrackText({
-  title, artist, album, gap = "gap-2",
+  title, artist, album, gap = "gap-2", onArtistClick, onAlbumClick,
 }: {
   title:  string
   artist: string
   album:  string
   gap?:   string
+  onArtistClick?: () => void
+  onAlbumClick?:  () => void
 }) {
+  // Render a link-ish button when a handler is supplied (hover underline),
+  // otherwise a plain caption span. `stopPropagation` keeps a tap from
+  // bubbling to the mini-bar's expand handler.
+  const linkCls = "rounded-sm hover:text-foreground hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/30"
+  const artistEl = onArtistClick ? (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); onArtistClick() }}
+      className={cn("text-xsmall leading-none text-muted-foreground truncate shrink-0 text-left", linkCls)}
+    >
+      {artist}
+    </button>
+  ) : (
+    <span className="text-xsmall leading-none text-muted-foreground truncate shrink-0">{artist}</span>
+  )
+  const albumEl = onAlbumClick ? (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); onAlbumClick() }}
+      className={cn("text-xsmall leading-none text-muted-foreground truncate text-left min-w-0", linkCls)}
+    >
+      {album}
+    </button>
+  ) : (
+    <span className="text-xsmall leading-none text-muted-foreground truncate">{album}</span>
+  )
   return (
     <div className={cn("flex flex-col min-w-0 flex-1", gap)}>
-      <p className="text-small leading-none text-foreground truncate">{title}</p>
+      <MarqueeText as="p" containerClassName="leading-none" className="text-small leading-none text-foreground">{title}</MarqueeText>
       <div className="flex items-center gap-2 min-w-0">
-        <span className="text-xsmall leading-none text-muted-foreground truncate shrink-0">{artist}</span>
+        {artistEl}
         <span className="text-xsmall leading-none text-muted-foreground shrink-0">·</span>
-        <span className="text-xsmall leading-none text-muted-foreground truncate">{album}</span>
+        {albumEl}
       </div>
     </div>
   )
@@ -228,10 +252,28 @@ interface PlayerBarProps {
   }
   currentTime?: string
   totalTime?:   string
+  /** Externally-driven progress 0–1. When set (e.g. from the global player
+   *  store's simulated clock), it overrides the internal wavesurfer-derived
+   *  progress so the mobile arc fills even without real decoded audio. */
+  progress?:    number
+  /** Fired when the user scrubs the waveform (seconds). */
+  onSeek?:      (seconds: number) => void
+  /** Navigate to the track's artist / album. When set, the subtitle's
+   *  artist + album become links. */
+  onArtistClick?: () => void
+  onAlbumClick?:  () => void
   /** Fired when the user taps the mobile mini-bar surface (outside its
    *  own transport buttons). The consumer typically uses this to open a
    *  full-screen player overlay. Desktop variants ignore it. */
   onExpand?:    () => void
+  /** Drive play/pause from the global player store instead of local
+   *  state. When set, the play buttons toggle the store and the disc /
+   *  icons reflect `bound.playing`. The DS showcase omits this and stays
+   *  self-contained. */
+  bound?: { playing: boolean; onToggle: () => void }
+  /** Drive Shuffle from the global store so it stays in sync with the
+   *  detail-page MediaHeaders. Omit for the self-contained DS showcase. */
+  shuffle?: { active: boolean; onToggle: () => void }
 }
 
 export function PlayerBar({
@@ -245,14 +287,33 @@ export function PlayerBar({
   },
   currentTime = "2:24",
   totalTime   = "5:12",
+  progress: progressProp,
+  onSeek,
+  onArtistClick,
+  onAlbumClick,
   onExpand,
+  bound,
+  shuffle: shuffleBound,
 }: PlayerBarProps) {
-  // Playback
-  const [playing,  setPlaying]   = useState(false)
-  const [progress, setProgress]  = useState(0)  // 0–1, drives the mobile progress arc
+  // Playback — local state unless bound to the global store.
+  const [localPlaying, setLocalPlaying] = useState(false)
+  const playing  = bound ? bound.playing : localPlaying
+  const setPlaying = (next: boolean | ((p: boolean) => boolean)) => {
+    if (bound) { bound.onToggle(); return }
+    setLocalPlaying(next)
+  }
+  // 0–1 progress for the mobile arc. Prefer the externally-driven value
+  // (store's simulated clock); fall back to wavesurfer's real time updates.
+  const [localProgress, setLocalProgress] = useState(0)
+  const progress = progressProp ?? localProgress
+  // No real audio (no `url`) → wavesurfer can't advance time itself, so let
+  // the `currentTime` prop drive the played portion by keeping it "paused".
+  const waveformPlaying = track.url ? playing : false
 
   // Secondary controls
-  const [shuffle, setShuffle]    = useState(false)
+  const [localShuffle, setLocalShuffle] = useState(false)
+  const shuffle      = shuffleBound ? shuffleBound.active : localShuffle
+  const toggleShuffle = () => { if (shuffleBound) shuffleBound.onToggle(); else setLocalShuffle(s => !s) }
   const [repeat,  setRepeat]     = useState(false)
   const [volume,  setVolume]     = useState(75)  // 0–100
 
@@ -277,10 +338,12 @@ export function PlayerBar({
       <div className="hidden @min-[640px]:flex items-center h-[80px]">
 
         {/* ── Current track (left) ──
-             Scales 240→320px between bar widths ~688 and ~1000, hitting
-             the 240px floor exactly when the right section reaches its
-             minimum, and its 320px cap at common desktop widths. */}
-        <div className="relative flex items-center shrink-0 h-[80px] w-[clamp(15rem,calc(24cqw+5rem),20rem)]">
+             Floors at 240px (the 15rem `max` term, hit on the narrowest
+             desktop bars) then grows smoothly and UNCAPPED at ~24% of the
+             bar width, so wide screens give the title / artist / album more
+             room to read. The right section's `min-w` floor keeps the
+             waveform from ever being starved. */}
+        <div className="relative flex items-center shrink-0 h-[80px] w-[max(15rem,calc(24cqw+5rem))]">
           {/* Background: a stretchable CSS pill + a fixed-size SVG lens on
               the right edge that creates the protruding notch per Figma. */}
           <div className="absolute inset-[0_11px_0_0] rounded-[32px] bg-background pointer-events-none" />
@@ -307,10 +370,16 @@ export function PlayerBar({
 
           {/* Text + Plus button — positioned inside the solid pill. */}
           <div className="absolute inset-[19px_11px_19px_96px] flex items-center gap-1 min-w-0">
-            <TrackText title={track.title} artist={track.artist} album={track.album} gap="gap-2" />
-            <button className={ghostIconBtn} aria-label="Add to library">
-              <Plus className="size-5 text-foreground" strokeWidth={1.5} />
-            </button>
+            <TrackText title={track.title} artist={track.artist} album={track.album} gap="gap-1" onArtistClick={onArtistClick} onAlbumClick={onAlbumClick} />
+            <LibraryHeartButton
+              type="song"
+              id={slugify(track.title)}
+              name={track.title}
+              song={{ id: slugify(track.title), title: track.title, artist: track.artist, album: track.album, cover: track.image, duration: totalTime }}
+              variant="ghost"
+              size="icon"
+              iconClassName="size-5"
+            />
           </div>
         </div>
 
@@ -356,11 +425,11 @@ export function PlayerBar({
             <div className="flex flex-1 items-center min-w-[120px]">
               <Waveform
                 url={track.url}
-                playing={playing}
+                playing={waveformPlaying}
                 currentTime={parseTime(currentTime)}
                 duration={track.url ? undefined : parseTime(totalTime)}
-                onSeek={() => setPlaying(true)}
-                onTimeUpdate={(t, dur) => setProgress(dur > 0 ? t / dur : 0)}
+                onSeek={(t) => { onSeek?.(t); if (!bound) setPlaying(true) }}
+                onTimeUpdate={(t, dur) => setLocalProgress(dur > 0 ? t / dur : 0)}
                 height={40}
                 hoverLineHeight={72}
               />
@@ -377,7 +446,7 @@ export function PlayerBar({
           <div className="flex items-center gap-0.5 shrink-0">
             <ShuffleToggle
               active={shuffle}
-              onToggle={() => setShuffle(s => !s)}
+              onToggle={toggleShuffle}
               w={40}
               h={32}
               iconSize={18}
@@ -412,7 +481,7 @@ export function PlayerBar({
       >
 
         <div className="relative flex-1 flex items-center justify-between pl-[72px] pr-[3px] py-2 min-h-0">
-          <TrackText title={track.title} artist={track.artist} album={track.album} gap="gap-1" />
+          <TrackText title={track.title} artist={track.artist} album={track.album} gap="gap-1" onArtistClick={onArtistClick} onAlbumClick={onAlbumClick} />
 
           <div className="flex items-center shrink-0 h-full">
             {/* stopPropagation on every button so transport controls don't

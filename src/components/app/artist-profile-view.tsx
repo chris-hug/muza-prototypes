@@ -26,7 +26,7 @@
 
 import * as React from "react"
 import { useMemo, useRef, useState } from "react"
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, LayoutGrid, List, MoreHorizontal, Share2, MoreVertical, Radio } from "lucide-react"
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, LayoutGrid, List, MoreHorizontal, Radio, Heart, ListPlus, Disc3, Info } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { ContentTypeBadge } from "@/components/ui/badge"
@@ -39,11 +39,21 @@ import { TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { AlbumCardMenuItems } from "@/components/ui/cover-card-menu"
 import { useUserLibrary } from "@/lib/user-library"
+import { LibraryHeartButton } from "@/components/ui/library-heart-button"
 import { albumMetaFor, libraryIdForTitle } from "@/lib/album-meta"
+import { ShareButton, ShareMenuItems } from "@/components/ui/share-button"
+import { useCredits } from "@/lib/credits-context"
+import { hasAlbumDetail, registerAlbums } from "@/lib/album-catalog"
+import { hasPlaylistDetail, registerPlaylists } from "@/lib/playlist-catalog"
+import { useMediaNav, slugify } from "@/lib/media-nav"
+import { useFooterNav } from "@/lib/use-media-query"
+import { usePlayer } from "@/lib/player"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ToggleGroup } from "@/components/ui/toggle-group"
 import { Toggle } from "@/components/ui/toggle"
@@ -53,8 +63,9 @@ import { PlaylistCard } from "@/components/ui/playlist-card"
 import { ProductCard } from "@/components/ui/product-card"
 import { SongListItem } from "@/components/ui/song-list-item"
 import { CoverPlayButton } from "@/components/ui/cover-play-button"
-import { PlayFilledAlt } from "@/components/ui/transport-icons"
+import { PlayFilledAlt, PauseFilledAlt } from "@/components/ui/transport-icons"
 import { CardRail } from "@/components/app/card-rail"
+import { usePublishDetailHeader } from "@/lib/detail-actions"
 
 // ─── Mock data ──────────────────────────────────────────────────────────────
 //
@@ -195,12 +206,61 @@ const SIMILAR_ARTISTS = [
   { id: "sa6", name: "Anthony Braxton", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Anthony_braxton_5268134w.jpg/500px-Anthony_braxton_5268134w.jpg" },
 ]
 
+// Register this artist's releases + curated playlists into the catalogs
+// so their cards resolve to real synthesized detail pages (rather than
+// the default fallback). Runs once at module load.
+registerAlbums(
+  DISCOGRAPHY.map(r => ({
+    id: r.id, title: r.title, cover: r.cover,
+    artist: r.band ?? ARTIST.name, year: r.year,
+  })),
+)
+registerPlaylists(
+  CURATED_PLAYLISTS.map(p => ({
+    id: p.id, title: p.title, covers: p.covers,
+    songCount: p.songCount, owner: p.owner, owned: p.owned,
+  })),
+)
+
 // ─── View ───────────────────────────────────────────────────────────────────
 
-export function ArtistProfileView({ onBack }: { onBack?: () => void }) {
+export function ArtistProfileView() {
+  const { openAlbum, openPlaylist, openArtist } = useMediaNav()
   const [tab, setTab] = useState("overview")
   const [bioOpen, setBioOpen] = useState(false)
   const library = useUserLibrary()
+  const player = usePlayer()
+  // This artist is the active player source AND playing → hero Play
+  // button shows Pause.
+  const isThisArtistPlaying = player.playing && player.playingFrom === ARTIST.name
+  // Artist library key — the hero heart and the mobile "…" menu both bind
+  // to the shared store by this id, so they stay in sync (and persist).
+  const artistId = slugify(ARTIST.name)
+  // On mobile (footer-nav active) the hero's Share + library buttons
+  // collapse into the floating header's "…"; gated on the actual
+  // footer-nav breakpoint, not Tailwind's `md`, so it stays in sync.
+  const footerNav = useFooterNav()
+
+  // Publish the title + cover + menu for the floating mobile chrome. On
+  // mobile the hero's Share + Add-to-library buttons collapse into the
+  // header's "…" (top-right, mirroring the back top-left); this config
+  // drives that menu. The chrome samples `coverSrc` to flip the back icon
+  // light/dark to stay legible over the hero photo.
+  usePublishDetailHeader({
+    title: ARTIST.name,
+    coverSrc: ARTIST.cover,
+    menu: {
+      kind: "artist",
+      title: ARTIST.name,
+      subtitle: "Artist",
+      cover: ARTIST.cover,
+      // Save action binds to the global user-library store (same as the
+      // hero heart) so the two stay in sync and Save flips to Remove.
+      libraryType: "artist",
+      libraryId: artistId,
+      libraryName: ARTIST.name,
+    },
+  })
 
   // No `overflow-auto` here — the outer layout already owns the page
   // scroll. A second scroll container would break sticky positioning
@@ -236,20 +296,10 @@ export function ArtistProfileView({ onBack }: { onBack?: () => void }) {
           className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/40 to-black/80"
         />
 
-        {/* Back button — top-left, standard 40px icon button to
-             match the bottom-right Share / More cluster. */}
-        <Button
-          variant="outline"
-          size="icon"
-          aria-label="Back"
-          onClick={onBack}
-          className="absolute top-4 left-8"
-        >
-          <ChevronLeft />
-        </Button>
+        {/* Back lives in the top bar (chrome) — see the shell's <Topbar>. */}
 
         {/* Name + bio — pinned to bottom-left of the hero. */}
-        <div className="absolute inset-x-0 bottom-0 mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] w-full px-10 pb-8 flex flex-col gap-4">
+        <div className="absolute inset-x-0 bottom-0 mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] w-full px-page pb-8 flex flex-col gap-4">
           <div className="max-w-3xl flex flex-col gap-3">
             <h1 className="text-[clamp(2.5rem,5vw,4rem)] font-medium leading-[1.05] tracking-tight">
               {ARTIST.name}
@@ -266,29 +316,45 @@ export function ArtistProfileView({ onBack }: { onBack?: () => void }) {
             </p>
           </div>
 
-          {/* Action row — Play (primary), Artist radio (outline),
-               then circular Share + More on the right. All buttons
-               use design-system variants; the `dark` wrapper above
-               handles the colour shift. */}
+          {/* Action row — Play (primary), Artist radio (outline), then
+               circular Share + Add-to-library on the right. On mobile
+               (max-md, the footer-nav breakpoint) the Share + library
+               buttons collapse into the floating header's "…" instead,
+               so they're hidden here. */}
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Button size="lg" className="h-12 px-6 rounded-full">
-                <PlayFilledAlt className="size-4" />
-                Play
+              <Button
+                size="lg"
+                className="h-12 px-6 rounded-full"
+                aria-pressed={isThisArtistPlaying}
+                onClick={() => {
+                  if (player.playingFrom === ARTIST.name && player.track) { player.toggle(); return }
+                  const s = TOP_SONGS[0]; player.play(
+                    { title: s.title, artist: ARTIST.name, album: s.album, image: s.cover, totalTime: s.duration, artistAvatar: ARTIST.cover },
+                    ARTIST.name,
+                  )
+                }}
+              >
+                {isThisArtistPlaying ? <PauseFilledAlt className="size-4" /> : <PlayFilledAlt className="size-4" />}
+                {isThisArtistPlaying ? "Pause" : "Play"}
               </Button>
               <Button variant="outline" size="lg" className="h-12 px-6 rounded-full">
                 <Radio />
                 Artist radio
               </Button>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" aria-label="Share">
-                <Share2 />
-              </Button>
-              <Button variant="outline" size="icon" aria-label="More options">
-                <MoreVertical />
-              </Button>
-            </div>
+            {!footerNav && (
+              <div className="flex items-center gap-2">
+                <ShareButton variant="outline" size="icon" title={ARTIST.name} text={ARTIST.name} />
+                <LibraryHeartButton
+                  type="artist"
+                  id={artistId}
+                  name={ARTIST.name}
+                  variant="outline"
+                  size="icon"
+                />
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -308,7 +374,11 @@ export function ArtistProfileView({ onBack }: { onBack?: () => void }) {
       <div className="w-full bg-muted">
         <div className="@container w-full pt-4">
           <Tabs value={tab} onValueChange={setTab}>
-            <TabsList variant="line" className="w-full gap-0 h-8">
+            {/* h-9 matches the triggers' own height — the `line` variant
+                 scrolls (overflow-x-auto), which forces overflow-y to clip;
+                 a shorter list would cut off the triggers' bottom borders
+                 (the active underline). */}
+            <TabsList variant="line" className="w-full gap-0 h-9">
               <TabsTrigger
                 value="overview"
                 className="flex-1 h-9 items-start px-0 pt-0 pb-0 after:hidden border-b border-border data-active:border-foreground"
@@ -336,7 +406,7 @@ export function ArtistProfileView({ onBack }: { onBack?: () => void }) {
            rather than on this outer div because container-type breaks
            position: sticky for descendants (the discography list view
            needs a sticky table head against the page scroll). */}
-      <div className="mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] w-full px-10">
+      <div className="mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] w-full px-page">
         {tab === "overview" && (
           <div className="@container">
           <>
@@ -346,6 +416,8 @@ export function ArtistProfileView({ onBack }: { onBack?: () => void }) {
               {TOP_ALBUMS.map(a => {
                 const meta  = albumMetaFor(a.title)
                 const libId = libraryIdForTitle(a.title)
+                const key   = slugify(a.title)
+                const linkable = hasAlbumDetail(key)
                 return (
                   <li key={a.id}>
                     <AlbumCard
@@ -356,6 +428,9 @@ export function ArtistProfileView({ onBack }: { onBack?: () => void }) {
                       streamPrice={meta.streamPrice}
                       downloadPrice={meta.downloadPrice}
                       purchased={libId ? library.isPurchased(libId) : false}
+                      onTitleClick={linkable ? () => openAlbum(key) : undefined}
+                      onPlay={linkable ? () => openAlbum(key) : undefined}
+                      hideGoToArtist
                     />
                   </li>
                 )
@@ -371,22 +446,28 @@ export function ArtistProfileView({ onBack }: { onBack?: () => void }) {
             </CardRail>
 
             <CardRail title="Curated Playlists">
-              {CURATED_PLAYLISTS.map(p => (
-                <li key={p.id}>
-                  <PlaylistCard
-                    title={p.title}
-                    covers={p.covers}
-                    songCount={p.songCount}
-                    owner={p.owner}
-                    owned={p.owned}
-                  />
-                </li>
-              ))}
+              {CURATED_PLAYLISTS.map(p => {
+                const key = slugify(p.title)
+                const linkable = hasPlaylistDetail(key)
+                return (
+                  <li key={p.id}>
+                    <PlaylistCard
+                      title={p.title}
+                      covers={p.covers}
+                      songCount={p.songCount}
+                      owner={p.owner}
+                      owned={p.owned}
+                      onTitleClick={linkable ? () => openPlaylist(key) : undefined}
+                      onPlay={linkable ? () => openPlaylist(key) : undefined}
+                    />
+                  </li>
+                )
+              })}
             </CardRail>
 
             <CardRail title="Similar Artists">
               {SIMILAR_ARTISTS.map(a => (
-                <li key={a.id}><ArtistCard name={a.name} image={a.image} /></li>
+                <li key={a.id}><ArtistCard name={a.name} image={a.image} onClick={() => openArtist(slugify(a.name))} /></li>
               ))}
             </CardRail>
           </>
@@ -479,6 +560,7 @@ function DiscographyView({
   releases, artistName,
 }: { releases: typeof DISCOGRAPHY; artistName: string }) {
   const library = useUserLibrary()
+  const { openAlbum } = useMediaNav()
   // Multi-select kind filter. Empty set means "no filter applied"
   // (i.e. show all releases) — keeps the menu's `Clear all` row in
   // sync with the visible-everything default.
@@ -589,6 +671,8 @@ function DiscographyView({
           {visible.map(r => {
             const meta  = albumMetaFor(r.title)
             const libId = libraryIdForTitle(r.title)
+            const key   = slugify(r.title)
+            const linkable = hasAlbumDetail(key)
             return (
               <li key={r.id}>
                 <AlbumCard
@@ -599,6 +683,9 @@ function DiscographyView({
                   streamPrice={meta.streamPrice}
                   downloadPrice={meta.downloadPrice}
                   purchased={libId ? library.isPurchased(libId) : false}
+                  onTitleClick={linkable ? () => openAlbum(key) : undefined}
+                  onPlay={linkable ? () => openAlbum(key) : undefined}
+                  hideGoToArtist
                 />
               </li>
             )
@@ -759,11 +846,19 @@ function DiscographyView({
 // at @min-[1164px] 3. The arrows scroll by clientWidth + gap (one
 // page of visible columns) — same trick CardRail uses to land cleanly
 // on a column boundary.
+//
+// Responsive behaviour mirrors CardRail: below 692px (phones + small
+// tablets) the column is undersized so the next group peeks at the
+// right edge (swipe cue), and the ◀ ▶ arrows are hidden on touch
+// (`pointer-coarse`) / below 692. From 692 up: exact columns + arrows.
 
 const ROWS_PER_COLUMN = 3
 
 function TopSongsRow({ songs }: { songs: typeof TOP_SONGS }) {
   const scrollRef = useRef<HTMLUListElement>(null)
+  const { openAlbum } = useMediaNav()
+  const credits = useCredits()
+  const player = usePlayer()
   const columns: (typeof songs)[] = []
   for (let i = 0; i < songs.length; i += ROWS_PER_COLUMN) {
     columns.push(songs.slice(i, i + ROWS_PER_COLUMN))
@@ -782,7 +877,10 @@ function TopSongsRow({ songs }: { songs: typeof TOP_SONGS }) {
         <Separator />
         <div className="flex items-center justify-between">
           <h2 className="text-small font-medium text-foreground">Top Songs</h2>
-          <div className="flex items-center gap-1">
+          {/* ◀ ▶ are a pointer affordance only — hidden on touch
+               (`pointer-coarse`) and below 692px, where the swipe peek
+               (a cut-off next column) is the scroll cue instead. */}
+          <div className="flex items-center gap-1 [@media(hover:none)]:!hidden @max-[692px]:hidden">
             <Button variant="outline" size="icon-sm" aria-label="Scroll Top Songs left"  onClick={() => scrollPage(-1)}>
               <ChevronLeft />
             </Button>
@@ -804,7 +902,13 @@ function TopSongsRow({ songs }: { songs: typeof TOP_SONGS }) {
           // 1 col default, 2 at ≥692, 3 at ≥1164 — column widths are
           // computed from the ul's own 100% so they line up with the
           // CardRail card columns sitting at the same page width.
-          "[&>li]:w-full " +
+          //
+          // Mobile (< 692): the single column is undersized by 48px so
+          // a ~24px sliver of the next column peeks at the right edge —
+          // the swipe cue (matches CardRail's mobile peek; gap is 24px
+          // here, so 48−24 ≈ 24px visible). From 692 up: exact columns
+          // (no peek), arrows carry the scroll affordance.
+          "[&>li]:w-[calc(100%-48px)] " +
           "@min-[692px]:[&>li]:w-[calc((100%-24px)/2)] " +
           "@min-[1164px]:[&>li]:w-[calc((100%-48px)/3)]"
         }
@@ -815,12 +919,37 @@ function TopSongsRow({ songs }: { songs: typeof TOP_SONGS }) {
               {col.map(s => (
                 <li key={s.id}>
                   <SongListItem
+                    compact
                     cover={s.cover}
                     title={s.title}
                     album={s.album}
                     year={s.year}
                     badge={s.badge}
                     duration={s.duration}
+                    playing={player.playing && player.playingFrom === ARTIST.name && player.track?.title === s.title}
+                    onPlay={() => {
+                      if (player.playingFrom === ARTIST.name && player.track?.title === s.title) { player.toggle(); return }
+                      player.play(
+                        { title: s.title, artist: ARTIST.name, album: s.album, image: s.cover, totalTime: s.duration, artistAvatar: ARTIST.cover },
+                        ARTIST.name,
+                      )
+                    }}
+                    onAlbumClick={hasAlbumDetail(slugify(s.album)) ? () => openAlbum(slugify(s.album)) : undefined}
+                    menuItems={
+                      <>
+                        <ShareMenuItems title={s.title} />
+                        <DropdownMenuItem onClick={() => {}}><Heart />Save to library</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {}}><ListPlus />Add to playlist</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => hasAlbumDetail(slugify(s.album)) && openAlbum(slugify(s.album))}
+                        >
+                          <Disc3 />Go to album
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => credits.open(slugify(s.album))}><Info />Show credits</DropdownMenuItem>
+                      </>
+                    }
                   />
                 </li>
               ))}

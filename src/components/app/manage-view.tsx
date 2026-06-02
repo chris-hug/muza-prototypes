@@ -88,7 +88,7 @@ function PaymentRow({ logo, name, detail, active, onEdit }: PaymentRowProps) {
         <p className="text-small font-medium text-foreground leading-snug">{name}</p>
         <p className="text-xsmall text-muted-foreground leading-snug">{detail}</p>
       </div>
-      <Button variant="link" className="text-primary shrink-0 px-0" onClick={onEdit}>
+      <Button variant="link" className="text-primary-text shrink-0 px-0" onClick={onEdit}>
         Edit
       </Button>
     </div>
@@ -203,7 +203,7 @@ export function ManageView() {
   const editingAccount = allAccounts.find(a => a.id === editingId) ?? null
 
   return (
-    <div className="flex gap-6 px-10 py-8 pb-40 items-start">
+    <div className="flex gap-6 px-page py-8 pb-40 items-start">
 
       {/* Left column */}
       <div className="flex flex-col gap-10 w-1/2 min-w-0">

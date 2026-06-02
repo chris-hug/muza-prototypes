@@ -300,7 +300,7 @@ export function SubscriptionCheckoutDialog({
                     href={ABOUT_URL}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-0.5 text-primary hover:underline underline-offset-2"
+                    className="inline-flex items-center gap-0.5 text-primary-text hover:underline underline-offset-2"
                   >
                     Learn more
                     <ArrowUpRight className="size-3" />
@@ -383,7 +383,7 @@ export function SubscriptionCheckoutDialog({
         {step === "success" && (
           <div className="flex flex-col items-center justify-center gap-4 px-6 py-10 min-h-[320px]">
             <DialogTitle className="sr-only">Subscription active</DialogTitle>
-            <CircleCheck className="size-10 text-primary" strokeWidth={1.5} />
+            <CircleCheck className="size-10 text-primary-text" strokeWidth={1.5} />
             <div className="flex flex-col gap-1.5 text-center">
               <p className="text-xlarge font-medium text-foreground">
                 You're a Muza member

@@ -223,7 +223,7 @@ function KpiCard({ label, value, delta, icon }: {
   label: string; value: string; delta?: number; icon: React.ReactNode
 }) {
   return (
-    <div className="min-w-0 bg-background border border-border rounded-xl p-5 flex flex-col gap-2">
+    <div className="min-w-0 bg-background border border-border rounded-xl p-4 sm:p-5 flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <span className="text-xsmall text-muted-foreground">{label}</span>
         <span className="text-muted-foreground">{icon}</span>
@@ -240,6 +240,32 @@ function KpiCard({ label, value, delta, icon }: {
           <span>{delta > 0 ? "+" : ""}{delta.toFixed(1)}% vs prev period</span>
         </div>
       )}
+    </div>
+  )
+}
+
+// ─── Mobile ranking card — the table's row, restated for small screens ───────
+// Each ranking table collapses to a stack of these on mobile: rank + title
+// on top, then a compact mini-grid of just the key stats (complexity
+// reduced vs the full table).
+
+function RankCard({ rank, title, stats }: {
+  rank: number; title: string; stats: { label: string; value: string }[]
+}) {
+  return (
+    <div className="bg-background border border-border rounded-xl p-4 flex flex-col gap-3">
+      <div className="flex items-baseline gap-3 min-w-0">
+        <span className="text-small text-muted-foreground tabular-nums shrink-0 w-4">{rank}</span>
+        <span className="text-base font-medium text-foreground truncate">{title}</span>
+      </div>
+      <div className={cn("grid gap-2", stats.length <= 2 ? "grid-cols-2" : "grid-cols-3")}>
+        {stats.map(s => (
+          <div key={s.label} className="flex flex-col gap-0.5 min-w-0">
+            <span className="text-2xsmall text-muted-foreground truncate">{s.label}</span>
+            <span className="text-small text-foreground tabular-nums">{s.value}</span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -295,20 +321,37 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
   const chartData  = chartView === "cumulative" ? cumulative(rawData) : rawData
 
   return (
-    <div className="flex flex-col px-10 pb-40">
+    <div className="flex flex-col px-page pb-40">
 
       {/* ── Page header + Analytics ───────────────────────────────────────
            Both share the same `bg-muted` surface so the header reads as
            the top of the analytics card, not a separate page bar. The
-           `-mx-10 px-10` bleed extends the fill to the viewport edges. */}
-      <div className="bg-muted -mx-10 px-10 pb-16 mb-12">
-        <div className="shrink-0 flex items-center justify-between gap-6 pt-8 pb-6">
+           `-mx-10 px-page` bleed extends the fill to the viewport edges. */}
+      <div className="bg-muted mx-[calc(var(--page-px)*-1)] px-page pb-10 sm:pb-16 mb-8 sm:mb-12">
+        {/* The MobileAppHeader already shows the "Analytics" title on phones,
+             so the in-page h1 is hidden there to avoid a double title; the
+             period tabs carry the row. */}
+        <div className="shrink-0 flex items-center justify-between gap-4 pt-4 sm:pt-8 pb-6">
           {!embedded
-            ? <h1 className="text-2xlarge font-medium tracking-tight text-balance">Analytics</h1>
+            ? <h1 className="hidden sm:block text-2xlarge font-medium tracking-tight text-balance">Analytics</h1>
             : <span />
           }
-          <Tabs value={period} onValueChange={v => setPeriod(v as Period)}>
-            <TabsList variant="pill">
+          {/* `flex-1` on mobile constrains the pill list to the row width so
+               its `overflow-x-auto` actually scrolls (swipable) instead of
+               overflowing; `sm:flex-none` keeps it content-sized + right-
+               aligned next to the title on desktop. */}
+          {/* `flex-1` on mobile constrains the pill list so its
+               `overflow-x-auto` scrolls (swipable) rather than overflowing;
+               tightened pill padding + gap on phones so all five fit without
+               the active-tab auto-centre cutting "Day" off the left edge.
+               `sm:flex-none` restores the content-sized, right-aligned row
+               next to the title on desktop. */}
+          <Tabs value={period} onValueChange={v => setPeriod(v as Period)} className="min-w-0 flex-1 sm:flex-none">
+            <TabsList
+              variant="pill"
+              autoCenter={false}
+              className="justify-start gap-1 sm:gap-1.5 [&_[data-slot=tabs-trigger]]:px-3! sm:[&_[data-slot=tabs-trigger]]:px-[18px]!"
+            >
               {PERIODS.map(p => (
                 <TabsTrigger key={p.value} value={p.value}>{p.label}</TabsTrigger>
               ))}
@@ -318,8 +361,11 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
 
         <section className="flex flex-col gap-6">
 
-        {/* Chart card */}
-        <div className="relative mt-6">
+        {/* Chart card — hidden on the 1-column phone layout (below `sm`):
+             the headline stat cards are enough there. From `sm` up it
+             reappears, dropping BELOW the cards on tablet (order-2) and
+             leading again on desktop (order-1). */}
+        <div className="hidden sm:block relative order-2 lg:order-1 mt-6">
           {/* Floating metric tabs — centred on the card's top border */}
           <div className="absolute -top-6 inset-x-0 flex items-center justify-center pointer-events-none z-10">
             <div className="pointer-events-auto">
@@ -389,10 +435,11 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
         </div>
         </div>
 
-        {/* KPI strip — open, no card */}
-        <div className="flex flex-col gap-1 -mt-3">
+        {/* KPI strip — open, no card. Leads on mobile (order-1), 2-up grid;
+             4-up and tucked under the chart on desktop. */}
+        <div className="flex flex-col gap-1 order-1 lg:order-2 lg:-mt-3">
           <span className="text-xsmall text-muted-foreground px-1">{PERIOD_LABEL[period]}</span>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <KpiCard label="Listeners"         value={kpi.listeners} delta={kpi.listenersDelta} icon={<Users      className="size-4" />} />
             <KpiCard label="Streams"           value={kpi.streams}   delta={kpi.streamsDelta}   icon={<Activity   className="size-4" />} />
             <KpiCard label="Earnings"          value={kpi.earnings}  delta={kpi.earningsDelta}  icon={<DollarSign className="size-4" />} />
@@ -403,7 +450,7 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
       </div>
 
       {/* ── Rankings ─────────────────────────────────────────────────────── */}
-      <section className="flex flex-col gap-16">
+      <section className="flex flex-col gap-10 sm:gap-16">
 
         {/* Track Ranking */}
         <div className="flex flex-col gap-2">
@@ -411,7 +458,7 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
             <h2 className="text-xlarge font-medium text-foreground text-balance">Track Ranking</h2>
             <RangeDropdown value={trackRange} onChange={setTrackRange} />
           </div>
-          <div className="bg-background border border-border rounded-xl overflow-hidden">
+          <div className="hidden sm:block bg-background border border-border rounded-xl overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -437,6 +484,16 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
               </TableBody>
             </Table>
           </div>
+          {/* Mobile: card list (Listeners · Streams · Earnings; Purchases dropped). */}
+          <div className="sm:hidden flex flex-col gap-2">
+            {TRACKS.map(row => (
+              <RankCard key={row.rank} rank={row.rank} title={row.title} stats={[
+                { label: "Listeners", value: row.listeners },
+                { label: "Streams",   value: row.streams },
+                { label: "Earnings",  value: row.earnings },
+              ]} />
+            ))}
+          </div>
         </div>
 
         {/* Album Ranking */}
@@ -445,7 +502,7 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
             <h2 className="text-xlarge font-medium text-foreground text-balance">Album Ranking</h2>
             <RangeDropdown value={albumRange} onChange={setAlbumRange} />
           </div>
-          <div className="bg-background border border-border rounded-xl overflow-hidden">
+          <div className="hidden sm:block bg-background border border-border rounded-xl overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -469,6 +526,15 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
               </TableBody>
             </Table>
           </div>
+          <div className="sm:hidden flex flex-col gap-2">
+            {ALBUMS.map(row => (
+              <RankCard key={row.rank} rank={row.rank} title={row.title} stats={[
+                { label: "Sold",  value: String(row.sold) },
+                { label: "Price", value: row.price },
+                { label: "Total", value: row.total },
+              ]} />
+            ))}
+          </div>
         </div>
 
         {/* Playlist Reach — always total, not period-filtered */}
@@ -476,7 +542,7 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
           <div className="flex items-center gap-2 px-1">
             <h2 className="text-xlarge font-medium text-foreground text-balance">Playlist Reach</h2>
           </div>
-          <div className="bg-background border border-border rounded-xl overflow-hidden">
+          <div className="hidden sm:block bg-background border border-border rounded-xl overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -497,6 +563,14 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
                 ))}
               </TableBody>
             </Table>
+          </div>
+          <div className="sm:hidden flex flex-col gap-2">
+            {PLAYLISTS.map(row => (
+              <RankCard key={row.rank} rank={row.rank} title={row.title} stats={[
+                { label: "Playlists",  value: String(row.playlists) },
+                { label: "Est. Reach", value: row.reach },
+              ]} />
+            ))}
           </div>
         </div>
 

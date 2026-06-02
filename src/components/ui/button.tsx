@@ -26,15 +26,16 @@ const buttonVariants = cva(
         // proper glass effect.
         outline:
           "border-border bg-background/20 backdrop-blur-lg text-foreground hover:bg-muted hover:border-foreground/30",
-        // Primary outline — same glass treatment, primary text colour.
+        // Primary outline — same glass treatment, primary INK (legible on
+        // dark — see --primary-text), not the solid-fill --primary.
         "outline-primary":
-          "border-border bg-background/20 backdrop-blur-lg text-primary hover:bg-muted hover:border-foreground/30",
+          "border-border bg-background/20 backdrop-blur-lg text-primary-text hover:bg-muted hover:border-foreground/30",
         // Ghost — bg-clip-border so fill reaches the outer edge
         ghost:
           "border-transparent hover:bg-accent text-foreground bg-clip-border",
-        // Link
+        // Link — primary INK (legible on dark)
         link:
-          "border-transparent text-primary underline-offset-4 hover:underline p-0 h-auto",
+          "border-transparent text-primary-text underline-offset-4 hover:underline p-0 h-auto",
         // Destructive
         destructive:
           "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/85",

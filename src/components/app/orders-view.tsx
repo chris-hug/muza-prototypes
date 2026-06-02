@@ -16,6 +16,7 @@ import {
   type OrderStatus,
 } from "@/components/ui/order-status-badge"
 import { Button } from "@/components/ui/button"
+import { BulkActionBar, BulkActionButton } from "@/components/ui/bulk-action-bar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ChipDismiss } from "@/components/ui/chip"
 import { useToast } from "@/components/ui/toast"
@@ -806,7 +807,7 @@ export function OrdersView() {
     <div className="relative flex flex-col h-full">
 
       {/* ── Page header ──────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-center justify-between gap-6 px-10 pt-8 pb-6">
+      <div className="shrink-0 flex items-center justify-between gap-6 px-page pt-8 pb-6">
         <div>
           <h1 className="text-2xlarge font-medium tracking-tight text-balance">Orders</h1>
           <p className="text-small font-normal text-muted-foreground mt-1">
@@ -816,7 +817,7 @@ export function OrdersView() {
       </div>
 
       {/* ── Toolbar ──────────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-center gap-3 px-10 pb-8">
+      <div className="shrink-0 flex items-center gap-3 px-page pb-8">
         <StatusFilter selected={statusFilters} onChange={setStatusFilters} />
         <ProductFilter selected={productFilters} onChange={setProductFilters} />
         <ProductTypeFilter selected={productTypeFilters} onChange={setProductTypeFilters} />
@@ -895,7 +896,7 @@ export function OrdersView() {
 
       {/* ── Active filter chips ───────────────────────────────────────── */}
       {anyFilter && (
-        <div className="shrink-0 flex items-center gap-1.5 px-10 pb-3 flex-wrap">
+        <div className="shrink-0 flex items-center gap-1.5 px-page pb-3 flex-wrap">
           <button
             onClick={() => { setStatusFilters(new Set()); setProductFilters(new Set()); setProductTypeFilters(new Set()); setSearchQuery("") }}
             className="text-xsmall font-normal text-muted-foreground hover:text-foreground transition-colors mr-1 shrink-0"
@@ -932,7 +933,7 @@ export function OrdersView() {
       )}
 
       {/* ── Table ────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-auto px-10">
+      <div className="flex-1 overflow-auto px-page">
 
         {/* ── Needs-your-attention panel ───────────────────────────────────
              Failed payments live here, ABOVE the regular ledger. They're
@@ -1127,47 +1128,26 @@ export function OrdersView() {
       </div>
 
       {/* ── Bulk actions toolbar ──────────────────────────────────────── */}
-      {selectedIds.size > 0 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-foreground border border-foreground shadow-xl">
-            <span className="text-small font-medium text-background tabular-nums pr-2 whitespace-nowrap">
-              {selectedIds.size} selected
-            </span>
-            <div className="w-px h-5 bg-background/20" />
-            {/* Render every action whose eligible-count > 0 against the
-                 current selection. Buttons show their count inline so the
-                 artist sees the consequence before clicking. Zero-count
-                 actions are hidden entirely (less mental load than a row
-                 of greyed-out buttons). */}
-            {BULK_ACTIONS.map(action => {
-              const eligibleCount = Array.from(selectedIds).filter(id => {
-                const cur = statuses[id] ?? ORDERS.find(o => o.id === id)?.status
-                return cur ? action.isEligible(cur) : false
-              }).length
-              if (eligibleCount === 0) return null
-              return (
-                <Button
-                  key={action.key}
-                  size="sm"
-                  variant="secondary"
-                  className="bg-background/15 hover:bg-background/25 text-background border-transparent"
-                  onClick={() => setBulkAction(action.key)}
-                >
-                  {action.icon}
-                  {action.label}
-                  <span className="text-background/60 tabular-nums">({eligibleCount})</span>
-                </Button>
-              )
-            })}
-            <button
-              onClick={() => setSelectedIds(new Set())}
-              className="ml-1 text-background/50 hover:text-background transition-colors"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Render every action whose eligible-count > 0 against the current
+           selection. Buttons show their count inline so the artist sees
+           the consequence before clicking. Zero-count actions are hidden
+           entirely (less mental load than a row of greyed-out buttons). */}
+      <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())}>
+        {BULK_ACTIONS.map(action => {
+          const eligibleCount = Array.from(selectedIds).filter(id => {
+            const cur = statuses[id] ?? ORDERS.find(o => o.id === id)?.status
+            return cur ? action.isEligible(cur) : false
+          }).length
+          if (eligibleCount === 0) return null
+          return (
+            <BulkActionButton key={action.key} onClick={() => setBulkAction(action.key)}>
+              {action.icon}
+              {action.label}
+              <span className="text-background/60 tabular-nums">({eligibleCount})</span>
+            </BulkActionButton>
+          )
+        })}
+      </BulkActionBar>
 
       {/* ── Bulk action confirmation ──────────────────────────────────
            Single dialog for the entire batch — driven by BULK_ACTIONS

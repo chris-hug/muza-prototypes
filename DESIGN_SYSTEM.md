@@ -70,8 +70,9 @@ Instead: **inject the capture script + a floating dev-only "📸 Capture to Figm
 | `--card-foreground` | `#0D0D04` | `#FAFCF4` | card text |
 | `--popover` | `#FEFFFB` | `#0D0D04` | popover / dropdown surface |
 | `--popover-foreground` | `#0D0D04` | `#FAFCF4` | popover text |
-| `--primary` | `#1E34D8` | `#1E34D8` | brand blue (muza-blue-200) — buttons, links, shuffle-active |
-| `--primary-foreground` | `#FAFCF4` | `#FAFCF4` | text on primary bg |
+| `--primary` | `#1E34D8` | `#1E34D8` | brand blue (muza-blue-200) — solid **fill**: buttons, shuffle-active, progress |
+| `--primary-foreground` | `#FAFCF4` | `#FAFCF4` | ink on a primary **fill** (white-ish text on a blue button) |
+| `--primary-text` | `#1E34D8` | `#3F66FF` | primary **ink** on neutral surfaces — links, ghost/outline-primary labels, accent icons. Dark lifts to blue-100 for legibility |
 | `--secondary` | `#ECEEDF` | `#2E2C24` | secondary surface; ghost hover bg |
 | `--secondary-foreground` | `#1D1C18` | `#FAFCF4` | text on secondary bg |
 | `--muted` | `#FAFCF4` | — | lightest fill (barely visible) |
@@ -242,6 +243,7 @@ All map 1:1 to CSS custom properties in `app/app.css`. Light + dark modes are di
 | `popover-foreground` | `#0D0D04` | `#F9FAF0` | `--popover-foreground` |
 | `primary` | `#1E34D8` (blue-200) | `#1E34D8` (blue-200) | `--primary` |
 | `primary-foreground` | `#F9FAF0` | `#F9FAF0` | `--primary-foreground` |
+| `primary-text` | `#1E34D8` (blue-200) | `#3F66FF` (blue-100) | `--primary-text` |
 | `ring` | `#1D1C18` (neutrals-900) | `#DADDCD` (neutrals-300) | `--ring` |
 | `secondary` | `#F1F3E6` (neutrals-100) | `#2E2C24` (neutrals-800) | `--secondary` |
 | `secondary-hover` | `#ECEEDF` (neutrals-200) | `#3C3D33` (neutrals-700) | `--secondary-hover` |
@@ -251,6 +253,8 @@ All map 1:1 to CSS custom properties in `app/app.css`. Light + dark modes are di
 | `sidebar-*` | varied | varied | `--sidebar-*` (same shape as above) |
 
 **Rule: never write hex colours in component code. Always use semantic token classes (`bg-primary`, `text-muted-foreground`, `border-border`) or the CSS variable references.**
+
+**Rule: primary *fill* vs primary *ink*.** Use `bg-primary` (+ `text-primary-foreground`) for a solid blue **fill** — buttons, progress, shuffle-active. Use **`text-primary-text`** whenever the blue is **ink on a neutral surface** — links, ghost/`outline-primary` button labels, accent icons (checkmarks), the filled library heart. Never use bare `text-primary` for text: `--primary` (blue-200) is only ~2.2:1 on the dark background, whereas `--primary-text` lifts to blue-100 (`#3F66FF`) in dark mode while staying identical in light. The `link` and `outline-primary` Button variants already bake this in.
 
 ### Border-radius aliases
 
@@ -418,8 +422,8 @@ Dismissable chips use `<ChipDismiss>` with X icon (14px).
 Shape: `rounded-[2px]` · Padding: `pt-[4px] pb-[6px] px-1.5` · Font: `text-xxs font-medium` · Never uppercase
 
 ### `<ContentTypeBadge>` (Figma node 21368:27118)
-Used on tracks/releases/artists. Always `bg-secondary text-secondary-foreground` + left Lucide icon (12px).
-Types: `song` · `album` · `single` · `ep` · `artist` · `playlist`
+Used on tracks/releases/artists/labels. Always `bg-secondary text-secondary-foreground` + left Lucide icon (12px).
+Types: `song` (Music2) · `album` (Disc3) · `single` (Disc3) · `ep` (Disc3) · `artist` (Mic) · `playlist` (ListMusic) · `label` (Building2 — the same icon as the "Go to label" action).
 
 ### `<StatusBadge>` (Figma node 21368:27118)
 Track visibility. Always glassmorphism: `backdrop-blur-sm bg-background/50 border-[0.5px] border-neutral-500 text-muted-foreground`.
@@ -501,3 +505,52 @@ Tokens are **roles**, not colours. Never mix roles.
 - **NEVER** hardcode hex values — use CSS variable tokens
 - Dark mode managed via `.dark` class on `<html>`, ThemeProvider in `layout.tsx`
 - Toast: `ToastProvider` wraps layout, `useToast()` works anywhere inside
+
+---
+
+## Responsive & pointer — gating rules
+
+**Breakpoints / hooks (the real ones):**
+- `useFooterNav()` → **608px** viewport: sidebar ⇄ bottom tab bar; desktop Topbar ⇄ frosted `MobileAppHeader`.
+- `useIsMobile()` → **< 768px** viewport: the canonical phone gate for **swapping a component for a different one** (e.g. dropdown ⇄ bottom sheet).
+- `--page-px` gutter tiers: ≥1069 → 40px, 584–1068 → 24px, < 584 → 12px.
+- Container-query column steps (cards/rails/library grids): `304→2 · 464→3 · 692→4 · 928→5 · 1164→6 · 1500→7`. The mobile↔desktop **behaviour** boundary (rail swipe-peek, MediaHeader stacking) is **560px container**.
+
+**Gate on viewport, NOT `hover:` media queries, when choosing between two component renders.** `[@media(hover:none/hover)]:!hidden` is fine for *cosmetic* show/hide of a control, but to render a *different component* (dropdown vs sheet) use `useIsMobile()`. Reasons: the headless preview reports `hover: hover` even at phone width (so a hover-gated sheet never appears there), and hybrid touch-laptops report `hover: hover` too. Example: `DetailMoreButton` does `if (isMobile) return <Sheet>…; return <DropdownMenu>…`.
+
+---
+
+## Mobile surfaces — sheets
+
+Three escalating surfaces, all bottom-anchored on phones:
+
+**1. Responsive dialog → bottom sheet** (`CreditsDialog`, `EditReleaseDialog`). One `DialogContent`, responsive position: mobile `left-0 right-0 bottom-0 max-w-full rounded-t-2xl rounded-b-none slide-in-from-bottom`; desktop `sm:left-1/2 sm:top-1/2 sm:-translate-* sm:max-w-… sm:rounded-2xl zoom-in`. To **grow with content up to the viewport** (less scrolling): `DialogContent` is `flex flex-col max-h-[92vh] sm:max-h-[85vh]`, the header is `shrink-0`, and the scroll body is `min-h-0` (fills to the cap, scrolls only on overflow).
+
+**2. DropdownMenu auto-sheet.** The app `DropdownMenu` already presents as a bottom sheet on touch — use it for simple "…" lists.
+
+**3. Advanced bottom-sheet "…" menu** (`DetailMoreButton`, Album/Playlist/Artist). Rich, store-aware action surface, gated by `useIsMobile()`:
+- **Header** — `MenuCover` (square cover / 2×2 playlist collage / round artist avatar, **72px** ≈ the 3 text lines) + title + `ContentTypeBadge` + meta. No divider; generous `pb-6`.
+- **Quick actions** — a row of icon-over-label pills: `flex-1 rounded-2xl bg-secondary px-2 py-3.5`, icon `size-5` + `text-xsmall`. Per kind: Share · Save · (Edit / Play radio …).
+- **Grouped rows** — `SheetRow`s (44px tap target) separated by `h-px bg-border` dividers: Add to a playlist · Play next · Add to queue · Credits / Go to artist / Go to label · Report / Delete (destructive).
+- The published-header config (`usePublishDetailHeader`) must forward **every** field via live getters — a stale whitelist silently drops `covers`/`meta`/library binding.
+
+**Overlay panels don't push content.** A panel that opens under a sticky header (e.g. the search recent/suggestions panel) is `absolute inset-x-* top-full z-40` (out of flow) so it floats over the page instead of displacing it.
+
+---
+
+## Save to library — wording & behaviour
+
+- The affordance is **"Save"** / **"Save to library"** — never "Add". Toasts read **"Saved to Library"** / **"Removed from Library"**.
+- Bind to the global store with `libraryType` + `libraryId` (the same keys the header/card hearts use) so every surface stays in sync. The action **flips Save ⇄ Remove** by live store state; the heart fills (`fill-primary-text text-primary-text`) when saved.
+- `LibraryHeartButton` is the one heart everywhere (detail headers, player, rows, cards); `DetailMoreButton`'s Save quick action and the card/row menus all read the same store.
+
+---
+
+## Search surface
+
+The Explore page **is** the search/discover surface; results are URL-backed (`?page=Explore&q=…&scope=…`) and identical on desktop and mobile.
+
+- **`SearchPanel`** (on focus) — empty query → "Your recent searches" (clock rows, removable); typing → plain-text suggestions. localStorage-backed recents (`search-catalog`).
+- **`SearchResultsView`** — `Search for: <q>` heading (desktop; dropped on mobile since the search field shows it) · **scope** `ToggleGroup` (Muza Catalog / My Library — full-width in the mobile header, inline on desktop) · category filter (underlined `Tabs variant="line"` on desktop, `MobilePillTabs` on mobile) · results.
+- **Top result** — under the **All** tab the best-ranked match is promoted to an oversized hero card (big cover, large title, badge, Play button for playable kinds); the rest stay as the normal list under "More results".
+- Result rows reuse **`MediaListItem`** (songs play / open their album, containers navigate); the `label` kind renders like an artist (round) with a "Label" badge + album count.

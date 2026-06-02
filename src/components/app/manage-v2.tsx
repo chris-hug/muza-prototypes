@@ -96,7 +96,7 @@ function AccountCard({ account, expanded, onEdit, onClose }: {
               <X className="size-4" />
             </Button>
           ) : (
-            <Button variant="link" className="text-primary shrink-0 px-0" onClick={onEdit}>
+            <Button variant="link" className="text-primary-text shrink-0 px-0" onClick={onEdit}>
               Edit
             </Button>
           )}
@@ -202,7 +202,7 @@ export function ManageV2() {
   const toggle = (id: string) => setEditingId(prev => prev === id ? null : id)
 
   return (
-    <div className="flex flex-col items-center pt-8 pb-40 px-10">
+    <div className="flex flex-col items-center pt-8 pb-40 px-page">
       <div className="flex flex-col gap-10 w-full max-w-[560px]">
 
         {/* Bank accounts */}

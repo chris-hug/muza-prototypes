@@ -79,7 +79,7 @@ function StatusBadge({ status, onStatusChange, className }: StatusBadgeProps) {
                 >
                   <ItemIcon className="size-3 shrink-0" aria-hidden />
                   {itemLabel}
-                  {key === status && <Check className="ml-auto size-3 text-primary" aria-hidden />}
+                  {key === status && <Check className="ml-auto size-3 text-primary-text" aria-hidden />}
                 </MenuPrimitive.Item>
               )
             )}

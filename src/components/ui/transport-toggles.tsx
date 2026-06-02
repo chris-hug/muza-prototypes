@@ -32,12 +32,30 @@ interface ToggleBaseProps {
 
 // ─────────────────────────────────────────────────────────────────────────
 // ShuffleToggle — animated; primary emphasis control.
+//
+// Two sizing modes:
+//   · Fixed pill (player bars / overlay): pass `w`/`h`/`iconSize` numbers.
+//   · Flexible (MediaHeader's stretchable Play/Shuffle row): omit w/h and
+//     pass sizing via `className` (e.g. "flex-1 min-w-12 h-10"); the inner
+//     button fills it (`size-full`). `variant` controls the inactive look
+//     so a header button can read as `secondary` while the bars stay
+//     `ghost`. Active state + the pop/halo micro-animation are identical
+//     in both modes — that's the whole point of sharing this control.
 // ─────────────────────────────────────────────────────────────────────────
+interface ShuffleToggleProps extends Omit<ToggleBaseProps, "w" | "h" | "iconSize"> {
+  w?:        number
+  h?:        number
+  iconSize?: number
+  /** Inactive button appearance. Defaults to `ghost` (player bars). */
+  variant?:  "ghost" | "secondary"
+}
+
 export function ShuffleToggle({
   active, onToggle,
-  w, h, iconSize,
+  w, h, iconSize = 18,
+  variant = "ghost",
   className,
-}: ToggleBaseProps) {
+}: ShuffleToggleProps) {
   // Ref (not state) so re-renders don't fight the user's click.
   const pulseCount = useRef(0)
 
@@ -46,8 +64,10 @@ export function ShuffleToggle({
     onToggle()
   }
 
+  const sized = w != null && h != null
+
   return (
-    <div className={cn("relative inline-flex", className)} style={{ width: w, height: h }}>
+    <div className={cn("relative inline-flex", className)} style={sized ? { width: w, height: h } : undefined}>
       {active && (
         <span
           key={pulseCount.current}
@@ -56,15 +76,17 @@ export function ShuffleToggle({
         />
       )}
       <Button
-        variant="ghost"
+        variant={variant}
+        size="lg"
         aria-label="Shuffle"
         aria-pressed={active}
         onClick={handleClick}
         className={cn(
           "p-0 relative transition-colors",
-          active && "bg-primary hover:bg-primary-hover active:bg-primary-hover",
+          !sized && "size-full",
+          active && "bg-primary hover:bg-primary-hover active:bg-primary-hover text-primary-foreground",
         )}
-        style={{ width: w, height: h }}
+        style={sized ? { width: w, height: h } : undefined}
       >
         <Shuffle
           key={pulseCount.current}

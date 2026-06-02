@@ -29,15 +29,15 @@ import { ExploreView } from "./home"
 // alone would silently still resolve to the same id but reads
 // inaccurately.
 const GROUPS: ReadonlyArray<{ title: string; items: ReadonlyArray<string> }> = [
-  { title: "Foundations",      items: ["Colors", "Typography"] },
+  { title: "Foundations",      items: ["Responsive", "Colors", "Typography"] },
   { title: "Atoms",            items: ["Button", "Toggle", "ToggleGroup", "Toolbar", "Badge", "Status Badge", "Order Status Badge", "Purchased Badge", "Chips"] },
-  { title: "Inputs",           items: ["Input", "Chip Input", "NumberField", "Select", "MultiSelect", "SingleSelect", "Combobox", "Menu", "NavigationMenu", "DatePicker", "Checkbox & Radio", "Radio Card", "Switch", "Slider"] },
+  { title: "Inputs",           items: ["Input", "Chip Input", "NumberField", "Select", "MultiSelect", "SingleSelect", "Combobox", "Menu", "Detail Menu", "NavigationMenu", "DatePicker", "Checkbox & Radio", "Radio Card", "Switch", "Slider"] },
   { title: "Indicators",       items: ["Progress", "Meter", "Spinner", "Top Progress Bar", "Separator", "Avatar", "User Avatar"] },
   { title: "Containers",       items: ["Tabs", "Tooltip", "ScrollArea", "Collapsible", "Accordion"] },
-  { title: "Cards & lists",    items: ["Album Card", "Artist Card", "Playlist Card", "Cover Play Button", "Song List Item", "Card Rail", "Product Card", "Checkout Card"] },
-  { title: "Page composition", items: ["Media Header", "Page Section", "Items"] },
-  { title: "Overlays",         items: ["Alerts", "AlertDialog", "Dialog", "Purchase Album Dialog", "Paywall", "Drawer", "Toast"] },
-  { title: "Utility",          items: ["Skeleton", "Popover", "Table", "List Table", "Pagination", "Command", "OTP Input", "Form"] },
+  { title: "Cards & lists",    items: ["Album Card", "Artist Card", "Playlist Card", "Cover Play Button", "Song List Item", "Media List Item", "Search", "Card Rail", "Product Card", "Checkout Card"] },
+  { title: "Page composition", items: ["Media Header", "Mobile Header", "Footer Nav", "Page Section", "Items"] },
+  { title: "Overlays",         items: ["Alerts", "AlertDialog", "Dialog", "Purchase Album Dialog", "Paywall", "Credits Dialog", "Drawer", "Toast"] },
+  { title: "Utility",          items: ["Skeleton", "Popover", "Table", "List Table", "Bulk Action Bar", "Pagination", "Command", "OTP Input", "Form"] },
   { title: "Player",           items: ["Player Bar", "Player Overlay"] },
 ]
 
@@ -45,6 +45,7 @@ const GROUPS: ReadonlyArray<{ title: string; items: ReadonlyArray<string> }> = [
 // convention. Map them explicitly so the sidebar click + scroll-spy
 // resolve to real anchors.
 const ID_OVERRIDES: Record<string, string> = {
+  "Detail Menu":      "detail-more-button",
   "Checkbox & Radio": "checkbox",
   "Card Rail":        "card-rail",
   "MultiSelect":      "multi-select",
@@ -179,7 +180,7 @@ export default function DesignSystem() {
             if (visibleItems.length === 0) return null
             return (
             <div key={group.title} className="mb-4 last:mb-0">
-              <p className="text-2xsmall font-medium uppercase tracking-wider text-muted-foreground px-3 pt-3 pb-1">
+              <p className="text-2xsmall font-normal text-muted-foreground px-3 pt-3 pb-1">
                 {group.title}
               </p>
               <ul className="flex flex-col">
@@ -193,16 +194,16 @@ export default function DesignSystem() {
                         type="button"
                         onClick={() => goto(id)}
                         className={
-                          "w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-xsmall font-normal transition-colors " +
+                          "w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-xsmall font-normal text-foreground transition-colors " +
                           (isActive
-                            ? "bg-secondary text-foreground"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground")
+                            ? "bg-secondary"
+                            : "hover:bg-muted")
                         }
                       >
                         <span className="truncate">{item}</span>
                         {PHASE_2.has(item)    && <Badge variant="secondary" className="ml-auto">Phase 2</Badge>}
-                        {status === "new"     && <Badge variant="success" className="ml-auto">New</Badge>}
-                        {status === "updated" && <Badge variant="outline" className="ml-auto">Updated</Badge>}
+                        {status === "new"     && <Badge variant="new" className="ml-auto">New</Badge>}
+                        {status === "updated" && <Badge variant="updated" className="ml-auto">Updated</Badge>}
                       </button>
                     </li>
                   )
