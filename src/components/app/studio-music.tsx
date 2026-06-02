@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { BulkActionBar, BulkActionButton } from "@/components/ui/bulk-action-bar"
 import { ContentTypeBadge } from "@/components/ui/badge"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -16,7 +17,7 @@ import { filterTriggerCls, FilterChevron } from "@/components/ui/filter-button"
 import { MultiSelect } from "@/components/ui/multi-select"
 import {
   ArrowDown, ArrowUp, ArrowUpDown, Settings2, ChevronDown,
-  Download, Pencil, Play, Search, Upload, X,
+  Download, Pencil, Play, Search, Upload, X, Laptop, ChevronLeft,
 } from "lucide-react"
 import { UploadMusicDialog } from "@/components/app/upload-music-dialog"
 import { EditReleaseDialog } from "@/components/app/edit-release-dialog"
@@ -75,8 +76,21 @@ const COL_DEFS: { key: ColKey; label: string; required?: boolean }[] = [
   { key: "monetisation",label: "Monetisation", required: true },
 ]
 
-// When the table container shrinks below this width, cover auto-hides
-const COVER_HIDE_THRESHOLD = 800
+// Responsive column dropping — as the table container narrows, columns
+// auto-hide in this order (widest threshold drops first): image → label →
+// uploaded → type → monetisation → state. Title (+ the always-on identity
+// columns) never drop; title carries a min width so it can't get too narrow.
+// Thresholds are the table-container width (NOT viewport) below which each
+// column drops — derived from cumulative column widths so a column only goes
+// when it would otherwise stop fitting.
+const COL_HIDE_THRESHOLD: Partial<Record<ColKey, number>> = {
+  cover:        940,
+  label:        890,
+  uploaded:     800,
+  type:         710,
+  monetisation: 640,
+  state:        500,
+}
 
 // ─── Sort & upload date helpers ───────────────────────────────────────────────
 
@@ -556,6 +570,39 @@ function MusicCard({
 
 // ─── StudioMusicView ──────────────────────────────────────────────────────────
 
+// ─── Upload-on-desktop screen (mobile) ──────────────────────────────────────
+// Releasing music is detailed, desktop-grade work; rather than cram the full
+// upload flow onto a phone, the mobile upload action lands here — a warm note
+// that nudges the user to finish on a computer.
+function UploadOnDesktop({ onBack }: { onBack: () => void }) {
+  return (
+    <div className="flex flex-col h-full px-page">
+      <div className="shrink-0 pt-4 pb-2">
+        <Button variant="ghost" size="sm" onClick={onBack} className="-ml-2 gap-1.5 text-muted-foreground">
+          <ChevronLeft className="size-4" />
+          My Music
+        </Button>
+      </div>
+
+      <div className="flex-1 flex flex-col items-center justify-center text-center gap-6 pb-24 max-w-sm mx-auto">
+        <div className="flex items-center justify-center size-16 rounded-2xl bg-muted">
+          <Laptop className="size-7 text-foreground" strokeWidth={1.5} />
+        </div>
+        <div className="flex flex-col gap-2">
+          <h2 className="text-large font-medium text-foreground">Let’s do this on desktop</h2>
+          <p className="text-small text-muted-foreground leading-relaxed">
+            Your music deserves care — cover art, track details, pricing and
+            rights, all in one place. We’ve kept the upload studio on desktop
+            so you’ve got the room to get every detail right. Open muza on your
+            computer to add your next release.
+          </p>
+        </div>
+        <Button variant="secondary" onClick={onBack}>Back to My Music</Button>
+      </div>
+    </div>
+  )
+}
+
 export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void }) {
   // Below `md` (768px) the table is unusable — switch to a card list with a
   // simplified toolbar (no column manager, larger tap targets).
@@ -607,17 +654,16 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
     year: false, tracks: false, uploaded: true, type: true, state: true,
     label: true, monetisation: true,
   })
-  // Cover auto-hide driven by ResizeObserver
-  const [autoCoverHide, setAutoCoverHide] = useState(false)
+  // Container width drives responsive column dropping (see COL_HIDE_THRESHOLD).
+  // Starts at Infinity so nothing auto-hides until the first measurement.
+  const [containerW, setContainerW] = useState(Infinity)
 
   const tableWrapRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const el = tableWrapRef.current
     if (!el) return
-    const ro = new ResizeObserver(([entry]) => {
-      setAutoCoverHide(entry.contentRect.width < COVER_HIDE_THRESHOLD)
-    })
+    const ro = new ResizeObserver(([entry]) => setContainerW(entry.contentRect.width))
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
@@ -634,11 +680,18 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
   }
 
 
-  // Effective visibility — cover also obeys auto-hide at narrow widths
-  const effectiveVis: Record<ColKey, boolean> = {
-    ...visibleCols,
-    cover: visibleCols.cover && !autoCoverHide,
-  }
+  // Which columns the narrow container is currently forcing hidden.
+  const autoHidden = Object.fromEntries(
+    COL_DEFS.map(({ key }) => {
+      const t = COL_HIDE_THRESHOLD[key]
+      return [key, t !== undefined && containerW < t]
+    }),
+  ) as Record<ColKey, boolean>
+
+  // Effective visibility = the user's choice AND not force-hidden by width.
+  const effectiveVis = Object.fromEntries(
+    COL_DEFS.map(({ key }) => [key, visibleCols[key] && !autoHidden[key]]),
+  ) as Record<ColKey, boolean>
 
   const isColsModified = COL_DEFS.some(({ key }) => !visibleCols[key])
 
@@ -675,14 +728,25 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
     }
   }
 
+  // Uploading a release is detailed, desktop-grade work. On mobile we route
+  // the upload action to a friendly "continue on desktop" screen instead of
+  // cramming the full upload dialog onto a phone.
+  const [desktopOnly, setDesktopOnly] = useState(false)
+  const requestUpload = () => { if (isMobile) setDesktopOnly(true); else onOpenUpload?.() }
+
+  if (desktopOnly) return <UploadOnDesktop onBack={() => setDesktopOnly(false)} />
+
   return (
     <div ref={tableWrapRef} className="relative flex flex-col h-full">
 
       {/* ── Page header ──────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-center justify-between gap-3 px-4 md:px-10 pt-6 md:pt-8 pb-4 md:pb-6">
+      <div className="shrink-0 flex items-center justify-between gap-3 px-page pt-6 md:pt-8 pb-4 md:pb-6">
         <div className="min-w-0">
-          <h1 className="text-2xlarge font-medium tracking-tight text-balance">My Music</h1>
-          <p className="text-small font-normal text-muted-foreground mt-1">
+          {/* Hidden on mobile — the frosted MobileAppHeader already shows
+               the "Music" page title, so this would be a redundant second
+               title. The release count stays for context. */}
+          <h1 className="hidden sm:block text-2xlarge font-medium tracking-tight text-balance">My Music</h1>
+          <p className="text-small font-normal text-muted-foreground sm:mt-1">
             {RELEASES.length} releases
           </p>
         </div>
@@ -691,7 +755,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
           <Button
             size={isMobile ? "icon-lg" : "lg"}
             className={cn(!isMobile && "text-base px-8 h-14 gap-2.5")}
-            onClick={onOpenUpload}
+            onClick={requestUpload}
             aria-label="Upload music"
           >
             <Upload className={isMobile ? "size-5" : "size-5"} />
@@ -701,7 +765,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
       </div>
 
       {/* ── Toolbar ──────────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-start gap-3 px-4 md:px-10 pb-6 md:pb-8">
+      <div className="shrink-0 flex items-start gap-3 px-page pb-6 md:pb-8">
 
         {/* LEFT — filters */}
         <div className="flex items-start gap-2 flex-1 flex-wrap">
@@ -793,23 +857,30 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
               <DropdownMenuGroup>
                 <DropdownMenuLabel className="font-normal">Toggle columns</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {COL_DEFS.map(({ key, label, required }) => (
-                  <DropdownMenuItem
-                    key={key}
-                    onClick={() => toggleCol(key)}
-                    closeOnClick={false}
-                    className={cn("text-foreground text-xsmall", required && "opacity-40 pointer-events-none")}
-                  >
-                    <Checkbox
-                      checked={visibleCols[key]}
-                      onCheckedChange={() => {}}
-                      tabIndex={-1}
-                      className="pointer-events-none shrink-0 after:hidden"
-                    />
-                    {label}
-                    {required && <span className="ml-auto text-2xsmall text-muted-foreground">required</span>}
-                  </DropdownMenuItem>
-                ))}
+                {COL_DEFS.map(({ key, label, required }) => {
+                  // Force-hidden by the narrow container → show it as off and
+                  // un-toggleable, so it never reads as "active" while absent.
+                  const forced = autoHidden[key]
+                  return (
+                    <DropdownMenuItem
+                      key={key}
+                      onClick={() => toggleCol(key)}
+                      closeOnClick={false}
+                      className={cn("text-foreground text-xsmall", (required || forced) && "opacity-40 pointer-events-none")}
+                    >
+                      <Checkbox
+                        checked={effectiveVis[key]}
+                        onCheckedChange={() => {}}
+                        tabIndex={-1}
+                        className="pointer-events-none shrink-0 after:hidden"
+                      />
+                      {label}
+                      {forced
+                        ? <span className="ml-auto text-2xsmall text-muted-foreground">hidden — narrow</span>
+                        : required && <span className="ml-auto text-2xsmall text-muted-foreground">required</span>}
+                    </DropdownMenuItem>
+                  )
+                })}
               </DropdownMenuGroup>
               {isColsModified && (
                 <FilterPopoverClearAll
@@ -829,7 +900,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
 
       {/* ── Active filter chips ──────────────────────────────────────── */}
       {anyFilter && (
-        <div className="shrink-0 flex items-center gap-1.5 px-4 md:px-10 pb-3 flex-wrap">
+        <div className="shrink-0 flex items-center gap-1.5 px-page pb-3 flex-wrap">
           <button
             onClick={() => { setTypeFilters(new Set()); setStatusFilter("all"); setArtistFilters(new Set()); setLabelFilters(new Set()); setMonetisationFilters(new Set()); setSearchQuery("") }}
             className="text-xsmall font-normal text-muted-foreground hover:text-foreground transition-colors mr-1 shrink-0"
@@ -914,17 +985,9 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
             </div>
           ) : (
             <div className="flex flex-col gap-2">
-              {/* Upload card — first item, mirrors desktop's Upload row */}
-              <button
-                type="button"
-                onClick={onOpenUpload}
-                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl border border-dashed border-border bg-muted/30 hover:bg-muted transition-colors text-left"
-              >
-                <div className="size-14 shrink-0 rounded-xs bg-background border border-border flex items-center justify-center">
-                  <Upload className="size-4 text-muted-foreground" />
-                </div>
-                <span className="text-small font-medium text-foreground">Upload music</span>
-              </button>
+              {/* No inline "Upload music" card on mobile — the header already
+                   carries the upload action (which routes to the
+                   continue-on-desktop screen), so this would be redundant. */}
               {filtered.map(r => (
                 <MusicCard
                   key={r.id}
@@ -937,7 +1000,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
           )}
         </div>
       ) : (
-      <div className="flex-1 overflow-auto px-10">
+      <div className="flex-1 overflow-auto px-page">
         <table className="w-full">
 
           {/* Sticky header */}
@@ -1007,7 +1070,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
               {/* Upload row — empty cells for checkbox/id/cover so the icon
                    + label start aligned with the Title column, then a single
                    spanning cell for the remaining columns. */}
-              <tr onClick={onOpenUpload} className="border-b border-border hover:bg-muted transition-colors cursor-pointer group" style={{ height: 56 }}>
+              <tr onClick={requestUpload} className="border-b border-border hover:bg-muted transition-colors cursor-pointer group" style={{ height: 56 }}>
                 <td className="w-10 px-2 py-0" />
                 <td className={cn("px-4 py-0", !effectiveVis.id    && "hidden")} />
                 <td className={cn("px-2 py-0", !effectiveVis.cover && "hidden")} />
@@ -1036,44 +1099,14 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
       </div>
       )}
 
-      {selectedIds.size > 0 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-foreground border border-foreground shadow-xl">
-            <span className="text-small font-medium text-background tabular-nums pr-2">
-              {selectedIds.size} selected
-            </span>
-            <div className="w-px h-5 bg-background/20" />
-            <Button
-              size="sm"
-              variant="secondary"
-              className="bg-background/15 hover:bg-background/25 text-background border-transparent"
-              onClick={() => {
-                selectedIds.forEach(id => setReleaseStatus(id, "public"))
-                setSelectedIds(new Set())
-              }}
-            >
-              Make public
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              className="bg-background/15 hover:bg-background/25 text-background border-transparent"
-              onClick={() => {
-                selectedIds.forEach(id => setReleaseStatus(id, "private"))
-                setSelectedIds(new Set())
-              }}
-            >
-              Make private
-            </Button>
-            <button
-              onClick={() => setSelectedIds(new Set())}
-              className="ml-1 text-background/50 hover:text-background transition-colors"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-        </div>
-      )}
+      <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())}>
+        <BulkActionButton onClick={() => { selectedIds.forEach(id => setReleaseStatus(id, "public")); setSelectedIds(new Set()) }}>
+          Make public
+        </BulkActionButton>
+        <BulkActionButton onClick={() => { selectedIds.forEach(id => setReleaseStatus(id, "private")); setSelectedIds(new Set()) }}>
+          Make private
+        </BulkActionButton>
+      </BulkActionBar>
 
       {/* Edit-release dialog — opens when `editingId` is set (triggered by
           the Edit button on any release row). */}

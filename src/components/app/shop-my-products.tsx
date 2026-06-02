@@ -11,6 +11,7 @@ import { Alert, AlertTitle, AlertDescription, AlertAction } from "@/components/u
 import { Badge } from "@/components/ui/badge"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Button } from "@/components/ui/button"
+import { BulkActionBar, BulkActionButton } from "@/components/ui/bulk-action-bar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ChipDismiss } from "@/components/ui/chip"
 import {
@@ -590,7 +591,7 @@ export function ShopMyProductsView() {
     <div className="relative flex flex-col h-full">
 
       {/* ── Page header ──────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-center justify-between gap-6 px-10 pt-8 pb-6">
+      <div className="shrink-0 flex items-center justify-between gap-6 px-page pt-8 pb-6">
         <div>
           <h1 className="text-2xlarge font-medium tracking-tight text-balance">Products</h1>
           <p className="text-small font-normal text-muted-foreground mt-1">
@@ -616,7 +617,7 @@ export function ShopMyProductsView() {
            Alert primitive in its destructive variant so it reads
            consistently with every other "action required" surface. */}
       {!isShopLive && (
-        <div className="shrink-0 px-10 pb-4">
+        <div className="shrink-0 px-page pb-4">
           <Alert variant="destructive">
             <AlertCircle className="size-4" />
             <AlertTitle>Shop not live yet</AlertTitle>
@@ -633,7 +634,7 @@ export function ShopMyProductsView() {
       )}
 
       {/* ── Toolbar ──────────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-start gap-3 px-10 pb-8">
+      <div className="shrink-0 flex items-start gap-3 px-page pb-8">
         <div className="flex items-start gap-2 flex-1 flex-wrap">
 
           {/* Status filter */}
@@ -672,7 +673,7 @@ export function ShopMyProductsView() {
 
       {/* ── Active filter chips ───────────────────────────────────────── */}
       {anyFilter && (
-        <div className="shrink-0 flex items-center gap-1.5 px-10 pb-3 flex-wrap">
+        <div className="shrink-0 flex items-center gap-1.5 px-page pb-3 flex-wrap">
           <button
             onClick={clearAllFilters}
             className="text-xsmall font-normal text-muted-foreground hover:text-foreground transition-colors mr-1 shrink-0"
@@ -705,7 +706,7 @@ export function ShopMyProductsView() {
       )}
 
       {/* ── Table ────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-auto px-10">
+      <div className="flex-1 overflow-auto px-page">
         <table className="w-full">
 
           {/* Sticky header */}
@@ -799,44 +800,14 @@ export function ShopMyProductsView() {
       </div>
 
       {/* ── Bulk actions toolbar ──────────────────────────────────────── */}
-      {selectedIds.size > 0 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-foreground border border-foreground shadow-xl">
-            <span className="text-small font-medium text-background tabular-nums pr-2">
-              {selectedIds.size} selected
-            </span>
-            <div className="w-px h-5 bg-background/20" />
-            <Button
-              size="sm"
-              variant="secondary"
-              className="bg-background/15 hover:bg-background/25 text-background border-transparent"
-              onClick={() => {
-                selectedIds.forEach(id => setProductStatus(id, "public"))
-                setSelectedIds(new Set())
-              }}
-            >
-              Publish
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              className="bg-background/15 hover:bg-background/25 text-background border-transparent"
-              onClick={() => {
-                selectedIds.forEach(id => setProductStatus(id, "private"))
-                setSelectedIds(new Set())
-              }}
-            >
-              Unpublish
-            </Button>
-            <button
-              onClick={() => setSelectedIds(new Set())}
-              className="ml-1 text-background/50 hover:text-background transition-colors"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-        </div>
-      )}
+      <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())}>
+        <BulkActionButton onClick={() => { selectedIds.forEach(id => setProductStatus(id, "public")); setSelectedIds(new Set()) }}>
+          Publish
+        </BulkActionButton>
+        <BulkActionButton onClick={() => { selectedIds.forEach(id => setProductStatus(id, "private")); setSelectedIds(new Set()) }}>
+          Unpublish
+        </BulkActionButton>
+      </BulkActionBar>
 
       {/* ── Add product dialog ──────────────────────────────────────── */}
       <AddProductDialog

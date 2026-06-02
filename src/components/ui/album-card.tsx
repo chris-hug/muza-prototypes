@@ -3,13 +3,19 @@
 /*
  * AlbumCard — square cover image + title + artist subtitle, with
  * hover-revealed action buttons on the cover (mouse) and long-press
- * to open the same actions on touch.
+ * to open the actions on touch.
  *
- * Interactions:
- *   · Tap cover (or hover-Play button) → onPlay
+ * The card is a NAV surface; playing and saving are their own buttons:
+ *   · Tap cover / click title          → OPEN the album detail page
+ *   · Click hover Play button          → PLAY (first track, self-contained)
+ *   · Click hover Heart                → SAVE to library (store-bound)
  *   · Long-press cover                 → onMore (parent renders Sheet)
- *   · Click title text                 → onTitleClick (album detail)
  *   · Click artist text                → onArtistClick (artist page)
+ *
+ * Play / Save never navigate — the action cluster stops the cover's
+ * useLongPress pointer gesture so a button press can't also open the page.
+ * The legacy `onPlay`/`onAdd` props are no longer used for the cover Play /
+ * Heart (the card handles both itself); `onAdd` still feeds the ⋯ menu.
  *
  * Figma source: file L9yw4Yaec9YtAXGxP8q4fu › Component "Record Cover"
  *   · 19272:1570 / 1543 (Album default / hover)
@@ -19,14 +25,19 @@
  * cover buttons stay readable in either light or dark mode.
  */
 
-import { Plus, Pencil, Download } from "lucide-react"
+import { useEffect } from "react"
+import { Pencil, Download } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { PlayFilledAlt } from "@/components/ui/transport-icons"
 import { AlbumCardMenu } from "@/components/ui/cover-card-menu"
+import { LibraryHeartButton } from "@/components/ui/library-heart-button"
 import { PurchasedBadge } from "@/components/ui/purchased-badge"
 import { useLongPress } from "@/lib/use-long-press"
+import { useMediaNav, slugify } from "@/lib/media-nav"
+import { usePlayer } from "@/lib/player"
+import { registerAlbums, getAlbumDetail } from "@/lib/album-catalog"
 
 // Cover-button base — translucent muted fill + light backdrop blur,
 // border-0 to avoid a ghost edge from `bg-clip-padding`. Size
@@ -63,7 +74,6 @@ export interface AlbumCardProps {
   /** Hover cluster + menu actions. */
   onAdd?:           () => void
   onEdit?:          () => void
-  onShare?:         () => void
   onAddToPlaylist?: () => void
   onGoToArtist?:    () => void
   onGoToAlbum?:     () => void
@@ -73,25 +83,57 @@ export interface AlbumCardProps {
   /** Text labels — separate destinations from the cover. */
   onTitleClick?:  () => void
   onArtistClick?: () => void
+  /** Context-awareness for the "…" menu — hide a nav row when the user
+   *  is already there (e.g. `hideGoToArtist` on the artist page). */
+  hideGoToArtist?: boolean
+  hideGoToAlbum?:  boolean
+  /** The album is already in the user's library — drops "Save to library"
+   *  (menu + hover quick-add) and surfaces "Remove from library" instead. */
+  inLibrary?: boolean
   className?: string
 }
 
 export function AlbumCard({
   cover, title, artist, year, owned, purchased, streamPrice, downloadPrice,
-  onPlay, onMore, onAdd, onEdit, onShare, onAddToPlaylist,
+  onPlay, onMore, onAdd, onEdit, onAddToPlaylist,
   onGoToArtist, onGoToAlbum, onRemove, onReport, onShowInfo,
-  onTitleClick, onArtistClick, className,
+  onTitleClick, onArtistClick, hideGoToArtist, hideGoToAlbum, inLibrary, className,
 }: AlbumCardProps) {
+  const { openAlbum } = useMediaNav()
+  const player = usePlayer()
+  const key = slugify(title)
+  // Baked-in share target — link to this album's own detail page.
+  const shareHref = `/?page=Album&album=${key}`
+
+  // Self-register so this card always resolves to a real detail page
+  // (with its own cover/artist) — even titles the catalog didn't seed.
+  // Never overrides a richer/library record (registerAlbums is idempotent).
+  useEffect(() => {
+    registerAlbums([{ id: key, title, cover, artist, year: typeof year === "number" ? year : undefined, streamPrice, downloadPrice }])
+  }, [key, title, cover, artist, year, streamPrice, downloadPrice])
+
+  // The card is a NAV surface: tapping the cover (or title) opens the
+  // detail page. Playing and saving are their OWN affordances (the Play
+  // button and the heart) — they never navigate.
+  const goAlbum = () => openAlbum(key)
+  // Start playback from the album's first track (context = album title).
+  // The card always plays itself — the legacy `onPlay` prop (which hosts
+  // historically wired to navigation) is intentionally NOT used here.
+  const playAlbum = () => {
+    const al = getAlbumDetail(key)
+    const t = al.tracks[0]
+    if (t) player.play({ title: t.title, artist: al.artist, album: al.title, image: al.cover, totalTime: t.duration }, al.title)
+  }
   // Buttons stop propagation so clicking them doesn't also fire the
-  // cover's tap-to-play (which would steal the action).
+  // cover's tap-to-open (which would steal the action).
   const stop = <T,>(fn?: (e: T) => void) => (e: T) => {
     ;(e as unknown as { stopPropagation: () => void }).stopPropagation()
     fn?.(e)
   }
 
-  // Cover-area gestures: single tap → play, long-hold → more menu.
+  // Cover-area gestures: single tap → OPEN detail, long-hold → more menu.
   const coverGestures = useLongPress({
-    onClick:     () => onPlay?.(),
+    onClick:     goAlbum,
     onLongPress: () => onMore?.(),
   })
 
@@ -124,7 +166,14 @@ export function AlbumCard({
         {/* Mouse-only hover cluster (Add/Edit + More + Play). Hidden
              on touch — touch users get the same actions via the
              long-press → bottom-sheet path. */}
-        <div className="absolute inset-x-0 bottom-0 p-1.5 flex items-end justify-between opacity-0 transition-opacity group-hover/album:opacity-100 group-focus-within/album:opacity-100">
+        {/* The cover runs a useLongPress gesture (pointerup → open detail).
+            Stop pointer events here so clicking a cluster button (play /
+            heart / menu) never bubbles up and also triggers the open. */}
+        <div
+          onPointerDown={e => e.stopPropagation()}
+          onPointerUp={e => e.stopPropagation()}
+          className="absolute inset-x-0 bottom-0 p-1.5 flex items-end justify-between opacity-0 transition-opacity group-hover/album:opacity-100 group-focus-within/album:opacity-100"
+        >
           <div className="flex items-center gap-1.5">
             {owned ? (
               <Button
@@ -136,20 +185,25 @@ export function AlbumCard({
               >
                 <Pencil />
               </Button>
-            ) : (
-              <Button
+            ) : inLibrary ? null : (
+              // Store-bound: toggles save/remove + animates + toasts; stops
+              // propagation so it never opens the detail page.
+              <LibraryHeartButton
+                type="album"
+                id={key}
+                name={title}
                 variant="outline"
                 size="icon-sm"
                 className={COVER_BTN_SM}
-                onClick={stop(onAdd)}
-                aria-label="Add to library"
-              >
-                <Plus />
-              </Button>
+              />
             )}
             <AlbumCardMenu
               owned={owned}
-              onShare={onShare}
+              inLibrary={inLibrary}
+              shareTitle={title}
+              shareUrl={shareHref}
+              hideGoToArtist={hideGoToArtist}
+              hideGoToAlbum={hideGoToAlbum}
               onAdd={onAdd}
               onEdit={onEdit}
               onAddToPlaylist={onAddToPlaylist}
@@ -164,7 +218,7 @@ export function AlbumCard({
             variant="outline"
             size="icon"
             className={COVER_BTN_LG}
-            onClick={stop(onPlay)}
+            onClick={stop(playAlbum)}
             aria-label="Play"
           >
             <PlayFilledAlt />
@@ -179,7 +233,7 @@ export function AlbumCard({
              the third row below, not here. */}
         <button
           type="button"
-          onClick={onTitleClick}
+          onClick={onTitleClick ?? goAlbum}
           className="text-small font-normal leading-5 text-foreground text-left line-clamp-2 hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto] pb-[6px] -mb-[6px] outline-none cursor-pointer"
         >
           {title}
@@ -197,10 +251,13 @@ export function AlbumCard({
             {artist}
           </button>
           {year !== undefined && (
-            <>
-              <span aria-hidden="true" className="shrink-0">·</span>
-              <span className="shrink-0">{year}</span>
-            </>
+            // `data-card-year` lets dense layouts (e.g. CardRail's
+            // mobile swipeable-grid variant) hide the year via CSS
+            // without prop-drilling — the cards get too tight for it.
+            <span data-card-year className="flex items-center gap-1.5 shrink-0">
+              <span aria-hidden="true">·</span>
+              <span>{year}</span>
+            </span>
           )}
         </div>
         {/* Status / pricing row. Mirrors the Studio music table's

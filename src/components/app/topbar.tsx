@@ -1,10 +1,12 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useSearchParams } from "react-router"
-import { Search, Sun, Moon, ShoppingCart, User, Receipt, Wallet, Settings, LogOut } from "lucide-react"
+import { Search, ShoppingCart, User, Receipt, Wallet, Settings, LogOut, ChevronLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useTheme } from "@/components/app/theme-provider"
+import { Button } from "@/components/ui/button"
+import { SearchPanel } from "@/components/ui/search-panel"
+import { useSearchNav } from "@/lib/use-search-nav"
 import { useCart } from "@/lib/cart"
 import { CartDrawer } from "@/components/app/cart-drawer"
 import {
@@ -14,8 +16,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Toggle } from "@/components/ui/toggle"
-import { ToggleGroup } from "@/components/ui/toggle-group"
 import { UserAvatar } from "@/components/ui/user-avatar"
 import { CURRENT_USERNAME } from "@/components/app/settings-view"
 
@@ -29,63 +29,100 @@ interface TopbarProps {
   placeholder?: string
   /** Right-side slot — pass avatar, studio button, etc. */
   actions?: React.ReactNode
+  /** When set, a ◀ back chevron appears at the far left (detail pages).
+   *  Back lives in the chrome — not in the page gutter — so it's
+   *  unaffected by the responsive `px-page` gutter. */
+  onBack?: () => void
   className?: string
 }
 
 export function Topbar({
   placeholder = "Search for Artists, Albums or Songs",
   actions,
+  onBack,
   className,
 }: TopbarProps) {
   const [focused, setFocused] = useState(false)
-  const [value, setValue] = useState("")
+  const { query, submit } = useSearchNav()
+  const [value, setValue] = useState(query)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // Keep the field in sync with the active query (navigations, deep links).
+  useEffect(() => { setValue(query) }, [query])
+
   const isFocusOrFilled = focused || value.length > 0
+
+  const runSearch = (q: string) => {
+    submit(q)
+    setValue(q)
+    setFocused(false)
+    inputRef.current?.blur()
+  }
+
+  // Search field — left padding tightens when the back button precedes it
+  // (the button + gap already supply the left inset).
+  const searchEl = (
+    <div className="relative flex flex-1 h-full min-w-0">
+    <div
+      className={cn(
+        "flex flex-1 h-full items-center gap-2 pr-4 transition-colors cursor-text",
+        onBack ? "pl-2" : "pl-[18px]",
+        // Transparent at rest so the frosted-glass header shows through;
+        // opaque muted only when focused/filled (the active input field).
+        // The active black underline is pulled down 1px (`-mb-px`) so it
+        // sits ON the header's bottom hairline instead of stacking above
+        // it — one line, not a double underline.
+        isFocusOrFilled ? "bg-muted border-b border-foreground -mb-px" : "bg-transparent",
+      )}
+      onClick={() => inputRef.current?.focus()}
+    >
+      <Search className="size-5 shrink-0 text-muted-foreground" />
+      <input
+        ref={inputRef}
+        type="text"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); runSearch(value) } }}
+        placeholder={placeholder}
+        className={cn(
+          "flex-1 bg-transparent border-none outline-none text-base font-normal",
+          "text-foreground placeholder:text-muted-foreground",
+        )}
+      />
+    </div>
+      {/* Recent searches / suggestions — anchored under the field. */}
+      {focused && (
+        <SearchPanel
+          query={value}
+          onPick={runSearch}
+          className="absolute left-2 right-2 top-full z-50 mt-2 max-h-[60vh] overflow-y-auto"
+        />
+      )}
+    </div>
+  )
 
   return (
     <header
       className={cn(
-        // Always bg-background — never white, never muted.
-        // `pr-3` gives 12px right gutter so the profile icon aligns with
-        // the right-edge chevrons used in detail-view headers.
-        "h-[54px] w-full bg-background border-b border-border flex items-center gap-6 pr-3 shrink-0",
+        // Frosted-glass surface — same material as the mobile FooterNav
+        // (`.frosted-glass`): translucent, backdrop-blurred, with a simple
+        // bottom hairline. `pr-3` gives 12px right gutter so the profile
+        // icon aligns with the right-edge chevrons in detail-view headers.
+        "h-[54px] w-full frosted-glass border-b border-border/50 flex items-center gap-6 pr-3 shrink-0",
         className
       )}
     >
-      {/* ── Search area ─────────────────────────────────────────────── */}
-      {/* `pl-[18px]` aligns the search icon's visual center with the
-            back-arrow icon used inside detail-view headers (28px from edge,
-            since the back button's centered 16px icon sits 8px in from a
-            12px-offset button). */}
-      <div
-        className={cn(
-          "flex flex-1 h-full items-center gap-2 pl-[18px] pr-4 transition-colors cursor-text",
-          isFocusOrFilled
-            ? "bg-muted border-b border-foreground"
-            : "bg-background"
-        )}
-        onClick={() => inputRef.current?.focus()}
-      >
-        {/* Search icon — muted-foreground so it carries the 75% opacity */}
-        <Search className="size-5 shrink-0 text-muted-foreground" />
-
-        {/* Input */}
-        <input
-          ref={inputRef}
-          type="text"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          placeholder={placeholder}
-          className={cn(
-            // bg-transparent so the parent bg shows through
-            "flex-1 bg-transparent border-none outline-none text-base font-normal",
-            "text-foreground placeholder:text-muted-foreground",
-          )}
-        />
-      </div>
+      {/* ── Search area (+ optional back chevron) ───────────────────── */}
+      {onBack ? (
+        <div className="flex flex-1 h-full items-center min-w-0">
+          <Button variant="ghost" size="icon-sm" aria-label="Back" onClick={onBack} className="ml-2 mr-1 shrink-0">
+            <ChevronLeft />
+          </Button>
+          {searchEl}
+        </div>
+      ) : searchEl}
 
       {/* ── Right actions slot ──────────────────────────────────────── */}
       {actions && (
@@ -99,33 +136,6 @@ export function Topbar({
 
 // ─── Mode toggle ──────────────────────────────────────────────────────────────
 //
-// Light/dark theme picker. Built on the design-system ToggleGroup primitive
-// — the visual chrome (segmented track + lifted pressed pill) lives in the
-// shared component, not duplicated here.
-
-function ModeToggle() {
-  const { theme, setTheme } = useTheme()
-  return (
-    <ToggleGroup
-      value={[theme]}
-      onValueChange={(values) => {
-        const next = values[0]
-        if (next) setTheme(next as "light" | "dark")
-      }}
-      aria-label="Theme"
-    >
-      {/* Icon-only mode: drop horizontal padding so the pill stays square,
-           leaving height to come from the group (h-[40px] - p-1 = 32px). */}
-      <Toggle value="light" aria-label="Light mode" className="aspect-square px-0">
-        <Sun className="size-[14px]" />
-      </Toggle>
-      <Toggle value="dark" aria-label="Dark mode" className="aspect-square px-0">
-        <Moon className="size-[14px]" />
-      </Toggle>
-    </ToggleGroup>
-  )
-}
-
 // ─── Cart icon ──────────────────────────────────────────────────────────────
 //
 // Renders a 40×40 hit-area icon button (visually 32px) that opens the
@@ -163,8 +173,10 @@ function CartButton() {
 //
 // Identity-side actions only — no "Switch to Studio". Studio access lives in
 // the sidebar where the user's role-switching mental model already sits.
+// Exported so the mobile header reuses the SAME menu (which auto-presents as
+// a bottom sheet on touch via the responsive DropdownMenu).
 
-function ProfileMenu() {
+export function ProfileMenu({ avatarClassName }: { avatarClassName?: string }) {
   const [, setParams] = useSearchParams()
   const go = (view: string) => {
     setParams(prev => {
@@ -181,7 +193,7 @@ function ProfileMenu() {
         aria-label="Open profile menu"
         className="rounded-full shrink-0 hover:opacity-90 transition-opacity outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       >
-        <UserAvatar username={CURRENT_USERNAME} />
+        <UserAvatar username={CURRENT_USERNAME} className={avatarClassName} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={8} className="min-w-[200px]">
         <DropdownMenuItem>
@@ -217,36 +229,9 @@ function ProfileMenu() {
 
 // ─── Default actions used in demo ─────────────────────────────────────────────
 
-// Text link to the design-system view. Uses `setSearchParams`
-// instead of `<a href>` so the navigation stays SPA-internal — a
-// plain anchor would trigger a full document reload (white screen
-// while the JS bundle re-parses) and the in-app TopProgressBar
-// couldn't fire because React isn't running during that gap.
-function DesignSystemButton() {
-  const [, setParams] = useSearchParams()
-  const go = () => {
-    setParams(prev => {
-      const next = new URLSearchParams(prev)
-      next.set("page", "DesignSystem")
-      return next
-    }, { replace: true })
-  }
-  return (
-    <button
-      type="button"
-      onClick={go}
-      className="inline-flex items-center h-10 px-3 rounded-full text-small font-normal text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer"
-    >
-      Design system
-    </button>
-  )
-}
-
 export function TopbarDefaultActions() {
   return (
     <div className="flex items-center gap-2">
-      <DesignSystemButton />
-      <ModeToggle />
       <CartButton />
       <ProfileMenu />
     </div>

@@ -8,12 +8,17 @@
  * Figma source: file dbSHgvquI2o4TFie2iAJxv › node 2840:112964
  * (Album Detail view — default — responsive ≥ 1280).
  *
- * Mock data lives inline for the prototype; real wiring would take
- * an album ID via URL param + look it up.
+ * The album shown is driven by the `?album=<library-id>` query param,
+ * looked up in `album-catalog`. Unknown / missing ids fall back to the
+ * default album (A Love Supreme). Library cards thread their id straight
+ * into the param, so the same component renders any catalog album.
  */
 
-import { useState } from "react"
-import { ChevronLeft } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { useSearchParams } from "react-router"
+import { DetailMoreButton } from "@/components/ui/detail-more-button"
+import { usePublishDetailHeader } from "@/lib/detail-actions"
+import { useFooterNav } from "@/lib/use-media-query"
 
 import { Button } from "@/components/ui/button"
 import { MediaHeader } from "@/components/ui/media-header"
@@ -27,61 +32,15 @@ import { PurchaseAlbumDialog } from "@/components/app/purchase-album-dialog"
 import { useUserLibrary } from "@/lib/user-library"
 import { useUserAccount } from "@/lib/user-account"
 import { albumMetaFor, libraryIdForTitle } from "@/lib/album-meta"
+import { getAlbumDetail, hasAlbumDetail } from "@/lib/album-catalog"
+import { hasPlaylistDetail } from "@/lib/playlist-catalog"
+import { useMediaNav, slugify } from "@/lib/media-nav"
+import { usePlayer } from "@/lib/player"
 import {
   SubscriptionPromptDialog,
   SubscriptionCheckoutDialog,
 } from "@/components/app/subscription-dialogs"
 
-interface AlbumDetailViewProps {
-  /** Back handler — wired to `navigate("Home")` (or wherever) by
-   *  the route shell. */
-  onBack?: () => void
-}
-
-// Demo album — A Love Supreme (John Coltrane, 1965). Covers reuse
-// known-working URLs from `LibraryAlbumsView` so the prototype
-// always shows real artwork (random made-up mzstatic IDs would 404).
-const ALBUM = {
-  // ID maps into the user-library store + the SAVED_ALBUMS fixture
-  // (a07). When the buyer completes a purchase, this id flips to
-  // `purchased: true` and every surface that lists this album picks
-  // up the badge automatically.
-  id:           "a07",
-  cover:        "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/e5/24/aa/e524aacd-467b-66f3-8931-0fcd6750a4b9/08UMGIM07914.rgb.jpg/600x600bb.jpg",
-  title:        "A Love Supreme",
-  artist:       "John Coltrane",
-  artistAvatar: "https://picsum.photos/seed/coltrane-avatar/120/120",
-  year:         1965,
-  format:       "Album",
-  // Buyer-side tiers — the artist set both on upload (see
-  // upload-music-dialog.tsx, Monetisation step). The header CTA
-  // surfaces the cheaper one ("Unlock All Songs – $2.99"); the
-  // purchase dialog lets the buyer pick which tier to pay for.
-  buyingPrice:   "$2.99", // stream-unlock price (cheaper, shown on CTA)
-  downloadPrice: "$4.99", // download-license price (optional tier)
-  tracks: [
-    { id: "1", title: "Acknowledgement", duration: "7:47" },
-    { id: "2", title: "Resolution",      duration: "7:21" },
-    { id: "3", title: "Pursuance",       duration: "10:46" },
-    { id: "4", title: "Psalm",           duration: "7:08" },
-  ],
-} as const
-
-// "More from this artist" — known-working Coltrane / contemporaries
-// covers from the saved-albums fixture in `LibraryAlbumsView`. 10
-// items so the rail is definitely scrollable at any container width.
-const MORE_FROM_ARTIST = [
-  { id: "m1",  title: "Blue Train",                              year: 1958, cover: "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/6e/1a/13/6e1a134d-8f6f-d90f-b855-ea69436a2e8b/17UM1IM45370.rgb.jpg/600x600bb.jpg" },
-  { id: "m2",  title: "Giant Steps",                             year: 1960, cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/a8/ee/3c/a8ee3cc7-e694-f7e1-5208-2c67f9ae5ed5/13ULAIM49176.rgb.jpg/600x600bb.jpg" },
-  { id: "m3",  title: "My Favorite Things",                      year: 1961, cover: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/d6/a3/1d/d6a31d82-038d-a73f-5452-0380d8bd9bae/00724349532755.jpg/600x600bb.jpg" },
-  { id: "m4",  title: "Ascension",                               year: 1966, cover: "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/d5/f1/41/d5f1417f-9c45-d013-392f-aa6c7c4b494c/13UABIM03210.rgb.jpg/600x600bb.jpg" },
-  { id: "m5",  title: "Karma",                                   year: 1969, cover: "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/01/36/a6/0136a666-36d2-caf1-efb1-da77a646d104/06UMGIM03764.rgb.jpg/600x600bb.jpg" },
-  { id: "m6",  title: "The Black Saint and the Sinner Lady",     year: 1963, cover: "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/cb/85/94/cb85949f-5a43-58d5-c866-d9d0292354bd/06UMGIM01616.rgb.jpg/600x600bb.jpg" },
-  { id: "m7",  title: "Maiden Voyage",                           year: 1965, cover: "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/23/49/49/234949c3-db74-f0eb-30f5-d715526e459b/19UMGIM73745.rgb.jpg/600x600bb.jpg" },
-  { id: "m8",  title: "Speak No Evil",                           year: 1966, cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/a8/ee/3c/a8ee3cc7-e694-f7e1-5208-2c67f9ae5ed5/13ULAIM49176.rgb.jpg/600x600bb.jpg" },
-  { id: "m9",  title: "Empyrean Isles",                          year: 1964, cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/3b/30/51/3b305111-c28a-80ad-1f1d-6e89fb4fa2af/13ULAIM49306.rgb.jpg/600x600bb.jpg" },
-  { id: "m10", title: "Out to Lunch",                            year: 1964, cover: "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/d5/f1/41/d5f1417f-9c45-d013-392f-aa6c7c4b494c/13UABIM03210.rgb.jpg/600x600bb.jpg" },
-] as const
 
 // "Playlists with John Coltrane" — curated lists that include the
 // album's primary artist. Composite covers driven by 4 album thumbs
@@ -102,7 +61,7 @@ const PL_COVER_POOL = [
 // Pick four cover URLs from the pool starting at offset `i` so each
 // playlist gets a unique-looking composite without hand-typing 36
 // strings.
-const pickCovers = (i: number): readonly string[] => [
+const pickCovers = (i: number): string[] => [
   PL_COVER_POOL[i % PL_COVER_POOL.length],
   PL_COVER_POOL[(i + 1) % PL_COVER_POOL.length],
   PL_COVER_POOL[(i + 2) % PL_COVER_POOL.length],
@@ -121,18 +80,28 @@ const PLAYLISTS_WITH_ARTIST = [
   { id: "p9", title: "Post-Bop Heroes",             songCount: 38, owner: "Muza Editorial", covers: pickCovers(4) },
 ] as const
 
-// "Artists on this Album" — the recording quartet. Coltrane (lead) +
-// the classic rhythm section. Picsum portraits as stand-ins for
-// proper artist photography; real wiring would link to each artist's
-// profile page.
-const ARTISTS_ON_ALBUM = [
-  { id: "art1", name: "John Coltrane",   image: "https://picsum.photos/seed/coltrane/400/400"  },
-  { id: "art2", name: "McCoy Tyner",     image: "https://picsum.photos/seed/mccoy-tyner/400/400" },
-  { id: "art3", name: "Jimmy Garrison",  image: "https://picsum.photos/seed/jimmy-garrison/400/400" },
-  { id: "art4", name: "Elvin Jones",     image: "https://picsum.photos/seed/elvin-jones/400/400" },
-] as const
+export function AlbumDetailView() {
+  // The album shown is driven by `?album=<key>` (title slug or library
+  // id); unknown keys fall back to the default. The in-page rails use
+  // `useMediaNav` to hop to another album / playlist without leaving the
+  // route.
+  const [params] = useSearchParams()
+  const { openAlbum, openPlaylist, openArtist } = useMediaNav()
+  const ALBUM = getAlbumDetail(params.get("album"))
 
-export function AlbumDetailView({ onBack }: AlbumDetailViewProps) {
+  // Hopping between albums keeps the same route (page stays "Album"), so
+  // the route shell's scroll-to-top (keyed on `page`) doesn't fire —
+  // reset the scroll container ourselves whenever the album id changes.
+  const rootRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    let el = rootRef.current?.parentElement
+    while (el) {
+      const oy = getComputedStyle(el).overflowY
+      if (oy === "auto" || oy === "scroll") { el.scrollTop = 0; break }
+      el = el.parentElement
+    }
+  }, [ALBUM.id])
+
   // Purchase dialog open state — the MediaHeader's `onBuy` flips
   // this true; `PurchaseAlbumDialog` flips it back via
   // `onOpenChange` (Cancel / Close / post-success auto-close).
@@ -145,18 +114,35 @@ export function AlbumDetailView({ onBack }: AlbumDetailViewProps) {
   const [subscribeOpen,     setSubscribeOpen]     = useState(false)
   const [subscribeAmount,   setSubscribeAmount]   = useState<string>("10")
   const library  = useUserLibrary()
+  const player   = usePlayer()
+  // This album is the active player source AND playing → header Play
+  // button shows Pause.
+  const isThisAlbumPlaying = player.playing && player.playingFrom === ALBUM.title
+  const footerNav = useFooterNav()
   const account  = useUserAccount()
   // Gate a track-play attempt through the subscription cap. Anonymous
   // users get up to ANONYMOUS_PLAY_LIMIT plays per track; past that
   // the paywall opens instead of starting playback.
-  const tryPlayTrack = (trackId: string) => {
-    const result = account.canListen(trackId)
+  const tryPlayTrack = (track: { id: string; title: string; duration?: string }) => {
+    const result = account.canListen(track.id)
     if (!result.allowed) {
       setPaywallOpen(true)
       return
     }
-    account.recordPlay(trackId)
-    // Real wiring would call player.play(trackId) here.
+    account.recordPlay(track.id)
+    // Load the global player with this track (cover + artist from the
+    // album header, since album-detail rows omit per-track art).
+    player.play(
+      {
+        title:  track.title,
+        artist: ALBUM.artist,
+        album:  ALBUM.title,
+        image:  ALBUM.cover,
+        totalTime: track.duration,
+        artistAvatar: ALBUM.artistAvatar,
+      },
+      ALBUM.title,
+    )
   }
   const isPurchased    = library.isPurchased(ALBUM.id)
   const isDownloadable = library.entryFor(ALBUM.id)?.tier === "download"
@@ -173,25 +159,40 @@ export function AlbumDetailView({ onBack }: AlbumDetailViewProps) {
     : 0
   const canUpgradeToDownload = isPurchased && !isDownloadable && !!ALBUM.downloadPrice && rawUpgradeDelta > 0
   const upgradePriceStr = `$${rawUpgradeDelta.toFixed(2)}`
+
+  // Overflow-menu config — shared by the in-page "…" (stacked layout)
+  // and the floating mobile chrome's "…".
+  const albumMenu = {
+    kind: "album" as const,
+    title: ALBUM.title,
+    subtitle: ALBUM.artist,
+    cover: ALBUM.cover,
+    meta: String(ALBUM.year),
+    // Save action binds to the global user-library store (same as the
+    // header heart) so the two stay in sync and Save flips to Remove.
+    libraryType: "album" as const,
+    libraryId: ALBUM.id,
+    libraryName: ALBUM.title,
+    onGoToArtist: () => openArtist(slugify(ALBUM.artist)),
+  }
+  // No `coverSrc` — album covers are framed squares on the light page,
+  // so the floating back / "…" sit over the light bg and stay dark.
+  // (Luminance adaptation is only for the artist's full-bleed hero.)
+  usePublishDetailHeader({ title: ALBUM.title, menu: albumMenu })
+
   return (
-    <div className="@container relative w-full px-10 pt-6 pb-24 max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto flex flex-col gap-10">
-      {/* Back chevron — sits in the page gutter to the LEFT of the
-           content. `ghost` variant (no border, no backdrop-blur) so
-           the 32px button reads as a quiet glyph in the tight 40px
-           gutter rather than a chunky pill competing with the cover
-           edge. Hover surfaces the bg-accent wash on demand. Top
-           aligned with the cover/title baseline so the button reads
-           as paired with the title row. */}
-      {onBack && (
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Back"
-          onClick={onBack}
-          className="absolute top-10 left-1"
-        >
-          <ChevronLeft />
-        </Button>
+    <div ref={rootRef} className="@container relative w-full px-page pt-6 pb-24 max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto flex flex-col gap-10">
+      {/* Back lives in the top bar (chrome), not the page gutter —
+           see the shell's <Topbar onBack=…>. */}
+
+      {/* "…" — opens a bottom sheet with the actions the MediaHeader's icon
+           cluster carries. Stacked layout only (<560), and only off-phone;
+           below 768 the slim detail header's "…" owns it. */}
+      {!footerNav && (
+        <DetailMoreButton
+          {...albumMenu}
+          className="absolute top-6 right-1 @min-[560px]:hidden"
+        />
       )}
 
       {/* Header (300px tall) — the new component. When the user has
@@ -206,7 +207,33 @@ export function AlbumDetailView({ onBack }: AlbumDetailViewProps) {
         ownerAvatar={ALBUM.artistAvatar}
         format={ALBUM.format}
         year={ALBUM.year}
-        hasBuyingOption={!isPurchased}
+        onOwnerClick={() => openArtist(slugify(ALBUM.artist))}
+        libraryType="album"
+        libraryId={ALBUM.id}
+        libraryName={ALBUM.title}
+        playing={isThisAlbumPlaying}
+        shuffleActive={player.shuffle}
+        onPlay={() => {
+          // If this album is already the active source, the header Play
+          // button is a pause/resume toggle; otherwise start track 1.
+          if (player.playingFrom === ALBUM.title && player.track) { player.toggle(); return }
+          const t = ALBUM.tracks[0]; if (t) tryPlayTrack({ id: t.id, title: t.title, duration: t.duration })
+        }}
+        onShuffle={() => {
+          // Toggle shuffle mode (synced with the player). Turning it ON
+          // also starts playback — "shuffling" implies playing — so the
+          // Play button flips to Pause. Resume if this album is loaded but
+          // paused; otherwise start from the top.
+          const turningOn = !player.shuffle
+          player.toggleShuffle()
+          if (!turningOn) return
+          if (player.playingFrom === ALBUM.title && player.track) {
+            if (!player.playing) player.toggle()
+          } else {
+            const t = ALBUM.tracks[0]; if (t) tryPlayTrack({ id: t.id, title: t.title, duration: t.duration })
+          }
+        }}
+        hasBuyingOption={!isPurchased && !!ALBUM.buyingPrice}
         buyingPrice={ALBUM.buyingPrice}
         onBuy={() => setBuyOpen(true)}
         purchased={isPurchased}
@@ -234,7 +261,7 @@ export function AlbumDetailView({ onBack }: AlbumDetailViewProps) {
           year:   ALBUM.year,
           format: ALBUM.format,
         }}
-        streamPrice={ALBUM.buyingPrice}
+        streamPrice={ALBUM.buyingPrice ?? ""}
         downloadPrice={ALBUM.downloadPrice}
         onPurchased={(tier) => library.purchase(ALBUM.id, tier)}
         onGoToLibrary={() => {
@@ -264,7 +291,7 @@ export function AlbumDetailView({ onBack }: AlbumDetailViewProps) {
           year:   ALBUM.year,
           format: ALBUM.format,
         }}
-        streamPrice={ALBUM.buyingPrice}
+        streamPrice={ALBUM.buyingPrice ?? ""}
         downloadPrice={ALBUM.downloadPrice}
         upgradeMode
         upgradePrice={upgradePriceStr}
@@ -298,27 +325,43 @@ export function AlbumDetailView({ onBack }: AlbumDetailViewProps) {
       <ul className="flex flex-col gap-2">
         {ALBUM.tracks.map((t, i) => (
           <li key={t.id}>
+            {/* Album-detail rows are single-line: just №, title and
+                 duration. Artist / album / year are omitted — they're
+                 identical for every track and already in the header. */}
             <SongListItem
               trackNumber={i + 1}
               title={t.title}
-              artist={ALBUM.artist}
-              album={ALBUM.title}
-              year={ALBUM.year}
               duration={t.duration}
-              menuItems={<AlbumCardMenuItems />}
-              onPlay={() => tryPlayTrack(t.id)}
+              menuItems={
+                <AlbumCardMenuItems
+                  hideGoToAlbum
+                  shareTitle={ALBUM.title}
+                  shareUrl={`/?page=Album&album=${slugify(ALBUM.title)}`}
+                  onGoToArtist={() => openArtist(slugify(ALBUM.artist))}
+                />
+              }
+              playing={isThisAlbumPlaying && player.track?.title === t.title}
+              onPlay={() => {
+                // Same track again → pause/resume; otherwise load it.
+                if (player.playingFrom === ALBUM.title && player.track?.title === t.title) { player.toggle(); return }
+                tryPlayTrack({ id: t.id, title: t.title, duration: t.duration })
+              }}
             />
           </li>
         ))}
       </ul>
 
-      {/* "More from this artist" rail */}
+      {/* "More from this artist" rail. Entries that map to a catalog
+           album (via title → library id) are clickable through to their
+           own detail page; the rest are decorative discography. */}
       <CardRail title={`More from ${ALBUM.artist}`} showAllLabel="All albums">
-        {MORE_FROM_ARTIST.map(a => {
+        {ALBUM.moreFrom.map(a => {
           const meta  = albumMetaFor(a.title)
           const libId = libraryIdForTitle(a.title)
+          const key   = slugify(a.title)
+          const linkable = hasAlbumDetail(key)
           return (
-            <li key={a.id}>
+            <li key={a.title}>
               <AlbumCard
                 cover={a.cover}
                 title={a.title}
@@ -327,6 +370,8 @@ export function AlbumDetailView({ onBack }: AlbumDetailViewProps) {
                 streamPrice={meta.streamPrice}
                 downloadPrice={meta.downloadPrice}
                 purchased={libId ? library.isPurchased(libId) : false}
+                onTitleClick={linkable ? () => openAlbum(key) : undefined}
+                onPlay={linkable ? () => openAlbum(key) : undefined}
               />
             </li>
           )
@@ -335,16 +380,22 @@ export function AlbumDetailView({ onBack }: AlbumDetailViewProps) {
 
       {/* Playlists that feature this artist */}
       <CardRail title={`Playlists with ${ALBUM.artist}`} showAllLabel="All playlists">
-        {PLAYLISTS_WITH_ARTIST.map(p => (
-          <li key={p.id}>
-            <PlaylistCard
-              title={p.title}
-              covers={p.covers}
-              songCount={p.songCount}
-              owner={p.owner}
-            />
-          </li>
-        ))}
+        {PLAYLISTS_WITH_ARTIST.map(p => {
+          const key = slugify(p.title)
+          const linkable = hasPlaylistDetail(key)
+          return (
+            <li key={p.id}>
+              <PlaylistCard
+                title={p.title}
+                covers={p.covers}
+                songCount={p.songCount}
+                owner={p.owner}
+                onTitleClick={linkable ? () => openPlaylist(key) : undefined}
+                onPlay={linkable ? () => openPlaylist(key) : undefined}
+              />
+            </li>
+          )
+        })}
       </CardRail>
 
       {/* Artists who played on the recording — `showAllLabel={null}`
@@ -353,9 +404,9 @@ export function AlbumDetailView({ onBack }: AlbumDetailViewProps) {
            content fits, so when the row of 4 doesn't overflow there
            are no nav affordances at all. */}
       <CardRail title="Artists on this Album" showAllLabel={null}>
-        {ARTISTS_ON_ALBUM.map(a => (
-          <li key={a.id}>
-            <ArtistCard name={a.name} image={a.image} />
+        {ALBUM.artistsOnAlbum.map(a => (
+          <li key={a.name}>
+            <ArtistCard name={a.name} image={a.image} onClick={() => openArtist(slugify(a.name))} />
           </li>
         ))}
       </CardRail>

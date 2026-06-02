@@ -47,7 +47,7 @@ export const CURRENT_USERNAME = "Chris-123"
 
 // ─── Shell ────────────────────────────────────────────────────────────────────
 
-type SettingsTab = "account" | "general" | "payments" | "verification" | "about"
+type SettingsTab = "account" | "general" | "verification" | "about"
 
 export function SettingsView({
   initialTab = "account",
@@ -56,15 +56,16 @@ export function SettingsView({
 }) {
   return (
     <Tabs defaultValue={initialTab} className="flex flex-col h-full gap-0">
-      {/* Header — same chrome as Studio pages (px-10 + pt-8 + border-b
+      {/* Header — same chrome as Studio pages (px-page + pt-8 + border-b
            under the tab strip) so navigating here feels like every
            other top-level page. */}
-      <div className="shrink-0 px-10 pt-8 border-b border-border">
-        <h1 className="text-2xlarge font-medium tracking-tight mb-5">Settings</h1>
+      {/* Mobile header already shows "Settings", so the in-page <h1> is
+           hidden on mobile (avoids a redundant double title). */}
+      <div className="shrink-0 px-page pt-4 sm:pt-8 border-b border-border">
+        <h1 className="hidden sm:block text-2xlarge font-medium tracking-tight mb-5">Settings</h1>
         <TabsList variant="line" className="w-auto justify-start gap-0 h-auto pb-0">
           <TabsTrigger value="account"      className="flex-none px-4 pb-3 text-small">Account</TabsTrigger>
           <TabsTrigger value="general"      className="flex-none px-4 pb-3 text-small">General</TabsTrigger>
-          <TabsTrigger value="payments"     className="flex-none px-4 pb-3 text-small">Payments</TabsTrigger>
           <TabsTrigger value="verification" className="flex-none px-4 pb-3 text-small">Artist verification</TabsTrigger>
           <TabsTrigger value="about"        className="flex-none px-4 pb-3 text-small">About</TabsTrigger>
         </TabsList>
@@ -74,10 +75,9 @@ export function SettingsView({
            Figma. Generous gap so flat sections breathe (chrome is
            kept light per the "no extra boxes" rule). */}
       <div className="flex-1 overflow-auto">
-        <div className="mx-auto max-w-[760px] px-10 py-10">
+        <div className="mx-auto max-w-[760px] px-page py-6 sm:py-10">
           <TabsContent value="account"><AccountTab /></TabsContent>
           <TabsContent value="general"><GeneralTab /></TabsContent>
-          <TabsContent value="payments"><PaymentsTab /></TabsContent>
           <TabsContent value="verification"><VerificationTab /></TabsContent>
           <TabsContent value="about"><AboutTab /></TabsContent>
         </div>
@@ -100,11 +100,14 @@ function SettingsSection({
 }) {
   return (
     <section className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-3">
+      {/* Title + optional action. The action wraps under the title on
+           very narrow screens so a long button label never squeezes the
+           heading; side-by-side once there's room (≥420px). */}
+      <div className="flex flex-col gap-2 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between min-[420px]:gap-3">
         <h2 className="text-small font-medium text-foreground">{title}</h2>
         {action}
       </div>
-      <div className="rounded-xl border border-border bg-background px-5 py-4">
+      <div className="rounded-xl border border-border bg-background px-4 py-4 sm:px-5">
         {children}
       </div>
     </section>
@@ -138,10 +141,12 @@ function MetaRow({
     )
   }
   return (
-    <div className="flex items-center gap-4 py-2.5 first:pt-0 last:pb-0">
-      <span className="w-[180px] shrink-0 text-xsmall text-muted-foreground">{label}</span>
+    // Mobile: label sits above the value (the fixed 180px label column is
+    // too wide for a phone). Desktop (sm+): the original side-by-side row.
+    <div className="flex flex-col gap-0.5 py-2.5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:gap-4">
+      <span className="text-2xsmall sm:text-xsmall text-muted-foreground sm:w-[180px] sm:shrink-0">{label}</span>
       <span className="flex-1 min-w-0 text-small text-foreground truncate">{value}</span>
-      {action}
+      {action && <div className="mt-1 sm:mt-0">{action}</div>}
     </div>
   )
 }
@@ -150,7 +155,7 @@ function MetaRow({
 
 function AccountTab() {
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-8 sm:gap-10">
       {/* Profile identity — avatar + display name + "become an artist"
            CTA. Sits ABOVE the first labeled section as a hero row, no
            card chrome of its own (the avatar carries the focus). */}
@@ -179,7 +184,7 @@ function AccountTab() {
           </Button>
         }
       >
-        <div className="grid grid-cols-2 gap-x-8 gap-y-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
           <MetaRow layout="stacked" label="First name"    value="Chris" />
           <MetaRow layout="stacked" label="Last name"     value="Schreiber" />
           <MetaRow layout="stacked" label="Date of birth" value="01.01.1959" />
@@ -198,19 +203,21 @@ function AccountTab() {
               variant="outline"
               size="sm"
               onClick={() => {
-                // Tabs is uncontrolled — click the Payments trigger to
-                // switch panels without lifting state.
-                const trigger = document.querySelector(
-                  'button[role="tab"][data-value="payments"], button[role="tab"][value="payments"]'
-                ) as HTMLElement | null
-                trigger?.click()
+                // Payment is now the last section of this same tab — jump
+                // to it instead of switching tabs.
+                document.getElementById("settings-payment")?.scrollIntoView({ behavior: "smooth" })
               }}
             >
-              Manage in Payments
+              Manage payment
             </Button>
           }
         />
       </SettingsSection>
+
+      {/* Payment — methods + billing, the final block of Account. */}
+      <div id="settings-payment" className="scroll-mt-4 flex flex-col gap-8 sm:gap-10">
+        <PaymentSettings />
+      </div>
     </div>
   )
 }
@@ -259,26 +266,31 @@ function SubscriptionRow() {
 function ProfileIdentityRow() {
   const [editAvatarOpen, setEditAvatarOpen] = useState(false)
   return (
-    <div className="flex items-center gap-5">
-      <div className="relative shrink-0">
-        <UserAvatar
-          username={CURRENT_USERNAME}
-          className="size-20 text-xlarge"
-        />
-        <button
-          type="button"
-          onClick={() => setEditAvatarOpen(true)}
-          aria-label="Edit profile picture"
-          className="absolute -bottom-1 -right-1 size-7 rounded-full bg-secondary text-secondary-foreground border border-border hover:bg-secondary-hover transition-colors flex items-center justify-center cursor-pointer"
-        >
-          <Pencil className="size-3.5" />
-        </button>
+    // Mobile: avatar + name stack above a full-width CTA so the long
+    // "Become an artist or label" button never overflows. Desktop (sm+):
+    // the original single horizontal row with the CTA pinned right.
+    <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+      <div className="flex items-center gap-4 sm:gap-5 min-w-0 sm:flex-1">
+        <div className="relative shrink-0">
+          <UserAvatar
+            username={CURRENT_USERNAME}
+            className="size-16 sm:size-20 text-large sm:text-xlarge"
+          />
+          <button
+            type="button"
+            onClick={() => setEditAvatarOpen(true)}
+            aria-label="Edit profile picture"
+            className="absolute -bottom-1 -right-1 size-7 rounded-full bg-secondary text-secondary-foreground border border-border hover:bg-secondary-hover transition-colors flex items-center justify-center cursor-pointer"
+          >
+            <Pencil className="size-3.5" />
+          </button>
+        </div>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-large font-medium text-foreground truncate">{CURRENT_USERNAME}</h2>
+          <p className="text-xsmall text-muted-foreground mt-0.5">Listener · Joined May 2024</p>
+        </div>
       </div>
-      <div className="flex-1 min-w-0">
-        <h2 className="text-large font-medium text-foreground truncate">{CURRENT_USERNAME}</h2>
-        <p className="text-xsmall text-muted-foreground mt-0.5">Listener · Joined May 2024</p>
-      </div>
-      <Button variant="default" size="lg" className="shrink-0">
+      <Button variant="default" size="lg" className="w-full sm:w-auto shrink-0">
         <Mic />
         Become an artist or label
       </Button>
@@ -298,7 +310,7 @@ function GeneralTab() {
   const { theme, setTheme }     = useTheme()
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-8 sm:gap-10">
       <SettingsSection title="Audio quality">
         <RadioGroup
           value={quality}
@@ -401,7 +413,10 @@ const INITIAL_METHODS: PaymentMethod[] = [
   { id: "pm_2", brand: "Mastercard", last4: "8210", expiry: "03 / 26", isDefault: false },
 ]
 
-function PaymentsTab() {
+// Payment management — methods list + billing. Lives as the last block
+// of the Account tab (no longer its own tab). Rendered without an outer
+// vertical wrapper so the host controls spacing.
+function PaymentSettings() {
   const [methods, setMethods] = useState<PaymentMethod[]>(INITIAL_METHODS)
   // null = closed, "add" = blank add dialog, PaymentMethod = edit dialog
   const [editing, setEditing] = useState<null | "add" | PaymentMethod>(null)
@@ -433,44 +448,52 @@ function PaymentsTab() {
   }
 
   return (
-    <div className="flex flex-col gap-10">
-      <SettingsSection
-        title="Payment methods"
-        action={
-          <Button variant="outline" size="sm" onClick={() => setEditing("add")}>
+    <>
+      <div className="flex flex-col gap-3">
+        <SettingsSection title="Payment methods">
+          {methods.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 py-6 text-center">
+              <CreditCard className="size-8 text-muted-foreground/60" />
+              <p className="text-small text-foreground">No payment methods on file</p>
+              <p className="text-xsmall text-muted-foreground max-w-xs">
+                Add a card or PayPal account so your next checkout is one tap.
+              </p>
+              <Button size="sm" onClick={() => setEditing("add")} className="mt-1">
+                <Plus />
+                Add payment method
+              </Button>
+            </div>
+          ) : (
+            <ul className="flex flex-col">
+              {methods.map((m, i) => (
+                <li key={m.id}>
+                  {i > 0 && <div className="h-px bg-border/60" />}
+                  <PaymentMethodRow
+                    method={m}
+                    onEdit={() => setEditing(m)}
+                    onSetDefault={() => setDefault(m.id)}
+                    onRemove={() => remove(m.id)}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </SettingsSection>
+        {/* Add button sits BELOW the methods container (only when methods
+             exist — the empty state carries its own centred CTA). Full-
+             width on mobile, hugs the left on desktop. */}
+        {methods.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setEditing("add")}
+            className="w-full sm:w-auto sm:self-start"
+          >
             <Plus />
             Add payment method
           </Button>
-        }
-      >
-        {methods.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 py-6 text-center">
-            <CreditCard className="size-8 text-muted-foreground/60" />
-            <p className="text-small text-foreground">No payment methods on file</p>
-            <p className="text-xsmall text-muted-foreground max-w-xs">
-              Add a card or PayPal account so your next checkout is one tap.
-            </p>
-            <Button size="sm" onClick={() => setEditing("add")} className="mt-1">
-              <Plus />
-              Add payment method
-            </Button>
-          </div>
-        ) : (
-          <ul className="flex flex-col">
-            {methods.map((m, i) => (
-              <li key={m.id}>
-                {i > 0 && <div className="h-px bg-border/60" />}
-                <PaymentMethodRow
-                  method={m}
-                  onEdit={() => setEditing(m)}
-                  onSetDefault={() => setDefault(m.id)}
-                  onRemove={() => remove(m.id)}
-                />
-              </li>
-            ))}
-          </ul>
         )}
-      </SettingsSection>
+      </div>
 
       <SettingsSection title="Billing">
         <MetaRow
@@ -498,7 +521,7 @@ function PaymentsTab() {
         onSaveEdit={saveEdit}
         onSaveNew={saveNew}
       />
-    </div>
+    </>
   )
 }
 
@@ -643,7 +666,7 @@ function PaymentMethodDialog({
                 <button
                   type="button"
                   onClick={() => setReplacing(true)}
-                  className="text-xsmall text-primary hover:underline underline-offset-2"
+                  className="text-xsmall text-primary-text hover:underline underline-offset-2"
                 >
                   Replace
                 </button>
@@ -713,7 +736,7 @@ function VerificationTab() {
   const [step, setStep] = useState<VerificationStep>("submit")
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-8 sm:gap-10">
       <VerificationStepper current={step} />
 
       {step === "submit" && (

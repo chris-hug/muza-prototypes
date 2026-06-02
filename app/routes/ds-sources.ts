@@ -35,6 +35,7 @@ export const SECTION_SOURCE: Record<string, string> = {
   "filter-menu": "src/components/ui/filter-button.tsx",
   combobox:      "src/components/ui/combobox.tsx",
   menu:          "src/components/ui/dropdown-menu.tsx",
+  "detail-more-button": "src/components/ui/detail-more-button.tsx",
   navigationmenu:"src/components/ui/navigation-menu.tsx",
   datepicker:    "src/components/ui/date-picker.tsx",
   checkbox:      "src/components/ui/checkbox.tsx",
@@ -70,6 +71,10 @@ export const SECTION_SOURCE: Record<string, string> = {
 
   // Page composition
   "media-header": "src/components/ui/media-header.tsx",
+  "media-list-item": "src/components/ui/media-list-item.tsx",
+  search:            "src/components/app/search-results-view.tsx",
+  "mobile-header": "src/components/ui/mobile-header.tsx",
+  "footer-nav":   "src/components/app/footer-nav.tsx",
   items:          "src/components/app/items-section.tsx",
 
   // Overlays
@@ -78,6 +83,7 @@ export const SECTION_SOURCE: Record<string, string> = {
   dialog:                 "src/components/ui/dialog.tsx",
   "purchase-album-dialog":"src/components/app/purchase-album-dialog.tsx",
   paywall:                "src/components/app/subscription-dialogs.tsx",
+  "credits-dialog":       "src/components/app/credits-dialog.tsx",
   drawer:                 "src/components/ui/sheet.tsx",
   toast:                  "src/components/ui/toast.tsx",
 
@@ -86,12 +92,15 @@ export const SECTION_SOURCE: Record<string, string> = {
   popover:     "src/components/ui/popover.tsx",
   table:       "src/components/ui/table.tsx",
   "list-table":"src/components/ui/table.tsx",
+  "bulk-action-bar":"src/components/ui/bulk-action-bar.tsx",
   pagination:  "src/components/ui/pagination.tsx",
   command:     "src/components/ui/command.tsx",
   "otp-input": "src/components/ui/input-otp.tsx",
   form:        "src/components/ui/form.tsx",
 
-  // Player
-  "player-bar":     "src/components/ui/player-bar.tsx",
+  // Player — the live bar is variant B (player-bar-b.tsx); variant A is
+  // kept for reference only, so the section's source link / changed-date
+  // tracks the in-use component.
+  "player-bar":     "src/components/ui/player-bar-b.tsx",
   "player-overlay": "src/components/ui/player-overlay.tsx",
 }

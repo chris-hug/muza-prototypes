@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/select"
 import { useIsMobile } from "@/lib/use-media-query"
 import { useToast } from "@/components/ui/toast"
+import { copyToClipboard } from "@/lib/clipboard"
 import { cn } from "@/lib/utils"
 import {
   Order, formatDate, formatTotal,
@@ -533,7 +534,7 @@ function FulfillmentSection({ d, status, onStatusChange }: {
           href={trackingUrl}
           target="_blank"
           rel="noreferrer"
-          className="mt-3 inline-flex items-center gap-1.5 text-xsmall text-primary hover:underline underline-offset-3"
+          className="mt-3 inline-flex items-center gap-1.5 text-xsmall text-primary-text hover:underline underline-offset-3"
         >
           Track on {carrier}
           <ExternalLink className="size-3" />
@@ -832,36 +833,6 @@ function ComposeEmailDialog({
 
 // ─── Customer / addresses / notes ─────────────────────────────────────────────
 
-// Robust clipboard copy — falls back to a hidden textarea + execCommand
-// when the async Clipboard API is unavailable (insecure context, iframe
-// preview, or a Permissions-Policy block). Either path resolves to a
-// boolean so the caller can drive UI feedback without ever surfacing a
-// browser error.
-async function copyToClipboard(value: string): Promise<boolean> {
-  try {
-    if (typeof navigator !== "undefined" && navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(value)
-      return true
-    }
-  } catch {
-    // fall through to the textarea fallback
-  }
-  try {
-    const ta = document.createElement("textarea")
-    ta.value = value
-    ta.setAttribute("readonly", "")
-    ta.style.position = "fixed"
-    ta.style.top = "-1000px"
-    ta.style.opacity = "0"
-    document.body.appendChild(ta)
-    ta.select()
-    const ok = document.execCommand("copy")
-    document.body.removeChild(ta)
-    return ok
-  } catch {
-    return false
-  }
-}
 
 function CopyButton({ value }: { value: string }) {
   const [copied, setCopied] = useState(false)
@@ -1207,10 +1178,10 @@ export function OrderDetailView({
 
       {/* ── Body ─────────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-auto">
-        <div className="px-4 md:px-10 py-6 md:py-8 flex flex-col gap-4">
+        <div className="px-page py-6 md:py-8 flex flex-col gap-4">
 
           {/* Two-column body. Same horizontal padding as the other studio
-               pages (px-10) for visual consistency. Wide gap so the right
+               pages (px-page) for visual consistency. Wide gap so the right
                metadata column reads as a separate region, not "the thing
                next to the items". On mobile we stack everything. */}
           <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] gap-12 items-start">

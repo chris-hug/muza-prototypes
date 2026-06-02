@@ -3,6 +3,61 @@
 
 @custom-variant 3xl (@media (width >= 1920px));
 
+/* ═══ RESPONSIVE LADDER — single reference ════════════════════════════════
+   Two coordinate systems, by design:
+     • VIEWPORT media queries  → page chrome: gutters, sidebar/footer nav.
+     • CONTAINER queries (@container) → content that must also react to the
+       sidebar: card grids, rails, MediaHeader.
+       container width ≈ viewport − sidebar − 2×gutter.
+
+   COLUMN LADDER (container) — shared by `grid-cards`, Card Rail, Top Songs:
+       304→2 · 464→3 · 692→4 · 928→5 · 1164→6 · 1500→7  columns.
+     Cards are minmax(143px,220px); each threshold sits at the N×220 cap so
+     a column is added only once the current ones reach 220 (keeps cards big
+     rather than splitting early like auto-fill would).
+
+   MOBILE-MODE break (container 560) — MediaHeader stacks · rails switch to
+     swipe-peek + drop chevrons · "Show all" firms into a pill.
+   MediaHeader full action cluster: container 780.
+
+   PAGE GUTTER (viewport, `--page-px`):  ≥1069 → 40px · 584–1068 → 24px ·
+     <584 → 12px.  1069 = sidebar-collapse point; 584 = the 560 mobile-mode
+     boundary expressed in viewport px at the 12px gutter (560 + 2×12).
+
+   NAV CHROME (viewport):  <768 → footer tab bar replaces sidebar ·
+     <1069 → sidebar auto-collapses to the icon rail.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/* Page horizontal gutter — see PAGE GUTTER above. One knob: `--page-px`.
+   Apply via the `px-page` utility on page wrappers (instead of `px-10`). */
+@utility px-page {
+  padding-inline: var(--page-px);
+}
+:root { --page-px: 2.5rem; }            /* 40px */
+@media (max-width: 1068px) {
+  :root { --page-px: 1.5rem; }          /* 24px */
+}
+@media (max-width: 583px) {
+  :root { --page-px: 0.75rem; }         /* 12px */
+}
+
+/* Card grid — the responsive album/artist/playlist tile grid. Column COUNT
+   steps on the shared COLUMN LADDER above; gap-x 16px, gap-y 24px. Put
+   `grid-cards` on the <ul>; it queries the nearest `@container` ancestor. */
+@layer components {
+  .grid-cards {
+    display: grid;
+    gap: 1.5rem 1rem;
+    grid-template-columns: repeat(1, minmax(143px, 220px));
+  }
+  @container (min-width: 304px)  { .grid-cards { grid-template-columns: repeat(2, minmax(143px, 220px)); } }
+  @container (min-width: 464px)  { .grid-cards { grid-template-columns: repeat(3, minmax(143px, 220px)); } }
+  @container (min-width: 692px)  { .grid-cards { grid-template-columns: repeat(4, minmax(143px, 220px)); } }
+  @container (min-width: 928px)  { .grid-cards { grid-template-columns: repeat(5, minmax(143px, 220px)); } }
+  @container (min-width: 1164px) { .grid-cards { grid-template-columns: repeat(6, minmax(143px, 220px)); } }
+  @container (min-width: 1500px) { .grid-cards { grid-template-columns: repeat(7, minmax(143px, 220px)); } }
+}
+
 /* ─── Founders Grotesk ───────────────────────────────────────────────────── */
 @font-face {
   font-family: "Founders Grotesk";
@@ -76,6 +131,7 @@
   --color-primary:                 var(--primary);
   --color-primary-hover:           var(--primary-hover);
   --color-primary-foreground:      var(--primary-foreground);
+  --color-primary-text:            var(--primary-text);
   --color-secondary:               var(--secondary);
   --color-secondary-foreground:    var(--secondary-foreground);
   --color-secondary-hover:         var(--secondary-hover);
@@ -173,6 +229,54 @@
   --animate-caret-blink:    caret-blink 1.25s ease-out infinite;
 }
 
+/* Frosted glass — blurred + saturated translucent surface with a faint
+   top-right sheen and a fine fractal-noise grain. Background is
+   theme-aware (muza-white in light, muza-black in dark) at ~80% so it
+   reads as glass in both modes. Set your own border-radius on the
+   element. */
+.frosted-glass {
+  backdrop-filter: blur(10px) saturate(100%);
+  -webkit-backdrop-filter: blur(10px) saturate(100%);
+  background-color: color-mix(in srgb, var(--background) 58%, transparent);
+  /* Just the glass itself: a faint top-right sheen + fine grain. No
+     border or inner vignette baked in — consumers add their own subtle
+     edge (e.g. a hairline `border-t`) so it never reads as aggressive. */
+  background-image:
+    linear-gradient(to top right, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)' opacity='0.1'/%3E%3C/svg%3E");
+  background-size: cover, 182px;
+  background-repeat: no-repeat, repeat;
+}
+
+/* Dark mode — a noticeably darker, more opaque glass: more of the near-black
+   `--background` tint (so the surface reads as deep glass, not a washed-out
+   grey), and a much fainter top-right sheen so the highlight doesn't lift it
+   back towards light. Shared by the player overlay, top-bar search, mobile
+   header and footer nav. */
+.dark .frosted-glass {
+  background-color: color-mix(in srgb, var(--background) 92%, transparent);
+  background-image:
+    linear-gradient(to top right, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)' opacity='0.1'/%3E%3C/svg%3E");
+}
+
+/* Waveform colours — both adapt to the mode the waveform sits in.
+   · played (`--waveform-progress`): deep blue-200 on light glass; brighter
+     blue-50 on the near-black dark glass (blue-200 is too low-contrast there).
+   · unplayed (`--waveform-wave`): the muted foreground on light; on dark the
+     muted foreground resolves near-white, which (at the bars' 50% opacity)
+     reads too bright, so dark mode uses the dimmer neutral-400.
+   NB the colour-resolver strips alpha, so `--waveform-wave` must be a SOLID
+   colour — the bars' 50% opacity comes from the canvas, not the colour. */
+:root {
+  --waveform-progress: var(--muza-blue-200);
+  --waveform-wave:     var(--muted-foreground);
+}
+.dark {
+  --waveform-progress: var(--muza-blue-50);
+  --waveform-wave:     var(--muza-neutrals-400);
+}
+
 @keyframes accordion-down {
   from { height: 0; }
   to   { height: var(--radix-accordion-content-height); }
@@ -188,7 +292,9 @@
 /* Player overlay title marquee — scrolls overflowing text back and forth
    with gentle pauses at each end. Distance is driven by `--marquee-end`
    (set inline per instance). */
-@keyframes player-overlay-marquee {
+/* Marquee scroll for single-line text that overflows — see MarqueeText.
+   Pauses at each end (0–12% start, 50–62% end) then eases back. */
+@keyframes marquee-scroll {
   0%, 12%   { transform: translateX(0); }
   50%, 62%  { transform: translateX(var(--marquee-end)); }
   100%      { transform: translateX(0); }
@@ -208,6 +314,39 @@
 }
 .animate-shuffle-pop  { animation: shuffle-pop  450ms cubic-bezier(.2,.9,.3,1.2) both; }
 .animate-shuffle-halo { animation: shuffle-halo 550ms ease-out both; }
+
+/* Library "like" heart — a satisfying pop on add (overshoot + settle),
+   a soft outward halo, and a one-shot ring burst. Re-triggered by
+   remounting the animated nodes via a React `key`. */
+@keyframes heart-pop {
+  0%   { transform: scale(1);    }
+  25%  { transform: scale(0.8);  }
+  55%  { transform: scale(1.3);  }
+  75%  { transform: scale(0.94); }
+  100% { transform: scale(1);    }
+}
+/* Soft filled-heart halo pulsing outward (mirrors shuffle-halo). */
+@keyframes heart-halo {
+  0%   { transform: scale(0.6); opacity: 0.5; }
+  100% { transform: scale(2);   opacity: 0;   }
+}
+/* Thin ring that expands + fades — the "burst" rim around the heart. */
+@keyframes heart-burst {
+  0%   { transform: scale(0.4); opacity: 0.9; }
+  100% { transform: scale(1.9); opacity: 0;   }
+}
+.animate-heart-pop   { animation: heart-pop   420ms cubic-bezier(.2,.9,.3,1.3) both; }
+.animate-heart-halo  { animation: heart-halo  520ms ease-out both; }
+.animate-heart-burst { animation: heart-burst 480ms cubic-bezier(.2,.7,.3,1) both; }
+
+/* Player-overlay tab swap — a quick, subtle directional slide + fade so
+   switching tabs (tap OR swipe) reads as lateral movement toward the tab.
+   `next` = moving to a tab on the right (enters from the right); `prev` =
+   moving left. Kept small (14px) and fast (190ms). */
+@keyframes tab-in-next { from { opacity: 0; transform: translateX(14px);  } to { opacity: 1; transform: translateX(0); } }
+@keyframes tab-in-prev { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: translateX(0); } }
+.animate-tab-next { animation: tab-in-next 190ms cubic-bezier(.2,.7,.3,1) both; }
+.animate-tab-prev { animation: tab-in-prev 190ms cubic-bezier(.2,.7,.3,1) both; }
 
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -274,6 +413,11 @@
   --primary:                 var(--muza-blue-200);
   --primary-hover:           color-mix(in srgb, black 20%, var(--muza-blue-200));
   --primary-foreground:      var(--muza-neutrals-50);
+  /* Primary as INK on neutral surfaces (links, ghost/outline-primary
+     labels, accent icons). On white this matches --primary (AA at ~8.8:1);
+     dark mode lifts it — see .dark. NOT the same as --primary-foreground,
+     which is the near-white ink that sits ON a primary fill. */
+  --primary-text:            var(--muza-blue-200);
 
   --secondary:               var(--muza-neutrals-200);
   --secondary-foreground:    var(--muza-neutrals-900);
@@ -322,6 +466,11 @@
   --primary:                 var(--muza-blue-200);
   --primary-hover:           color-mix(in srgb, black 20%, var(--muza-blue-200));
   --primary-foreground:      var(--muza-neutrals-50);
+  /* Lifted from blue-200 (~2.2:1, fails AA) to blue-100 (#3F66FF) so
+     primary ink stays legible on the near-black surface. The solid
+     --primary FILL stays blue-200 — white ink on it is already
+     accessible. */
+  --primary-text:            var(--muza-blue-100);
 
   --secondary:               var(--muza-neutrals-800);
   --secondary-foreground:    var(--muza-neutrals-50);
@@ -378,6 +527,7 @@
   --primary:                 var(--muza-blue-200);
   --primary-hover:           color-mix(in srgb, black 20%, var(--muza-blue-200));
   --primary-foreground:      var(--muza-neutrals-50);
+  --primary-text:            var(--muza-blue-200);
 
   --secondary:               var(--muza-neutrals-200);
   --secondary-foreground:    var(--muza-neutrals-900);

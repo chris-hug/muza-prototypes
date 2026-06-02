@@ -16,7 +16,7 @@ export function TransferView() {
   const BALANCE = 2380.00
 
   return (
-    <div className="flex flex-col items-center pt-8 pb-40 px-10">
+    <div className="flex flex-col items-center pt-8 pb-40 px-page">
       <div className="flex flex-col gap-6 w-full max-w-[490px]">
 
         {/* ── Card ──────────────────────────────────────────────────────── */}

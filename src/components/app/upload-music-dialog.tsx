@@ -22,7 +22,7 @@ import {
   Search, X, Check, CloudUpload, ImagePlus, Music2, Disc3,
   Plus, GripVertical, FileAudio, Loader2, ChevronRight,
   AlertTriangle, Trash2, Minimize2, Play, Shuffle,
-  Share2, Info, MoreHorizontal, CheckCircle2,
+  Share, Info, MoreHorizontal, CheckCircle2,
   Radio as RadioIcon, ShoppingBag,
 } from "lucide-react"
 
@@ -1514,7 +1514,7 @@ function StepConfirmation({
               </button>
             </div>
             <div className="flex items-center gap-2">
-              {([Plus, Share2, Info, MoreHorizontal] as const).map((Icon, idx) => (
+              {([Plus, Share, Info, MoreHorizontal] as const).map((Icon, idx) => (
                 <button
                   key={idx}
                   className="size-12 rounded-full border border-border flex items-center justify-center text-foreground hover:bg-muted transition-colors"
@@ -1665,7 +1665,7 @@ function FilePanel({
             <CloudUpload className="size-5 text-muted-foreground" />
             <p className="text-xsmall font-normal text-center text-muted-foreground">
               Drag audio files here<br />
-              or <span className="text-primary underline underline-offset-2">browse files</span>
+              or <span className="text-primary-text underline underline-offset-2">browse files</span>
             </p>
             <p className="text-2xsmall text-muted-foreground font-normal opacity-60">WAV · FLAC · AIFF · up to 2 GB</p>
           </div>
@@ -1899,9 +1899,9 @@ export function UploadMusicDialog({
       {/* ── Published success modal ───────────────────────────────────── */}
       {published && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center backdrop-blur-md bg-background/60">
-          <div className="flex flex-col items-center gap-6 text-center bg-background border border-border rounded-2xl shadow-xl px-10 py-10 max-w-sm w-full mx-6">
+          <div className="flex flex-col items-center gap-6 text-center bg-background border border-border rounded-2xl shadow-xl px-page py-10 max-w-sm w-full mx-6">
             <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <CheckCircle2 className="size-8 text-primary" />
+              <CheckCircle2 className="size-8 text-primary-text" />
             </div>
             <div className="flex flex-col gap-2">
               <h2 className="text-xlarge font-semibold">Your release is live.</h2>

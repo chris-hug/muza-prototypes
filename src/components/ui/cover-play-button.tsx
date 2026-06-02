@@ -96,49 +96,61 @@ export function CoverPlayButton({
       aria-label={playing ? `Pause ${title}` : `Play ${title}`}
       data-playing={playing || undefined}
       className={cn(
-        "group/cpb relative shrink-0 overflow-hidden rounded-xs shadow-sm focus-visible:ring-3 focus-visible:ring-ring/50 outline-none cursor-pointer",
+        "group/cpb relative shrink-0 rounded-xs shadow-sm focus-visible:ring-3 focus-visible:ring-ring/50 outline-none cursor-pointer",
         sizeClassName,
         className,
       )}
     >
-      <img
-        src={src}
-        alt=""
-        draggable={false}
-        className="size-full object-cover"
-      />
-      {/* Dark-wash overlay — always rendered, opacity-0 at rest, fades
-           in when playing OR hovered. `bg-black/40 + text-white` keeps
-           the wash theme-agnostic (still dark in dark mode). */}
+      {/* Clipped layer — cover image + dark wash + Play/Pause icons.
+           `overflow-hidden` rounds the cover corners. Everything in
+           here is flat 2D, so clipping is harmless. */}
+      <span className="absolute inset-0 overflow-hidden rounded-xs">
+        <img
+          src={src}
+          alt=""
+          draggable={false}
+          className="size-full object-cover"
+        />
+        {/* Dark-wash overlay — always rendered, opacity-0 at rest,
+             fades in when playing OR hovered. `bg-black/40 + text-white`
+             keeps the wash theme-agnostic (still dark in dark mode). */}
+        <span
+          aria-hidden="true"
+          className={cn(
+            "absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-150",
+            c.overlay,
+          )}
+        >
+          {/* Play / Pause crossfade — CSS opacity decides which shows. */}
+          <PlayFilledAlt
+            className={cn(
+              "absolute size-4 text-white opacity-0 transition-opacity duration-150",
+              c.play,
+            )}
+          />
+          <PauseFilledAlt
+            className={cn(
+              "absolute size-4 text-white opacity-0 transition-opacity duration-150",
+              c.pause,
+            )}
+          />
+        </span>
+      </span>
+      {/* 3D wave — rendered OUTSIDE the overflow-hidden clip. A clipping
+           (overflow:hidden) ancestor is a grouping context that flattens
+           + rasterizes any descendant `preserve-3d` subtree, which
+           resampled the dots into a permanent blur. Kept unclipped here
+           it renders crisp; it's centered 28px well inside the cover, so
+           there's nothing to clip anyway. Opacity/crossfade sit on this
+           plain wrapper, never on the PlayingWave's 3D root. */}
       <span
         aria-hidden="true"
         className={cn(
-          "absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-150",
-          c.overlay,
+          "absolute inset-0 flex items-center justify-center text-white opacity-0 transition-opacity duration-150",
+          c.wave,
         )}
       >
-        {/* All three icons live in the same stack, absolutely
-             positioned. CSS opacity decides which one is visible —
-             no JSX branching, so every transition crossfades. */}
-        <PlayFilledAlt
-          className={cn(
-            "absolute size-4 text-white opacity-0 transition-opacity duration-150",
-            c.play,
-          )}
-        />
-        <PlayingWave
-          size={28}
-          className={cn(
-            "absolute text-white opacity-0 transition-opacity duration-150",
-            c.wave,
-          )}
-        />
-        <PauseFilledAlt
-          className={cn(
-            "absolute size-4 text-white opacity-0 transition-opacity duration-150",
-            c.pause,
-          )}
-        />
+        <PlayingWave size={28} />
       </span>
     </button>
   )

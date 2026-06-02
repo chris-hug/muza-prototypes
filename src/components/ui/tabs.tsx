@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { Tabs as TabsPrimitive } from "@base-ui/react/tabs"
 import { cva, type VariantProps } from "class-variance-authority"
 
@@ -40,15 +41,21 @@ const tabsListVariants = cva(
   {
     variants: {
       variant: {
-        // Pill/segment — tabs inside a muted background container
+        // Pill/segment — tabs inside a muted background container. A
+        // fixed segmented control, so it does NOT scroll.
         default:
           "rounded-full bg-muted p-1 text-muted-foreground gap-0",
-        // Underline — transparent container, bottom-border active indicator
+        // Underline — transparent container, bottom-border active
+        // indicator. Full-width tab strips like this can overflow a phone
+        // (e.g. Settings' five tabs), so they scroll horizontally with the
+        // scrollbar hidden — every tab stays reachable by swipe. `max-w-full`
+        // lets the inline-flex know when it's overflowing.
         line:
-          "rounded-none bg-transparent gap-3 text-muted-foreground",
-        // Pill — each tab is its own pill (no container background)
+          "rounded-none bg-transparent gap-3 text-muted-foreground max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+        // Pill — each tab is its own pill (no container background). Same
+        // horizontal-scroll treatment as `line`.
         pill:
-          "rounded-none bg-transparent gap-1.5 text-muted-foreground",
+          "rounded-none bg-transparent gap-1.5 text-muted-foreground max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
       },
       size: {
         sm:      "",
@@ -72,10 +79,54 @@ function TabsList({
   className,
   variant = "default",
   size = "default",
+  autoCenter = true,
   ...props
-}: TabsPrimitive.List.Props & VariantProps<typeof tabsListVariants>) {
+}: TabsPrimitive.List.Props & VariantProps<typeof tabsListVariants> & {
+  /** Auto-scroll the active tab to centre when the strip overflows.
+   *  Disable for free-scrolling filter rows where the user should be able
+   *  to swipe to (and rest on) ANY tab, not just the active one. */
+  autoCenter?: boolean
+}) {
+  const ref = React.useRef<HTMLDivElement>(null)
+
+  // When the list scrolls (overflowing tab strips on mobile), keep the
+  // ACTIVE tab horizontally centred — except the very first tab, which
+  // stays pinned to the start (centring it would push the strip right and
+  // reveal empty space before it). The `default` segmented variant never
+  // scrolls, so this is a no-op there. base-ui toggles the active tab's
+  // `data-active` attribute; a MutationObserver re-centres on each change.
+  React.useEffect(() => {
+    if (!autoCenter) return
+    const list = ref.current
+    if (!list) return
+
+    const recenter = () => {
+      if (list.scrollWidth <= list.clientWidth) return // not scrollable
+      const active = list.querySelector<HTMLElement>('[data-active], [aria-selected="true"]')
+      if (!active) return
+      const tabs = list.querySelectorAll('[role="tab"]')
+      // First tab → pin to the start; nothing before it to reveal.
+      if (active === tabs[0]) {
+        list.scrollTo({ left: 0, behavior: "smooth" })
+        return
+      }
+      const target = active.offsetLeft - (list.clientWidth - active.offsetWidth) / 2
+      list.scrollTo({ left: Math.max(0, target), behavior: "smooth" })
+    }
+
+    recenter()
+    const observer = new MutationObserver(recenter)
+    observer.observe(list, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["data-active", "aria-selected"],
+    })
+    return () => observer.disconnect()
+  }, [])
+
   return (
     <TabsPrimitive.List
+      ref={ref}
       data-slot="tabs-list"
       data-variant={variant}
       data-size={variant === "default" ? size : undefined}
@@ -127,8 +178,13 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
         // Active: just foreground text + bottom border
         "group-data-[variant=line]/tabs-list:data-active:text-foreground",
         "group-data-[variant=line]/tabs-list:data-active:after:opacity-100",
-        // The underline indicator
+        // The underline indicator. Default sits 1px BELOW the trigger
+        // (`-bottom-px`) to overlap the container's hairline; but the
+        // scrollable line/pill list clips overflow-y, which would cut that
+        // 1px. So for line/pill the indicator is pinned to `bottom-0`
+        // (inside the clip box) instead.
         "after:absolute after:inset-x-0 after:-bottom-px after:h-px after:rounded-full after:bg-foreground after:opacity-0 after:transition-opacity",
+        "group-data-[variant=line]/tabs-list:after:bottom-0 group-data-[variant=pill]/tabs-list:after:bottom-0",
 
         // ── Pill variant ────────────────────────────────────────────────
         "group-data-[variant=pill]/tabs-list:rounded-full",

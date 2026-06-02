@@ -357,10 +357,10 @@ export function PurchasesView() {
   if (!showList) {
     return (
       <div className="relative flex flex-col h-full">
-        <div className="shrink-0 px-4 md:px-10 pt-8 pb-6 border-b border-border/60">
+        <div className="hidden sm:block shrink-0 px-page pt-8 pb-6 border-b border-border/60">
           <h1 className="text-2xlarge font-medium tracking-tight text-balance">Your purchases</h1>
         </div>
-        <div className="flex-1 flex items-center justify-center px-4 md:px-10 py-16">
+        <div className="flex-1 flex items-center justify-center px-page py-16">
           <div className="max-w-[420px] flex flex-col items-center text-center gap-5">
             <div className="size-14 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
               <ShoppingBag className="size-6" />
@@ -386,7 +386,7 @@ export function PurchasesView() {
       {/* ── Page header — title row + toolbar row, both inside the
            bordered fixed area. The border-b separates the entire header
            (title + tabs + search + sort) from the scrolling card list. */}
-      <div className="shrink-0 flex flex-col gap-6 px-4 md:px-10 pt-8 pb-6 border-b border-border/60">
+      <div className="shrink-0 flex flex-col gap-6 px-page pt-4 sm:pt-8 pb-6 border-b border-border/60">
         {/* Row 1: title (left) + status tabs (right).
              The H1's line-box is taller than the 40px pill, so plain
              `items-center` lands the pill slightly above the headline's
@@ -400,8 +400,10 @@ export function PurchasesView() {
                the caption sits up by the cap-line — baseline-alignment
                dropped it below the headline's optical centre. */}
           <div className="flex items-start gap-3 min-w-0">
-            <h1 className="text-2xlarge font-medium tracking-tight text-balance">Your purchases</h1>
-            <span className="text-small font-normal text-muted-foreground tabular-nums shrink-0 mt-2">
+            {/* Mobile header already shows the page name — hide the in-page
+                 <h1> there to avoid a redundant double title. */}
+            <h1 className="hidden sm:block text-2xlarge font-medium tracking-tight text-balance">Your purchases</h1>
+            <span className="text-small font-normal text-muted-foreground tabular-nums shrink-0 mt-1.5 sm:mt-2">
               {filtered.length} {filtered.length === 1 ? "order" : "orders"}
             </span>
           </div>
@@ -428,7 +430,7 @@ export function PurchasesView() {
       </div>
 
       {/* ── Card list ────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-auto px-4 md:px-10 pt-6 pb-12">
+      <div className="flex-1 overflow-auto px-page pt-6 pb-12">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-16">
             <p className="text-small text-muted-foreground">

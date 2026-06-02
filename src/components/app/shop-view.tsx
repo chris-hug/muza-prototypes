@@ -138,7 +138,7 @@ function TabsChrome() {
            identifier (Products / Orders / Settings), and the sidebar
            already highlights Shop. Each tab content keeps its own H1
            and toolbar inside it. */}
-      <div className="shrink-0 px-4 md:px-10 pt-6 border-b border-border">
+      <div className="shrink-0 px-page pt-6 border-b border-border">
         <TabsList variant="line" className="w-auto justify-start gap-0 h-auto pb-0">
           {TABS.map(t => (
             <TabsTrigger key={t.value} value={t.value} className="flex-none px-4 pb-3 text-small gap-2">

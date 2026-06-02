@@ -208,7 +208,7 @@ function ReleaseTitleCombobox({
             <ComboboxItem
               value={`__unlinked__:${query}`}
               hideIndicator
-              className="text-primary font-normal"
+              className="text-primary-text font-normal"
             >
               <Plus className="size-4" />
               Add "{query}" as unlinked Release
@@ -361,7 +361,7 @@ function ImageUploadSection() {
         </div>
         <p className="text-small text-foreground">Drag cover art here</p>
         <p className="text-xsmall text-muted-foreground">
-          or <span className="text-primary">browse files</span>
+          or <span className="text-primary-text">browse files</span>
         </p>
       </div>
       <p className="text-2xsmall text-muted-foreground">
@@ -1045,7 +1045,7 @@ export function VinylCreateListing({
            intentionally hidden); the arrow communicates "step out and
            go back" more clearly than a generic Cancel, and matches the
            same affordance used on the buyer-side purchase-detail page. */}
-      <div className="shrink-0 flex items-center justify-between gap-6 px-10 pt-8 pb-6 border-b border-border bg-background">
+      <div className="shrink-0 flex items-center justify-between gap-6 px-page pt-8 pb-6 border-b border-border bg-background">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon-sm" onClick={onCancel} aria-label="Back to products">
             <ArrowLeft className="size-4" />

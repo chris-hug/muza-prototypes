@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useMemo, useEffect } from "react"
+import { useRef, useMemo, useEffect, useState } from "react"
 import { useWavesurfer } from "@wavesurfer/react"
 import Hover from "wavesurfer.js/dist/plugins/hover.esm.js"
 import { cn } from "@/lib/utils"
@@ -25,30 +25,52 @@ const DEMO_PEAKS = Array.from({ length: 512 }, (_, i) => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * Resolve a `var(--…)` CSS custom property to a concrete rgb/oklch string that
- * canvas can use, and STRIP the alpha channel.
+ * Resolve a `var(--…)` CSS custom property to a concrete OPAQUE `rgb()` string
+ * the canvas can always paint — and STRIP any alpha.
  *
- * Why strip alpha: WaveSurfer paints the progress canvas by cloning the wave
- * canvas with `globalCompositeOperation = 'source-in'` and then filling it
- * with progressColor. Any alpha on `waveColor` bleeds into the progress layer
- * and silently dims both. We restore the visual opacity on the unplayed
- * portion separately via `[part="canvases"] { opacity: 0.5 }` in the shadow
- * DOM.
+ * Two reasons this must end as plain `rgb()`:
+ *  1. `getComputedStyle().color` preserves the source colour space, so a token
+ *     authored in `oklch()` (e.g. `--muza-neutrals-400`) comes back as
+ *     `oklch(…)`. Canvas `fillStyle` silently rejects values it can't parse and
+ *     keeps its default — BLACK — so we must hand it `rgb()`. A 1×1 canvas
+ *     round-trip (`fillRect` → `getImageData`) converts ANY CSS colour the
+ *     browser understands into concrete sRGB bytes.
+ *  2. WaveSurfer paints the progress canvas by cloning the wave canvas with
+ *     `globalCompositeOperation = 'source-in'` then filling with progressColor;
+ *     alpha on `waveColor` bleeds into the progress layer and dims both. We
+ *     restore the unplayed opacity separately via `[part="canvases"]{opacity:.5}`.
+ *
+ * NB: resolve against `document.documentElement` (where the waveform tokens
+ * live) and feed the result straight to WaveSurfer as a PROP — never the raw
+ * `var(--…)` string, which `@wavesurfer/react` would re-sync onto the canvas on
+ * every render (each time-tick), repainting it black.
  */
-function resolveCssColor(input: string, host: HTMLElement): string {
-  if (!input.includes("var(")) return input
-  const probe = document.createElement("span")
-  probe.style.color   = input
-  probe.style.display = "none"
-  host.appendChild(probe)
-  const raw = getComputedStyle(probe).color
-  probe.remove()
-  return raw
-    .replace(/^rgba?\(([^)]+)\)$/, (_, inner) => {
-      const parts = inner.split(/[\s,\/]+/).filter(Boolean).slice(0, 3)
-      return `rgb(${parts.join(", ")})`
-    })
-    .replace(/\s*\/\s*[\d.]+\s*\)$/, ")")
+function toOpaqueRgb(color: string): string {
+  try {
+    const ctx = document.createElement("canvas").getContext("2d")
+    if (!ctx) return color
+    ctx.fillStyle = color
+    ctx.fillRect(0, 0, 1, 1)
+    const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data
+    return `rgb(${r}, ${g}, ${b})`
+  } catch {
+    return color
+  }
+}
+
+function resolveCssColor(input: string): string {
+  if (typeof document === "undefined") return input
+  let raw = input
+  if (input.includes("var(")) {
+    const probe = document.createElement("span")
+    probe.style.color    = input
+    probe.style.position = "absolute"
+    probe.style.visibility = "hidden"
+    document.documentElement.appendChild(probe)
+    raw = getComputedStyle(probe).color
+    probe.remove()
+  }
+  return toOpaqueRgb(raw)
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -99,11 +121,11 @@ export function Waveform({
   playing,
   onTimeUpdate,
   onSeek,
-  // muza-blue-200 reads clearly on both light and dark glass; the semantic
-  // `--primary` (blue-500 / blue-300) is too low-lightness for a large fill
-  // against the dark-mode backdrop.
-  progressColor   = "var(--muza-blue-200)",
-  waveColor       = "var(--muted-foreground)",
+  // `--waveform-progress` adapts to the mode: deep blue-200 on light glass,
+  // brighter blue-50 on the near-black dark glass (set in app.css). The
+  // colour-resolver below already re-applies on theme change.
+  progressColor   = "var(--waveform-progress)",
+  waveColor       = "var(--waveform-wave)",
   barWidth        = 1,
   barGap          = 1,
   // radius 0 avoids a 50%-alpha anti-aliased pill that washes out the colour
@@ -114,6 +136,22 @@ export function Waveform({
   className,
 }: WaveformProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Concrete, canvas-safe colours. Resolved up-front and passed to wavesurfer
+  // as PROPS (never the raw var(), which the hook would re-sync onto the canvas
+  // every render — repainting it black). Re-resolves on theme change.
+  const [resolvedWave, setResolvedWave]         = useState(() => resolveCssColor(waveColor))
+  const [resolvedProgress, setResolvedProgress] = useState(() => resolveCssColor(progressColor))
+  useEffect(() => {
+    const apply = () => {
+      setResolvedWave(resolveCssColor(waveColor))
+      setResolvedProgress(resolveCssColor(progressColor))
+    }
+    apply()
+    const obs = new MutationObserver(apply)
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-theme"] })
+    return () => obs.disconnect()
+  }, [waveColor, progressColor])
 
   const resolvedPeaks = useMemo<number[][] | undefined>(() => {
     if (peaks)  return Array.isArray(peaks[0]) ? (peaks as number[][]) : [peaks as number[]]
@@ -143,8 +181,8 @@ export function Waveform({
     url,
     peaks:       resolvedPeaks,
     duration:    resolvedDuration,
-    waveColor,
-    progressColor,
+    waveColor:     resolvedWave,
+    progressColor: resolvedProgress,
     cursorColor: "transparent",
     barWidth,
     barGap,
@@ -192,22 +230,8 @@ export function Waveform({
     return () => { wavesurfer.un("interaction", handler) }
   }, [wavesurfer, onSeek])
 
-  // Canvas doesn't understand `var(--…)` — resolve to concrete colours, push
-  // them onto wavesurfer, and re-push on theme change so dark mode recolours.
-  useEffect(() => {
-    if (!wavesurfer || !isReady || !containerRef.current) return
-    const host = containerRef.current
-
-    const apply = () => wavesurfer.setOptions({
-      waveColor:     resolveCssColor(waveColor,     host),
-      progressColor: resolveCssColor(progressColor, host),
-    })
-
-    apply()
-    const observer = new MutationObserver(apply)
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-theme"] })
-    return () => observer.disconnect()
-  }, [wavesurfer, isReady, waveColor, progressColor])
+  // Colour resolution happens up-front (see `resolvedWave`/`resolvedProgress`)
+  // and flows in via the wavesurfer props above — no post-init re-push needed.
 
   // Re-apply the `height` option when the prop changes. `setOptions({ height })`
   // re-renders the canvas at the new size, but wavesurfer hard-codes the

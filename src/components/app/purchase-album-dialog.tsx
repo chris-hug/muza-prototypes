@@ -419,7 +419,7 @@ export function PurchaseAlbumDialog({
                  though it's in a dialog. Centered icon + bold "You
                  own X" + soft confirmation line below. */}
             <div className="flex flex-col items-center gap-3 text-center">
-              <CircleCheck className="size-10 text-primary" strokeWidth={1.5} />
+              <CircleCheck className="size-10 text-primary-text" strokeWidth={1.5} />
               <p className="text-xlarge font-medium text-foreground">
                 {upgradeMode
                   ? `Download added to ${album.title}`

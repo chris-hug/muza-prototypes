@@ -72,6 +72,11 @@ export const SECTION_STATUS: Record<string, SectionStatusEntry> = {
   // ── This cycle: new ───────────────────────────────────────────
   "Chip Input":            { status: "new" },
   "Media Header":          { status: "new" },
+  "Mobile Header":         { status: "new" },
+  "Footer Nav":            { status: "new" },
+  "Media List Item":       { status: "new" },
+  "Detail Menu":           { status: "new" },
+  "Search":                { status: "new" },
   "Purchase Album Dialog": { status: "new" },
   "Paywall":               { status: "new" },
   "User Avatar":           { status: "new" },
@@ -79,8 +84,14 @@ export const SECTION_STATUS: Record<string, SectionStatusEntry> = {
 
   // ── This cycle: updated ───────────────────────────────────────
   "Song List Item":        { status: "updated" },
+  "Badge":                 { status: "updated" }, // gained the `label` content type
   "Card Rail":             { status: "updated" },
-  "Album Card":            { status: "updated" },
+  "Album Card":            { status: "updated" }, // nav surface: cover→open, Play plays, Heart saves (no nav)
+  "Playlist Card":         { status: "updated" }, // nav surface: cover→open, Play plays, Heart saves (no nav)
+  "Tabs":                  { status: "updated" }, // mobile: scroll + auto-centre active
+  "Menu":                  { status: "updated" }, // mobile: presents as a bottom sheet
+  "Player Bar":            { status: "updated" }, // live = variant B; marquee, links, synced shuffle, uncapped info width
+  "Player Overlay":        { status: "updated" }, // waveform progress, synced shuffle, artist/album links, footer in shell
 
   // ── Built but not yet consumed in a live app surface ──────────
   // Renders the "Not used yet" badge. The "changed" date still

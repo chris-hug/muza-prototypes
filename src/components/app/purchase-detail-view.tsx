@@ -196,7 +196,7 @@ export function PurchaseDetailView({
   return (
     <div className="relative flex flex-col h-full">
       {/* ── Back nav ─────────────────────────────────────────────────── */}
-      <div className="shrink-0 px-4 md:px-10 pt-6">
+      <div className="shrink-0 px-page pt-6">
         <button
           type="button"
           onClick={onBack}
@@ -208,7 +208,7 @@ export function PurchaseDetailView({
       </div>
 
       {/* ── Page header ──────────────────────────────────────────────── */}
-      <div className="shrink-0 px-4 md:px-10 pt-4 pb-6 border-b border-border/60">
+      <div className="shrink-0 px-page pt-4 pb-6 border-b border-border/60">
         <div className="flex items-start justify-between gap-6">
           <div className="min-w-0">
             <div className="flex items-center gap-3">
@@ -249,7 +249,7 @@ export function PurchaseDetailView({
 
       {/* ── Body — two-column on desktop ─────────────────────────────── */}
       <div className="flex-1 overflow-auto">
-        <div className="px-4 md:px-10 py-8 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-x-12 gap-y-10">
+        <div className="px-page py-8 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-x-12 gap-y-10">
 
           {/* ── LEFT: actionable surfaces ───────────────────────────── */}
           <div className="flex flex-col gap-10 min-w-0">
