@@ -11,6 +11,7 @@
 
 import { SAVED_PLAYLISTS, type SavedPlaylist } from "@/components/app/library-playlists-view"
 import { slugify as slug } from "@/lib/media-nav"
+import { artistImage } from "@/lib/artist-data"
 
 export interface PlaylistTrack {
   id:       string
@@ -38,7 +39,8 @@ export interface RailAlbum {
 
 export interface PlaylistPerson {
   name:  string
-  image: string
+  /** Real portrait, or undefined → ArtistCard shows the branded placeholder. */
+  image?: string
 }
 
 export interface PlaylistDetail {
@@ -60,8 +62,12 @@ export interface PlaylistDetail {
   moreFrom:        RailPlaylist[]
 }
 
-const portrait = (name: string) => `https://picsum.photos/seed/${slug(name)}/400/400`
-const avatar   = (name: string) => `https://picsum.photos/seed/${slug(name)}-av/120/120`
+// Real portraits from the curated artist DB / wider Wikipedia set.
+// `portrait` → undefined for unknowns (ArtistCard shows the branded
+// placeholder); `avatar` keeps a pravatar fallback for the small owner
+// avatar where a circle must always fill.
+const portrait = (name: string) => artistImage(name)
+const avatar   = (name: string) => artistImage(name) ?? `https://i.pravatar.cc/400?u=${slug(name)}`
 
 // ── Shared track pool ────────────────────────────────────────────────
 // Synthesized playlists draw rows from this pool (real jazz tracks with
@@ -121,7 +127,7 @@ const LATE_NIGHT: PlaylistDetail = {
   covers: [TRACK_POOL[0].cover, TRACK_POOL[1].cover, TRACK_POOL[2].cover, TRACK_POOL[3].cover],
   trackMeta: "8 tracks · 1h 31m",
   tracks: TRACK_POOL.slice(0, 8).map((t, i) => ({ ...t, id: `t${i + 1}` })),
-  featuredAlbums: albumsFromTracks(TRACK_POOL.slice(0, 8).map((t, i) => ({ ...t, id: `t${i + 1}` }))),
+  featuredAlbums: albumsFromTracks(TRACK_POOL.map((t, i) => ({ ...t, id: `tp${i + 1}` }))),
   featuredArtists: [
     "John Coltrane", "Charles Mingus", "Pharoah Sanders", "Herbie Hancock",
     "Wayne Shorter", "Sonny Clark", "Eric Dolphy",
@@ -166,8 +172,12 @@ function synthDetail(base: SavedPlaylist): PlaylistDetail {
   const start = seed % Math.max(1, rest.length - 8)
   const similarPlaylists: RailPlaylist[] = rest.slice(start, start + 8).map(railOf)
 
-  const featuredAlbums  = albumsFromTracks(tracks)
-  const featuredArtists = Array.from(new Set(tracks.map(t => t.artist)))
+  // Featured rails draw from the FULL track pool (not just this playlist's
+  // windowed tracks) so every playlist surfaces a full rail (≥7) regardless
+  // of how many songs it has.
+  const poolTracks      = TRACK_POOL.map((t, i) => ({ ...t, id: `tp${i + 1}` }))
+  const featuredAlbums  = albumsFromTracks(poolTracks)
+  const featuredArtists = Array.from(new Set(TRACK_POOL.map(t => t.artist)))
     .map(name => ({ name, image: portrait(name) }))
 
   return {

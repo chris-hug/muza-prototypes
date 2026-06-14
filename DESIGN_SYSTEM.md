@@ -166,6 +166,10 @@ The app uses **two content-growth tiers** so very wide viewports don't leave gap
 ```
 Past each ceiling the photo crops horizontally via `object-cover` rather than inflating the hero.
 
+### Bottom gutter — player clearance
+
+The persistent player floats over the content (desktop: `AppPlayer` pinned ~`bottom-5`, ~80px tall; mobile: footer-nav + mini bar stacked, ~112px). So **the app shell's single scroll container carries `pb-32` (128px) on every page** — applied once on the scroll `<div>` in the root shell ([`app/routes/home.tsx`](app/routes/home.tsx)), not per page — so the last content can always scroll clear of the bar and nothing hides behind it. Don't rely on per-page bottom padding; add page-specific bottom space *on top of* this gutter only if a layout needs it.
+
 **Keep all three caps in sync.** If you change the tier-1 max-w, you must also recompute the tier-1 hero `max-h` (`max-w × 400/1072`) and the tier-2 mirror.
 
 ### Border-radius (primitives, px)

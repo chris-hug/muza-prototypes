@@ -21,7 +21,9 @@
  * Explore / Artists, search results, "fans also liked" rails.
  */
 
+import { useState } from "react"
 import { cn } from "@/lib/utils"
+import { LogoMark } from "@/components/ui/logo"
 
 export interface ArtistCardProps {
   name:    string
@@ -32,7 +34,8 @@ export interface ArtistCardProps {
 }
 
 export function ArtistCard({ name, image, onClick, className }: ArtistCardProps) {
-  const initials = name.split(/\s+/).filter(Boolean).map(p => p[0]).slice(0, 2).join("").toUpperCase()
+  const [failed, setFailed] = useState(false)
+  const showImg = !!image && !failed
   return (
     <button
       type="button"
@@ -56,7 +59,7 @@ export function ArtistCard({ name, image, onClick, className }: ArtistCardProps)
            portrait-aspect Wikipedia thumbnails) and the inset stays
            consistent across rows. */}
       <div className="aspect-square w-full p-[5%]">
-        {image ? (
+        {showImg ? (
           // `brightness` filter darkens the portrait on hover so the
           // card reads as actionable. Same hover convention as the
           // dark gradient overlay on AlbumCard/PlaylistCard (the
@@ -65,11 +68,16 @@ export function ArtistCard({ name, image, onClick, className }: ArtistCardProps)
             src={image}
             alt={name}
             draggable={false}
+            onError={() => setFailed(true)}
             className="aspect-square w-full rounded-full object-cover transition-[filter] group-hover/artist:brightness-75"
           />
         ) : (
-          <div className="aspect-square w-full rounded-full bg-muted flex items-center justify-center text-large font-medium text-muted-foreground transition-colors group-hover/artist:bg-accent">
-            {initials || "?"}
+          // Branded placeholder — muted circle with a soft muza mark
+          // (used when there's no real portrait, or one fails to load).
+          <div className="aspect-square w-full rounded-full bg-muted flex items-center justify-center transition-colors group-hover/artist:bg-accent">
+            {/* Solid secondary fill (no alpha) so the 3 overlapping circles
+                read as one flat mark instead of darkening where they cross. */}
+            <LogoMark className="w-2/5 h-auto text-secondary" />
           </div>
         )}
       </div>
