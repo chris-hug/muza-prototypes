@@ -98,9 +98,7 @@ export const SECTION_SOURCE: Record<string, string> = {
   "otp-input": "src/components/ui/input-otp.tsx",
   form:        "src/components/ui/form.tsx",
 
-  // Player — the live bar is variant B (player-bar-b.tsx); variant A is
-  // kept for reference only, so the section's source link / changed-date
-  // tracks the in-use component.
+  // Player — the live bar is player-bar-b.tsx.
   "player-bar":     "src/components/ui/player-bar-b.tsx",
   "player-overlay": "src/components/ui/player-overlay.tsx",
 }

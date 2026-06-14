@@ -107,7 +107,7 @@ import {
   Plus, Search, ChevronDown, Trash2, SlidersHorizontal, Maximize2,
   Radio as RadioIcon, ShoppingBag, Disc3, Disc, CassetteTape, Shirt, Ghost,
   ChevronLeft, ChevronRight, Globe, X, Sun, Moon, MapPin, CircleCheckBig,
-  Code, ArrowUpRight, Truck, Mail,
+  ArrowUpRight, Truck, Mail,
   ListPlus, ListStart, ListEnd, Mic, Flag, Clock,
 } from "lucide-react"
 import { DetailMoreButton } from "@/components/ui/detail-more-button"
@@ -142,7 +142,7 @@ import { ArtistProfileView } from "@/components/app/artist-profile-view"
 import { AlbumDetailView } from "@/components/app/album-detail-view"
 import { PlaylistDetailView } from "@/components/app/playlist-detail-view"
 import { PurchaseAlbumDialog, PurchaseAlbumDialogPreview } from "@/components/app/purchase-album-dialog"
-import { SubscriptionPromptDialog, SubscriptionPromptDialogPreview, SubscriptionCheckoutDialog } from "@/components/app/subscription-dialogs"
+import { SubscriptionPromptDialog, SubscriptionPromptDialogPreview, SubscriptionCheckoutDialog, SubscriptionCheckoutDialogPreview } from "@/components/app/subscription-dialogs"
 import { LibraryArtistsView, SAVED_ARTISTS } from "@/components/app/library-artists-view"
 import { LibraryPlaylistsView, SAVED_PLAYLISTS } from "@/components/app/library-playlists-view"
 import { LibrarySongsView, SAVED_SONGS_SEED } from "@/components/app/library-songs-view"
@@ -173,7 +173,6 @@ import { Section as PageSection } from "@/components/app/section"
 import { ItemsSection as DetailItemsSection } from "@/components/app/items-section"
 import { COUNTRY_CODES, countryName } from "@/lib/countries"
 import { MultiSelect } from "@/components/ui/multi-select"
-import { PlayerBar }     from "@/components/ui/player-bar"
 import { PlayerBarB }    from "@/components/ui/player-bar-b"
 import { PlayerOverlay } from "@/components/ui/player-overlay"
 import { PlayerProvider } from "@/lib/player"
@@ -253,8 +252,7 @@ function Section({
                   size="sm"
                   render={<a href={sourceUrl} target="_blank" rel="noreferrer" />}
                 >
-                  <Code className="size-3.5" />
-                  Source
+                  GitHub
                   <ArrowUpRight className="size-3" />
                 </Button>
               )}
@@ -777,6 +775,16 @@ const HOME_NEW_ALBUMS = [
   { id: "h-na-12", title: "Under Tangled Silence",             artist: "Djrum",                          cover: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/4a/2d/6f/4a2d6f89-f204-8f91-9812-f9bd203e33b0/cover.jpg/600x600bb.jpg" },
 ]
 
+// A few releases marked as already-purchased on the live home rails, so the
+// "Owned" label shows up without buying first. Spread across both album
+// rails — two priced-looking titles per rail.
+const HOME_OWNED = new Set<string>([
+  "Promises",          // New Albums
+  "Black Acid Soul",   // New Albums
+  "Maiden Voyage",     // Albums of the week
+  "Glass Bead Game",   // Albums of the week
+])
+
 const HOME_WEEKLY_ALBUMS = [
   { id: "h-wa-1",  title: "Maiden Voyage",                     artist: "Herbie Hancock",                 cover: "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/23/49/49/234949c3-db74-f0eb-30f5-d715526e459b/19UMGIM73745.rgb.jpg/600x600bb.jpg" },
   { id: "h-wa-2",  title: "A Love Supreme",                    artist: "John Coltrane",                  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/e5/24/aa/e524aacd-467b-66f3-8931-0fcd6750a4b9/08UMGIM07914.rgb.jpg/600x600bb.jpg" },
@@ -870,6 +878,9 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
     const meta  = albumMetaFor(a.title)
     const libId = libraryIdForTitle(a.title)
     const key   = slugify(a.title)
+    // Seed a handful of "Owned" releases across the rails so the purchased
+    // state is visible on the live home page even before the user buys.
+    const owned = (libId ? library.isPurchased(libId) : false) || HOME_OWNED.has(a.title)
     return (
       <AlbumCard
         cover={a.cover}
@@ -878,7 +889,7 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
         year={meta.year}
         streamPrice={meta.streamPrice}
         downloadPrice={meta.downloadPrice}
-        purchased={libId ? library.isPurchased(libId) : false}
+        purchased={owned}
         onTitleClick={() => openAlbum(key)}
         onPlay={() => openAlbum(key)}
       />
@@ -1143,7 +1154,7 @@ function CoverPlayButtonDemo() {
 // always visible on the DS page (no click required). A trigger
 // button below opens the real `<PurchaseAlbumDialog>` modal for
 // live interaction. New-vs-existing-customer distinction sits
-// INSIDE Pay.com's universal form (saved-card detection +
+// INSIDE Square's universal form (saved-card detection +
 // brand-detection on new cards + Apple Pay / Google Pay / PayPal
 // express buttons all in one iframe) — the dialog only owns the
 // shell.
@@ -1213,6 +1224,8 @@ function SubscriptionPromptDemo() {
   return (
     <div className="flex flex-col gap-4">
       <SubscriptionPromptDialogPreview />
+      {/* Step 2 — the checkout, shown static below the paywall. */}
+      <SubscriptionCheckoutDialogPreview />
       <div className="flex items-center gap-3 flex-wrap">
         <Button variant="outline" onClick={() => setPromptOpen(true)}>
           Open as modal
@@ -1334,14 +1347,14 @@ function ListTableDemo() {
                   hoverGroup="row"
                 />
               </TableCell>
-              <TableCell className="text-small text-foreground whitespace-nowrap truncate">
+              <TableCell className="text-foreground whitespace-nowrap truncate">
                 <button type="button" className="text-left hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] outline-none cursor-pointer">{r.title}</button>
               </TableCell>
-              <TableCell className="text-small text-muted-foreground whitespace-nowrap truncate">
+              <TableCell className="text-muted-foreground whitespace-nowrap truncate">
                 <button type="button" className="text-left hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] outline-none cursor-pointer">{r.band}</button>
               </TableCell>
-              <TableCell className="text-small text-muted-foreground tabular-nums whitespace-nowrap">{r.year}</TableCell>
-              <TableCell className="text-small text-muted-foreground tabular-nums whitespace-nowrap">{r.tracks}</TableCell>
+              <TableCell className="text-muted-foreground tabular-nums whitespace-nowrap">{r.year}</TableCell>
+              <TableCell className="text-muted-foreground tabular-nums whitespace-nowrap">{r.tracks}</TableCell>
               <TableCell className="text-right">
                 <ContentTypeBadge type={r.type} />
               </TableCell>
@@ -2146,32 +2159,33 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         <p className="text-small font-medium text-muted-foreground mb-1">Primitives</p>
         <p className="text-xsmall font-normal text-muted-foreground mb-5">
           Raw font-size values. Used directly only when no semantic alias fits (large display headings).
+          Display sizes <code className="text-xsmall">text-2xl</code>–<code className="text-xsmall">text-9xl</code> are <span className="text-foreground">fluid</span> — they clamp from a mobile floor up to the listed max across a 360→1280px viewport.
         </p>
         <div className="flex gap-6 pb-2 border-b border-border">
           <span className="w-32 shrink-0 text-xsmall text-muted-foreground">Primitive</span>
-          <span className="w-20 shrink-0 text-xsmall text-muted-foreground">Value</span>
+          <span className="w-28 shrink-0 text-xsmall text-muted-foreground">Value (px)</span>
           <span className="flex-1 text-xsmall text-muted-foreground">Example</span>
         </div>
         <div className="flex flex-col divide-y divide-border">
           {[
-            { token: "text-9xl",  px: 200 },
-            { token: "text-8xl",  px: 160 },
-            { token: "text-7xl",  px: 128 },
-            { token: "text-6xl",  px: 96 },
-            { token: "text-5xl",  px: 72 },
-            { token: "text-4xl",  px: 60 },
-            { token: "text-3xl",  px: 48 },
-            { token: "text-2xl",  px: 36 },
+            { token: "text-9xl",  px: "84–200" },
+            { token: "text-8xl",  px: "72–160" },
+            { token: "text-7xl",  px: "62–128" },
+            { token: "text-6xl",  px: "52–96" },
+            { token: "text-5xl",  px: "44–72" },
+            { token: "text-4xl",  px: "38–60" },
+            { token: "text-3xl",  px: "34–48" },
+            { token: "text-2xl",  px: "32–36" },
             { token: "text-xl",   px: 30 },
             { token: "text-lg",   px: 24 },
-            { token: "text-base", px: 20 },
-            { token: "text-sm",   px: 18 },
-            { token: "text-xs",   px: 16 },
-            { token: "text-xxs",  px: 14 },
+            { token: "text-base", px: 21 },
+            { token: "text-sm",   px: 19 },
+            { token: "text-xs",   px: 17 },
+            { token: "text-xxs",  px: 15 },
           ].map(({ token, px }) => (
             <div key={token} className="flex items-baseline gap-6 py-4">
               <span className="w-32 shrink-0 text-small font-normal">{token}</span>
-              <span className="w-20 shrink-0 text-xsmall text-muted-foreground tabular-nums">{px}px</span>
+              <span className="w-28 shrink-0 text-xsmall text-muted-foreground tabular-nums">{px}px</span>
               <div className="flex-1 min-w-0">
                 <p className={`${token} font-normal leading-none truncate`}>Discover Music</p>
               </div>
@@ -2189,25 +2203,25 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         <div className="flex gap-6 pb-2 border-b border-border">
           <span className="w-32 shrink-0 text-xsmall text-muted-foreground">Alias</span>
           <span className="w-32 shrink-0 text-xsmall text-muted-foreground">→ Primitive</span>
-          <span className="w-20 shrink-0 text-xsmall text-muted-foreground">Resolved</span>
+          <span className="w-28 shrink-0 text-xsmall text-muted-foreground">Resolved</span>
           <span className="flex-1 text-xsmall text-muted-foreground">Example</span>
         </div>
         <div className="flex flex-col divide-y divide-border">
           {[
-            { alias: "text-4xlarge", primitive: "text-4xl",  px: 60, weight: "font-medium",   sample: "Discover Music" },
-            { alias: "text-3xlarge", primitive: "text-3xl",  px: 48, weight: "font-medium",   sample: "Featured Releases" },
-            { alias: "text-2xlarge", primitive: "text-2xl",  px: 36, weight: "font-medium",   sample: "Top Playlists" },
+            { alias: "text-4xlarge", primitive: "text-4xl",  px: "38–60", weight: "font-medium",   sample: "Discover Music" },
+            { alias: "text-3xlarge", primitive: "text-3xl",  px: "34–48", weight: "font-medium",   sample: "Featured Releases" },
+            { alias: "text-2xlarge", primitive: "text-2xl",  px: "32–36", weight: "font-medium",   sample: "Top Playlists" },
             { alias: "text-xlarge",  primitive: "text-xl",   px: 30, weight: "font-medium",   sample: "Album of the Week" },
             { alias: "text-large",   primitive: "text-lg",   px: 24, weight: "font-medium",   sample: "Dialog titles, lead paragraphs." },
-            { alias: "text-base",    primitive: "text-base", px: 20, weight: "font-normal",   sample: "Body copy, card content, default paragraphs.", note: "alias name = primitive name; use the primitive directly (no separate CSS variable)." },
-            { alias: "text-small",   primitive: "text-sm",   px: 18, weight: "font-normal",   sample: "Descriptions, table cells, body text." },
-            { alias: "text-xsmall",  primitive: "text-xs",   px: 16, weight: "font-normal",   sample: "Helper text, placeholder copy." },
-            { alias: "text-2xsmall", primitive: "text-xxs",  px: 14, weight: "font-normal",   sample: "Badges, chips, captions, meta." },
+            { alias: "text-base",    primitive: "text-base", px: 21, weight: "font-normal",   sample: "Card-rail titles, lead paragraphs.", note: "this 21px step's semantic name equals its token name — use text-base (it's a sanctioned semantic token)." },
+            { alias: "text-small",   primitive: "text-sm",   px: 19, weight: "font-normal",   sample: "Descriptions, body text, song-list rows." },
+            { alias: "text-xsmall",  primitive: "text-xs",   px: 17, weight: "font-normal",   sample: "Media-card title + meta, table rows, helper text." },
+            { alias: "text-2xsmall", primitive: "text-xxs",  px: 15, weight: "font-normal",   sample: "Badges, chips, captions, meta." },
           ].map(({ alias, primitive, px, weight, sample, note }) => (
             <div key={alias} className="flex items-baseline gap-6 py-4">
               <span className="w-32 shrink-0 text-small font-normal">{alias}</span>
               <span className="w-32 shrink-0 text-xsmall text-muted-foreground">{primitive}</span>
-              <span className="w-20 shrink-0 text-xsmall text-muted-foreground tabular-nums">{px}px</span>
+              <span className="w-28 shrink-0 text-xsmall text-muted-foreground tabular-nums">{px}px</span>
               <div className="flex-1 min-w-0">
                 <p className={`${alias} ${weight} leading-normal text-foreground truncate`}>{sample}</p>
                 {note && (
@@ -3501,8 +3515,10 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
 
         <SubLabel>Monetisation states — Free · Stream-only · Stream + Download · Owned</SubLabel>
         <p className="text-xsmall text-muted-foreground mb-5 max-w-2xl">
-          The card's third row shows the album's monetisation state.
-          Free streams under the Muza subscription;
+          The card's third row shows the album's monetisation state — and
+          only when there's something to say. A free album (streams under the
+          Muza subscription) shows <span className="text-foreground">nothing</span> —
+          the absence of a price is the signal.
           <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">streamPrice</code>
           alone marks stream-only purchase albums; adding
           <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">downloadPrice</code>
@@ -4605,14 +4621,11 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           { label: "Album detail — Unlock All Songs CTA", href: "/?page=Album" },
         ]}>
         <p className="text-base text-muted-foreground mb-5 max-w-2xl">
-          The one-time checkout — wraps Pay.com's universal form and reads as a transactional cart. The non-obvious bits:
+          The one-time checkout — wraps Square's universal form and reads as a transactional cart. The non-obvious bits:
         </p>
         <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-5 max-w-2xl list-disc pl-5">
           <li>
             <span className="text-foreground">Tier picker</span> (Listening vs Download) only shows when both prices are set.
-          </li>
-          <li>
-            <span className="text-foreground">Contribute to Muza</span> — optional tip jar, default $1, one-click opt-out.
           </li>
           <li>
             <span className="text-foreground">Upgrade mode</span> (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">upgradeMode</code> + <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">upgradePrice</code>) — pay-the-difference "add download" flow: tier picker hidden, cart shows just the delta, success fires <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">onUpgraded</code>.
@@ -4630,9 +4643,12 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         <p className="text-base text-muted-foreground mb-5 max-w-2xl">
           The non-profit paywall. Fires when an anonymous account trips
           the 3-play cap (or as a re-entry from Settings). Built as a
-          mini landing page, not a generic dialog — one continuous
-          muted surface, stacked muza lockup, bold headline, the
-          amount picker IS in the hero so subscribing is one click.
+          mini landing page, not a generic dialog — a two-up split:{" "}
+          <span className="text-foreground">why</span> (headline, pitch,
+          brand) on the left, <span className="text-foreground">action</span>{" "}
+          (amount picker + CTA) on the right. Stacks to a single flat column
+          on mobile via a container query on the dialog width — the brand
+          lockup drops to the footer.
         </p>
         <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-5 max-w-2xl list-disc pl-5">
           <li>
@@ -5022,11 +5038,9 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       {/* ══ PLAYER BAR ══ */}
       <Section id="player-bar" title="Player Bar">
         <p className="text-base text-muted-foreground mb-4 max-w-2xl">
-          The persistent glass transport. Two layouts were explored;{" "}
-          <span className="text-foreground">Variant B</span> is the one wired
-          into the app (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">AppPlayer</code> →{" "}
-          <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">player-bar-b.tsx</code>);
-          variant A is kept here for reference only.
+          The persistent glass transport, wired into the app via{" "}
+          <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">AppPlayer</code> →{" "}
+          <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">player-bar-b.tsx</code>.
         </p>
         <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-6 max-w-2xl list-disc pl-5">
           <li>
@@ -5050,47 +5064,24 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             <div
               className="relative flex flex-col justify-center gap-4 rounded-xl overflow-hidden p-10"
               style={{
-                backgroundImage: "url(https://www.figma.com/api/mcp/asset/146ffdca-77f3-4008-8ff4-904d2b06ca52)",
-                backgroundSize: "cover",
-                backgroundPosition: "center top",
+                // Zoomed-in Sun Ra "Space Is the Place" cover (high-res),
+                // cropped to fill — colourful atmosphere behind the bar.
+                backgroundImage: "url(https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/2000x2000bb.jpg)",
+                backgroundSize: "160%",
+                backgroundPosition: "center",
                 minHeight: 360,
               }}
             >
+              {/* Darkening overlay so the busy cover sits back and the
+                  glass bar + label read clearly on top. */}
+              <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/40 to-black/35" />
               <div className="relative z-10 flex flex-col gap-4">
                 <div className="self-start flex items-center gap-2">
                   <span className="text-2xsmall font-medium text-foreground bg-background/70 backdrop-blur-sm px-2 py-0.5 rounded-full">
-                    Player Bar B
-                  </span>
-                  <span className="text-2xsmall font-medium text-primary-foreground bg-primary px-2 py-0.5 rounded-full">
-                    In use
+                    Player Bar
                   </span>
                 </div>
                 <PlayerBarB className="w-full" />
-              </div>
-            </div>
-          </ResizableBox>
-
-          {/* Player A — kept for reference only; NOT used in the app. */}
-          <ResizableBox initialWidth={1000} minWidth={368} maxWidth={1500}>
-            <div
-              className="relative flex flex-col justify-center gap-4 rounded-xl overflow-hidden p-10"
-              style={{
-                backgroundImage: "url(https://www.figma.com/api/mcp/asset/146ffdca-77f3-4008-8ff4-904d2b06ca52)",
-                backgroundSize: "cover",
-                backgroundPosition: "center top",
-                minHeight: 360,
-              }}
-            >
-              <div className="relative z-10 flex flex-col gap-4">
-                <div className="self-start flex items-center gap-2">
-                  <span className="text-2xsmall font-medium text-foreground bg-background/70 backdrop-blur-sm px-2 py-0.5 rounded-full">
-                    Player Bar A
-                  </span>
-                  <span className="text-2xsmall font-medium text-muted-foreground bg-muted border border-border px-2 py-0.5 rounded-full">
-                    Not used
-                  </span>
-                </div>
-                <PlayerBar className="w-full" />
               </div>
             </div>
           </ResizableBox>

@@ -83,6 +83,8 @@ export const SECTION_STATUS: Record<string, SectionStatusEntry> = {
   "Purchased Badge":       { status: "new" },
 
   // ── This cycle: updated ───────────────────────────────────────
+  "Typography":            { status: "updated" }, // scale reworked to 15/17/19/21; B-style media text adopted globally
+  "Artist Card":           { status: "updated" }, // name → 17px (text-xsmall), enlarged circle
   "Song List Item":        { status: "updated" },
   "Badge":                 { status: "updated" }, // gained the `label` content type
   "Card Rail":             { status: "updated" },
@@ -90,7 +92,7 @@ export const SECTION_STATUS: Record<string, SectionStatusEntry> = {
   "Playlist Card":         { status: "updated" }, // nav surface: cover→open, Play plays, Heart saves (no nav)
   "Tabs":                  { status: "updated" }, // mobile: scroll + auto-centre active
   "Menu":                  { status: "updated" }, // mobile: presents as a bottom sheet
-  "Player Bar":            { status: "updated" }, // live = variant B; marquee, links, synced shuffle, uncapped info width
+  "Player Bar":            { status: "updated" }, // marquee, links, synced shuffle, uncapped info width
   "Player Overlay":        { status: "updated" }, // waveform progress, synced shuffle, artist/album links, footer in shell
 
   // ── Built but not yet consumed in a live app surface ──────────

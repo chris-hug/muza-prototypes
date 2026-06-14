@@ -160,7 +160,8 @@ function CartButton() {
             aria-hidden="true"
             className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-foreground text-background text-2xsmall font-medium tabular-nums flex items-center justify-center leading-none"
           >
-            {cart.count > 99 ? "99+" : cart.count}
+            {/* optical nudge — the figure ink sits a hair high in the line box */}
+            <span className="relative top-[-0.5px]">{cart.count > 99 ? "99+" : cart.count}</span>
           </span>
         )}
       </button>

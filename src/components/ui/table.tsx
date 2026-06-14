@@ -24,7 +24,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
     <div data-slot="table-wrapper" className="relative w-full overflow-auto">
       <table
         data-slot="table"
-        className={cn("w-full caption-bottom text-small", className)}
+        className={cn("w-full caption-bottom text-xsmall", className)}
         {...props}
       />
     </div>
@@ -176,7 +176,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "p-4 align-middle text-small [&:has([role=checkbox])]:pr-0",
+        "p-4 align-middle text-xsmall [&:has([role=checkbox])]:pr-0",
         className
       )}
       {...props}

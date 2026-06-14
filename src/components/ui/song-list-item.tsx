@@ -218,7 +218,7 @@ export function SongListItem({
         <button
           type="button"
           onClick={onTitleClick}
-          className="text-small font-normal leading-5 text-foreground text-left truncate hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto] outline-none cursor-pointer"
+          className="text-xsmall font-normal leading-5 text-foreground text-left truncate hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto] outline-none cursor-pointer"
         >
           {title}
         </button>
@@ -227,7 +227,7 @@ export function SongListItem({
              artist always stays. Album also shrinks 2× faster than
              artist, so when both show the artist truncates last. */}
         {(badge || artist || album || year) && (
-        <div className="flex items-center gap-1.5 min-w-0 text-small text-muted-foreground leading-5">
+        <div className="flex items-center gap-1.5 min-w-0 text-xsmall font-light tracking-[0.02em] text-muted-foreground leading-5">
           {badge && (
             <Badge variant="secondary" className="shrink-0">
               {badge}
@@ -392,7 +392,7 @@ export function SongListItem({
                very tight rows (≤300) so the title/meta keep the space;
                it's the least critical field after artist/album/year. */}
           {duration && (
-            <span className="text-right min-w-10 text-xsmall text-muted-foreground leading-4 @max-[300px]:hidden">
+            <span className="text-right min-w-10 text-xsmall font-light tracking-[0.02em] text-muted-foreground leading-4 @max-[300px]:hidden">
               {duration}
             </span>
           )}

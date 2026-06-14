@@ -7,7 +7,7 @@
  *   1. `SubscriptionPromptDialog` — fires when the user trips the
  *      3-play cap. Soft pitch with the headline number + one CTA
  *      that opens (2).
- *   2. `SubscriptionCheckoutDialog` — monthly plan picker + Pay.com
+ *   2. `SubscriptionCheckoutDialog` — monthly plan picker + Square
  *      slot + success state. Mirrors the chrome of
  *      `PurchaseAlbumDialog` so users feel they're in the same
  *      transactional flow.
@@ -30,14 +30,13 @@ import { cn } from "@/lib/utils"
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
   DialogFooter, DialogClose,
-  DialogPreview,
+  DialogPreview, DialogPreviewTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
 import { Spinner } from "@/components/ui/spinner"
-import { LogoMark, Wordmark } from "@/components/ui/logo"
+import { LogoHorizontal } from "@/components/ui/logo"
 import { useUserAccount, ANONYMOUS_PLAY_LIMIT } from "@/lib/user-account"
 
 const ABOUT_URL = "https://dev.muza-music.org/about"
@@ -63,95 +62,120 @@ export function SubscriptionPromptDialog({
     if (open) setAmount("10")
   }, [open])
 
+  const ctaLabel = Number(amount) > 0 ? `Subscribe — $${Number(amount).toFixed(2)}/mo` : "Start free"
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="!w-[80vw] !max-w-[980px] sm:!max-w-[980px] p-0 gap-0 overflow-hidden bg-muted">
-        {/* Hero — landing-page energy, everything centered. One
-            continuous muted surface runs through hero → body →
-            footer; no internal dividers, no contrasting blocks. */}
-        <div className="flex flex-col items-center gap-6 px-14 pt-14 pb-12 text-center">
-          {/* Stacked logo lockup (icon-on-top + wordmark below) */}
-          <div className="flex flex-col items-center gap-2">
-            <LogoMark className="h-16 w-auto text-foreground" />
-            <Wordmark className="h-5 w-auto text-foreground" />
-          </div>
-
-          <DialogHeader className="gap-5 items-center text-center mt-2">
-            <p className="text-small font-normal text-foreground">
-              The Platform for Independent Music
-            </p>
-            <DialogTitle className="text-3xl sm:text-4xl leading-[1.05] font-medium text-foreground tracking-[-0.02em] max-w-[16ch]">
-              Support your artists.
-            </DialogTitle>
-            <DialogDescription className="sr-only">
-              Choose what you pay monthly to support the artists you listen to. As a non-profit, muza distributes 100% of your subscription to artists by your actual listening time.
-            </DialogDescription>
-            {/* Bullets replace the description visually — three
-                short proof points carry the value prop. The
-                accessible description above stays in the DOM for
-                screen readers. */}
-            <ul className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-small pt-2">
-              <ImpactRow>Unlimited streaming</ImpactRow>
-              <ImpactRow>100% to artists</ImpactRow>
-              <ImpactRow>Distributed by listening time</ImpactRow>
-            </ul>
-          </DialogHeader>
-
-          {/* Amount picker — sits in the hero so it reads as part
-              of the pitch, not a form. Pre-selected at $10. Label
-              promoted (text-small + medium + foreground) so it reads
-              as an action, not a caption. */}
-          <div className="flex flex-col items-center gap-3 mt-4">
-            <p className="text-small font-medium text-foreground">
-              Choose your monthly amount
-            </p>
-            <AmountPillRow value={amount} onChange={setAmount} />
-            {/* Combined micro-context: explains WHY this dialog
-                appeared (3-play preview limit hit) AND the alpha
-                pricing reassurance in one line. */}
-            <p className="text-xsmall text-muted-foreground mt-1">
-              Pay what feels right. During our alpha also $0 is fine.
-            </p>
-          </div>
-        </div>
-
-        {/* Footer — single centered Subscribe CTA, no flanking
-            ghost buttons. Trust microcopy below carries cancel +
-            non-profit signals AND the subtle 'How muza works' link
-            inline. Big bottom padding lets the dialog breathe. */}
-        <div className="flex items-center justify-center px-14">
-          <Button
-            size="lg"
-            className="!h-[72px] !px-[60px] !text-lg"
-            onClick={() => { onOpenChange(false); onSubscribe(amount) }}
-          >
-            {Number(amount) > 0
-              ? `Subscribe — $${Number(amount).toFixed(2)}/mo`
-              : "Start free"}
-          </Button>
-        </div>
-        <p className="text-xsmall text-muted-foreground text-center px-14 pt-12 pb-8">
-          Cancel anytime · billed monthly · muza is a registered non-profit ·{" "}
-          <a
-            href={ABOUT_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="underline underline-offset-2 hover:text-foreground"
-          >
-            How muza works <ArrowUpRight className="inline size-3 align-baseline" />
-          </a>
-        </p>
+        {/* Visible heading lives inside PaywallContent; these keep the
+            dialog accessible (aria-labelledby / describedby). */}
+        <DialogTitle className="sr-only">Support your artists.</DialogTitle>
+        <DialogDescription className="sr-only">
+          muza is a non-profit fixing streaming&rsquo;s broken economics: 90% of your money goes straight to the artists you actually listen to, paid by real listening time. A fairer model for music, and for the people who make it.
+        </DialogDescription>
+        <PaywallContent
+          amount={amount}
+          onAmountChange={setAmount}
+          ctaLabel={ctaLabel}
+          onSubscribe={() => { onOpenChange(false); onSubscribe(amount) }}
+        />
       </DialogContent>
     </Dialog>
   )
 }
 
-function ImpactRow({ children }: { children: React.ReactNode }) {
+// The pitch sentence — single source of truth.
+const PAYWALL_PITCH =
+  "90% of your money goes straight to the artists you actually listen to, paid by real listening time. A fairer model for music, and for the people who make it."
+
+/*
+ * PaywallContent — the paywall body. Two columns on desktop (why | action),
+ * stacks to a single column on mobile via a container query on the DIALOG's
+ * own width (not the viewport), so it adapts inside the modal at any screen
+ * size. The brand lockup sits bottom-left of the left column when wide and
+ * drops to a footer (last element) when stacked. Rendered by both the live
+ * dialog and the DS preview. The visible <h2> is the heading; callers add an
+ * sr-only DialogTitle for dialog a11y.
+ */
+function PaywallContent({
+  amount, onAmountChange, ctaLabel, onSubscribe,
+}: {
+  amount: string
+  onAmountChange: (next: string) => void
+  ctaLabel: string
+  onSubscribe?: () => void
+}) {
+  const brandLockup = (
+    <>
+      <LogoHorizontal className="h-6 w-auto text-foreground" />
+      <span className="text-small text-muted-foreground">
+        The Platform for Independent Music
+      </span>
+    </>
+  )
+
   return (
-    <li className="inline-flex items-center gap-2 whitespace-nowrap">
-      <CircleCheck className="size-4 shrink-0 text-muted-foreground" />
-      <span className="text-muted-foreground leading-5">{children}</span>
-    </li>
+    <div className="@container">
+      <div className="flex flex-col @[760px]:flex-row @[760px]:min-h-[660px]">
+        {/* LEFT — the why. The brand lockup + claim sit pinned to the
+            bottom-left (two-column); pitch left-aligned when wide so the
+            copy is readable (centered long copy is the weak spot). */}
+        <div className="flex flex-col gap-8 px-10 sm:px-12 pt-12 pb-10 @[760px]:pb-12 items-center @[760px]:items-start text-center @[760px]:text-left @[760px]:flex-1 @[760px]:justify-between">
+          <div className="flex flex-col items-center @[760px]:items-start gap-5">
+            <h2 className="text-2xlarge @[760px]:text-4xlarge leading-[1.05] font-medium text-foreground tracking-[-0.02em] max-w-[16ch]">
+              Support your artists.
+            </h2>
+            <p className="text-large font-normal text-foreground leading-8 max-w-[42ch]">
+              {PAYWALL_PITCH}
+            </p>
+            <a
+              href={ABOUT_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="text-small text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              See how it works <ArrowUpRight className="inline size-3 align-baseline" />
+            </a>
+          </div>
+          {/* Two-column only: brand bottom-left. Stacked → footer (below). */}
+          <div className="hidden @[760px]:flex flex-col items-start gap-2">
+            {brandLockup}
+          </div>
+        </div>
+        {/* RIGHT — the action. Action group centers in the upper space, fine
+            print pins to the bottom (mirrors the brand lockup on the left).
+            Divider + subtle tint only when two-column; one flat surface when
+            stacked. */}
+        <div className="flex flex-col items-center text-center gap-8 px-10 sm:px-12 pt-8 pb-12 @[760px]:pt-12 @[760px]:border-l border-border @[760px]:bg-background/50 @[760px]:flex-1">
+          <div className="flex w-full flex-col items-center gap-4 @[760px]:flex-1 @[760px]:justify-center">
+            <p className="text-small font-medium text-foreground">
+              Choose your monthly amount
+            </p>
+            <AmountPillRow value={amount} onChange={onAmountChange} />
+            <Button
+              size="lg"
+              className="!h-16 w-full !text-large mt-1"
+              onClick={onSubscribe}
+            >
+              {ctaLabel}
+            </Button>
+          </div>
+          <div className="flex flex-col items-center gap-0.5">
+            <p className="text-xsmall text-muted-foreground text-center">
+              Pay what feels right. During our alpha also $0 is fine.
+            </p>
+            <p className="text-xsmall text-muted-foreground text-center">
+              Cancel anytime · billed monthly · registered non-profit
+            </p>
+          </div>
+        </div>
+      </div>
+      {/* Stacked only: the brand lockup becomes the footer — the very last
+          thing users see (in two-column it's bottom-left, above). */}
+      <div className="@[760px]:hidden flex flex-col items-center gap-2 px-10 pt-4 pb-10">
+        {brandLockup}
+      </div>
+    </div>
   )
 }
 
@@ -171,59 +195,109 @@ export function SubscriptionPromptDialogPreview({
   className?: string
 } = {}) {
   const [amount, setAmount] = useState<string>("10")
-  const monthly = Math.max(0, Number(amount) || 0)
+  const monthly  = Math.max(0, Number(amount) || 0)
+  const ctaLabel = monthly > 0 ? `Subscribe — $${monthly.toFixed(2)}/mo` : "Start free"
   return (
     <DialogPreview
       showCloseButton
       className={cn("!w-full !max-w-[980px] p-0 gap-0 overflow-hidden bg-muted", className)}
     >
-      <div className="flex flex-col items-center gap-6 px-14 pt-14 pb-12 text-center">
-        <div className="flex flex-col items-center gap-2">
-          <LogoMark className="h-16 w-auto text-foreground" />
-          <Wordmark className="h-5 w-auto text-foreground" />
+      <PaywallContent
+        amount={amount}
+        onAmountChange={setAmount}
+        ctaLabel={ctaLabel}
+      />
+    </DialogPreview>
+  )
+}
+
+/*
+ * SubscriptionCheckoutDialogPreview — static, always-visible version of the
+ * checkout (summary step) for the design-system showcase. Mirrors the live
+ * `SubscriptionCheckoutDialog` summary markup; keep in sync when iterating.
+ * Interactive locally (amount + email) so reviewers can watch the CTA update.
+ */
+export function SubscriptionCheckoutDialogPreview({
+  className,
+}: {
+  className?: string
+} = {}) {
+  const [amount, setAmount] = useState<string>("10")
+  const [email, setEmail]   = useState<string>(MOCK_USER_EMAIL)
+  const monthlyAmount    = Math.max(0, Number(amount) || 0)
+  const formattedMonthly = `$${monthlyAmount.toFixed(2)}/mo`
+  const emailValid       = /\S+@\S+\.\S+/.test(email)
+  return (
+    <DialogPreview
+      showCloseButton
+      className={cn("!w-full !max-w-xl p-0 gap-0 flex flex-col", className)}
+    >
+      <div className="shrink-0 flex flex-col gap-3 px-6 pt-6 pb-4 border-b border-border">
+        <DialogPreviewTitle>Subscribe to Muza</DialogPreviewTitle>
+      </div>
+
+      <div className="px-6 py-4 flex flex-col gap-6">
+        <div className="flex flex-col gap-2">
+          <AmountPicker value={amount} onChange={setAmount} />
+          <p className="text-2xsmall text-muted-foreground">
+            During alpha, $0 is a real option — pay when (and what) feels right.
+          </p>
         </div>
 
-        <div className="flex flex-col gap-5 items-center text-center mt-2">
-          <p className="text-small font-normal text-foreground">
-            The Platform for Independent Music
-          </p>
-          <h2 className="text-3xl sm:text-4xl leading-[1.05] font-medium text-foreground tracking-[-0.02em] max-w-[16ch]">
-            Support your artists.
-          </h2>
-          <ul className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-small pt-2">
-            <ImpactRow>Unlimited streaming</ImpactRow>
-            <ImpactRow>100% to artists</ImpactRow>
-            <ImpactRow>Distributed by listening time</ImpactRow>
-          </ul>
+        <div className="flex flex-col gap-2">
+          <SectionLabel>Contact</SectionLabel>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="sub-email-preview" className="sr-only">Email</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+              <Input
+                id="sub-email-preview"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                autoComplete="email"
+                className="pl-10"
+              />
+            </div>
+            <p className="text-2xsmall text-muted-foreground">
+              Receipts + cancellation emails go here.
+            </p>
+          </div>
         </div>
 
-        <div className="flex flex-col items-center gap-3 mt-4">
-          <p className="text-small font-medium text-foreground">
-            Choose your monthly amount
-          </p>
-          <AmountPillRow value={amount} onChange={setAmount} />
-          <p className="text-xsmall text-muted-foreground mt-1">
-            Pay what feels right. During our alpha also $0 is fine.
-          </p>
+        <div className="flex flex-col gap-2">
+          <SectionLabel>Payment</SectionLabel>
+          <SquareContainer />
+        </div>
+
+        <dl className="flex flex-col gap-1.5 py-1">
+          <div className="flex items-center justify-between">
+            <dt className="text-small text-muted-foreground">Muza membership · monthly</dt>
+            <dd className="text-small tabular-nums">{formattedMonthly}</dd>
+          </div>
+          <div className="flex items-center justify-between pt-1.5 border-t border-border">
+            <dt className="text-small font-medium text-foreground">Total today</dt>
+            <dd className="text-large font-medium tabular-nums">
+              {monthlyAmount === 0 ? "$0.00" : `$${monthlyAmount.toFixed(2)}`}
+            </dd>
+          </div>
+        </dl>
+
+        <div className="flex items-center gap-2 text-2xsmall text-muted-foreground">
+          <ShieldCheck className="size-3.5" />
+          <span>
+            Subscriptions processed by Square. Card details never touch Muza's servers.
+          </span>
         </div>
       </div>
 
-      <div className="flex items-center justify-center px-14">
-        <Button size="lg" className="!h-[72px] !px-[60px] !text-lg">
-          {monthly > 0 ? `Subscribe — $${monthly.toFixed(2)}/mo` : "Start free"}
+      <div className="m-0 shrink-0 flex justify-end gap-2 border-t border-border bg-muted px-6 py-4 rounded-b-xl sm:rounded-b-2xl">
+        <Button variant="ghost">Cancel</Button>
+        <Button disabled={!emailValid}>
+          {monthlyAmount === 0 ? "Start free" : `Subscribe — ${formattedMonthly}`}
         </Button>
       </div>
-      <p className="text-xsmall text-muted-foreground text-center px-14 pt-12 pb-8">
-        Cancel anytime · billed monthly · muza is a registered non-profit ·{" "}
-        <a
-          href={ABOUT_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="underline underline-offset-2 hover:text-foreground"
-        >
-          How muza works <ArrowUpRight className="inline size-3 align-baseline" />
-        </a>
-      </p>
     </DialogPreview>
   )
 }
@@ -283,33 +357,22 @@ export function SubscriptionCheckoutDialog({
             <div className="shrink-0 flex flex-col gap-3 px-6 pt-6 pb-4 border-b border-border">
               <DialogHeader>
                 <DialogTitle>Subscribe to Muza</DialogTitle>
-                <DialogDescription>
-                  Unlimited streaming. Cancel anytime. Money goes back to the artists you actually listen to.
+                <DialogDescription className="sr-only">
+                  Choose what you pay monthly, add your details, and check out.
                 </DialogDescription>
               </DialogHeader>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-5">
+            <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-6">
 
-              {/* ── Pay-what-you-want ─────────────────────────── */}
+              {/* Pay-what-you-want — leads directly under the title (no
+                  second heading); whitespace groups the sections, no rules. */}
               <div className="flex flex-col gap-2">
-                <SectionLabel>Choose what you pay monthly</SectionLabel>
-                <p className="text-xsmall text-muted-foreground">
-                  Muza is a non-profit. <span className="text-foreground">100% of your payment</span> is split among the artists you actually listen to. During alpha, <span className="text-foreground">$0 is a real option</span> — pay when (and what) feels right.{" "}
-                  <a
-                    href={ABOUT_URL}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-0.5 text-primary-text hover:underline underline-offset-2"
-                  >
-                    Learn more
-                    <ArrowUpRight className="size-3" />
-                  </a>
-                </p>
                 <AmountPicker value={amount} onChange={setAmount} />
+                <p className="text-2xsmall text-muted-foreground">
+                  During alpha, $0 is a real option — pay when (and what) feels right.
+                </p>
               </div>
-
-              <Separator />
 
               <div className="flex flex-col gap-2">
                 <SectionLabel>Contact</SectionLabel>
@@ -333,14 +396,10 @@ export function SubscriptionCheckoutDialog({
                 </div>
               </div>
 
-              <Separator />
-
               <div className="flex flex-col gap-2">
                 <SectionLabel>Payment</SectionLabel>
-                <PaycomContainer />
+                <SquareContainer />
               </div>
-
-              <Separator />
 
               <dl className="flex flex-col gap-1.5 py-1">
                 <div className="flex items-center justify-between">
@@ -358,7 +417,7 @@ export function SubscriptionCheckoutDialog({
               <div className="flex items-center gap-2 text-2xsmall text-muted-foreground">
                 <ShieldCheck className="size-3.5" />
                 <span>
-                  Subscriptions processed by Pay.com. Card details never touch Muza's servers.
+                  Subscriptions processed by Square. Card details never touch Muza's servers.
                 </span>
               </div>
             </div>
@@ -486,55 +545,58 @@ function AmountPicker({
   onChange: (next: string) => void
 }) {
   const isPreset = (AMOUNT_PRESETS as readonly string[]).includes(value)
+  const customActive = !isPreset && value !== ""
+  // 5 presets + a custom field = 6 equal-width pills, 3 per row (2 rows).
   return (
-    <div className="flex flex-col gap-2">
-      <div className="grid grid-cols-5 gap-1.5">
-        {AMOUNT_PRESETS.map(p => {
-          const active = value === p
-          return (
-            <button
-              key={p}
-              type="button"
-              onClick={() => onChange(p)}
-              aria-pressed={active}
-              className={cn(
-                "h-10 rounded-full text-small font-medium tabular-nums transition-colors border",
-                active
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-background text-foreground border-border hover:bg-muted",
-              )}
-            >
-              ${p}
-            </button>
-          )
-        })}
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-xsmall text-muted-foreground">Custom</span>
-        <div className="relative flex-1">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base text-muted-foreground pointer-events-none">$</span>
-          <Input
-            type="text"
-            inputMode="decimal"
-            value={isPreset ? "" : value}
-            onChange={e => {
-              const raw = e.target.value.replace(/[^0-9.]/g, "")
-              onChange(raw)
-            }}
-            placeholder="0.00"
-            className="pl-8"
-          />
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xsmall text-muted-foreground pointer-events-none">/ month</span>
-        </div>
-      </div>
+    <div className="grid grid-cols-3 gap-1.5">
+      {AMOUNT_PRESETS.map(p => {
+        const active = value === p
+        return (
+          <button
+            key={p}
+            type="button"
+            onClick={() => onChange(p)}
+            aria-pressed={active}
+            className={cn(
+              "h-10 rounded-full text-small font-medium tabular-nums transition-colors border",
+              active
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-background text-foreground border-border hover:bg-muted",
+            )}
+          >
+            ${p}
+          </button>
+        )
+      })}
+      {/* Custom — 6th pill, same size; type any amount. The $ prefix
+          appears once a value is entered so the empty state reads "Custom". */}
+      <label
+        className={cn(
+          "h-10 inline-flex items-center justify-center gap-0.5 rounded-full border bg-background px-3 text-small font-medium tabular-nums transition-colors",
+          customActive
+            ? "border-primary"
+            : "border-border hover:border-foreground/40 focus-within:border-foreground",
+        )}
+      >
+        {customActive && <span className="text-muted-foreground">$</span>}
+        <input
+          type="text"
+          inputMode="decimal"
+          value={isPreset ? "" : value}
+          onChange={e => onChange(e.target.value.replace(/[^0-9.]/g, ""))}
+          placeholder="Custom"
+          aria-label="Custom monthly amount"
+          className="w-full min-w-0 bg-transparent text-center text-foreground placeholder:text-muted-foreground outline-none"
+        />
+      </label>
     </div>
   )
 }
 
-function PaycomContainer() {
+function SquareContainer() {
   return (
     <div
-      id="paycom-container-subscription"
+      id="square-container-subscription"
       className="flex flex-col items-center justify-center gap-2 py-10 px-6 rounded-lg border border-dashed border-border bg-muted/40"
     >
       <p className="text-small font-medium text-foreground">
@@ -542,7 +604,7 @@ function PaycomContainer() {
       </p>
       <p className="text-2xsmall text-muted-foreground text-center max-w-[320px]">
         Card · Apple Pay · Google Pay · PayPal — all rendered by
-        Pay.com's universal form.
+        Square's universal form.
       </p>
     </div>
   )

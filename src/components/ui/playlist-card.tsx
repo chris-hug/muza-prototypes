@@ -70,11 +70,20 @@ export interface PlaylistCardProps {
 export function PlaylistCard({
   title, covers, songCount, owner, owned, inLibrary,
   onPlay, onMore, onAdd, onEdit, onGoToOwner, onGoToPlaylist,
-  onDelete, onRemove, onReport, onShowInfo, onTitleClick, onOwnerClick, className,
+  onDelete, onRemove, onReport, onShowInfo, onTitleClick, onOwnerClick,
+  className,
 }: PlaylistCardProps) {
   const songsLabel = `${songCount.toLocaleString()} ${songCount === 1 ? "Song" : "Songs"}`
   const showOwner  = !owned && !!owner
   const { openPlaylist } = useMediaNav()
+  // Media-tile text — matches AlbumCard (no price row here): title + meta at
+  // text-xsmall (17px); meta a lighter 300 weight with a hair of tracking.
+  const titleSize  = "text-xsmall"
+  const metaSize   = "text-xsmall"
+  const leadingCls = "leading-[18px]"
+  const rowsGap    = "gap-0.5"
+  const metaWeight = "font-light"
+  const metaTracking = "tracking-[0.02em]"
   const player = usePlayer()
   const key = slugify(title)
   // Baked-in share target — link to this playlist's own detail page.
@@ -185,15 +194,15 @@ export function PlaylistCard({
         </div>
       </div>
 
-      <div className="flex flex-col gap-0.5 min-w-0">
+      <div className={cn("flex flex-col min-w-0", rowsGap)}>
         <button
           type="button"
           onClick={onTitleClick ?? goPlaylist}
-          className="text-small font-normal leading-5 text-foreground text-left line-clamp-2 hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto] pb-[6px] -mb-[6px] outline-none cursor-pointer"
+          className={cn(titleSize, leadingCls, "font-normal text-foreground text-left line-clamp-2 hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto] pb-[6px] -mb-[6px] outline-none cursor-pointer")}
         >
           {title}
         </button>
-        <div className="flex items-center gap-1.5 min-w-0 text-small font-normal leading-5 text-muted-foreground">
+        <div className={cn("flex items-center gap-1.5 min-w-0 text-muted-foreground", metaSize, metaWeight, leadingCls, metaTracking)}>
           <span className="shrink-0">{songsLabel}</span>
           {showOwner && (
             <>

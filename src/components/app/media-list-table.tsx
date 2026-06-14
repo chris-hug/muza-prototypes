@@ -258,22 +258,22 @@ export function AlbumListTable({ albums }: { albums: AlbumRow[] }) {
               <TableCell className="px-2">
                 <CoverThumb src={a.cover} alt={a.title} onClick={() => openAlbum(a.key)} />
               </TableCell>
-              <TableCell className="text-small text-foreground whitespace-nowrap truncate">
+              <TableCell className="text-foreground whitespace-nowrap truncate">
                 <button type="button" onClick={() => openAlbum(a.key)} className={linkCell}>{a.title}</button>
               </TableCell>
-              <TableCell className="text-small text-muted-foreground whitespace-nowrap truncate">
+              <TableCell className="text-muted-foreground whitespace-nowrap truncate">
                 <button type="button" onClick={() => openArtist(slugify(a.artist))} className={linkCell}>{a.artist}</button>
               </TableCell>
-              <TableCell className="text-small text-muted-foreground whitespace-nowrap truncate">
+              <TableCell className="text-muted-foreground whitespace-nowrap truncate">
                 {a.label}
               </TableCell>
-              <TableCell className="text-small text-muted-foreground tabular-nums whitespace-nowrap">
+              <TableCell className="text-muted-foreground tabular-nums whitespace-nowrap">
                 {a.year ?? "—"}
               </TableCell>
-              <TableCell className="text-small text-muted-foreground tabular-nums whitespace-nowrap">
+              <TableCell className="text-muted-foreground tabular-nums whitespace-nowrap">
                 {a.added.text}
               </TableCell>
-              <TableCell className="text-right text-small text-muted-foreground whitespace-nowrap tabular-nums">
+              <TableCell className="text-right text-muted-foreground whitespace-nowrap tabular-nums">
                 {purchased
                   ? <span className="inline-flex justify-end"><PurchasedBadge /></span>
                   : a.streamPrice ?? "Free"}
@@ -421,22 +421,22 @@ export function SongListTable({ songs }: { songs: SavedSong[] }) {
                   hoverGroup="row"
                 />
               </TableCell>
-              <TableCell className="text-small text-foreground whitespace-nowrap truncate">
+              <TableCell className="text-foreground whitespace-nowrap truncate">
                 <button type="button" onClick={() => play(s)} className={linkCell}>{s.title}</button>
               </TableCell>
-              <TableCell className="text-small text-muted-foreground whitespace-nowrap truncate">
+              <TableCell className="text-muted-foreground whitespace-nowrap truncate">
                 {s.artist
                   ? <button type="button" onClick={() => openArtist(slugify(s.artist!))} className={linkCell}>{s.artist}</button>
                   : "—"}
               </TableCell>
-              <TableCell className="text-small text-muted-foreground whitespace-nowrap truncate">
+              <TableCell className="text-muted-foreground whitespace-nowrap truncate">
                 {s.album
                   ? (linkAlbum
                       ? <button type="button" onClick={() => openAlbum(slugify(s.album!))} className={linkCell}>{s.album}</button>
                       : s.album)
                   : "—"}
               </TableCell>
-              <TableCell className="text-right text-small text-muted-foreground tabular-nums whitespace-nowrap">
+              <TableCell className="text-right text-muted-foreground tabular-nums whitespace-nowrap">
                 {s.duration ?? "—"}
               </TableCell>
               <TableCell className="px-2">
@@ -730,15 +730,15 @@ export function PlaylistListTable({ playlists }: { playlists: PlaylistRow[] }) {
               <TableCell className="px-2">
                 <CompositeThumb covers={p.covers} alt={p.title} onClick={() => openPlaylist(key)} />
               </TableCell>
-              <TableCell className="text-small text-foreground whitespace-nowrap truncate">
+              <TableCell className="text-foreground whitespace-nowrap truncate">
                 <button type="button" onClick={() => openPlaylist(key)} className={linkCell}>{p.title}</button>
               </TableCell>
-              <TableCell className="text-small text-muted-foreground whitespace-nowrap truncate">
+              <TableCell className="text-muted-foreground whitespace-nowrap truncate">
                 {p.owned
                   ? owner
                   : <button type="button" onClick={() => openArtist(slugify(owner))} className={linkCell}>{owner}</button>}
               </TableCell>
-              <TableCell className="text-right text-small text-muted-foreground tabular-nums whitespace-nowrap">
+              <TableCell className="text-right text-muted-foreground tabular-nums whitespace-nowrap">
                 {p.songCount}
               </TableCell>
               <TableCell className="px-2">

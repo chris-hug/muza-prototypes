@@ -205,7 +205,7 @@ function SearchTopResult({ r }: { r: SearchResult }) {
       <TopCover r={r} />
 
       <div className="min-w-0 flex-1 flex flex-col gap-2">
-        <h3 className="truncate text-large sm:text-xl font-medium leading-tight text-foreground">{r.title}</h3>
+        <h3 className="truncate text-large sm:text-xlarge font-medium leading-tight text-foreground">{r.title}</h3>
         <div className="flex items-center gap-2 min-w-0">
           <ContentTypeBadge type={badgeType} />
           {sub && <span className="truncate text-small text-muted-foreground">{sub}</span>}

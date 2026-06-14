@@ -4,14 +4,14 @@
  * PurchaseAlbumDialog — buyer-side checkout for the "Unlock All
  * Songs" CTA on an album detail page. Three states:
  *
- *   summary    → order summary + tier picker + email + Pay.com
+ *   summary    → order summary + tier picker + email + Square
  *                payment container + sticky footer (total + Pay).
  *   processing → Spinner + "Processing payment…" (mocked 1.4s).
  *   success    → CircleCheck + "Unlocked!" then auto-closes 1.5s.
  *
- * ─────── Pay.com integration plan ───────
+ * ─────── Square integration plan ───────
  *
- * Real wiring uses `@pay-com/js`. Pay.com renders a PCI-compliant
+ * Real wiring uses `@square/web-sdk`. Square renders a PCI-compliant
  * "universal" iframe form into a DOM container we give them; that
  * form handles ALL payment methods (card fields with brand
  * auto-detection, Apple Pay, Google Pay, PayPal) AND the saved-
@@ -22,21 +22,21 @@
  * Sketch of the live integration (commented; needs a real merchant
  * id + a backend endpoint that mints a clientSecret per session):
  *
- *   import { Pay } from "@pay-com/js"            // npm i @pay-com/js
+ *   import { Pay } from "@square/web-sdk"            // npm i @square/web-sdk
  *
  *   useEffect(() => {
  *     if (!open) return
  *     let cancelled = false
  *     ;(async () => {
- *       const clientSecret = await fetch("/api/paycom-session", {
+ *       const clientSecret = await fetch("/api/square-session", {
  *         method: "POST",
  *         body: JSON.stringify({ albumId, tier, email }),
  *       }).then(r => r.json()).then(j => j.clientSecret)
  *       if (cancelled) return
- *       const pay      = await Pay.com({ identifier: MERCHANT_ID })
+ *       const pay      = await Square({ identifier: MERCHANT_ID })
  *       const checkout = pay.checkout({ clientSecret })
  *       checkout.universal({
- *         container: "#paycom-container",
+ *         container: "#square-container",
  *         toggles: { submitButton: false }, // we own the Pay button
  *       })
  *       checkout.on("success", res => onPurchased?.(tier, res))
@@ -58,7 +58,7 @@
  *
  * For the prototype the container is a labeled placeholder + the
  * Pay button is a mocked `setTimeout`. The shell around the
- * placeholder is what we'll keep when the real Pay.com universal
+ * placeholder is what we'll keep when the real Square universal
  * form goes in.
  */
 
@@ -74,7 +74,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { PlayFilledAlt } from "@/components/ui/transport-icons"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
 import { Spinner } from "@/components/ui/spinner"
 import { RadioCard, RadioCardGroup } from "@/components/ui/radio-card"
 import { Input } from "@/components/ui/input"
@@ -128,13 +127,6 @@ export function PurchaseAlbumDialog({
   // owns the stream tier so the upgrade IS the download license.
   const [tier, setTier]   = useState<PurchaseTier>(upgradeMode ? "download" : "stream")
   const [email, setEmail] = useState(userEmail)
-  // Optional tip to Muza — strings keep the input controlled and
-  // parsing tolerant (e.g. "1.50", "1.5", ""). `null` = explicit
-  // "No contribution" pick (zeroes the row + suppresses the
-  // thank-you banner). Default $1 preselected as the cheap-anchor
-  // nudge — preferred over $0 because the non-profit framing only
-  // works if the default makes the user opt OUT, not opt IN.
-  const [contribution, setContribution] = useState<string | null>("1")
 
   // In upgrade mode the cart line is the price delta, not the full
   // download price (user already paid for the stream tier).
@@ -142,9 +134,7 @@ export function PurchaseAlbumDialog({
     ? upgradePrice
     : tier === "download" && downloadPrice ? downloadPrice : streamPrice
   const itemPrice    = parsePrice(itemPriceStr)
-  const contribAmt   = contribution === null ? 0 : Math.max(0, Number(contribution) || 0)
-  const total        = itemPrice + contribAmt
-  const price        = formatPrice(total)
+  const price        = formatPrice(itemPrice)
 
   // Reset on each open.
   useEffect(() => {
@@ -152,7 +142,6 @@ export function PurchaseAlbumDialog({
     setStep("summary")
     setTier(upgradeMode ? "download" : "stream")
     setEmail(userEmail)
-    setContribution("1")
   }, [open, userEmail, upgradeMode])
 
   // Success state stays open until the user picks an action. The
@@ -169,7 +158,7 @@ export function PurchaseAlbumDialog({
 
   const handlePay = () => {
     setStep("processing")
-    // Mocked checkout — see header doc for the real Pay.com
+    // Mocked checkout — see header doc for the real Square
     // `checkout.submit()` flow.
     setTimeout(() => {
       setStep("success")
@@ -257,7 +246,7 @@ export function PurchaseAlbumDialog({
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-5">
+            <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-6">
 
               {/* ── Tier picker ──────────────────────────────────
                    Hidden in upgrade mode — user already owns the
@@ -292,7 +281,6 @@ export function PurchaseAlbumDialog({
                     </RadioCardGroup>
                   </div>
 
-                  <Separator />
                 </>
               )}
 
@@ -319,68 +307,23 @@ export function PurchaseAlbumDialog({
                 </div>
               </div>
 
-              <Separator />
 
-              {/* ── Payment (Pay.com universal form mounts here) ─ */}
+              {/* ── Payment (Square universal form mounts here) ─ */}
               <div className="flex flex-col gap-2">
                 <SectionLabel>Payment</SectionLabel>
-                <PaycomContainer />
+                <SquareContainer />
               </div>
 
-              <Separator />
-
-              {/* ── Contribute to Muza ────────────────────────────
-                   Optional tip jar — Muza is non-profit and 100% of
-                   subscription revenue already goes to artists, so
-                   the contribution explicitly funds the platform
-                   (infra, dev, ops) rather than artist payouts.
-                   Preset amounts + custom field + "No contribution"
-                   escape hatch. Default $1 preselected as a quiet
-                   nudge; opting out is one click. */}
-              <div className="flex flex-col gap-2">
-                <SectionLabel>Contribute to Muza</SectionLabel>
-                <p className="text-2xsmall text-muted-foreground">
-                  100% of {itemPriceStr} goes directly to the artist. Add a small contribution to keep Muza non-profit and community-owned.
-                </p>
-                <ContributionPicker
-                  value={contribution}
-                  onChange={setContribution}
-                />
-                {contribAmt > 0 && (
-                  <div className="rounded-lg bg-muted/60 px-3 py-2 text-xsmall text-foreground mt-1">
-                    Thank you for your contribution.
-                  </div>
-                )}
-              </div>
-
-              <Separator />
-
-              {/* ── Itemized totals ───────────────────────────────
-                   Three lines: subtotal (the album), contribution,
-                   total. Hides the contribution row entirely when
-                   set to "No contribution" so the row doesn't sit
-                   there as a faded $0 distraction. */}
-              <dl className="flex flex-col gap-1.5 py-1">
-                <div className="flex items-center justify-between">
-                  <dt className="text-small text-muted-foreground">Subtotal</dt>
-                  <dd className="text-small tabular-nums">{itemPriceStr}</dd>
-                </div>
-                {contribAmt > 0 && (
-                  <div className="flex items-center justify-between">
-                    <dt className="text-small text-muted-foreground">Contribution to Muza</dt>
-                    <dd className="text-small tabular-nums">{formatPrice(contribAmt)}</dd>
-                  </div>
-                )}
-                <div className="flex items-center justify-between pt-1.5 border-t border-border">
-                  <dt className="text-small font-medium text-foreground">Total</dt>
-                  <dd className="text-large font-medium tabular-nums">{price}</dd>
-                </div>
+              {/* Total — single line; 100% of the price goes to the artist. */}
+              <dl className="flex items-center justify-between py-1">
+                <dt className="text-small font-medium text-foreground">Total</dt>
+                <dd className="text-large font-medium tabular-nums">{price}</dd>
               </dl>
 
               <div className="flex items-center gap-2 text-2xsmall text-muted-foreground">
                 <ShieldCheck className="size-3.5" />
                 <span>
-                  Payments processed securely by Pay.com. Card
+                  Payments processed securely by Square. Card
                   details never touch Muza's servers.
                 </span>
               </div>
@@ -432,36 +375,23 @@ export function PurchaseAlbumDialog({
                  where their money went. Reinforces the muza non-profit
                  / artist-first story at the moment of highest
                  emotional payoff (right after the buyer paid). */}
-            {(itemPrice > 0 || contribAmt > 0) && (
+            {itemPrice > 0 && (
               <div className="rounded-2xl border border-border bg-muted/40 px-5 py-4 flex flex-col gap-3">
                 <p className="text-small text-foreground">
                   Thank you. Your purchase supports {album.artist}.
                 </p>
                 <ul className="flex flex-col gap-2">
-                  {itemPrice > 0 && (
-                    <li className="flex items-start gap-2">
-                      <CircleCheckBig className="size-4 mt-px shrink-0 text-foreground" />
-                      <span className="text-small text-foreground leading-5">
-                        <span className="font-medium">{album.artist}</span>
-                        {" received "}
-                        <span className="tabular-nums">{itemPriceStr}</span>
-                        {upgradeMode
-                          ? " — 100% of your upgrade."
-                          : " — 100% of your purchase."}
-                      </span>
-                    </li>
-                  )}
-                  {contribAmt > 0 && (
-                    <li className="flex items-start gap-2">
-                      <CircleCheckBig className="size-4 mt-px shrink-0 text-foreground" />
-                      <span className="text-small text-foreground leading-5">
-                        <span className="font-medium">Muza</span>
-                        {" received your "}
-                        <span className="tabular-nums">{formatPrice(contribAmt)}</span>
-                        {" contribution — keeps the platform non-profit and community-owned."}
-                      </span>
-                    </li>
-                  )}
+                  <li className="flex items-start gap-2">
+                    <CircleCheckBig className="size-4 mt-px shrink-0 text-foreground" />
+                    <span className="text-small text-foreground leading-5">
+                      <span className="font-medium">{album.artist}</span>
+                      {" received "}
+                      <span className="tabular-nums">{itemPriceStr}</span>
+                      {upgradeMode
+                        ? " — 100% of your upgrade."
+                        : " — 100% of your purchase."}
+                    </span>
+                  </li>
                 </ul>
               </div>
             )}
@@ -564,74 +494,6 @@ function SectionLabel({ children, className }: { children: React.ReactNode; clas
   )
 }
 
-// Tip-jar picker — preset amounts as a segmented row plus a custom
-// numeric field. `null` is the explicit "No contribution" selection;
-// it zeroes the contribution row and suppresses the thank-you banner.
-const PRESETS = ["1", "2", "5"] as const
-function ContributionPicker({
-  value, onChange,
-}: {
-  value: string | null
-  onChange: (next: string | null) => void
-}) {
-  const isPreset = value !== null && (PRESETS as readonly string[]).includes(value)
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-stretch gap-1.5">
-        {PRESETS.map(p => {
-          const active = value === p
-          return (
-            <button
-              key={p}
-              type="button"
-              onClick={() => onChange(p)}
-              aria-pressed={active}
-              className={cn(
-                "flex-1 h-10 rounded-full text-small font-medium tabular-nums transition-colors border",
-                active
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-background text-foreground border-border hover:bg-muted",
-              )}
-            >
-              ${p}.00
-            </button>
-          )
-        })}
-        <button
-          type="button"
-          onClick={() => onChange(null)}
-          aria-pressed={value === null}
-          className={cn(
-            "flex-1 h-10 rounded-full text-small font-medium transition-colors border whitespace-nowrap px-3",
-            value === null
-              ? "bg-primary text-primary-foreground border-primary"
-              : "bg-background text-foreground border-border hover:bg-muted",
-          )}
-        >
-          No contribution
-        </button>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-xsmall text-muted-foreground">Custom</span>
-        <div className="relative flex-1">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base text-muted-foreground pointer-events-none">$</span>
-          <Input
-            type="text"
-            inputMode="decimal"
-            value={isPreset ? "" : (value ?? "")}
-            onChange={e => {
-              const raw = e.target.value.replace(/[^0-9.]/g, "")
-              onChange(raw === "" ? null : raw)
-            }}
-            placeholder="0.00"
-            className="pl-8"
-          />
-        </div>
-      </div>
-    </div>
-  )
-}
-
 // Convert "$2.99" → 2.99. Tolerant of stripped currency, spaces, etc.
 function parsePrice(input: string | undefined | null): number {
   if (!input) return 0
@@ -643,26 +505,26 @@ function formatPrice(amount: number): string {
 }
 
 /*
- * PaycomContainer — placeholder for Pay.com's universal payment
+ * SquareContainer — placeholder for Square's universal payment
  * form. In production this becomes:
  *
- *   <div id="paycom-container" ref={paycomRef} />
+ *   <div id="square-container" ref={squareRef} />
  *
- * and a `useEffect` initializes Pay.com against the ref (see the
- * file header for the full sketch). Pay.com mounts an iframe with
+ * and a `useEffect` initializes Square against the ref (see the
+ * file header for the full sketch). Square mounts an iframe with
  * the card fields, brand auto-detection, Apple Pay / Google Pay /
  * PayPal express buttons, and the saved-card row for returning
- * customers — all rendered by Pay.com, all PCI-compliant.
+ * customers — all rendered by Square, all PCI-compliant.
  *
  * The placeholder here is just visual scaffolding so the
  * surrounding dialog reads correctly at design time. Once the live
  * integration lands, swap the inner contents for the empty
- * `<div id="paycom-container" />` and everything around it stays.
+ * `<div id="square-container" />` and everything around it stays.
  */
-function PaycomContainer() {
+function SquareContainer() {
   return (
     <div
-      id="paycom-container"
+      id="square-container"
       className="flex flex-col items-center justify-center gap-2 py-10 px-6 rounded-lg border border-dashed border-border bg-muted/40"
     >
       <p className="text-small font-medium text-foreground">
@@ -670,7 +532,7 @@ function PaycomContainer() {
       </p>
       <p className="text-2xsmall text-muted-foreground text-center max-w-[320px]">
         Card · Apple Pay · Google Pay · PayPal — all rendered by
-        Pay.com's universal form. Brand auto-detection and saved-card
+        Square's universal form. Brand auto-detection and saved-card
         handling come built-in.
       </p>
     </div>
@@ -703,16 +565,13 @@ export function PurchaseAlbumDialogPreview({
   userEmail = MOCK_USER_EMAIL, className,
 }: PurchaseAlbumDialogPreviewProps) {
   // Local state so the preview is interactive even though it's
-  // static-mounted — devs can flip the tier picker / contribution /
-  // email and see the breakdown react.
+  // static-mounted — devs can flip the tier picker / email and see
+  // the total react.
   const [tier, setTier]   = useState<PurchaseTier>("stream")
   const [email, setEmail] = useState(userEmail)
-  const [contribution, setContribution] = useState<string | null>("1")
   const itemPriceStr = tier === "download" && downloadPrice ? downloadPrice : streamPrice
   const itemPrice    = parsePrice(itemPriceStr)
-  const contribAmt   = contribution === null ? 0 : Math.max(0, Number(contribution) || 0)
-  const total        = itemPrice + contribAmt
-  const price        = formatPrice(total)
+  const price        = formatPrice(itemPrice)
 
   return (
     <DialogPreview
@@ -764,7 +623,7 @@ export function PurchaseAlbumDialogPreview({
       </div>
 
       {/* Scroll body */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-5">
+      <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-6">
         <div className="flex flex-col gap-2">
           <SectionLabel>Tier</SectionLabel>
           <RadioCardGroup
@@ -792,7 +651,6 @@ export function PurchaseAlbumDialogPreview({
           </RadioCardGroup>
         </div>
 
-        <Separator />
 
         <div className="flex flex-col gap-2">
           <SectionLabel>Contact</SectionLabel>
@@ -816,54 +674,21 @@ export function PurchaseAlbumDialogPreview({
           </div>
         </div>
 
-        <Separator />
 
         <div className="flex flex-col gap-2">
           <SectionLabel>Payment</SectionLabel>
-          <PaycomContainer />
+          <SquareContainer />
         </div>
 
-        <Separator />
-
-        <div className="flex flex-col gap-2">
-          <SectionLabel>Contribute to Muza</SectionLabel>
-          <p className="text-2xsmall text-muted-foreground">
-            100% of {itemPriceStr} goes directly to the artist. Add a small contribution to keep Muza non-profit and community-owned.
-          </p>
-          <ContributionPicker
-            value={contribution}
-            onChange={setContribution}
-          />
-          {contribAmt > 0 && (
-            <div className="rounded-lg bg-muted/60 px-3 py-2 text-xsmall text-foreground mt-1">
-              Thank you for your contribution.
-            </div>
-          )}
-        </div>
-
-        <Separator />
-
-        <dl className="flex flex-col gap-1.5 py-1">
-          <div className="flex items-center justify-between">
-            <dt className="text-small text-muted-foreground">Subtotal</dt>
-            <dd className="text-small tabular-nums">{itemPriceStr}</dd>
-          </div>
-          {contribAmt > 0 && (
-            <div className="flex items-center justify-between">
-              <dt className="text-small text-muted-foreground">Contribution to Muza</dt>
-              <dd className="text-small tabular-nums">{formatPrice(contribAmt)}</dd>
-            </div>
-          )}
-          <div className="flex items-center justify-between pt-1.5 border-t border-border">
-            <dt className="text-small font-medium text-foreground">Total</dt>
-            <dd className="text-large font-medium tabular-nums">{price}</dd>
-          </div>
+        <dl className="flex items-center justify-between py-1">
+          <dt className="text-small font-medium text-foreground">Total</dt>
+          <dd className="text-large font-medium tabular-nums">{price}</dd>
         </dl>
 
         <div className="flex items-center gap-2 text-2xsmall text-muted-foreground">
           <ShieldCheck className="size-3.5" />
           <span>
-            Payments processed securely by Pay.com. Card details
+            Payments processed securely by Square. Card details
             never touch Muza's servers.
           </span>
         </div>

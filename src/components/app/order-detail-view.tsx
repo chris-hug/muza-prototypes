@@ -218,14 +218,14 @@ export function getOrderDetail(order: Order, status: OrderStatus): OrderDetail {
     timeline.push({
       at: orderDate.toISOString(),
       kind: "system",
-      title: `Authorization placed via pay.com — ${formatTotal(total)}`,
+      title: `Authorization placed via Square — ${formatTotal(total)}`,
       detail: `Will capture on release date${releaseDate ? ` (${formatDate(releaseDate)})` : ""}`,
     })
   } else if (status !== "payment_failed") {
     timeline.push({
       at: orderDate.toISOString(),
       kind: "success",
-      title: `Payment captured via pay.com — ${formatTotal(total)}`,
+      title: `Payment captured via Square — ${formatTotal(total)}`,
       detail: `Visa **** ${(h % 9000) + 1000} → Muza wallet`,
     })
   }
@@ -234,7 +234,7 @@ export function getOrderDetail(order: Order, status: OrderStatus): OrderDetail {
       at: addDays(orderDate, isPreorder ? 14 : 0).toISOString(),
       kind: "warning",
       title: `${isPreorder ? "Capture" : "Payment"} failed — card declined`,
-      detail: "pay.com returned card_declined. Awaiting updated payment method from buyer.",
+      detail: "Square returned card_declined. Awaiting updated payment method from buyer.",
     })
   }
   timeline.push({
@@ -371,7 +371,7 @@ function HeaderAlerts({ d, status, orderNumber, total }: {
   const { add } = useToast()
   // For payment_failed, the deep-red status badge already says "look at this"
   // and the timeline carries the prose. Header hosts only the recovery
-  // action — re-attempting the existing pay.com authorization. Reaching out
+  // action — re-attempting the existing Square authorization. Reaching out
   // to the customer happens via the email shown in the right-hand metadata
   // column (we don't have an internal messaging system to wrap).
   if (status === "payment_failed") {
@@ -381,7 +381,7 @@ function HeaderAlerts({ d, status, orderNumber, total }: {
           size="sm"
           variant="outline"
           onClick={() => add({
-            title: "Retrying capture via pay.com…",
+            title: "Retrying capture via Square…",
             description: `${orderNumber} · ${formatTotal(total)}`,
             type: "loading",
           })}
@@ -994,12 +994,12 @@ function PaymentSection({ d, status }: { d: OrderDetail; status: OrderStatus }) 
       </div>
       <p className="text-2xsmall text-muted-foreground mt-1">
         {status === "payment_failed"
-          ? "Processed via pay.com — capture failed."
+          ? "Processed via Square — capture failed."
           : status === "new" && d.preorderState === "authorized"
-          ? "Authorized via pay.com — captures on release."
+          ? "Authorized via Square — captures on release."
           : status === "refunded"
-          ? "Refund issued via pay.com to the original card."
-          : "Captured via pay.com → your Muza wallet."}
+          ? "Refund issued via Square to the original card."
+          : "Captured via Square → your Muza wallet."}
       </p>
       {d.refundedAmount > 0 && (
         <p className="text-xsmall text-muted-foreground mt-1">

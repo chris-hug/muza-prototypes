@@ -61,7 +61,7 @@ function Value({ children, onClick }: { children: React.ReactNode; onClick?: () 
 function Field({ label, value, onClick }: { label: string; value: string; onClick?: () => void }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <p className="text-xxs text-muted-foreground leading-[16px]">{label}</p>
+      <p className="text-2xsmall text-muted-foreground leading-[16px]">{label}</p>
       <Value onClick={onClick}>{value}</Value>
     </div>
   )
@@ -123,7 +123,7 @@ export function CreditsContent({
           <div className="flex flex-col gap-3">
             {credits.performers.map((p, i) => (
               <div key={`${p.role}-${i}`} className="flex flex-col gap-0.5">
-                <p className="text-xxs text-muted-foreground leading-[16px]">{p.role}</p>
+                <p className="text-2xsmall text-muted-foreground leading-[16px]">{p.role}</p>
                 <div className="text-small text-foreground leading-[20px]">
                   {p.names.map((name, j) => (
                     <span key={name}>

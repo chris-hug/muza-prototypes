@@ -15,7 +15,7 @@
  *   - Cart-wide currency picker — all values displayed via cart.format(usd)
  *   - Destination-based tax (VAT/GST) derived from the shipping address
  *   - "Top up wallet" inline flow when the wallet doesn't cover the order
- *   - Footer trust microcopy (pay.com, refund window)
+ *   - Footer trust microcopy (Square, refund window)
  *
  * The price field stays name-your-price (Bandcamp model). It shows and edits
  * in the active currency; the store keeps USD canonical via inverse rate
@@ -760,7 +760,7 @@ function FooterTrustLine() {
     <div className="flex items-center justify-between gap-3 text-2xsmall text-muted-foreground pt-1">
       <span className="inline-flex items-center gap-1">
         <Lock className="size-3" />
-        Secure checkout · pay.com
+        Secure checkout · Square
       </span>
       <span className="inline-flex items-center gap-1">
         <ShieldCheck className="size-3" />
