@@ -90,11 +90,6 @@ export interface AlbumCardProps {
   /** The album is already in the user's library — drops "Save to library"
    *  (menu + hover quick-add) and surfaces "Remove from library" instead. */
   inLibrary?: boolean
-  /** Text-size treatment for the title + meta rows — the two candidates in
-   *  the home-page A/B. `default` = 18px title / 15px meta; `xs17t` = uniform
-   *  17px, lighter (300) meta weight, even line rhythm, and a hair of positive
-   *  letter-spacing on the meta rows. */
-  textVariant?: "default" | "xs17t"
   className?: string
 }
 
@@ -103,21 +98,20 @@ export function AlbumCard({
   onPlay, onMore, onAdd, onEdit, onAddToPlaylist,
   onGoToArtist, onGoToAlbum, onRemove, onReport, onShowInfo,
   onTitleClick, onArtistClick, hideGoToArtist, hideGoToAlbum, inLibrary,
-  textVariant = "default", className,
+  className,
 }: AlbumCardProps) {
   const { openAlbum } = useMediaNav()
   const player = usePlayer()
   const key = slugify(title)
-  // A/B text sizing. `xs17t` puts all three rows at a uniform 17px with a
-  // lighter (300) weight on the artist / price rows and a hair of positive
-  // tracking to open the thin Light strokes (title stays normal weight /
-  // default tracking). `default` keeps the 18px title / 15px meta.
-  const isAlt      = textVariant === "xs17t"
-  const titleSize  = isAlt ? "text-[17px]" : "text-small"
-  const metaSize   = isAlt ? "text-[17px]" : "text-2xsmall"
+  // Media-tile text: title + meta share one size (text-xsmall = 17px). The
+  // meta rows (artist · year, price, "Owned") go a lighter 300 weight with a
+  // hair of positive tracking to open the thin Light strokes; the title stays
+  // normal weight / default tracking.
+  const titleSize  = "text-xsmall"
+  const metaSize   = "text-xsmall"
   const leadingCls = "leading-[18px]"
-  const metaWeight = isAlt ? "font-light" : "font-normal"
-  const metaTracking = isAlt ? "tracking-[0.02em]" : ""
+  const metaWeight = "font-light"
+  const metaTracking = "tracking-[0.02em]"
   // Baked-in share target — link to this album's own detail page.
   const shareHref = `/?page=Album&album=${key}`
 

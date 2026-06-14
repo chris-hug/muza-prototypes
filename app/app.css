@@ -187,27 +187,32 @@
    * Primitives — raw px values, 1:1 with Figma's updated scale.
    * Semantic aliases (below) point at these via var() — never a raw value. */
   --text-xxs:  15px;
-  --text-xs:   16px;
-  --text-sm:   18px;
+  --text-xs:   17px;
+  --text-sm:   19px;
   --text-base: 21px;
   --text-lg:   24px;
   --text-xl:   30px;
-  --text-2xl:  36px;
-  --text-3xl:  48px;
-  --text-4xl:  60px;
-  --text-5xl:  72px;
-  --text-6xl:  96px;
-  --text-7xl:  128px;
-  --text-8xl:  160px;
-  --text-9xl:  200px;
+  /* Display sizes (2xl–9xl) are FLUID: clamp(min, vw-interpolation, max).
+   * max = the original fixed value (desktop ceiling); they scale down to a
+   * mobile floor across a 360px→1280px viewport band, then pin at both ends.
+   * xl and below stay fixed (body/UI text shouldn't reflow with viewport). */
+  --text-2xl:  clamp(2rem,     0.43vw + 1.90rem, 2.25rem);  /* 32 → 36px  */
+  --text-3xl:  clamp(2.125rem, 1.52vw + 1.78rem, 3rem);     /* 34 → 48px  */
+  --text-4xl:  clamp(2.375rem, 2.39vw + 1.84rem, 3.75rem);  /* 38 → 60px  */
+  --text-5xl:  clamp(2.75rem,  3.04vw + 2.07rem, 4.5rem);   /* 44 → 72px  */
+  --text-6xl:  clamp(3.25rem,  4.78vw + 2.17rem, 6rem);     /* 52 → 96px  */
+  --text-7xl:  clamp(3.875rem, 7.17vw + 2.26rem, 8rem);     /* 62 → 128px */
+  --text-8xl:  clamp(4.5rem,   9.57vw + 2.35rem, 10rem);    /* 72 → 160px */
+  --text-9xl:  clamp(5.25rem, 12.61vw + 2.41rem, 12.5rem);  /* 84 → 200px */
 
-  /* Semantic aliases — always reference a primitive, never hardcode px.
-   * Full set, 1:1 name match with Figma's "base sizes" semantic family.
-   * "base" is omitted because the alias name equals the primitive name
-   * (`text-base`) — the primitive already serves that role. */
+  /* Semantic aliases — ALWAYS use these in components, never the raw
+   * primitives (text-sm/lg/…) and never arbitrary text-[..]. Each points
+   * at a primitive via var(). `text-base` (21px) is the one step whose
+   * semantic name equals its primitive name — it IS a sanctioned semantic
+   * token (the 21px step between small and large); use `text-base` freely. */
   --text-2xsmall: var(--text-xxs);  /* 15px — Figma "2x small"     */
-  --text-xsmall:  var(--text-xs);   /* 16px — Figma "extra small"  */
-  --text-small:   var(--text-sm);   /* 18px — Figma "small"        */
+  --text-xsmall:  var(--text-xs);   /* 17px — Figma "extra small"  */
+  --text-small:   var(--text-sm);   /* 19px — Figma "small"        */
   --text-large:   var(--text-lg);   /* 24px — Figma "large"        */
   --text-xlarge:  var(--text-xl);   /* 30px — Figma "xlarge"       */
   --text-2xlarge: var(--text-2xl);  /* 36px — Figma "2x large"     */

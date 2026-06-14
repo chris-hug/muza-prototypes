@@ -88,9 +88,9 @@ export function MediaListItem({
 
       {/* Title + meta. */}
       <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-        <p className="text-small font-normal leading-5 text-foreground truncate">{title}</p>
+        <p className="text-xsmall font-normal leading-5 text-foreground truncate">{title}</p>
         {(type !== "artist" && (subtitle || meta)) && (
-          <div className="flex items-center gap-1.5 min-w-0 text-small text-muted-foreground leading-5">
+          <div className="flex items-center gap-1.5 min-w-0 text-xsmall font-light tracking-[0.02em] text-muted-foreground leading-5">
             <ContentTypeBadge type={type} />
             {subtitle && (
               onSubtitleClick ? (

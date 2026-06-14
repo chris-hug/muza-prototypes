@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils"
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
   DialogFooter, DialogClose,
-  DialogPreview,
+  DialogPreview, DialogPreviewTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -122,7 +122,7 @@ function PaywallContent({
             copy is readable (centered long copy is the weak spot). */}
         <div className="flex flex-col gap-8 px-10 sm:px-12 pt-12 pb-10 @[760px]:pb-12 items-center @[760px]:items-start text-center @[760px]:text-left @[760px]:flex-1 @[760px]:justify-between">
           <div className="flex flex-col items-center @[760px]:items-start gap-5">
-            <h2 className="text-2xl @[760px]:text-4xl leading-[1.05] font-medium text-foreground tracking-[-0.02em] max-w-[16ch]">
+            <h2 className="text-2xlarge @[760px]:text-4xlarge leading-[1.05] font-medium text-foreground tracking-[-0.02em] max-w-[16ch]">
               Support your artists.
             </h2>
             <p className="text-large font-normal text-foreground leading-8 max-w-[42ch]">
@@ -154,7 +154,7 @@ function PaywallContent({
             <AmountPillRow value={amount} onChange={onAmountChange} />
             <Button
               size="lg"
-              className="!h-16 w-full !text-lg mt-1"
+              className="!h-16 w-full !text-large mt-1"
               onClick={onSubscribe}
             >
               {ctaLabel}
@@ -211,6 +211,97 @@ export function SubscriptionPromptDialogPreview({
   )
 }
 
+/*
+ * SubscriptionCheckoutDialogPreview — static, always-visible version of the
+ * checkout (summary step) for the design-system showcase. Mirrors the live
+ * `SubscriptionCheckoutDialog` summary markup; keep in sync when iterating.
+ * Interactive locally (amount + email) so reviewers can watch the CTA update.
+ */
+export function SubscriptionCheckoutDialogPreview({
+  className,
+}: {
+  className?: string
+} = {}) {
+  const [amount, setAmount] = useState<string>("10")
+  const [email, setEmail]   = useState<string>(MOCK_USER_EMAIL)
+  const monthlyAmount    = Math.max(0, Number(amount) || 0)
+  const formattedMonthly = `$${monthlyAmount.toFixed(2)}/mo`
+  const emailValid       = /\S+@\S+\.\S+/.test(email)
+  return (
+    <DialogPreview
+      showCloseButton
+      className={cn("!w-full !max-w-xl p-0 gap-0 flex flex-col", className)}
+    >
+      <div className="shrink-0 flex flex-col gap-3 px-6 pt-6 pb-4 border-b border-border">
+        <DialogPreviewTitle>Subscribe to Muza</DialogPreviewTitle>
+      </div>
+
+      <div className="px-6 py-4 flex flex-col gap-6">
+        <div className="flex flex-col gap-2">
+          <AmountPicker value={amount} onChange={setAmount} />
+          <p className="text-2xsmall text-muted-foreground">
+            During alpha, $0 is a real option — pay when (and what) feels right.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <SectionLabel>Contact</SectionLabel>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="sub-email-preview" className="sr-only">Email</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+              <Input
+                id="sub-email-preview"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                autoComplete="email"
+                className="pl-10"
+              />
+            </div>
+            <p className="text-2xsmall text-muted-foreground">
+              Receipts + cancellation emails go here.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <SectionLabel>Payment</SectionLabel>
+          <SquareContainer />
+        </div>
+
+        <dl className="flex flex-col gap-1.5 py-1">
+          <div className="flex items-center justify-between">
+            <dt className="text-small text-muted-foreground">Muza membership · monthly</dt>
+            <dd className="text-small tabular-nums">{formattedMonthly}</dd>
+          </div>
+          <div className="flex items-center justify-between pt-1.5 border-t border-border">
+            <dt className="text-small font-medium text-foreground">Total today</dt>
+            <dd className="text-large font-medium tabular-nums">
+              {monthlyAmount === 0 ? "$0.00" : `$${monthlyAmount.toFixed(2)}`}
+            </dd>
+          </div>
+        </dl>
+
+        <div className="flex items-center gap-2 text-2xsmall text-muted-foreground">
+          <ShieldCheck className="size-3.5" />
+          <span>
+            Subscriptions processed by Square. Card details never touch Muza's servers.
+          </span>
+        </div>
+      </div>
+
+      <div className="m-0 shrink-0 flex justify-end gap-2 border-t border-border bg-muted px-6 py-4 rounded-b-xl sm:rounded-b-2xl">
+        <Button variant="ghost">Cancel</Button>
+        <Button disabled={!emailValid}>
+          {monthlyAmount === 0 ? "Start free" : `Subscribe — ${formattedMonthly}`}
+        </Button>
+      </div>
+    </DialogPreview>
+  )
+}
+
 // ─── SubscriptionCheckoutDialog ──────────────────────────────────
 
 type CheckoutStep = "summary" | "processing" | "success"
@@ -263,7 +354,7 @@ export function SubscriptionCheckoutDialog({
       <DialogContent className="sm:max-w-xl max-h-[90vh] p-0 gap-0 flex flex-col">
         {step === "summary" && (
           <>
-            <div className="shrink-0 flex flex-col gap-3 px-6 pt-6 pb-1">
+            <div className="shrink-0 flex flex-col gap-3 px-6 pt-6 pb-4 border-b border-border">
               <DialogHeader>
                 <DialogTitle>Subscribe to Muza</DialogTitle>
                 <DialogDescription className="sr-only">

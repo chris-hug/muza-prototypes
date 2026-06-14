@@ -786,7 +786,7 @@ function DiscographyView({
                       hoverGroup="row"
                     />
                   </TableCell>
-                  <TableCell className="text-small text-foreground whitespace-nowrap truncate">
+                  <TableCell className="text-foreground whitespace-nowrap truncate">
                     <button
                       type="button"
                       className="text-left hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto] outline-none cursor-pointer"
@@ -794,7 +794,7 @@ function DiscographyView({
                       {r.title}
                     </button>
                   </TableCell>
-                  <TableCell className="text-small text-muted-foreground whitespace-nowrap truncate">
+                  <TableCell className="text-muted-foreground whitespace-nowrap truncate">
                     <button
                       type="button"
                       className="text-left hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto] outline-none cursor-pointer"
@@ -802,10 +802,10 @@ function DiscographyView({
                       {r.band ?? artistName}
                     </button>
                   </TableCell>
-                  <TableCell className="text-small text-muted-foreground tabular-nums whitespace-nowrap">
+                  <TableCell className="text-muted-foreground tabular-nums whitespace-nowrap">
                     {r.year}
                   </TableCell>
-                  <TableCell className="text-small text-muted-foreground tabular-nums whitespace-nowrap">
+                  <TableCell className="text-muted-foreground tabular-nums whitespace-nowrap">
                     {r.tracks}
                   </TableCell>
                   <TableCell className="text-right">

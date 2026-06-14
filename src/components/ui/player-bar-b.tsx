@@ -130,6 +130,13 @@ function TrackText({
   )
 }
 
+// Parse a "m:ss" / "h:mm:ss" clock string to seconds (0 if unparseable).
+function secondsFromClock(s: string): number {
+  const parts = s.split(":").map(Number)
+  if (parts.length === 0 || parts.some(Number.isNaN)) return 0
+  return parts.reduce((acc, n) => acc * 60 + n, 0)
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Mobile progress bar — an SVG arc tracing the pill's bottom outline
 // ═══════════════════════════════════════════════════════════════════════════
@@ -150,15 +157,12 @@ function MobileProgressOutline({ progress }: { progress: number }) {
 
   const R = 28                                          // mobile pill cap radius (56 / 2)
   const H = 56                                          // mobile pill height
-  const straight = Math.max(0, width - 2 * R)
-  const total    = Math.PI * R + straight               // two quarter-caps + straight middle
-  const drawn    = total * Math.max(0, Math.min(1, progress))
+  const p = Math.max(0, Math.min(1, progress))          // clamped played fraction
 
-  // From left-cap midpoint, around the bottom of the pill, to the right-cap midpoint.
-  const d =
-    width > 0
-      ? `M 0 ${R} A ${R} ${R} 0 0 0 ${R} ${H} L ${width - R} ${H} A ${R} ${R} 0 0 0 ${width} ${R}`
-      : ""
+  // Track the FLAT bottom of the pill only — a straight line between the cap
+  // tangents. It never climbs the rounded end-caps (which read as a stray
+  // hook at high progress). Sits 2px in so the 4px stroke stays on the edge.
+  const d = width > 2 * R ? `M ${R} ${H - 2} L ${width - R} ${H - 2}` : ""
 
   return (
     <div ref={ref} className="absolute inset-0 pointer-events-none" aria-hidden>
@@ -168,15 +172,22 @@ function MobileProgressOutline({ progress }: { progress: number }) {
         height={H}
         viewBox={`0 0 ${Math.max(width, 1)} ${H}`}
       >
-        <path
-          d={d}
-          fill="none"
-          stroke="var(--muza-blue-200)"
-          strokeWidth={4}
-          strokeLinecap="round"
-          strokeDasharray={`${drawn} ${total}`}
-          style={{ transition: "stroke-dasharray 100ms linear" }}
-        />
+        {/* Dash math is normalised via `pathLength={1}` so it's independent
+            of the measured width — resizing mid-playback can't desync the
+            dash pattern from the path geometry (which caused stray segments).
+            Guard p>0 so a 0-length round-capped dash can't render a dot. */}
+        {p > 0 && d && (
+          <path
+            d={d}
+            pathLength={1}
+            fill="none"
+            stroke="var(--muza-blue-200)"
+            strokeWidth={4}
+            strokeLinecap="round"
+            strokeDasharray={`${p} 1`}
+            style={{ transition: "stroke-dasharray 100ms linear" }}
+          />
+        )}
       </svg>
     </div>
   )
@@ -305,7 +316,11 @@ export function PlayerBarB({
   // 0–1 progress for the mobile arc. Prefer the externally-driven value
   // (store's simulated clock); fall back to wavesurfer's real time updates.
   const [localProgress, setLocalProgress] = useState(0)
-  const progress = progressProp ?? localProgress
+  // With real audio, wavesurfer drives `localProgress`. Without a URL (static
+  // demos), fall back to the played fraction implied by the timestamps so the
+  // mobile arc matches the displayed clock instead of sitting at 0.
+  const derivedProgress = secondsFromClock(currentTime) / Math.max(1, secondsFromClock(totalTime))
+  const progress = progressProp ?? (track.url ? localProgress : derivedProgress)
   // No real audio (no `url`) → wavesurfer can't advance time itself, so let
   // the `currentTime` prop drive the played portion by keeping it "paused".
   const waveformPlaying = track.url ? playing : false

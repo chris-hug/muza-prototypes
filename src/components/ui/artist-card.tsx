@@ -73,7 +73,7 @@ export function ArtistCard({ name, image, onClick, className }: ArtistCardProps)
           </div>
         )}
       </div>
-      <p className="text-small font-normal leading-5 text-foreground truncate group-hover/artist:underline group-focus-visible/artist:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto]">{name}</p>
+      <p className="text-xsmall font-normal leading-5 text-foreground truncate group-hover/artist:underline group-focus-visible/artist:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto]">{name}</p>
     </button>
   )
 }

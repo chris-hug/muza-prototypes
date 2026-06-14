@@ -198,9 +198,9 @@ Figma primitives now match Muza CSS 1:1 after Figma was updated to adopt Muza's 
 | Primitive | Figma value | Muza CSS value | Aligned? |
 |---|---|---|---|
 | `text-xxs` | **15**  | 15  | ✅ |
-| `text-xs`  | **16**  | 16  | ✅ |
-| `text-sm`  | **18**  | 18  | ✅ |
-| `text-base`| **20**  | 20  | ✅ |
+| `text-xs`  | **17**  | 17  | ✅ |
+| `text-sm`  | **19**  | 19  | ✅ |
+| `text-base`| **21**  | 21  | ✅ |
 | `text-lg`  | **24**  | 24  | ✅ |
 | `text-xl`  | **30**  | 30  | ✅ |
 | `text-2xl` | **36**  | 36  | ✅ |
@@ -279,8 +279,8 @@ The **"Resolves to"** column shows three numbers in the order `font-size / line-
 | Semantic alias | → Size primitive | → Line-height | → Letter-spacing | Resolves to (px: size / lh / tracking) |
 |---|---|---|---|---|
 | `2x small`    | `text-xxs`  | `leading-4`  | `normal`      | 15 / 16 / 0 |
-| `extra small` | `text-xs`   | `leading-4`  | `normal`      | 16 / 16 / 0 |
-| `small`       | `text-sm`   | `leading-5`  | `wide` (0.25) | 18 / 20 / 0.25 |
+| `extra small` | `text-xs`   | `leading-4`  | `normal`      | 17 / 16 / 0 |
+| `small`       | `text-sm`   | `leading-5`  | `wide` (0.25) | 19 / 20 / 0.25 |
 | `base`        | `text-base` | `leading-6`  | `normal`      | 21 / 24 / 0 |
 | `large`       | `text-lg`   | `leading-7`  | `normal`      | 24 / 28 / 0 |
 | `xlarge`      | `text-xl`   | `leading-7`  | `normal`      | 30 / 28 / 0 |
@@ -295,8 +295,8 @@ Both bugs fixed. Full upper range present; aliases use `var()` references.
 | Token (Muza CSS) | Kind | Value | Status |
 |---|---|---|---|
 | `--text-xxs`   | primitive         | `15px`  | ✅ |
-| `--text-xs`    | primitive         | `16px`  | ✅ |
-| `--text-sm`    | primitive         | `18px`  | ✅ |
+| `--text-xs`    | primitive         | `17px`  | ✅ |
+| `--text-sm`    | primitive         | `19px`  | ✅ |
 | `--text-base`  | primitive         | `21px`  | ✅ |
 | `--text-lg`    | primitive         | `24px`  | ✅ |
 | `--text-xl`    | primitive         | `30px`  | ✅ |
@@ -309,9 +309,9 @@ Both bugs fixed. Full upper range present; aliases use `var()` references.
 | `--text-8xl`   | primitive         | `160px` | ✅ added |
 | `--text-9xl`   | primitive         | `200px` | ✅ added |
 | `--text-2xsmall` | semantic alias  | `var(--text-xxs)`  → 15 | ✅ wired via var() |
-| `--text-xsmall`  | semantic alias  | `var(--text-xs)`   → 16 | ✅ wired via var() |
-| `--text-small`   | semantic alias  | `var(--text-sm)`   → 18 | ✅ wired via var() |
-| `text-base`      | alias = primitive | — (primitive serves both roles) → 20 | ✅ — use primitive directly |
+| `--text-xsmall`  | semantic alias  | `var(--text-xs)`   → 17 | ✅ wired via var() |
+| `--text-small`   | semantic alias  | `var(--text-sm)`   → 19 | ✅ wired via var() |
+| `text-base`      | sanctioned semantic | 21 (name = token; no separate alias) | ✅ — use `text-base` directly |
 | `--text-large`   | semantic alias  | `var(--text-lg)`   → 24 | ✅ wired via var() |
 | `--text-xlarge`  | semantic alias  | `var(--text-xl)`   → 30 | ✅ wired via var() |
 | `--text-2xlarge` | semantic alias  | `var(--text-2xl)`  → 36 | ✅ wired via var() |
@@ -331,11 +331,11 @@ Three layers, left to right: **Preset** (what a component author picks) → **Se
 | `lead`        | `xlarge`      | `text-xl`  | 30 | `leading-7`  | `normal` | Regular 400 |
 | `large`       | `large`       | `text-lg`  | 24 | `leading-7`  | `normal` | Regular 400 |
 | `blockquote`  | `base`        | `text-base`| 20 | `leading-6`  | `normal` | Regular 400 *italic* |
-| `list`        | `base`        | `text-base`| 20 | `leading-7`  | `normal` | Regular 400 |
-| `table`       | `base`        | `text-base`| 20 | —            | `normal` | Regular 400 |
-| `p`           | `small`       | `text-sm`  | 18 | `leading-6`  | `normal` | Regular 400 |
-| `inline code` | `small`       | `text-sm`  | 18 | `leading-5`  | `normal` | Semibold 600 mono |
-| `small`       | `extra small` | `text-xs`  | 16 | `leading-4`  | `wide` (0.25) | Regular 400 |
+| `list`        | `base`        | `text-base`| 21 | `leading-7`  | `normal` | Regular 400 |
+| `table`       | `extra small` | `text-xsmall` | 17 | —         | `normal` | Regular 400 — data tables use the smaller step |
+| `p`           | `small`       | `text-small`| 19 | `leading-6`  | `normal` | Regular 400 |
+| `inline code` | `small`       | `text-small`| 19 | `leading-5`  | `normal` | Semibold 600 mono |
+| `small`       | `extra small` | `text-xsmall` | 17 | `leading-4`  | `wide` (0.25) | Regular 400 |
 
 ### Non-typography alias → primitive examples (same pattern)
 
@@ -369,8 +369,8 @@ The rule is identical: **an alias never holds a raw value; it references the pri
 | Class | Size | Usage |
 |---|---|---|
 | `text-xxs` | 15px | **minimum** — chips, badges, button-sm only |
-| `text-xs` | 16px | captions, metadata, helper text |
-| `text-sm` | 18px | body, labels, inputs, nav sub-items |
+| `text-xs` | 17px | media-card title + meta, table rows, captions, metadata, helper text |
+| `text-sm` | 19px | body, labels, inputs, nav sub-items, song-list rows |
 | `text-base` | 21px | lead text, nav items, primary content; Card Rail section titles |
 | `text-lg` | 24px | large body |
 | `text-xl` | 30px | H4 |

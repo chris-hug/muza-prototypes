@@ -64,9 +64,6 @@ export interface PlaylistCardProps {
   onShowInfo?:     () => void
   onTitleClick?:  () => void
   onOwnerClick?:  () => void
-  /** A/B text treatment — see AlbumCard. `xs17t` = uniform 17px, light meta,
-   *  tighter rhythm, a hair of letter-spacing on the meta row. */
-  textVariant?: "default" | "xs17t"
   className?: string
 }
 
@@ -74,19 +71,19 @@ export function PlaylistCard({
   title, covers, songCount, owner, owned, inLibrary,
   onPlay, onMore, onAdd, onEdit, onGoToOwner, onGoToPlaylist,
   onDelete, onRemove, onReport, onShowInfo, onTitleClick, onOwnerClick,
-  textVariant = "default", className,
+  className,
 }: PlaylistCardProps) {
   const songsLabel = `${songCount.toLocaleString()} ${songCount === 1 ? "Song" : "Songs"}`
   const showOwner  = !owned && !!owner
   const { openPlaylist } = useMediaNav()
-  // Mirror AlbumCard's `xs17t` treatment (no price row here).
-  const isAlt      = textVariant === "xs17t"
-  const titleSize  = isAlt ? "text-[17px]" : "text-small"
-  const metaSize   = isAlt ? "text-[17px]" : "text-2xsmall"
+  // Media-tile text — matches AlbumCard (no price row here): title + meta at
+  // text-xsmall (17px); meta a lighter 300 weight with a hair of tracking.
+  const titleSize  = "text-xsmall"
+  const metaSize   = "text-xsmall"
   const leadingCls = "leading-[18px]"
   const rowsGap    = "gap-0.5"
-  const metaWeight = isAlt ? "font-light" : "font-normal"
-  const metaTracking = isAlt ? "tracking-[0.02em]" : ""
+  const metaWeight = "font-light"
+  const metaTracking = "tracking-[0.02em]"
   const player = usePlayer()
   const key = slugify(title)
   // Baked-in share target — link to this playlist's own detail page.

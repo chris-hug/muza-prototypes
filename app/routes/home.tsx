@@ -107,7 +107,7 @@ import {
   Plus, Search, ChevronDown, Trash2, SlidersHorizontal, Maximize2,
   Radio as RadioIcon, ShoppingBag, Disc3, Disc, CassetteTape, Shirt, Ghost,
   ChevronLeft, ChevronRight, Globe, X, Sun, Moon, MapPin, CircleCheckBig,
-  Code, ArrowUpRight, Truck, Mail,
+  ArrowUpRight, Truck, Mail,
   ListPlus, ListStart, ListEnd, Mic, Flag, Clock,
 } from "lucide-react"
 import { DetailMoreButton } from "@/components/ui/detail-more-button"
@@ -142,7 +142,7 @@ import { ArtistProfileView } from "@/components/app/artist-profile-view"
 import { AlbumDetailView } from "@/components/app/album-detail-view"
 import { PlaylistDetailView } from "@/components/app/playlist-detail-view"
 import { PurchaseAlbumDialog, PurchaseAlbumDialogPreview } from "@/components/app/purchase-album-dialog"
-import { SubscriptionPromptDialog, SubscriptionPromptDialogPreview, SubscriptionCheckoutDialog } from "@/components/app/subscription-dialogs"
+import { SubscriptionPromptDialog, SubscriptionPromptDialogPreview, SubscriptionCheckoutDialog, SubscriptionCheckoutDialogPreview } from "@/components/app/subscription-dialogs"
 import { LibraryArtistsView, SAVED_ARTISTS } from "@/components/app/library-artists-view"
 import { LibraryPlaylistsView, SAVED_PLAYLISTS } from "@/components/app/library-playlists-view"
 import { LibrarySongsView, SAVED_SONGS_SEED } from "@/components/app/library-songs-view"
@@ -163,8 +163,6 @@ import { TopProgressBar } from "@/components/ui/top-progress-bar"
 import { AlbumCardMenuItems, PlaylistCardMenuItems } from "@/components/ui/cover-card-menu"
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
 import { CardRail } from "@/components/app/card-rail"
-import { CardAbToggle } from "@/components/ui/card-ab-toggle"
-import { useCardAb, cardAbVariant } from "@/lib/use-card-ab"
 import { PlaylistCreateCard } from "@/components/ui/playlist-create-card"
 import { MediaHeader } from "@/components/ui/media-header"
 import {
@@ -175,7 +173,6 @@ import { Section as PageSection } from "@/components/app/section"
 import { ItemsSection as DetailItemsSection } from "@/components/app/items-section"
 import { COUNTRY_CODES, countryName } from "@/lib/countries"
 import { MultiSelect } from "@/components/ui/multi-select"
-import { PlayerBar }     from "@/components/ui/player-bar"
 import { PlayerBarB }    from "@/components/ui/player-bar-b"
 import { PlayerOverlay } from "@/components/ui/player-overlay"
 import { PlayerProvider } from "@/lib/player"
@@ -255,8 +252,7 @@ function Section({
                   size="sm"
                   render={<a href={sourceUrl} target="_blank" rel="noreferrer" />}
                 >
-                  <Code className="size-3.5" />
-                  Source
+                  GitHub
                   <ArrowUpRight className="size-3" />
                 </Button>
               )}
@@ -780,8 +776,8 @@ const HOME_NEW_ALBUMS = [
 ]
 
 // A few releases marked as already-purchased on the live home rails, so the
-// "Owned" label (and its A/B text treatment) shows up without buying first.
-// Spread across both album rails — two priced-looking titles per rail.
+// "Owned" label shows up without buying first. Spread across both album
+// rails — two priced-looking titles per rail.
 const HOME_OWNED = new Set<string>([
   "Promises",          // New Albums
   "Black Acid Soul",   // New Albums
@@ -875,8 +871,6 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
   const logoSize = useViewportLogoSize()
   const library  = useUserLibrary()
   const { openAlbum, openPlaylist, openArtist } = useMediaNav()
-  // Stakeholder card-text A/B (see CardAbToggle): A = original, B = refined.
-  const cardTextVariant = cardAbVariant(useCardAb())
   // Wrap an album catalog entry into a fully-propped AlbumCard via
   // the shared album-meta lookup. Same helper is reused in album /
   // playlist / artist detail rails so cards render consistently.
@@ -884,13 +878,11 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
     const meta  = albumMetaFor(a.title)
     const libId = libraryIdForTitle(a.title)
     const key   = slugify(a.title)
-    // Seed a handful of "Owned" releases across the rails so the
-    // purchased state (and its A/B "Owned" treatment) is visible on the
-    // live home page even before the user buys anything.
+    // Seed a handful of "Owned" releases across the rails so the purchased
+    // state is visible on the live home page even before the user buys.
     const owned = (libId ? library.isPurchased(libId) : false) || HOME_OWNED.has(a.title)
     return (
       <AlbumCard
-        textVariant={cardTextVariant}
         cover={a.cover}
         title={a.title}
         artist={a.artist}
@@ -932,7 +924,6 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
           {HOME_WEEKLY_PLAYLISTS.map(p => (
             <li key={p.id}>
               <PlaylistCard
-                textVariant={cardTextVariant === "xs17t" ? "xs17t" : "default"}
                 title={p.title}
                 covers={p.covers}
                 songCount={p.songCount}
@@ -957,9 +948,6 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
           ))}
         </CardRail>
       </div>
-
-      {/* Stakeholder A/B — flip the card-text treatment to compare. */}
-      <CardAbToggle />
     </div>
   )
 }
@@ -1236,6 +1224,8 @@ function SubscriptionPromptDemo() {
   return (
     <div className="flex flex-col gap-4">
       <SubscriptionPromptDialogPreview />
+      {/* Step 2 — the checkout, shown static below the paywall. */}
+      <SubscriptionCheckoutDialogPreview />
       <div className="flex items-center gap-3 flex-wrap">
         <Button variant="outline" onClick={() => setPromptOpen(true)}>
           Open as modal
@@ -1357,14 +1347,14 @@ function ListTableDemo() {
                   hoverGroup="row"
                 />
               </TableCell>
-              <TableCell className="text-small text-foreground whitespace-nowrap truncate">
+              <TableCell className="text-foreground whitespace-nowrap truncate">
                 <button type="button" className="text-left hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] outline-none cursor-pointer">{r.title}</button>
               </TableCell>
-              <TableCell className="text-small text-muted-foreground whitespace-nowrap truncate">
+              <TableCell className="text-muted-foreground whitespace-nowrap truncate">
                 <button type="button" className="text-left hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] outline-none cursor-pointer">{r.band}</button>
               </TableCell>
-              <TableCell className="text-small text-muted-foreground tabular-nums whitespace-nowrap">{r.year}</TableCell>
-              <TableCell className="text-small text-muted-foreground tabular-nums whitespace-nowrap">{r.tracks}</TableCell>
+              <TableCell className="text-muted-foreground tabular-nums whitespace-nowrap">{r.year}</TableCell>
+              <TableCell className="text-muted-foreground tabular-nums whitespace-nowrap">{r.tracks}</TableCell>
               <TableCell className="text-right">
                 <ContentTypeBadge type={r.type} />
               </TableCell>
@@ -2169,32 +2159,33 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         <p className="text-small font-medium text-muted-foreground mb-1">Primitives</p>
         <p className="text-xsmall font-normal text-muted-foreground mb-5">
           Raw font-size values. Used directly only when no semantic alias fits (large display headings).
+          Display sizes <code className="text-xsmall">text-2xl</code>–<code className="text-xsmall">text-9xl</code> are <span className="text-foreground">fluid</span> — they clamp from a mobile floor up to the listed max across a 360→1280px viewport.
         </p>
         <div className="flex gap-6 pb-2 border-b border-border">
           <span className="w-32 shrink-0 text-xsmall text-muted-foreground">Primitive</span>
-          <span className="w-20 shrink-0 text-xsmall text-muted-foreground">Value</span>
+          <span className="w-28 shrink-0 text-xsmall text-muted-foreground">Value (px)</span>
           <span className="flex-1 text-xsmall text-muted-foreground">Example</span>
         </div>
         <div className="flex flex-col divide-y divide-border">
           {[
-            { token: "text-9xl",  px: 200 },
-            { token: "text-8xl",  px: 160 },
-            { token: "text-7xl",  px: 128 },
-            { token: "text-6xl",  px: 96 },
-            { token: "text-5xl",  px: 72 },
-            { token: "text-4xl",  px: 60 },
-            { token: "text-3xl",  px: 48 },
-            { token: "text-2xl",  px: 36 },
+            { token: "text-9xl",  px: "84–200" },
+            { token: "text-8xl",  px: "72–160" },
+            { token: "text-7xl",  px: "62–128" },
+            { token: "text-6xl",  px: "52–96" },
+            { token: "text-5xl",  px: "44–72" },
+            { token: "text-4xl",  px: "38–60" },
+            { token: "text-3xl",  px: "34–48" },
+            { token: "text-2xl",  px: "32–36" },
             { token: "text-xl",   px: 30 },
             { token: "text-lg",   px: 24 },
-            { token: "text-base", px: 20 },
-            { token: "text-sm",   px: 18 },
-            { token: "text-xs",   px: 16 },
+            { token: "text-base", px: 21 },
+            { token: "text-sm",   px: 19 },
+            { token: "text-xs",   px: 17 },
             { token: "text-xxs",  px: 15 },
           ].map(({ token, px }) => (
             <div key={token} className="flex items-baseline gap-6 py-4">
               <span className="w-32 shrink-0 text-small font-normal">{token}</span>
-              <span className="w-20 shrink-0 text-xsmall text-muted-foreground tabular-nums">{px}px</span>
+              <span className="w-28 shrink-0 text-xsmall text-muted-foreground tabular-nums">{px}px</span>
               <div className="flex-1 min-w-0">
                 <p className={`${token} font-normal leading-none truncate`}>Discover Music</p>
               </div>
@@ -2212,25 +2203,25 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         <div className="flex gap-6 pb-2 border-b border-border">
           <span className="w-32 shrink-0 text-xsmall text-muted-foreground">Alias</span>
           <span className="w-32 shrink-0 text-xsmall text-muted-foreground">→ Primitive</span>
-          <span className="w-20 shrink-0 text-xsmall text-muted-foreground">Resolved</span>
+          <span className="w-28 shrink-0 text-xsmall text-muted-foreground">Resolved</span>
           <span className="flex-1 text-xsmall text-muted-foreground">Example</span>
         </div>
         <div className="flex flex-col divide-y divide-border">
           {[
-            { alias: "text-4xlarge", primitive: "text-4xl",  px: 60, weight: "font-medium",   sample: "Discover Music" },
-            { alias: "text-3xlarge", primitive: "text-3xl",  px: 48, weight: "font-medium",   sample: "Featured Releases" },
-            { alias: "text-2xlarge", primitive: "text-2xl",  px: 36, weight: "font-medium",   sample: "Top Playlists" },
+            { alias: "text-4xlarge", primitive: "text-4xl",  px: "38–60", weight: "font-medium",   sample: "Discover Music" },
+            { alias: "text-3xlarge", primitive: "text-3xl",  px: "34–48", weight: "font-medium",   sample: "Featured Releases" },
+            { alias: "text-2xlarge", primitive: "text-2xl",  px: "32–36", weight: "font-medium",   sample: "Top Playlists" },
             { alias: "text-xlarge",  primitive: "text-xl",   px: 30, weight: "font-medium",   sample: "Album of the Week" },
             { alias: "text-large",   primitive: "text-lg",   px: 24, weight: "font-medium",   sample: "Dialog titles, lead paragraphs." },
-            { alias: "text-base",    primitive: "text-base", px: 20, weight: "font-normal",   sample: "Body copy, card content, default paragraphs.", note: "alias name = primitive name; use the primitive directly (no separate CSS variable)." },
-            { alias: "text-small",   primitive: "text-sm",   px: 18, weight: "font-normal",   sample: "Descriptions, table cells, body text." },
-            { alias: "text-xsmall",  primitive: "text-xs",   px: 16, weight: "font-normal",   sample: "Helper text, placeholder copy." },
+            { alias: "text-base",    primitive: "text-base", px: 21, weight: "font-normal",   sample: "Card-rail titles, lead paragraphs.", note: "this 21px step's semantic name equals its token name — use text-base (it's a sanctioned semantic token)." },
+            { alias: "text-small",   primitive: "text-sm",   px: 19, weight: "font-normal",   sample: "Descriptions, body text, song-list rows." },
+            { alias: "text-xsmall",  primitive: "text-xs",   px: 17, weight: "font-normal",   sample: "Media-card title + meta, table rows, helper text." },
             { alias: "text-2xsmall", primitive: "text-xxs",  px: 15, weight: "font-normal",   sample: "Badges, chips, captions, meta." },
           ].map(({ alias, primitive, px, weight, sample, note }) => (
             <div key={alias} className="flex items-baseline gap-6 py-4">
               <span className="w-32 shrink-0 text-small font-normal">{alias}</span>
               <span className="w-32 shrink-0 text-xsmall text-muted-foreground">{primitive}</span>
-              <span className="w-20 shrink-0 text-xsmall text-muted-foreground tabular-nums">{px}px</span>
+              <span className="w-28 shrink-0 text-xsmall text-muted-foreground tabular-nums">{px}px</span>
               <div className="flex-1 min-w-0">
                 <p className={`${alias} ${weight} leading-normal text-foreground truncate`}>{sample}</p>
                 {note && (
@@ -3566,48 +3557,6 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           />
         </div>
 
-        <SubLabel>Pricing &amp; “Owned” — A vs B (home A/B)</SubLabel>
-        <p className="text-xsmall text-muted-foreground mb-5 max-w-2xl">
-          The meta row — including the <span className="text-foreground">price</span> and the
-          <span className="text-foreground"> “Owned”</span> label — follows the chosen text
-          treatment. In <span className="text-foreground">B</span> it renders at the lighter (300)
-          weight with a hair of letter-spacing; “Owned” keeps <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">text-foreground</code> so
-          it stays a touch more present than the muted price.
-        </p>
-        <div className="flex flex-wrap gap-x-12 gap-y-6 mb-10">
-          {([
-            { v: "default" as const, label: "A — current (18 / 15px, normal)" },
-            { v: "xs17t"   as const, label: "B — refined (17px, light meta + tracking)" },
-          ]).map(({ v, label }) => (
-            <div key={v} className="flex flex-col gap-2">
-              <span className="text-2xsmall text-muted-foreground">{label}</span>
-              <div className="flex gap-4">
-                <div className="w-[180px]">
-                  <AlbumCard
-                    textVariant={v}
-                    cover="https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/19/b3/86/19b386e1-550c-0ec4-868b-542cd02bc382/118212.jpg/600x600bb.jpg"
-                    title="Glass Bead Game"
-                    artist="Clifford Jordan"
-                    year={1973}
-                    purchased
-                  />
-                </div>
-                <div className="w-[180px]">
-                  <AlbumCard
-                    textVariant={v}
-                    cover="https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/e5/24/aa/e524aacd-467b-66f3-8931-0fcd6750a4b9/08UMGIM07914.rgb.jpg/600x600bb.jpg"
-                    title="A Love Supreme"
-                    artist="John Coltrane"
-                    year={1965}
-                    streamPrice="$2.99"
-                    downloadPrice="$4.99"
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
         <SubLabel>Title clamp · owned-by-user variant</SubLabel>
         <p className="text-xsmall text-muted-foreground mb-5 max-w-2xl">
           Long titles wrap to a 2-line clamp (Spotify-style) so the
@@ -4088,8 +4037,6 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             one gap. Native scrollbar hidden.
           </li>
         </ul>
-        {/* Card-text treatment is being A/B-tested live on the Home page
-            (default vs `textVariant="xs17t"`) — see the floating toggle there. */}
         <CardRail title="New Albums">
           {HOME_NEW_ALBUMS.map(a => (
             <li key={a.id}><AlbumCard cover={a.cover} title={a.title} artist={a.artist} year={albumMetaFor(a.title).year} streamPrice={albumMetaFor(a.title).streamPrice} downloadPrice={albumMetaFor(a.title).downloadPrice} /></li>
@@ -4681,9 +4628,6 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             <span className="text-foreground">Tier picker</span> (Listening vs Download) only shows when both prices are set.
           </li>
           <li>
-            <span className="text-foreground">Contribute to Muza</span> — optional tip jar, default $1, one-click opt-out.
-          </li>
-          <li>
             <span className="text-foreground">Upgrade mode</span> (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">upgradeMode</code> + <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">upgradePrice</code>) — pay-the-difference "add download" flow: tier picker hidden, cart shows just the delta, success fires <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">onUpgraded</code>.
           </li>
         </ul>
@@ -5094,11 +5038,9 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       {/* ══ PLAYER BAR ══ */}
       <Section id="player-bar" title="Player Bar">
         <p className="text-base text-muted-foreground mb-4 max-w-2xl">
-          The persistent glass transport. Two layouts were explored;{" "}
-          <span className="text-foreground">Variant B</span> is the one wired
-          into the app (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">AppPlayer</code> →{" "}
-          <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">player-bar-b.tsx</code>);
-          variant A is kept here for reference only.
+          The persistent glass transport, wired into the app via{" "}
+          <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">AppPlayer</code> →{" "}
+          <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">player-bar-b.tsx</code>.
         </p>
         <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-6 max-w-2xl list-disc pl-5">
           <li>
@@ -5122,47 +5064,24 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             <div
               className="relative flex flex-col justify-center gap-4 rounded-xl overflow-hidden p-10"
               style={{
-                backgroundImage: "url(https://www.figma.com/api/mcp/asset/146ffdca-77f3-4008-8ff4-904d2b06ca52)",
-                backgroundSize: "cover",
-                backgroundPosition: "center top",
+                // Zoomed-in Sun Ra "Space Is the Place" cover (high-res),
+                // cropped to fill — colourful atmosphere behind the bar.
+                backgroundImage: "url(https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/2000x2000bb.jpg)",
+                backgroundSize: "160%",
+                backgroundPosition: "center",
                 minHeight: 360,
               }}
             >
+              {/* Darkening overlay so the busy cover sits back and the
+                  glass bar + label read clearly on top. */}
+              <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/40 to-black/35" />
               <div className="relative z-10 flex flex-col gap-4">
                 <div className="self-start flex items-center gap-2">
                   <span className="text-2xsmall font-medium text-foreground bg-background/70 backdrop-blur-sm px-2 py-0.5 rounded-full">
-                    Player Bar B
-                  </span>
-                  <span className="text-2xsmall font-medium text-primary-foreground bg-primary px-2 py-0.5 rounded-full">
-                    In use
+                    Player Bar
                   </span>
                 </div>
                 <PlayerBarB className="w-full" />
-              </div>
-            </div>
-          </ResizableBox>
-
-          {/* Player A — kept for reference only; NOT used in the app. */}
-          <ResizableBox initialWidth={1000} minWidth={368} maxWidth={1500}>
-            <div
-              className="relative flex flex-col justify-center gap-4 rounded-xl overflow-hidden p-10"
-              style={{
-                backgroundImage: "url(https://www.figma.com/api/mcp/asset/146ffdca-77f3-4008-8ff4-904d2b06ca52)",
-                backgroundSize: "cover",
-                backgroundPosition: "center top",
-                minHeight: 360,
-              }}
-            >
-              <div className="relative z-10 flex flex-col gap-4">
-                <div className="self-start flex items-center gap-2">
-                  <span className="text-2xsmall font-medium text-foreground bg-background/70 backdrop-blur-sm px-2 py-0.5 rounded-full">
-                    Player Bar A
-                  </span>
-                  <span className="text-2xsmall font-medium text-muted-foreground bg-muted border border-border px-2 py-0.5 rounded-full">
-                    Not used
-                  </span>
-                </div>
-                <PlayerBar className="w-full" />
               </div>
             </div>
           </ResizableBox>
