@@ -157,7 +157,7 @@ export function CardRail({ title, showAllLabel = "Show all", onShowAll, mobileGr
                when the row gets tight; `min-w-0` lets it shrink in the
                flex, and the action cluster is `shrink-0` so it's never
                squeezed by a long title. */}
-          <h2 className="text-small font-medium text-foreground truncate min-w-0">{title}</h2>
+          <h2 className="text-base font-medium text-foreground truncate min-w-0">{title}</h2>
           <div className="flex items-center gap-1 shrink-0">
             {/* Order per spec: [Show all] then ◀ ▶. Show-all is
                  optional; arrows are always rendered with the outline

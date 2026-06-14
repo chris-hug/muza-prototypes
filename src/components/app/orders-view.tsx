@@ -480,7 +480,7 @@ function FailedOrderRow({
             size="sm"
             onClick={() => {
               add({
-                title: "Retrying capture via pay.com…",
+                title: "Retrying capture via Square…",
                 description: `${order.number} · ${formatTotal(order.total)}`,
                 type: "loading",
               })

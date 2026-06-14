@@ -4,14 +4,14 @@
  * PurchaseAlbumDialog — buyer-side checkout for the "Unlock All
  * Songs" CTA on an album detail page. Three states:
  *
- *   summary    → order summary + tier picker + email + Pay.com
+ *   summary    → order summary + tier picker + email + Square
  *                payment container + sticky footer (total + Pay).
  *   processing → Spinner + "Processing payment…" (mocked 1.4s).
  *   success    → CircleCheck + "Unlocked!" then auto-closes 1.5s.
  *
- * ─────── Pay.com integration plan ───────
+ * ─────── Square integration plan ───────
  *
- * Real wiring uses `@pay-com/js`. Pay.com renders a PCI-compliant
+ * Real wiring uses `@square/web-sdk`. Square renders a PCI-compliant
  * "universal" iframe form into a DOM container we give them; that
  * form handles ALL payment methods (card fields with brand
  * auto-detection, Apple Pay, Google Pay, PayPal) AND the saved-
@@ -22,21 +22,21 @@
  * Sketch of the live integration (commented; needs a real merchant
  * id + a backend endpoint that mints a clientSecret per session):
  *
- *   import { Pay } from "@pay-com/js"            // npm i @pay-com/js
+ *   import { Pay } from "@square/web-sdk"            // npm i @square/web-sdk
  *
  *   useEffect(() => {
  *     if (!open) return
  *     let cancelled = false
  *     ;(async () => {
- *       const clientSecret = await fetch("/api/paycom-session", {
+ *       const clientSecret = await fetch("/api/square-session", {
  *         method: "POST",
  *         body: JSON.stringify({ albumId, tier, email }),
  *       }).then(r => r.json()).then(j => j.clientSecret)
  *       if (cancelled) return
- *       const pay      = await Pay.com({ identifier: MERCHANT_ID })
+ *       const pay      = await Square({ identifier: MERCHANT_ID })
  *       const checkout = pay.checkout({ clientSecret })
  *       checkout.universal({
- *         container: "#paycom-container",
+ *         container: "#square-container",
  *         toggles: { submitButton: false }, // we own the Pay button
  *       })
  *       checkout.on("success", res => onPurchased?.(tier, res))
@@ -58,7 +58,7 @@
  *
  * For the prototype the container is a labeled placeholder + the
  * Pay button is a mocked `setTimeout`. The shell around the
- * placeholder is what we'll keep when the real Pay.com universal
+ * placeholder is what we'll keep when the real Square universal
  * form goes in.
  */
 
@@ -169,7 +169,7 @@ export function PurchaseAlbumDialog({
 
   const handlePay = () => {
     setStep("processing")
-    // Mocked checkout — see header doc for the real Pay.com
+    // Mocked checkout — see header doc for the real Square
     // `checkout.submit()` flow.
     setTimeout(() => {
       setStep("success")
@@ -321,10 +321,10 @@ export function PurchaseAlbumDialog({
 
               <Separator />
 
-              {/* ── Payment (Pay.com universal form mounts here) ─ */}
+              {/* ── Payment (Square universal form mounts here) ─ */}
               <div className="flex flex-col gap-2">
                 <SectionLabel>Payment</SectionLabel>
-                <PaycomContainer />
+                <SquareContainer />
               </div>
 
               <Separator />
@@ -380,7 +380,7 @@ export function PurchaseAlbumDialog({
               <div className="flex items-center gap-2 text-2xsmall text-muted-foreground">
                 <ShieldCheck className="size-3.5" />
                 <span>
-                  Payments processed securely by Pay.com. Card
+                  Payments processed securely by Square. Card
                   details never touch Muza's servers.
                 </span>
               </div>
@@ -643,26 +643,26 @@ function formatPrice(amount: number): string {
 }
 
 /*
- * PaycomContainer — placeholder for Pay.com's universal payment
+ * SquareContainer — placeholder for Square's universal payment
  * form. In production this becomes:
  *
- *   <div id="paycom-container" ref={paycomRef} />
+ *   <div id="square-container" ref={squareRef} />
  *
- * and a `useEffect` initializes Pay.com against the ref (see the
- * file header for the full sketch). Pay.com mounts an iframe with
+ * and a `useEffect` initializes Square against the ref (see the
+ * file header for the full sketch). Square mounts an iframe with
  * the card fields, brand auto-detection, Apple Pay / Google Pay /
  * PayPal express buttons, and the saved-card row for returning
- * customers — all rendered by Pay.com, all PCI-compliant.
+ * customers — all rendered by Square, all PCI-compliant.
  *
  * The placeholder here is just visual scaffolding so the
  * surrounding dialog reads correctly at design time. Once the live
  * integration lands, swap the inner contents for the empty
- * `<div id="paycom-container" />` and everything around it stays.
+ * `<div id="square-container" />` and everything around it stays.
  */
-function PaycomContainer() {
+function SquareContainer() {
   return (
     <div
-      id="paycom-container"
+      id="square-container"
       className="flex flex-col items-center justify-center gap-2 py-10 px-6 rounded-lg border border-dashed border-border bg-muted/40"
     >
       <p className="text-small font-medium text-foreground">
@@ -670,7 +670,7 @@ function PaycomContainer() {
       </p>
       <p className="text-2xsmall text-muted-foreground text-center max-w-[320px]">
         Card · Apple Pay · Google Pay · PayPal — all rendered by
-        Pay.com's universal form. Brand auto-detection and saved-card
+        Square's universal form. Brand auto-detection and saved-card
         handling come built-in.
       </p>
     </div>
@@ -820,7 +820,7 @@ export function PurchaseAlbumDialogPreview({
 
         <div className="flex flex-col gap-2">
           <SectionLabel>Payment</SectionLabel>
-          <PaycomContainer />
+          <SquareContainer />
         </div>
 
         <Separator />
@@ -863,7 +863,7 @@ export function PurchaseAlbumDialogPreview({
         <div className="flex items-center gap-2 text-2xsmall text-muted-foreground">
           <ShieldCheck className="size-3.5" />
           <span>
-            Payments processed securely by Pay.com. Card details
+            Payments processed securely by Square. Card details
             never touch Muza's servers.
           </span>
         </div>

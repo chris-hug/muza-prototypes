@@ -393,10 +393,10 @@ function RadioRow({
 
 // ─── Payments tab ─────────────────────────────────────────────────────────────
 //
-// Lists saved payment methods (managed via Pay.com Setup Intent under
-// the hood) with default selection + per-card remove. Pay.com renders
+// Lists saved payment methods (managed via Square Setup Intent under
+// the hood) with default selection + per-card remove. Square renders
 // the actual add-card form in an iframe, so "Add" opens a dialog with
-// a placeholder container — wired to a real Pay.com session when the
+// a placeholder container — wired to a real Square session when the
 // integration lands.
 
 interface PaymentMethod {
@@ -512,7 +512,7 @@ function PaymentSettings() {
       </SettingsSection>
 
       <p className="text-2xsmall text-muted-foreground">
-        Payment methods are stored by Pay.com — Muza never sees your full card details.
+        Payment methods are stored by Square — Muza never sees your full card details.
       </p>
 
       <PaymentMethodDialog
@@ -537,7 +537,7 @@ function PaymentMethodRow({
     <div className="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
       {/* Brand swatch — placeholder for the real card-network logo.
            A neutral monochrome wordmark works as a stand-in until the
-           Pay.com brand pack is wired in. */}
+           Square brand pack is wired in. */}
       <div className="shrink-0 w-10 h-7 rounded-md border border-border bg-muted flex items-center justify-center text-2xsmall font-semibold text-foreground">
         {method.brand === "Visa"       ? "VISA"
          : method.brand === "Mastercard" ? "MC"
@@ -588,7 +588,7 @@ function PaymentMethodRow({
 // ─── Payment method dialog ────────────────────────────────────────────────────
 //
 // Single dialog handles both "Add" and "Edit". In edit mode the card
-// number lives inside Pay.com's iframe so we can only show "•••• 4242"
+// number lives inside Square's iframe so we can only show "•••• 4242"
 // + an inline "Replace card" affordance that hands off to a fresh
 // Setup Intent. Editable here directly: cardholder name, expiry,
 // billing zip.
@@ -630,15 +630,15 @@ function PaymentMethodDialog({
     : "Add payment method"
 
   const description = isEdit
-    ? "Update billing details or replace the card. Card numbers are stored by Pay.com — Muza never sees them."
-    : "Card details are entered into Pay.com's secure form. Muza never sees the full card number."
+    ? "Update billing details or replace the card. Card numbers are stored by Square — Muza never sees them."
+    : "Card details are entered into Square's secure form. Muza never sees the full card number."
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (isEdit) {
       onSaveEdit(existing!.id, { expiry })
     } else {
-      // Mock — in reality Pay.com returns the tokenised card metadata.
+      // Mock — in reality Square returns the tokenised card metadata.
       onSaveNew({ brand: "Visa", last4: "0000", expiry })
     }
   }
@@ -655,7 +655,7 @@ function PaymentMethodDialog({
           {/* ── Card number row ─────────────────────────────────────
                In edit mode show a static masked-card row + "Replace
                card" toggle. Switching to replace mode swaps in the
-               Pay.com placeholder. */}
+               Square placeholder. */}
           <Field label="Card">
             {isEdit && !replacing ? (
               <div className="flex items-center gap-3 h-10 px-4 rounded-full border border-border bg-muted/30">
@@ -672,7 +672,7 @@ function PaymentMethodDialog({
                 </button>
               </div>
             ) : (
-              <PaycomCardField />
+              <SquareCardField />
             )}
           </Field>
 
@@ -715,12 +715,12 @@ function PaymentMethodDialog({
   )
 }
 
-// Placeholder for the Pay.com universal-form iframe slot. Matches the
+// Placeholder for the Square universal-form iframe slot. Matches the
 // look used in PurchaseAlbumDialog so the chrome reads as one system.
-function PaycomCardField() {
+function SquareCardField() {
   return (
     <div className="rounded-xl border border-dashed border-border bg-muted/30 p-3 text-xsmall text-muted-foreground leading-5">
-      Pay.com renders the card form here — card number, expiry, CVC, and brand detection — inside a secure iframe.
+      Square renders the card form here — card number, expiry, CVC, and brand detection — inside a secure iframe.
     </div>
   )
 }

@@ -193,11 +193,11 @@ Past each ceiling the photo crops horizontally via `object-cover` rather than in
 
 **Primitives are the only layer that holds a number.** Semantic aliases and typography presets reference these — they **never** hardcode px values.
 
-Figma primitives now match Muza CSS 1:1 after Figma was updated to adopt Muza's scale (text-xxs = 14 promoted to a first-class primitive, all other sizes shifted up one step).
+Figma primitives now match Muza CSS 1:1 after Figma was updated to adopt Muza's scale (text-xxs = 15 (bumped from 14) as a first-class primitive, all other sizes shifted up one step).
 
 | Primitive | Figma value | Muza CSS value | Aligned? |
 |---|---|---|---|
-| `text-xxs` | **14**  | 14  | ✅ |
+| `text-xxs` | **15**  | 15  | ✅ |
 | `text-xs`  | **16**  | 16  | ✅ |
 | `text-sm`  | **18**  | 18  | ✅ |
 | `text-base`| **20**  | 20  | ✅ |
@@ -278,10 +278,10 @@ The **"Resolves to"** column shows three numbers in the order `font-size / line-
 
 | Semantic alias | → Size primitive | → Line-height | → Letter-spacing | Resolves to (px: size / lh / tracking) |
 |---|---|---|---|---|
-| `2x small`    | `text-xxs`  | `leading-4`  | `normal`      | 14 / 16 / 0 |
+| `2x small`    | `text-xxs`  | `leading-4`  | `normal`      | 15 / 16 / 0 |
 | `extra small` | `text-xs`   | `leading-4`  | `normal`      | 16 / 16 / 0 |
 | `small`       | `text-sm`   | `leading-5`  | `wide` (0.25) | 18 / 20 / 0.25 |
-| `base`        | `text-base` | `leading-6`  | `normal`      | 20 / 24 / 0 |
+| `base`        | `text-base` | `leading-6`  | `normal`      | 21 / 24 / 0 |
 | `large`       | `text-lg`   | `leading-7`  | `normal`      | 24 / 28 / 0 |
 | `xlarge`      | `text-xl`   | `leading-7`  | `normal`      | 30 / 28 / 0 |
 | `2x large`    | `text-2xl`  | `leading-8`  | `normal`      | 36 / 32 / 0 |
@@ -294,10 +294,10 @@ Both bugs fixed. Full upper range present; aliases use `var()` references.
 
 | Token (Muza CSS) | Kind | Value | Status |
 |---|---|---|---|
-| `--text-xxs`   | primitive         | `14px`  | ✅ |
+| `--text-xxs`   | primitive         | `15px`  | ✅ |
 | `--text-xs`    | primitive         | `16px`  | ✅ |
 | `--text-sm`    | primitive         | `18px`  | ✅ |
-| `--text-base`  | primitive         | `20px`  | ✅ |
+| `--text-base`  | primitive         | `21px`  | ✅ |
 | `--text-lg`    | primitive         | `24px`  | ✅ |
 | `--text-xl`    | primitive         | `30px`  | ✅ |
 | `--text-2xl`   | primitive         | `36px`  | ✅ |
@@ -308,7 +308,7 @@ Both bugs fixed. Full upper range present; aliases use `var()` references.
 | `--text-7xl`   | primitive         | `128px` | ✅ added |
 | `--text-8xl`   | primitive         | `160px` | ✅ added |
 | `--text-9xl`   | primitive         | `200px` | ✅ added |
-| `--text-2xsmall` | semantic alias  | `var(--text-xxs)`  → 14 | ✅ wired via var() |
+| `--text-2xsmall` | semantic alias  | `var(--text-xxs)`  → 15 | ✅ wired via var() |
 | `--text-xsmall`  | semantic alias  | `var(--text-xs)`   → 16 | ✅ wired via var() |
 | `--text-small`   | semantic alias  | `var(--text-sm)`   → 18 | ✅ wired via var() |
 | `text-base`      | alias = primitive | — (primitive serves both roles) → 20 | ✅ — use primitive directly |
@@ -368,10 +368,10 @@ The rule is identical: **an alias never holds a raw value; it references the pri
 
 | Class | Size | Usage |
 |---|---|---|
-| `text-xxs` | 14px | **minimum** — chips, badges, button-sm only |
+| `text-xxs` | 15px | **minimum** — chips, badges, button-sm only |
 | `text-xs` | 16px | captions, metadata, helper text |
 | `text-sm` | 18px | body, labels, inputs, nav sub-items |
-| `text-base` | 20px | lead text, nav items, primary content |
+| `text-base` | 21px | lead text, nav items, primary content; Card Rail section titles |
 | `text-lg` | 24px | large body |
 | `text-xl` | 30px | H4 |
 | `text-2xl` | 36px | H3 |
@@ -396,7 +396,7 @@ The rule is identical: **an alias never holds a raw value; it references the pri
 
 | Size | Height | H-padding | Font | Weight |
 |---|---|---|---|---|
-| `sm` | 32px `h-8` | 12px `px-3` | 14px `text-xxs` | `font-normal` |
+| `sm` | 32px `h-8` | 12px `px-3` | 15px `text-xxs` | `font-normal` |
 | `default` | 36px `h-9` | 16px `px-4` | 18px `text-sm` | `font-medium` |
 | `lg` | 40px `h-10` | 32px `px-8` | 18px `text-sm` | `font-medium` |
 | `icon-sm` | 32px `size-8` | — | — | — |
@@ -410,7 +410,7 @@ Ghost hover bg: `hover:bg-secondary` (NOT muted — too light)
 ## Chips (Figma node 21232:6353 filter · 21232:6420 dismissable)
 
 Height: 32px (`h-8`) · Padding: 12px (`px-3`) · Gap: 8px (`gap-2`) · `rounded-full`
-Font: 14px `text-xxs` `font-normal`
+Font: 15px `text-xxs` `font-normal`
 Variants: **default** (`bg-background border-border hover:bg-muted` — same as outline button) · **selected** (`bg-primary border-primary text-primary-foreground`)
 No secondary or ghost variants — those don't exist in Figma.
 Dismissable chips use `<ChipDismiss>` with X icon (14px).

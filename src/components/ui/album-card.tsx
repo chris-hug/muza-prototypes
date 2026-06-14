@@ -90,6 +90,11 @@ export interface AlbumCardProps {
   /** The album is already in the user's library — drops "Save to library"
    *  (menu + hover quick-add) and surfaces "Remove from library" instead. */
   inLibrary?: boolean
+  /** Text-size treatment for the title + meta rows — the two candidates in
+   *  the home-page A/B. `default` = 18px title / 15px meta; `xs17t` = uniform
+   *  17px, lighter (300) meta weight, even line rhythm, and a hair of positive
+   *  letter-spacing on the meta rows. */
+  textVariant?: "default" | "xs17t"
   className?: string
 }
 
@@ -97,11 +102,22 @@ export function AlbumCard({
   cover, title, artist, year, owned, purchased, streamPrice, downloadPrice,
   onPlay, onMore, onAdd, onEdit, onAddToPlaylist,
   onGoToArtist, onGoToAlbum, onRemove, onReport, onShowInfo,
-  onTitleClick, onArtistClick, hideGoToArtist, hideGoToAlbum, inLibrary, className,
+  onTitleClick, onArtistClick, hideGoToArtist, hideGoToAlbum, inLibrary,
+  textVariant = "default", className,
 }: AlbumCardProps) {
   const { openAlbum } = useMediaNav()
   const player = usePlayer()
   const key = slugify(title)
+  // A/B text sizing. `xs17t` puts all three rows at a uniform 17px with a
+  // lighter (300) weight on the artist / price rows and a hair of positive
+  // tracking to open the thin Light strokes (title stays normal weight /
+  // default tracking). `default` keeps the 18px title / 15px meta.
+  const isAlt      = textVariant === "xs17t"
+  const titleSize  = isAlt ? "text-[17px]" : "text-small"
+  const metaSize   = isAlt ? "text-[17px]" : "text-2xsmall"
+  const leadingCls = "leading-[18px]"
+  const metaWeight = isAlt ? "font-light" : "font-normal"
+  const metaTracking = isAlt ? "tracking-[0.02em]" : ""
   // Baked-in share target — link to this album's own detail page.
   const shareHref = `/?page=Album&album=${key}`
 
@@ -234,7 +250,7 @@ export function AlbumCard({
         <button
           type="button"
           onClick={onTitleClick ?? goAlbum}
-          className="text-small font-normal leading-5 text-foreground text-left line-clamp-2 hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto] pb-[6px] -mb-[6px] outline-none cursor-pointer"
+          className={cn(titleSize, leadingCls, "font-normal text-foreground text-left line-clamp-2 hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto] pb-[6px] -mb-[6px] outline-none cursor-pointer")}
         >
           {title}
         </button>
@@ -242,7 +258,7 @@ export function AlbumCard({
              artist text taking the underline-on-hover affordance
              (independent click target) and the year as plain meta
              after a `·` separator. */}
-        <div className="flex items-center gap-1.5 min-w-0 text-small font-normal leading-5 text-muted-foreground">
+        <div className={cn("flex items-center gap-1.5 min-w-0 text-muted-foreground", metaSize, metaWeight, leadingCls, metaTracking)}>
           <button
             type="button"
             onClick={onArtistClick}
@@ -260,33 +276,32 @@ export function AlbumCard({
             </span>
           )}
         </div>
-        {/* Status / pricing row. Mirrors the Studio music table's
-             monetisation cell: prices in tabular nums, faded `·`
-             separator, download icon glyph next to the download
-             price. Fixed 18px height so the pill-rendering case and
-             the text-rendering case occupy identical vertical space —
-             without the lock, the pill's bg fill makes the Owned
-             row "feel" different from the Free / priced rows. */}
-        <div className="flex items-center h-[18px]">
-          {purchased ? (
-            <PurchasedBadge className="text-2xsmall [&_svg]:size-3" />
-          ) : streamPrice ? (
-            <span className="flex items-center gap-1.5 text-2xsmall text-muted-foreground tabular-nums">
-              <span>{streamPrice}</span>
-              {downloadPrice && (
-                <>
-                  <span className="opacity-30" aria-hidden>·</span>
-                  <span className="flex items-center gap-0.5">
-                    <span>{downloadPrice}</span>
-                    <Download className="size-3 shrink-0" aria-hidden />
-                  </span>
-                </>
-              )}
-            </span>
-          ) : (
-            <p className="text-2xsmall text-muted-foreground">Free</p>
-          )}
-        </div>
+        {/* Status / pricing row — only when there's something to say:
+             "Owned" once purchased, or the price(s) for paid releases.
+             Free albums show nothing (the price's absence IS the signal).
+             Both the "Owned" label and the price TEXT are line boxes with the
+             same line-height as the meta row, so the artist→status gap matches
+             the title→artist gap exactly (no centred fixed-height box, which
+             would sit a hair tighter against the meta line). */}
+        {purchased ? (
+          // Match the meta treatment (weight + tracking) AND its line box, so
+          // "Owned" sits on the same rhythm as a price line; it keeps
+          // `text-foreground` (slightly more present than the muted price).
+          <PurchasedBadge className={cn("flex items-center", metaSize, metaWeight, metaTracking, leadingCls, "[&_svg]:size-3")} />
+        ) : streamPrice ? (
+          <span className={cn("flex items-center gap-1.5 text-muted-foreground tabular-nums", metaSize, metaWeight, metaTracking, leadingCls)}>
+            <span>{streamPrice}</span>
+            {downloadPrice && (
+              <>
+                <span className="opacity-30" aria-hidden>·</span>
+                <span className="flex items-center gap-0.5">
+                  <span>{downloadPrice}</span>
+                  <Download className="size-3 shrink-0" aria-hidden />
+                </span>
+              </>
+            )}
+          </span>
+        ) : null}
       </div>
     </div>
   )

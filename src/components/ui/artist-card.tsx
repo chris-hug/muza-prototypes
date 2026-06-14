@@ -55,7 +55,7 @@ export function ArtistCard({ name, image, onClick, className }: ArtistCardProps)
            always fills its container exactly (no oval rendering for
            portrait-aspect Wikipedia thumbnails) and the inset stays
            consistent across rows. */}
-      <div className="aspect-square w-full p-[10%]">
+      <div className="aspect-square w-full p-[5%]">
         {image ? (
           // `brightness` filter darkens the portrait on hover so the
           // card reads as actionable. Same hover convention as the

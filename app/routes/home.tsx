@@ -163,6 +163,8 @@ import { TopProgressBar } from "@/components/ui/top-progress-bar"
 import { AlbumCardMenuItems, PlaylistCardMenuItems } from "@/components/ui/cover-card-menu"
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
 import { CardRail } from "@/components/app/card-rail"
+import { CardAbToggle } from "@/components/ui/card-ab-toggle"
+import { useCardAb, cardAbVariant } from "@/lib/use-card-ab"
 import { PlaylistCreateCard } from "@/components/ui/playlist-create-card"
 import { MediaHeader } from "@/components/ui/media-header"
 import {
@@ -777,6 +779,16 @@ const HOME_NEW_ALBUMS = [
   { id: "h-na-12", title: "Under Tangled Silence",             artist: "Djrum",                          cover: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/4a/2d/6f/4a2d6f89-f204-8f91-9812-f9bd203e33b0/cover.jpg/600x600bb.jpg" },
 ]
 
+// A few releases marked as already-purchased on the live home rails, so the
+// "Owned" label (and its A/B text treatment) shows up without buying first.
+// Spread across both album rails — two priced-looking titles per rail.
+const HOME_OWNED = new Set<string>([
+  "Promises",          // New Albums
+  "Black Acid Soul",   // New Albums
+  "Maiden Voyage",     // Albums of the week
+  "Glass Bead Game",   // Albums of the week
+])
+
 const HOME_WEEKLY_ALBUMS = [
   { id: "h-wa-1",  title: "Maiden Voyage",                     artist: "Herbie Hancock",                 cover: "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/23/49/49/234949c3-db74-f0eb-30f5-d715526e459b/19UMGIM73745.rgb.jpg/600x600bb.jpg" },
   { id: "h-wa-2",  title: "A Love Supreme",                    artist: "John Coltrane",                  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/e5/24/aa/e524aacd-467b-66f3-8931-0fcd6750a4b9/08UMGIM07914.rgb.jpg/600x600bb.jpg" },
@@ -863,6 +875,8 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
   const logoSize = useViewportLogoSize()
   const library  = useUserLibrary()
   const { openAlbum, openPlaylist, openArtist } = useMediaNav()
+  // Stakeholder card-text A/B (see CardAbToggle): A = original, B = refined.
+  const cardTextVariant = cardAbVariant(useCardAb())
   // Wrap an album catalog entry into a fully-propped AlbumCard via
   // the shared album-meta lookup. Same helper is reused in album /
   // playlist / artist detail rails so cards render consistently.
@@ -870,15 +884,20 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
     const meta  = albumMetaFor(a.title)
     const libId = libraryIdForTitle(a.title)
     const key   = slugify(a.title)
+    // Seed a handful of "Owned" releases across the rails so the
+    // purchased state (and its A/B "Owned" treatment) is visible on the
+    // live home page even before the user buys anything.
+    const owned = (libId ? library.isPurchased(libId) : false) || HOME_OWNED.has(a.title)
     return (
       <AlbumCard
+        textVariant={cardTextVariant}
         cover={a.cover}
         title={a.title}
         artist={a.artist}
         year={meta.year}
         streamPrice={meta.streamPrice}
         downloadPrice={meta.downloadPrice}
-        purchased={libId ? library.isPurchased(libId) : false}
+        purchased={owned}
         onTitleClick={() => openAlbum(key)}
         onPlay={() => openAlbum(key)}
       />
@@ -913,6 +932,7 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
           {HOME_WEEKLY_PLAYLISTS.map(p => (
             <li key={p.id}>
               <PlaylistCard
+                textVariant={cardTextVariant === "xs17t" ? "xs17t" : "default"}
                 title={p.title}
                 covers={p.covers}
                 songCount={p.songCount}
@@ -937,6 +957,9 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
           ))}
         </CardRail>
       </div>
+
+      {/* Stakeholder A/B — flip the card-text treatment to compare. */}
+      <CardAbToggle />
     </div>
   )
 }
@@ -1143,7 +1166,7 @@ function CoverPlayButtonDemo() {
 // always visible on the DS page (no click required). A trigger
 // button below opens the real `<PurchaseAlbumDialog>` modal for
 // live interaction. New-vs-existing-customer distinction sits
-// INSIDE Pay.com's universal form (saved-card detection +
+// INSIDE Square's universal form (saved-card detection +
 // brand-detection on new cards + Apple Pay / Google Pay / PayPal
 // express buttons all in one iframe) — the dialog only owns the
 // shell.
@@ -2167,7 +2190,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             { token: "text-base", px: 20 },
             { token: "text-sm",   px: 18 },
             { token: "text-xs",   px: 16 },
-            { token: "text-xxs",  px: 14 },
+            { token: "text-xxs",  px: 15 },
           ].map(({ token, px }) => (
             <div key={token} className="flex items-baseline gap-6 py-4">
               <span className="w-32 shrink-0 text-small font-normal">{token}</span>
@@ -2202,7 +2225,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             { alias: "text-base",    primitive: "text-base", px: 20, weight: "font-normal",   sample: "Body copy, card content, default paragraphs.", note: "alias name = primitive name; use the primitive directly (no separate CSS variable)." },
             { alias: "text-small",   primitive: "text-sm",   px: 18, weight: "font-normal",   sample: "Descriptions, table cells, body text." },
             { alias: "text-xsmall",  primitive: "text-xs",   px: 16, weight: "font-normal",   sample: "Helper text, placeholder copy." },
-            { alias: "text-2xsmall", primitive: "text-xxs",  px: 14, weight: "font-normal",   sample: "Badges, chips, captions, meta." },
+            { alias: "text-2xsmall", primitive: "text-xxs",  px: 15, weight: "font-normal",   sample: "Badges, chips, captions, meta." },
           ].map(({ alias, primitive, px, weight, sample, note }) => (
             <div key={alias} className="flex items-baseline gap-6 py-4">
               <span className="w-32 shrink-0 text-small font-normal">{alias}</span>
@@ -3501,8 +3524,10 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
 
         <SubLabel>Monetisation states — Free · Stream-only · Stream + Download · Owned</SubLabel>
         <p className="text-xsmall text-muted-foreground mb-5 max-w-2xl">
-          The card's third row shows the album's monetisation state.
-          Free streams under the Muza subscription;
+          The card's third row shows the album's monetisation state — and
+          only when there's something to say. A free album (streams under the
+          Muza subscription) shows <span className="text-foreground">nothing</span> —
+          the absence of a price is the signal.
           <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">streamPrice</code>
           alone marks stream-only purchase albums; adding
           <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">downloadPrice</code>
@@ -3539,6 +3564,48 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             year={1973}
             purchased
           />
+        </div>
+
+        <SubLabel>Pricing &amp; “Owned” — A vs B (home A/B)</SubLabel>
+        <p className="text-xsmall text-muted-foreground mb-5 max-w-2xl">
+          The meta row — including the <span className="text-foreground">price</span> and the
+          <span className="text-foreground"> “Owned”</span> label — follows the chosen text
+          treatment. In <span className="text-foreground">B</span> it renders at the lighter (300)
+          weight with a hair of letter-spacing; “Owned” keeps <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">text-foreground</code> so
+          it stays a touch more present than the muted price.
+        </p>
+        <div className="flex flex-wrap gap-x-12 gap-y-6 mb-10">
+          {([
+            { v: "default" as const, label: "A — current (18 / 15px, normal)" },
+            { v: "xs17t"   as const, label: "B — refined (17px, light meta + tracking)" },
+          ]).map(({ v, label }) => (
+            <div key={v} className="flex flex-col gap-2">
+              <span className="text-2xsmall text-muted-foreground">{label}</span>
+              <div className="flex gap-4">
+                <div className="w-[180px]">
+                  <AlbumCard
+                    textVariant={v}
+                    cover="https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/19/b3/86/19b386e1-550c-0ec4-868b-542cd02bc382/118212.jpg/600x600bb.jpg"
+                    title="Glass Bead Game"
+                    artist="Clifford Jordan"
+                    year={1973}
+                    purchased
+                  />
+                </div>
+                <div className="w-[180px]">
+                  <AlbumCard
+                    textVariant={v}
+                    cover="https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/e5/24/aa/e524aacd-467b-66f3-8931-0fcd6750a4b9/08UMGIM07914.rgb.jpg/600x600bb.jpg"
+                    title="A Love Supreme"
+                    artist="John Coltrane"
+                    year={1965}
+                    streamPrice="$2.99"
+                    downloadPrice="$4.99"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
         <SubLabel>Title clamp · owned-by-user variant</SubLabel>
@@ -4021,6 +4088,8 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             one gap. Native scrollbar hidden.
           </li>
         </ul>
+        {/* Card-text treatment is being A/B-tested live on the Home page
+            (default vs `textVariant="xs17t"`) — see the floating toggle there. */}
         <CardRail title="New Albums">
           {HOME_NEW_ALBUMS.map(a => (
             <li key={a.id}><AlbumCard cover={a.cover} title={a.title} artist={a.artist} year={albumMetaFor(a.title).year} streamPrice={albumMetaFor(a.title).streamPrice} downloadPrice={albumMetaFor(a.title).downloadPrice} /></li>
@@ -4605,7 +4674,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           { label: "Album detail — Unlock All Songs CTA", href: "/?page=Album" },
         ]}>
         <p className="text-base text-muted-foreground mb-5 max-w-2xl">
-          The one-time checkout — wraps Pay.com's universal form and reads as a transactional cart. The non-obvious bits:
+          The one-time checkout — wraps Square's universal form and reads as a transactional cart. The non-obvious bits:
         </p>
         <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-5 max-w-2xl list-disc pl-5">
           <li>
@@ -4630,9 +4699,12 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         <p className="text-base text-muted-foreground mb-5 max-w-2xl">
           The non-profit paywall. Fires when an anonymous account trips
           the 3-play cap (or as a re-entry from Settings). Built as a
-          mini landing page, not a generic dialog — one continuous
-          muted surface, stacked muza lockup, bold headline, the
-          amount picker IS in the hero so subscribing is one click.
+          mini landing page, not a generic dialog — a two-up split:{" "}
+          <span className="text-foreground">why</span> (headline, pitch,
+          brand) on the left, <span className="text-foreground">action</span>{" "}
+          (amount picker + CTA) on the right. Stacks to a single flat column
+          on mobile via a container query on the dialog width — the brand
+          lockup drops to the footer.
         </p>
         <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-5 max-w-2xl list-disc pl-5">
           <li>

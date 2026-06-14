@@ -186,10 +186,10 @@
   /* ── Muza type scale ────────────────────────────────────────────────────
    * Primitives — raw px values, 1:1 with Figma's updated scale.
    * Semantic aliases (below) point at these via var() — never a raw value. */
-  --text-xxs:  14px;
+  --text-xxs:  15px;
   --text-xs:   16px;
   --text-sm:   18px;
-  --text-base: 20px;
+  --text-base: 21px;
   --text-lg:   24px;
   --text-xl:   30px;
   --text-2xl:  36px;
@@ -205,7 +205,7 @@
    * Full set, 1:1 name match with Figma's "base sizes" semantic family.
    * "base" is omitted because the alias name equals the primitive name
    * (`text-base`) — the primitive already serves that role. */
-  --text-2xsmall: var(--text-xxs);  /* 14px — Figma "2x small"     */
+  --text-2xsmall: var(--text-xxs);  /* 15px — Figma "2x small"     */
   --text-xsmall:  var(--text-xs);   /* 16px — Figma "extra small"  */
   --text-small:   var(--text-sm);   /* 18px — Figma "small"        */
   --text-large:   var(--text-lg);   /* 24px — Figma "large"        */
