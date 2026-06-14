@@ -31,6 +31,7 @@ import { Pencil, Download } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { PlayFilledAlt } from "@/components/ui/transport-icons"
+import { CoverArt } from "@/components/ui/cover-art"
 import { AlbumCardMenu } from "@/components/ui/cover-card-menu"
 import { LibraryHeartButton } from "@/components/ui/library-heart-button"
 import { PurchasedBadge } from "@/components/ui/purchased-badge"
@@ -158,12 +159,7 @@ export function AlbumCard({
         {...coverGestures}
         className="relative aspect-square w-full overflow-hidden cursor-pointer select-none touch-none"
       >
-        <img
-          src={cover}
-          alt={title}
-          draggable={false}
-          className="size-full object-cover"
-        />
+        <CoverArt src={cover} alt={title} />
 
         {/* Dark linear gradient (bottom → top), theme-agnostic.
              Softer than before (`/45` cap) so cover details stay
@@ -236,7 +232,7 @@ export function AlbumCard({
         </div>
       </div>
 
-      <div className="flex flex-col gap-0.5 min-w-0">
+      <div className="flex flex-col gap-1 min-w-0">
         {/* Title — clean text row, 2-line clamp (Spotify-style) so
              longer release names wrap instead of getting truncated
              mid-word. The "Owned" pill / pricing meta both live in

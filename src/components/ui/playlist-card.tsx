@@ -81,7 +81,7 @@ export function PlaylistCard({
   const titleSize  = "text-xsmall"
   const metaSize   = "text-xsmall"
   const leadingCls = "leading-[18px]"
-  const rowsGap    = "gap-0.5"
+  const rowsGap    = "gap-1"
   const metaWeight = "font-light"
   const metaTracking = "tracking-[0.02em]"
   const player = usePlayer()

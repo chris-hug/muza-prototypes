@@ -16,6 +16,7 @@
 
 import { SAVED_ALBUMS, type SavedAlbum } from "@/components/app/library-albums-view"
 import { slugify as slug } from "@/lib/media-nav"
+import { artistImage } from "@/lib/artist-data"
 
 export interface AlbumTrack {
   id:       string
@@ -31,7 +32,8 @@ export interface RailAlbum {
 
 export interface AlbumPerson {
   name:  string
-  image: string
+  /** Real portrait, or undefined → ArtistCard shows the branded placeholder. */
+  image?: string
   /** Instrument / contribution, e.g. "Tenor Saxophone". Shown in the
    *  credits dialog; omitted for the plain "Artists on this album" rail. */
   role?: string
@@ -69,8 +71,12 @@ export interface Credits {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────
-const portrait = (name: string) => `https://picsum.photos/seed/${slug(name)}/400/400`
-const avatar   = (name: string) => `https://picsum.photos/seed/${slug(name)}-av/120/120`
+// Real portraits from the curated artist DB / wider Wikipedia set.
+// `portrait` → undefined for unknowns (ArtistCard shows the branded
+// placeholder); `avatar` keeps a pravatar fallback for the small header
+// avatar (playlist curators / unknown leads) where a circle must fill.
+const portrait = (name: string) => artistImage(name)
+const avatar   = (name: string) => artistImage(name) ?? `https://i.pravatar.cc/400?u=${slug(name)}`
 
 // Known-good covers (reused from SAVED_ALBUMS). The "more from" rails
 // cycle through this pool so every entry shows real artwork even when

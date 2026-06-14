@@ -24,6 +24,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { PlayFilledAlt, PauseFilledAlt } from "@/components/ui/transport-icons"
 import { PlayingWave } from "@/components/ui/playing-wave"
+import { CoverArt } from "@/components/ui/cover-art"
 
 export interface CoverPlayButtonProps {
   /** Image URL for the cover thumbnail. */
@@ -105,12 +106,7 @@ export function CoverPlayButton({
            `overflow-hidden` rounds the cover corners. Everything in
            here is flat 2D, so clipping is harmless. */}
       <span className="absolute inset-0 overflow-hidden rounded-xs">
-        <img
-          src={src}
-          alt=""
-          draggable={false}
-          className="size-full object-cover"
-        />
+        <CoverArt src={src} />
         {/* Dark-wash overlay — always rendered, opacity-0 at rest,
              fades in when playing OR hovered. `bg-black/40 + text-white`
              keeps the wash theme-agnostic (still dark in dark mode). */}

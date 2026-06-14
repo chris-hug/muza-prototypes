@@ -176,6 +176,8 @@ const PRODUCTS = [
   { id: "p4", title: "Saturn Records Cap",                       price: "28 $",  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
   { id: "p5", title: "Cosmic Equation Poster",                   price: "18 $",  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
   { id: "p6", title: "Space Is the Place Tote Bag",              price: "22 $",  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
+  { id: "p7", title: "Sun Ra Arkestra Enamel Pin",              price: "12 $",  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
+  { id: "p8", title: "Astro-Black Mythology Hoodie",            price: "65 $",  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
 ]
 
 // 2×2 composite covers for the Curated Playlists row.
@@ -195,6 +197,8 @@ const CURATED_PLAYLISTS = [
   { id: "cp4", title: "Arkestra Live",             songCount: 27, owner: "Léa M",    covers: composite(3) },
   { id: "cp5", title: "Saturn-bound",              songCount: 51, owner: "Otto K",   covers: composite(4) },
   { id: "cp6", title: "Spiritual Jazz Cornerstones", songCount: 38, owner: "Hana N", covers: composite(0) },
+  { id: "cp7", title: "Outer Space Ways",          songCount: 29, owner: "Théo R",          covers: composite(2) },
+  { id: "cp8", title: "Heliocentric Worlds",       songCount: 44, owner: "Muza Editorial",  covers: composite(1) },
 ]
 
 const SIMILAR_ARTISTS = [
@@ -204,6 +208,8 @@ const SIMILAR_ARTISTS = [
   { id: "sa4", name: "Yusef Lateef",    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Yusef_Lateef.jpg/500px-Yusef_Lateef.jpg" },
   { id: "sa5", name: "Don Cherry",      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Don_Cherry_in_2010.jpg/500px-Don_Cherry_in_2010.jpg" },
   { id: "sa6", name: "Anthony Braxton", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Anthony_braxton_5268134w.jpg/500px-Anthony_braxton_5268134w.jpg" },
+  { id: "sa7", name: "Shabaka Hutchings", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Shabaka_Hutchings_Sons_of_Kemet_Oslo_Jazzfestival_2018_%28223102%29.jpg/500px-Shabaka_Hutchings_Sons_of_Kemet_Oslo_Jazzfestival_2018_%28223102%29.jpg" },
+  { id: "sa8", name: "Theon Cross",      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Theon_Cross_at_Ljubljana%2C_May_2015.jpg/500px-Theon_Cross_at_Ljubljana%2C_May_2015.jpg" },
 ]
 
 // Register this artist's releases + curated playlists into the catalogs

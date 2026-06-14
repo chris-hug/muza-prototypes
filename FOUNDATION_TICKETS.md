@@ -140,3 +140,10 @@ instead of inflating the hero further.
   intentional — cards are sized to ~60% so a sliver of the next
   card is visible, signaling scrollability. Don't widen them to
   exactly N cards at that breakpoint.
+- **Bottom gutter (player clearance).** The player floats over the
+  content (desktop bar ~80px at `bottom-5`; mobile footer-nav + mini
+  bar ≈ 112px), so the shell's scroll container carries **`pb-32`
+  (128px) on every page** — set once on the scroll `<div>` in the root
+  shell, not per page. Last content must always scroll clear of the
+  bar; nothing hides behind it. Add page-specific bottom space only
+  *on top of* this gutter when a layout truly needs it.

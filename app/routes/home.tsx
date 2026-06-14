@@ -327,9 +327,9 @@ function smoothScrollTo(scroller: Element, targetTop: number) {
   requestAnimationFrame(step)
 }
 
-function SubLabel({ children }: { children: React.ReactNode }) {
+function SubLabel({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <p className="text-xsmall font-normal text-muted-foreground mb-3">{children}</p>
+    <p className={cn("text-xsmall font-normal text-muted-foreground mb-3", className)}>{children}</p>
   )
 }
 
@@ -913,7 +913,7 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
       {/* Discovery rails — four content rows below the call-to-action.
            The outer `@container` lets CardRail's grid step its column
            count off the row's own width, independent of viewport. */}
-      <div className="@container mt-24 flex flex-col">
+      <div className="@container mt-24 flex flex-col gap-8">
         <CardRail title="New Albums">
           {HOME_NEW_ALBUMS.map(a => (
             <li key={a.id}>{renderAlbum(a)}</li>
@@ -3588,6 +3588,18 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             year={2020}
           />
         </div>
+
+        <SubLabel className="mt-12">Missing-artwork fallback</SubLabel>
+        <p className="text-xsmall text-muted-foreground mb-5 max-w-2xl">
+          When a cover is missing or fails to load, the artwork square shows
+          the branded placeholder (muted square + soft solid-secondary muza
+          mark) via the shared <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">CoverArt</code> —
+          same language as the artist circle and song rows.
+        </p>
+        <div className="grid grid-cols-[repeat(1,minmax(143px,220px))] @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))] gap-x-4 gap-y-6">
+          <AlbumCard cover="" title="Untitled Release" artist="Unknown Artist" year={2026} streamPrice="$1.99" />
+          <AlbumCard cover="" title="Lost Tapes, Vol. 2" artist="Various Artists" purchased />
+        </div>
       </Section>
 
       {/* ══ ARTIST CARD ══ */}
@@ -3614,6 +3626,18 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           <ArtistCard name="Sun Ra"          image="https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Sun_Ra_%281973_publicity_photo_-_Impulse_ABC_Dunhill%29.jpg/500px-Sun_Ra_%281973_publicity_photo_-_Impulse_ABC_Dunhill%29.jpg" />
           <ArtistCard name="Anthony Braxton" image="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Anthony_braxton_5268134w.jpg/500px-Anthony_braxton_5268134w.jpg" />
           <ArtistCard name="Nubya Garcia"    image="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Nubya_Garcia_INNt%C3%B6ne_01.jpg/500px-Nubya_Garcia_INNt%C3%B6ne_01.jpg" />
+        </div>
+
+        <SubLabel className="mt-12">No-photo fallback</SubLabel>
+        <p className="text-xsmall text-muted-foreground mb-5 max-w-2xl">
+          When there's no real portrait (or one fails to load), the circle
+          shows a branded placeholder — a muted disc with a soft, solid
+          secondary muza mark — instead of a random stock photo. Same
+          treatment carries to album / song artwork (see those sections).
+        </p>
+        <div className="grid-cards">
+          <ArtistCard name="Curtis Fuller" />
+          <ArtistCard name="Unknown Artist" />
         </div>
       </Section>
 
@@ -3815,6 +3839,19 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
                 album="Sleeping Beauty"
                 year={1979}
                 duration="9:03"
+                menuItems={<AlbumCardMenuItems />}
+              />
+            </li>
+            {/* Missing-artwork fallback — empty cover → branded CoverArt
+                placeholder (muted square + soft solid-secondary muza mark). */}
+            <li>
+              <SongListItem
+                cover=""
+                title="Untitled (no artwork)"
+                artist="Unknown Artist"
+                album="Bootleg Series"
+                year={1971}
+                duration="6:02"
                 menuItems={<AlbumCardMenuItems />}
               />
             </li>
@@ -5329,7 +5366,10 @@ export default function Home() {
             className="absolute inset-x-0 top-0 z-30"
           />
         )}
-        <div ref={scrollRef} className={cn("flex-1 overflow-auto", !footerNav && "pt-[54px]", footerNav && "pb-24")}>
+        {/* Bottom gutter on every page so content can always scroll clear of
+            the floating player bar (desktop) / footer-nav + mini bar (mobile)
+            — nothing ever hides behind them. */}
+        <div ref={scrollRef} className={cn("flex-1 overflow-auto pb-32", !footerNav && "pt-[54px]")}>
           {/* Phone header — sticky top of the scroll area so the frosted
               glass reads against scrolling content. Sits OUTSIDE the
               keyed fade wrapper so it doesn't re-fade on every nav. */}
