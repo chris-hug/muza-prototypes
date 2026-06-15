@@ -4169,7 +4169,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           <li><span className="text-foreground">Meta line</span> is priority-ordered against its own width: year/duration drops first (&lt; 320), then type (&lt; 240), and the owner only <span className="text-foreground">truncates as a last resort</span> once both are gone — so the owner stays readable as long as possible.</li>
         </ul>
         <p className="text-base text-muted-foreground mb-8 max-w-2xl">
-          The header's own "…" persists across both horizontal tiers; the <span className="text-foreground">page-gutter</span> "…" (mirroring the back chevron) only appears in the stacked tier (&lt; 560), where there's no cluster. The full-cluster floor of <span className="text-foreground">780px</span> is what the sidebar auto-collapse and the <a href="/?page=DesignSystem#card-rail" className="text-primary-text hover:underline underline-offset-2">Card Rail</a> peek boundary are synced to. See <a href="/?page=DesignSystem#responsive" className="text-primary-text hover:underline underline-offset-2">Responsive &amp; Pointer</a>.
+          The header's own "…" persists across both horizontal tiers; the <span className="text-foreground">page-gutter</span> "…" (mirroring the back chevron) only appears in the stacked tier (&lt; 560), where there's no cluster. The full-cluster floor of <span className="text-foreground">780px</span> is what the sidebar auto-collapse (<span className="text-foreground">1069</span> = 780 + sidebar + gutters) is synced to; the <a href="/?page=DesignSystem#card-rail" className="text-primary-text hover:underline underline-offset-2">Card Rail</a> peek boundary is synced to the <span className="text-foreground">560</span> stack breakpoint instead. See <a href="/?page=DesignSystem#responsive" className="text-primary-text hover:underline underline-offset-2">Responsive &amp; Pointer</a>.
         </p>
         <div className="flex flex-col gap-10">
           <div className="flex flex-col gap-2">
@@ -5247,7 +5247,7 @@ export default function Home() {
   }
 
   // Sidebar auto-collapses at a breakpoint synced to the MediaHeader's
-  // full-cluster tier (see `useSidebarAutoCollapsed`): below ~1169px the
+  // full-cluster tier (see `useSidebarAutoCollapsed`): below ~1069px the
   // expanded 208px sidebar would push the detail-page header out of its
   // richest layout, so we collapse it to reclaim that width. "Auto wins
   // on resize" — the effect only fires when the threshold is crossed, so

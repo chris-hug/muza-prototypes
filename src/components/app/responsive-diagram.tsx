@@ -126,7 +126,7 @@ export function ResponsiveDiagram() {
       {/* Legend for the gutter band */}
       <div className="flex items-center gap-2 text-2xsmall text-muted-foreground -mt-3">
         <span aria-hidden className="inline-block h-3 w-4 rounded-[2px] bg-primary/10 border border-dashed border-primary/30" />
-        page gutter (<code className="font-sans px-1 rounded-sm bg-muted">px-page</code>) · sidebar collapses to an icon rail below 1069, then to a bottom tab bar below 768
+        page gutter (<code className="font-sans px-1 rounded-sm bg-muted">px-page</code>) · sidebar collapses to an icon rail below 1069, then sidebar + topbar swap for a bottom tab bar + mobile header below 608
       </div>
 
       <div className="h-px bg-border" />

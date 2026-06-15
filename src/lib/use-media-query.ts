@@ -56,7 +56,7 @@ const SIDEBAR_EXPANDED_W  = 208   // MIN_W in sidebar.tsx
 const CONTENT_PADDING_X   = 80    // detail view px-10 × 2
 const SIDEBAR_BORDER      = 1
 export const SIDEBAR_COLLAPSE_BELOW =
-  SIDEBAR_FULL_HEADER + SIDEBAR_EXPANDED_W + CONTENT_PADDING_X + SIDEBAR_BORDER // 1169
+  SIDEBAR_FULL_HEADER + SIDEBAR_EXPANDED_W + CONTENT_PADDING_X + SIDEBAR_BORDER // 1069
 
 /**
  * True when the viewport is narrow enough that the sidebar should

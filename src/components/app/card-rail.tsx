@@ -73,10 +73,10 @@ interface CardRailProps {
   showAllLabel?: string | null
   onShowAll?: () => void
   /** Opt-in "swipeable grid" mode for MOBILE only. When true, on
-   *  screens below 692px the rail lays cards out as a 2-row,
+   *  containers below 560px the rail lays cards out as a 2-row,
    *  column-major horizontal grid (swipe across columns) instead of
-   *  a single row — surfacing ~2× the cards per screen. Desktop
-   *  (≥ 692px) is unchanged (single-row exact grid).
+   *  a single row — surfacing ~2× the cards per screen. From 560px up
+   *  it collapses to a single-row exact grid (unchanged).
    *
    *  Editorial rule (host's call, NOT enforced here): only enable
    *  this when the rail holds 12+ entries, and only when a muza

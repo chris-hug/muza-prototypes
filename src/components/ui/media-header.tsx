@@ -281,9 +281,9 @@ export function MediaHeader({
 
   return (
     <header className={cn("@container relative w-full", className)}>
-      {/* Layout flips at 692: stacked (cover on top) below, horizontal
-           (cover left, content right, actions pinned to cover's bottom
-           via justify-between + the 300px height) at and above. */}
+      {/* Layout flips at 560 (container): stacked (cover on top) below,
+           horizontal (cover left, content right, actions pinned to cover's
+           bottom via justify-between + the 300px height) at and above. */}
       <div className="flex flex-col gap-4 @min-[560px]:flex-row @min-[560px]:items-stretch @min-[560px]:h-[300px] @min-[560px]:py-4">
         {/* Cover — on mobile it's centered and inset (≈76% width) so the
              overlaid detail-header back / "…" buttons sit in the side
