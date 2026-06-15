@@ -172,6 +172,15 @@ The persistent player floats over the content (desktop: `AppPlayer` pinned ~`bot
 
 **Keep all three caps in sync.** If you change the tier-1 max-w, you must also recompute the tier-1 hero `max-h` (`max-w × 400/1072`) and the tier-2 mirror.
 
+### Missing artwork — branded fallback (`CoverArt`)
+
+Empty states must read as **intentional**, never as a broken image. Every piece of release/portrait artwork goes through a branded fallback rather than a raw `<img>`:
+
+- **Albums / songs / releases** — use [`CoverArt`](src/components/ui/cover-art.tsx): a square `<img>` that, when `src` is missing **or fails to load** (`onError`), swaps to a `bg-muted` box centered on a soft **solid-`secondary`** muza `LogoMark`. The `className` applies to both the image and the fallback box (same square), so rounding/sizing match.
+- **Artists** — the [`ArtistCard`](src/components/ui/artist-card.tsx) portrait uses the same language in a **circle** (`bg-muted` + solid-`secondary` mark), inset via padding so portrait-aspect thumbnails never render oval.
+
+**Rules.** The mark is **solid `text-secondary` (no alpha)** so the three overlapping circles read as one flat shape (alpha darkens where they cross). Fallback fill is always `bg-muted`. Don't hand-roll per-surface placeholders — route through `CoverArt` / the `ArtistCard` pattern so the empty state is consistent everywhere.
+
 ### Border-radius (primitives, px)
 `rounded-none` 0 · `rounded-sm` 2 · `rounded` 4 · `rounded-md` 6 · `rounded-lg` 8 · `rounded-xl` 12 · `rounded-2xl` 16 · `rounded-3xl` 24 · `rounded-4xl` 32 · `rounded-full` 9999
 
@@ -206,13 +215,17 @@ Figma primitives now match Muza CSS 1:1 after Figma was updated to adopt Muza's 
 | `text-sm`  | **19**  | 19  | ✅ |
 | `text-base`| **21**  | 21  | ✅ |
 | `text-lg`  | **24**  | 24  | ✅ |
-| `text-xl`  | **30**  | 30  | ✅ |
-| `text-2xl` | **36**  | 36  | ✅ |
-| `text-3xl` | **48**  | 48  | ✅ |
-| `text-4xl` | **60**  | 60  | ✅ |
-| `text-5xl` | **72**  | 72  | ✅ |
-| `text-6xl` | **96**  | 96  | ✅ |
-| `text-7xl` | **128** | 128 | ✅ |
+| `text-xl`  | **30**  | 30 (fixed)        | ✅ |
+| `text-2xl` | **36**  | 32 → 36 (fluid)   | ✅ |
+| `text-3xl` | **48**  | 34 → 48 (fluid)   | ✅ |
+| `text-4xl` | **60**  | 38 → 60 (fluid)   | ✅ |
+| `text-5xl` | **72**  | 44 → 72 (fluid)   | ✅ |
+| `text-6xl` | **96**  | 52 → 96 (fluid)   | ✅ |
+| `text-7xl` | **128** | 62 → 128 (fluid)  | ✅ |
+| `text-8xl` | **160** | 72 → 160 (fluid)  | ✅ added |
+| `text-9xl` | **200** | 84 → 200 (fluid)  | ✅ added |
+
+**Display sizes (`text-2xl`–`text-9xl`) are FLUID** — each is a `clamp(min, vw-interpolation, max)` where `max` is the desktop ceiling (the Figma value) and `min` is a mobile floor, interpolating across a **360px → 1280px** viewport band and pinning at both ends. `text-xl` and below stay **fixed** (body/UI text must not reflow with the viewport). The raw `clamp()` definitions live in [`app/app.css`](app/app.css) — never restate the px in components; use the semantic alias.
 | `text-8xl` | **160** | 160 | ✅ |
 | `text-9xl` | **200** | 200 | ✅ |
 
@@ -374,6 +387,8 @@ The rule is identical: **an alias never holds a raw value; it references the pri
 |---|---|---|
 | `text-xxs` | 15px | **minimum** — chips, badges, button-sm only |
 | `text-xs` | 17px | media-card title + meta, table rows, captions, metadata, helper text |
+
+**Media-card text contrast.** On cards, list rows, and media items the **title is `font-normal`** and the **meta rows are `font-light` with `tracking-[0.02em]`** (both `text-xsmall`/17px) — the weight contrast (not size) is what separates title from artist/year/price. Keep title↔meta vertical rhythm even (single `gap`); meta stays `text-muted-foreground`.
 | `text-sm` | 19px | body, labels, inputs, nav sub-items, song-list rows |
 | `text-base` | 21px | lead text, nav items, primary content; Card Rail section titles |
 | `text-lg` | 24px | large body |
