@@ -71,6 +71,7 @@ export const SECTION_SOURCE: Record<string, string> = {
 
   // Page composition
   "media-header": "src/components/ui/media-header.tsx",
+  "artist-header": "src/components/app/artist-hero.tsx",
   "media-list-item": "src/components/ui/media-list-item.tsx",
   search:            "src/components/app/search-results-view.tsx",
   "mobile-header": "src/components/ui/mobile-header.tsx",

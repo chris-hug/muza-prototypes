@@ -26,7 +26,7 @@
 
 import * as React from "react"
 import { useMemo, useRef, useState } from "react"
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, LayoutGrid, List, MoreHorizontal, Radio, Heart, ListPlus, Disc3, Info } from "lucide-react"
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, LayoutGrid, List, MoreHorizontal, Heart, ListPlus, Disc3, Info } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { ContentTypeBadge } from "@/components/ui/badge"
@@ -45,14 +45,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { AlbumCardMenuItems } from "@/components/ui/cover-card-menu"
 import { useUserLibrary } from "@/lib/user-library"
-import { LibraryHeartButton } from "@/components/ui/library-heart-button"
+import { ArtistHero } from "./artist-hero"
+import { artistImage } from "@/lib/artist-data"
 import { albumMetaFor, libraryIdForTitle } from "@/lib/album-meta"
-import { ShareButton, ShareMenuItems } from "@/components/ui/share-button"
+import { ShareMenuItems } from "@/components/ui/share-button"
 import { useCredits } from "@/lib/credits-context"
 import { hasAlbumDetail, registerAlbums } from "@/lib/album-catalog"
 import { hasPlaylistDetail, registerPlaylists } from "@/lib/playlist-catalog"
 import { useMediaNav, slugify } from "@/lib/media-nav"
-import { useFooterNav } from "@/lib/use-media-query"
 import { usePlayer } from "@/lib/player"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ToggleGroup } from "@/components/ui/toggle-group"
@@ -63,7 +63,6 @@ import { PlaylistCard } from "@/components/ui/playlist-card"
 import { ProductCard } from "@/components/ui/product-card"
 import { SongListItem } from "@/components/ui/song-list-item"
 import { CoverPlayButton } from "@/components/ui/cover-play-button"
-import { PlayFilledAlt, PauseFilledAlt } from "@/components/ui/transport-icons"
 import { CardRail } from "@/components/app/card-rail"
 import { usePublishDetailHeader } from "@/lib/detail-actions"
 
@@ -75,7 +74,7 @@ import { usePublishDetailHeader } from "@/lib/detail-actions"
 const ARTIST = {
   name:   "Sun Ra",
   cover:  "https://miro.medium.com/v2/resize:fit:4800/format:webp/1*lGV1JcK0hYHFLvyimbVK5Q.jpeg",
-  bio:    "Sun Ra (born Herman Poole Blount; May 22, 1914 – May 30, 1993) was an American jazz composer, bandleader, piano and synthesizer player, and poet known for his experimental music, cosmic philosophy, prolific output and theatrical performances.",
+  bio:    "Sun Ra (born Herman Poole Blount; May 22, 1914 – May 30, 1993) was an American jazz composer, bandleader, piano and synthesizer player, and poet known for his experimental music, cosmic philosophy, prolific output and theatrical performances.\n\nFor much of his career he led the Arkestra, an ensemble with an ever-changing lineup and name, distinguished by its costumes, choreography and freewheeling sound. Born in Birmingham, Alabama, he abandoned his birth name and claimed to be an alien from Saturn on a mission to preach peace — a persona he used to explore space, mythology and Black liberation.\n\nAcross more than three decades he recorded hundreds of releases, many on his own Saturn label, spanning bebop, big-band swing, free jazz and pioneering electronic music. Long a cult figure, he is now widely regarded as a visionary whose influence reaches across jazz, funk and experimental music.",
 }
 
 // Real Sun Ra tracks pulled from the corresponding album sleeves
@@ -233,7 +232,6 @@ registerPlaylists(
 export function ArtistProfileView() {
   const { openAlbum, openPlaylist, openArtist } = useMediaNav()
   const [tab, setTab] = useState("overview")
-  const [bioOpen, setBioOpen] = useState(false)
   const library = useUserLibrary()
   const player = usePlayer()
   // This artist is the active player source AND playing → hero Play
@@ -242,10 +240,6 @@ export function ArtistProfileView() {
   // Artist library key — the hero heart and the mobile "…" menu both bind
   // to the shared store by this id, so they stay in sync (and persist).
   const artistId = slugify(ARTIST.name)
-  // On mobile (footer-nav active) the hero's Share + library buttons
-  // collapse into the floating header's "…"; gated on the actual
-  // footer-nav breakpoint, not Tailwind's `md`, so it stays in sync.
-  const footerNav = useFooterNav()
 
   // Publish the title + cover + menu for the floating mobile chrome. On
   // mobile the hero's Share + Add-to-library buttons collapse into the
@@ -280,90 +274,22 @@ export function ArtistProfileView() {
            Button outline variant (border-border + bg-background/20 +
            backdrop-blur) renders correctly on the dark photo backdrop
            without any per-button colour overrides. */}
-      {/* Hero height is locked to the same growth ceilings as the
-           inner content wrappers (the page-wide
-           `max-w-[1480px] min-[1920px]:max-w-[1716px]` pattern).
-           At each ceiling the natural aspect-[1072/400] gives:
-             ·  tier 1: 1480 × 400/1072 ≈ 552px
-             ·  tier 2: 1716 × 400/1072 ≈ 640px
-           So the hero stops growing taller at exactly the same
-           viewport widths where the rails stop growing wider. */}
-      <section className="dark relative w-full aspect-[1072/400] min-h-[320px] max-h-[552px] min-[1920px]:max-h-[640px] overflow-hidden text-foreground">
-        <img
-          src={ARTIST.cover}
-          alt={ARTIST.name}
-          draggable={false}
-          className="absolute inset-0 size-full object-cover"
-        />
-        {/* Theme-agnostic dark gradient over the photo so the
-             foreground content stays readable regardless of cover. */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/40 to-black/80"
-        />
-
-        {/* Back lives in the top bar (chrome) — see the shell's <Topbar>. */}
-
-        {/* Name + bio — pinned to bottom-left of the hero. */}
-        <div className="absolute inset-x-0 bottom-0 mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] w-full px-page pb-8 flex flex-col gap-4">
-          <div className="max-w-3xl flex flex-col gap-3">
-            <h1 className="text-[clamp(2.5rem,5vw,4rem)] font-medium leading-[1.05] tracking-tight">
-              {ARTIST.name}
-            </h1>
-            <p className={cn("text-small leading-6 text-foreground/90", !bioOpen && "line-clamp-3")}>
-              {ARTIST.bio}{" "}
-              <button
-                type="button"
-                onClick={() => setBioOpen(o => !o)}
-                className="underline underline-offset-[3px] [text-decoration-thickness:1px] cursor-pointer"
-              >
-                {bioOpen ? "show less" : "read more"}
-              </button>
-            </p>
-          </div>
-
-          {/* Action row — Play (primary), Artist radio (outline), then
-               circular Share + Add-to-library on the right. On mobile
-               (max-md, the footer-nav breakpoint) the Share + library
-               buttons collapse into the floating header's "…" instead,
-               so they're hidden here. */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Button
-                size="lg"
-                className="h-12 px-6 rounded-full"
-                aria-pressed={isThisArtistPlaying}
-                onClick={() => {
-                  if (player.playingFrom === ARTIST.name && player.track) { player.toggle(); return }
-                  const s = TOP_SONGS[0]; player.play(
-                    { title: s.title, artist: ARTIST.name, album: s.album, image: s.cover, totalTime: s.duration, artistAvatar: ARTIST.cover },
-                    ARTIST.name,
-                  )
-                }}
-              >
-                {isThisArtistPlaying ? <PauseFilledAlt className="size-4" /> : <PlayFilledAlt className="size-4" />}
-                {isThisArtistPlaying ? "Pause" : "Play"}
-              </Button>
-              <Button variant="outline" size="lg" className="h-12 px-6 rounded-full">
-                <Radio />
-                Artist radio
-              </Button>
-            </div>
-            {!footerNav && (
-              <div className="flex items-center gap-2">
-                <ShareButton variant="outline" size="icon" title={ARTIST.name} text={ARTIST.name} />
-                <LibraryHeartButton
-                  type="artist"
-                  id={artistId}
-                  name={ARTIST.name}
-                  variant="outline"
-                  size="icon"
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
+      <ArtistHero
+        name={ARTIST.name}
+        cover={ARTIST.cover}
+        avatar={artistImage(ARTIST.name)}
+        bio={ARTIST.bio}
+        artistId={artistId}
+        isPlaying={isThisArtistPlaying}
+        onPlayToggle={() => {
+          if (player.playingFrom === ARTIST.name && player.track) { player.toggle(); return }
+          const s = TOP_SONGS[0]
+          player.play(
+            { title: s.title, artist: ARTIST.name, album: s.album, image: s.cover, totalTime: s.duration, artistAvatar: ARTIST.cover },
+            ARTIST.name,
+          )
+        }}
+      />
 
       {/* ── Tab strip ──────────────────────────────────────────────────
            Full-bleed muted band so the tabs sit visually attached to

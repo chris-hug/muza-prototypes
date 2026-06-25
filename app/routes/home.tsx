@@ -166,6 +166,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
 import { CardRail } from "@/components/app/card-rail"
 import { PlaylistCreateCard } from "@/components/ui/playlist-create-card"
 import { MediaHeader } from "@/components/ui/media-header"
+import { ArtistHero } from "@/components/app/artist-hero"
 import {
   MobileHeader, MobileTitleRow, MobileIconButton, MobileAvatar,
   MobileSearchBar, MobilePillTabs, MobileScopeToggle,
@@ -4301,6 +4302,31 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             />
           </div>
         </div>
+      </Section>
+
+      {/* ══ ARTIST HEADER ══ */}
+      <Section id="artist-header" title="Artist Header"
+        usage={[
+          { label: "Artist profile (hero)", href: "/?page=Artist&artist=sun-ra" },
+        ]}>
+        <p className="text-base text-muted-foreground mb-2 max-w-2xl">
+          The full-bleed hero on the artist page — distinct from the <a href="/?page=DesignSystem#media-header" className="text-primary-text hover:underline underline-offset-2">Media Header</a> (album / playlist). A cover photo under a dark gradient, with name, bio, and the action row pinned bottom-left.
+        </p>
+        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-3 max-w-2xl list-disc pl-5">
+          <li><span className="text-foreground">Dual-cap height</span> — <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">aspect-[1072/400]</code>, floor <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">min-h-[320px]</code>, cap <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">max-h-[552px]</code> → <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">min-[1920px]:max-h-[640px]</code>. Derived from the page-width tiers (1480 / 1716 × 400/1072), so it stops growing exactly where the rails do. See <a href="/?page=DesignSystem#responsive" className="text-primary-text hover:underline underline-offset-2">Responsive &amp; Pointer</a>.</li>
+          <li><span className="text-foreground">Dark gradient</span> over the photo (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">from-black/35 via-black/40 to-black/80</code>) so white foreground stays readable on any cover; the section is <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">.dark</code>-scoped so outline buttons read correctly.</li>
+          <li><span className="text-foreground">Content</span> pinned bottom-left in the same <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">max-w-[1480px]</code> wrapper as the page below — name (fluid <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">clamp(2.5rem,5vw,4rem)</code>), a 3-line bio with read-more, then Play / Artist radio + Share / Save.</li>
+        </ul>
+        <SubLabel>Live component · <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">&lt;ArtistHero&gt;</code> from <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">artist-hero.tsx</code></SubLabel>
+        <ArtistHero
+          name="Sun Ra"
+          cover="https://miro.medium.com/v2/resize:fit:4800/format:webp/1*lGV1JcK0hYHFLvyimbVK5Q.jpeg"
+          avatar="https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Sun_Ra_%281973_publicity_photo_-_Impulse_ABC_Dunhill%29.jpg/500px-Sun_Ra_%281973_publicity_photo_-_Impulse_ABC_Dunhill%29.jpg"
+          bio={"Sun Ra (born Herman Poole Blount; May 22, 1914 – May 30, 1993) was an American jazz composer, bandleader, piano and synthesizer player, and poet known for his experimental music, cosmic philosophy, prolific output and theatrical performances.\n\nFor much of his career he led the Arkestra, an ensemble with an ever-changing lineup and name, distinguished by its costumes, choreography and freewheeling sound. Born in Birmingham, Alabama, he abandoned his birth name and claimed to be an alien from Saturn on a mission to preach peace — a persona he used to explore space, mythology and Black liberation.\n\nAcross more than three decades he recorded hundreds of releases, many on his own Saturn label, spanning bebop, big-band swing, free jazz and pioneering electronic music. Long a cult figure, he is now widely regarded as a visionary whose influence reaches across jazz, funk and experimental music."}
+          artistId="sun-ra"
+          isPlaying={false}
+          onPlayToggle={() => {}}
+        />
       </Section>
 
       {/* ══ MOBILE HEADER ══ */}

@@ -571,6 +571,16 @@
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+  /* Text selection — use the warm `--secondary` surface instead of the
+     browser's default blue, so highlighting stays on-brand. */
+  ::selection {
+    background-color: var(--secondary);
+    color: var(--secondary-foreground);
+  }
+  ::-moz-selection {
+    background-color: var(--secondary);
+    color: var(--secondary-foreground);
+  }
 }
 
 /* ── Image outline (skill: pure black/white, never a tinted neutral) ────────

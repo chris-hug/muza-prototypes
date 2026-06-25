@@ -160,7 +160,7 @@ The app uses **two content-growth tiers** so very wide viewports don't leave gap
 
 `CardRail` mirrors the same step map — see [`src/components/app/card-rail.tsx`](src/components/app/card-rail.tsx).
 
-**Artist hero (`artist-profile-view.tsx`)** uses the same dual cap:
+**Artist hero (`ArtistHero`, `artist-hero.tsx`)** uses the same dual cap (a reusable component, also shown in the DS under "Artist Header"):
 ```tsx
 <section className="aspect-[1072/400] min-h-[320px] max-h-[552px] min-[1920px]:max-h-[640px] …">
 ```

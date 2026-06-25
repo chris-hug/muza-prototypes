@@ -72,6 +72,7 @@ export const SECTION_STATUS: Record<string, SectionStatusEntry> = {
   // ── This cycle: new ───────────────────────────────────────────
   "Chip Input":            { status: "new" },
   "Media Header":          { status: "new" },
+  "Artist Header":         { status: "new" },
   "Mobile Header":         { status: "new" },
   "Footer Nav":            { status: "new" },
   "Media List Item":       { status: "new" },
