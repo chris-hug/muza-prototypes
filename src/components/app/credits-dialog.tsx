@@ -161,13 +161,11 @@ function CreditsDialogContent({ credits, onClose }: { credits: Credits; onClose:
     // md dialog with its normal zoom-in.
     <DialogContent
       className={cn(
-        "left-0 right-0 top-auto bottom-0 translate-x-0 translate-y-0 max-w-full rounded-b-none rounded-t-2xl",
-        "data-open:zoom-in-100 data-open:slide-in-from-bottom-4",
-        "sm:left-1/2 sm:right-auto sm:top-1/2 sm:bottom-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-md sm:rounded-2xl",
-        "sm:data-open:zoom-in-95 sm:data-open:slide-in-from-bottom-0",
-        // flex column so the metadata body fills the gap up to the height
-        // cap, and the sheet grows with its content (less scrolling) but
-        // never past ~92vh of the viewport.
+        // Mobile bottom sheet / desktop centered modal now come from the base
+        // DialogContent. Here we only set the desktop width + grow-with-content
+        // sizing: a flex column so the metadata body fills up to the height cap
+        // and the sheet grows with its content, never past ~92vh.
+        "sm:max-w-md",
         "p-0 gap-0 overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[85vh]",
       )}
     >

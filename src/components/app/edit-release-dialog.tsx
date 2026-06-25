@@ -169,13 +169,9 @@ export function EditReleaseDialog({
           grows past the viewport. */}
       <DialogContent
         className={cn(
-          // Mobile → bottom sheet: full-width, anchored to the bottom edge,
-          // rounded only at the top, slides up (no zoom). Desktop (sm+) →
-          // the centered 600px dialog with its normal zoom-in.
-          "left-0 right-0 top-auto bottom-0 translate-x-0 translate-y-0 max-w-full rounded-b-none rounded-t-2xl",
-          "data-open:zoom-in-100 data-open:slide-in-from-bottom-4",
-          "sm:left-1/2 sm:right-auto sm:top-1/2 sm:bottom-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-[600px] sm:rounded-2xl",
-          "sm:data-open:zoom-in-95 sm:data-open:slide-in-from-bottom-0",
+          // Mobile bottom sheet / desktop centered modal come from the base
+          // DialogContent. Here: desktop width (600px) + grow-to-cap sizing.
+          "sm:max-w-[600px]",
           "p-0 gap-0 shadow-none max-h-[90vh] sm:max-h-[min(90vh,900px)] flex flex-col",
         )}
       >

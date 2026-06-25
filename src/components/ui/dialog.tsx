@@ -25,8 +25,21 @@ export const dialogChromeClass =
   // `max-w` cap and dragging the footer's negative margins with it.
   "grid w-full max-w-[calc(100%-2rem)] gap-5 rounded-xl sm:rounded-2xl bg-popover p-6 text-small text-popover-foreground border border-border outline-none overflow-hidden sm:max-w-sm"
 
+// App-wide rule: every Dialog is a BOTTOM SHEET on mobile and a centered
+// modal on desktop (sm+). Mobile → pinned to the bottom edge, full-width,
+// top-rounded, slides up. Desktop → centered, zooms in. Baked in here so
+// every Dialog gets it for free; individual dialogs only override their
+// desktop width (`sm:max-w-*`) / height. Applied AFTER `dialogChromeClass`
+// in `DialogContent` so this positioning + the mobile rounding/width win
+// over the chrome's defaults (twMerge: last wins).
 export const dialogPositionClass =
-  "fixed top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2 duration-100 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95"
+  "fixed z-50 duration-100 data-open:animate-in data-open:fade-in-0 " +
+  // mobile → bottom sheet
+  "inset-x-0 bottom-0 top-auto translate-x-0 translate-y-0 max-w-full rounded-b-none rounded-t-2xl " +
+  "data-open:slide-in-from-bottom-4 data-open:zoom-in-100 " +
+  // desktop (sm+) → centered modal
+  "sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-sm sm:rounded-2xl " +
+  "sm:data-open:slide-in-from-bottom-0 sm:data-open:zoom-in-95"
 
 export const dialogTitleClass =
   "font-heading text-base leading-none font-medium"
@@ -86,7 +99,7 @@ function DialogContent({
       <DialogOverlay />
       <DialogPrimitive.Popup
         data-slot="dialog-content"
-        className={cn(dialogPositionClass, dialogChromeClass, className)}
+        className={cn(dialogChromeClass, dialogPositionClass, className)}
         {...props}
       >
         {children}

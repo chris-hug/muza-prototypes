@@ -2,23 +2,33 @@
 
 /*
  * SearchResultsView — the results surface for the global search, shown on
- * the Explore page once a query is present (`?page=Explore&q=…`). Mirrors
- * the Figma results screen (file dbSHgvquI2o4TFie2iAJxv › 3975:484405):
+ * the Explore page once a query is present (`?page=Explore&q=…`).
  *
  *   Search for: <query>            [ Muza Catalog | My Library ]
- *   All · Songs · Artists · Albums · Playlists · Labels
+ *   All · Songs · Artists · Albums · …   ← only types with results
  *   ─────────────────────────────────────────────────────────
- *   <MediaListItem rows — songs play, containers navigate>
+ *   All  → Top result hero + one shelf per type (see AllResults)
+ *   type → a flat vertical list of MediaListItem rows
  *
- * Every row reuses MediaListItem (the mixed-list nav/play row) so the list
- * is visually uniform and each type carries its own ContentTypeBadge. The
- * ⋯ menu reuses AlbumCardMenuItems / PlaylistCardMenuItems (which already
- * flip Save ⇄ Remove by library state); songs / artists get a small inline
- * menu built from the same shared pieces.
+ * Two distinct layouts:
+ *   · The **All** tab is a composition of shelves — a "Top result" hero
+ *     then, per content type, a CardRail / song column-rail / list. The
+ *     full ruleset (thresholds, ordering, de-dupe, overflow-gated "Show
+ *     all") lives on `AllResults` below and in DESIGN_SYSTEM.md ›
+ *     "Search results — All composition". This is NOT a mixed list.
+ *   · A **specific tab** is the simple case: a flat vertical list where
+ *     every row reuses `MediaListItem` (uniform, carries its own
+ *     ContentTypeBadge). The ⋯ menu reuses AlbumCardMenuItems /
+ *     PlaylistCardMenuItems (which flip Save ⇄ Remove by library state);
+ *     songs / artists get a small inline menu from the same pieces.
+ *
+ * Category tabs only list types that actually have results (All always
+ * shown); the active tab falls back to All if it empties as the query
+ * narrows.
  */
 
-import { useMemo, useState } from "react"
-import { Mic, Heart, ListPlus, Info, Trash2 } from "lucide-react"
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { Mic, Heart, ListPlus, Info, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MobilePillTabs } from "@/components/ui/mobile-header"
@@ -31,6 +41,12 @@ import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdow
 import { AlbumCardMenuItems, PlaylistCardMenuItems } from "@/components/ui/cover-card-menu"
 import { ShareMenuItems } from "@/components/ui/share-button"
 import { PlayFilledAlt, PauseFilledAlt } from "@/components/ui/transport-icons"
+import { CardRail } from "@/components/app/card-rail"
+import { Separator } from "@/components/ui/separator"
+import { SongListItem } from "@/components/ui/song-list-item"
+import { AlbumCard } from "@/components/ui/album-card"
+import { ArtistCard } from "@/components/ui/artist-card"
+import { PlaylistCard } from "@/components/ui/playlist-card"
 
 import { useMediaNav, slugify } from "@/lib/media-nav"
 import { useSearchNav } from "@/lib/use-search-nav"
@@ -70,11 +86,15 @@ export function SearchResultsView({ query }: { query: string }) {
 
   const visible = tab === "all" ? scoped : scoped.filter(r => r.kind === tab)
 
-  // Under "All", the best-ranked match is promoted to a big "Top result"
-  // card; the remaining matches stay as the normal list below it.
-  const showTop = tab === "all" && visible.length > 0
-  const topResult = showTop ? visible[0] : null
-  const listItems = showTop ? visible.slice(1) : visible
+  // Only offer category tabs that actually have results (All is always shown),
+  // so users never click into an empty tab (e.g. Labels with no matches). If
+  // the active tab empties out after the query narrows, fall back to All.
+  const tabCounts = scoped.reduce((c, r) => { c[r.kind] = (c[r.kind] ?? 0) + 1; return c }, {} as Record<SearchKind, number>)
+  const visibleTabs = TABS.filter(t => t.key === "all" || (tabCounts[t.key as SearchKind] ?? 0) > 0)
+  useEffect(() => {
+    if (tab !== "all" && !scoped.some(r => r.kind === tab)) setTab("all")
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, query, scope])
 
   return (
     <div className="max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto px-page pt-3 sm:pt-6 pb-24 flex flex-col gap-3 sm:gap-5">
@@ -102,7 +122,7 @@ export function SearchResultsView({ query }: { query: string }) {
           scrollable pill buttons the Library uses (MobilePillTabs). */}
       <Tabs value={tab} onValueChange={v => setTab(v as TabKey)} className="hidden sm:block min-w-0">
         <TabsList variant="line" autoCenter={false} className="w-full justify-start border-b border-border">
-          {TABS.map(t => (
+          {visibleTabs.map(t => (
             <TabsTrigger key={t.key} value={t.key}>{t.label}</TabsTrigger>
           ))}
         </TabsList>
@@ -111,35 +131,25 @@ export function SearchResultsView({ query }: { query: string }) {
         <MobilePillTabs
           value={tab}
           onChange={v => setTab(v as TabKey)}
-          tabs={TABS.map(t => ({ value: t.key, label: t.label }))}
+          tabs={visibleTabs.map(t => ({ value: t.key, label: t.label }))}
         />
       </div>
 
-      {/* Results. */}
+      {/* Results. The "All" tab is a relevance-ordered set of shelves
+          (Top result + per-type sections); a specific tab is a flat list. */}
       {visible.length === 0 ? (
         <p className="text-small text-muted-foreground py-10">
           No {tab === "all" ? "results" : labelFor(tab).toLowerCase()} found
           {scope === "library" ? " in your library" : ""} for “{query}”.
         </p>
+      ) : tab === "all" ? (
+        <AllResults visible={visible} onShowAll={setTab} />
       ) : (
-        <div className="flex flex-col gap-4 sm:gap-6">
-          {topResult && (
-            <section className="flex flex-col gap-2 sm:gap-3">
-              <h2 className="text-large font-medium text-foreground">Top result</h2>
-              <SearchTopResult r={topResult} />
-            </section>
-          )}
-          {listItems.length > 0 && (
-            <section className="flex flex-col gap-2 sm:gap-3">
-              {showTop && <h2 className="text-large font-medium text-foreground">More results</h2>}
-              <ul className="flex flex-col gap-1">
-                {listItems.map(r => (
-                  <li key={r.id}><SearchRow r={r} /></li>
-                ))}
-              </ul>
-            </section>
-          )}
-        </div>
+        <ul className="flex flex-col gap-1">
+          {visible.map(r => (
+            <li key={r.id}><SearchRow r={r} /></li>
+          ))}
+        </ul>
       )}
     </div>
   )
@@ -380,6 +390,284 @@ function SearchRow({ r }: { r: SearchResult }) {
       cover={r.cover}
       title={r.title}
       subtitle={r.meta}
+    />
+  )
+}
+
+// ─── "All" tab — relevance-ordered shelves ───────────────────────────────────
+// Replaces the old flat list. Top result hero, then one section per content
+// type ordered by where its best-ranked hit falls. Songs become a column-rail
+// (the Artist › Top Songs pattern) at ≥6, else a simple vertical list; artwork
+// types become CardRails at ≥2, else a single inline card; labels stay a list.
+// Composition rules are documented in DESIGN_SYSTEM.md ›
+// "Search results — All composition".
+const ROWS_PER_COLUMN = 3
+
+const SECTION_TITLE: Record<SearchKind, string> = {
+  song: "Songs", artist: "Artists", album: "Albums", playlist: "Playlists", label: "Labels",
+}
+
+function AllResults({ visible, onShowAll }: { visible: SearchResult[]; onShowAll: (k: SearchKind) => void }) {
+  const top = visible[0]
+
+  // Very sparse query (≤2 total): a hero + a tiny list reads better than
+  // shelves carrying one item each.
+  if (visible.length <= 2) {
+    return (
+      <div className="flex flex-col gap-4 sm:gap-6">
+        <section className="flex flex-col gap-2 sm:gap-3">
+          <h2 className="text-large font-medium text-foreground">Top result</h2>
+          <SearchTopResult r={top} />
+        </section>
+        {visible.length > 1 && (
+          <ul className="flex flex-col gap-1">
+            {visible.slice(1).map(r => <li key={r.id}><SearchRow r={r} /></li>)}
+          </ul>
+        )}
+      </div>
+    )
+  }
+
+  // Group by kind from everything EXCEPT the Top result, so the Top result's
+  // own type section only appears when there are OTHER hits of that type (e.g.
+  // more artists with similar names) — a lone match never gets a redundant
+  // one-item rail repeating the hero. The Top result's type still leads when
+  // it does have siblings.
+  const byKind = new Map<SearchKind, SearchResult[]>()
+  const seen: SearchKind[] = []
+  for (const r of visible.slice(1)) {
+    if (!byKind.has(r.kind)) { byKind.set(r.kind, []); seen.push(r.kind) }
+    byKind.get(r.kind)!.push(r)
+  }
+  const order = byKind.has(top.kind) ? [top.kind, ...seen.filter(k => k !== top.kind)] : seen
+
+  return (
+    <div className="@container flex flex-col gap-4 sm:gap-6">
+      <section className="flex flex-col gap-2 sm:gap-3">
+        <h2 className="text-large font-medium text-foreground">Top result</h2>
+        <SearchTopResult r={top} />
+      </section>
+      {order.map(kind => (
+        <GroupSection key={kind} kind={kind} items={byKind.get(kind)!} onShowAll={() => onShowAll(kind)} />
+      ))}
+    </div>
+  )
+}
+
+function GroupSection({ kind, items, onShowAll }: { kind: SearchKind; items: SearchResult[]; onShowAll: () => void }) {
+  const title = SECTION_TITLE[kind]
+
+  // Songs: column-rail at ≥6 (fills ≥2 full 3-row columns), simple list ≤5.
+  if (kind === "song") {
+    return items.length >= 6
+      ? <SongRail title={title} songs={items} onShowAll={onShowAll} />
+      : (
+        <ListSection title={title}>
+          <ul className="flex flex-col gap-1">
+            {items.map(r => <li key={r.id}><SearchSongRow r={r} /></li>)}
+          </ul>
+        </ListSection>
+      )
+  }
+
+  // Artwork types: CardRail at ≥2, a single inline card at exactly 1.
+  if (kind === "artist" || kind === "album" || kind === "playlist") {
+    if (items.length >= 2) {
+      return (
+        <CardRail title={title} onShowAll={onShowAll} showAllOnlyWhenScrollable>
+          {items.map(r => <li key={r.id}><ResultCard r={r} /></li>)}
+        </CardRail>
+      )
+    }
+    return (
+      <ListSection title={title}>
+        <div className="w-[clamp(143px,42vw,220px)]"><ResultCard r={items[0]} /></div>
+      </ListSection>
+    )
+  }
+
+  // Labels: no card / no detail page — a simple list.
+  return (
+    <ListSection title={title}>
+      <ul className="flex flex-col gap-1">
+        {items.map(r => <li key={r.id}><SearchRow r={r} /></li>)}
+      </ul>
+    </ListSection>
+  )
+}
+
+// Section shell mirroring the CardRail header (separator + title + optional
+// "Show all"), for the non-rail sections (song list, single card, labels).
+function ListSection({ title, onShowAll, children }: { title: string; onShowAll?: () => void; children: ReactNode }) {
+  return (
+    <section className="flex flex-col gap-4 min-w-0">
+      <div className="flex flex-col gap-2 pt-6">
+        <Separator />
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-base font-medium text-foreground truncate min-w-0">{title}</h2>
+          {onShowAll && <Button variant="ghost" size="sm" onClick={onShowAll}>Show all</Button>}
+        </div>
+      </div>
+      {children}
+    </section>
+  )
+}
+
+// Songs as a horizontally-paged grid of 3-row columns — the same shape as the
+// Artist page's Top Songs (1 col <692 with peek, 2 ≥692, 3 ≥1164). Used at ≥6.
+function SongRail({ title, songs, onShowAll }: { title: string; songs: SearchResult[]; onShowAll: () => void }) {
+  const scrollRef = useRef<HTMLUListElement>(null)
+  const columns: SearchResult[][] = []
+  for (let i = 0; i < songs.length; i += ROWS_PER_COLUMN) columns.push(songs.slice(i, i + ROWS_PER_COLUMN))
+
+  // "Show all" + arrows only when there's actually off-screen content to
+  // scroll to (same condition CardRail uses for its arrows).
+  const [overflowing, setOverflowing] = useState(false)
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const recalc = () => setOverflowing(el.scrollWidth - el.clientWidth > 1)
+    recalc()
+    const ro = new ResizeObserver(recalc); ro.observe(el)
+    const mo = new MutationObserver(recalc); mo.observe(el, { childList: true, subtree: true })
+    return () => { ro.disconnect(); mo.disconnect() }
+  }, [])
+
+  const scrollPage = (dir: 1 | -1) => {
+    const el = scrollRef.current
+    if (!el) return
+    const gap = parseFloat(getComputedStyle(el).columnGap) || 0
+    el.scrollBy({ left: dir * (el.clientWidth + gap), behavior: "smooth" })
+  }
+
+  return (
+    <section className="flex flex-col gap-4 min-w-0 overflow-x-clip">
+      <div className="flex flex-col gap-2 pt-6">
+        <Separator />
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-base font-medium text-foreground truncate min-w-0">{title}</h2>
+          {/* Show all + arrows only when the rail actually overflows. */}
+          {overflowing && (
+            <div className="flex items-center gap-1 shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onShowAll}
+                className="@max-[559px]:!bg-secondary @max-[559px]:!text-secondary-foreground @max-[559px]:hover:!bg-secondary-hover"
+              >
+                Show all
+              </Button>
+              {/* Arrows: pointer-only, and only ≥692 where ≥2 columns show. */}
+              <div className="flex items-center gap-1 [@media(hover:none)]:!hidden @max-[692px]:hidden">
+                <Button variant="outline" size="icon-sm" aria-label="Scroll Songs left" onClick={() => scrollPage(-1)}><ChevronLeft /></Button>
+                <Button variant="outline" size="icon-sm" aria-label="Scroll Songs right" onClick={() => scrollPage(1)}><ChevronRight /></Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <ul
+        ref={scrollRef}
+        className={
+          "min-w-0 flex gap-6 items-start overflow-x-auto overflow-y-hidden " +
+          "snap-x snap-proximity scroll-smooth touch-pan-x overscroll-x-contain " +
+          "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden " +
+          "[&>li]:shrink-0 [&>li]:snap-start " +
+          "[&>li]:w-[calc(100%-48px)] " +
+          "@min-[692px]:[&>li]:w-[calc((100%-24px)/2)] " +
+          "@min-[1164px]:[&>li]:w-[calc((100%-48px)/3)]"
+        }
+      >
+        {columns.map((col, i) => (
+          <li key={i}>
+            <ul className="flex flex-col gap-1">
+              {col.map(r => <li key={r.id}><SearchSongRow r={r} compact /></li>)}
+            </ul>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+// A single search-result card (artist / album / playlist) for the shelves.
+function ResultCard({ r }: { r: SearchResult }) {
+  const { openAlbum, openArtist, openPlaylist } = useMediaNav()
+  if (r.kind === "artist") {
+    return <ArtistCard name={r.title} image={r.cover} onClick={() => r.navKey && openArtist(r.navKey)} />
+  }
+  if (r.kind === "album") {
+    return (
+      <AlbumCard
+        cover={r.cover ?? ""}
+        title={r.title}
+        artist={r.subtitle ?? ""}
+        year={r.year}
+        onTitleClick={() => r.navKey && openAlbum(r.navKey)}
+        onArtistClick={() => r.subtitle && openArtist(slugify(r.subtitle))}
+      />
+    )
+  }
+  if (r.kind === "playlist") {
+    const owned = r.subtitle === "You"
+    return (
+      <PlaylistCard
+        title={r.title}
+        covers={r.covers ?? []}
+        songCount={parseInt(r.meta ?? "", 10) || 0}
+        owner={owned ? undefined : r.subtitle}
+        owned={owned}
+        onTitleClick={() => r.navKey && openPlaylist(r.navKey)}
+        onPlay={() => r.navKey && openPlaylist(r.navKey)}
+      />
+    )
+  }
+  return null
+}
+
+// One song row for the "All" shelves — SongListItem wired to player + library
+// + credits (compact inside the column-rail, full in the ≤5 list).
+function SearchSongRow({ r, compact }: { r: SearchResult; compact?: boolean }) {
+  const { openAlbum, openArtist } = useMediaNav()
+  const player = usePlayer()
+  const library = useUserLibrary()
+  const toggleLibrary = useLibraryToggle()
+  const credits = useCredits()
+
+  const inLibrary = !!(r.libraryType && r.libraryId && library.inLibrary(r.libraryType, r.libraryId))
+  const toggleSave = () => { if (r.libraryType && r.libraryId) toggleLibrary(r.libraryType, r.libraryId, r.title) }
+  const playing = player.playing && player.track?.title === r.title && player.playingFrom === r.album
+
+  return (
+    <SongListItem
+      compact={compact}
+      cover={r.cover}
+      title={r.title}
+      artist={r.artist}
+      album={r.album}
+      year={r.year}
+      duration={r.duration}
+      playing={playing}
+      onPlay={() => {
+        if (playing) { player.toggle(); return }
+        player.play({ title: r.title, artist: r.artist ?? "", album: r.album ?? "", image: r.cover ?? "", totalTime: r.duration }, r.album ?? "")
+      }}
+      onArtistClick={r.artist ? () => openArtist(slugify(r.artist!)) : undefined}
+      onAlbumClick={r.navKey ? () => openAlbum(r.navKey!) : undefined}
+      menuItems={
+        <>
+          <ShareMenuItems title={r.title} text={r.artist ? `${r.title} — ${r.artist}` : r.title} />
+          <DropdownMenuItem onClick={toggleSave}>
+            <Heart className={inLibrary ? "fill-current" : undefined} />
+            {inLibrary ? "Remove from library" : "Save to library"}
+          </DropdownMenuItem>
+          <DropdownMenuItem><ListPlus />Add to playlist</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          {r.artist && <DropdownMenuItem onClick={() => openArtist(slugify(r.artist!))}><Mic />Go to artist</DropdownMenuItem>}
+          <DropdownMenuItem onClick={() => r.album && credits.open(slugify(r.album))}><Info />Show credits</DropdownMenuItem>
+        </>
+      }
     />
   )
 }

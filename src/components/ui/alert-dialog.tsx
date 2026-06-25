@@ -65,16 +65,19 @@ function AlertDialogContent({
       <AlertDialogPrimitive.Popup
         data-slot="alert-dialog-content"
         className={cn(
-          // Centering
-          "fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2",
-          // Size
-          "w-full max-w-md",
+          // Position — same app-wide rule as Dialog: bottom sheet on mobile,
+          // centered modal on desktop (sm+).
+          "fixed z-50 w-full",
+          "inset-x-0 bottom-0 top-auto translate-x-0 translate-y-0 max-w-full rounded-b-none rounded-t-2xl",
+          "data-open:slide-in-from-bottom-4 data-open:zoom-in-100",
+          "sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-md sm:rounded-2xl",
+          "sm:data-open:slide-in-from-bottom-0 sm:data-open:zoom-in-95",
           // Surface — bg-background (never bg-white)
-          "bg-background border border-border rounded-2xl",
+          "bg-background border border-border",
           // Spacing
           "p-6 shadow-xl",
           // Animations
-          "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
+          "data-open:animate-in data-open:fade-in-0",
           "duration-200",
           "outline-none",
           className

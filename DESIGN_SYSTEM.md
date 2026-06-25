@@ -543,7 +543,7 @@ Tokens are **roles**, not colours. Never mix roles.
 
 Three escalating surfaces, all bottom-anchored on phones:
 
-**1. Responsive dialog → bottom sheet** (`CreditsDialog`, `EditReleaseDialog`). One `DialogContent`, responsive position: mobile `left-0 right-0 bottom-0 max-w-full rounded-t-2xl rounded-b-none slide-in-from-bottom`; desktop `sm:left-1/2 sm:top-1/2 sm:-translate-* sm:max-w-… sm:rounded-2xl zoom-in`. To **grow with content up to the viewport** (less scrolling): `DialogContent` is `flex flex-col max-h-[92vh] sm:max-h-[85vh]`, the header is `shrink-0`, and the scroll body is `min-h-0` (fills to the cap, scrolls only on overflow).
+**1. Responsive dialog → bottom sheet — the BASE DEFAULT.** **Every** `Dialog` and `AlertDialog` is a **bottom sheet on mobile** and a **centered modal on desktop (sm+)** — no per-dialog opt-in. It's baked into the base `DialogContent` / `AlertDialogContent` (`dialogPositionClass` in [`dialog.tsx`](src/components/ui/dialog.tsx)): mobile `inset-x-0 bottom-0 max-w-full rounded-t-2xl rounded-b-none slide-in-from-bottom`; desktop `sm:left-1/2 sm:top-1/2 sm:-translate-* sm:rounded-2xl zoom-in`. Individual dialogs only set their **desktop width** (`sm:max-w-*`) and any height/scroll behaviour — they must **not** re-declare the positioning. To **grow with content up to the viewport** (less scrolling): make `DialogContent` `flex flex-col max-h-[92vh] sm:max-h-[85vh]`, the header `shrink-0`, and the scroll body `min-h-0` (fills to the cap, scrolls only on overflow).
 
 **2. DropdownMenu auto-sheet.** The app `DropdownMenu` already presents as a bottom sheet on touch — use it for simple "…" lists.
 
@@ -571,5 +571,20 @@ The Explore page **is** the search/discover surface; results are URL-backed (`?p
 
 - **`SearchPanel`** (on focus) — empty query → "Your recent searches" (clock rows, removable); typing → plain-text suggestions. localStorage-backed recents (`search-catalog`).
 - **`SearchResultsView`** — `Search for: <q>` heading (desktop; dropped on mobile since the search field shows it) · **scope** `ToggleGroup` (Muza Catalog / My Library — full-width in the mobile header, inline on desktop) · category filter (underlined `Tabs variant="line"` on desktop, `MobilePillTabs` on mobile) · results.
-- **Top result** — under the **All** tab the best-ranked match is promoted to an oversized hero card (big cover, large title, badge, Play button for playable kinds); the rest stay as the normal list under "More results".
-- Result rows reuse **`MediaListItem`** (songs play / open their album, containers navigate); the `label` kind renders like an artist (round) with a "Label" badge + album count.
+- **Category tabs show only types that have results** (All is always present) — an empty type (e.g. Labels with no match) is dropped so users never click into nothing. If the active tab empties out as the query narrows, it falls back to All. No counts on tabs (they churn per keystroke and clutter the strip; matches Spotify / Apple / YT).
+- A **specific tab** (Songs / Artists / Albums / …) is a flat vertical list of **`MediaListItem`** rows (songs play / open their album, containers navigate); the `label` kind renders like an artist (round) with a "Label" badge + album count.
+
+### Search results — All composition
+
+The **All** tab is **not** a flat list — it's a Top-result hero followed by one **shelf per content type**, mirroring the Home rails so search reads as part of the same system. Rules (enforced in [`search-results-view.tsx`](src/components/app/search-results-view.tsx)):
+
+- **Top result** — the single best-ranked match, promoted to an oversized hero card (big cover, large title, content-type badge, Play button for playable kinds). It is **removed from its own type section**, so that section appears only when there are OTHER hits of that type (e.g. more artists with a similar name); a lone match never gets a redundant one-item rail repeating the hero.
+- **Section order is relevance-driven** — a type's position is set by where its best-ranked hit falls, and the Top result's type still leads when it has siblings. Tie-break order: Songs · Artists · Albums · Playlists · Labels.
+- **Songs** — a horizontally-paged **column-rail** (the Artist › Top Songs pattern: 3 rows per column, 1 col < 692 with peek, 2 ≥ 692, 3 ≥ 1164) when there are **≥ 6** songs; a plain **vertical list** when **≤ 5** (6 = the first count that fills two full 3-row columns, so fewer would leave a ragged column).
+- **Artists / Albums / Playlists** — a **`CardRail`** of the matching cards when **≥ 2**; a **single inline card** (no rail chrome) when exactly **1**.
+- **Labels** — always a simple vertical list (no card / no detail page).
+- **Empty types are omitted** (no empty shelves).
+- **"Show all"** appears **only when the shelf actually overflows** (there's off-screen content to scroll to) → opens that type's tab. Sections that already show every hit (e.g. 3 cards that fit, or a ≤5-song list) get **no** "Show all" — it would reveal nothing. Card rails use `CardRail`'s `showAllOnlyWhenScrollable`; the song column-rail gates it on its own overflow check.
+- **Sparse query (≤ 2 total results)** → skip the shelves: Top result + a short vertical list.
+
+Needs an `@container` ancestor (the All wrapper sets one) so the rails' `@min-[…]` column steps resolve against the content area.

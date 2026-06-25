@@ -2044,8 +2044,8 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           </li>
           <li>
             <span className="text-foreground">Mobile surfaces escalate to sheets.</span>{" "}
-            Dialogs become bottom sheets (one responsive <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogContent</code>, growing to{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">max-h-[92vh]</code> with a <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">min-h-0</code> scroll body);
+            <span className="text-foreground">Every</span> dialog (and alert dialog) becomes a bottom sheet — it's the <span className="text-foreground">base default</span> of <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogContent</code>, not a per-dialog opt-in; tall ones grow to{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">max-h-[92vh]</code> with a <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">min-h-0</code> scroll body;
             simple "…" lists use the auto-sheet <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DropdownMenu</code>; rich "…" actions use the advanced{" "}
             <a href="/?page=DesignSystem#detail-more-button" className="text-primary-text hover:underline underline-offset-2">bottom-sheet menu</a>.
             Panels that open under the sticky header (search suggestions) are <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">absolute</code> (out of flow) so they overlay rather than push content.
@@ -3991,8 +3991,18 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-6 max-w-2xl list-disc pl-5">
           <li><span className="text-foreground">Panel</span> — empty query → “Your recent searches” (clock rows, removable); typing → plain-text suggestions.</li>
           <li><span className="text-foreground">Scope</span> — a <a href="/?page=DesignSystem#togglegroup" className="text-primary-text hover:underline underline-offset-2">ToggleGroup</a> (Muza Catalog / My Library); full-width in the mobile header, inline on desktop.</li>
-          <li><span className="text-foreground">Category filter</span> — underlined <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">Tabs variant="line"</code> on desktop, <a href="/?page=DesignSystem#mobile-header" className="text-primary-text hover:underline underline-offset-2">MobilePillTabs</a> on mobile.</li>
-          <li><span className="text-foreground">Top result</span> — under <span className="text-foreground">All</span>, the best-ranked match is promoted to an oversized hero card; the rest stay as <a href="/?page=DesignSystem#media-list-item" className="text-primary-text hover:underline underline-offset-2">Media List Item</a> rows under “More results”.</li>
+          <li><span className="text-foreground">Category filter</span> — underlined <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">Tabs variant="line"</code> on desktop, <a href="/?page=DesignSystem#mobile-header" className="text-primary-text hover:underline underline-offset-2">MobilePillTabs</a> on mobile. <span className="text-foreground">Only types with results are shown</span> (All always); the active tab falls back to All if it empties as the query narrows. No counts (they churn per keystroke).</li>
+          <li><span className="text-foreground">A specific tab</span> (Songs / Artists / …) — a flat vertical list of <a href="/?page=DesignSystem#media-list-item" className="text-primary-text hover:underline underline-offset-2">Media List Item</a> rows (songs play / open their album, containers navigate); <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">label</code> renders round with a “Label” badge + album count.</li>
+        </ul>
+
+        <p className="text-base font-medium text-foreground mb-2 max-w-2xl">The “All” tab — a composition of shelves, not a flat list</p>
+        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-6 max-w-2xl list-disc pl-5">
+          <li><span className="text-foreground">Top result</span> — the single best-ranked match as an oversized hero card (cover, title, content-type badge, Play for playable kinds). It’s <span className="text-foreground">removed from its own type section</span>, so that section appears only when there are <span className="text-foreground">other</span> hits of that type (e.g. more artists with a similar name) — a lone match never gets a one-item rail repeating the hero.</li>
+          <li><span className="text-foreground">Then one shelf per type</span>, ordered by relevance (the Top result’s type leads when it has siblings).</li>
+          <li><span className="text-foreground">Songs</span> — a horizontally-paged <a href="/?page=DesignSystem#song-list-item" className="text-primary-text hover:underline underline-offset-2">Song List Item</a> column-rail (3 rows/column) when <span className="text-foreground">≥ 6</span>; a plain vertical list when <span className="text-foreground">≤ 5</span>.</li>
+          <li><span className="text-foreground">Artists / Albums / Playlists</span> — a <a href="/?page=DesignSystem#card-rail" className="text-primary-text hover:underline underline-offset-2">Card Rail</a> when <span className="text-foreground">≥ 2</span>; a single inline card when exactly <span className="text-foreground">1</span>. <span className="text-foreground">Labels</span> — always a list.</li>
+          <li><span className="text-foreground">“Show all”</span> shows <span className="text-foreground">only when the shelf overflows</span> (off-screen content to scroll to) → opens that type’s tab; shelves that already show everything get none.</li>
+          <li><span className="text-foreground">Sparse query</span> (≤ 2 total results) → skip the shelves: Top result + a short list.</li>
         </ul>
 
         <SubLabel>Panel — recent searches / suggestions</SubLabel>

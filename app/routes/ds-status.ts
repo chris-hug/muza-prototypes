@@ -87,7 +87,7 @@ export const SECTION_STATUS: Record<string, SectionStatusEntry> = {
   "Artist Card":           { status: "updated" }, // name → 17px (text-xsmall), enlarged circle
   "Song List Item":        { status: "updated" },
   "Badge":                 { status: "updated" }, // gained the `label` content type
-  "Card Rail":             { status: "updated" },
+  "Card Rail":             { status: "updated" }, // + showAllOnlyWhenScrollable (used by search "All" shelves)
   "Album Card":            { status: "updated" }, // nav surface: cover→open, Play plays, Heart saves (no nav)
   "Playlist Card":         { status: "updated" }, // nav surface: cover→open, Play plays, Heart saves (no nav)
   "Tabs":                  { status: "updated" }, // mobile: scroll + auto-centre active

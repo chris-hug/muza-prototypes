@@ -72,6 +72,13 @@ interface CardRailProps {
    *  Album"). */
   showAllLabel?: string | null
   onShowAll?: () => void
+  /** When true, "Show all" renders ONLY if the rail actually overflows
+   *  (there's off-screen content to scroll to). Use where the rail
+   *  already contains every item — e.g. search-result sections — so the
+   *  link doesn't appear when nothing is hidden. Default false: "Show
+   *  all" always shows (Home / detail rails, where it links to a fuller
+   *  page that holds more than the rail). */
+  showAllOnlyWhenScrollable?: boolean
   /** Opt-in "swipeable grid" mode for MOBILE only. When true, on
    *  containers below 560px the rail lays cards out as a 2-row,
    *  column-major horizontal grid (swipe across columns) instead of
@@ -86,7 +93,7 @@ interface CardRailProps {
   children:   React.ReactNode
 }
 
-export function CardRail({ title, showAllLabel = "Show all", onShowAll, mobileGrid = false, children }: CardRailProps) {
+export function CardRail({ title, showAllLabel = "Show all", onShowAll, showAllOnlyWhenScrollable = false, mobileGrid = false, children }: CardRailProps) {
   const scrollRef = useRef<HTMLUListElement>(null)
   // Track whether the rail can scroll in either direction. When
   // both are false the content fits the viewport entirely → hide
@@ -166,7 +173,7 @@ export function CardRail({ title, showAllLabel = "Show all", onShowAll, mobileGr
                  peek mode (< 560 — where the chevrons drop out) it firms
                  up into a secondary pill so it stays a clear, tappable
                  affordance. `!` beats ghost's own hover:bg-accent. */}
-            {showAllLabel && (
+            {showAllLabel && (!showAllOnlyWhenScrollable || showArrows) && (
               <Button
                 variant="ghost"
                 size="sm"
