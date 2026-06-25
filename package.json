@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "react-router dev",
+    "prebuild": "git fetch --unshallow 2>/dev/null || true",
     "build": "react-router build && cp -r dist/client/* dist/",
     "start": "react-router-serve ./build/server/index.js",
     "lint": "eslint",

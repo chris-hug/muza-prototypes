@@ -79,6 +79,7 @@ export const SECTION_STATUS: Record<string, SectionStatusEntry> = {
   "Search":                { status: "new" },
   "Purchase Album Dialog": { status: "new" },
   "Paywall":               { status: "new" },
+  "Login":                 { status: "new" },
   "User Avatar":           { status: "new" },
   "Purchased Badge":       { status: "new" },
 

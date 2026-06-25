@@ -83,6 +83,7 @@ export const SECTION_SOURCE: Record<string, string> = {
   dialog:                 "src/components/ui/dialog.tsx",
   "purchase-album-dialog":"src/components/app/purchase-album-dialog.tsx",
   paywall:                "src/components/app/subscription-dialogs.tsx",
+  login:                  "src/components/app/login-dialog.tsx",
   "credits-dialog":       "src/components/app/credits-dialog.tsx",
   drawer:                 "src/components/ui/sheet.tsx",
   toast:                  "src/components/ui/toast.tsx",

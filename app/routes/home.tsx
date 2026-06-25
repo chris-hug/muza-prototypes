@@ -143,6 +143,7 @@ import { AlbumDetailView } from "@/components/app/album-detail-view"
 import { PlaylistDetailView } from "@/components/app/playlist-detail-view"
 import { PurchaseAlbumDialog, PurchaseAlbumDialogPreview } from "@/components/app/purchase-album-dialog"
 import { SubscriptionPromptDialog, SubscriptionPromptDialogPreview, SubscriptionCheckoutDialog, SubscriptionCheckoutDialogPreview } from "@/components/app/subscription-dialogs"
+import { LoginDialog, LoginDialogPreview } from "@/components/app/login-dialog"
 import { LibraryArtistsView, SAVED_ARTISTS } from "@/components/app/library-artists-view"
 import { LibraryPlaylistsView, SAVED_PLAYLISTS } from "@/components/app/library-playlists-view"
 import { LibrarySongsView, SAVED_SONGS_SEED } from "@/components/app/library-songs-view"
@@ -1247,6 +1248,23 @@ function SubscriptionPromptDemo() {
         onOpenChange={setCheckoutOpen}
         initialAmount={amount}
       />
+    </div>
+  )
+}
+
+// Login demo — static preview + a button that opens the real modal.
+function LoginDemo() {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="flex flex-col gap-4">
+      <LoginDialogPreview />
+      <div className="flex items-center gap-3 flex-wrap">
+        <Button variant="outline" onClick={() => setOpen(true)}>Open as modal</Button>
+        <span className="text-xsmall text-muted-foreground">
+          Real dialog (portal + focus trap). Bottom sheet on mobile, centered modal on desktop — straight from the base.
+        </span>
+      </div>
+      <LoginDialog open={open} onOpenChange={setOpen} />
     </div>
   )
 }
@@ -4719,6 +4737,25 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           </li>
         </ul>
         <SubscriptionPromptDemo />
+      </Section>
+
+      {/* ══ LOGIN ══ */}
+      <Section id="login" title="Login"
+        usage={[
+          { label: "Account entry — sign in / create account (passwordless)", href: "/?page=Settings" },
+        ]}>
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
+          Passwordless <span className="text-foreground">email → one-time passcode</span> entry. A plain
+          dialog (not the paywall's landing-page split) — muza mark, semantic type, a single pill CTA. It sets
+          only its desktop width (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">sm:max-w-md</code>);
+          the bottom-sheet-on-mobile behaviour is inherited from the base <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogContent</code>.
+        </p>
+        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-5 max-w-2xl list-disc pl-5">
+          <li><span className="text-foreground">One step</span> — email field + "Send me a one-time passcode"; the code-entry step reuses the <a href="/?page=DesignSystem#otp-input" className="text-primary-text hover:underline underline-offset-2">OTP Input</a> when wired to a backend.</li>
+          <li><span className="text-foreground">CTA disabled</span> until the email field has a value.</li>
+          <li><span className="text-foreground">Mobile</span> — bottom sheet via the base default (no positioning override here).</li>
+        </ul>
+        <LoginDemo />
       </Section>
 
       {/* ══ CREDITS DIALOG ══ */}

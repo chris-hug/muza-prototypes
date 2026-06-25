@@ -11,6 +11,13 @@ import { SECTION_SOURCE } from "./app/routes/ds-sources";
 // just-pushed commit, so HEAD's commit date IS the push date. Falls
 // back to an empty string if git isn't available (the DS page then
 // hides the label gracefully).
+//
+// IMPORTANT — per-section dates need FULL git history. On a shallow
+// clone (depth 1, what many deploy hosts do) `git log -- <file>` can
+// only see HEAD, so EVERY section collapses onto the deploy date. The
+// `prebuild` script (`git fetch --unshallow`) restores history before
+// the build. If a host can't fetch, build locally (full clone) and
+// upload `dist/` instead.
 function lastCommitDate(file?: string): string {
   try {
     const target = file ? ` -- "${file}"` : "";
