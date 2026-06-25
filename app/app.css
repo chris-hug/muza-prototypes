@@ -240,8 +240,13 @@
    reads as glass in both modes. Set your own border-radius on the
    element. */
 .frosted-glass {
-  backdrop-filter: blur(10px) saturate(100%);
-  -webkit-backdrop-filter: blur(10px) saturate(100%);
+  /* Just blur — NOT `saturate(100%)`. 100% is a no-op, and Lightning CSS
+     (the prod minifier) collapses it into an invalid empty `saturate()`,
+     which voids the whole backdrop-filter → no blur on the deployed build
+     (dev works because its CSS isn't minified). Single function = nothing
+     for the minifier to mangle. */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   background-color: color-mix(in srgb, var(--background) 58%, transparent);
   /* Just the glass itself: a faint top-right sheen + fine grain. No
      border or inner vignette baked in — consumers add their own subtle
