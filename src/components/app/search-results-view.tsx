@@ -27,8 +27,8 @@
  * narrows.
  */
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
-import { Mic, Heart, ListPlus, Info, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
+import { Mic, Heart, ListPlus, Info, Trash2 } from "lucide-react"
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MobilePillTabs } from "@/components/ui/mobile-header"
@@ -43,6 +43,7 @@ import { ShareMenuItems } from "@/components/ui/share-button"
 import { PlayFilledAlt, PauseFilledAlt } from "@/components/ui/transport-icons"
 import { CardRail } from "@/components/app/card-rail"
 import { Separator } from "@/components/ui/separator"
+import { SongRail as SongRailShell } from "./song-rail"
 import { SongListItem } from "@/components/ui/song-list-item"
 import { AlbumCard } from "@/components/ui/album-card"
 import { ArtistCard } from "@/components/ui/artist-card"
@@ -401,7 +402,6 @@ function SearchRow({ r }: { r: SearchResult }) {
 // types become CardRails at ≥2, else a single inline card; labels stay a list.
 // Composition rules are documented in DESIGN_SYSTEM.md ›
 // "Search results — All composition".
-const ROWS_PER_COLUMN = 3
 
 const SECTION_TITLE: Record<SearchKind, string> = {
   song: "Songs", artist: "Artists", album: "Albums", playlist: "Playlists", label: "Labels",
@@ -515,80 +515,12 @@ function ListSection({ title, onShowAll, children }: { title: string; onShowAll?
 
 // Songs as a horizontally-paged grid of 3-row columns — the same shape as the
 // Artist page's Top Songs (1 col <692 with peek, 2 ≥692, 3 ≥1164). Used at ≥6.
+// Search › Songs = the shared `SongRail` shell fed search-result rows.
+// Only builds the rows; the rail (columns, chevrons, peek, Show-all/overflow)
+// lives in `song-rail.tsx`.
 function SongRail({ title, songs, onShowAll }: { title: string; songs: SearchResult[]; onShowAll: () => void }) {
-  const scrollRef = useRef<HTMLUListElement>(null)
-  const columns: SearchResult[][] = []
-  for (let i = 0; i < songs.length; i += ROWS_PER_COLUMN) columns.push(songs.slice(i, i + ROWS_PER_COLUMN))
-
-  // "Show all" + arrows only when there's actually off-screen content to
-  // scroll to (same condition CardRail uses for its arrows).
-  const [overflowing, setOverflowing] = useState(false)
-  useEffect(() => {
-    const el = scrollRef.current
-    if (!el) return
-    const recalc = () => setOverflowing(el.scrollWidth - el.clientWidth > 1)
-    recalc()
-    const ro = new ResizeObserver(recalc); ro.observe(el)
-    const mo = new MutationObserver(recalc); mo.observe(el, { childList: true, subtree: true })
-    return () => { ro.disconnect(); mo.disconnect() }
-  }, [])
-
-  const scrollPage = (dir: 1 | -1) => {
-    const el = scrollRef.current
-    if (!el) return
-    const gap = parseFloat(getComputedStyle(el).columnGap) || 0
-    el.scrollBy({ left: dir * (el.clientWidth + gap), behavior: "smooth" })
-  }
-
-  return (
-    <section className="flex flex-col gap-4 min-w-0 overflow-x-clip">
-      <div className="flex flex-col gap-2 pt-6">
-        <Separator />
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-base font-medium text-foreground truncate min-w-0">{title}</h2>
-          {/* Show all + arrows only when the rail actually overflows. */}
-          {overflowing && (
-            <div className="flex items-center gap-1 shrink-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onShowAll}
-                className="@max-[559px]:!bg-secondary @max-[559px]:!text-secondary-foreground @max-[559px]:hover:!bg-secondary-hover"
-              >
-                Show all
-              </Button>
-              {/* Arrows: pointer-only, and only ≥692 where ≥2 columns show. */}
-              <div className="flex items-center gap-1 [@media(hover:none)]:!hidden @max-[692px]:hidden">
-                <Button variant="outline" size="icon-sm" aria-label="Scroll Songs left" onClick={() => scrollPage(-1)}><ChevronLeft /></Button>
-                <Button variant="outline" size="icon-sm" aria-label="Scroll Songs right" onClick={() => scrollPage(1)}><ChevronRight /></Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <ul
-        ref={scrollRef}
-        className={
-          "min-w-0 flex gap-6 items-start overflow-x-auto overflow-y-hidden " +
-          "snap-x snap-proximity scroll-smooth touch-pan-x overscroll-x-contain " +
-          "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden " +
-          "[&>li]:shrink-0 [&>li]:snap-start " +
-          "[&>li]:w-[calc(100%-48px)] " +
-          "@min-[692px]:[&>li]:w-[calc((100%-24px)/2)] " +
-          "@min-[1164px]:[&>li]:w-[calc((100%-48px)/3)]"
-        }
-      >
-        {columns.map((col, i) => (
-          <li key={i}>
-            <ul className="flex flex-col gap-1">
-              {col.map(r => <li key={r.id}><SearchSongRow r={r} compact /></li>)}
-            </ul>
-          </li>
-        ))}
-      </ul>
-    </section>
-  )
+  const rows = songs.map(r => <SearchSongRow key={r.id} r={r} compact />)
+  return <SongRailShell title={title} rows={rows} onShowAll={onShowAll} />
 }
 
 // A single search-result card (artist / album / playlist) for the shelves.

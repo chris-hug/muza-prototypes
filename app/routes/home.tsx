@@ -164,6 +164,7 @@ import { TopProgressBar } from "@/components/ui/top-progress-bar"
 import { AlbumCardMenuItems, PlaylistCardMenuItems } from "@/components/ui/cover-card-menu"
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
 import { CardRail } from "@/components/app/card-rail"
+import { SongRail } from "@/components/app/song-rail"
 import { PlaylistCreateCard } from "@/components/ui/playlist-create-card"
 import { MediaHeader } from "@/components/ui/media-header"
 import { ArtistHero } from "@/components/app/artist-hero"
@@ -328,6 +329,18 @@ function smoothScrollTo(scroller: Element, targetTop: number) {
   }
   requestAnimationFrame(step)
 }
+
+// Sample rows for the DS Song Rail showcase (enough to overflow → arrows + Show all).
+const SONG_RAIL_DEMO = [
+  { id: "sr1", title: "Blue Train",        album: "Blue Train",        duration: "10:43", cover: "https://picsum.photos/seed/songrail1/80" },
+  { id: "sr2", title: "Moment's Notice",   album: "Blue Train",        duration: "9:10",  cover: "https://picsum.photos/seed/songrail2/80" },
+  { id: "sr3", title: "Locomotion",        album: "Blue Train",        duration: "7:14",  cover: "https://picsum.photos/seed/songrail3/80" },
+  { id: "sr4", title: "Lazy Bird",         album: "Blue Train",        duration: "7:05",  cover: "https://picsum.photos/seed/songrail4/80" },
+  { id: "sr5", title: "I'm Old Fashioned", album: "Blue Train",        duration: "7:58",  cover: "https://picsum.photos/seed/songrail5/80" },
+  { id: "sr6", title: "Naima",             album: "Giant Steps",       duration: "4:21",  cover: "https://picsum.photos/seed/songrail6/80" },
+  { id: "sr7", title: "Cousin Mary",       album: "Giant Steps",       duration: "5:45",  cover: "https://picsum.photos/seed/songrail7/80" },
+  { id: "sr8", title: "Mr. P.C.",          album: "Giant Steps",       duration: "6:57",  cover: "https://picsum.photos/seed/songrail8/80" },
+]
 
 function SubLabel({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
@@ -4117,6 +4130,32 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             <li key={a.id}><AlbumCard cover={a.cover} title={a.title} artist={a.artist} year={albumMetaFor(a.title).year} streamPrice={albumMetaFor(a.title).streamPrice} downloadPrice={albumMetaFor(a.title).downloadPrice} /></li>
           ))}
         </CardRail>
+      </Section>
+
+      {/* ══ SONG RAIL ══ */}
+      <Section id="song-rail" title="Song Rail"
+        usage={[
+          { label: "Artist › Top Songs",     href: "/?page=Artist&artist=sun-ra" },
+          { label: "Search › Songs group",   href: "/?page=Explore&q=blue" },
+        ]}>
+        <p className="text-base text-muted-foreground mb-2 max-w-2xl">
+          The row-shaped sibling of <a href="/?page=DesignSystem#card-rail" className="text-primary-text hover:underline underline-offset-2">Card Rail</a>: it stacks <a href="/?page=DesignSystem#song-list-item" className="text-primary-text hover:underline underline-offset-2">Song List Item</a> rows into columns of <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">3</code> and scrolls sideways. One shared shell (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">song-rail.tsx</code>) — Artist Top Songs and Search Songs both feed it their own rows.
+        </p>
+        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-5 max-w-2xl list-disc pl-5">
+          <li><span className="text-foreground">Column steps</span> — 1 column default, 2 at <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">@min-[692px]</code>, 3 at <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">@min-[1164px]</code>; widths are computed from the rail's own 100% so columns line up with Card Rail at the same page width.</li>
+          <li><span className="text-foreground">Mobile peek</span> (&lt; 692px) — the single column is undersized so the next peeks (~24px) as the swipe cue.</li>
+          <li><span className="text-foreground">Arrows</span> — a pointer affordance only: hidden on touch (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">hover: none</code>) and below 692px, and shown only when the rail actually overflows.</li>
+          <li><span className="text-foreground">Show all</span> — optional (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">onShowAll</code>); omitted on Artist Top Songs. When present it appears only on overflow (firms into a secondary pill &lt; 560px).</li>
+          <li><span className="text-foreground">Rows passed in</span> — the shell is data-agnostic: each host renders its own keyed rows (player-wired on Artist, <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">SearchSongRow</code> in Search).</li>
+        </ul>
+        <SubLabel>Live component · <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">&lt;SongRail&gt;</code> from <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">song-rail.tsx</code></SubLabel>
+        <SongRail
+          title="Top Songs"
+          onShowAll={() => {}}
+          rows={SONG_RAIL_DEMO.map(s => (
+            <SongListItem key={s.id} compact cover={s.cover} title={s.title} album={s.album} duration={s.duration} onPlay={() => {}} />
+          ))}
+        />
       </Section>
 
       {/* ══ PRODUCT CARD ══ */}

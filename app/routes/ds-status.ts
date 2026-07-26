@@ -90,6 +90,7 @@ export const SECTION_STATUS: Record<string, SectionStatusEntry> = {
   "Song List Item":        { status: "updated" },
   "Badge":                 { status: "updated" }, // gained the `label` content type
   "Card Rail":             { status: "updated" }, // + showAllOnlyWhenScrollable (used by search "All" shelves)
+  "Song Rail":             { status: "new" }, // extracted shared shell (Artist Top Songs + Search Songs)
   "Album Card":            { status: "updated" }, // nav surface: cover→open, Play plays, Heart saves (no nav)
   "Playlist Card":         { status: "updated" }, // nav surface: cover→open, Play plays, Heart saves (no nav)
   "Tabs":                  { status: "updated" }, // mobile: scroll + auto-centre active
@@ -144,6 +145,7 @@ function titleToId(label: string): string {
   const overrides: Record<string, string> = {
     "Checkbox & Radio": "checkbox",
     "Card Rail":         "card-rail",
+    "Song Rail":         "song-rail",
     "MultiSelect":       "multi-select",
     "SingleSelect":      "single-select",
     "User Avatar":       "user-avatar",

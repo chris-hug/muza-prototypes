@@ -160,6 +160,8 @@ The app uses **two content-growth tiers** so very wide viewports don't leave gap
 
 `CardRail` mirrors the same step map — see [`src/components/app/card-rail.tsx`](src/components/app/card-rail.tsx).
 
+**Song rail (`SongRail`, `song-rail.tsx`)** is the row-shaped sibling of `CardRail`: it stacks [Song List Item](src/components/ui/song-list-item.tsx) rows into columns of **3** and scrolls sideways (1 column < 692px with a peek, 2 ≥ 692, 3 ≥ 1164 — widths from the rail's own `100%` so columns align with `CardRail` at the same width). It is the single shared shell for **Artist › Top Songs** and **Search › Songs**; each host passes its own pre-rendered rows (`rows: ReactNode[]`) so the rail stays data-agnostic. `title` heading is `text-base`. `onShowAll` is optional (omit → no "Show all", e.g. Top Songs); when present, "Show all" + the ◀ ▶ arrows appear **only on overflow**, and the arrows are pointer-only (hidden on touch / < 692px). Shown in the DS under "Song Rail".
+
 **Artist hero (`ArtistHero`, `artist-hero.tsx`)** uses the same dual cap (a reusable component, also shown in the DS under "Artist Header"):
 ```tsx
 <section className="aspect-[1072/400] min-h-[320px] max-h-[552px] min-[1920px]:max-h-[640px] …">
@@ -580,11 +582,11 @@ The **All** tab is **not** a flat list — it's a Top-result hero followed by on
 
 - **Top result** — the single best-ranked match, promoted to an oversized hero card (big cover, large title, content-type badge, Play button for playable kinds). It is **removed from its own type section**, so that section appears only when there are OTHER hits of that type (e.g. more artists with a similar name); a lone match never gets a redundant one-item rail repeating the hero.
 - **Section order is relevance-driven** — a type's position is set by where its best-ranked hit falls, and the Top result's type still leads when it has siblings. Tie-break order: Songs · Artists · Albums · Playlists · Labels.
-- **Songs** — a horizontally-paged **column-rail** (the Artist › Top Songs pattern: 3 rows per column, 1 col < 692 with peek, 2 ≥ 692, 3 ≥ 1164) when there are **≥ 6** songs; a plain **vertical list** when **≤ 5** (6 = the first count that fills two full 3-row columns, so fewer would leave a ragged column).
+- **Songs** — the shared **`SongRail`** (same shell as Artist › Top Songs: 3 rows per column, 1 col < 692 with peek, 2 ≥ 692, 3 ≥ 1164) when there are **≥ 6** songs; a plain **vertical list** when **≤ 5** (6 = the first count that fills two full 3-row columns, so fewer would leave a ragged column).
 - **Artists / Albums / Playlists** — a **`CardRail`** of the matching cards when **≥ 2**; a **single inline card** (no rail chrome) when exactly **1**.
 - **Labels** — always a simple vertical list (no card / no detail page).
 - **Empty types are omitted** (no empty shelves).
-- **"Show all"** appears **only when the shelf actually overflows** (there's off-screen content to scroll to) → opens that type's tab. Sections that already show every hit (e.g. 3 cards that fit, or a ≤5-song list) get **no** "Show all" — it would reveal nothing. Card rails use `CardRail`'s `showAllOnlyWhenScrollable`; the song column-rail gates it on its own overflow check.
+- **"Show all"** appears **only when the shelf actually overflows** (there's off-screen content to scroll to) → opens that type's tab. Sections that already show every hit (e.g. 3 cards that fit, or a ≤5-song list) get **no** "Show all" — it would reveal nothing. Card rails use `CardRail`'s `showAllOnlyWhenScrollable`; `SongRail` gates it on its own overflow check.
 - **Sparse query (≤ 2 total results)** → skip the shelves: Top result + a short vertical list.
 
 Needs an `@container` ancestor (the All wrapper sets one) so the rails' `@min-[…]` column steps resolve against the content area.

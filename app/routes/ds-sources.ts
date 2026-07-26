@@ -67,6 +67,7 @@ export const SECTION_SOURCE: Record<string, string> = {
   "cover-play-button":"src/components/ui/cover-play-button.tsx",
   "song-list-item":   "src/components/ui/song-list-item.tsx",
   "card-rail":        "src/components/app/card-rail.tsx",
+  "song-rail":        "src/components/app/song-rail.tsx",
   "product-card":     "src/components/ui/product-card.tsx",
 
   // Page composition

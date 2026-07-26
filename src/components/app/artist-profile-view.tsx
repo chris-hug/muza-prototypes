@@ -25,8 +25,8 @@
  */
 
 import * as React from "react"
-import { useMemo, useRef, useState } from "react"
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, LayoutGrid, List, MoreHorizontal, Heart, ListPlus, Disc3, Info } from "lucide-react"
+import { useMemo, useState } from "react"
+import { ArrowDown, ArrowUp, ArrowUpDown, LayoutGrid, List, MoreHorizontal, Heart, ListPlus, Disc3, Info } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { ContentTypeBadge } from "@/components/ui/badge"
@@ -46,6 +46,7 @@ import {
 import { AlbumCardMenuItems } from "@/components/ui/cover-card-menu"
 import { useUserLibrary } from "@/lib/user-library"
 import { ArtistHero } from "./artist-hero"
+import { SongRail } from "./song-rail"
 import { artistImage } from "@/lib/artist-data"
 import { albumMetaFor, libraryIdForTitle } from "@/lib/album-meta"
 import { ShareMenuItems } from "@/components/ui/share-button"
@@ -770,87 +771,18 @@ function DiscographyView({
 
 // ─── TopSongsRow ────────────────────────────────────────────────────────────
 //
-// Horizontally-scrolling rail of song columns (max 3 rows per column).
-// Header chrome (separator + title + ◀ ▶ + Show all) matches CardRail so
-// the Artist page reads as one rhythm of section dividers.
-//
-// At default container width 1 column is visible; at @min-[692px] 2;
-// at @min-[1164px] 3. The arrows scroll by clientWidth + gap (one
-// page of visible columns) — same trick CardRail uses to land cleanly
-// on a column boundary.
-//
-// Responsive behaviour mirrors CardRail: below 692px (phones + small
-// tablets) the column is undersized so the next group peeks at the
-// right edge (swipe cue), and the ◀ ▶ arrows are hidden on touch
-// (`pointer-coarse`) / below 692. From 692 up: exact columns + arrows.
-
-const ROWS_PER_COLUMN = 3
+// Artist › Top Songs = the shared `SongRail` shell fed artist-wired rows.
+// This wrapper only builds the rows (player / credits / album nav); the rail
+// itself (columns, chevrons, peek, responsive ladder) lives in `song-rail.tsx`.
 
 function TopSongsRow({ songs }: { songs: typeof TOP_SONGS }) {
-  const scrollRef = useRef<HTMLUListElement>(null)
   const { openAlbum } = useMediaNav()
   const credits = useCredits()
   const player = usePlayer()
-  const columns: (typeof songs)[] = []
-  for (let i = 0; i < songs.length; i += ROWS_PER_COLUMN) {
-    columns.push(songs.slice(i, i + ROWS_PER_COLUMN))
-  }
 
-  const scrollPage = (dir: 1 | -1) => {
-    const el = scrollRef.current
-    if (!el) return
-    const gap = parseFloat(getComputedStyle(el).columnGap) || 0
-    el.scrollBy({ left: dir * (el.clientWidth + gap), behavior: "smooth" })
-  }
-
-  return (
-    <section className="flex flex-col gap-4 min-w-0 overflow-x-clip">
-      <div className="flex flex-col gap-2 pt-6">
-        <Separator />
-        <div className="flex items-center justify-between">
-          <h2 className="text-small font-medium text-foreground">Top Songs</h2>
-          {/* ◀ ▶ are a pointer affordance only — hidden on touch
-               (`pointer-coarse`) and below 692px, where the swipe peek
-               (a cut-off next column) is the scroll cue instead. */}
-          <div className="flex items-center gap-1 [@media(hover:none)]:!hidden @max-[692px]:hidden">
-            <Button variant="outline" size="icon-sm" aria-label="Scroll Top Songs left"  onClick={() => scrollPage(-1)}>
-              <ChevronLeft />
-            </Button>
-            <Button variant="outline" size="icon-sm" aria-label="Scroll Top Songs right" onClick={() => scrollPage(1)}>
-              <ChevronRight />
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <ul
-        ref={scrollRef}
-        className={
-          "min-w-0 flex gap-6 items-start overflow-x-auto overflow-y-hidden " +
-          "snap-x snap-proximity scroll-smooth " +
-          "touch-pan-x overscroll-x-contain " +
-          "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden " +
-          "[&>li]:shrink-0 [&>li]:snap-start " +
-          // 1 col default, 2 at ≥692, 3 at ≥1164 — column widths are
-          // computed from the ul's own 100% so they line up with the
-          // CardRail card columns sitting at the same page width.
-          //
-          // Mobile (< 692): the single column is undersized by 48px so
-          // a ~24px sliver of the next column peeks at the right edge —
-          // the swipe cue (matches CardRail's mobile peek; gap is 24px
-          // here, so 48−24 ≈ 24px visible). From 692 up: exact columns
-          // (no peek), arrows carry the scroll affordance.
-          "[&>li]:w-[calc(100%-48px)] " +
-          "@min-[692px]:[&>li]:w-[calc((100%-24px)/2)] " +
-          "@min-[1164px]:[&>li]:w-[calc((100%-48px)/3)]"
-        }
-      >
-        {columns.map((col, i) => (
-          <li key={i}>
-            <ul className="flex flex-col gap-1">
-              {col.map(s => (
-                <li key={s.id}>
+  const rows = songs.map(s => (
                   <SongListItem
+                    key={s.id}
                     compact
                     cover={s.cover}
                     title={s.title}
@@ -883,12 +815,7 @@ function TopSongsRow({ songs }: { songs: typeof TOP_SONGS }) {
                       </>
                     }
                   />
-                </li>
-              ))}
-            </ul>
-          </li>
-        ))}
-      </ul>
-    </section>
-  )
+  ))
+
+  return <SongRail title="Top Songs" rows={rows} />
 }
