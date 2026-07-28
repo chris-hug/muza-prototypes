@@ -314,8 +314,11 @@ export function MediaHeader({
           </div>
 
           {/* ── Mobile actions — single full-width row: Play | Shuffle
-               | Add/Edit | Share. Info + More live in the page top bar
-               on mobile, so they're omitted here. */}
+               | Add/Edit | Info. The two trailing icons are Save (heart)
+               and Info (credits); Share + the rest live in the top-bar
+               "…" menu (DetailMoreButton), so they're omitted here.
+               Playlists have no release credits → no Info, leaving just
+               the heart. */}
           <div className="flex flex-col gap-3 w-full @min-[560px]:hidden">
             {ctaButton}
             <div className="flex items-center gap-2 w-full">
@@ -328,7 +331,11 @@ export function MediaHeader({
               ) : (
                 heartButton()
               )}
-              <ShareButton variant="outline" size="icon-lg" title={title} text={shareText} className={ACTION_BTN_CLASS} />
+              {!isPlaylist && (
+                <Button variant="outline" size="icon-lg" onClick={showInfo} aria-label="Info" className={ACTION_BTN_CLASS}>
+                  <Info />
+                </Button>
+              )}
             </div>
           </div>
 
@@ -374,6 +381,12 @@ export function MediaHeader({
                 cover={cover}
                 owned={isOwned}
                 kind={isPlaylist ? "playlist" : "album"}
+                /* Same library binding as the header heart, so the menu's
+                   Save toggles the store — the heart fills and the menu flips
+                   to "Remove from library" together. */
+                libraryType={libraryType}
+                libraryId={libraryId}
+                libraryName={libraryName}
                 onAdd={onAdd}
                 onEdit={onEdit}
                 onGoToArtist={onOwnerClick}

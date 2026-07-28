@@ -13,10 +13,11 @@
 
 import { useEffect, useState } from "react"
 import { useSearchParams } from "react-router"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Search, X } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
+import { Input } from "@/components/ui/input"
 import { ExploreView } from "./home"
 
 // Section groupings. The label has to match the section id used in
@@ -102,6 +103,16 @@ export default function DesignSystem() {
   // and the content. Defaults to ON so docs are complete; flip OFF
   // when working purely on day-one features.
   const [showPhase2, setShowPhase2] = useState(true)
+  // Component search — filters the sidebar nav by label (case-insensitive
+  // substring). Enter jumps to the first match.
+  const [query, setQuery] = useState("")
+  const q = query.trim().toLowerCase()
+  const matches = (item: string) =>
+    (showPhase2 || !PHASE_2.has(item)) && (!q || item.toLowerCase().includes(q))
+  const firstMatchId = () => {
+    for (const g of GROUPS) for (const item of g.items) if (matches(item)) return idFor(item)
+    return null
+  }
 
   // Sync scroll → active sidebar item via IntersectionObserver. Each
   // <Section> gets `scroll-mt-6` (set inside home.tsx) so anchored
@@ -150,8 +161,9 @@ export default function DesignSystem() {
     <div className="flex h-svh w-full">
       {/* Sidebar */}
       <aside className="shrink-0 w-64 border-r border-border bg-background flex flex-col">
-        {/* Top — wordmark + back-to-prototype link. */}
-        <div className="shrink-0 px-5 pt-6 pb-4 flex flex-col gap-3 border-b border-border">
+        {/* Top — back link, title, component search, phase-2 toggle.
+            Borderless / minimal; the nav below carries its own spacing. */}
+        <div className="shrink-0 px-4 pt-6 pb-4 flex flex-col gap-4 border-b border-border">
           <button
             type="button"
             onClick={goBackToPrototype}
@@ -160,14 +172,32 @@ export default function DesignSystem() {
             <ArrowLeft className="size-3.5" />
             Back to prototype
           </button>
-          <div>
-            <h2 className="text-small font-medium text-foreground">Design system</h2>
-            <p className="text-xsmall text-muted-foreground mt-0.5">Components & patterns</p>
+          <h2 className="text-small font-medium text-foreground">Design system</h2>
+
+          {/* Component search — filters the nav (Enter jumps to first match). */}
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+            <Input
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") { const id = firstMatchId(); if (id) goto(id) } }}
+              placeholder="Search components"
+              aria-label="Search components"
+              className="pl-10 pr-9"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                aria-label="Clear search"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <X className="size-4" />
+              </button>
+            )}
           </div>
-          {/* Phase 2 visibility — toggle hides shop/products
-              components from both the sidebar nav and the content
-              so day-one work isn't visually crowded. */}
-          <label className="flex items-center justify-between gap-3 pt-1 cursor-pointer select-none">
+
+          <label className="flex items-center justify-between gap-3 cursor-pointer select-none">
             <span className="text-xsmall font-normal text-muted-foreground">Show Phase 2</span>
             <Switch checked={showPhase2} onCheckedChange={setShowPhase2} />
           </label>
@@ -175,8 +205,11 @@ export default function DesignSystem() {
 
         {/* Grouped section nav. */}
         <nav className="flex-1 overflow-y-auto py-2 px-2">
+          {!GROUPS.some(g => g.items.some(matches)) && (
+            <p className="px-3 py-4 text-xsmall text-muted-foreground">No components match “{query}”.</p>
+          )}
           {GROUPS.map(group => {
-            const visibleItems = group.items.filter(item => showPhase2 || !PHASE_2.has(item))
+            const visibleItems = group.items.filter(matches)
             if (visibleItems.length === 0) return null
             return (
             <div key={group.title} className="mb-4 last:mb-0">

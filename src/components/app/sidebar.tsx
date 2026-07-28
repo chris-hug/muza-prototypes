@@ -5,6 +5,7 @@ import { Collapsible } from "@base-ui/react/collapsible"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { LogoHorizontal, LogoMark } from "@/components/ui/logo"
+import { FeedbackDialog } from "@/components/app/feedback-dialog"
 import {
   Home, Compass, ListMusic, Disc3, Mic, Music2,
   Sliders, FileText, ShoppingCart, Library,
@@ -231,6 +232,7 @@ export function Sidebar({
   const [openGroup,  setOpenGroup]  = useState<string>("Library")
   const [sidebarWidth, setSidebarWidth] = useState(MIN_W)
   const [resizing, setResizing] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
 
   const isResizingRef  = useRef(false)
   const resizeStartX   = useRef(0)
@@ -351,6 +353,19 @@ export function Sidebar({
                 />
                 <Collapsible.Panel className="sidebar-panel overflow-hidden">
                   <div className="flex flex-col gap-0.5 pt-0.5 pb-1 pl-3">
+                    {/* Studio-only action — feedback straight to the team.
+                        First thing in the (already Studio-gated) group, so only
+                        Studio users ever see it. */}
+                    {group.label === "Studio" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full my-1"
+                        onClick={() => setFeedbackOpen(true)}
+                      >
+                        Send Feedback
+                      </Button>
+                    )}
                     {group.children.map((child, i) =>
                       "separator" in child ? (
                         <div
@@ -462,6 +477,8 @@ export function Sidebar({
           <div className="h-full w-full group-hover:bg-sidebar-border transition-colors" />
         </div>
       )}
+
+      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </aside>
   )
 }

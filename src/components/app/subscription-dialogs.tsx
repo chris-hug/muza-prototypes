@@ -62,7 +62,9 @@ export function SubscriptionPromptDialog({
     if (open) setAmount("10")
   }, [open])
 
-  const ctaLabel = Number(amount) > 0 ? `Subscribe — $${Number(amount).toFixed(2)}/mo` : "Start free"
+  const paidAmount = Math.max(0, Number(amount) || 0)
+  const paidValid = paidAmount >= MIN_AMOUNT
+  const ctaLabel = `Subscribe — $${paidAmount.toFixed(2)}/mo`
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -77,12 +79,19 @@ export function SubscriptionPromptDialog({
           amount={amount}
           onAmountChange={setAmount}
           ctaLabel={ctaLabel}
+          subscribeDisabled={!paidValid}
           onSubscribe={() => { onOpenChange(false); onSubscribe(amount) }}
+          onFreeTrial={() => { onOpenChange(false); onSubscribe(FREE_TRIAL) }}
         />
       </DialogContent>
     </Dialog>
   )
 }
+
+// Sentinel amount that routes the checkout into its free-month mode
+// (a first month on us, no charge today), instead of a paid amount.
+const FREE_TRIAL = "free"
+const isFreeTrial = (v: string) => v === FREE_TRIAL
 
 // The pitch sentence — single source of truth.
 const PAYWALL_PITCH =
@@ -98,12 +107,14 @@ const PAYWALL_PITCH =
  * sr-only DialogTitle for dialog a11y.
  */
 function PaywallContent({
-  amount, onAmountChange, ctaLabel, onSubscribe,
+  amount, onAmountChange, ctaLabel, subscribeDisabled, onSubscribe, onFreeTrial,
 }: {
   amount: string
   onAmountChange: (next: string) => void
   ctaLabel: string
+  subscribeDisabled?: boolean
   onSubscribe?: () => void
+  onFreeTrial?: () => void
 }) {
   const brandLockup = (
     <>
@@ -152,20 +163,30 @@ function PaywallContent({
               Choose your monthly amount
             </p>
             <AmountPillRow value={amount} onChange={onAmountChange} />
+            {/* Subtle separator between the picker and the actions. */}
+            <div className="w-full h-px bg-border/60 my-1" />
             <Button
               size="lg"
-              className="!h-16 w-full !text-large mt-1"
+              className="!h-16 w-full !text-large"
+              disabled={subscribeDisabled}
               onClick={onSubscribe}
             >
               {ctaLabel}
             </Button>
+            {/* Secondary action — a first month on us for anyone not
+                ready to commit to an amount yet. Same size as primary. */}
+            <Button
+              variant="secondary"
+              size="lg"
+              className="!h-16 w-full !text-large font-normal"
+              onClick={onFreeTrial}
+            >
+              Try a free month
+            </Button>
           </div>
           <div className="flex flex-col items-center gap-0.5">
-            <p className="text-xsmall text-muted-foreground text-center">
-              Pay what feels right. During our alpha also $0 is fine.
-            </p>
-            <p className="text-xsmall text-muted-foreground text-center">
-              Cancel anytime · billed monthly · registered non-profit
+            <p className="text-small text-muted-foreground text-center">
+              Cancel anytime · billed monthly
             </p>
           </div>
         </div>
@@ -196,7 +217,7 @@ export function SubscriptionPromptDialogPreview({
 } = {}) {
   const [amount, setAmount] = useState<string>("10")
   const monthly  = Math.max(0, Number(amount) || 0)
-  const ctaLabel = monthly > 0 ? `Subscribe — $${monthly.toFixed(2)}/mo` : "Start free"
+  const ctaLabel = `Subscribe — $${monthly.toFixed(2)}/mo`
   return (
     <DialogPreview
       showCloseButton
@@ -206,6 +227,7 @@ export function SubscriptionPromptDialogPreview({
         amount={amount}
         onAmountChange={setAmount}
         ctaLabel={ctaLabel}
+        subscribeDisabled={monthly < MIN_AMOUNT}
       />
     </DialogPreview>
   )
@@ -218,40 +240,52 @@ export function SubscriptionPromptDialogPreview({
  * Interactive locally (amount + email) so reviewers can watch the CTA update.
  */
 export function SubscriptionCheckoutDialogPreview({
-  className,
+  className, freeTrial = false,
 }: {
   className?: string
+  /** Show the free-month variant (no amount / no payment, $0 today). */
+  freeTrial?: boolean
 } = {}) {
   const [amount, setAmount] = useState<string>("10")
   const [email, setEmail]   = useState<string>(MOCK_USER_EMAIL)
   const monthlyAmount    = Math.max(0, Number(amount) || 0)
   const formattedMonthly = `$${monthlyAmount.toFixed(2)}/mo`
   const emailValid       = /\S+@\S+\.\S+/.test(email)
+  const emailId = freeTrial ? "sub-email-preview-free" : "sub-email-preview"
   return (
     <DialogPreview
       showCloseButton
       className={cn("!w-full !max-w-xl p-0 gap-0 flex flex-col", className)}
     >
       <div className="shrink-0 flex flex-col gap-3 px-6 pt-6 pb-4 border-b border-border">
-        <DialogPreviewTitle>Subscribe to Muza</DialogPreviewTitle>
+        <DialogPreviewTitle>{freeTrial ? "Start your free month" : "Subscribe to Muza"}</DialogPreviewTitle>
       </div>
 
       <div className="px-6 py-4 flex flex-col gap-6">
-        <div className="flex flex-col gap-2">
-          <AmountPicker value={amount} onChange={setAmount} />
-          <p className="text-2xsmall text-muted-foreground">
-            During alpha, $0 is a real option — pay when (and what) feels right.
-          </p>
-        </div>
+        {freeTrial ? (
+          <div className="flex flex-col gap-1.5 rounded-lg border border-border bg-muted/40 p-4">
+            <p className="text-small font-medium text-foreground">Your first month is on us</p>
+            <p className="text-2xsmall text-muted-foreground">
+              Free for 30 days — full access, no charge today. Near the end we&rsquo;ll ask what you&rsquo;d like to pay; cancel anytime before and you&rsquo;re never billed.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <AmountPillRow value={amount} onChange={setAmount} />
+            <p className="text-2xsmall text-muted-foreground">
+              Pay what feels right — $1 and up.
+            </p>
+          </div>
+        )}
 
         <div className="flex flex-col gap-2">
           <SectionLabel>Contact</SectionLabel>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="sub-email-preview" className="sr-only">Email</Label>
+            <Label htmlFor={emailId} className="sr-only">Email</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
               <Input
-                id="sub-email-preview"
+                id={emailId}
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
@@ -266,36 +300,42 @@ export function SubscriptionCheckoutDialogPreview({
           </div>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <SectionLabel>Payment</SectionLabel>
-          <SquareContainer />
-        </div>
+        {!freeTrial && (
+          <div className="flex flex-col gap-2">
+            <SectionLabel>Payment</SectionLabel>
+            <SquareContainer />
+          </div>
+        )}
 
         <dl className="flex flex-col gap-1.5 py-1">
           <div className="flex items-center justify-between">
-            <dt className="text-small text-muted-foreground">Muza membership · monthly</dt>
-            <dd className="text-small tabular-nums">{formattedMonthly}</dd>
+            <dt className="text-small text-muted-foreground">
+              {freeTrial ? "Muza membership · first month" : "Muza membership · monthly"}
+            </dt>
+            <dd className="text-small tabular-nums">{freeTrial ? "Free" : formattedMonthly}</dd>
           </div>
           <div className="flex items-center justify-between pt-1.5 border-t border-border">
             <dt className="text-small font-medium text-foreground">Total today</dt>
             <dd className="text-large font-medium tabular-nums">
-              {monthlyAmount === 0 ? "$0.00" : `$${monthlyAmount.toFixed(2)}`}
+              {freeTrial ? "$0.00" : `$${monthlyAmount.toFixed(2)}`}
             </dd>
           </div>
         </dl>
 
-        <div className="flex items-center gap-2 text-2xsmall text-muted-foreground">
-          <ShieldCheck className="size-3.5" />
-          <span>
-            Subscriptions processed by Square. Card details never touch Muza's servers.
-          </span>
-        </div>
+        {!freeTrial && (
+          <div className="flex items-center gap-2 text-2xsmall text-muted-foreground">
+            <ShieldCheck className="size-3.5" />
+            <span>
+              Subscriptions processed by Square. Card details never touch Muza's servers.
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="m-0 shrink-0 flex justify-end gap-2 border-t border-border bg-muted px-6 py-4 rounded-b-xl sm:rounded-b-2xl">
         <Button variant="ghost">Cancel</Button>
-        <Button disabled={!emailValid}>
-          {monthlyAmount === 0 ? "Start free" : `Subscribe — ${formattedMonthly}`}
+        <Button disabled={!emailValid || (!freeTrial && monthlyAmount < MIN_AMOUNT)}>
+          {freeTrial ? "Start free month" : `Subscribe — ${formattedMonthly}`}
         </Button>
       </div>
     </DialogPreview>
@@ -306,11 +346,12 @@ export function SubscriptionCheckoutDialogPreview({
 
 type CheckoutStep = "summary" | "processing" | "success"
 
-// Alpha pricing — pay what you want. $0 is a real option (free
-// subscription during alpha); presets nudge toward modest support
-// without anchoring high. The 6th slot is a "custom" pill that
-// reveals a numeric field. Default $10 as the soft suggestion.
-const AMOUNT_PRESETS = ["0", "5", "10", "15", "30"] as const
+// Pay-what-you-want, $5 and up. Presets nudge toward modest support
+// without anchoring high; the last slot is a "custom" pill (numeric
+// field). Default $10 as the soft suggestion. A free month is offered
+// separately (a secondary action), not as a $0 amount.
+const AMOUNT_PRESETS = ["5", "10", "20"] as const
+const MIN_AMOUNT = 1
 
 export function SubscriptionCheckoutDialog({
   open, onOpenChange, onSubscribed, userEmail = MOCK_USER_EMAIL,
@@ -336,7 +377,9 @@ export function SubscriptionCheckoutDialog({
     setEmail(userEmail)
   }, [open, userEmail, initialAmount])
 
+  const freeTrial = isFreeTrial(amount)
   const monthlyAmount = Math.max(0, Number(amount) || 0)
+  const paidValid = monthlyAmount >= MIN_AMOUNT
   const formattedMonthly = `$${monthlyAmount.toFixed(2)}/mo`
   const emailValid = /\S+@\S+\.\S+/.test(email)
   const handleSubscribe = () => {
@@ -356,23 +399,34 @@ export function SubscriptionCheckoutDialog({
           <>
             <div className="shrink-0 flex flex-col gap-3 px-6 pt-6 pb-4 border-b border-border">
               <DialogHeader>
-                <DialogTitle>Subscribe to Muza</DialogTitle>
+                <DialogTitle>{freeTrial ? "Start your free month" : "Subscribe to Muza"}</DialogTitle>
                 <DialogDescription className="sr-only">
-                  Choose what you pay monthly, add your details, and check out.
+                  {freeTrial
+                    ? "Confirm your email to start your free month. No charge today."
+                    : "Choose what you pay monthly, add your details, and check out."}
                 </DialogDescription>
               </DialogHeader>
             </div>
 
             <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-6">
 
-              {/* Pay-what-you-want — leads directly under the title (no
-                  second heading); whitespace groups the sections, no rules. */}
-              <div className="flex flex-col gap-2">
-                <AmountPicker value={amount} onChange={setAmount} />
-                <p className="text-2xsmall text-muted-foreground">
-                  During alpha, $0 is a real option — pay when (and what) feels right.
-                </p>
-              </div>
+              {/* Free-trial → explainer, no amount to pick. Paid →
+                  pay-what-you-want picker ($5+). */}
+              {freeTrial ? (
+                <div className="flex flex-col gap-1.5 rounded-lg border border-border bg-muted/40 p-4">
+                  <p className="text-small font-medium text-foreground">Your first month is on us</p>
+                  <p className="text-2xsmall text-muted-foreground">
+                    Free for 30 days — full access, no charge today. Near the end we&rsquo;ll ask what you&rsquo;d like to pay; cancel anytime before and you&rsquo;re never billed.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <AmountPillRow value={amount} onChange={setAmount} />
+                  <p className="text-2xsmall text-muted-foreground">
+                    Pay what feels right — $1 and up.
+                  </p>
+                </div>
+              )}
 
               <div className="flex flex-col gap-2">
                 <SectionLabel>Contact</SectionLabel>
@@ -396,36 +450,44 @@ export function SubscriptionCheckoutDialog({
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <SectionLabel>Payment</SectionLabel>
-                <SquareContainer />
-              </div>
+              {/* No card needed to start the free month — payment only
+                  when there's a charge today. */}
+              {!freeTrial && (
+                <div className="flex flex-col gap-2">
+                  <SectionLabel>Payment</SectionLabel>
+                  <SquareContainer />
+                </div>
+              )}
 
               <dl className="flex flex-col gap-1.5 py-1">
                 <div className="flex items-center justify-between">
-                  <dt className="text-small text-muted-foreground">Muza membership · monthly</dt>
-                  <dd className="text-small tabular-nums">{formattedMonthly}</dd>
+                  <dt className="text-small text-muted-foreground">
+                    {freeTrial ? "Muza membership · first month" : "Muza membership · monthly"}
+                  </dt>
+                  <dd className="text-small tabular-nums">{freeTrial ? "Free" : formattedMonthly}</dd>
                 </div>
                 <div className="flex items-center justify-between pt-1.5 border-t border-border">
                   <dt className="text-small font-medium text-foreground">Total today</dt>
                   <dd className="text-large font-medium tabular-nums">
-                    {monthlyAmount === 0 ? "$0.00" : `$${monthlyAmount.toFixed(2)}`}
+                    {freeTrial ? "$0.00" : `$${monthlyAmount.toFixed(2)}`}
                   </dd>
                 </div>
               </dl>
 
-              <div className="flex items-center gap-2 text-2xsmall text-muted-foreground">
-                <ShieldCheck className="size-3.5" />
-                <span>
-                  Subscriptions processed by Square. Card details never touch Muza's servers.
-                </span>
-              </div>
+              {!freeTrial && (
+                <div className="flex items-center gap-2 text-2xsmall text-muted-foreground">
+                  <ShieldCheck className="size-3.5" />
+                  <span>
+                    Subscriptions processed by Square. Card details never touch Muza's servers.
+                  </span>
+                </div>
+              )}
             </div>
 
             <DialogFooter className="m-0 shrink-0 border-t border-border bg-muted px-6 py-4 rounded-b-xl sm:rounded-b-2xl">
               <DialogClose render={<Button variant="ghost" />}>Cancel</DialogClose>
-              <Button onClick={handleSubscribe} disabled={!emailValid}>
-                {monthlyAmount === 0 ? "Start free" : `Subscribe — ${formattedMonthly}`}
+              <Button onClick={handleSubscribe} disabled={!emailValid || (!freeTrial && !paidValid)}>
+                {freeTrial ? "Start free month" : `Subscribe — ${formattedMonthly}`}
               </Button>
             </DialogFooter>
           </>
@@ -489,32 +551,33 @@ function AmountPillRow({
   const customActive = !isPreset && value !== ""
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2">
-      {AMOUNT_PRESETS.map(p => {
-        const active = isPreset && value === p
-        return (
-          <button
-            key={p}
-            type="button"
-            onClick={() => onChange(p)}
-            aria-pressed={active}
-            className={cn(
-              "h-11 min-w-[88px] px-6 rounded-full text-base font-normal tabular-nums transition-colors bg-background",
-              active
-                ? "border border-foreground"
-                : "border border-border hover:border-foreground/40",
-            )}
-          >
-            ${p}
-          </button>
-        )
-      })}
-      {/* Custom pill — always renders as an inline input with a $
-          prefix so users immediately see they can type any amount.
-          No click-to-reveal step. */}
+    <div className="flex w-full flex-col items-stretch gap-2">
+      <div className="grid grid-cols-3 gap-2">
+        {AMOUNT_PRESETS.map(p => {
+          const active = isPreset && value === p
+          return (
+            <button
+              key={p}
+              type="button"
+              onClick={() => onChange(p)}
+              aria-pressed={active}
+              className={cn(
+                "h-11 w-full px-2 rounded-full text-base font-normal tabular-nums transition-colors bg-background",
+                active
+                  ? "border border-foreground"
+                  : "border border-border hover:border-foreground/40",
+              )}
+            >
+              ${p}
+            </button>
+          )
+        })}
+      </div>
+      {/* Custom — full-width row under the presets, always typeable
+          (no click-to-reveal). $ prefix + "choose your own" placeholder. */}
       <label
         className={cn(
-          "h-11 pl-4 pr-3 inline-flex items-center gap-1 rounded-full bg-background text-base font-normal tabular-nums transition-colors",
+          "h-11 w-full pl-4 pr-3 flex items-center gap-1 rounded-full bg-background text-base font-normal tabular-nums transition-colors",
           customActive
             ? "border border-foreground"
             : "border border-border hover:border-foreground/40 focus-within:border-foreground",
@@ -529,64 +592,9 @@ function AmountPillRow({
             const raw = e.target.value.replace(/[^0-9.]/g, "")
             onChange(raw)
           }}
-          placeholder="0"
+          placeholder="choose your own"
           aria-label="Custom monthly amount"
-          className="w-16 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
-        />
-      </label>
-    </div>
-  )
-}
-
-function AmountPicker({
-  value, onChange,
-}: {
-  value: string
-  onChange: (next: string) => void
-}) {
-  const isPreset = (AMOUNT_PRESETS as readonly string[]).includes(value)
-  const customActive = !isPreset && value !== ""
-  // 5 presets + a custom field = 6 equal-width pills, 3 per row (2 rows).
-  return (
-    <div className="grid grid-cols-3 gap-1.5">
-      {AMOUNT_PRESETS.map(p => {
-        const active = value === p
-        return (
-          <button
-            key={p}
-            type="button"
-            onClick={() => onChange(p)}
-            aria-pressed={active}
-            className={cn(
-              "h-10 rounded-full text-small font-medium tabular-nums transition-colors border",
-              active
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-background text-foreground border-border hover:bg-muted",
-            )}
-          >
-            ${p}
-          </button>
-        )
-      })}
-      {/* Custom — 6th pill, same size; type any amount. The $ prefix
-          appears once a value is entered so the empty state reads "Custom". */}
-      <label
-        className={cn(
-          "h-10 inline-flex items-center justify-center gap-0.5 rounded-full border bg-background px-3 text-small font-medium tabular-nums transition-colors",
-          customActive
-            ? "border-primary"
-            : "border-border hover:border-foreground/40 focus-within:border-foreground",
-        )}
-      >
-        {customActive && <span className="text-muted-foreground">$</span>}
-        <input
-          type="text"
-          inputMode="decimal"
-          value={isPreset ? "" : value}
-          onChange={e => onChange(e.target.value.replace(/[^0-9.]/g, ""))}
-          placeholder="Custom"
-          aria-label="Custom monthly amount"
-          className="w-full min-w-0 bg-transparent text-center text-foreground placeholder:text-muted-foreground outline-none"
+          className="flex-1 min-w-0 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
         />
       </label>
     </div>

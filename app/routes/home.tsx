@@ -1239,8 +1239,13 @@ function SubscriptionPromptDemo() {
   return (
     <div className="flex flex-col gap-4">
       <SubscriptionPromptDialogPreview />
-      {/* Step 2 — the checkout, shown static below the paywall. */}
-      <SubscriptionCheckoutDialogPreview />
+      {/* Step 2 — the checkout, shown static below the paywall. Two
+          variants side by side: the paid summary and the free-month
+          variant (no amount / no payment, $0 today). */}
+      <div className="flex flex-wrap items-start gap-4">
+        <SubscriptionCheckoutDialogPreview className="flex-1 min-w-[320px]" />
+        <SubscriptionCheckoutDialogPreview freeTrial className="flex-1 min-w-[320px]" />
+      </div>
       <div className="flex items-center gap-3 flex-wrap">
         <Button variant="outline" onClick={() => setPromptOpen(true)}>
           Open as modal
@@ -4783,16 +4788,17 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-5 max-w-2xl list-disc pl-5">
           <li>
             <span className="text-foreground">Inline amount picker</span>
-            {" "}— 5 preset pills (<code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">$0 / $5 / $10 / $15 / $30</code>)
-            + a 6th <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">$ _</code>
-            input pill that's always typeable (no click-to-reveal
-            step). Pre-selected at $10. Active pill = dark outline.
+            {" "}— 3 preset pills (<code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">$5 / $10 / $20</code>)
+            + a full-width <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">$ _</code>
+            custom row below them ("choose your own"), always typeable (no
+            click-to-reveal). Pre-selected at $10. <span className="text-foreground">$1 minimum</span> — Subscribe disables below it. Active pill = dark outline.
           </li>
           <li>
-            <span className="text-foreground">Single primary CTA</span>
+            <span className="text-foreground">Primary + secondary CTA</span>
             {" "}— oversized Subscribe (150% of <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">size=lg</code>)
-            centered. Label morphs: <em>"Subscribe — $10.00/mo"</em> or
-            <em> "Start free"</em> when amount = $0.
+            reading <em>"Subscribe — $10.00/mo"</em>, with a secondary
+            <em> "Try a free month"</em> button below it (routes to the checkout's
+            free-month mode — first month on us, no charge, no card).
           </li>
           <li>
             <span className="text-foreground">Subscribe hand-off</span>

@@ -86,55 +86,56 @@ export interface DetailMoreButtonProps {
 interface Action {
   icon:        React.ReactNode
   label:       string
+  /** Shorter label for the compact quick-action TILES (mobile sheet) where
+   *  the full `label` would wrap — e.g. "Save" instead of "Save to library".
+   *  Menu rows + the desktop dropdown always use the full `label`. */
+  shortLabel?: string
   onClick?:    () => void
   destructive?: boolean
+  /** Keep the sheet open after tapping (e.g. Save, which toggles in place
+   *  so the user sees it flip to "Remove from library"). */
+  keepOpen?:   boolean
 }
 
 // ─── Sheet pieces ─────────────────────────────────────────────────────────────
 
-// Rich list row (icon + label, 44px+ tap target). Closes the sheet on tap.
-function SheetRow({ icon, label, destructive, onClick }: Action) {
+// Rich list row (icon + label, 44px+ tap target). Closes the sheet on tap
+// unless `keepOpen` (Save toggles in place).
+function SheetRow({ icon, label, destructive, onClick, keepOpen }: Action) {
+  const cls = cn(
+    "flex w-full items-center gap-3 rounded-lg px-3 py-3 text-base text-left transition-colors",
+    "hover:bg-muted active:bg-muted outline-none focus-visible:bg-muted",
+    "[&_svg]:size-5 [&_svg]:shrink-0",
+    destructive
+      ? "text-destructive [&_svg]:text-destructive"
+      : "text-foreground [&_svg]:text-muted-foreground",
+  )
+  if (keepOpen) {
+    return <button type="button" onClick={onClick} className={cls}>{icon}{label}</button>
+  }
   return (
-    <SheetClose
-      render={
-        <button
-          type="button"
-          onClick={onClick}
-          className={cn(
-            "flex w-full items-center gap-3 rounded-lg px-3 py-3 text-base text-left transition-colors",
-            "hover:bg-muted active:bg-muted outline-none focus-visible:bg-muted",
-            "[&_svg]:size-5 [&_svg]:shrink-0",
-            destructive
-              ? "text-destructive [&_svg]:text-destructive"
-              : "text-foreground [&_svg]:text-muted-foreground",
-          )}
-        />
-      }
-    >
+    <SheetClose render={<button type="button" onClick={onClick} className={cls} />}>
       {icon}
       {label}
     </SheetClose>
   )
 }
 
-// Prominent quick-action button (icon over label, soft pill). Closes on tap.
-function QuickAction({ icon, label, onClick }: Action) {
+// Prominent quick-action button (icon over label, soft pill). Closes on tap
+// unless `keepOpen` (Save toggles in place).
+function QuickAction({ icon, label, shortLabel, onClick, keepOpen }: Action) {
+  const cls = cn(
+    "flex-1 min-w-0 flex flex-col items-center justify-center gap-2 rounded-2xl bg-secondary px-2 py-3.5",
+    "text-foreground transition-colors hover:bg-secondary-hover active:bg-secondary-hover",
+    "outline-none focus-visible:ring-2 focus-visible:ring-ring/50 [&_svg]:size-5",
+  )
+  const inner = <>{icon}<span className="text-xsmall">{shortLabel ?? label}</span></>
+  if (keepOpen) {
+    return <button type="button" onClick={onClick} className={cls}>{inner}</button>
+  }
   return (
-    <SheetClose
-      render={
-        <button
-          type="button"
-          onClick={onClick}
-          className={cn(
-            "flex-1 min-w-0 flex flex-col items-center justify-center gap-2 rounded-2xl bg-secondary px-2 py-3.5",
-            "text-foreground transition-colors hover:bg-secondary-hover active:bg-secondary-hover",
-            "outline-none focus-visible:ring-2 focus-visible:ring-ring/50 [&_svg]:size-5",
-          )}
-        />
-      }
-    >
-      {icon}
-      <span className="text-xsmall">{label}</span>
+    <SheetClose render={<button type="button" onClick={onClick} className={cls} />}>
+      {inner}
     </SheetClose>
   )
 }
@@ -198,16 +199,23 @@ export function DetailMoreButton({
   // flips to a filled-heart "Remove".
   const save: Action = {
     icon: <Heart className={saved ? "fill-current" : undefined} />,
-    label: saved ? "Remove" : "Save",
+    label: saved ? "Remove from library" : "Save to library",
+    shortLabel: saved ? "Remove" : "Save",
     onClick: onSave,
+    keepOpen: true,
   }
+  // Credits ("i") — the album's release personnel. Promoted to a top
+  // quick action for every album / single / EP (in place of Play radio),
+  // since it's the most-reached-for album detail. Owned albums keep Edit
+  // as the third tile, so Credits stays in the list below for them.
+  const showCredits: Action = { icon: <Info />, label: "Credits", onClick: () => credits.open(slugify(title)) }
   const quick: Action[] = isPlaylist
     ? (owned
         ? [share, { icon: <Plus />, label: "Add music", onClick: onAddMusic }, { icon: <Pencil />, label: "Edit info", onClick: onEdit }]
         : [share, save])
     : isAlbum
       ? [share, save,
-         owned ? { icon: <Pencil />, label: "Edit", onClick: onEdit } : { icon: <Radio />, label: "Play radio", onClick: onPlayRadio }]
+         owned ? { icon: <Pencil />, label: "Edit", onClick: onEdit } : showCredits]
       : [share, save, { icon: <Radio />, label: "Play radio", onClick: onPlayRadio }]
 
   // ── List groups (separated by dividers) ───────────────────────────────
@@ -219,7 +227,10 @@ export function DetailMoreButton({
 
   const g2: Action[] = []
   if (isAlbum) {
-    g2.push({ icon: <Info />,      label: "Credits",     onClick: () => credits.open(slugify(title)) })
+    // Owned albums keep Edit as the top tile, so Credits lives here. For
+    // non-owned it's promoted to a top quick action (above) — omit here to
+    // avoid duplicating it.
+    if (owned) g2.push(showCredits)
     g2.push({ icon: <Mic />,       label: "Go to artist", onClick: onGoToArtist })
     g2.push({ icon: <Building2 />, label: "Go to label",  onClick: onGoToLabel })
   }

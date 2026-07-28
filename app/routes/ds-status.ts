@@ -69,50 +69,10 @@ export function sectionSourceUrl(id: string): string | null {
  *  section `title` props exactly. Only sections with a badge live
  *  here; everything else just shows its auto "changed" date. */
 export const SECTION_STATUS: Record<string, SectionStatusEntry> = {
-  // ── This cycle: new ───────────────────────────────────────────
-  "Chip Input":            { status: "new" },
-  "Media Header":          { status: "new" },
-  "Artist Header":         { status: "new" },
-  "Mobile Header":         { status: "new" },
-  "Footer Nav":            { status: "new" },
-  "Media List Item":       { status: "new" },
-  "Detail Menu":           { status: "new" },
-  "Search":                { status: "new" },
-  "Purchase Album Dialog": { status: "new" },
-  "Paywall":               { status: "new" },
-  "Login":                 { status: "new" },
-  "User Avatar":           { status: "new" },
-  "Purchased Badge":       { status: "new" },
-
-  // ── This cycle: updated ───────────────────────────────────────
-  "Typography":            { status: "updated" }, // scale reworked to 15/17/19/21; B-style media text adopted globally
-  "Artist Card":           { status: "updated" }, // name → 17px (text-xsmall), enlarged circle
-  "Song List Item":        { status: "updated" },
-  "Badge":                 { status: "updated" }, // gained the `label` content type
-  "Card Rail":             { status: "updated" }, // + showAllOnlyWhenScrollable (used by search "All" shelves)
-  "Song Rail":             { status: "new" }, // extracted shared shell (Artist Top Songs + Search Songs)
-  "Album Card":            { status: "updated" }, // nav surface: cover→open, Play plays, Heart saves (no nav)
-  "Playlist Card":         { status: "updated" }, // nav surface: cover→open, Play plays, Heart saves (no nav)
-  "Tabs":                  { status: "updated" }, // mobile: scroll + auto-centre active
-  "Menu":                  { status: "updated" }, // mobile: presents as a bottom sheet
-  "Player Bar":            { status: "updated" }, // marquee, links, synced shuffle, uncapped info width
-  "Player Overlay":        { status: "updated" }, // waveform progress, synced shuffle, artist/album links, footer in shell
-
-  // ── Built but not yet consumed in a live app surface ──────────
-  // Renders the "Not used yet" badge. The "changed" date still
-  // auto-derives from each file's git history.
-  "Form":            { status: "concept" },
-  "Pagination":      { status: "concept" },
-  "Command":         { status: "concept" },
-  "Accordion":       { status: "concept" },
-  "ScrollArea":      { status: "concept" },
-  "NavigationMenu":  { status: "concept" },
-  "OTP Input":       { status: "concept" },
-  "Popover":         { status: "concept" },
-  "Collapsible":     { status: "concept" },
-  "Meter":           { status: "concept" },
-  "Skeleton":        { status: "concept" },
-  "Toolbar":         { status: "concept" },
+  // Badges cleared. Add `new` / `updated` (or `concept` for "Not used
+  // yet") entries here to flag a cycle's work; graduate with
+  // `npm run release -- --clear`. (Phase 2 badges are a separate list —
+  // see `PHASE_2` in design-system.tsx — and are NOT affected here.)
 }
 
 /** Same map keyed by Section `id` (post-`idFor` lowercasing) so the
