@@ -13,7 +13,7 @@
  */
 
 import { useMemo, useState } from "react"
-import { ArrowDown, ArrowUp, ArrowUpDown, MoreHorizontal, Mic, Share, Link2, Check, LayoutGrid, List } from "lucide-react"
+import { ArrowDown, ArrowUp, ArrowUpDown, MoreHorizontal, Mic, Share, Link2, Check, LayoutGrid, List, Plus } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { AlbumCardMenuItems, PlaylistCardMenuItems } from "@/components/ui/cover-card-menu"
 import { MediaListItem } from "@/components/ui/media-list-item"
+import { SongMenuItems } from "@/components/ui/song-list-item"
 import { CoverPlayButton } from "@/components/ui/cover-play-button"
 import { PurchasedBadge } from "@/components/ui/purchased-badge"
 import { useUserLibrary, type SavedSong } from "@/lib/user-library"
@@ -445,10 +446,18 @@ export function SongListTable({ songs }: { songs: SavedSong[] }) {
                     <MoreHorizontal />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" sideOffset={6}>
-                    {s.artist && <DropdownMenuItem onClick={() => openArtist(slugify(s.artist!))}><Mic />Go to artist</DropdownMenuItem>}
-                    <DropdownMenuItem variant="destructive" onClick={() => library.removeItem("song", s.id)}>
-                      Remove from library
-                    </DropdownMenuItem>
+                    {/* The shared song menu — same items as every SongListItem
+                        row. Keyed by (title, artist) = s.id, so Save/Remove
+                        targets this exact row. */}
+                    <SongMenuItems
+                      title={s.title}
+                      artist={s.artist}
+                      album={s.album}
+                      cover={s.cover}
+                      duration={s.duration}
+                      onArtistClick={s.artist ? () => openArtist(slugify(s.artist!)) : undefined}
+                      onAlbumClick={linkAlbum ? () => openAlbum(slugify(s.album!)) : undefined}
+                    />
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
@@ -539,8 +548,10 @@ export function MobileArtistRow({ artist: ar }: { artist: SavedArtist }) {
       menuItems={
         <>
           <DropdownMenuItem onClick={open}><Mic />Go to artist</DropdownMenuItem>
-          {canNativeShare && <DropdownMenuItem onClick={nativeShare}><Share />Share…</DropdownMenuItem>}
-          <DropdownMenuItem onClick={copyLink}><Link2 />Copy link</DropdownMenuItem>
+          <DropdownMenuItem onClick={canNativeShare ? nativeShare : copyLink}>
+            {canNativeShare ? <Share /> : <Link2 />}
+            {canNativeShare ? "Share…" : "Copy link"}
+          </DropdownMenuItem>
         </>
       }
     />
@@ -656,28 +667,36 @@ export interface PlaylistRow {
   owned?:    boolean
 }
 
-type PlaylistSort = "title-az" | "title-za" | "owner-az" | "owner-za" | "songs-desc" | "songs-asc"
+type PlaylistSort =
+  | "title-az" | "title-za" | "owner-az" | "owner-za"
+  | "songs-desc" | "songs-asc" | "added-desc" | "added-asc"
 
-export function PlaylistListTable({ playlists }: { playlists: PlaylistRow[] }) {
+export function PlaylistListTable({ playlists, onCreate }: { playlists: PlaylistRow[]; onCreate?: () => void }) {
   const { openPlaylist, openArtist } = useMediaNav()
-  const [sort, setSort] = useState<PlaylistSort>("title-az")
+  // Recently-added first by default (mirrors the Albums table) — the new
+  // "Added" column is sortable both ways.
+  const [sort, setSort] = useState<PlaylistSort>("added-desc")
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   const ownerOf = (p: PlaylistRow) => p.owned ? "You" : (p.owner ?? "—")
 
   const rows = useMemo(() => {
-    const s = [...playlists]
-    s.sort((a, b) => {
+    // Stable synthetic "added to library" date per title (same helper the
+    // Albums table uses), decorated once then sorted.
+    const decorated = playlists.map(p => ({ ...p, added: addedInfo(p.title) }))
+    decorated.sort((a, b) => {
       switch (sort) {
-        case "title-za":  return b.title.localeCompare(a.title)
-        case "owner-az":  return ownerOf(a).localeCompare(ownerOf(b)) || a.title.localeCompare(b.title)
-        case "owner-za":  return ownerOf(b).localeCompare(ownerOf(a)) || a.title.localeCompare(b.title)
+        case "title-za":   return b.title.localeCompare(a.title)
+        case "owner-az":   return ownerOf(a).localeCompare(ownerOf(b)) || a.title.localeCompare(b.title)
+        case "owner-za":   return ownerOf(b).localeCompare(ownerOf(a)) || a.title.localeCompare(b.title)
         case "songs-desc": return b.songCount - a.songCount
         case "songs-asc":  return a.songCount - b.songCount
+        case "added-asc":  return a.added.ts - b.added.ts
+        case "added-desc": return b.added.ts - a.added.ts
         default:           return a.title.localeCompare(b.title)
       }
     })
-    return s
+    return decorated
   }, [playlists, sort])
 
   const allSelected  = rows.length > 0 && rows.every(p => selectedIds.has(p.id))
@@ -698,7 +717,8 @@ export function PlaylistListTable({ playlists }: { playlists: PlaylistRow[] }) {
         <col style={{ width: 64 }} />
         <col />
         <col />
-        <col style={{ width: 96 }} />
+        <col style={{ width: 140 }} />
+        <col style={{ width: 80 }} />
         <col style={{ width: 56 }} />
       </colgroup>
       <thead className={HEAD_CLS}>
@@ -713,6 +733,10 @@ export function PlaylistListTable({ playlists }: { playlists: PlaylistRow[] }) {
             <SortHeader label="Owner" active={sort.startsWith("owner")} dir={sort === "owner-za" ? "desc" : "asc"}
               onClick={() => setSort(sort === "owner-az" ? "owner-za" : "owner-az")} />
           </TableHead>
+          <TableHead resizable={false}>
+            <SortHeader label="Added" active={sort.startsWith("added")} dir={sort === "added-asc" ? "asc" : "desc"}
+              onClick={() => setSort(sort === "added-desc" ? "added-asc" : "added-desc")} />
+          </TableHead>
           <TableHead resizable={false} className="text-right">
             <SortHeader label="Songs" active={sort.startsWith("songs")} dir={sort === "songs-asc" ? "asc" : "desc"}
               onClick={() => setSort(sort === "songs-desc" ? "songs-asc" : "songs-desc")} className="justify-end ml-auto" />
@@ -721,6 +745,25 @@ export function PlaylistListTable({ playlists }: { playlists: PlaylistRow[] }) {
         </TableRow>
       </thead>
       <TableBody>
+        {/* Create-playlist row — mirrors the Studio › My Music "Upload"
+            row: empty select/cover cells so the icon + label line up under
+            Title, then a spanning cell. Always first, above the sorted rows. */}
+        {onCreate && (
+          <tr
+            onClick={onCreate}
+            className="border-b border-border hover:bg-muted transition-colors cursor-pointer group"
+            style={{ height: 56 }}
+          >
+            <td className="w-10 px-2 py-0" />
+            <td className="px-2 py-0" />
+            <td colSpan={5} className="px-4 py-0">
+              <div className="flex items-center gap-2.5">
+                <Plus className="size-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                <span className="text-small font-normal text-muted-foreground group-hover:text-foreground transition-colors">Create New Playlist</span>
+              </div>
+            </td>
+          </tr>
+        )}
         {rows.map(p => {
           const key = slugify(p.title)
           const owner = ownerOf(p)
@@ -737,6 +780,9 @@ export function PlaylistListTable({ playlists }: { playlists: PlaylistRow[] }) {
                 {p.owned
                   ? owner
                   : <button type="button" onClick={() => openArtist(slugify(owner))} className={linkCell}>{owner}</button>}
+              </TableCell>
+              <TableCell className="text-muted-foreground whitespace-nowrap">
+                {p.added.text}
               </TableCell>
               <TableCell className="text-right text-muted-foreground tabular-nums whitespace-nowrap">
                 {p.songCount}

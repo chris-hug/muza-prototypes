@@ -28,14 +28,13 @@
  */
 
 import { useEffect, useMemo, useState, type ReactNode } from "react"
-import { Mic, Heart, ListPlus, Info, Trash2 } from "lucide-react"
+import { Mic, Heart } from "lucide-react"
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MobilePillTabs } from "@/components/ui/mobile-header"
 import { ToggleGroup } from "@/components/ui/toggle-group"
 import { Toggle } from "@/components/ui/toggle"
 import { Button } from "@/components/ui/button"
-import { ContentTypeBadge, type ContentType } from "@/components/ui/badge"
 import { MediaListItem } from "@/components/ui/media-list-item"
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { AlbumCardMenuItems, PlaylistCardMenuItems } from "@/components/ui/cover-card-menu"
@@ -54,7 +53,6 @@ import { useSearchNav } from "@/lib/use-search-nav"
 import { usePlayer } from "@/lib/player"
 import { useUserLibrary } from "@/lib/user-library"
 import { useLibraryToggle } from "@/lib/use-library-toggle"
-import { useCredits } from "@/lib/credits-context"
 import { getAlbumDetail } from "@/lib/album-catalog"
 import { getPlaylistDetail } from "@/lib/playlist-catalog"
 import { searchCatalog, type SearchResult, type SearchKind } from "@/lib/search-catalog"
@@ -165,9 +163,6 @@ function SearchTopResult({ r }: { r: SearchResult }) {
   const { openAlbum, openArtist, openPlaylist } = useMediaNav()
   const player = usePlayer()
 
-  const isArtist   = r.kind === "artist"
-  const isLabel    = r.kind === "label"
-  const isPlaylist = r.kind === "playlist"
   const playable   = r.kind === "song" || r.kind === "album" || r.kind === "playlist"
 
   const open = () => {
@@ -205,7 +200,8 @@ function SearchTopResult({ r }: { r: SearchResult }) {
   // the explicit Play button handles playback.
   const onCard = () => open()
 
-  const badgeType = (isLabel ? "label" : isArtist ? "artist" : isPlaylist ? "playlist" : r.kind === "album" ? "album" : "song") as ContentType
+  // No content-type badge — the cover shape (round = artist/label, square =
+  // album/song, collage = playlist) plus the tabs already convey the type.
   const sub = [r.subtitle, r.meta].filter(Boolean).join(" · ")
 
   return (
@@ -217,10 +213,7 @@ function SearchTopResult({ r }: { r: SearchResult }) {
 
       <div className="min-w-0 flex-1 flex flex-col gap-2">
         <h3 className="truncate text-large sm:text-xlarge font-medium leading-tight text-foreground">{r.title}</h3>
-        <div className="flex items-center gap-2 min-w-0">
-          <ContentTypeBadge type={badgeType} />
-          {sub && <span className="truncate text-small text-muted-foreground">{sub}</span>}
-        </div>
+        {sub && <span className="truncate text-small text-muted-foreground">{sub}</span>}
       </div>
 
       {/* Play (song / album / playlist) — primary circle, lifts on hover.
@@ -262,48 +255,17 @@ function TopCover({ r }: { r: SearchResult }) {
 // ─── One result row ──────────────────────────────────────────────────────────
 function SearchRow({ r }: { r: SearchResult }) {
   const { openAlbum, openArtist, openPlaylist } = useMediaNav()
-  const player = usePlayer()
   const library = useUserLibrary()
   const toggleLibrary = useLibraryToggle()
-  const credits = useCredits()
 
   const inLibrary = !!(r.libraryType && r.libraryId && library.inLibrary(r.libraryType, r.libraryId))
   const toggleSave = () => { if (r.libraryType && r.libraryId) toggleLibrary(r.libraryType, r.libraryId, r.title) }
 
-  // ── Song — plays into the global player (context = its album). ──────────
-  if (r.kind === "song") {
-    const playing = player.playing && player.track?.title === r.title && player.playingFrom === r.album
-    return (
-      <MediaListItem
-        type="song"
-        cover={r.cover}
-        title={r.title}
-        subtitle={r.subtitle}
-        meta={r.meta}
-        playing={playing}
-        // Row body → open the song's release; cover button → play.
-        onOpen={r.navKey ? () => openAlbum(r.navKey!) : undefined}
-        onPlay={() => {
-          if (playing) { player.toggle(); return }
-          player.play({ title: r.title, artist: r.artist ?? "", album: r.album ?? "", image: r.cover ?? "", totalTime: r.duration }, r.album ?? "")
-        }}
-        onSubtitleClick={r.artist ? () => openArtist(slugify(r.artist!)) : undefined}
-        menuItems={
-          <>
-            <ShareMenuItems title={r.title} text={r.artist ? `${r.title} — ${r.artist}` : r.title} />
-            <DropdownMenuItem onClick={toggleSave}>
-              <Heart className={inLibrary ? "fill-current" : undefined} />
-              {inLibrary ? "Remove from library" : "Save to library"}
-            </DropdownMenuItem>
-            <DropdownMenuItem><ListPlus />Add to playlist</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {r.artist && <DropdownMenuItem onClick={() => openArtist(slugify(r.artist!))}><Mic />Go to artist</DropdownMenuItem>}
-            <DropdownMenuItem onClick={() => r.album && credits.open(slugify(r.album))}><Info />Show credits</DropdownMenuItem>
-          </>
-        }
-      />
-    )
-  }
+  // ── Song — the shared SongListItem (cover + heart-always, info/⋯ on
+  //    hover, duration), identical to the playlist / Top-Songs rows. Same
+  //    component everywhere a song is listed; SearchSongRow does the player
+  //    / library / credits wiring. ─────────────────────────────────────────
+  if (r.kind === "song") return <SearchSongRow r={r} />
 
   // ── Album. ──────────────────────────────────────────────────────────────
   if (r.kind === "album") {
@@ -374,8 +336,8 @@ function SearchRow({ r }: { r: SearchResult }) {
             <DropdownMenuItem onClick={open}><Mic />Go to artist</DropdownMenuItem>
             <ShareMenuItems title={r.title} />
             <DropdownMenuSeparator />
-            <DropdownMenuItem variant={inLibrary ? "destructive" : "default"} onClick={toggleSave}>
-              {inLibrary ? <Trash2 /> : <Heart />}
+            <DropdownMenuItem onClick={toggleSave}>
+              <Heart className={inLibrary ? "fill-current" : undefined} />
               {inLibrary ? "Remove from library" : "Save to library"}
             </DropdownMenuItem>
           </>
@@ -563,14 +525,12 @@ function ResultCard({ r }: { r: SearchResult }) {
 function SearchSongRow({ r, compact }: { r: SearchResult; compact?: boolean }) {
   const { openAlbum, openArtist } = useMediaNav()
   const player = usePlayer()
-  const library = useUserLibrary()
-  const toggleLibrary = useLibraryToggle()
-  const credits = useCredits()
-
-  const inLibrary = !!(r.libraryType && r.libraryId && library.inLibrary(r.libraryType, r.libraryId))
-  const toggleSave = () => { if (r.libraryType && r.libraryId) toggleLibrary(r.libraryType, r.libraryId, r.title) }
   const playing = player.playing && player.track?.title === r.title && player.playingFrom === r.album
 
+  // No `menuItems` — the row's built-in shared song menu (Share / Copy link /
+  // Save / Add to playlist / Go to artist / Go to album / Credits / Report)
+  // renders from these handlers. Search is not inside a playlist / artist /
+  // album page, so nothing is hidden.
   return (
     <SongListItem
       compact={compact}
@@ -587,19 +547,6 @@ function SearchSongRow({ r, compact }: { r: SearchResult; compact?: boolean }) {
       }}
       onArtistClick={r.artist ? () => openArtist(slugify(r.artist!)) : undefined}
       onAlbumClick={r.navKey ? () => openAlbum(r.navKey!) : undefined}
-      menuItems={
-        <>
-          <ShareMenuItems title={r.title} text={r.artist ? `${r.title} — ${r.artist}` : r.title} />
-          <DropdownMenuItem onClick={toggleSave}>
-            <Heart className={inLibrary ? "fill-current" : undefined} />
-            {inLibrary ? "Remove from library" : "Save to library"}
-          </DropdownMenuItem>
-          <DropdownMenuItem><ListPlus />Add to playlist</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          {r.artist && <DropdownMenuItem onClick={() => openArtist(slugify(r.artist!))}><Mic />Go to artist</DropdownMenuItem>}
-          <DropdownMenuItem onClick={() => r.album && credits.open(slugify(r.album))}><Info />Show credits</DropdownMenuItem>
-        </>
-      }
     />
   )
 }

@@ -37,6 +37,7 @@ import { LibraryHeartButton } from "@/components/ui/library-heart-button"
 import { PurchasedBadge } from "@/components/ui/purchased-badge"
 import { useLongPress } from "@/lib/use-long-press"
 import { useMediaNav, slugify } from "@/lib/media-nav"
+import { libraryIdForTitle } from "@/lib/album-meta"
 import { usePlayer } from "@/lib/player"
 import { registerAlbums, getAlbumDetail } from "@/lib/album-catalog"
 
@@ -101,9 +102,13 @@ export function AlbumCard({
   onTitleClick, onArtistClick, hideGoToArtist, hideGoToAlbum, inLibrary,
   className,
 }: AlbumCardProps) {
-  const { openAlbum } = useMediaNav()
+  const { openAlbum, openArtist } = useMediaNav()
   const player = usePlayer()
   const key = slugify(title)
+  // Library key: the catalog id (matches the detail page + seed) so the card
+  // heart / menu Save stay in sync with the detail; slug fallback for
+  // synthesized albums not in the catalog.
+  const libId = libraryIdForTitle(title) ?? key
   // Media-tile text: title + meta share one size (text-xsmall = 17px). The
   // meta rows (artist · year, price, "Owned") go a lighter 300 weight with a
   // hair of positive tracking to open the thin Light strokes; the title stays
@@ -196,7 +201,7 @@ export function AlbumCard({
               // propagation so it never opens the detail page.
               <LibraryHeartButton
                 type="album"
-                id={key}
+                id={libId}
                 name={title}
                 variant="outline"
                 size="icon-sm"
@@ -213,7 +218,10 @@ export function AlbumCard({
               onAdd={onAdd}
               onEdit={onEdit}
               onAddToPlaylist={onAddToPlaylist}
-              onGoToArtist={onGoToArtist}
+              // "Go to artist" baked from the album's own artist name, so EVERY
+              // album card menu offers it (a host can still override). No "Go to
+              // album" — the card IS the album, so it'd navigate to itself.
+              onGoToArtist={onGoToArtist ?? (() => openArtist(slugify(artist)))}
               onGoToAlbum={onGoToAlbum}
               onRemove={onRemove}
               onReport={onReport}

@@ -65,7 +65,7 @@ export function Topbar({
     <div className="relative flex flex-1 h-full min-w-0">
     <div
       className={cn(
-        "flex flex-1 h-full items-center gap-2 pr-4 transition-colors cursor-text",
+        "flex flex-1 min-w-0 h-full items-center gap-2 pr-4 transition-colors cursor-text",
         onBack ? "pl-2" : "pl-[18px]",
         // Transparent at rest so the frosted-glass header shows through;
         // opaque muted only when focused/filled (the active input field).
@@ -87,7 +87,9 @@ export function Topbar({
         onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); runSearch(value) } }}
         placeholder={placeholder}
         className={cn(
-          "flex-1 bg-transparent border-none outline-none text-base font-normal",
+          // `min-w-0` — without it the input's intrinsic size wins over
+          // `flex-1` and the placeholder runs out under the right actions.
+          "flex-1 min-w-0 bg-transparent border-none outline-none text-base font-normal",
           "text-foreground placeholder:text-muted-foreground",
         )}
       />
@@ -142,32 +144,48 @@ export function Topbar({
 // CartDrawer. A small count badge sits top-right when the cart isn't empty;
 // the icon hides the badge entirely at count=0 to stay quiet.
 
-function CartButton() {
+function CartButton({ onOpen }: { onOpen: () => void }) {
   const cart = useCart()
-  const [open, setOpen] = useState(false)
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label={`Open cart${cart.count > 0 ? ` (${cart.count} items)` : ""}`}
-        className="relative size-10 flex items-center justify-center rounded-full text-foreground hover:bg-accent transition-colors"
-      >
-        <ShoppingCart className="size-[18px]" />
-        {cart.count > 0 && (
-          <span
-            aria-hidden="true"
-            className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-foreground text-background text-2xsmall font-medium tabular-nums flex items-center justify-center leading-none"
-          >
-            {/* optical nudge — the figure ink sits a hair high in the line box */}
-            <span className="relative top-[-0.5px]">{cart.count > 99 ? "99+" : cart.count}</span>
-          </span>
-        )}
-      </button>
-      <CartDrawer open={open} onOpenChange={setOpen} />
-    </>
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={`Open cart${cart.count > 0 ? ` (${cart.count} items)` : ""}`}
+      className="relative size-10 flex items-center justify-center rounded-full text-foreground hover:bg-accent transition-colors"
+    >
+      <ShoppingCart className="size-[18px]" />
+      {cart.count > 0 && (
+        <span
+          aria-hidden="true"
+          className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-foreground text-background text-2xsmall font-medium tabular-nums flex items-center justify-center leading-none"
+        >
+          {/* optical nudge — the figure ink sits a hair high in the line box */}
+          <span className="relative top-[-0.5px]">{cart.count > 99 ? "99+" : cart.count}</span>
+        </span>
+      )}
+    </button>
   )
+}
+
+/*
+ * The topbar narrows with the shell (the playlist editor docks beside it), so
+ * the trigger is the HEADER's width, not the viewport's — below this the search
+ * field would run under the actions. The cart then folds into the profile menu.
+ */
+const COMPACT_HEADER = 560
+
+function useCompactHeader(ref: React.RefObject<HTMLElement | null>) {
+  const [compact, setCompact] = useState(false)
+  useEffect(() => {
+    const header = ref.current?.closest("header")
+    if (!header) return
+    const ro = new ResizeObserver(([entry]) =>
+      setCompact(entry.contentRect.width < COMPACT_HEADER))
+    ro.observe(header)
+    return () => ro.disconnect()
+  }, [ref])
+  return compact
 }
 
 // ─── Profile menu (avatar dropdown) ─────────────────────────────────────────
@@ -177,8 +195,13 @@ function CartButton() {
 // Exported so the mobile header reuses the SAME menu (which auto-presents as
 // a bottom sheet on touch via the responsive DropdownMenu).
 
-export function ProfileMenu({ avatarClassName }: { avatarClassName?: string }) {
+export function ProfileMenu({ avatarClassName, onOpenCart }: {
+  avatarClassName?: string
+  /** Set only when the cart button is hidden — the cart folds in here instead. */
+  onOpenCart?: () => void
+}) {
   const [, setParams] = useSearchParams()
+  const cart = useCart()
   const go = (view: string) => {
     setParams(prev => {
       const next = new URLSearchParams(prev)
@@ -197,6 +220,21 @@ export function ProfileMenu({ avatarClassName }: { avatarClassName?: string }) {
         <UserAvatar username={CURRENT_USERNAME} className={avatarClassName} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={8} className="min-w-[200px]">
+        {/* Cart leads the menu only when the topbar dropped its own button. */}
+        {onOpenCart && (
+          <>
+            <DropdownMenuItem onClick={onOpenCart}>
+              <ShoppingCart className="size-4" />
+              Cart
+              {cart.count > 0 && (
+                <span className="ms-auto text-small text-muted-foreground tabular-nums">
+                  {cart.count > 99 ? "99+" : cart.count}
+                </span>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuItem>
           <User className="size-4" />
           Your profile
@@ -231,10 +269,17 @@ export function ProfileMenu({ avatarClassName }: { avatarClassName?: string }) {
 // ─── Default actions used in demo ─────────────────────────────────────────────
 
 export function TopbarDefaultActions() {
+  const ref = useRef<HTMLDivElement>(null)
+  const compact = useCompactHeader(ref)
+  // The drawer is owned here so BOTH triggers (button and menu item) open the
+  // same one — swapping trigger must not swap drawer state.
+  const [cartOpen, setCartOpen] = useState(false)
+
   return (
-    <div className="flex items-center gap-2">
-      <CartButton />
-      <ProfileMenu />
+    <div ref={ref} className="flex items-center gap-2">
+      {!compact && <CartButton onOpen={() => setCartOpen(true)} />}
+      <ProfileMenu onOpenCart={compact ? () => setCartOpen(true) : undefined} />
+      <CartDrawer open={cartOpen} onOpenChange={setCartOpen} />
     </div>
   )
 }

@@ -389,7 +389,11 @@ export function MediaHeader({
                 libraryName={libraryName}
                 onAdd={onAdd}
                 onEdit={onEdit}
-                onGoToArtist={onOwnerClick}
+                /* Nav routes to the kind's own prop: albums → "Go to artist",
+                   playlists → "Go to owner" (useDetailActions reads different
+                   keys per kind). `onOwnerClick` is the artist/owner target. */
+                onGoToArtist={isPlaylist ? undefined : onOwnerClick}
+                onGoToOwner={isPlaylist ? onOwnerClick : undefined}
                 onShowInfo={onInfo}
                 triggerVariant="outline"
                 triggerSize="icon-lg"

@@ -10,12 +10,17 @@
  * un-hearting a track removes it from this list.
  */
 
+import { useState, useMemo } from "react"
+
 import { SongListItem } from "@/components/ui/song-list-item"
 import { SongListTable } from "@/components/app/media-list-table"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SAVED_ALBUMS } from "@/components/app/library-albums-view"
 import { useUserLibrary, type SavedSong } from "@/lib/user-library"
 import { usePlayer } from "@/lib/player"
 import { useFooterNav } from "@/lib/use-media-query"
+import { useLibraryFilter, matchesLibraryQuery } from "@/lib/use-library-filter"
+import { LibrarySearchField } from "@/components/app/library-search-field"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 import { hasAlbumDetail } from "@/lib/album-catalog"
 
@@ -62,20 +67,52 @@ export function LibrarySongsView() {
   const player    = usePlayer()
   const footerNav = useFooterNav()
   const { openAlbum, openArtist } = useMediaNav()
-  const songs = library.songs()
+  const [query] = useLibraryFilter()
+  // Songs have no status of their own — "Downloaded" derives from the song's
+  // ALBUM being downloaded (tier "download"). No "Owned" tab: you don't buy a
+  // single track here. Desktop-only, like the Albums status tabs.
+  const [status, setStatus] = useState<"all" | "downloaded">("all")
+  const albumIdByTitle = useMemo(
+    () => new Map(SAVED_ALBUMS.map(a => [a.title, a.id])),
+    [],
+  )
+  const isDownloaded = (s: SavedSong) => {
+    const id = s.album ? albumIdByTitle.get(s.album) : undefined
+    return !!id && library.entryFor(id)?.tier === "download"
+  }
+  const allSongs = library.songs()
+  const songs = allSongs
+    // In-library search — match title / artist / album.
+    .filter(s => matchesLibraryQuery(query, s.title, s.artist, s.album))
+    .filter(s => status === "all" || isDownloaded(s))
 
   return (
     <div className="flex-1 overflow-auto">
       <div className="@container mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] px-page pt-8 pb-12">
         {/* Mobile already shows "Library" + active pill in the header. */}
         {!footerNav && (
-          <h1 className="text-2xlarge font-medium text-foreground tracking-tight mb-6">Songs</h1>
+          <>
+            <h1 className="text-2xlarge font-medium text-foreground tracking-tight mb-4">Songs</h1>
+            {/* Status tabs (left) + in-library search (right). */}
+            <div className="flex items-center justify-between gap-4 mb-6">
+              <Tabs value={status} onValueChange={v => setStatus(v as "all" | "downloaded")}>
+                <TabsList variant="line" autoCenter={false}>
+                  <TabsTrigger value="all">All songs</TabsTrigger>
+                  <TabsTrigger value="downloaded">Downloaded</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <LibrarySearchField />
+            </div>
+          </>
         )}
 
         {songs.length === 0 ? (
           <p className="text-small text-muted-foreground max-w-md">
-            No saved songs yet. Tap the heart on any track — in the player or
-            a song list — and it'll show up here.
+            {allSongs.length === 0
+              ? "No saved songs yet. Tap the heart on any track — in the player or a song list — and it'll show up here."
+              : query
+                ? `No songs match “${query}”.`
+                : "No downloaded songs yet — download an album to keep its tracks offline."}
           </p>
         ) : footerNav ? (
           // Touch: stacked song rows (same component the detail pages use).

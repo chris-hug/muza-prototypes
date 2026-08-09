@@ -9,6 +9,9 @@ import { SearchResultsView } from "@/components/app/search-results-view"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 import { registerAlbums } from "@/lib/album-catalog"
 import { CreditsProvider, CreditsDialogPreview, useCredits } from "@/components/app/credits-dialog"
+import { AddToPlaylistProvider } from "@/components/app/add-to-playlist-dialog"
+import { CreatePlaylistProvider } from "@/components/app/create-playlist-dialog"
+import { PlaylistEditDrawer, PlaylistEditorProvider } from "@/components/app/playlist-edit-drawer"
 import { BulkActionBarContent, BulkActionButton } from "@/components/ui/bulk-action-bar"
 import { ResponsiveDiagram } from "@/components/app/responsive-diagram"
 import { registerPlaylists } from "@/lib/playlist-catalog"
@@ -108,8 +111,9 @@ import {
   Radio as RadioIcon, ShoppingBag, Disc3, Disc, CassetteTape, Shirt, Ghost,
   ChevronLeft, ChevronRight, Globe, X, Sun, Moon, MapPin, CircleCheckBig,
   ArrowUpRight, Truck, Mail,
-  ListPlus, ListStart, ListEnd, Mic, Flag, Clock,
+  ListPlus, ListStart, ListEnd, Mic, Flag, Clock, Lock, ListMusic,
 } from "lucide-react"
+import { NavRow } from "@/components/ui/nav-row"
 import { DetailMoreButton } from "@/components/ui/detail-more-button"
 import { SearchPanel } from "@/components/ui/search-panel"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
@@ -147,6 +151,7 @@ import { LoginDialog, LoginDialogPreview } from "@/components/app/login-dialog"
 import { LibraryArtistsView, SAVED_ARTISTS } from "@/components/app/library-artists-view"
 import { LibraryPlaylistsView, SAVED_PLAYLISTS } from "@/components/app/library-playlists-view"
 import { LibrarySongsView, SAVED_SONGS_SEED } from "@/components/app/library-songs-view"
+import { ExperimentsView } from "@/components/app/experiments-view"
 // Imported after the per-type views so the SAVED_* data modules they
 // own are initialised before this combined view (which reads them)
 // enters the playlist-catalog import cycle.
@@ -759,16 +764,10 @@ function RadioCardKitchenSink() {
 }
 
 // ─── Home view ────────────────────────────────────────────────────────────────
-function useViewportLogoSize() {
-  const [size, setSize] = useState(288)
-  useEffect(() => {
-    const update = () => setSize(Math.round(Math.max(160, Math.min(304, window.innerWidth * 0.20))))
-    update()
-    window.addEventListener("resize", update)
-    return () => window.removeEventListener("resize", update)
-  }, [])
-  return size
-}
+// The hero logo tracks the viewport in CSS, not in React — a resize listener
+// that re-renders HomeView (every rail, every card) on each pixel made
+// window-resizing visibly stutter.
+const LOGO_SIZE = "clamp(160px, 20vw, 304px)"
 
 // Curated picks for the Home content rows. Real wiring would pull
 // these from "new releases", "editorial picks", and "trending artist"
@@ -883,7 +882,6 @@ registerPlaylists(
 )
 
 function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
-  const logoSize = useViewportLogoSize()
   const library  = useUserLibrary()
   const { openAlbum, openPlaylist, openArtist } = useMediaNav()
   // Wrap an album catalog entry into a fully-propped AlbumCard via
@@ -917,7 +915,7 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
           <Wordmark className="h-4 w-auto" />
           <h1 className="text-[clamp(3.6rem,_5.4vw,_7.2rem)] leading-[1] font-medium text-foreground text-center">The Platform for<br />Independent Music.</h1>
         </div>
-        <AnimatedLogo size={logoSize} />
+        <AnimatedLogo size={LOGO_SIZE} />
       </div>
       <p className="text-[clamp(2rem,_3vw,_4rem)] leading-[1.1] font-normal text-foreground mt-16">Built as a non-profit, muza exists to fix streaming's broken economics. Instead of paying artists per click, muza rewards attention — distributing revenue based on actual listening time and direct listener support. Your subscription goes only to the artists you play.</p>
       <p className="text-[clamp(2rem,_3vw,_4rem)] leading-[1.1] font-normal text-foreground mt-10">We combine subscription streaming with direct artist uploads, giving musicians full control over how their music is shared and monetised. Artists retain ownership, receive up to 90–95% of revenue, and are paid directly — no hidden intermediaries.</p>
@@ -1964,6 +1962,7 @@ function ResizableBox({
 export function ExploreView({ showHero = true, showQuickNav = true }: { showHero?: boolean; showQuickNav?: boolean } = {}) {
   const [inputSelectCurrency, setInputSelectCurrency] = useState("USD")
   const [inputSelectTld, setInputSelectTld] = useState(".com")
+  const [dsSearchValue, setDsSearchValue] = useState("Blue Note")
   const [playing, setPlaying] = useState(false)
   const [volume, setVolume] = useState([62])
   const [progress, setProgress] = useState([38])
@@ -2631,11 +2630,27 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             />
           </div>
           <div className="flex flex-col gap-1.5 min-w-[260px]">
-            <Label htmlFor="search-input">With icon</Label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input id="search-input" className="pl-9" placeholder="Search artists, albums…" />
-            </div>
+            <Label htmlFor="search-input">With icon (`startIcon`)</Label>
+            {/* The icon is a prop, not a hand-rolled absolute wrapper — the
+                 Input owns the padding it needs. */}
+            <Input
+              id="search-input"
+              startIcon={<Search />}
+              placeholder="Search artists, albums…"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5 min-w-[260px]">
+            <Label htmlFor="search-clear-input">Searchable (`onClear`)</Label>
+            {/* Filter fields: icon + a clear "×" that appears once there's a
+                 value. Used by the in-library search and the add-music sheet. */}
+            <Input
+              id="search-clear-input"
+              startIcon={<Search />}
+              value={dsSearchValue}
+              onChange={e => setDsSearchValue(e.target.value)}
+              onClear={() => setDsSearchValue("")}
+              placeholder="Filter your library…"
+            />
           </div>
           <div className="flex flex-col gap-1.5 min-w-[320px]">
             <Label htmlFor="bio">Textarea</Label>
@@ -2992,6 +3007,26 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         </div>
       </Section>
 
+      {/* ══ NAV ROW ══ */}
+      <Section id="nav-row" title="Nav Row"
+        usage={[
+          { label: "Add music sheet → browse entry points", href: "/?page=Playlists" },
+        ]}>
+        <p className="text-base text-muted-foreground mb-6 max-w-2xl">
+          A tappable row that drills somewhere: optional leading icon, label,
+          optional trailing value, chevron. The list-view counterpart to a menu
+          item — browse entry points, settings groups, any "tap to go deeper"
+          row. Same 44px tap target and hover/active fill as the other rows.
+        </p>
+        <div className="max-w-md flex flex-col">
+          <NavRow icon={<Mic />}       label="Artists" />
+          <NavRow icon={<Disc3 />}     label="Albums" />
+          <NavRow icon={<ListMusic />} label="Playlists" />
+          <NavRow icon={<Clock />}     label="Recently added" value="24" />
+          <NavRow                      label="No icon, no value" />
+        </div>
+      </Section>
+
       {/* ══ NAVIGATION MENU ══ */}
       <Section id="navigationmenu" title="NavigationMenu">
         <NavigationMenu>
@@ -3114,17 +3149,36 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
 
       {/* ══ SWITCH ══ */}
       <Section id="switch" title="Switch">
-        <div className="flex flex-col gap-4">
-          {[
-            { id: "s1", label: "High quality audio", on: true },
-            { id: "s2", label: "Offline mode" },
-            { id: "s3", label: "Artist notifications", on: true },
-          ].map(({ id, label, on }) => (
-            <div key={id} className="flex items-center gap-3">
-              <Switch id={id} defaultChecked={on} />
-              <Label htmlFor={id} className="cursor-pointer">{label}</Label>
-            </div>
-          ))}
+        <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-4">
+            {[
+              { id: "s1", label: "High quality audio", on: true },
+              { id: "s2", label: "Offline mode" },
+              { id: "s3", label: "Artist notifications", on: true },
+            ].map(({ id, label, on }) => (
+              <div key={id} className="flex items-center gap-3">
+                <Switch id={id} defaultChecked={on} />
+                <Label htmlFor={id} className="cursor-pointer">{label}</Label>
+              </div>
+            ))}
+          </div>
+
+          {/* Setting row — the form variant used in dialogs (e.g. "Keep
+              private" when creating a playlist). Switch leads, an optional
+              icon sits with the label, and a muted description explains the
+              consequence underneath. */}
+          <div className="flex flex-col gap-2 max-w-md">
+            <label className="flex items-center gap-1 cursor-pointer">
+              <Switch id="s4" aria-describedby="s4-desc" />
+              <p className="text-foreground text-base ms-2 flex items-center gap-2 font-medium">
+                <Lock className="size-4" />
+                Keep private
+              </p>
+            </label>
+            <p id="s4-desc" className="text-small text-muted-foreground">
+              Your playlist will not be visible nor accessible by anyone.
+            </p>
+          </div>
         </div>
       </Section>
 
@@ -5440,6 +5494,9 @@ export default function Home() {
     <UserLibraryProvider seed={LIBRARY_SEED} savedSeed={LIBRARY_SAVED_SEED}>
     <UserAccountProvider initialTier="anonymous" initialPlayCounts={DEMO_PLAY_COUNTS}>
     <CreditsProvider>
+    <AddToPlaylistProvider>
+    <CreatePlaylistProvider>
+    <PlaylistEditorProvider>
     <PlayerProvider>
     <DetailActionsProvider>
     {/* Top progress bar — fires on every activeNav change. Sits
@@ -5524,6 +5581,7 @@ export default function Home() {
               />
             )}
             {activeNav === "Songs"     && <LibrarySongsView />}
+            {activeNav === "Experiments" && <ExperimentsView />}
           </div>
         </div>
 
@@ -5550,6 +5608,11 @@ export default function Home() {
         )}
       </main>
 
+      {/* Playlist editor — docks beside the content (not an overlay) and
+          persists across navigation, so tracks can be dragged in from any
+          page. Renders nothing until a playlist is opened for editing. */}
+      <PlaylistEditDrawer />
+
       {/* Global upload toast — always visible when minimized */}
       {uploadMinimized && (
         <div className="fixed top-[86px] right-10 z-50 flex items-center gap-3 pl-3 pr-2 py-2 rounded-xl bg-background border border-border shadow-lg">
@@ -5573,6 +5636,9 @@ export default function Home() {
     </div>
     </DetailActionsProvider>
     </PlayerProvider>
+    </PlaylistEditorProvider>
+    </CreatePlaylistProvider>
+    </AddToPlaylistProvider>
     </CreditsProvider>
     </UserAccountProvider>
     </UserLibraryProvider>

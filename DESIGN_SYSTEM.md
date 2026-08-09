@@ -453,6 +453,20 @@ Always has left icon + right chevron. Statuses: `public` (Globe) · `private` (L
 ### `<Badge>` primitives (Figma node 26:169)
 Design system base variants: `default` (neutral-950) · `secondary` · `outline` (glassmorphism) · `destructive`
 
+### Where content-type badges belong — STRICT
+
+A badge that repeats what the surrounding UI already states is noise. `ContentTypeBadge` is allowed **only** where the type isn't otherwise obvious:
+
+| Surface | Badge? | Why |
+|---|---|---|
+| Search results (rows, cards) | **no** | the category tabs already name the type |
+| Library list rows / `MediaListItem` | **no** | the view is single-type |
+| Mobile "…" sheet header | **yes** | the sheet is context-free once open — album, playlist **and artist** |
+| Artist discography rows | **yes** | Album / Single / EP is a real distinction inside one list |
+| Studio | **yes** | mixed-type inventory |
+
+Never pair a badge with a subtitle that says the same word ("Artist" under a name + an "Artist" badge).
+
 ---
 
 ## Context Menu
@@ -590,3 +604,71 @@ The **All** tab is **not** a flat list — it's a Top-result hero followed by on
 - **Sparse query (≤ 2 total results)** → skip the shelves: Top result + a short vertical list.
 
 Needs an `@container` ancestor (the All wrapper sets one) so the rails' `@min-[…]` column steps resolve against the content area.
+
+---
+
+## Media menus — ONE menu per media kind
+
+There is exactly **one** "…" menu per media kind, and every surface triggers that same menu. A card's "…", a list row's "…" and the detail page's "…" are the *same component with the same items* — only context-dependent rows are gated out. If two surfaces show different items for the same object, that's a bug.
+
+**Built by** `useDetailActions()` in [`detail-more-button.tsx`](src/components/ui/detail-more-button.tsx), consumed three ways:
+- `<DetailMoreButton {...props} />` — trigger + surface (dropdown on desktop, bottom sheet on mobile)
+- `<DetailMenuItems {...props} />` — items only, to drop inside an existing menu (card / row "…")
+- `<SongMenuItems />` in [`song-list-item.tsx`](src/components/ui/song-list-item.tsx) — the song equivalent
+
+**Song menu — the canonical item set** (every song surface: album, playlist, search, artist Top Songs, library):
+Show credits · Share · Save to library / Remove from library · Add to a playlist · Go to artist · Go to album · Report
+
+Context gating, nothing else:
+- `hideAddToPlaylist` — inside your own playlist (it's already there)
+- `hideGoToArtist` — on that artist's page
+- `hideGoToAlbum` — on that album's page
+
+**Handlers are baked in, not wired per call site.** Library save, share, credits, report and add-to-playlist resolve inside the component from `libraryType` + `libraryId`. Call sites that "forget" to pass a handler used to silently lose rows — a `live()` filter now drops any action with no handler, so a missing row means a missing binding, not a design choice.
+
+**Library keys must match across surfaces.** Albums are keyed by **catalog id** (`a02`), not by title slug — use `libraryIdForTitle(title) ?? slugify(title)`. Playlists and artists are keyed by slug. A card writing to a different key than its detail page is why hearts silently desync.
+
+**Owned playlists never bind the library.** Your own playlist is in your library by definition: `variant="my-playlist"` swaps the save heart for **Edit**, and the menu drops Save entirely.
+
+**Playlists navigate to their OWNER, not an artist.** `useDetailActions` reads `onGoToOwner` for the playlist kind and `onGoToArtist` for everything else — passing the wrong one drops the row with no error.
+
+---
+
+## Share — one adaptive action
+
+**One row, everywhere.** Where the Web Share API exists the button/row opens the **native OS sheet** ("Share…", `Share` icon); everywhere else it **copies the link** ("Copy link", `Link2` icon) and toasts. Never both rows — the native sheet already offers copy alongside AirDrop / messaging.
+
+`ShareButton` (standalone trigger) and `ShareMenuItems` (inside a menu) both come from [`share-button.tsx`](src/components/ui/share-button.tsx) and share `useShare()`, so every share affordance in the app behaves identically.
+
+---
+
+## Library views — tabs, filter, table
+
+- **Status filters are tabs, not a dropdown** — Playlists (All / By you / Saved), Albums (All / Owned / Downloaded), Songs (All / Downloaded). **Desktop only**: on mobile the strip competes with the content-type nav and reads as clutter, so it's hidden.
+- **In-library search** is a single shared store, [`use-library-filter.ts`](src/lib/use-library-filter.ts) (`useSyncExternalStore`), so the desktop field and the mobile header field drive the same query. The header clears it on unmount — a collapsed mobile field must never leave a hidden filter applied.
+- **Playlist cards carry a byline** — "By you" for your own, "By {name}" for saved ones.
+- **List tables** get an **Added** column + sort, and a **create row** leading the list (the same pattern as Studio's upload row).
+
+---
+
+## Create playlist / Add music
+
+One flow, started from every entry point via [`create-playlist-context.ts`](src/lib/create-playlist-context.ts) — `useCreatePlaylist().open()`. Entry points: sidebar "+" (expanded header row and collapsed rail), mobile Library header "+", the Playlists grid tile. Same pattern for `useAddToPlaylist()`.
+
+The provider mounts both steps: **New Playlist** (cover tile, name `Input`, "Keep private" setting row) → **Add music**.
+
+**Typing in Add music switches to global search** — not a local filter. The results render with the standard search pattern: content-type **pills** (`MobilePillTabs`), songs selectable via `MediaListItem` + a trailing `Checkbox`, containers as nav rows.
+
+**"Add music" row** leads your own playlist's track list while the header is in its **stacked layout** (`@min-[560px]:hidden`) — a normal list row: `size-12` `bg-secondary` circle with the bespoke `AddMusicIcon`, then the label. Never nest a primary/filled button inside a secondary row.
+
+---
+
+## Playlist edit drawer (desktop)
+
+Owner-only **Edit** on a playlist docks a panel on the right that **persists across navigation** — you can browse to Home, search, open any album, and drag tracks into the playlist still held in the drawer. It is **docked, not an overlay**: it takes width from the content instead of covering it.
+
+- State lives in [`playlist-editor-context.ts`](src/lib/playlist-editor-context.ts); `<PlaylistEditDrawer />` is mounted once at app level.
+- **Drag and drop** uses the private MIME type `application/x-muza-song` (`SONG_DRAG_TYPE`) so only Muza rows are accepted. Every `SongListItem` is draggable.
+- **Resizable** via [`use-resizable-width.ts`](src/lib/use-resizable-width.ts): handle on the panel's left edge, width remembered in localStorage, re-clamped to the **current** viewport on restore and on window resize (a width stored on a wide screen must not crush a narrow one). While dragging, the width is written straight to the element inside a rAF — React only sees it at drag start and end.
+- **⤢ expands the drawer into the full playlist page** in four phases (`grow` → `cover` → `dissolve` → `idle`): the panel leaves the flow (`fixed` + `contain: layout paint`, with a placeholder holding its slot), grows to `main + panel` width, the editor UI fades out, and navigation commits *while covered* so the destination renders at its final width — no flash of the old page, no narrow→wide snap.
+- The in-list "Add music" row is **hidden while the drawer is editing that same playlist** — both do the same job.

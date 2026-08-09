@@ -17,6 +17,8 @@ import { useUserLibrary } from "@/lib/user-library"
 import { slugify } from "@/lib/media-nav"
 import { useFooterNav } from "@/lib/use-media-query"
 import { useLibrarySort, compareLibrary } from "@/lib/use-library-sort"
+import { useLibraryFilter, matchesLibraryQuery } from "@/lib/use-library-filter"
+import { LibrarySearchField } from "@/components/app/library-search-field"
 import { useLibraryView } from "@/lib/use-library-view"
 
 // Artist data moved to a pure leaf module (`@/lib/artist-data`) so search
@@ -31,10 +33,13 @@ export function LibraryArtistsView() {
   const footerNav = useFooterNav()
   const [sort] = useLibrarySort()
   const [view, setView] = useLibraryView()
+  const [query] = useLibraryFilter()
   const library = useUserLibrary()
   // Only artists currently in the library (seeded with the demo set;
-  // toggling an artist's heart adds / removes it here).
-  const saved = SAVED_ARTISTS.filter(a => library.inLibrary("artist", slugify(a.name)))
+  // toggling an artist's heart adds / removes it here). Also honours the
+  // in-library search field (match on name).
+  const saved = SAVED_ARTISTS.filter(a =>
+    library.inLibrary("artist", slugify(a.name)) && matchesLibraryQuery(query, a.name))
   const artists = footerNav
     ? [...saved].sort(compareLibrary(sort, a => a.name))
     : saved
@@ -62,9 +67,12 @@ export function LibraryArtistsView() {
             <LibraryViewToggle value={view} onChange={setView} />
           </div>
         ) : (
-          <h1 className="text-2xlarge font-medium text-foreground tracking-tight mb-6">
-            Artists
-          </h1>
+          <div className="flex items-center justify-between gap-4 mb-6">
+            <h1 className="text-2xlarge font-medium text-foreground tracking-tight">
+              Artists
+            </h1>
+            <LibrarySearchField />
+          </div>
         )}
 
         {footerNav && view === "list" ? (

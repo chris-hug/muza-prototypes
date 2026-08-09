@@ -27,7 +27,7 @@
 
 import * as React from "react"
 import { useState } from "react"
-import { Heart, Info, MoreHorizontal, ListPlus, Mic, Disc3, Share, Link2 } from "lucide-react"
+import { Heart, Info, MoreHorizontal, ListPlus, Mic, Disc3, Share, Link2, Flag } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
@@ -36,6 +36,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
@@ -54,6 +55,9 @@ import { useCredits } from "@/lib/credits-context"
 import { slugify } from "@/lib/media-nav"
 import { useUserLibrary } from "@/lib/user-library"
 import { useLibraryToggle } from "@/lib/use-library-toggle"
+import { useAddToPlaylist } from "@/lib/add-to-playlist-context"
+import { SONG_DRAG_TYPE } from "@/lib/playlist-editor-context"
+import { useToast } from "@/components/ui/toast"
 import { LibraryHeartButton } from "@/components/ui/library-heart-button"
 
 // Re-export for callers still importing PlayingWave from the row
@@ -96,26 +100,114 @@ export interface SongListItemProps {
    *  (Heart). The overflow menu carries "Add to playlist" separately. */
   onAddToLibrary?:  () => void
   onAddToPlaylist?: () => void
-  /** The "…" button ALWAYS opens a dropdown (desktop) / bottom sheet
-   *  (touch). Pass bespoke `menuItems` (e.g. `AlbumCardMenuItems`) for
-   *  context-specific content; when omitted, the row renders a sensible
-   *  default menu built from its own handlers + the baked share
-   *  actions. */
+  /** The "…" opens ONE shared song menu (desktop dropdown / touch sheet),
+   *  built from the row's own handlers + context. Every song row — playlist,
+   *  album, artist Top Songs, search, library — gets the SAME items; a
+   *  surface hides only what's redundant there via the `hide…` flags below.
+   *  `menuItems` is a legacy escape hatch to override the whole set; prefer
+   *  the flags so the menu stays consistent. */
   menuItems?:       React.ReactNode
   onInfo?:          () => void
+  /** Report the track. Defaults to a "Reported" toast when omitted, so the
+   *  row always offers it. */
+  onReport?:        () => void
+  /** Hide "Add to playlist" — set when the row is inside the user's OWN
+   *  playlist (adding it to the playlist it's already in is meaningless). */
+  hideAddToPlaylist?: boolean
+  /** Hide "Go to artist" — set on the artist page's own Top Songs (you're
+   *  already there). */
+  hideGoToArtist?:  boolean
+  /** Hide "Go to album" — set on an album page / album track list. */
+  hideGoToAlbum?:   boolean
   /** Click target for the title text (navigates to song detail). */
   onTitleClick?:    () => void
-  /** Click target for the album text in the meta line. */
+  /** Click target for the album text in the meta line. Also drives the
+   *  menu's "Go to album". */
   onAlbumClick?:    () => void
-  /** Click target for the artist text in the meta line. */
+  /** Click target for the artist text in the meta line. Also drives the
+   *  menu's "Go to artist". */
   onArtistClick?:   () => void
   className?: string
+}
+
+/*
+ * SongMenuItems — the shared song "…" menu, as dropdown items, so the SAME
+ * menu sits behind BOTH the SongListItem overflow button AND a table row's
+ * kebab (SongListTable): every song, every surface, one menu. Renders only
+ * the items — the host wraps them in a DropdownMenuContent.
+ *
+ * Full set: Share…/Copy link · Save ⇄ Remove from library · Add to playlist
+ * · Go to artist · Go to album · Show credits · Report. Each surface hides
+ * only what's redundant there via the `hide…` flags; nav rows also need
+ * their click handler. Library / share / credits / report are self-wired
+ * (store + toast), keyed by (title, artist) so the saved state matches the
+ * row's heart.
+ */
+export function SongMenuItems({
+  title, artist, album, cover, duration,
+  onAddToPlaylist, onArtistClick, onAlbumClick, onInfo, onReport,
+  hideAddToPlaylist, hideGoToArtist, hideGoToAlbum,
+}: {
+  title:    string
+  artist?:  string
+  album?:   string
+  cover?:   string
+  duration?: string
+  onAddToPlaylist?: () => void
+  onArtistClick?:   () => void
+  onAlbumClick?:    () => void
+  onInfo?:          () => void
+  onReport?:        () => void
+  hideAddToPlaylist?: boolean
+  hideGoToArtist?:  boolean
+  hideGoToAlbum?:   boolean
+}) {
+  const { canNativeShare, copyLink, nativeShare } = useShare({ title, text: artist ? `${title} — ${artist}` : title })
+  const credits = useCredits()
+  const showCredits = album ? () => credits.open(slugify(album)) : onInfo
+
+  const library = useUserLibrary()
+  const toggleLibrary = useLibraryToggle()
+  const songId = slugify(artist ? `${title}-${artist}` : title)
+  const inLibrary = library.inLibrary("song", songId)
+  const libraryLabel = inLibrary ? "Remove from library" : "Save to library"
+  const handleSongLibrary = () => toggleLibrary("song", songId, title, { id: songId, title, artist, album, cover, duration })
+
+  const { add: toast } = useToast()
+  const handleReport = onReport ?? (() => toast({
+    title: "Reported",
+    description: `Thanks — we'll take a look at “${title}”.`,
+  }))
+
+  // "Add to playlist" opens the shared Tidal-style dialog by default (keyed
+  // by this song); a host may override with its own `onAddToPlaylist`.
+  const addToPlaylist = useAddToPlaylist()
+  const handleAddToPlaylist = onAddToPlaylist ?? (() =>
+    addToPlaylist.open({ id: songId, title, artist, album, cover, duration }))
+
+  return (
+    <>
+      <DropdownMenuItem onClick={canNativeShare ? nativeShare : copyLink}>
+        {canNativeShare ? <Share /> : <Link2 />}
+        {canNativeShare ? "Share…" : "Copy link"}
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={handleSongLibrary}><Heart className={cn(inLibrary && "fill-current")} />{libraryLabel}</DropdownMenuItem>
+      {!hideAddToPlaylist && <DropdownMenuItem onClick={handleAddToPlaylist}><ListPlus />Add to playlist</DropdownMenuItem>}
+      <DropdownMenuSeparator />
+      {onArtistClick && !hideGoToArtist && <DropdownMenuItem onClick={onArtistClick}><Mic />Go to artist</DropdownMenuItem>}
+      {onAlbumClick && !hideGoToAlbum && <DropdownMenuItem onClick={onAlbumClick}><Disc3 />Go to album</DropdownMenuItem>}
+      <DropdownMenuItem onClick={showCredits}><Info />Show credits</DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem variant="destructive" onClick={handleReport}><Flag />Report</DropdownMenuItem>
+    </>
+  )
 }
 
 export function SongListItem({
   cover, trackNumber, title, artist, album, year, badge, duration,
   compact = false,
   onPlay, playing: playingProp, onAddToLibrary, onAddToPlaylist, menuItems, onInfo,
+  onReport, hideAddToPlaylist, hideGoToArtist, hideGoToAlbum,
   onTitleClick, onAlbumClick, onArtistClick, className,
 }: SongListItemProps) {
   // Playback state. CONTROLLED when `playing` is passed (a global player
@@ -146,21 +238,36 @@ export function SongListItem({
   const handleSongLibrary = () => { toggleLibrary("song", songId, title, songMeta); onAddToLibrary?.() }
   const libraryLabel = inLibrary ? "Remove from library" : "Save to library"
 
-  // The "…" always opens a dropdown. Host can pass bespoke `menuItems`
-  // (context-dependent); otherwise we render a sensible default built
-  // from the row's own handlers + the baked share actions.
+  // Report — baked default (toast) so every song row offers it; a host may
+  // override with its own `onReport`.
+  const { add: toast } = useToast()
+  const handleReport = onReport ?? (() => toast({
+    title: "Reported",
+    description: `Thanks — we'll take a look at “${title}”.`,
+  }))
+
+  // "Add to playlist" — opens the shared dialog by default (the touch sheet
+  // uses this; the desktop dropdown is SongMenuItems, which bakes its own).
+  const addToPlaylist = useAddToPlaylist()
+  const handleAddToPlaylist = onAddToPlaylist ?? (() => addToPlaylist.open(songMeta))
+
+  // The ONE shared song menu (desktop dropdown; the touch sheet below mirrors
+  // it). Same items everywhere a song is listed; each surface only hides what
+  // is redundant there (own-playlist → no "Add to playlist"; artist page → no
+  // "Go to artist"; album page → no "Go to album"). Nav rows also require
+  // their click handler. `menuItems` stays as a legacy full-override hatch.
   const menuContent = menuItems ?? (
-    <>
-      {canNativeShare && (
-        <DropdownMenuItem onClick={nativeShare}><Share />Share…</DropdownMenuItem>
-      )}
-      <DropdownMenuItem onClick={copyLink}><Link2 />Copy link</DropdownMenuItem>
-      <DropdownMenuItem onClick={handleSongLibrary}><Heart className={cn(inLibrary && "fill-current")} />{libraryLabel}</DropdownMenuItem>
-      <DropdownMenuItem onClick={onAddToPlaylist}><ListPlus />Add to playlist</DropdownMenuItem>
-      {onArtistClick && <DropdownMenuItem onClick={onArtistClick}><Mic />Go to artist</DropdownMenuItem>}
-      {onAlbumClick && <DropdownMenuItem onClick={onAlbumClick}><Disc3 />Go to album</DropdownMenuItem>}
-      <DropdownMenuItem onClick={showCredits}><Info />Show credits</DropdownMenuItem>
-    </>
+    <SongMenuItems
+      title={title} artist={artist} album={album} cover={cover} duration={duration}
+      onAddToPlaylist={onAddToPlaylist}
+      onArtistClick={onArtistClick}
+      onAlbumClick={onAlbumClick}
+      onInfo={onInfo}
+      onReport={onReport}
+      hideAddToPlaylist={hideAddToPlaylist}
+      hideGoToArtist={hideGoToArtist}
+      hideGoToAlbum={hideGoToAlbum}
+    />
   )
 
   // Row-wide click toggles play/pause. Clicks on interactive
@@ -175,6 +282,14 @@ export function SongListItem({
   return (
     <div
       onClick={onRowClick}
+      // Draggable so the row can be dropped into the playlist-edit drawer.
+      // Carries the song as JSON under our own MIME type, so unrelated drop
+      // targets ignore it.
+      draggable
+      onDragStart={e => {
+        e.dataTransfer.setData(SONG_DRAG_TYPE, JSON.stringify(songMeta))
+        e.dataTransfer.effectAllowed = "copy"
+      }}
       className={cn(
         // `@container` so the meta line can drop fields by the row's
         // OWN width (priority order: keep artist, drop album, drop
@@ -323,12 +438,16 @@ export function SongListItem({
                 </SheetHeader>
                 <div className="flex flex-col px-2 pb-4">
                   <SheetAction icon={<Heart className={cn(inLibrary && "fill-current")} />} label={libraryLabel} onClick={handleSongLibrary} />
-                  <SheetAction icon={<ListPlus />} label="Add to playlist" onClick={onAddToPlaylist} />
-                  <SheetAction icon={<Mic />}      label="Go to artist"    onClick={onArtistClick} />
-                  <SheetAction icon={<Disc3 />}    label="Go to album"     onClick={onAlbumClick} />
-                  {canNativeShare && <SheetAction icon={<Share />} label="Share…" onClick={nativeShare} />}
-                  <SheetAction icon={<Link2 />}    label="Copy link"        onClick={copyLink} />
-                  <SheetAction icon={<Info />}     label="Song info"       onClick={onInfo} />
+                  {!hideAddToPlaylist && <SheetAction icon={<ListPlus />} label="Add to playlist" onClick={handleAddToPlaylist} />}
+                  {onArtistClick && !hideGoToArtist && <SheetAction icon={<Mic />}   label="Go to artist" onClick={onArtistClick} />}
+                  {onAlbumClick  && !hideGoToAlbum  && <SheetAction icon={<Disc3 />} label="Go to album"  onClick={onAlbumClick} />}
+                  <SheetAction
+                    icon={canNativeShare ? <Share /> : <Link2 />}
+                    label={canNativeShare ? "Share…" : "Copy link"}
+                    onClick={canNativeShare ? nativeShare : copyLink}
+                  />
+                  <SheetAction icon={<Info />}  label="Show credits" onClick={showCredits} />
+                  <SheetAction icon={<Flag />}  label="Report"       onClick={handleReport} destructive />
                 </div>
               </SheetContent>
             </Sheet>
@@ -408,11 +527,12 @@ export function SongListItem({
  * 44px+ hit target for touch.
  */
 function SheetAction({
-  icon, label, onClick,
+  icon, label, onClick, destructive,
 }: {
   icon: React.ReactNode
   label: string
   onClick?: () => void
+  destructive?: boolean
 }) {
   return (
     <SheetClose
@@ -420,7 +540,12 @@ function SheetAction({
         <button
           type="button"
           onClick={onClick}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-base text-foreground text-left transition-colors hover:bg-muted active:bg-muted [&_svg]:size-5 [&_svg]:shrink-0 [&_svg]:text-muted-foreground outline-none focus-visible:bg-muted"
+          className={cn(
+            "flex w-full items-center gap-3 rounded-lg px-3 py-3 text-base text-left transition-colors hover:bg-muted active:bg-muted [&_svg]:size-5 [&_svg]:shrink-0 outline-none focus-visible:bg-muted",
+            destructive
+              ? "text-destructive [&_svg]:text-destructive"
+              : "text-foreground [&_svg]:text-muted-foreground",
+          )}
         />
       }
     >

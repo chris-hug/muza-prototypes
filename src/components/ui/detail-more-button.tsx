@@ -16,8 +16,9 @@
  */
 
 import {
-  MoreHorizontal, Share, Plus, Heart, Pencil, Radio, Lock,
+  MoreHorizontal, Share, Link2, Plus, Heart, Pencil, Radio, Lock,
   ListPlus, ListStart, ListEnd, Mic, Building2, Info, Flag, Trash2,
+  Disc3, ListMusic,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -31,6 +32,7 @@ import {
   Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger,
 } from "@/components/ui/sheet"
 import { useShare } from "@/lib/use-share"
+import { useToast } from "@/components/ui/toast"
 import { useCredits } from "@/lib/credits-context"
 import { useIsMobile } from "@/lib/use-media-query"
 import { slugify } from "@/lib/media-nav"
@@ -73,6 +75,14 @@ export interface DetailMoreButtonProps {
   onMakePrivate?:   () => void
   onGoToArtist?:    () => void
   onGoToLabel?:     () => void
+  /** Playlist owner nav — "Go to owner" (playlists have an owner, not a
+   *  single artist). */
+  onGoToOwner?:     () => void
+  /** "Go to this item" — navigate to the album / playlist detail. Only
+   *  wired from a CARD or list row; on the item's own detail page it's
+   *  omitted (you're already there). Artists have no self-nav — you click
+   *  the artist itself. */
+  onGoToSelf?:      () => void
   onArtistInfo?:    () => void
   onRemove?:        () => void
   onReport?:        () => void
@@ -162,27 +172,46 @@ function MenuCover({ kind, cover, covers, title }: {
 
 // ─── DetailMoreButton ─────────────────────────────────────────────────────────
 
-export function DetailMoreButton({
-  title, subtitle, cover, covers, meta, owned, inLibrary, isPrivate, kind = "album",
+// ─── Shared action builder ────────────────────────────────────────────────────
+//
+// The single source of truth for the menu's items — consumed by BOTH
+// `DetailMoreButton` (trigger + dropdown / sheet) and `DetailMenuItems`
+// (items-only, dropped into another menu's content: card kebab, list-row
+// kebab, search row). Building the actions in one place is what makes "the card
+// menu" and "the detail menu" the SAME menu, just triggered from elsewhere.
+//
+// Navigation is context-aware: "Go to <this item>" (`onGoToSelf`) shows only
+// where wired (a card / row, not the item's own page); "Go to artist / label /
+// owner" show only when their handler is passed. Play next / Add to queue show
+// only where playback handlers are wired.
+function useDetailActions({
+  title, subtitle, owned, inLibrary, isPrivate, kind = "album",
   libraryType, libraryId, libraryName, librarySong,
   onAdd, onAddMusic, onEdit, onPlayRadio, onAddToPlaylist, onPlayNext, onAddToQueue,
-  onMakePrivate, onGoToArtist, onGoToLabel, onArtistInfo, onRemove, onReport,
-  className, triggerVariant = "ghost", triggerSize = "icon-sm", triggerIcon,
-}: DetailMoreButtonProps) {
-  const icon = triggerIcon ?? <MoreHorizontal />
-  const isMobile = useIsMobile()
+  onMakePrivate, onGoToArtist, onGoToLabel, onGoToOwner, onGoToSelf, onArtistInfo,
+  onRemove, onReport,
+}: DetailMoreButtonProps): { quick: Action[]; groups: Action[][]; flat: Action[]; badgeType: ContentType } {
   const { canNativeShare, copyLink, nativeShare } = useShare({
     title, text: subtitle ? `${title} — ${subtitle}` : title,
   })
   const credits = useCredits()
+  // Report — baked default (toast) so every non-owned album / playlist offers
+  // it without the caller wiring a handler, exactly like the song menu.
+  const { add: toast } = useToast()
+  const reportHandler = onReport ?? (() => toast({
+    title: "Reported",
+    description: `Thanks — we'll take a look at “${title}”.`,
+  }))
 
-  // Save-to-library state. When bound to the store (libraryType + libraryId)
-  // it reads live and toggles there — so the Save action flips to Remove the
-  // moment the item is saved, in sync with the header / card hearts. Falls
-  // back to the passed `inLibrary` + `onAdd`/`onRemove` otherwise.
+  // Save-to-library state. Store-bound (libraryType + libraryId) reads live and
+  // toggles there — in sync with the header / card hearts. Otherwise falls back
+  // to the passed `inLibrary` + `onAdd` / `onRemove`.
   const library = useUserLibrary()
   const toggleLibrary = useLibraryToggle()
-  const storeBound = !!(libraryType && libraryId)
+  // A playlist you OWN is in your library by definition — never offer to save
+  // (or un-save) it; owners get Edit / Delete instead.
+  const ownPlaylist = kind === "playlist" && owned
+  const storeBound = !!(libraryType && libraryId) && !ownPlaylist
   const saved = storeBound ? library.inLibrary(libraryType, libraryId) : !!inLibrary
   const onSave = storeBound
     ? () => toggleLibrary(libraryType, libraryId, libraryName ?? title, librarySong)
@@ -192,11 +221,13 @@ export function DetailMoreButton({
   const isPlaylist = kind === "playlist"
   const isArtist   = kind === "artist"
 
-  // ── Quick actions (prominent button row) ──────────────────────────────
-  const share: Action = { icon: <Share />, label: "Share", onClick: canNativeShare ? nativeShare : copyLink }
-  // "Save" (♥ → library) is distinct from "Add music" (＋ tracks to an
-  // owned playlist) — only the former carries the heart. Once saved it
-  // flips to a filled-heart "Remove".
+  // ── Quick actions (sheet tiles; lead the dropdown) ──────────────────────
+  // One adaptive share row: native sheet where available, else copy link.
+  // Label + icon reflect the actual action — identical to ShareMenuItems /
+  // the song menu.
+  const share: Action = canNativeShare
+    ? { icon: <Share />, label: "Share…",    onClick: nativeShare }
+    : { icon: <Link2 />, label: "Copy link", onClick: copyLink }
   const save: Action = {
     icon: <Heart className={saved ? "fill-current" : undefined} />,
     label: saved ? "Remove from library" : "Save to library",
@@ -204,10 +235,9 @@ export function DetailMoreButton({
     onClick: onSave,
     keepOpen: true,
   }
-  // Credits ("i") — the album's release personnel. Promoted to a top
-  // quick action for every album / single / EP (in place of Play radio),
-  // since it's the most-reached-for album detail. Owned albums keep Edit
-  // as the third tile, so Credits stays in the list below for them.
+  // Credits — promoted to a top quick action for every album / single / EP
+  // (in place of Play radio). Owned albums keep Edit as the third tile, so
+  // Credits lives in the list below for them.
   const showCredits: Action = { icon: <Info />, label: "Credits", onClick: () => credits.open(slugify(title)) }
   const quick: Action[] = isPlaylist
     ? (owned
@@ -218,32 +248,72 @@ export function DetailMoreButton({
          owned ? { icon: <Pencil />, label: "Edit", onClick: onEdit } : showCredits]
       : [share, save, { icon: <Radio />, label: "Play radio", onClick: onPlayRadio }]
 
-  // ── List groups (separated by dividers) ───────────────────────────────
+  // ── Manage + queue ──────────────────────────────────────────────────────
   const g1: Action[] = []
   if (isPlaylist && owned) g1.push({ icon: <Lock />, label: isPrivate ? "Make public" : "Make private", onClick: onMakePrivate })
-  if (!isArtist)           g1.push({ icon: <ListPlus />, label: "Add to a playlist", onClick: onAddToPlaylist })
-  g1.push({ icon: <ListStart />, label: "Play next",    onClick: onPlayNext })
-  g1.push({ icon: <ListEnd />,   label: "Add to queue", onClick: onAddToQueue })
+  // Albums only — you add an album's tracks TO a playlist. A playlist can't be
+  // added to a playlist, and an artist isn't addable at all.
+  if (isAlbum)             g1.push({ icon: <ListPlus />, label: "Add to a playlist", onClick: onAddToPlaylist })
+  if (onPlayNext)          g1.push({ icon: <ListStart />, label: "Play next",    onClick: onPlayNext })
+  if (onAddToQueue)        g1.push({ icon: <ListEnd />,   label: "Add to queue", onClick: onAddToQueue })
 
+  // ── Navigation (context-aware) ──────────────────────────────────────────
   const g2: Action[] = []
+  if (onGoToSelf && isAlbum)    g2.push({ icon: <Disc3 />,     label: "Go to album",    onClick: onGoToSelf })
+  if (onGoToSelf && isPlaylist) g2.push({ icon: <ListMusic />, label: "Go to playlist", onClick: onGoToSelf })
   if (isAlbum) {
-    // Owned albums keep Edit as the top tile, so Credits lives here. For
-    // non-owned it's promoted to a top quick action (above) — omit here to
-    // avoid duplicating it.
-    if (owned) g2.push(showCredits)
-    g2.push({ icon: <Mic />,       label: "Go to artist", onClick: onGoToArtist })
-    g2.push({ icon: <Building2 />, label: "Go to label",  onClick: onGoToLabel })
+    if (owned) g2.push(showCredits)            // credits in-list for owned (tile is Edit)
+    if (onGoToArtist) g2.push({ icon: <Mic />,       label: "Go to artist", onClick: onGoToArtist })
+    if (onGoToLabel)  g2.push({ icon: <Building2 />, label: "Go to label",  onClick: onGoToLabel })
   }
-  if (isArtist) g2.push({ icon: <Info />, label: "Artist info", onClick: onArtistInfo })
+  if (isPlaylist && onGoToOwner) g2.push({ icon: <Mic />, label: "Go to owner", onClick: onGoToOwner })
+  if (isArtist)                  g2.push({ icon: <Info />, label: "Artist info", onClick: onArtistInfo })
 
+  // ── Destructive / report ────────────────────────────────────────────────
   const g3: Action[] = []
-  if (isPlaylist && owned)        g3.push({ icon: <Trash2 />, label: "Delete playlist", onClick: onRemove, destructive: true })
-  else if (!owned && onReport)    g3.push({ icon: <Flag />,   label: "Report",          onClick: onReport })
+  if (isPlaylist && owned) g3.push({ icon: <Trash2 />, label: "Delete playlist", onClick: onRemove, destructive: true })
+  else if (!owned)         g3.push({ icon: <Flag />,   label: "Report",          onClick: reportHandler })
 
-  const groups = [g1, g2, g3].filter(g => g.length > 0)
-  const flat = [...quick, ...groups.flat()]   // desktop dropdown order
+  // Drop any action whose handler isn't wired in this context, so no menu ever
+  // shows a dead row (e.g. a card that doesn't provide Play next / queue, or a
+  // playlist with no "Add to a playlist"). This is what makes the shared menu
+  // adapt per surface without per-call-site conditionals.
+  const live = (arr: Action[]) => arr.filter(a => a.onClick)
+  const quickLive = live(quick)
+  const groups = [g1, g2, g3].map(live).filter(g => g.length > 0)
+  const flat = [...quickLive, ...groups.flat()]   // dropdown / list-items order
+  const badgeType = (isArtist ? "artist" : isAlbum ? "album" : "playlist") as ContentType
+  return { quick: quickLive, groups, flat, badgeType }
+}
 
-  const badgeType = (isAlbum ? "album" : "playlist") as ContentType
+// ─── DetailMenuItems ──────────────────────────────────────────────────────────
+//
+// Items-only: the shared action set rendered as <DropdownMenuItem>s, for use as
+// another menu's `menuItems` (card kebab, list-row kebab, search row). Identical
+// items + behavior to DetailMoreButton — only the trigger differs.
+export function DetailMenuItems(props: DetailMoreButtonProps) {
+  const { flat } = useDetailActions(props)
+  return (
+    <>
+      {flat.map((a, i) => (
+        <DropdownMenuItem key={`${a.label}-${i}`} onClick={a.onClick} variant={a.destructive ? "destructive" : "default"}>
+          {a.icon}
+          {a.label}
+        </DropdownMenuItem>
+      ))}
+    </>
+  )
+}
+
+// ─── DetailMoreButton ─────────────────────────────────────────────────────────
+
+export function DetailMoreButton(props: DetailMoreButtonProps) {
+  const { title, subtitle, cover, covers, meta, kind = "album",
+          className, triggerVariant = "ghost", triggerSize = "icon-sm", triggerIcon } = props
+  const isArtist = kind === "artist"
+  const icon = triggerIcon ?? <MoreHorizontal />
+  const isMobile = useIsMobile()
+  const { quick, groups, flat, badgeType } = useDetailActions(props)
 
   // Desktop → anchored dropdown; mobile (< 768) → the advanced bottom sheet.
   if (!isMobile) {
@@ -282,12 +352,10 @@ export function DetailMoreButton({
             <div className="min-w-0 text-left flex flex-col gap-1">
               <SheetTitle className="truncate text-base leading-tight">{title}</SheetTitle>
               {subtitle && <p className="truncate text-small text-muted-foreground leading-none">{subtitle}</p>}
-              {(!isArtist || meta) && (
-                <div className="flex items-center gap-2 min-w-0">
-                  {!isArtist && <ContentTypeBadge type={badgeType} />}
-                  {meta && <span className="text-xsmall text-muted-foreground truncate">{meta}</span>}
-                </div>
-              )}
+              <div className="flex items-center gap-2 min-w-0">
+                <ContentTypeBadge type={badgeType} />
+                {meta && <span className="text-xsmall text-muted-foreground truncate">{meta}</span>}
+              </div>
             </div>
           </SheetHeader>
 

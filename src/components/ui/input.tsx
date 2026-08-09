@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Input as InputPrimitive } from "@base-ui/react/input"
 import { Field } from "@base-ui/react/field"
+import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -26,6 +27,10 @@ interface InputProps extends React.ComponentProps<"input"> {
   /** Tone of the hint. `error` flips it destructive and routes through
    *  Field.Error (announced as a validation message by screen readers). */
   hintTone?: "default" | "error"
+  /** Leading glyph inside the field (e.g. a search icon). Adds left padding. */
+  startIcon?: React.ReactNode
+  /** Shows a clear (✕) button whenever `value` is non-empty. */
+  onClear?: () => void
 }
 
 const FIELD_CLS =
@@ -52,15 +57,55 @@ const FIELD_CLS =
 
 const HINT_CLS = "text-2xsmall leading-snug"
 
-function Input({ className, type, hint, hintTone = "default", ...props }: InputProps) {
-  const field = (
+function Input({
+  className, type, hint, hintTone = "default", startIcon, onClear, ...props
+}: InputProps) {
+  const showClear = !!onClear && !!props.value
+
+  let field = (
     <InputPrimitive
       type={type}
       data-slot="input"
-      className={cn(FIELD_CLS, className)}
+      className={cn(
+        FIELD_CLS,
+        // Reserve room for the affordances that overlay the field.
+        startIcon && "pl-10",
+        showClear && "pr-10",
+        className,
+      )}
       {...props}
     />
   )
+
+  // Leading icon and/or trailing clear — both overlay the field, so wrap it
+  // in a relative box. Purely additive: without either prop nothing changes.
+  if (startIcon || onClear) {
+    // `min-w-0` so the wrapper can shrink inside grid/flex parents (a grid item
+    // defaults to min-width:auto and would otherwise force overflow).
+    field = (
+      <div data-slot="input-affordances" className="relative w-full min-w-0">
+        {startIcon && (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground [&_svg]:size-4"
+          >
+            {startIcon}
+          </span>
+        )}
+        {field}
+        {showClear && (
+          <button
+            type="button"
+            onClick={onClear}
+            aria-label="Clear"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground outline-none focus-visible:text-foreground [&_svg]:size-4"
+          >
+            <X />
+          </button>
+        )}
+      </div>
+    )
+  }
 
   // No hint → bare field, zero impact on existing call-sites.
   if (!hint) return field

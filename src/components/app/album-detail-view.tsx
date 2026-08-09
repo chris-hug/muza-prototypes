@@ -27,7 +27,6 @@ import { AlbumCard } from "@/components/ui/album-card"
 import { ArtistCard } from "@/components/ui/artist-card"
 import { PlaylistCard } from "@/components/ui/playlist-card"
 import { CardRail } from "@/components/app/card-rail"
-import { AlbumCardMenuItems } from "@/components/ui/cover-card-menu"
 import { PurchaseAlbumDialog } from "@/components/app/purchase-album-dialog"
 import { useUserLibrary } from "@/lib/user-library"
 import { useUserAccount } from "@/lib/user-account"
@@ -36,6 +35,7 @@ import { getAlbumDetail, hasAlbumDetail } from "@/lib/album-catalog"
 import { hasPlaylistDetail } from "@/lib/playlist-catalog"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 import { usePlayer } from "@/lib/player"
+import { useCredits } from "@/lib/credits-context"
 import {
   SubscriptionPromptDialog,
   SubscriptionCheckoutDialog,
@@ -87,6 +87,7 @@ export function AlbumDetailView() {
   // route.
   const [params] = useSearchParams()
   const { openAlbum, openPlaylist, openArtist } = useMediaNav()
+  const credits = useCredits()
   const ALBUM = getAlbumDetail(params.get("album"))
 
   // Hopping between albums keeps the same route (page stays "Album"), so
@@ -332,14 +333,13 @@ export function AlbumDetailView() {
               trackNumber={i + 1}
               title={t.title}
               duration={t.duration}
-              menuItems={
-                <AlbumCardMenuItems
-                  hideGoToAlbum
-                  shareTitle={ALBUM.title}
-                  shareUrl={`/?page=Album&album=${slugify(ALBUM.title)}`}
-                  onGoToArtist={() => openArtist(slugify(ALBUM.artist))}
-                />
-              }
+              // Album page: no per-track artist/album in the meta line (would
+              // just repeat the header), so `album` is NOT passed — credits
+              // come via `onInfo` instead. No "Go to album" (you're here);
+              // "Go to artist" stays.
+              hideGoToAlbum
+              onArtistClick={() => openArtist(slugify(ALBUM.artist))}
+              onInfo={() => credits.open(slugify(ALBUM.title))}
               playing={isThisAlbumPlaying && player.track?.title === t.title}
               onPlay={() => {
                 // Same track again → pause/resume; otherwise load it.

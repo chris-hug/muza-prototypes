@@ -32,7 +32,7 @@ import { ExploreView } from "./home"
 const GROUPS: ReadonlyArray<{ title: string; items: ReadonlyArray<string> }> = [
   { title: "Foundations",      items: ["Responsive", "Colors", "Typography"] },
   { title: "Atoms",            items: ["Button", "Toggle", "ToggleGroup", "Toolbar", "Badge", "Status Badge", "Order Status Badge", "Purchased Badge", "Chips"] },
-  { title: "Inputs",           items: ["Input", "Chip Input", "NumberField", "Select", "MultiSelect", "SingleSelect", "Combobox", "Menu", "Detail Menu", "NavigationMenu", "DatePicker", "Checkbox & Radio", "Radio Card", "Switch", "Slider"] },
+  { title: "Inputs",           items: ["Input", "Chip Input", "NumberField", "Select", "MultiSelect", "SingleSelect", "Combobox", "Menu", "Detail Menu", "Nav Row", "NavigationMenu", "DatePicker", "Checkbox & Radio", "Radio Card", "Switch", "Slider"] },
   { title: "Indicators",       items: ["Progress", "Meter", "Spinner", "Top Progress Bar", "Separator", "Avatar", "User Avatar"] },
   { title: "Containers",       items: ["Tabs", "Tooltip", "ScrollArea", "Collapsible", "Accordion"] },
   { title: "Cards & lists",    items: ["Album Card", "Artist Card", "Playlist Card", "Cover Play Button", "Song List Item", "Media List Item", "Search", "Card Rail", "Song Rail", "Product Card", "Checkout Card"] },

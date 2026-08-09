@@ -18,14 +18,17 @@ import { useState } from "react"
 import { PlaylistCard } from "@/components/ui/playlist-card"
 import { PlaylistCreateCard } from "@/components/ui/playlist-create-card"
 import { PlaylistListTable, PlaylistMobileList, LibrarySortMenu } from "@/components/app/media-list-table"
+import { LibrarySearchField } from "@/components/app/library-search-field"
+import { useCreatePlaylist } from "@/components/app/create-playlist-dialog"
 import { Toggle } from "@/components/ui/toggle"
 import { ToggleGroup } from "@/components/ui/toggle-group"
-import { SingleSelect } from "@/components/ui/single-select"
-import { LayoutGrid, List, ListFilter } from "lucide-react"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { LayoutGrid, List } from "lucide-react"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 import { useUserLibrary } from "@/lib/user-library"
 import { useLibraryView } from "@/lib/use-library-view"
 import { useLibrarySort, compareLibrary } from "@/lib/use-library-sort"
+import { useLibraryFilter, matchesLibraryQuery } from "@/lib/use-library-filter"
 import { useFooterNav } from "@/lib/use-media-query"
 
 export interface SavedPlaylist {
@@ -186,6 +189,10 @@ export function LibraryPlaylistsView() {
   const [view, setView] = useLibraryView()
   const footerNav = useFooterNav()
   const [sort] = useLibrarySort()
+  const [query] = useLibraryFilter()
+  // The two-step create flow (New Playlist → Add music) is mounted once by
+  // CreatePlaylistProvider; every entry point just calls open().
+  const createPlaylist = useCreatePlaylist()
   const library = useUserLibrary()
 
   const filtered = SAVED_PLAYLISTS.filter(p => {
@@ -193,9 +200,10 @@ export function LibraryPlaylistsView() {
     // a playlist's heart off on its detail page removes it here.
     const inLib = p.owned || library.inLibrary("playlist", slugify(p.title))
     if (!inLib) return false
-    if (status === "yours") return !!p.owned
-    if (status === "saved") return !p.owned
-    return true
+    if (status === "yours" && !p.owned) return false
+    if (status === "saved" && p.owned) return false
+    // Search-within-library — match title or owner name.
+    return matchesLibraryQuery(query, p.title, p.owned ? "you" : p.owner)
   })
   // Mobile sort drives the order; desktop keeps source/table order.
   const playlists = footerNav
@@ -215,24 +223,25 @@ export function LibraryPlaylistsView() {
         )}
         {/* Toolbar — filters left, view switch right (see Albums). */}
         <div className="flex items-center justify-between gap-4 mb-6">
-          {/* Desktop = status filter; mobile = sort menu. */}
+          {/* Desktop = status tabs; mobile = sort menu. Tabs (not a filter
+              dropdown) so the split is always visible at a glance — the
+              segments read like the sections they are. */}
           <div className="flex items-center gap-2 min-w-0">
             {footerNav ? (
               <LibrarySortMenu />
             ) : (
-              <SingleSelect
-                value={status}
-                onChange={setStatus}
-                icon={<ListFilter className="size-4" />}
-                options={[
-                  { value: "all",   label: "All playlists" },
-                  { value: "yours", label: "Created by you" },
-                  { value: "saved", label: "Saved" },
-                ]}
-              />
+              <Tabs value={status} onValueChange={v => setStatus(v as "all" | "yours" | "saved")}>
+                <TabsList variant="line" autoCenter={false}>
+                  <TabsTrigger value="all">All playlists</TabsTrigger>
+                  <TabsTrigger value="yours">Created by you</TabsTrigger>
+                  <TabsTrigger value="saved">Saved</TabsTrigger>
+                </TabsList>
+              </Tabs>
             )}
           </div>
-          {/* Tile / list view switch. */}
+          {/* Right cluster — desktop in-library search + view switch. */}
+          <div className="flex items-center gap-3">
+          {!footerNav && <LibrarySearchField />}
           <ToggleGroup
             size="sm"
             value={[view]}
@@ -246,6 +255,7 @@ export function LibraryPlaylistsView() {
               <List className="size-3.5" />
             </Toggle>
           </ToggleGroup>
+          </div>
         </div>
 
         {view === "grid" ? (
@@ -254,7 +264,7 @@ export function LibraryPlaylistsView() {
               {/* Create card only shows in the unfiltered / "yours" views. */}
               {status !== "saved" && (
                 <li>
-                  <PlaylistCreateCard />
+                  <PlaylistCreateCard onClick={() => createPlaylist.open()} />
                 </li>
               )}
               {playlists.map(p => (
@@ -276,7 +286,11 @@ export function LibraryPlaylistsView() {
         ) : footerNav ? (
           <PlaylistMobileList playlists={playlists} />
         ) : (
-          <PlaylistListTable playlists={playlists} />
+          // "saved" tab shows only others' playlists → no create row there.
+          <PlaylistListTable
+            playlists={playlists}
+            onCreate={status !== "saved" ? () => createPlaylist.open() : undefined}
+          />
         )}
       </div>
     </div>

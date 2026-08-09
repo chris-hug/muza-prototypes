@@ -24,7 +24,7 @@ import { MoreHorizontal } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { ContentTypeBadge, type ContentType } from "@/components/ui/badge"
+import { type ContentType } from "@/components/ui/badge"
 import { CoverPlayButton } from "@/components/ui/cover-play-button"
 import {
   DropdownMenu,
@@ -55,12 +55,15 @@ export interface MediaListItemProps {
   onSubtitleClick?: () => void
   /** ⋯ menu content (e.g. `AlbumCardMenuItems`). Omitted → no menu. */
   menuItems?: React.ReactNode
+  /** Bespoke trailing content instead of the ⋯ menu — e.g. a selection
+   *  Checkbox in a picker. Takes precedence over `menuItems`. */
+  trailing?: React.ReactNode
   className?: string
 }
 
 export function MediaListItem({
   type, title, cover, covers, subtitle, meta, playing = false,
-  onOpen, onPlay, onSubtitleClick, menuItems, className,
+  onOpen, onPlay, onSubtitleClick, menuItems, trailing, className,
 }: MediaListItemProps) {
   // Primary (row-body) action. Containers always navigate (onOpen). A song
   // navigates to its release when `onOpen` is supplied (so the row opens the
@@ -91,7 +94,6 @@ export function MediaListItem({
         <p className="text-xsmall font-normal leading-5 text-foreground truncate">{title}</p>
         {(type !== "artist" && (subtitle || meta)) && (
           <div className="flex items-center gap-1.5 min-w-0 text-xsmall font-light tracking-[0.02em] text-muted-foreground leading-5">
-            <ContentTypeBadge type={type} />
             {subtitle && (
               onSubtitleClick ? (
                 <button
@@ -115,8 +117,12 @@ export function MediaListItem({
         )}
       </div>
 
-      {/* Trailing — ⋯ menu only. */}
-      {menuItems && (
+      {/* Trailing — either bespoke content (e.g. a selection Checkbox in the
+           Add-music picker) or the ⋯ menu. `trailing` wins when both are
+           passed, since a row is one or the other. */}
+      {trailing ? (
+        <div className="shrink-0 pr-6">{trailing}</div>
+      ) : menuItems && (
         <div className="shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="More options" />}>

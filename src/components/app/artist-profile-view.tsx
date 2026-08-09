@@ -26,7 +26,7 @@
 
 import * as React from "react"
 import { useMemo, useState } from "react"
-import { ArrowDown, ArrowUp, ArrowUpDown, LayoutGrid, List, MoreHorizontal, Heart, ListPlus, Disc3, Info } from "lucide-react"
+import { ArrowDown, ArrowUp, ArrowUpDown, LayoutGrid, List, MoreHorizontal } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { ContentTypeBadge } from "@/components/ui/badge"
@@ -39,8 +39,6 @@ import { TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { AlbumCardMenuItems } from "@/components/ui/cover-card-menu"
@@ -49,8 +47,6 @@ import { ArtistHero } from "./artist-hero"
 import { SongRail } from "./song-rail"
 import { artistImage } from "@/lib/artist-data"
 import { albumMetaFor, libraryIdForTitle } from "@/lib/album-meta"
-import { ShareMenuItems } from "@/components/ui/share-button"
-import { useCredits } from "@/lib/credits-context"
 import { hasAlbumDetail, registerAlbums } from "@/lib/album-catalog"
 import { hasPlaylistDetail, registerPlaylists } from "@/lib/playlist-catalog"
 import { useMediaNav, slugify } from "@/lib/media-nav"
@@ -91,7 +87,7 @@ const COVER_PURPLE     = "https://is1-ssl.mzstatic.com/image/thumb/Music3/v4/47/
 const COVER_MAYAN      = "https://is1-ssl.mzstatic.com/image/thumb/Music/cd/cb/07/mzi.qqxpchzn.jpg/200x200bb.jpg"
 
 const TOP_SONGS = [
-  { id: "s1",  cover: COVER_SPACE,      title: "Space Is the Place",       album: "Space Is the Place",                       year: 1973, duration: "21:14", badge: "Title track" },
+  { id: "s1",  cover: COVER_SPACE,      title: "Space Is the Place",       album: "Space Is the Place",                       year: 1973, duration: "21:14" },
   { id: "s2",  cover: COVER_LANQUIDITY, title: "Lanquidity",               album: "Lanquidity",                               year: 1978, duration: "9:11" },
   { id: "s3",  cover: COVER_SLEEPING,   title: "Door of the Cosmos",       album: "Sleeping Beauty",                          year: 1979, duration: "9:03" },
   { id: "s4",  cover: COVER_FUTURISTIC, title: "Rocket Number Nine",       album: "The Futuristic Sounds of Sun Ra",          year: 1961, duration: "3:24" },
@@ -253,7 +249,8 @@ export function ArtistProfileView() {
     menu: {
       kind: "artist",
       title: ARTIST.name,
-      subtitle: "Artist",
+      // No subtitle — the "Artist" content-type badge already labels it, so a
+      // "Artist" subtitle would just repeat.
       cover: ARTIST.cover,
       // Save action binds to the global user-library store (same as the
       // hero heart) so the two stay in sync and Save flips to Remove.
@@ -777,7 +774,6 @@ function DiscographyView({
 
 function TopSongsRow({ songs }: { songs: typeof TOP_SONGS }) {
   const { openAlbum } = useMediaNav()
-  const credits = useCredits()
   const player = usePlayer()
 
   const rows = songs.map(s => (
@@ -788,7 +784,6 @@ function TopSongsRow({ songs }: { songs: typeof TOP_SONGS }) {
                     title={s.title}
                     album={s.album}
                     year={s.year}
-                    badge={s.badge}
                     duration={s.duration}
                     playing={player.playing && player.playingFrom === ARTIST.name && player.track?.title === s.title}
                     onPlay={() => {
@@ -799,21 +794,10 @@ function TopSongsRow({ songs }: { songs: typeof TOP_SONGS }) {
                       )
                     }}
                     onAlbumClick={hasAlbumDetail(slugify(s.album)) ? () => openAlbum(slugify(s.album)) : undefined}
-                    menuItems={
-                      <>
-                        <ShareMenuItems title={s.title} />
-                        <DropdownMenuItem onClick={() => {}}><Heart />Save to library</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => {}}><ListPlus />Add to playlist</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => hasAlbumDetail(slugify(s.album)) && openAlbum(slugify(s.album))}
-                        >
-                          <Disc3 />Go to album
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => credits.open(slugify(s.album))}><Info />Show credits</DropdownMenuItem>
-                      </>
-                    }
+                    // Artist's own Top Songs → no "Go to artist" (you're here).
+                    // The shared song menu (Save / Add to playlist / Go to album
+                    // / Credits / Report) builds from the row's handlers.
+                    hideGoToArtist
                   />
   ))
 

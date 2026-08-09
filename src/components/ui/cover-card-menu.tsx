@@ -25,22 +25,18 @@
  * menu self-contained and sidesteps any nested-<button> edge cases.
  */
 
-import * as React from "react"
-import {
-  Heart, ListPlus, Mic, Disc3, Flag, Info, Pencil, Trash2, MoreHorizontal,
-} from "lucide-react"
+// (menu items delegate to the shared DetailMenuItems — see below)
+import { MoreHorizontal } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ShareMenuItems } from "@/components/ui/share-button"
-import { useCredits } from "@/lib/credits-context"
+import { DetailMenuItems } from "@/components/ui/detail-more-button"
 import { slugify } from "@/lib/media-nav"
+import { libraryIdForTitle } from "@/lib/album-meta"
 
 // Native-button styling that mirrors the cover-overlay button look
 // (translucent muted fill, backdrop blur, foreground icon, 24px) so
@@ -86,38 +82,34 @@ export interface AlbumCardMenuProps extends CommonProps {
 
 // Items-only sub-component so the same menu can sit behind different
 // triggers (cover overlay button, table-row kebab, etc.).
+//
+// Delegates to the shared DetailMenuItems — the card kebab IS the detail
+// "…" menu, just triggered from a card. Card props map onto the shared
+// action model; context (hidden nav, ownership) is expressed by omitting
+// the corresponding handler, which the shared builder drops automatically.
 export function AlbumCardMenuItems(props: AlbumCardMenuProps) {
-  const { owned, inLibrary, onAdd, onEdit, onAddToPlaylist,
-          onGoToArtist, onGoToAlbum, onRemove, onReport, onShowInfo,
-          shareTitle, shareUrl, hideGoToArtist, hideGoToAlbum } = props
-  const showNav = !hideGoToArtist || !hideGoToAlbum
-  // In the library, the item is already saved — drop "Save to library".
-  const saved = owned || inLibrary
-  // "Show credits" opens the release credits dialog for this album.
-  const credits = useCredits()
-  const showCredits = shareTitle ? () => credits.open(slugify(shareTitle)) : onShowInfo
+  const { owned, onEdit, onAddToPlaylist,
+          onGoToArtist, onGoToAlbum, onReport,
+          shareTitle, hideGoToArtist, hideGoToAlbum } = props
+  // Save-to-library is BAKED store-bound, keyed the SAME as the album detail
+  // page (the catalog library id from the title, slug fallback for synthesized
+  // albums). So the card menu's "Save / Remove from library" is present and
+  // stays in sync with the detail-page menu + heart — no host wiring needed.
+  const libraryId = shareTitle ? (libraryIdForTitle(shareTitle) ?? slugify(shareTitle)) : undefined
   return (
-    <>
-      <ShareMenuItems title={shareTitle} url={shareUrl} />
-      {owned ? (
-        <DropdownMenuItem onClick={onEdit}><Pencil />Edit</DropdownMenuItem>
-      ) : inLibrary ? null : (
-        <DropdownMenuItem onClick={onAdd}><Heart />Save to library</DropdownMenuItem>
-      )}
-      <DropdownMenuItem onClick={onAddToPlaylist}><ListPlus />Add to playlist</DropdownMenuItem>
-      {showNav && <DropdownMenuSeparator />}
-      {!hideGoToArtist && <DropdownMenuItem onClick={onGoToArtist}><Mic />Go to artist</DropdownMenuItem>}
-      {!hideGoToAlbum && <DropdownMenuItem onClick={onGoToAlbum}><Disc3 />Go to album</DropdownMenuItem>}
-      <DropdownMenuSeparator />
-      {saved ? (
-        <DropdownMenuItem variant="destructive" onClick={onRemove}>
-          <Trash2 />Remove from library
-        </DropdownMenuItem>
-      ) : (
-        <DropdownMenuItem onClick={onReport}><Flag />Report</DropdownMenuItem>
-      )}
-      <DropdownMenuItem onClick={showCredits}><Info />Show credits</DropdownMenuItem>
-    </>
+    <DetailMenuItems
+      kind="album"
+      title={shareTitle ?? ""}
+      owned={owned}
+      libraryType="album"
+      libraryId={libraryId}
+      libraryName={shareTitle}
+      onEdit={onEdit}
+      onAddToPlaylist={onAddToPlaylist}
+      onGoToArtist={hideGoToArtist ? undefined : onGoToArtist}
+      onGoToSelf={hideGoToAlbum ? undefined : onGoToAlbum}
+      onReport={onReport}
+    />
   )
 }
 
@@ -158,39 +150,35 @@ export interface PlaylistCardMenuProps extends CommonProps {
 
 // Items-only sub-component so the same menu can sit behind different
 // triggers (cover overlay button, list-table kebab, etc.).
+//
+// Delegates to the shared DetailMenuItems (see AlbumCardMenuItems). For a
+// playlist the shared builder routes `onRemove` to either the save-toggle
+// (non-owned "Remove from library") or "Delete playlist" (owned) — so map
+// owned → onDelete, non-owned → onRemove. Playlists have "Go to owner"
+// (not "Go to artist") and no "Go to artist" row at all.
 export function PlaylistCardMenuItems({
-  owned, inLibrary, onAdd, onEdit, onGoToOwner, onGoToPlaylist,
-  onDelete, onRemove, onReport, shareTitle, shareUrl,
+  owned, onEdit, onGoToOwner, onGoToPlaylist,
+  onDelete, onReport, shareTitle,
   hideGoToOwner, hideGoToPlaylist,
 }: PlaylistCardMenuProps) {
+  // Save-to-library is BAKED store-bound (playlists are keyed by title slug),
+  // so "Save / Remove from library" works on every playlist card without the
+  // host wiring onAdd/onRemove — same as the song menu. Owned playlists show
+  // "Delete" (onDelete) instead of a save toggle.
   return (
-    <>
-      <ShareMenuItems title={shareTitle} url={shareUrl} />
-      {owned ? (
-        <DropdownMenuItem onClick={onEdit}><Pencil />Edit</DropdownMenuItem>
-      ) : inLibrary ? null : (
-        <DropdownMenuItem onClick={onAdd}><Heart />Save to library</DropdownMenuItem>
-      )}
-      {(!hideGoToOwner && !owned) || !hideGoToPlaylist ? <DropdownMenuSeparator /> : null}
-      {!owned && !hideGoToOwner && (
-        <DropdownMenuItem onClick={onGoToOwner}><Mic />Go to owner</DropdownMenuItem>
-      )}
-      {!hideGoToPlaylist && (
-        <DropdownMenuItem onClick={onGoToPlaylist}><ListPlus />Go to playlist</DropdownMenuItem>
-      )}
-      <DropdownMenuSeparator />
-      {owned ? (
-        <DropdownMenuItem variant="destructive" onClick={onDelete}>
-          <Trash2 />Delete playlist
-        </DropdownMenuItem>
-      ) : inLibrary ? (
-        <DropdownMenuItem variant="destructive" onClick={onRemove}>
-          <Trash2 />Remove from library
-        </DropdownMenuItem>
-      ) : (
-        <DropdownMenuItem onClick={onReport}><Flag />Report</DropdownMenuItem>
-      )}
-    </>
+    <DetailMenuItems
+      kind="playlist"
+      title={shareTitle ?? ""}
+      owned={owned}
+      libraryType="playlist"
+      libraryId={shareTitle ? slugify(shareTitle) : undefined}
+      libraryName={shareTitle}
+      onRemove={owned ? onDelete : undefined}
+      onEdit={onEdit}
+      onGoToOwner={hideGoToOwner ? undefined : onGoToOwner}
+      onGoToSelf={hideGoToPlaylist ? undefined : onGoToPlaylist}
+      onReport={onReport}
+    />
   )
 }
 

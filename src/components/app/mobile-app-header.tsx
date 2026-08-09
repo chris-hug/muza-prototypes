@@ -36,6 +36,8 @@ import { DetailMoreButton } from "@/components/ui/detail-more-button"
 import { useDetailHeader } from "@/lib/detail-actions"
 import { useImageLuminance } from "@/lib/use-image-luminance"
 import { useSearchNav } from "@/lib/use-search-nav"
+import { useLibraryFilter } from "@/lib/use-library-filter"
+import { useCreatePlaylist } from "@/lib/create-playlist-context"
 import { ProfileMenu } from "@/components/app/topbar"
 
 // Same account avatar as the desktop Topbar — but here it's the trigger
@@ -196,11 +198,18 @@ function DetailHeader({ onBack }: { onBack?: () => void }) {
 // row so the header never jumps.
 function LibraryHeader({ activeNav, onNavChange }: { activeNav: string; onNavChange: (n: string) => void }) {
   const [open, setOpen] = useState(false)
-  const [q, setQ] = useState("")
+  // Bound to the shared library-filter store, so the active library view
+  // (Playlists / Albums / Artists / Songs) filters as you type.
+  const [q, setQ] = useLibraryFilter()
+  const createPlaylist = useCreatePlaylist()
   const inputRef = useRef<HTMLInputElement>(null)
 
   const openSearch = () => { setOpen(true); requestAnimationFrame(() => inputRef.current?.focus()) }
   const closeSearch = () => { setOpen(false); setQ(""); inputRef.current?.blur() }
+
+  // Clear the shared query when leaving Library (the header unmounts), so a
+  // collapsed mobile field never leaves a hidden filter applied on return.
+  useEffect(() => () => setQ(""), [setQ])
 
   return (
     <MobileHeader>
@@ -216,7 +225,7 @@ function LibraryHeader({ activeNav, onNavChange }: { activeNav: string; onNavCha
             <h1 className="flex-1 min-w-0 overflow-hidden whitespace-nowrap text-2xlarge font-medium tracking-tight text-foreground">
               Library
             </h1>
-            <MobileIconButton label="Add"><Plus /></MobileIconButton>
+            <MobileIconButton label="New playlist" onClick={createPlaylist.open}><Plus /></MobileIconButton>
           </>
         )}
 

@@ -18,11 +18,13 @@ import { useUserLibrary } from "@/lib/user-library"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 import { useLibraryView } from "@/lib/use-library-view"
 import { useLibrarySort, compareLibrary } from "@/lib/use-library-sort"
+import { useLibraryFilter, matchesLibraryQuery } from "@/lib/use-library-filter"
+import { LibrarySearchField } from "@/components/app/library-search-field"
 import { useFooterNav } from "@/lib/use-media-query"
 import { Toggle } from "@/components/ui/toggle"
 import { ToggleGroup } from "@/components/ui/toggle-group"
-import { SingleSelect } from "@/components/ui/single-select"
-import { LayoutGrid, List, ListFilter } from "lucide-react"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { LayoutGrid, List } from "lucide-react"
 
 export interface SavedAlbum {
   id:           string
@@ -139,6 +141,7 @@ export function LibraryAlbumsView() {
   const footerNav = useFooterNav()
   // Mobile sort (the desktop table sorts via its own column headers).
   const [sort] = useLibrarySort()
+  const [query] = useLibraryFilter()
 
   const filtered = SAVED_ALBUMS
     .filter(a => library.isAdded(a.id))
@@ -147,6 +150,7 @@ export function LibraryAlbumsView() {
       if (status === "downloaded") return library.entryFor(a.id)?.tier === "download"
       return true
     })
+    .filter(a => matchesLibraryQuery(query, a.title, a.artist))
   // On mobile the sort menu drives the order (grid + list both); on
   // desktop the order is the table's job, so leave it untouched.
   const albums = footerNav
@@ -183,19 +187,18 @@ export function LibraryAlbumsView() {
             {footerNav ? (
               <LibrarySortMenu />
             ) : (
-              <SingleSelect
-                value={status}
-                onChange={setStatus}
-                icon={<ListFilter className="size-4" />}
-                options={[
-                  { value: "all",        label: "All albums" },
-                  { value: "owned",      label: "Owned" },
-                  { value: "downloaded", label: "Downloaded" },
-                ]}
-              />
+              <Tabs value={status} onValueChange={v => setStatus(v as "all" | "owned" | "downloaded")}>
+                <TabsList variant="line" autoCenter={false}>
+                  <TabsTrigger value="all">All albums</TabsTrigger>
+                  <TabsTrigger value="owned">Owned</TabsTrigger>
+                  <TabsTrigger value="downloaded">Downloaded</TabsTrigger>
+                </TabsList>
+              </Tabs>
             )}
           </div>
-          {/* Tile / list view switch. */}
+          {/* Right cluster — desktop in-library search + view switch. */}
+          <div className="flex items-center gap-3">
+          {!footerNav && <LibrarySearchField />}
           <ToggleGroup
             size="sm"
             value={[view]}
@@ -209,6 +212,7 @@ export function LibraryAlbumsView() {
               <List className="size-3.5" />
             </Toggle>
           </ToggleGroup>
+          </div>
         </div>
 
         {/* Responsive grid driven by CONTAINER queries (not viewport)

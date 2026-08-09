@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react"
 import { Collapsible } from "@base-ui/react/collapsible"
 import { cn } from "@/lib/utils"
+import { useCreatePlaylist } from "@/lib/create-playlist-context"
 import { Button } from "@/components/ui/button"
 import { LogoHorizontal, LogoMark } from "@/components/ui/logo"
 import { FeedbackDialog } from "@/components/app/feedback-dialog"
@@ -228,6 +229,8 @@ export function Sidebar({
   className,
 }: SidebarProps) {
   const [internalCollapsed, setInternalCollapsed] = useState(false)
+  // Same flow the mobile Library header "+" and the grid tile start.
+  const createPlaylist = useCreatePlaylist()
   const [activeItem, setActiveItem] = useState(activeNav)
   const [openGroup,  setOpenGroup]  = useState<string>("Library")
   const [sidebarWidth, setSidebarWidth] = useState(MIN_W)
@@ -398,6 +401,7 @@ export function Sidebar({
           /* Collapsed: single "+" create button */
           <button
             title="Create playlist"
+            onClick={createPlaylist.open}
             className="size-11 flex items-center justify-center rounded-full text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
           >
             <Plus className="size-4" />
@@ -409,7 +413,13 @@ export function Sidebar({
               <span className="text-xsmall font-medium text-muted-foreground flex-1 truncate">
                 My Playlists
               </span>
-              <Button variant="ghost" size="icon-sm" title="Create playlist" className="-mr-2">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                title="Create playlist"
+                onClick={createPlaylist.open}
+                className="-mr-2"
+              >
                 <Plus />
               </Button>
             </div>
@@ -430,6 +440,19 @@ export function Sidebar({
                     )}
                   >
                     <span className="text-xsmall font-normal truncate">Design system</span>
+                  </button>
+                  {/* Experiments — scratch page for in-progress ideas
+                       (motion studies etc.), sibling of the DS entry. */}
+                  <button
+                    onClick={() => handleNavChange("Experiments")}
+                    className={cn(
+                      "flex h-8 px-3 w-full text-left rounded-lg transition-colors items-center",
+                      currentActive === "Experiments"
+                        ? "bg-sidebar-primary text-sidebar-foreground"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent",
+                    )}
+                  >
+                    <span className="text-xsmall font-normal truncate">Experiments</span>
                   </button>
                   {playlists.map(pl => (
                     <button

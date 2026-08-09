@@ -8,7 +8,9 @@ import { useEffect, useRef } from "react"
 // `size` sets the CSS --mal-size variable (layout box = size×size px).
 
 interface AnimatedLogoProps {
-  size?: number
+  /** Number = px. A string is passed through, so callers can size it purely
+   *  in CSS (`clamp(…, 20vw, …)`) and skip re-rendering on every resize. */
+  size?: number | string
   className?: string
   /** Ambient mode: auto-rotates immediately, all interactions disabled */
   ambient?: boolean
@@ -155,6 +157,19 @@ export function AnimatedLogo({ size = 240, className, ambient = false }: Animate
       }
     }
 
+    // ── resize damping ────────────────────────────────────────────────────────
+    // Dragging the window edge streams `mousemove` at the page, which the tilt
+    // reads as the pointer flying around — the logo shivers, and its per-frame
+    // transforms fight the browser's relayout for the same frame budget. So
+    // the whole rig holds still until the resize settles.
+    let resizing = false
+    let resizeTimer: ReturnType<typeof setTimeout>
+    const onResize = () => {
+      resizing = true
+      clearTimeout(resizeTimer)
+      resizeTimer = setTimeout(() => { resizing = false }, 200)
+    }
+
     // ── event handlers ────────────────────────────────────────────────────────
     const onClickContainer = (e: MouseEvent) => {
       rotate(e.clientX < window.innerWidth / 2 ? "p" : "n")
@@ -162,6 +177,7 @@ export function AnimatedLogo({ size = 240, className, ambient = false }: Animate
     }
 
     const onMouseMove = (e: MouseEvent) => {
+      if (resizing) return
       const xr = (e.clientX / window.innerWidth)  - 0.5
       const yr = (e.clientY / window.innerHeight) - 0.5
       targetTiltX = yr * MAX_TILT_X
@@ -179,15 +195,19 @@ export function AnimatedLogo({ size = 240, className, ambient = false }: Animate
 
     // ── RAF loop ──────────────────────────────────────────────────────────────
     function frame() {
+      rafId = requestAnimationFrame(frame)
+      // Nothing moves mid-resize: the frame belongs to the relayout.
+      if (resizing) return
+
       tiltX += (targetTiltX - tiltX) * TILT_EASE
       tiltY += (targetTiltY - tiltY) * TILT_EASE
       tiltWrapper.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`
 
       updateAutoRotation()
-      rafId = requestAnimationFrame(frame)
     }
 
     frame()
+    window.addEventListener("resize", onResize, { passive: true })
     if (!ambient) {
       container.addEventListener("click",  onClickContainer)
       window.addEventListener("mousemove", onMouseMove, { passive: true })
@@ -196,6 +216,8 @@ export function AnimatedLogo({ size = 240, className, ambient = false }: Animate
 
     return () => {
       cancelAnimationFrame(rafId)
+      clearTimeout(resizeTimer)
+      window.removeEventListener("resize", onResize)
       if (!ambient) {
         container.removeEventListener("click",  onClickContainer)
         window.removeEventListener("mousemove", onMouseMove)
@@ -208,7 +230,7 @@ export function AnimatedLogo({ size = 240, className, ambient = false }: Animate
     <div
       ref={containerRef}
       className={`mal-root select-none ${ambient ? "" : "cursor-pointer"} ${className ?? ""}`}
-      style={{ "--mal-size": `${size}px` } as React.CSSProperties}
+      style={{ "--mal-size": typeof size === "number" ? `${size}px` : size } as React.CSSProperties}
     >
       <div className="mal-container">
         <div ref={tiltWrapperRef} className="mal-tilt-wrapper">

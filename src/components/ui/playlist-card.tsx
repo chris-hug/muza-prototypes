@@ -75,7 +75,7 @@ export function PlaylistCard({
 }: PlaylistCardProps) {
   const songsLabel = `${songCount.toLocaleString()} ${songCount === 1 ? "Song" : "Songs"}`
   const showOwner  = !owned && !!owner
-  const { openPlaylist } = useMediaNav()
+  const { openPlaylist, openArtist } = useMediaNav()
   // Media-tile text — matches AlbumCard (no price row here): title + meta at
   // text-xsmall (17px); meta a lighter 300 weight with a hair of tracking.
   const titleSize  = "text-xsmall"
@@ -174,7 +174,10 @@ export function PlaylistCard({
               shareUrl={shareHref}
               onAdd={onAdd}
               onEdit={onEdit}
-              onGoToOwner={onGoToOwner}
+              // "Go to owner" baked from the owner name (others' playlists
+              // only — your own has no separate owner). No "Go to playlist" —
+              // the card IS the playlist, so it'd navigate to itself.
+              onGoToOwner={onGoToOwner ?? (!owned && owner ? () => openArtist(slugify(owner)) : undefined)}
               onGoToPlaylist={onGoToPlaylist}
               onDelete={onDelete}
               onRemove={onRemove}
@@ -204,9 +207,16 @@ export function PlaylistCard({
         </button>
         <div className={cn("flex items-center gap-1.5 min-w-0 text-muted-foreground", metaSize, metaWeight, leadingCls, metaTracking)}>
           <span className="shrink-0">{songsLabel}</span>
-          {showOwner && (
-            <>
-              <span className="shrink-0" aria-hidden="true">·</span>
+          {/* Owner byline — ALWAYS shown so a mixed "All" grid is legible at a
+              glance: "By you" marks your own, "By <name>" marks a saved one
+              (the same cue Spotify / Tidal use). Owned isn't a link; a saved
+              owner navigates to their profile. */}
+          <span className="shrink-0" aria-hidden="true">·</span>
+          {owned ? (
+            <span className="truncate">By you</span>
+          ) : showOwner ? (
+            <span className="inline-flex min-w-0 shrink truncate">
+              <span className="shrink-0">By&nbsp;</span>
               <button
                 type="button"
                 onClick={onOwnerClick}
@@ -214,8 +224,8 @@ export function PlaylistCard({
               >
                 {owner}
               </button>
-            </>
-          )}
+            </span>
+          ) : null}
         </div>
       </div>
     </div>
