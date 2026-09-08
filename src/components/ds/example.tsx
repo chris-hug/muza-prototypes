@@ -17,8 +17,10 @@
  *
  * Width is applied with a plain `max-width` on the stage, and the stage is a
  * `@container`, so components written against container queries (cards, rails,
- * media rows) react exactly as they would at that viewport. An iframe would
- * isolate the theme and double the work for no gain here.
+ * media rows) react exactly as they would at that CONTAINER width. What the
+ * frame cannot do is move the viewport: anything gated on `useIsMobile()` or
+ * `useFooterNav()` reads the real window and is unaffected — resize the
+ * browser for those. An iframe would isolate the theme and double the work.
  */
 
 import { useState } from "react"
@@ -31,34 +33,57 @@ import {
 } from "@/components/ui/dialog"
 import { Markdown } from "@/components/ds/markdown"
 import { componentDoc } from "@/lib/component-docs"
-import { FOOTER_NAV_BELOW, SIDEBAR_COLLAPSE_BELOW } from "@/lib/use-media-query"
+import { VIEWPORTS, containerAt, sidebarAt, gutterAt } from "@/lib/breakpoints"
+import { ChromeSidebar, ChromeGutter, ChromeTabBar } from "@/components/ds/chrome-schematic"
 
-/*
- * The rungs are THIS PROJECT'S, not Tailwind's generic scale — the page
- * gutter steps at 584 and 1069, the sidebar becomes a footer tab bar at 608,
- * and `useIsMobile()` cuts at 768. Chips showing 640/768/1024 would look
- * authoritative while missing every width where something actually changes.
- *
- * The names are width BANDS, not devices: a 1024px tablet held sideways is
- * "Desktop" here, and that is correct — what matters is the room the layout
- * has, never what the hardware is called.
- *
- * 608 and 1069 are ARITHMETIC (560 + 2×24; 780 + 208 + 80 + 1), so they are
- * imported from where they are computed rather than written down again.
- * Full table and reasoning: `docs/components/responsive.md`.
- */
-function readWidths(): { label: string; px: number; note: string }[] {
-  return [
-    { label: "Phone",       px: 375,                    note: "reference phone — 12 mini / SE class" },
-    { label: "Phone wide",  px: 584,                    note: "page gutter 12 → 24px" },
-    { label: "Tablet",      px: FOOTER_NAV_BELOW,       note: "sidebar replaces the footer tab bar" },
-    { label: "Tablet wide", px: 768,                    note: "useIsMobile() — components swap" },
-    { label: "Desktop",     px: SIDEBAR_COLLAPSE_BELOW, note: "sidebar expands · gutter 24 → 40px" },
-  // Sorted because two of them are computed and could in principle cross.
-  ].sort((a, b) => a.px - b.px)
+export type ExampleWidth = {
+  label: string
+  /** The width the STAGE is set to — what the component measures. */
+  px: number
+  note: string
+  /** What the readout prints when this chip is active. Defaults to `px`. */
+  readout?: string
+  /** The page chrome to draw around the stage, when this chip is a window
+   *  width. Omitted for chips that are a plain box width (a component's own
+   *  steps), where there is no chrome to speak of. */
+  chrome?: { window: number; sidebar: number; gutter: number }
 }
 
-const WIDTHS = readWidths()
+/*
+ * ONE ladder on the page: the same window widths the Responsive section is
+ * picked in. The frame is still a container — it sets itself to what that
+ * window LEAVES after the chrome — so a chip labelled 1069 makes the stage
+ * 781px wide and says so.
+ *
+ * This replaced a second ladder of raw container steps (304 · 464 · 692 · 928
+ * · 1164 · 1500). Those were the card grid's own switch points, which made
+ * them exact but unreal: the app never produces a 464px column. Two unlabelled
+ * number sets on one page read as a contradiction, and labelling them did not
+ * fix it — it only named the contradiction. Nothing was lost by dropping them:
+ * stepping through these nine windows yields column counts 2·2·3·3·3·4·5·6·7,
+ * so every step of the card ladder is still reachable, at a width that
+ * actually occurs.
+ *
+ * A component with steps of its OWN is the exception and passes `widths` —
+ * `SongListItem` does. Not because its 260/300/380 are unreachable from a
+ * window: sweeping every width from 320 to 1920 finds them at 348 (a rail
+ * cell), 340 and 388, 420 and 468. The reason is that a window does not
+ * DETERMINE that row's width. At a 1069px window the same component is 765px
+ * wide in a list and 363px in a `SongRail` cell — one number in, two answers
+ * out. Only its own box says which, so its chips are its own box.
+ */
+const WINDOW_WIDTHS: ExampleWidth[] = VIEWPORTS.map(v => {
+  const container = containerAt(v.px)
+  const sidebar = sidebarAt(v.px)
+  const gutter = gutterAt(v.px)
+  return {
+    label: String(v.px),
+    px: container,
+    note: `${v.note} — leaves ${container}px of content`,
+    readout: `${v.px} → ${container}px`,
+    chrome: { window: v.px, sidebar, gutter },
+  }
+})
 
 /*
  * What `</>` shows: the call-site file with its explanatory head removed.
@@ -88,6 +113,8 @@ export function Example({
   code,
   codePath,
   defaultWidth,
+  widths = WINDOW_WIDTHS,
+  widthLabel = "window",
   controls,
   align = "center",
   className,
@@ -105,8 +132,14 @@ export function Example({
   /** Repo-relative path of that file — printed above the snippet and linked
    *  to GitHub, so the panel says where its truth lives. */
   codePath?: string
-  /** Start at a fixed rung instead of full width. */
+  /** Start at a fixed step instead of full width. */
   defaultWidth?: string
+  /** Override the width chips for a component with steps of its own — see
+   *  the note above `WINDOW_WIDTHS`. Defaults to the window ladder. */
+  widths?: ExampleWidth[]
+  /** What the chips measure, named beside them. `window` by default; say
+   *  `row` (or whatever the box is) when passing `widths`. */
+  widthLabel?: string
   /** Variant switches — rendered at the left of the toolbar. */
   controls?: React.ReactNode
   /** How the demo sits in the frame. `center` (default) shrink-wraps it —
@@ -124,7 +157,20 @@ export function Example({
   const [showDoc, setShowDoc] = useState(false)
   const [copied, setCopied] = useState(false)
   const entry = componentDoc(doc ?? "")
-  const px = WIDTHS.find(w => w.label === width)?.px
+  const active = widths.find(w => w.label === width)
+  const px = active?.px
+
+  /*
+   * The readout spells out the step the chip does not have room for. A window
+   * chip prints `1069 → 781px`, so the frame never shows a number the reader
+   * has to derive. A chip that carries no `readout` — a component's own steps
+   * — prints its label, because there the label already IS the width.
+   */
+  const readout = !active ? "free" : active.readout ?? `${active.px}px`
+
+  /* Chrome is drawn only for a window chip. With none — "free", or a chip that
+     is a plain box width — the stage is the frame, as before. */
+  const chrome = active?.chrome
 
   const usage = code ? usageOf(code) : undefined
 
@@ -141,7 +187,18 @@ export function Example({
       <div className="flex items-center gap-3 min-w-0">
         {title && <p className="text-small font-medium text-foreground truncate">{title}</p>}
         <div className="ml-auto flex items-center gap-1 shrink-0">
-          {WIDTHS.map(w => (
+          {/* Named, because a bare row of numbers beside a component invites
+              exactly one question — "which width is that?" — and the page used
+              to answer it differently in two places. Everything here is a
+              WINDOW width now, the same ladder the Responsive section uses;
+              the readout carries the container it leaves. */}
+          <span
+            className="mr-1 text-2xsmall text-muted-foreground/70 max-sm:hidden"
+            title={`These are ${widthLabel.toUpperCase()} widths — the box the component itself measures. The window is wider by the sidebar and the page gutter; see the Responsive section.`}
+          >
+            {widthLabel}
+          </span>
+          {widths.map(w => (
             <button
               key={w.label}
               type="button"
@@ -167,7 +224,7 @@ export function Example({
               width ? "text-muted-foreground hover:text-foreground underline underline-offset-2" : "text-foreground",
             )}
           >
-            {px ? `${px}px` : "free"}
+            {readout}
           </button>
         </div>
       </div>
@@ -240,7 +297,7 @@ export function Example({
         )}
 
         {/* Stage. Graph-paper grid behind the frame, as in the IRIS studio:
-            at a narrow rung the component no longer fills the card, and the
+            at a narrow step the component no longer fills the card, and the
             ruled ground makes that emptiness read as "this is how wide it is"
             instead of "something failed to render". The grid is its own
             absolutely positioned layer so its opacity can't reach the demo,
@@ -249,7 +306,15 @@ export function Example({
         {/* The ruled ground is only visible where the frame ENDS — no padding
             of its own. A ring of grid around a full-width frame would be a
             second border inside a bordered card, framing nothing. */}
-        <div className="relative flex justify-center">
+        <div
+          className="relative flex overflow-x-auto"
+          // `safe center`, not plain `center`: a centred flex item WIDER than
+          // its scroll container has its overflow pushed off both sides and
+          // the left half becomes unreachable. `safe` falls back to `start`
+          // exactly in that case, so a 1920 window stays scrollable from its
+          // left edge. Inline because Tailwind has no utility for it.
+          style={{ justifyContent: "safe center" }}
+        >
           <div
             aria-hidden
             className={cn(
@@ -258,25 +323,48 @@ export function Example({
               "[background-size:12px_12px]",
             )}
           />
-          {/* The `@container` must be EXACTLY the chip's width, so padding
-              cannot live on it: a container query measures the CONTENT box,
-              so `p-6` here made every component see 48px less than the chip
-              said — at the 584 rung a rail read 536 and stayed in its
-              below-560 layout. The padding belongs to the inner surface. */}
+          {/* The chrome, drawn around the stage whenever the chip is a WINDOW
+              width. It is what makes the ladder's one baffling step legible:
+              584 leaves 536px of content, 608 leaves 508 — the window grew and
+              the content shrank, because the 52px icon rail arrives at 608 and
+              costs more than the 24px gained. Told as two numbers that reads
+              like a bug; with the rail in the picture it reads as a cause. */}
           <div
-            data-slot="example-stage"
-            className="@container relative w-full"
-            style={px ? { maxWidth: px } : undefined}
+            className={cn("flex min-w-0", chrome ? "shrink-0 flex-col" : "w-full")}
+            style={chrome ? { width: chrome.window } : undefined}
           >
-            <div
-              className={cn(
-                "bg-background flex flex-col gap-6 p-6",
-                align === "center" ? "items-center" : "items-stretch",
-                stageClassName,
-              )}
-            >
-              {children}
+            <div className="flex min-w-0 flex-1">
+              {chrome && chrome.sidebar > 0 && <ChromeSidebar width={chrome.sidebar} />}
+              {chrome && <ChromeGutter width={chrome.gutter} />}
+
+              {/* The `@container` must be EXACTLY the chip's width, so padding
+                  cannot live on it: a container query measures the CONTENT
+                  box, so `p-6` here made every component see 48px less than
+                  the chip said — at the 584 step a rail read 536 and stayed in
+                  its below-560 layout. The padding belongs to the inner
+                  surface. */}
+              <div
+                data-slot="example-stage"
+                className={cn("@container relative", chrome ? "min-w-0 flex-1" : "w-full")}
+                style={px && !chrome ? { maxWidth: px } : undefined}
+              >
+                <div
+                  className={cn(
+                    "bg-background flex flex-col gap-6 p-6",
+                    align === "center" ? "items-center" : "items-stretch",
+                    stageClassName,
+                  )}
+                >
+                  {children}
+                </div>
+              </div>
+
+              {chrome && <ChromeGutter width={chrome.gutter} />}
             </div>
+
+            {/* Costs height, not width — drawn where it actually sits, so
+                "no sidebar" does not read as "no chrome". */}
+            {chrome && chrome.sidebar === 0 && <ChromeTabBar />}
           </div>
         </div>
       </div>

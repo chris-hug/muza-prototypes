@@ -36,11 +36,14 @@
  * Responsive model — synced to the MediaHeader / sidebar system:
  *   · Swipe peek below 560px container (the MediaHeader's stacked
  *     breakpoint): cards leave a ~24px sliver of the next card at the
- *     right edge, signalling the row scrolls on touch. With the sidebar
- *     auto-collapsing below ~1069px viewport, container = viewport − 133,
- *     so peek-at-560 lines up with the MediaHeader stacking at the same
- *     viewport. From 560px up cards fit exactly N-per-row (clean grid
- *     aligned to the Library grids), no peek.
+ *     right edge, signalling the row scrolls on touch. It is the same
+ *     560 the MediaHeader stacks at, so the two always flip together —
+ *     but only because both read the CONTAINER. In viewport terms the
+ *     width moves: below 608 the container is `viewport − 48`, from 608
+ *     it is `viewport − 52 − 48` (the icon rail arrives), so the peek
+ *     survives to viewport 660, not 608. From a 560 container up, cards
+ *     fit exactly N-per-row (clean grid aligned to the Library grids),
+ *     no peek.
  *   · Chevrons (◀ ▶) are a POINTER affordance for GRID mode (≥ 560)
  *     only. Below 560 the swipe peek is the scroll cue, so the arrows
  *     would be redundant and are hidden. On touch they're always hidden

@@ -73,15 +73,20 @@ export function useSidebarAutoCollapsed(): boolean {
  * Below this viewport the sidebar is dropped entirely in favour of a
  * mobile bottom tab bar (FooterNav).
  *
- * Synced to the MediaHeader's stacking point so the page goes "mobile"
- * as ONE coordinated event — footer nav appears at the same instant the
- * detail-page header flips from horizontal (cover left, content right)
- * to stacked (cover on top). Below the footer-nav breakpoint there's no
- * sidebar, so the content container is just `viewport − 2 × page gutter`.
- * The MediaHeader stacks at a 560px container; at this range the page
- * gutter is 24px, so the two coincide at:
+ * Derived from the MediaHeader's stacking point: BELOW this width there is
+ * no sidebar, so the content container is exactly `viewport − 2 × gutter`,
+ * and 560 + 2 × 24 is the last viewport at which that container is still
+ * under the header's 560 stack threshold.
  *
  *   560 (header stack) + 2 × 24 (gutter) = 608
+ *
+ * The two do NOT flip together, and the arithmetic above is easy to
+ * misread as saying they do: at 608 the icon rail appears in the same
+ * instant, and it costs 52px. So the container goes 559 → 508 across the
+ * break — it gets NARROWER as the page gets wider — and the MediaHeader
+ * stays stacked (and rails stay in swipe-peek) until viewport 660, where
+ * 660 − 52 − 48 finally reaches 560. See `ResponsiveLab`, which draws
+ * exactly this and counts the widths where the container loses ground.
  *
  * MEDIA_HEADER_STACK must match the `@min-[560px]` flip in
  * media-header.tsx (Tailwind variants can't read this constant).

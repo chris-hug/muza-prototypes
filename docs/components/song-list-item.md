@@ -64,27 +64,65 @@ gated on there being something before it (`artist &&` before the album,
 
 ## Priority disclosure — four steps by the row's own width
 
-The row is an `@container`, so what it shows depends on **its** width, not
-the viewport's — the same row works in a full-width list, a 3-per-column
-[`SongRail`](../../src/components/app/song-rail.tsx), or a narrow sheet. Fields shed in priority order,
-least important first. Tailwind v4's `@max-[N]` compiles to
-`@container (width < N)`, so each step begins one pixel below the number:
+The row is a **named** `@container/row`, so what it shows depends on **its**
+width, not the viewport's. Fields shed in priority order, least important
+first. Tailwind v4's `@max-[N]` compiles to `@container (width < N)`, so each
+step begins one pixel below the number:
 
 | Row width | Shows | What dropped, and why |
 |---|---|---|
 | ≥ 380px | artist · album · year + duration | everything |
-| 300–379px | artist · album + duration | `year` (`@max-[380px]:hidden`) — a year is the least informative field on a row that already shows the album |
-| 260–299px | artist · album | `duration` (`@max-[300px]:hidden` on the trailing span) — the title and meta keep the space; time is the least critical thing after the three meta fields |
-| < 260px | artist | `album` (`@max-[260px]:hidden` on the album span, dot included) — the artist is the one field that always stays |
+| 300–379px | artist · album + duration | `year` (`@max-[380px]/row:hidden`) — a year is the least informative field on a row that already shows the album |
+| 260–299px | artist · album | `duration` (`@max-[300px]/row:hidden` on the trailing span) — the title and meta keep the space; time is the least critical thing after the three meta fields |
+| < 260px | artist | `album` (`@max-[260px]/row:hidden` on the album span, dot included) — the artist is the one field that always stays, **when there is one**; see below |
 
 Between the steps, when artist and album both show, the album span carries
 `shrink-[2]` against the artist's default `1`: the album gives up two pixels
 for every one the artist gives up, so the artist truncates last. Both are
 `min-w-0 truncate`.
 
-The same four numbers also explain the difference from Media List Item's
-single 240px step: that row carries at most two meta fields, so it has only
-one thing to drop.
+### Why this row measures itself, when almost nothing else does
+
+This is the only component in the app with steps of its own, and it earns
+them twice:
+
+- In a [`SongRail`](../../src/components/app/song-rail.tsx) the row sits in a
+  cell of `100% − 48px` (or a column fraction), so on a 320px phone it is
+  **248px** wide where the same row in a plain list is 296. The cell is not
+  monotonic in the page column either: the rail's own 692 and 1164 steps drop
+  it back to 334 and 372.
+- Beside the **docked playlist editor** the page column itself narrows with
+  no rail involved — 294px at a 768px window, 288px on a 1440px laptop with
+  the editor pulled out.
+
+No prop passed down from a parent can describe both, which is why this is a
+container query and not a `dense` flag. The name (`/row`) is not decoration:
+an unnamed query resolves to the nearest container ancestor, which is how
+`PlayerOverlay` once ended up measuring the design-system page's 1400px
+wrapper instead of itself.
+
+### Two exceptions in the code, both deliberate
+
+**The duration step only applies to rows that have a meta line.** On album
+detail the per-track artist/album/year would just repeat the header, so they
+are not passed — and dropping the duration there empties the right-hand side
+and hands 40px to a title that was not asking for it. Those rows keep it at
+every width.
+
+**The meta line goes when all of its fields have gone.** The artist page
+passes album + year and no artist (the rows are already under that artist's
+name), so below 260 both fields hide — and the line used to stand as an empty
+20px band under the title. It now carries the matching hide step itself.
+
+### Measuring this in the design system
+
+The width chips on this section are the **row's own** steps, not the page
+column's ladder — the default chips start at 304, so three of the four steps
+here were unreachable in the very frame meant to show them. The numbers come
+from `ROW_STEPS` in the component. Note that the chip sets the row's OUTER
+width while a container query reads the CONTENT box, and the row has 8px of
+padding a side: the frame adds that back (and goes one pixel under the bound,
+since `@max-` is exclusive) so each chip shows the state it is named for.
 
 ## The primary action is play — and how nested controls stay out of it
 

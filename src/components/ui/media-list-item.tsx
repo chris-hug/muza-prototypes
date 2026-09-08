@@ -81,7 +81,16 @@ export function MediaListItem({
     <div
       onClick={onRowClick}
       className={cn(
-        "@container group/row relative flex items-center gap-3 rounded-md pl-2 pr-1.5 py-1.5 cursor-pointer transition-colors",
+        /* No `@container` here, deliberately. The row carried one, together
+           with a 240px hide step on the meta span — and an audit of
+           every placement showed 240 is never reached: 296 in page lists
+           (a 320px phone leaves a 296px column), 312 in the bottom sheets,
+           324 in the playlist drawer's drop zone, 480 in desktop dialogs.
+           The query had never fired. `min-w-0 truncate` on the meta span
+           handles the overflow it was meant to prevent. Unlike SongListItem,
+           this row is never placed in a rail cell, so it has no narrow
+           context that the page column does not already describe. */
+        "group/row relative flex items-center gap-3 rounded-md pl-2 pr-1.5 py-1.5 cursor-pointer transition-colors",
         playing ? "bg-muted" : "bg-background hover:bg-muted",
         className,
       )}
@@ -111,7 +120,7 @@ export function MediaListItem({
               // `min-w-0` + `truncate`, NOT `shrink-0`: a long album title
               // ("The Black Saint and the Sinner Lady") could not shrink and
               // ran on under the trailing button instead of ellipsing.
-              <span className="inline-flex items-center gap-1.5 min-w-0 @max-[240px]:hidden">
+              <span className="inline-flex items-center gap-1.5 min-w-0">
                 {subtitle && <span aria-hidden="true" className="shrink-0">·</span>}
                 <span className="truncate">{meta}</span>
               </span>

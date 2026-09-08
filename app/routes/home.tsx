@@ -14,7 +14,6 @@ import { AddToPlaylistProvider } from "@/components/app/add-to-playlist-dialog"
 import { CreatePlaylistProvider } from "@/components/app/create-playlist-dialog"
 import { PlaylistEditDrawer, PlaylistEditorProvider } from "@/components/app/playlist-edit-drawer"
 import { BulkActionBarContent, BulkActionButton } from "@/components/ui/bulk-action-bar"
-import { ResponsiveDiagram } from "@/components/app/responsive-diagram"
 import { registerPlaylists } from "@/lib/playlist-catalog"
 import { AnimatedLogo } from "@/components/app/animated-logo"
 import { Sidebar } from "@/components/app/sidebar"
@@ -38,9 +37,9 @@ import { UserAccountProvider } from "@/lib/user-account"
 import { albumMetaFor, libraryIdForTitle } from "@/lib/album-meta"
 import { AddMusicIcon } from "@/components/ui/media-icons"
 import { componentDoc } from "@/lib/component-docs"
-import { FOOTER_NAV_BELOW, SIDEBAR_COLLAPSE_BELOW } from "@/lib/use-media-query"
 import { Markdown } from "@/components/ds/markdown"
 import { Example } from "@/components/ds/example"
+import { ResponsiveLab } from "@/components/ds/responsive-lab"
 import DialogFormExample from "@/ds-examples/dialog-form"
 import dialogFormSrc from "@/ds-examples/dialog-form.tsx?raw"
 import CardRailRowExample from "@/ds-examples/card-rail-row"
@@ -184,7 +183,7 @@ import { AlbumCard } from "@/components/ui/album-card"
 import { ArtistCard } from "@/components/ui/artist-card"
 import { PlaylistCard } from "@/components/ui/playlist-card"
 import { ProductCard } from "@/components/ui/product-card"
-import { SongListItem } from "@/components/ui/song-list-item"
+import { SongListItem, ROW_STEPS } from "@/components/ui/song-list-item"
 import { CoverPlayButton } from "@/components/ui/cover-play-button"
 import { PlayingWave } from "@/components/ui/playing-wave"
 import { Spinner } from "@/components/ui/spinner"
@@ -222,66 +221,6 @@ type SectionUsage  = ReadonlyArray<{ label: string; href: string }>
  * per component under `docs/components/`, rendered with the app's own tokens.
  * Absent until that file is written, so the button is never a dead end.
  */
-/*
- * BreakpointTable — the app's own responsive ladder, printed.
- *
- * The two computed rungs are IMPORTED, not typed: `608` and `1069` are the
- * viewport widths at which a container threshold is reached, so if anything
- * in that chain moves the table has to move with it. A literal here would go
- * stale silently, which is exactly what happened to the design-system's
- * viewport chips before this existed.
- */
-function BreakpointTable() {
-  const rows: Array<[string, number, string, string]> = [
-    ["Phone",       375,                    "reference width — iPhone 12 mini / SE class", "—"],
-    ["Phone wide",  584,                    "page gutter --page-px 12 → 24px", "app.css"],
-    ["Tablet",      FOOTER_NAV_BELOW,       "sidebar replaces the footer tab bar; Topbar replaces MobileAppHeader", "FOOTER_NAV_BELOW"],
-    ["Tablet wide", 768,                    "useIsMobile() flips — components swap outright", "useIsMobile()"],
-    ["Desktop",     SIDEBAR_COLLAPSE_BELOW, "sidebar expands from the icon rail; gutter 24 → 40px", "SIDEBAR_COLLAPSE_BELOW"],
-  ]
-  return (
-    <div className="mb-6 max-w-3xl">
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-small">
-          <thead>
-            <tr className="border-b border-border">
-              <th className="py-2 pr-4 text-left font-medium text-foreground">Name</th>
-              <th className="py-2 pr-4 text-left font-medium text-foreground tabular-nums">px</th>
-              <th className="py-2 pr-4 text-left font-medium text-foreground">What changes</th>
-              <th className="py-2 text-left font-medium text-foreground">Defined in</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(([name, px, what, where]) => (
-              <tr key={name} className="border-b border-border/60 last:border-0">
-                <td className="py-2 pr-4 align-top text-foreground whitespace-nowrap">{name}</td>
-                <td className="py-2 pr-4 align-top text-muted-foreground tabular-nums">{px}</td>
-                <td className="py-2 pr-4 align-top text-muted-foreground">{what}</td>
-                <td className="py-2 align-top text-muted-foreground">
-                  <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">{where}</code>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <p className="mt-3 text-xsmall text-muted-foreground max-w-2xl">
-        The names are <span className="text-foreground">width bands, not devices</span> — a 1024px
-        tablet held sideways is “Desktop” here, and that is right: what matters is the room the
-        layout has, never what the hardware is called. Tailwind&rsquo;s own
-        {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">sm</code>/
-        <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">md</code>{" "}
-        still exist inside class names; almost no page-level layout changes there.
-        {" "}<span className="text-foreground">608</span> and{" "}
-        <span className="text-foreground">1069</span> are arithmetic —{" "}
-        <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">560 + 2×24</code> and{" "}
-        <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">780 + 208 + 80 + 1</code> —
-        so never write either number into a component.
-      </p>
-    </div>
-  )
-}
-
 function SectionDocButton({ id }: { id: string }) {
   const [open, setOpen] = useState(false)
   const entry = componentDoc(id)
@@ -2158,20 +2097,20 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           The shared foundations for how Muza components adapt to <span className="text-foreground">viewport / container width</span> and <span className="text-foreground">pointer type</span> (mouse vs touch). Each component documents its own specific behaviour in its own section — this is just the common ground they all build on.
         </p>
 
-        {/* The responsive ladder, visualised — three layout tiers + the
-             container column steps. Source of truth: app.css. */}
+        {/* ONE thing, not four. This section used to carry a static three-tier
+            diagram, a separate column ladder, a schematic lab on an abstract
+            pixel scale and a printed breakpoint table — the same page showed
+            1069 and 560 as if they were measured the same way. `ResponsiveLab`
+            is now a real page at a chosen width with the real CardRail inside
+            it, and the ladder table sits under it as one table. */}
         <p className="text-base text-muted-foreground mb-3 max-w-2xl">
-          <span className="text-foreground font-medium">The responsive ladder</span> — the page steps through three layouts as it narrows; the nav chrome, page gutter and card columns all change together:
+          <span className="text-foreground font-medium">The window decides, the content pays</span> —
+          the window width decides which chrome appears (sidebar, icon rail or bottom tab bar) and how
+          wide the page gutter is. What is left over is the{" "}
+          <span className="text-foreground">content width</span>, and that is what the cards measure.
+          Pick a width and watch it happen to real components:
         </p>
-        <div className="mb-6">
-          <ResponsiveDiagram />
-        </div>
-
-        {/* The named ladder. These are OUR widths, not Tailwind's — two of
-            them are arithmetic, so they are read from the constants that
-            compute them rather than written down a second time. The full
-            reasoning is in `docs/components/responsive.md` (the ⓘ above). */}
-        <BreakpointTable />
+        <ResponsiveLab />
 
         <ul className="text-base text-muted-foreground flex flex-col gap-2 mb-2 max-w-2xl list-disc pl-5">
           <li>
@@ -2888,45 +2827,10 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           <SelectBasicExample />
         </Example>
 
-        <div className="flex flex-wrap gap-6 items-start">
-          <div className="flex flex-col gap-1.5">
-            <Label>Genre</Label>
-            <Select>
-              <SelectTrigger><SelectValue placeholder="Select a genre" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="hip-hop">Hip-Hop</SelectItem>
-                <SelectItem value="electronic">Electronic</SelectItem>
-                <SelectItem value="jazz">Jazz</SelectItem>
-                <SelectItem value="rb">R&amp;B</SelectItem>
-                <SelectItem value="indie">Indie</SelectItem>
-                <SelectItem value="pop">Pop</SelectItem>
-                <SelectItem value="afrobeats">Afrobeats</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>Sort by</Label>
-            <Select>
-              <SelectTrigger><SelectValue placeholder="Most recent" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="recent">Most recent</SelectItem>
-                <SelectItem value="popular">Most popular</SelectItem>
-                <SelectItem value="az">A → Z</SelectItem>
-                <SelectItem value="za">Z → A</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>Disabled</Label>
-            <Select disabled>
-              <SelectTrigger><SelectValue placeholder="Select a genre" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="hip-hop">Hip-Hop</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </Section>
+        {/* The old inline demo lived here and showed the same three fields
+            as the call site above — one of them had to go, and the one that
+            renders from a file is the one that can also BE the snippet. */}
+</Section>
 
       {/* ══ MULTI SELECT ══
            base-ui `Menu` with left-checkbox items + pill trigger,
@@ -3761,7 +3665,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         <Example
           title="States — free · stream · owned"
           doc="album-card"
-          defaultWidth="Phone"
+          defaultWidth="375"
           align="stretch"
           code={albumCardBasicExampleSrc}
           codePath="src/ds-examples/album-card-basic.tsx"
@@ -4050,11 +3954,32 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           { label: "Artist › Top Songs",        href: "/?page=Artist" },
           { label: "Album detail (track list)", href: "/?page=Album" },
         ]}>
+        {/* This section gets the ROW's own chips, not the page column's. The
+            row drops fields at 260/300/380 — widths the default ladder cannot
+            reach, since it starts at 304 — so the four documented steps were
+            unreachable in the very frame that was meant to show them. */}
         <Example
           title="Cover rows"
           doc="song-list-item"
-          defaultWidth="Phone"
+          defaultWidth="380"
           align="stretch"
+          widthLabel="row"
+          widths={ROW_STEPS.map(s => ({
+            label: String(s.px),
+            px: s.framePx,
+            note: s.note,
+            /* The chip's own number, not `framePx`. The frame is a little
+               wider on purpose (the row's padding, plus a pixel to land
+               inside the bound), and printing 395 beside a chip marked 380
+               would be one more unexplained number on this page. */
+            readout: `${s.px}px`,
+          }))}
+          /* No stage padding here, and that is not cosmetic: the chips name
+             the ROW's width, and the stage's usual `p-6` would take 48px off
+             it — a 380 chip would hand the row 332 and the steps would fire
+             one chip early. The row carries its own `pl-2 pr-2`, so flush is
+             what it looks like in a real list anyway. */
+          stageClassName="p-0"
           code={songListItemBasicExampleSrc}
           codePath="src/ds-examples/song-list-item-basic.tsx"
         >
@@ -4068,13 +3993,13 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           <span className="text-foreground font-medium">Meta line is optional.</span> When no artist / album / year / badge is passed, the meta row is omitted and the title sits as a single centred line. That's the album-detail case: every track shares the same artist / album / year (already in the header), so repeating it per row is noise — pass just <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">trackNumber</code> + <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">title</code> + <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">duration</code>. A meta line is only worth showing when a track differs (e.g. guest artists).
         </p>
         <p className="text-base text-muted-foreground mb-2 max-w-2xl">
-          <span className="text-foreground font-medium">Priority disclosure</span> — the row is a <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">@container</code>, so meta fields shed by the row's <em>own</em> width (works in any context — full list, narrow rail, etc.), keeping the most important last:
+          <span className="text-foreground font-medium">Priority disclosure</span> — the row is a <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">@container/row</code>, so meta fields shed by the row&rsquo;s <em>own</em> width. It is the only component in the app that measures itself, and it needs to: in a rail cell it is 248px wide on a 320px phone where the same row in a list is 296, and beside the docked playlist editor the page column narrows to 294px at a 768px window. Use the chips above — they are this row&rsquo;s steps, not the page column&rsquo;s.
         </p>
         <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-3 max-w-2xl list-disc pl-5">
           <li><span className="text-foreground">≥ 380</span> — artist · album · year + duration</li>
           <li><span className="text-foreground">300–379</span> — year drops</li>
-          <li><span className="text-foreground">260–299</span> — duration drops</li>
-          <li><span className="text-foreground">&lt; 260</span> — album drops (artist always stays)</li>
+          <li><span className="text-foreground">260–299</span> — duration drops, on rows that <em>have</em> a meta line; album-detail rows have none and keep it</li>
+          <li><span className="text-foreground">&lt; 260</span> — album drops; the artist stays, and where there is no artist the whole line goes rather than standing empty</li>
         </ul>
         <p className="text-base text-muted-foreground mb-6 max-w-2xl">
           When both show, album shrinks 2× faster than artist (artist truncates last), and a left-fading veil dissolves the meta into the row bg before the action icons rather than hard-clipping.
@@ -4313,7 +4238,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
                 {/* Full rules: `docs/components/card-rail.md`, behind the ⓘ in this
             section's header — one copy, read the same way by the page and by
             an agent. Only the lead stays inline. */}
-        <Example title="Row mode — peek + snap" doc="card-rail" defaultWidth="Phone" align="stretch"
+        <Example title="Row mode — peek + snap" doc="card-rail" defaultWidth="375" align="stretch"
           code={cardRailRowSrc} codePath="src/ds-examples/card-rail-row.tsx">
 <CardRailRowExample />
 </Example>
@@ -4327,7 +4252,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         <Example
           title="Grid mode — two rows, column-major"
           doc="card-rail"
-          defaultWidth="Phone"
+          defaultWidth="375"
           align="stretch"
           code={cardRailGridSrc}
           codePath="src/ds-examples/card-rail-grid.tsx"
@@ -4439,7 +4364,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           <li><span className="text-foreground">560–779 — compact</span>: still horizontal, but Add/Share/Info drop; the "…" <span className="text-foreground">stays put</span> and carries them via its bottom sheet. Play/Shuffle can shrink toward square.</li>
           <li><span className="text-foreground">&lt; 560 — stacked</span>: full-width cover on top, title/meta, then a Play/Shuffle/Add/Share row; Info/More live in the page-gutter "…".</li>
           <li><span className="text-foreground">Title</span> stays on one line; if it's too long to fit it slowly scrolls back and forth (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">MarqueeText</code>) so the full name is readable, rather than wrapping or truncating.</li>
-          <li><span className="text-foreground">Meta line</span> is priority-ordered against its own width: year/duration drops first (&lt; 320), then type (&lt; 240), and the owner only <span className="text-foreground">truncates as a last resort</span> once both are gone — so the owner stays readable as long as possible.</li>
+          <li><span className="text-foreground">Meta line</span> is priority-ordered against its own width — which is not the page column: the fixed 268px cover and its gaps make it <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">column − 300</code> in the horizontal tier. Year/duration drops below 320, and the owner only <span className="text-foreground">truncates as a last resort</span> once it is gone. A type-chip step at 240 was removed: this line is never narrower than 260, so it had never fired.</li>
         </ul>
         <p className="text-base text-muted-foreground mb-8 max-w-2xl">
           The header's own "…" persists across both horizontal tiers; the <span className="text-foreground">page-gutter</span> "…" (mirroring the back chevron) only appears in the stacked tier (&lt; 560), where there's no cluster. The full-cluster floor of <span className="text-foreground">780px</span> is what the sidebar auto-collapse (<span className="text-foreground">1069</span> = 780 + sidebar + gutters) is synced to; the <a href="/?page=DesignSystem#card-rail" className="text-primary-text hover:underline underline-offset-2">Card Rail</a> peek boundary is synced to the <span className="text-foreground">560</span> stack breakpoint instead. See <a href="/?page=DesignSystem#responsive" className="text-primary-text hover:underline underline-offset-2">Responsive &amp; Pointer</a>.
@@ -4583,7 +4508,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         <Example
           title="Title row · tabs · sticky glass"
           doc="mobile-header"
-          defaultWidth="Phone"
+          defaultWidth="375"
           align="stretch"
           code={mobileHeaderBasicExampleSrc}
           codePath="src/ds-examples/mobile-header-basic.tsx"

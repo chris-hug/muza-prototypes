@@ -197,7 +197,7 @@ these widths; it returns on the single row from 560 up.
 ## The base declaration must be a real layout
 
 Under any container-query ladder the un-prefixed declaration is what renders
-below the first rung **and** on every engine without container queries (older
+below the first step **and** on every engine without container queries (older
 iOS Safari). It must therefore be a layout in its own right, not the ladder's
 bottom step. `.grid-cards` learned this the hard way: its base was
 `repeat(1, minmax(143px, 220px))`, which on a 296px-wide container (a 320px

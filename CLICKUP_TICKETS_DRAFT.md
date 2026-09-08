@@ -620,7 +620,7 @@ import { UploadMusicDialog } from "@/components/app/upload-music-dialog"
 ### Responsiveness & container rules + bottom gutter (updated)
 > **Resources**
 > DS: [Responsive](https://muza.imjustsittingherelookingatprettycolours.help/?page=DesignSystem#responsive)
-> Source: [`DESIGN_SYSTEM.md`](https://github.com/chris-hug/muza-prototypes/blob/main/DESIGN_SYSTEM.md) · [`home.tsx`](https://github.com/chris-hug/muza-prototypes/blob/main/app/routes/home.tsx) · [`responsive-diagram.tsx`](https://github.com/chris-hug/muza-prototypes/blob/main/src/components/app/responsive-diagram.tsx) · [`use-media-query.ts`](https://github.com/chris-hug/muza-prototypes/blob/main/src/lib/use-media-query.ts)
+> Source: [`DESIGN_SYSTEM.md`](https://github.com/chris-hug/muza-prototypes/blob/main/DESIGN_SYSTEM.md) · [`home.tsx`](https://github.com/chris-hug/muza-prototypes/blob/main/app/routes/home.tsx) · [`responsive-lab.tsx`](https://github.com/chris-hug/muza-prototypes/blob/main/src/components/ds/responsive-lab.tsx) · [`use-media-query.ts`](https://github.com/chris-hug/muza-prototypes/blob/main/src/lib/use-media-query.ts)
 
 **Summary.** The whole responsive model — page growth tiers, container queries, pointer gating, and the new player bottom-gutter rule.
 **Changed.**

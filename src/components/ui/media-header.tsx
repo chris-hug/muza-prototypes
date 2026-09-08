@@ -181,12 +181,20 @@ export function MediaHeader({
   const metaLine = (
     // Single line, never wraps. Priority-ordered progressive disclosure,
     // measured against the meta line's OWN width (`@container/meta`) so it
-    // reacts to the real space it has in either layout. Lowest priority
-    // drops first; the owner only truncates as a last resort:
-    //   year / track-count·duration  → drops below ~320px
-    //   type (Playlist / Album)      → drops below ~240px
-    //   owner (highest)              → always shown; truncates only once
-    //                                   both of the above are gone.
+    // reacts to the real space it has in either layout — which is NOT the
+    // page column: in the horizontal tier the fixed 268px cover and the
+    // gaps beside it take 300px, so this line is always `container − 300`.
+    // Lowest priority drops first; the owner only truncates as a last
+    // resort:
+    //   year / track-count·duration  → drops below 320px
+    //   owner (highest)              → always shown; truncates once the
+    //                                   year is gone.
+    //
+    // A second step used to sit between them — the type chip dropped below
+    // 240px — and it could never fire: this line's narrowest real width is
+    // 260 (horizontal tier at its 560 container floor: 560 − 300) and 296
+    // in the stacked tier (a 320px phone). Reaching 240 would need a 264px
+    // viewport, below anything the app supports.
     <div className="@container/meta flex items-center gap-3 min-w-0 text-small font-normal leading-none text-muted-foreground">
       {owner && (
         <button
@@ -203,15 +211,17 @@ export function MediaHeader({
           <span className="font-medium truncate min-w-0">{owner}</span>
         </button>
       )}
-      {/* Type — second to drop (below ~240px), so the owner keeps its
-          room rather than truncating while the type still shows. */}
+      {/* Type — always shown; see the head of this block for why its old
+          240px drop step was removed. */}
       {isPlaylist ? (
-        <span className="flex items-center gap-1 shrink-0 @max-[239px]/meta:hidden"><ListMusic className="size-3.5 shrink-0" />Playlist</span>
+        <span className="flex items-center gap-1 shrink-0"><ListMusic className="size-3.5 shrink-0" />Playlist</span>
       ) : format && (
-        <span className="flex items-center gap-1 shrink-0 @max-[239px]/meta:hidden"><Disc3 className="size-3.5 shrink-0" />{format}</span>
+        <span className="flex items-center gap-1 shrink-0"><Disc3 className="size-3.5 shrink-0" />{format}</span>
       )}
-      {/* Lowest priority — drops first (below ~320px) so the owner + type
-          keep their room instead of the owner truncating away. */}
+      {/* Lowest priority — drops first (below 320px) so the owner + type
+          keep their room instead of the owner truncating away. Fires on the
+          smallest phones (viewport 320–343, stacked) and in the icon-rail
+          band where the container sits at 560–619 (viewport 660–719). */}
       {year && <span className="pb-px shrink-0 @max-[319px]/meta:hidden">{year}</span>}
       {isOwned && visibility && (
         <StatusBadge status={visibility} onStatusChange={onVisibilityChange} />

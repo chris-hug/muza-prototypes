@@ -110,15 +110,26 @@ subtitle and meta — are `min-w-0` + `truncate`, deliberately **not**
 `shrink-0`: a long album title such as "The Black Saint and the Sinner Lady"
 could not shrink and ran on under the trailing button instead of ellipsing.
 
-The row is an `@container`, and the meta span (the dot plus the meta text)
-carries `@max-[240px]:hidden`. Below a 240px row width the year or song count
-is shed and the subtitle keeps the whole line. The dot is `shrink-0` and
-`aria-hidden` — it is punctuation, not content, and it must never be the part
-that ellipses.
+The dot is `shrink-0` and `aria-hidden` — it is punctuation, not content, and
+it must never be the part that ellipses.
 
-Compared with Song List Item's four-step priority disclosure (380 / 300 / 260
-px), this row has exactly one step. It carries at most two meta fields, so
-there is only one thing to drop.
+**This row has no width steps, and no container query.** It used to: the row
+was an `@container` and the meta span carried a 240px hide step. An audit of
+every placement found that 240 is never reached, so the step had never once
+fired:
+
+| Placement | Narrowest real width |
+|---|---|
+| Page lists (search, the phone library lists) | 296 — a 320px phone leaves a 296px column |
+| Add-to-playlist / Add-music bottom sheet | 312 |
+| Playlist editor drop zone | 324 |
+| Desktop dialogs | 480 |
+
+Both halves are already `min-w-0 truncate`, which handles the overflow the
+step was meant to prevent. Unlike [Song List Item](song-list-item.md), this
+row is never placed in a rail cell, so it has no narrow context that the page
+column does not already describe — and therefore nothing to measure itself
+for.
 
 ## Trailing — one slot, two occupants
 

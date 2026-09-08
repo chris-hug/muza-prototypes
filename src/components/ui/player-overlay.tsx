@@ -474,7 +474,16 @@ export function PlayerOverlay({
   const toggleIcon  = lerp(20, 28)
 
   return (
-    <div ref={rootRef} className={cn("relative w-full h-full overflow-hidden bg-background", className)}>
+    /* `@container/overlay` — the lyric lines below step up a size at 380px
+       via `@min-[380px]/overlay:`, and until now there was no container for
+       that query to measure. An unnamed container query with no container
+       ancestor never matches, so in the app the step silently never fired;
+       on the design-system page it fired ALWAYS, because the nearest
+       ancestor there is the DS page's own ~1400px wrapper — so the phone
+       frames showed 30px lyrics that the real phone never renders. Naming
+       the container fixes both halves: the query can only ever resolve to
+       this element, wherever the overlay is mounted. */
+    <div ref={rootRef} className={cn("@container/overlay relative w-full h-full overflow-hidden bg-background", className)}>
       {/* Full-bleed cover as the backdrop, gently blurred so it reads as an
            atmospheric background yet is still clearly the album art. The
            same `.frosted-glass` material the FooterNav uses sits on top —
@@ -554,7 +563,7 @@ export function PlayerOverlay({
                     key={i}
                     ref={i === activeLine ? activeLineRef : undefined}
                     className={cn(
-                      "text-large @min-[380px]:text-xlarge font-medium leading-snug transition-colors duration-300",
+                      "text-large @min-[380px]/overlay:text-xlarge font-medium leading-snug transition-colors duration-300",
                       line === "" && "h-3",
                       i === activeLine ? "text-foreground" : "text-muted-foreground/60",
                     )}

@@ -16,8 +16,8 @@
  *   · Row: `bg-background` at rest, `bg-muted` on hover (no zebra).
  *   · Heart (Save to library): always visible.
  *   · Info + More: faded in only on hover.
- *   · Duration: always visible; same `text-small text-muted-foreground`
- *     style as the meta line — no special tabular sizing.
+ *   · Duration: `text-xsmall text-muted-foreground`, same style as the meta
+ *     line — no special tabular sizing.
  *   · Cover hover overlay (mouse only): dark wash + Play icon.
  *
  * The right cluster has a small left-side gradient veil so meta text
@@ -60,6 +60,52 @@ import { useAddToPlaylist } from "@/lib/add-to-playlist-context"
 import { SONG_DRAG_TYPE } from "@/lib/playlist-editor-context"
 import { useToast } from "@/components/ui/toast"
 import { LibraryHeartButton } from "@/components/ui/library-heart-button"
+
+/**
+ * The row's OWN steps — not the page column's ladder.
+ *
+ * They come from where a line of TEXT stops fitting, which is why they look
+ * nothing like the card ladder (304/464/692/…): that one comes from where a
+ * 143–220px COVER stops fitting. Two different physical constraints, so two
+ * different sets of numbers — forcing them onto one scale would move a
+ * designed behaviour rather than tidy anything up.
+ *
+ * They are reachable from a window — 260 in a rail cell at a 348px window,
+ * 300 in a list at 340, 380 in a list at 420, and the year already drops in a
+ * rail cell at the ordinary 1069 and 1512 windows. What a window cannot do is
+ * DETERMINE them: at 1069 this same row is 765px wide in a list and 363px in
+ * a `SongRail` cell. Placement decides, so the row measures its own box.
+ *
+ * Tailwind cannot read a constant, so the classes below carry these numbers a
+ * second time. This export exists so the design system can offer chips at the
+ * widths where something actually happens: its default chips are the page
+ * column's and start at 304, so this row's section documented four steps that
+ * its own demo frame could not reach.
+ *
+ * `@max-[N]` compiles to `width < N`, so every bound here is exclusive.
+ */
+export const ROW_PADDING_X = 16 // `pl-2 pr-2`
+
+/*
+ * `framePx` is the OUTER width a demo frame must give the row for the step to
+ * be visible, and it is not the same number as the step. Two corrections:
+ *
+ *   · a container query measures the CONTENT box, and the row has 8px of
+ *     padding a side — so an outer width of 300 makes the row read 284 and
+ *     the step fires while the chip still says 300. Add the padding back;
+ *   · sitting exactly ON a bound shows nothing, because `@max-[N]` is
+ *     `width < N` — at 300 the duration is still there. Go one pixel under,
+ *     so clicking the chip shows the state it is named for.
+ *
+ * The 248 entry is not a step but a real width — the narrowest row the app
+ * actually renders — so it is passed through untouched.
+ */
+export const ROW_STEPS = [
+  { px: 248, framePx: 248, note: "a SongRail cell on a 320px phone — the narrowest real row" },
+  { px: 260, framePx: 260 + ROW_PADDING_X - 1, note: "below this the album drops" },
+  { px: 300, framePx: 300 + ROW_PADDING_X - 1, note: "below this the duration drops, on rows that have a meta line" },
+  { px: 380, framePx: 380 + ROW_PADDING_X - 1, note: "below this the year drops" },
+] as const
 
 // Re-export for callers still importing PlayingWave from the row
 // module (e.g. discography list view).
@@ -292,10 +338,27 @@ export function SongListItem({
         e.dataTransfer.effectAllowed = "copy"
       }}
       className={cn(
-        // `@container` so the meta line can drop fields by the row's
-        // OWN width (priority order: keep artist, drop album, drop
-        // year first — see the meta line below).
-        "@container group/song relative flex items-center gap-3 rounded-md pl-2 pr-2 py-1.5 overflow-clip cursor-pointer",
+        /* `@container/row` — the row measures ITSELF, not the page column,
+           and the name is not decoration: an unnamed query resolves to the
+           nearest container ancestor, which is how the player overlay ended
+           up measuring the design-system page's 1400px wrapper instead of
+           itself. With `/row` these steps can only ever mean this element.
+           Priority order: keep artist, drop album, drop year first — see
+           the meta line below.
+
+           This is the ONE component in the app that needs to measure its
+           own box, and it earns it twice over:
+             · in a SongRail the row sits in a cell of `100% − 48px` (or a
+               column fraction), so on a 320px phone it is 248px wide where
+               the same row in a plain list is 296 — and the cell width is
+               not monotonic in the page column: the rail's own 692 and
+               1164 steps drop it back to 334 and 372;
+             · beside the docked playlist drawer the page COLUMN itself
+               narrows with no rail involved — 294px at a 768px window,
+               288px on a 1440px laptop with the drawer dragged out.
+           No prop passed down from a parent can describe both, which is
+           why this stays a container query. */
+        "@container/row group/song relative flex items-center gap-3 rounded-md pl-2 pr-2 py-1.5 overflow-clip cursor-pointer",
         // Idle rows: bg-background with bg-muted on hover.
         // Playing rows: always bg-muted — marks this row as the
         // current item even at rest.
@@ -338,12 +401,24 @@ export function SongListItem({
         >
           {title}
         </button>
-        {/* Meta line — priority-ordered: artist > album > year. As the
-             row narrows, year drops first (≤380), then album (≤260);
-             artist always stays. Album also shrinks 2× faster than
-             artist, so when both show the artist truncates last. */}
+        {/* Meta line — priority-ordered: artist > album > year. As the row
+             narrows, year drops first (below 380), then album (below 260);
+             a badge or an artist always stays. Album also shrinks 2× faster
+             than artist, so when both show the artist truncates last.
+
+             The row can also drop EVERY field it was given, and then the
+             line has to go with them — otherwise it holds open an empty
+             20px band under the title. That is not hypothetical: the artist
+             page passes album + year and no artist (its rows are already
+             under that artist's name), so in a rail cell on a 320px phone
+             both fields hide and the line stood empty. The condition below
+             mirrors the two steps rather than measuring anything, so it
+             stays a pure CSS decision like the fields themselves. */}
         {(badge || artist || album || year) && (
-        <div className="flex items-center gap-1.5 min-w-0 text-xsmall font-light tracking-[0.02em] text-muted-foreground leading-5">
+        <div className={cn(
+          "flex items-center gap-1.5 min-w-0 text-xsmall font-light tracking-[0.02em] text-muted-foreground leading-5",
+          !badge && !artist && (album ? "@max-[260px]/row:hidden" : "@max-[380px]/row:hidden"),
+        )}>
           {badge && (
             <Badge variant="secondary" className="shrink-0">
               {badge}
@@ -359,7 +434,7 @@ export function SongListItem({
             </button>
           )}
           {album && (
-            <span className="inline-flex items-center gap-1.5 min-w-0 shrink-[2] @max-[260px]:hidden">
+            <span className="inline-flex items-center gap-1.5 min-w-0 shrink-[2] @max-[260px]/row:hidden">
               {artist && <span aria-hidden="true" className="shrink-0">·</span>}
               <button
                 type="button"
@@ -371,7 +446,7 @@ export function SongListItem({
             </span>
           )}
           {year && (
-            <span className="inline-flex items-center gap-1.5 shrink-0 @max-[380px]:hidden">
+            <span className="inline-flex items-center gap-1.5 shrink-0 @max-[380px]/row:hidden">
               {(artist || album) && <span aria-hidden="true" className="shrink-0">·</span>}
               <span>{year}</span>
             </span>
@@ -508,11 +583,26 @@ export function SongListItem({
                next to the duration. Store-backed + animated. */}
           <LibraryHeartButton type="song" id={songId} name={title} song={songMeta} variant="ghost" size="icon-sm" />
 
-          {/* Duration — text-xsmall with a min-width track. Dropped on
-               very tight rows (≤300) so the title/meta keep the space;
-               it's the least critical field after artist/album/year. */}
+          {/* Duration — `text-xsmall` with a min-width track. Dropped on very
+               tight rows (below 300) so the title and meta line keep the
+               space; it is the least critical field after artist/album/year.
+
+               But only where there IS a meta line to hand the space to. On a
+               row without one — album detail, where the per-track artist and
+               album would just repeat the header — dropping the duration
+               empties the right-hand side and gives the 40px to a title that
+               was not asking for it. Those rows keep it at every width.
+
+               Where it does fire: a 320px viewport (296px column), and any
+               column narrowed by the docked playlist drawer — 294px at a
+               768px window, 288px on a 1440px laptop with the drawer pulled
+               out. Not the edge case it looks like: browsing beside the open
+               drawer is what the drawer is for. */}
           {duration && (
-            <span className="text-right min-w-10 text-xsmall font-light tracking-[0.02em] text-muted-foreground leading-4 @max-[300px]:hidden">
+            <span className={cn(
+              "text-right min-w-10 text-xsmall font-light tracking-[0.02em] text-muted-foreground leading-4",
+              (badge || artist || album || year) && "@max-[300px]/row:hidden",
+            )}>
               {duration}
             </span>
           )}

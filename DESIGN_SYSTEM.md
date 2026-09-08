@@ -143,12 +143,26 @@ The app uses **two content-growth tiers** so very wide viewports don't leave gap
 
 **Apply the tier-aware cap on every top-level page wrapper:**
 ```tsx
-<div className="@container mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] px-10 …">
+<div className="@container mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] px-page …">
 ```
+
+**The content width does not follow from the viewport.** Two things besides
+the sidebar take from it, and code that assumes `viewport − sidebar − gutter`
+will be wrong:
+
+- the cap above — from a 1688px viewport up the column stops growing and the
+  extra pixels become margin;
+- the **docked playlist editor**, a flex sibling of `<main>` (`hidden md:flex`,
+  `w-[30%] min-w-[374px] max-w-[550px]`, draggable to `min(900, 60vw)`). With
+  it open a 768px viewport leaves **294px** of content — less than a 320px
+  phone. The expanded sidebar is resizable too (208–291px).
+
+Use `containerAt(viewport, { sidebar, drawer })` from `breakpoints.ts` rather
+than re-deriving it; `drawerAt()` and `contentCapAt()` supply the defaults.
 
 **Use the `grid-cards` class** (`app.css`) rather than re-typing the ladder — it is one definition shared by every Library view, the All tab and the DS grids.
 
-**Below the ladder's first rung (container < 304px) there is no rule**, so `grid-cards`' base declaration is the entire layout there — and it's also what renders on any engine where `@container` doesn't match. It must therefore be a real layout, not the ladder's bottom step: `repeat(auto-fill, minmax(128px, 1fr))`, which holds **two columns down to a 272px container**. A fixed `repeat(1, …220px)` base shipped one narrow column with an empty band beside it on a 320px phone (iPhone mini in Display Zoom → 296px container).
+**Below the ladder's first step (container < 304px) there is no rule**, so `grid-cards`' base declaration is the entire layout there — and it's also what renders on any engine where `@container` doesn't match. It must therefore be a real layout, not the ladder's bottom step: `repeat(auto-fill, minmax(128px, 1fr))`, which holds **two columns down to a 272px container**. A fixed `repeat(1, …220px)` base shipped one narrow column with an empty band beside it on a 320px phone (iPhone mini in Display Zoom → 296px container).
 
 The **column gap is 16px** (row gap 24px). That is *not* the page gutter — `--page-px` is 12px on phones. Two columns at a 296px container = (296 − 16) ÷ 2 = 140px per card.
 
