@@ -271,7 +271,7 @@
   --animate-caret-blink:    caret-blink 1.25s ease-out infinite;
 }
 
-/* Frosted glass — blurred + saturated translucent surface with a faint
+/* Frosted glass — blurred translucent surface with a faint
    top-right sheen and a fine fractal-noise grain. Background is
    theme-aware (muza-white in light, muza-black in dark) at ~80% so it
    reads as glass in both modes. Set your own border-radius on the

@@ -25,7 +25,7 @@
  * cover buttons stay readable in either light or dark mode.
  */
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Pencil, Download } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -109,6 +109,8 @@ export function AlbumCard({
   // heart / menu Save stay in sync with the detail; slug fallback for
   // synthesized albums not in the catalog.
   const libId = libraryIdForTitle(title) ?? key
+  // Opened by a long press on the cover — see `onLongPress` below.
+  const [menuOpen, setMenuOpen] = useState(false)
   // Media-tile text: title + meta share one size (text-xsmall = 17px). The
   // meta rows (artist · year, price, "Owned") go a lighter 300 weight with a
   // hair of positive tracking to open the thin Light strokes; the title stays
@@ -150,7 +152,11 @@ export function AlbumCard({
   // Cover-area gestures: single tap → OPEN detail, long-hold → more menu.
   const coverGestures = useLongPress({
     onClick:     goAlbum,
-    onLongPress: () => onMore?.(),
+    // Long press opens the card's OWN menu unless the host wants its own
+    // surface. Before this, `onMore` had no call site anywhere in the app, so
+    // a long press did nothing — while the ⋯ that opens the same menu sits in
+    // the pointer-only cluster, out of reach on touch.
+    onLongPress: () => (onMore ? onMore() : setMenuOpen(true)),
   })
 
   return (
@@ -190,7 +196,13 @@ export function AlbumCard({
           onPointerDown={e => e.stopPropagation()}
           onPointerUp={e => e.stopPropagation()}
           onClick={e => e.stopPropagation()}
-          className="absolute inset-x-0 bottom-0 p-1.5 flex items-end justify-between opacity-0 transition-opacity group-hover/album:opacity-100 group-focus-within/album:opacity-100"
+          // `!hidden` on touch, not just `opacity-0`: without hover the cluster
+          // never appears, but it still COVERED the bottom strip of the cover
+          // and swallowed taps through the three stopPropagation handlers
+          // above — a silent dead zone where a tap did nothing at all. The `!`
+          // is required; Tailwind v4 sorts the pointer variant before base
+          // `flex`, so without it the base wins and the gate is a no-op.
+          className="absolute inset-x-0 bottom-0 p-1.5 flex items-end justify-between opacity-0 transition-opacity group-hover/album:opacity-100 group-focus-within/album:opacity-100 [@media(hover:none)]:!hidden"
         >
           <div className="flex items-center gap-1.5">
             {owned ? (
@@ -216,6 +228,8 @@ export function AlbumCard({
               />
             )}
             <AlbumCardMenu
+              open={menuOpen}
+              onOpenChange={setMenuOpen}
               owned={owned}
               inLibrary={inLibrary}
               shareTitle={title}

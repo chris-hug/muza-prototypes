@@ -63,7 +63,23 @@ export function usePublishDetailHeader(config: DetailHeaderConfig) {
     // the chrome-rendered "…" sheet is identical to the in-page one. Missing
     // a field here silently drops it (e.g. a stale whitelist once swallowed
     // `covers`, `meta`, and the library binding — collage + Save broke).
-    const menu: DetailMenu = {
+    // Every handler is a GETTER that returns `undefined` when the page did
+    // not wire it. Plain wrappers (`onPlayNext: () => ref.current…?.()`)
+    // are always truthy, which defeated `DetailMenu`'s own "drop the rows
+    // nothing is wired to" filter: an album page with no `onPlayNext` showed
+    // no such row in-page and a dead one in the chrome's sheet.
+    //
+    // Built from a list rather than 20 hand-written getters — a handler
+    // added to `DetailMenu` and forgotten here disappears silently, which is
+    // exactly how `covers`, `meta` and the library binding went missing once.
+    const HANDLERS = [
+      "onAdd", "onAddMusic", "onEdit", "onPlayRadio", "onAddToPlaylist",
+      "onPlayNext", "onAddToQueue", "onMakePrivate", "onGoToArtist",
+      "onGoToLabel", "onGoToOwner", "onGoToSelf", "onArtistInfo",
+      "onRemove", "onReport", "onShowInfo",
+    ] as const
+
+    const menu = {
       get kind() { return ref.current.menu?.kind },
       get title() { return ref.current.menu?.title ?? ref.current.title },
       get subtitle() { return ref.current.menu?.subtitle },
@@ -77,21 +93,18 @@ export function usePublishDetailHeader(config: DetailHeaderConfig) {
       get libraryId() { return ref.current.menu?.libraryId },
       get libraryName() { return ref.current.menu?.libraryName },
       get librarySong() { return ref.current.menu?.librarySong },
-      onAdd: () => ref.current.menu?.onAdd?.(),
-      onAddMusic: () => ref.current.menu?.onAddMusic?.(),
-      onEdit: () => ref.current.menu?.onEdit?.(),
-      onPlayRadio: () => ref.current.menu?.onPlayRadio?.(),
-      onAddToPlaylist: () => ref.current.menu?.onAddToPlaylist?.(),
-      onPlayNext: () => ref.current.menu?.onPlayNext?.(),
-      onAddToQueue: () => ref.current.menu?.onAddToQueue?.(),
-      onMakePrivate: () => ref.current.menu?.onMakePrivate?.(),
-      onGoToArtist: () => ref.current.menu?.onGoToArtist?.(),
-      onGoToLabel: () => ref.current.menu?.onGoToLabel?.(),
-      onArtistInfo: () => ref.current.menu?.onArtistInfo?.(),
-      onRemove: () => ref.current.menu?.onRemove?.(),
-      onReport: () => ref.current.menu?.onReport?.(),
-      onShowInfo: () => ref.current.menu?.onShowInfo?.(),
+    } as DetailMenu
+
+    for (const key of HANDLERS) {
+      Object.defineProperty(menu, key, {
+        enumerable: true,
+        get() {
+          const live = ref.current.menu?.[key]
+          return live ? () => ref.current.menu?.[key]?.() : undefined
+        },
+      })
     }
+
     return {
       get title() { return ref.current.title },
       get menu() { return ref.current.menu ? menu : undefined },

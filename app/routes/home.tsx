@@ -36,6 +36,7 @@ import { CartProvider } from "@/lib/cart"
 import { UserLibraryProvider, useUserLibrary } from "@/lib/user-library"
 import { UserAccountProvider } from "@/lib/user-account"
 import { albumMetaFor, libraryIdForTitle } from "@/lib/album-meta"
+import { AddMusicIcon } from "@/components/ui/media-icons"
 import { componentDoc } from "@/lib/component-docs"
 import { FOOTER_NAV_BELOW, SIDEBAR_COLLAPSE_BELOW } from "@/lib/use-media-query"
 import { Markdown } from "@/components/ds/markdown"
@@ -46,6 +47,16 @@ import CardRailRowExample from "@/ds-examples/card-rail-row"
 import cardRailRowSrc from "@/ds-examples/card-rail-row.tsx?raw"
 import CardRailGridExample from "@/ds-examples/card-rail-grid"
 import cardRailGridSrc from "@/ds-examples/card-rail-grid.tsx?raw"
+import SelectBasicExample from "@/ds-examples/select-basic"
+import selectBasicExampleSrc from "@/ds-examples/select-basic.tsx?raw"
+import AlbumCardBasicExample from "@/ds-examples/album-card-basic"
+import albumCardBasicExampleSrc from "@/ds-examples/album-card-basic.tsx?raw"
+import SongListItemBasicExample from "@/ds-examples/song-list-item-basic"
+import songListItemBasicExampleSrc from "@/ds-examples/song-list-item-basic.tsx?raw"
+import DetailMenuBasicExample from "@/ds-examples/detail-menu-basic"
+import detailMenuBasicExampleSrc from "@/ds-examples/detail-menu-basic.tsx?raw"
+import MobileHeaderBasicExample from "@/ds-examples/mobile-header-basic"
+import mobileHeaderBasicExampleSrc from "@/ds-examples/mobile-header-basic.tsx?raw"
 import { SECTION_STATUS_BY_ID, LAST_GIT_PUSH, sectionLastChanged, sectionSourceUrl, formatStatusDate, type SectionStatus } from "./ds-status"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Badge, ContentTypeBadge } from "@/components/ui/badge"
@@ -2867,6 +2878,16 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
 
       {/* ══ SELECT ══ */}
       <Section id="select" title="Select">
+        <Example
+          title="Trigger · popup · groups"
+          doc="select"
+          align="center"
+          code={selectBasicExampleSrc}
+          codePath="src/ds-examples/select-basic.tsx"
+        >
+          <SelectBasicExample />
+        </Example>
+
         <div className="flex flex-wrap gap-6 items-start">
           <div className="flex flex-col gap-1.5">
             <Label>Genre</Label>
@@ -3048,6 +3069,16 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         usage={[
           { label: "Album / Playlist / Artist detail — header “…”", href: "/?page=Album" },
         ]}>
+        <Example
+          title="Album — the live menu"
+          doc="detail-more-button"
+          align="center"
+          code={detailMenuBasicExampleSrc}
+          codePath="src/ds-examples/detail-menu-basic.tsx"
+        >
+          <DetailMenuBasicExample />
+        </Example>
+
         <p className="text-base text-muted-foreground mb-5 max-w-2xl">
           <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DetailMoreButton</code> — the
           overflow affordance on media detail pages. <span className="text-foreground">Viewport-aware</span>{" "}
@@ -3104,7 +3135,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
               </div>
               {/* grouped rows */}
               <div className="flex flex-col px-4 pb-4">
-                {[{ icon: <ListPlus />, label: "Add to a playlist" }, { icon: <ListStart />, label: "Play next" }, { icon: <ListEnd />, label: "Add to queue" }].map(a => (
+                {[{ icon: <AddMusicIcon />, label: "Add to a playlist" }, { icon: <ListStart />, label: "Play next" }, { icon: <ListEnd />, label: "Add to queue" }].map(a => (
                   <div key={a.label} className="flex items-center gap-3 rounded-lg px-3 py-3 text-base text-foreground [&_svg]:size-5 [&_svg]:text-muted-foreground">{a.icon}{a.label}</div>
                 ))}
                 <div className="mx-2 my-1 h-px bg-border" />
@@ -3727,6 +3758,17 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           { label: "Artist › Discography (grid)", href: "/?page=Artist" },
           { label: "Home › New Albums rail",      href: "/" },
         ]}>
+        <Example
+          title="States — free · stream · owned"
+          doc="album-card"
+          defaultWidth="Phone"
+          align="stretch"
+          code={albumCardBasicExampleSrc}
+          codePath="src/ds-examples/album-card-basic.tsx"
+        >
+          <AlbumCardBasicExample />
+        </Example>
+
         <p className="text-base text-muted-foreground mb-8 max-w-2xl">
           The card is a <span className="text-foreground">nav surface</span>:
           tap the cover (or click the title) to <em>open the album</em>;
@@ -4008,6 +4050,17 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           { label: "Artist › Top Songs",        href: "/?page=Artist" },
           { label: "Album detail (track list)", href: "/?page=Album" },
         ]}>
+        <Example
+          title="Cover rows"
+          doc="song-list-item"
+          defaultWidth="Phone"
+          align="stretch"
+          code={songListItemBasicExampleSrc}
+          codePath="src/ds-examples/song-list-item-basic.tsx"
+        >
+          <SongListItemBasicExample />
+        </Example>
+
         <p className="text-base text-muted-foreground mb-5 max-w-2xl">
           One row in a song list — a single component with two leading-slot variants, driven by props (not separate components). Pass <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">cover</code> for album art (<span className="text-foreground">cover mode</span> — Top Songs, playlists, search) or <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">trackNumber</code> for a number (<span className="text-foreground">trackNumber mode</span> — album detail). Row tap toggles play; title / artist / album are independent links.
         </p>
@@ -4523,10 +4576,21 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       {/* ══ MOBILE HEADER ══ */}
       <Section id="mobile-header" title="Mobile Header"
         usage={[
-          { label: "Phone layouts (< 768px) — Home",     href: "/?page=Home" },
+          { label: "Phone layouts (< 608px) — Home",     href: "/?page=Home" },
           { label: "Library (Albums / Artists / …)",      href: "/?page=Albums" },
           { label: "Explore search",                       href: "/?page=Explore" },
         ]}>
+        <Example
+          title="Title row · tabs · sticky glass"
+          doc="mobile-header"
+          defaultWidth="Phone"
+          align="stretch"
+          code={mobileHeaderBasicExampleSrc}
+          codePath="src/ds-examples/mobile-header-basic.tsx"
+        >
+          <MobileHeaderBasicExample />
+        </Example>
+
         <p className="text-base text-muted-foreground mb-5 max-w-2xl">
           The frosted top bar for phone layouts. It shares the exact same
           glass material as the bottom <span className="text-foreground">FooterNav</span> —{" "}

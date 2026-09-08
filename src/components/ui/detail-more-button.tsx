@@ -255,7 +255,7 @@ function useDetailActions({
   if (isPlaylist && owned) g1.push({ icon: <Lock />, label: isPrivate ? "Make public" : "Make private", onClick: onMakePrivate })
   // Albums only — you add an album's tracks TO a playlist. A playlist can't be
   // added to a playlist, and an artist isn't addable at all.
-  if (isAlbum)             g1.push({ icon: <ListPlus />, label: "Add to a playlist", onClick: onAddToPlaylist })
+  if (isAlbum)             g1.push({ icon: <AddMusicIcon />, label: "Add to a playlist", onClick: onAddToPlaylist })
   if (onPlayNext)          g1.push({ icon: <ListStart />, label: "Play next",    onClick: onPlayNext })
   if (onAddToQueue)        g1.push({ icon: <ListEnd />,   label: "Add to queue", onClick: onAddToQueue })
 

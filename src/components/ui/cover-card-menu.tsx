@@ -113,9 +113,19 @@ export function AlbumCardMenuItems(props: AlbumCardMenuProps) {
   )
 }
 
-export function AlbumCardMenu(props: AlbumCardMenuProps) {
+/*
+ * `open` / `onOpenChange` let the CARD open this menu from a long press on
+ * the cover. Without them the menu was reachable only through its trigger,
+ * which lives in the pointer-only hover cluster — so on a touch screen the
+ * card's actions had no route at all. The app `DropdownMenu` already
+ * presents as a bottom sheet on touch, so this is the sheet the docs have
+ * described all along, finally wired up.
+ */
+export function AlbumCardMenu({
+  open, onOpenChange, ...props
+}: AlbumCardMenuProps & { open?: boolean; onOpenChange?: (v: boolean) => void }) {
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={onOpenChange}>
       <DropdownMenuTrigger
         aria-label="More options"
         className={cn(TRIGGER_CLASS, props.className)}
@@ -182,9 +192,11 @@ export function PlaylistCardMenuItems({
   )
 }
 
-export function PlaylistCardMenu({ className, ...props }: PlaylistCardMenuProps) {
+export function PlaylistCardMenu({
+  className, open, onOpenChange, ...props
+}: PlaylistCardMenuProps & { open?: boolean; onOpenChange?: (v: boolean) => void }) {
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={onOpenChange}>
       <DropdownMenuTrigger
         aria-label="More options"
         className={cn(TRIGGER_CLASS, className)}

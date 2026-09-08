@@ -419,6 +419,19 @@ The rule is identical: **an alias never holds a raw value; it references the pri
 
 ---
 
+## Icons — the ones that are fixed
+
+Most icons are Lucide, picked per context. Two are **not** free choices:
+
+- **"Add to playlist" / "Add to a playlist" / "Add music"** is always
+  `AddMusicIcon` from [`media-icons.tsx`](src/components/ui/media-icons.tsx) —
+  the note-with-plus. It appears on the playlist page, in the create flow, in
+  the song row's menu and sheet, and in the detail menu. It was `ListPlus` in
+  the menus for a while, which read as "add a list item" and matched nothing
+  else in the flow.
+- **`AddMusicIcon` also labels the Selection tab** in the Add-music sheet, so
+  the same mark means "music going into a playlist" everywhere it appears.
+
 ## Form controls — the shared recipe
 
 `Input`, `Select`, `Combobox`, `DatePicker` and the filter trigger are **one

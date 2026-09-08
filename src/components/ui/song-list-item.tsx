@@ -28,6 +28,7 @@
 import * as React from "react"
 import { useState } from "react"
 import { Heart, Info, MoreHorizontal, ListPlus, Mic, Disc3, Share, Link2, Flag } from "lucide-react"
+import { AddMusicIcon } from "@/components/ui/media-icons"
 
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
@@ -192,7 +193,7 @@ export function SongMenuItems({
         {canNativeShare ? "Share…" : "Copy link"}
       </DropdownMenuItem>
       <DropdownMenuItem onClick={handleSongLibrary}><Heart className={cn(inLibrary && "fill-current")} />{libraryLabel}</DropdownMenuItem>
-      {!hideAddToPlaylist && <DropdownMenuItem onClick={handleAddToPlaylist}><ListPlus />Add to playlist</DropdownMenuItem>}
+      {!hideAddToPlaylist && <DropdownMenuItem onClick={handleAddToPlaylist}><AddMusicIcon />Add to playlist</DropdownMenuItem>}
       <DropdownMenuSeparator />
       {onArtistClick && !hideGoToArtist && <DropdownMenuItem onClick={onArtistClick}><Mic />Go to artist</DropdownMenuItem>}
       {onAlbumClick && !hideGoToAlbum && <DropdownMenuItem onClick={onAlbumClick}><Disc3 />Go to album</DropdownMenuItem>}
@@ -438,7 +439,7 @@ export function SongListItem({
                 </SheetHeader>
                 <div className="flex flex-col px-2 pb-4">
                   <SheetAction icon={<Heart className={cn(inLibrary && "fill-current")} />} label={libraryLabel} onClick={handleSongLibrary} />
-                  {!hideAddToPlaylist && <SheetAction icon={<ListPlus />} label="Add to playlist" onClick={handleAddToPlaylist} />}
+                  {!hideAddToPlaylist && <SheetAction icon={<AddMusicIcon />} label="Add to playlist" onClick={handleAddToPlaylist} />}
                   {onArtistClick && !hideGoToArtist && <SheetAction icon={<Mic />}   label="Go to artist" onClick={onArtistClick} />}
                   {onAlbumClick  && !hideGoToAlbum  && <SheetAction icon={<Disc3 />} label="Go to album"  onClick={onAlbumClick} />}
                   <SheetAction
