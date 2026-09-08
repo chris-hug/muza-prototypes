@@ -56,8 +56,15 @@
        sideways. `auto-fill` + a `1fr` ceiling instead fills the row with as
        many 143px-or-wider cards as fit and can never exceed the container,
        so a phone lands on two columns with or without container queries.
-       Where they ARE supported the ladder below takes over unchanged. */
-    grid-template-columns: repeat(auto-fill, minmax(143px, 1fr));
+       Where they ARE supported the ladder below takes over unchanged.
+
+       The 128px minimum is set by the NARROWEST phone we support, not by the
+       card's ideal size: an iPhone 12 mini in Display Zoom reports a 320px
+       viewport → a 296px container, and two columns only fit there if the
+       minimum is ≤140px (296 − 16px gap, halved). At 143px it fell to one
+       full-width column — and the ladder's first step (304) doesn't fire at
+       296 either, so this base is the ONLY rule those devices get. */
+    grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
   }
   @container (min-width: 304px)  { .grid-cards { grid-template-columns: repeat(2, minmax(143px, 220px)); } }
   @container (min-width: 464px)  { .grid-cards { grid-template-columns: repeat(3, minmax(143px, 220px)); } }
