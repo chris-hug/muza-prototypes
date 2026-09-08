@@ -35,7 +35,7 @@ import { SelectTrackButton } from "@/components/ui/select-track-button"
 import { AddMusicIcon } from "@/components/ui/media-icons"
 import { NavRow } from "@/components/ui/nav-row"
 import { MobilePillTabs } from "@/components/ui/mobile-header"
-import { useToast } from "@/components/ui/toast"
+import { useToast, TOAST_CONFIRM_MS } from "@/components/ui/toast"
 import { MediaListItem } from "@/components/ui/media-list-item"
 import { SAVED_SONGS_SEED } from "@/components/app/library-songs-view"
 import { getAlbumDetail, hasAlbumDetail } from "@/lib/album-catalog"
@@ -150,6 +150,7 @@ export function AddMusicDialog({
       title: `${picked.length} ${picked.length === 1 ? "song" : "songs"} added`,
       description: playlistName ? `Added to “${playlistName}”.` : undefined,
       type: "success",
+      timeout: TOAST_CONFIRM_MS,
     })
     reset()
     onOpenChange(false)
@@ -217,7 +218,7 @@ export function AddMusicDialog({
               </Button>
             </div>
 
-            <div className="flex flex-col gap-1 min-w-0 overflow-y-auto max-h-[52vh] -mx-2 px-2">
+            <div className="flex flex-col gap-2 min-w-0 overflow-y-auto max-h-[60vh] sm:max-h-[52vh] -mx-2 px-2">
               {albumSongs.map(s => trackRow(s, s.id))}
             </div>
           </>
@@ -253,16 +254,16 @@ export function AddMusicDialog({
               </div>
             )}
 
-            <div className="flex flex-col gap-4 min-w-0 overflow-y-auto max-h-[52vh] -mx-2 px-2">
+            <div className="flex flex-col gap-4 min-w-0 overflow-y-auto max-h-[60vh] sm:max-h-[52vh] -mx-2 px-2">
               {tab === "selection" ? (
                 // Everything picked so far, regardless of the query it came from.
-                <section className="flex flex-col gap-1">
+                <section className="flex flex-col gap-2">
                   {picked.map(s => trackRow(s, songKey(s)))}
                 </section>
               ) : searching ? (
                 <>
                   {songHits.length > 0 && (
-                    <section className="flex flex-col gap-1">
+                    <section className="flex flex-col gap-2">
                       <SectionLabel>Songs</SectionLabel>
                       {songHits.map(r => trackRow(asSong(r), r.id))}
                     </section>
@@ -271,7 +272,7 @@ export function AddMusicDialog({
                   {/* Albums aren't tickable — you open one and add it from
                       inside, so the row reads as navigation (chevron). */}
                   {albumHits.length > 0 && (
-                    <section className="flex flex-col gap-1">
+                    <section className="flex flex-col gap-2">
                       <SectionLabel>Albums</SectionLabel>
                       {albumHits.map(r => (
                         <MediaListItem
@@ -296,7 +297,7 @@ export function AddMusicDialog({
               ) : (
                 <>
                   {/* Browse — structural entry points into the user's own library. */}
-                  <section className="flex flex-col gap-1">
+                  <section className="flex flex-col gap-2">
                     <SectionLabel>My library</SectionLabel>
                     {BROWSE.map(b => (
                       <NavRow key={b.label} icon={b.icon} label={b.label} />
@@ -305,7 +306,7 @@ export function AddMusicDialog({
                   </section>
 
                   {/* Suggested tracks — the multi-select list. */}
-                  <section className="flex flex-col gap-1">
+                  <section className="flex flex-col gap-2">
                     <SectionLabel>Suggested tracks</SectionLabel>
                     {SAVED_SONGS_SEED.map(s => trackRow(s, s.id))}
                   </section>

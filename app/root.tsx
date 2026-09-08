@@ -13,7 +13,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <html lang="en" className="h-full">
       <head>
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* `viewport-fit=cover` — REQUIRED for `env(safe-area-inset-*)` to
+             resolve to anything but 0. The mobile header, footer nav, player
+             shell, sheet footers and toasts all pad with those insets; without
+             this they were silently no-ops on notched phones.
+             `interactive-widget=resizes-content` makes Chrome/Android shrink
+             the layout viewport when the on-screen keyboard opens, so bottom
+             sheets stay above it natively. iOS doesn't honour it — see
+             `useKeyboardInset`, which covers that case. */}
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+        />
         <title>Muza</title>
         <Meta />
         <Links />

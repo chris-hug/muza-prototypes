@@ -28,7 +28,11 @@ type ToastType = "default" | "success" | "error" | "warning" | "info" | "loading
 // previews can render the same shell without forking the styles.
 export const toastShellClass = cn(
   "relative flex w-full items-start gap-2.5",
-  "rounded-xl border border-border bg-popover px-4 pt-4 pb-[18px] shadow-lg",
+  // Compact on phones: a confirmation is a glance, not a panel. Every major
+  // player uses a slim single-line bar at the bottom for "added to playlist";
+  // 4px/18px of padding around two stacked lines took a quarter of a small
+  // screen. Desktop keeps the roomier card.
+  "rounded-xl border border-border bg-popover px-3 py-3 sm:px-4 sm:pt-4 sm:pb-[18px] shadow-lg",
   "text-popover-foreground transition-[transform,opacity] duration-200",
 )
 const toastShell = toastShellClass
@@ -42,6 +46,10 @@ export const toastActionButtonClass = cn(
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
 )
 export const toastCloseButtonClass = cn(
+  // Hidden on phones: the toast auto-dismisses and can be swiped away, and a
+  // dismiss target competes for width with the message itself. Platform
+  // snackbars don't carry one either.
+  "hidden sm:flex",
   "shrink-0 self-start mt-[3px] rounded-lg p-0.5 text-muted-foreground",
   "hover:bg-accent hover:text-accent-foreground transition-colors",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
@@ -81,7 +89,13 @@ function ToastViewport({ className }: { className?: string }) {
   return (
     <ToastPrimitive.Viewport
       className={cn(
-        "fixed top-4 right-4 z-[100] flex flex-col gap-2 w-[380px] max-w-[calc(100vw-2rem)] outline-none",
+        "fixed z-[100] flex flex-col gap-2 outline-none",
+        // Mobile → a bar along the BOTTOM, which is where every player puts
+        // its confirmations (thumb-side, out of the content's way). Lifted
+        // clear of the mini player + footer tab bar and the home indicator.
+        "inset-x-3 bottom-[calc(112px+env(safe-area-inset-bottom)+var(--kb,0px))] w-auto",
+        // Desktop → the familiar top-right card.
+        "sm:inset-x-auto sm:right-4 sm:top-4 sm:bottom-auto sm:w-[380px] sm:max-w-[calc(100vw-2rem)]",
         className
       )}
     >
@@ -141,6 +155,12 @@ function ToastViewport({ className }: { className?: string }) {
 function useToast() {
   return ToastPrimitive.useToastManager()
 }
+
+/** Timeout for a plain confirmation ("added", "created", "saved") — the user
+ *  already saw the result, so the toast only has to register. Platform
+ *  snackbars sit around 2–3s; our 5s default is for messages carrying an
+ *  action or a consequence worth reading. Pass as `timeout` to `add()`. */
+export const TOAST_CONFIRM_MS = 2500
 
 // ── Static preview (kitchen-sink + design docs) ────────────────────────────────
 //

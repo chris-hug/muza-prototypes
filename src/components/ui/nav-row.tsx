@@ -30,7 +30,9 @@ export function NavRow({ label, icon, value, onClick, className }: NavRowProps) 
       type="button"
       onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left transition-colors",
+        // Tight rows: these are browse entry points, not content — they should
+        // not eat the space the track list needs on a phone. 40px tall.
+        "flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors",
         "hover:bg-muted active:bg-muted outline-none focus-visible:bg-muted",
         "[&_svg]:size-4 [&_svg]:shrink-0",
         className,

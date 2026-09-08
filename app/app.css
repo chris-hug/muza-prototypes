@@ -840,6 +840,17 @@ img[class*="object-cover"] {
   to   { background-position: 150% 0; }
 }
 
+/* The row's own nudge on add — a short symmetric shake, NOT a one-way drift.
+   An earlier version translated 2px and back, which read as the whole row
+   shifting position; returning through zero twice reads as a reaction. Total
+   travel is 3px and it's over in 260ms, so it registers without bouncing. */
+@keyframes muzaRowShake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(3px); }
+  60%      { transform: translateX(-2px); }
+  85%      { transform: translateX(1px); }
+}
+
 .muza-row-added {
   /* Darker than the row's own fill, but only just — this is a gesture, not
      a highlight. Sized 2× so the gradient has somewhere to travel from. */
@@ -857,7 +868,9 @@ img[class*="object-cover"] {
      class outlives the animation by a few frames — which showed up as a
      second, clipped sweep. */
   background-position: 150% 0;
-  animation: muzaRowAdded 260ms ease-out forwards;
+  animation:
+    muzaRowAdded 260ms ease-out forwards,
+    muzaRowShake 260ms ease-out;
 }
 
 /* Keyframe anchors — Tailwind v4 tree-shakes `@keyframes` whose names

@@ -571,6 +571,16 @@ Three escalating surfaces, all bottom-anchored on phones:
 
 **1. Responsive dialog → bottom sheet — the BASE DEFAULT.** **Every** `Dialog` and `AlertDialog` is a **bottom sheet on mobile** and a **centered modal on desktop (sm+)** — no per-dialog opt-in. It's baked into the base `DialogContent` / `AlertDialogContent` (`dialogPositionClass` in [`dialog.tsx`](src/components/ui/dialog.tsx)): mobile `inset-x-0 bottom-0 max-w-full rounded-t-2xl rounded-b-none slide-in-from-bottom`; desktop `sm:left-1/2 sm:top-1/2 sm:-translate-* sm:rounded-2xl zoom-in`. Individual dialogs only set their **desktop width** (`sm:max-w-*`) and any height/scroll behaviour — they must **not** re-declare the positioning. To **grow with content up to the viewport** (less scrolling): make `DialogContent` `flex flex-col max-h-[92vh] sm:max-h-[85vh]`, the header `shrink-0`, and the scroll body `min-h-0` (fills to the cap, scrolls only on overflow).
 
+**Sheet gutter is 12px on phones** (`p-3 sm:p-6`), matching `--page-px` at that width. A sheet spans the whole screen, so a 24px gutter costs 48px of a 320–375px width — enough to visibly squeeze list rows. The footer's full-bleed negative margins must match the gutter at **both** sizes (`-mx-3 sm:-mx-6`) or the bar stops short of the edges.
+
+**The keyboard is part of the layout.** iOS does NOT shrink the layout viewport when the on-screen keyboard opens — it shrinks the *visual* viewport — so a `fixed; bottom: 0` sheet sits **behind** the keyboard. With an autofocused field (Create playlist) that happens instantly and hides the sheet's own primary action. Every sheet therefore:
+- sits at `bottom: var(--kb, 0px)` and is capped to `max-h-[calc(100dvh-var(--kb,0px)-8px)]`, scrolling internally;
+- keeps its footer **`sticky bottom-[-0.75rem]` on mobile** so the actions can't scroll out of reach (`sm:static` — desktop doesn't scroll).
+
+`--kb` is published by [`useKeyboardInset`](src/lib/use-keyboard-inset.ts), mounted once in the app shell. Chrome/Android is handled declaratively by `interactive-widget=resizes-content` in the viewport meta, so `--kb` stays 0 there.
+
+**`viewport-fit=cover` is mandatory** in the viewport meta. Without it `env(safe-area-inset-*)` resolves to **0** and every safe-area pad in the app — mobile header, footer nav, player shell, dropdown sheets, dialog footers, toasts — is silently a no-op.
+
 **2. DropdownMenu auto-sheet.** The app `DropdownMenu` already presents as a bottom sheet on touch — use it for simple "…" lists.
 
 **3. Advanced bottom-sheet "…" menu** (`DetailMoreButton`, Album/Playlist/Artist). Rich, store-aware action surface, gated by `useIsMobile()`:
@@ -713,3 +723,14 @@ Phones are the default surface for the player, so gesture handling is a first-cl
 - Adding a track also runs `.muza-row-added` — a soft shade sweeping left→right across the row (260ms). It animates `background-position` only; an earlier `translateX` nudge read as the whole row shifting.
 
 Reference for the mark: `codepen.io/nicetransition/pen/bGdJzpZ`.
+
+---
+
+## Toasts — mobile shape
+
+A confirmation is a glance, not a panel. Every major player uses a slim bar at the **bottom** for "added to playlist"; ours matches, and keeps the roomier top-right card on desktop.
+
+- **Placement** — mobile: `inset-x-3`, anchored above the mini player, footer tab bar, home indicator **and the keyboard** (`bottom: calc(112px + env(safe-area-inset-bottom) + var(--kb,0px))`). Desktop: top-right, unchanged.
+- **Padding** — `px-3 py-3` on phones vs `px-4 pt-4 pb-[18px]` on desktop.
+- **No close button on phones** (`hidden sm:flex`) — it auto-dismisses and can be swiped, and a dismiss target competes for width with the message.
+- **Duration** — plain confirmations ("added", "created", "saved") use `TOAST_CONFIRM_MS` (2.5s). The 5s default is for messages carrying an **action** (Undo) or a consequence worth reading; 2.5s is too short to reach an Undo.

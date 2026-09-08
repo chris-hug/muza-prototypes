@@ -23,7 +23,11 @@ export const dialogChromeClass =
   // `overflow-hidden` is the safety-net: it keeps any inner content
   // (long item titles, wide tables) from pushing the dialog past its
   // `max-w` cap and dragging the footer's negative margins with it.
-  "grid w-full max-w-[calc(100%-2rem)] gap-5 rounded-xl sm:rounded-2xl bg-popover p-6 text-small text-popover-foreground border border-border outline-none overflow-hidden sm:max-w-sm"
+  // Gutter is 12px on phones (matching `--page-px` at that width), 24px from
+  // `sm` up. A bottom sheet spans the whole screen, so a 24px gutter costs
+  // 48px of a 320–375px width — enough to squeeze list rows noticeably.
+  // Desktop dialogs are narrow and floating, where 24 still reads right.
+  "grid w-full max-w-[calc(100%-2rem)] gap-5 rounded-xl sm:rounded-2xl bg-popover p-3 sm:p-6 text-small text-popover-foreground border border-border outline-none overflow-hidden sm:max-w-sm"
 
 // App-wide rule: every Dialog is a BOTTOM SHEET on mobile and a centered
 // modal on desktop (sm+). Mobile → pinned to the bottom edge, full-width,
@@ -34,11 +38,14 @@ export const dialogChromeClass =
 // over the chrome's defaults (twMerge: last wins).
 export const dialogPositionClass =
   "fixed z-50 duration-100 data-open:animate-in data-open:fade-in-0 " +
-  // mobile → bottom sheet
-  "inset-x-0 bottom-0 top-auto translate-x-0 translate-y-0 max-w-full rounded-b-none rounded-t-2xl " +
+  // mobile → bottom sheet. It sits above the on-screen keyboard (`--kb`, set
+  // by `useKeyboardInset`; 0 when no keyboard) and is capped to the space
+  // that leaves, scrolling internally rather than hiding its own footer.
+  "inset-x-0 bottom-[var(--kb,0px)] top-auto translate-x-0 translate-y-0 max-w-full rounded-b-none rounded-t-2xl " +
+  "max-h-[calc(100dvh-var(--kb,0px)-8px)] overflow-y-auto " +
   "data-open:slide-in-from-bottom-4 data-open:zoom-in-100 " +
   // desktop (sm+) → centered modal
-  "sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-sm sm:rounded-2xl " +
+  "sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-sm sm:rounded-2xl sm:max-h-none sm:overflow-hidden " +
   "sm:data-open:slide-in-from-bottom-0 sm:data-open:zoom-in-95"
 
 export const dialogTitleClass =
@@ -49,8 +56,18 @@ export const dialogDescriptionClass =
 
 export const dialogHeaderClass = "flex flex-col gap-2"
 
+// Negative margins must match the chrome's padding at BOTH sizes, or the
+// full-bleed footer stops reaching the edges. `pb` also clears the iOS home
+// indicator, so the actions sit at the bottom of the sheet without the OS
+// handle overlapping them.
 export const dialogFooterClass =
-  "-mx-6 -mb-6 mt-2 flex flex-col-reverse gap-2 rounded-b-xl sm:rounded-b-2xl border-t bg-muted p-6 sm:flex-row sm:justify-end"
+  "-mx-3 -mb-3 sm:-mx-6 sm:-mb-6 mt-2 flex flex-col-reverse gap-2 rounded-b-xl sm:rounded-b-2xl border-t bg-muted " +
+  // Sticky on mobile: with the keyboard open the sheet scrolls internally, and
+  // the actions must not scroll away — the "Create playlist" button is the
+  // thing the user is reaching for. `bottom` cancels the negative margin so it
+  // parks flush with the sheet's edge. Desktop has no scroll, so: static.
+  "sticky bottom-[-0.75rem] z-10 sm:static " +
+  "px-3 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] sm:p-6 sm:flex-row sm:justify-end"
 
 // ─── Live Dialog (portal-rendered, modal) ────────────────────────────────────
 

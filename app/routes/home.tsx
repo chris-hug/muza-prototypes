@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react"
 import { useSearchParams } from "react-router"
 import { cn } from "@/lib/utils"
 import { useSidebarAutoCollapsed, useFooterNav } from "@/lib/use-media-query"
+import { useKeyboardInset } from "@/lib/use-keyboard-inset"
 import { FooterNav } from "@/components/app/footer-nav"
 import { MobileAppHeader } from "@/components/app/mobile-app-header"
 import { MediaListItem } from "@/components/ui/media-list-item"
@@ -5435,6 +5436,10 @@ export default function Home() {
   const [params, setParams] = useSearchParams()
   const activeNav = params.get("page") ?? "Home"
   const searchQuery = params.get("q") ?? ""
+  // Publishes the on-screen keyboard height as `--kb` so bottom sheets and
+  // toasts sit above it instead of behind it (iOS doesn't resize the layout
+  // viewport for the keyboard).
+  useKeyboardInset()
 
   // Nav-driven loading state for the top progress bar.
   // Flips true on every activeNav change and back to false after a

@@ -81,7 +81,7 @@ export function MediaListItem({
     <div
       onClick={onRowClick}
       className={cn(
-        "@container group/row relative flex items-center gap-3 rounded-md pl-2 pr-1 py-1.5 cursor-pointer transition-colors",
+        "@container group/row relative flex items-center gap-3 rounded-md pl-2 pr-1.5 py-1.5 cursor-pointer transition-colors",
         playing ? "bg-muted" : "bg-background hover:bg-muted",
         className,
       )}
@@ -108,20 +108,26 @@ export function MediaListItem({
               )
             )}
             {meta && (
-              <span className="inline-flex items-center gap-1.5 shrink-0 @max-[240px]:hidden">
+              // `min-w-0` + `truncate`, NOT `shrink-0`: a long album title
+              // ("The Black Saint and the Sinner Lady") could not shrink and
+              // ran on under the trailing button instead of ellipsing.
+              <span className="inline-flex items-center gap-1.5 min-w-0 @max-[240px]:hidden">
                 {subtitle && <span aria-hidden="true" className="shrink-0">·</span>}
-                <span>{meta}</span>
+                <span className="truncate">{meta}</span>
               </span>
             )}
           </div>
         )}
       </div>
 
-      {/* Trailing — either bespoke content (e.g. a selection Checkbox in the
+      {/* Trailing — either bespoke content (e.g. the pick affordance in the
            Add-music picker) or the ⋯ menu. `trailing` wins when both are
-           passed, since a row is one or the other. */}
+           passed, since a row is one or the other.
+           It sits close to the row's right edge: the row's own `pr` is the
+           only inset. A deeper one wasted horizontal space on phones, where
+           the row is already the full sheet width. */}
       {trailing ? (
-        <div className="shrink-0 pr-6">{trailing}</div>
+        <div className="shrink-0">{trailing}</div>
       ) : menuItems && (
         <div className="shrink-0">
           <DropdownMenu>

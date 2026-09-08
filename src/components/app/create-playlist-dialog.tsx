@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { PlaylistCreateCard } from "@/components/ui/playlist-create-card"
-import { useToast } from "@/components/ui/toast"
+import { useToast, TOAST_CONFIRM_MS } from "@/components/ui/toast"
 import { AddMusicDialog } from "@/components/app/add-music-dialog"
 import { CreatePlaylistContext } from "@/lib/create-playlist-context"
 
@@ -85,8 +85,8 @@ export function CreatePlaylistDialog({
     if (!trimmed) return
     onCreated?.(trimmed)
     toast(editing
-      ? { title: "Playlist updated", description: `“${trimmed}” saved.`, type: "success" }
-      : { title: "Playlist created", description: `“${trimmed}” is ready.`, type: "success" })
+      ? { title: "Playlist updated", description: `“${trimmed}” saved.`, type: "success", timeout: TOAST_CONFIRM_MS }
+      : { title: "Playlist created", description: `“${trimmed}” is ready.`, type: "success", timeout: TOAST_CONFIRM_MS })
     reset()
     onOpenChange(false)
   }
