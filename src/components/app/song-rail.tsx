@@ -95,7 +95,10 @@ export function SongRail({ title, rows, onShowAll }: {
         ref={scrollRef}
         className={
           "min-w-0 flex gap-6 items-start overflow-x-auto overflow-y-hidden " +
-          "snap-x snap-proximity scroll-smooth touch-pan-x overscroll-x-contain " +
+          // `snap-mandatory` (not proximity) — same rule as CardRail: a flick
+          // keeps its momentum but always comes to rest on a column edge, so a
+          // hard swipe can't leave a column sliced down the middle.
+          "snap-x snap-mandatory scroll-smooth touch-pan-x overscroll-x-contain " +
           "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden " +
           "[&>li]:shrink-0 [&>li]:snap-start " +
           // Mobile (< 692): single column undersized by 48px so ~24px of the

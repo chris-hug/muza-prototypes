@@ -48,7 +48,16 @@
   .grid-cards {
     display: grid;
     gap: 1.5rem 1rem;
-    grid-template-columns: repeat(1, minmax(143px, 220px));
+    /* BASE = the fallback for any engine where the @container rules below
+       don't match (older iOS Safari has no container queries). It must be a
+       sane layout on its own, not the first rung of the ladder: a fixed
+       `repeat(1, …220px)` rendered ONE narrow column on a phone with the
+       rest of the row empty, and any card wider than the column overflowed
+       sideways. `auto-fill` + a `1fr` ceiling instead fills the row with as
+       many 143px-or-wider cards as fit and can never exceed the container,
+       so a phone lands on two columns with or without container queries.
+       Where they ARE supported the ladder below takes over unchanged. */
+    grid-template-columns: repeat(auto-fill, minmax(143px, 1fr));
   }
   @container (min-width: 304px)  { .grid-cards { grid-template-columns: repeat(2, minmax(143px, 220px)); } }
   @container (min-width: 464px)  { .grid-cards { grid-template-columns: repeat(3, minmax(143px, 220px)); } }

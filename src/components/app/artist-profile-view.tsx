@@ -547,8 +547,13 @@ function DiscographyView({
            Studio/Music). */}
       <div className="flex flex-col gap-2 pt-8">
         <Separator />
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
+        {/* Wraps on narrow screens. The trigger buttons are `shrink-0` (all
+             Buttons are), so on a 360px phone the filter + sort pair — 240px
+             and 202px — overflowed the 336px row and ran off the right edge,
+             which iOS then let you pan to. Wrapping keeps every control at
+             full size and just moves it to the next line. */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2 min-w-0">
             <MultiSelect
               label="All releases"
               selected={filter as Set<string>}
