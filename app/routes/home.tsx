@@ -2102,7 +2102,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           </li>
           <li>
             <span className="text-foreground">Touch gestures.</span> Cards use
-            {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useLongPress</code> (tap = primary action, long-press = bottom sheet). Rails use <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">touch-pan-x</code> + <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">overscroll-x-contain</code> + scroll-snap.
+            {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useLongPress</code> (tap = primary action, long-press = bottom sheet). The tap is the browser's REAL <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">click</code>, never one synthesised on pointerup — only the browser knows a touch became a scroll and withholds the click. Rails use <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">touch-pan-x pan-y</code> (both axes — <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">pan-x</code> alone forbids scrolling the page from a card) + <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">overscroll-x-contain</code> + scroll-snap.
           </li>
           <li>
             <span className="text-foreground">Shared column steps.</span> Library

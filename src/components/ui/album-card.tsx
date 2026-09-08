@@ -181,12 +181,15 @@ export function AlbumCard({
         {/* Mouse-only hover cluster (Add/Edit + More + Play). Hidden
              on touch — touch users get the same actions via the
              long-press → bottom-sheet path. */}
-        {/* The cover runs a useLongPress gesture (pointerup → open detail).
-            Stop pointer events here so clicking a cluster button (play /
-            heart / menu) never bubbles up and also triggers the open. */}
+        {/* The cover opens the detail page on a real `click`. Stop pointer
+            AND click events here so pressing a cluster button (play / heart /
+            menu) never bubbles up and also triggers the open — click matters
+            now that the cover listens for the browser's click rather than
+            synthesising one on pointerup. */}
         <div
           onPointerDown={e => e.stopPropagation()}
           onPointerUp={e => e.stopPropagation()}
+          onClick={e => e.stopPropagation()}
           className="absolute inset-x-0 bottom-0 p-1.5 flex items-end justify-between opacity-0 transition-opacity group-hover/album:opacity-100 group-focus-within/album:opacity-100"
         >
           <div className="flex items-center gap-1.5">

@@ -689,9 +689,11 @@ Owner-only **Edit** on a playlist docks a panel on the right that **persists acr
 
 Phones are the default surface for the player, so gesture handling is a first-class rule, not polish.
 
-**Never put `touch-action: none` on content you also want to scroll past.** It tells the browser not to pan at all for gestures starting there. Card covers had it, and since the cover is most of a card's area, a swipe along a rail almost always started on one — the rail simply refused to scroll. Covers now leave `touch-action` alone; the rail owns `touch-pan-x`.
+**Never put `touch-action: none` on content you also want to scroll past.** It tells the browser not to pan at all for gestures starting there. Card covers had it, and since the cover is most of a card's area, a swipe along a rail almost always started on one — the rail simply refused to scroll. Covers now leave `touch-action` alone; the rail owns it (see the axis rule below).
 
-**A drag is not a tap.** `useLongPress` fires its click on `pointerup`, which bypasses the browser's own "suppress the click after a scroll". It therefore has to make that judgement itself: movement past **8px** (`SLOP`) marks the gesture as a drag, which cancels both the long press *and* the click. Any hand-rolled pointer handler needs the same guard, or swiping a rail navigates to whatever card the finger landed on.
+**Never synthesise a tap from `pointerup`.** Use the browser's real `click`. It knows things a component cannot: whether the touch turned into a scroll, whether the page was still gliding, whether the finger drifted off the element — and it withholds the click in all of those cases. `useLongPress` therefore listens for `click` and only suppresses the single case the browser can't know about: the click that follows a *completed* long press. An earlier version fired on `pointerup` with an 8px movement guard, which is a crude re-implementation of one small part of that rule; the symptom was a light flick to scroll a page of large covers opening an album instead.
+
+**`touch-action: pan-x` does NOT mean "vertical falls through".** It forbids vertical panning for every touch starting on that element, so a finger on a card couldn't scroll the page at all. Rails list **both** axes (`pan-x pan-y`) and let the browser pick from the gesture.
 
 **Rails snap `mandatory`, not `proximity`.** A flick keeps its full momentum — the browser lets it coast to its natural resting point and then takes the nearest snap point — but it always comes to rest on an exact card boundary. `proximity` only snapped when the rail happened to stop near an edge, so a hard swipe left a card sliced down the middle. Requires a uniform stride (card + 16px gap) and no scroll-padding on the container.
 

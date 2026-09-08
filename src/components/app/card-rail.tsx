@@ -237,8 +237,11 @@ export function CardRail({ title, showAllLabel = "Show all", onShowAll, showAllO
           //     ul grow to its intrinsic content width, leaking
           //     horizontal scroll up to the page.
           //   · `overflow-y-hidden` clamps y back from `auto`.
-          //   · `touch-action: pan-x` — touch pans only horizontally;
-          //     vertical swipes pass to the page scroll.
+          //   · `touch-action: pan-x pan-y` — BOTH axes. `pan-x` alone does
+          //     not mean "horizontal here, vertical falls through": it
+          //     forbids vertical panning for any touch starting in the rail,
+          //     so scrolling the page with a finger on a card did nothing.
+          //     Listing both lets the browser pick the axis from the gesture.
           //   · `overscroll-behavior-x: contain` — no body rubber-band.
           //   · `snap-x snap-mandatory` — a flick ALWAYS comes to rest on a
           //     card boundary; each `<li>` is `snap-start`. Mandatory does
@@ -248,7 +251,7 @@ export function CardRail({ title, showAllLabel = "Show all", onShowAll, showAllO
           //     an edge, so a hard swipe left a card sliced down the middle.
           //   · Scrollbar hidden across browsers.
           "min-w-0 items-start overflow-x-auto overflow-y-hidden " +
-          "snap-x snap-mandatory scroll-smooth touch-pan-x overscroll-x-contain " +
+          "snap-x snap-mandatory scroll-smooth touch-pan-x touch-pan-y overscroll-x-contain " +
           "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden " +
           "[&>li]:snap-start [&>li]:max-w-[220px] " +
           (mobileGrid

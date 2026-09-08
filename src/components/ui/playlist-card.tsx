@@ -139,11 +139,12 @@ export function PlaylistCard({
           className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent opacity-0 transition-opacity group-hover/playlist:opacity-100 group-focus-within/playlist:opacity-100"
         />
 
-        {/* Stop pointer events so a cluster-button press (play / heart /
-            menu) doesn't also fire the cover's useLongPress → open detail. */}
+        {/* Stop pointer AND click events so a cluster-button press (play /
+            heart / menu) doesn't also fire the cover's open-detail click. */}
         <div
           onPointerDown={e => e.stopPropagation()}
           onPointerUp={e => e.stopPropagation()}
+          onClick={e => e.stopPropagation()}
           className="absolute inset-x-0 bottom-0 p-1.5 flex items-end justify-between opacity-0 transition-opacity group-hover/playlist:opacity-100 group-focus-within/playlist:opacity-100"
         >
           <div className="flex items-center gap-1.5">
