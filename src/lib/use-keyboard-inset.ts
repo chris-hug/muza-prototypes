@@ -8,10 +8,10 @@
  * Why this is needed at all: iOS Safari does NOT shrink the layout viewport
  * when the keyboard opens — it shrinks the VISUAL viewport and leaves layout
  * untouched. A `position: fixed; bottom: 0` sheet therefore stays pinned to
- * the bottom of a viewport that is now partly behind the keyboard. In the
- * Create-playlist sheet the name field is autofocused, so the keyboard opens
- * immediately and swallows the footer — the "Create playlist" button the user
- * was reaching for.
+ * the bottom of a viewport that is now partly behind the keyboard — and so
+ * would the sheet's footer, with the "Create playlist" button the user was
+ * reaching for. (That form is now a full-screen `mobile="form"` sheet with
+ * its actions in the top bar; `--kb` still bounds its scroll box.)
  *
  * Chrome/Android is handled declaratively by `interactive-widget=resizes-content`
  * in the viewport meta (it resizes the layout viewport, so `--kb` stays 0

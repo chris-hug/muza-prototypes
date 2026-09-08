@@ -573,11 +573,20 @@ Three escalating surfaces, all bottom-anchored on phones:
 
 **Sheet gutter is 12px on phones** (`p-3 sm:p-6`), matching `--page-px` at that width. A sheet spans the whole screen, so a 24px gutter costs 48px of a 320–375px width — enough to visibly squeeze list rows. The footer's full-bleed negative margins must match the gutter at **both** sizes (`-mx-3 sm:-mx-6`) or the bar stops short of the edges.
 
-**The keyboard is part of the layout.** iOS does NOT shrink the layout viewport when the on-screen keyboard opens — it shrinks the *visual* viewport — so a `fixed; bottom: 0` sheet sits **behind** the keyboard. With an autofocused field (Create playlist) that happens instantly and hides the sheet's own primary action. Every sheet therefore:
-- sits at `bottom: var(--kb, 0px)` and is capped to `max-h-[calc(100dvh-var(--kb,0px)-8px)]`, scrolling internally;
+**The keyboard is part of the layout.** iOS does NOT shrink the layout viewport when the on-screen keyboard opens — it shrinks the *visual* viewport — so a `fixed; bottom: 0` sheet sits **behind** the keyboard. Every sheet therefore:
+- sits at `bottom: var(--kb, 0px)` and is capped to `max-h-[calc(100dvh-var(--kb,0px)-8px)]`, scrolling internally, with `scroll-padding-bottom: 8rem` so a field the browser scrolls into view lands clear of the sticky footer;
 - keeps its footer **`sticky bottom-[-0.75rem]` on mobile** so the actions can't scroll out of reach (`sm:static` — desktop doesn't scroll).
 
 `--kb` is published by [`useKeyboardInset`](src/lib/use-keyboard-inset.ts), mounted once in the app shell. Chrome/Android is handled declaratively by `interactive-widget=resizes-content` in the viewport meta, so `--kb` stays 0 there.
+
+**Forms go full-screen on phones — `<DialogContent mobile="form">`.** A bottom sheet cannot hold a form once the keyboard is up: on a 12 mini in Brave the keyboard + accessory bar leave **~200px**, and title + field + toggle + footer need ~240. Lifting the sheet, capping it, or hiding content while typing only relocates the overlap. So any dialog whose **primary action must survive typing** uses the form presentation (`dialogFormPositionClass` in [`dialog.tsx`](src/components/ui/dialog.tsx)):
+- **anchored top, filling the screen** down to `--kb` (`inset-x-0 top-0 bottom-[var(--kb)]`, `rounded-none`, chrome padding zeroed) — removes the height budget instead of negotiating with it; `scroll-padding-top: 4rem` keeps a scrolled-to field clear of the bar;
+- actions live in a **`DialogActionBar`** along the top edge, where the keyboard can never reach them: `leading` Cancel (`ghost`) · `DialogTitle` (`text-base font-medium`, centred on the bar) · `trailing` primary action as a **`ghost` text button in `text-primary-text`** ("Create" / "Save", disabled until valid). Same frosted glass as `MobileHeader`, `sticky top-0`, safe-area top inset;
+- fields sit in a **`DialogFormBody`** (restores the 12px gutter + `gap-5`, clears the home indicator) with the **text field first**, directly under the bar, so it is on screen at any keyboard height without relying on scroll-into-view;
+- **don't autofocus** the field on phones — park `initialFocus` on the bar so the keyboard doesn't spring up before the sheet has been seen; on desktop focus the field directly;
+- **desktop is untouched**: the bar is `sm:hidden`, the body is `sm:contents`, and the ordinary `DialogHeader` / `DialogFooter` render. Gate the two with `useIsMobile()` so there is never more than one `DialogTitle` in the DOM.
+
+Used by **Create playlist / Edit info** (`CreatePlaylistDialog`). Pickers and lists (Add music, "…" menus, confirms) stay bottom sheets.
 
 **`viewport-fit=cover` is mandatory** in the viewport meta. Without it `env(safe-area-inset-*)` resolves to **0** and every safe-area pad in the app — mobile header, footer nav, player shell, dropdown sheets, dialog footers, toasts — is silently a no-op.
 

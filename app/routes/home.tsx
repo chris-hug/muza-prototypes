@@ -2097,6 +2097,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             <span className="text-foreground">Mobile surfaces escalate to sheets.</span>{" "}
             <span className="text-foreground">Every</span> dialog (and alert dialog) becomes a bottom sheet — it's the <span className="text-foreground">base default</span> of <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogContent</code>, not a per-dialog opt-in; tall ones grow to{" "}
             <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">max-h-[92vh]</code> with a <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">min-h-0</code> scroll body;
+            <span className="text-foreground">forms</span> (a text field whose primary action must survive the keyboard) go <span className="text-foreground">full-screen</span> instead via <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">mobile="form"</code> — actions in a top bar, see <a href="/?page=DesignSystem#dialog" className="text-primary-text hover:underline underline-offset-2">Dialog</a>;
             simple "…" lists use the auto-sheet <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DropdownMenu</code>; rich "…" actions use the advanced{" "}
             <a href="/?page=DesignSystem#detail-more-button" className="text-primary-text hover:underline underline-offset-2">bottom-sheet menu</a>.
             Panels that open under the sticky header (search suggestions) are <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">absolute</code> (out of flow) so they overlay rather than push content.
@@ -4833,7 +4834,19 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       </Section>
 
       {/* ══ DIALOGS ══ */}
-      <Section id="dialog" title="Dialog">
+      <Section id="dialog" title="Dialog"
+        usage={[
+          { label: "Library › + / create tile — New Playlist (full-screen form on phones)", href: "/?page=Playlists" },
+          { label: "Playlist detail › … → Edit info (same form)", href: "/?page=Playlist" },
+        ]}>
+        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
+          One dialog, two phone presentations. The default is the <span className="text-foreground">bottom sheet</span> (lifted above the keyboard via <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">--kb</code>, sticky footer). A dialog whose <span className="text-foreground">primary action must survive typing</span> uses <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">mobile="form"</code> instead: with the keyboard up a 12 mini in Brave has ~200px left and a title + field + toggle + footer need ~240 — lifting, capping or hiding content only moves the overlap. The form sheet removes the budget: anchored <span className="text-foreground">top</span>, full-screen, actions in a bar the keyboard can't reach.
+        </p>
+        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-5 max-w-2xl list-disc pl-5">
+          <li><span className="text-foreground"><code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogActionBar</code></span> — Cancel (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">ghost</code>) · <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogTitle</code> centred · primary action as a <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">ghost</code> text button in <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">text-primary-text</code>. Same frosted glass as the mobile header, <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">sticky top-0</code>, safe-area inset. <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">sm:hidden</code>.</li>
+          <li><span className="text-foreground"><code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogFormBody</code></span> — restores the 12px gutter the form chrome zeroes, clears the home indicator; <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">sm:contents</code> so desktop is the ordinary grid. Put the <span className="text-foreground">text field first</span> so it's on screen at any keyboard height.</li>
+          <li><span className="text-foreground">Desktop unchanged</span> — render the bar on phones and <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogHeader</code> + <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogFooter</code> from <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">sm</code> up, gated by <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useIsMobile()</code> so only one <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogTitle</code> exists. No autofocus on phones (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">initialFocus</code> parked on the bar); focus the field directly on desktop.</li>
+        </ul>
         <DialogsKitchenSink />
       </Section>
 

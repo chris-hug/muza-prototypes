@@ -36,17 +36,66 @@ export const dialogChromeClass =
 // desktop width (`sm:max-w-*`) / height. Applied AFTER `dialogChromeClass`
 // in `DialogContent` so this positioning + the mobile rounding/width win
 // over the chrome's defaults (twMerge: last wins).
-export const dialogPositionClass =
-  "fixed z-50 duration-100 data-open:animate-in data-open:fade-in-0 " +
-  // mobile → bottom sheet. It sits above the on-screen keyboard (`--kb`, set
-  // by `useKeyboardInset`; 0 when no keyboard) and is capped to the space
-  // that leaves, scrolling internally rather than hiding its own footer.
-  "inset-x-0 bottom-[var(--kb,0px)] top-auto translate-x-0 translate-y-0 max-w-full rounded-b-none rounded-t-2xl " +
-  "max-h-[calc(100dvh-var(--kb,0px)-8px)] overflow-y-auto " +
-  "data-open:slide-in-from-bottom-4 data-open:zoom-in-100 " +
+const dialogDesktopPositionClass =
   // desktop (sm+) → centered modal
   "sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-sm sm:rounded-2xl sm:max-h-none sm:overflow-hidden " +
+  "sm:[scroll-padding-top:0px] sm:[scroll-padding-bottom:0px] " +
   "sm:data-open:slide-in-from-bottom-0 sm:data-open:zoom-in-95"
+
+export const dialogPositionClass =
+  "fixed z-50 duration-100 data-open:animate-in data-open:fade-in-0 " +
+  // mobile → bottom sheet, sitting ON TOP of the on-screen keyboard (`--kb`,
+  // published by `useKeyboardInset`; 0 when there is none) and capped to the
+  // space that leaves, scrolling internally. Anchoring to `bottom: 0` would
+  // park the sheet BEHIND the keyboard on iOS (it shrinks the visual
+  // viewport, not the layout one).
+  //
+  // This is the right shape for pickers and lists. It is the WRONG shape for
+  // a form whose primary action lives in the footer: on a phone with browser
+  // chrome the keyboard leaves ~200px, which title + field + footer do not
+  // fit in. Forms use `mobile="form"` (`dialogFormPositionClass`) instead.
+  "inset-x-0 bottom-[var(--kb,0px)] top-auto translate-x-0 translate-y-0 max-w-full rounded-b-none rounded-t-2xl " +
+  "max-h-[calc(100dvh-var(--kb,0px)-8px)] overflow-y-auto " +
+  // The sticky footer floats OVER the scrolling content, so the browser's
+  // "scroll the focused field into view" would park a field underneath it.
+  // `scroll-padding-bottom` reserves the footer's height for that scroll.
+  "[scroll-padding-bottom:8rem] " +
+  "data-open:slide-in-from-bottom-4 data-open:zoom-in-100 " +
+  dialogDesktopPositionClass
+
+// `mobile="form"` — the full-screen FORM sheet (Apple Music "New Playlist").
+// Anchored to the TOP of the screen and filling it, with the actions in a
+// `DialogActionBar` along the top edge where the keyboard can never reach
+// them; the field sits near the top; the body scrolls under the bar. The
+// sheet still ends at `--kb`, so the browser's scroll-focused-field-into-view
+// has a real box to scroll within while the keyboard is up. This removes the
+// height budget instead of negotiating with it.
+//
+// The chrome's padding/gap are zeroed on mobile: the bar is full-bleed and
+// `DialogFormBody` re-applies the 12px gutter. Desktop is the same centered
+// modal as everything else — the bar hides, the ordinary header/footer show.
+export const dialogFormPositionClass =
+  "fixed z-50 duration-100 data-open:animate-in data-open:fade-in-0 " +
+  "inset-x-0 top-0 bottom-[var(--kb,0px)] translate-x-0 translate-y-0 max-w-full max-h-none rounded-none " +
+  "flex flex-col gap-0 p-0 overflow-y-auto " +
+  "[scroll-padding-top:4rem] [scroll-padding-bottom:1rem] " +
+  "data-open:slide-in-from-bottom-4 data-open:zoom-in-100 " +
+  "sm:grid sm:gap-5 sm:p-6 " +
+  dialogDesktopPositionClass
+
+// The form sheet's top bar: Cancel · title · primary action. Same frosted
+// glass as `MobileHeader` (it IS a mobile header, for a modal), sticky so
+// the actions stay put while the body scrolls beneath. Mobile only.
+export const dialogActionBarClass =
+  "sticky top-0 z-10 shrink-0 frosted-glass border-b border-border/50 " +
+  "flex items-center justify-between gap-2 min-h-12 px-1 pt-[max(4px,env(safe-area-inset-top))] pb-1 " +
+  "sm:hidden"
+
+// Body of a form sheet on mobile: restores the chrome's gutter + gap that
+// `dialogFormPositionClass` zeroed, clears the home indicator at the bottom.
+// On desktop it dissolves into the modal's own grid (`display: contents`).
+export const dialogFormBodyClass =
+  "flex flex-col gap-5 p-3 pb-[max(12px,env(safe-area-inset-bottom))] sm:contents"
 
 export const dialogTitleClass =
   "font-heading text-base leading-none font-medium"
@@ -62,10 +111,10 @@ export const dialogHeaderClass = "flex flex-col gap-2"
 // handle overlapping them.
 export const dialogFooterClass =
   "-mx-3 -mb-3 sm:-mx-6 sm:-mb-6 mt-2 flex flex-col-reverse gap-2 rounded-b-xl sm:rounded-b-2xl border-t bg-muted " +
-  // Sticky on mobile: with the keyboard open the sheet scrolls internally, and
-  // the actions must not scroll away — the "Create playlist" button is the
-  // thing the user is reaching for. `bottom` cancels the negative margin so it
-  // parks flush with the sheet's edge. Desktop has no scroll, so: static.
+  // Sticky on mobile so the actions never scroll out of reach when the sheet
+  // is short. `bottom` cancels the footer's own negative margin so it parks
+  // flush with the sheet's edge. The sheet itself already clears the keyboard,
+  // so no `--kb` here. Desktop doesn't scroll: static.
   "sticky bottom-[-0.75rem] z-10 sm:static " +
   "px-3 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] sm:p-6 sm:flex-row sm:justify-end"
 
@@ -107,16 +156,24 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  mobile = "sheet",
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
+  /** Phone presentation. `sheet` (default) — bottom sheet, actions in the
+   *  footer. `form` — full-screen sheet anchored top, actions in a
+   *  `DialogActionBar`; use for anything with a text field whose primary
+   *  action must survive the keyboard. Desktop is identical either way. */
+  mobile?: "sheet" | "form"
 }) {
+  const form = mobile === "form"
   return (
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Popup
         data-slot="dialog-content"
-        className={cn(dialogChromeClass, dialogPositionClass, className)}
+        data-mobile={mobile}
+        className={cn(dialogChromeClass, form ? dialogFormPositionClass : dialogPositionClass, className)}
         {...props}
       >
         {children}
@@ -126,7 +183,8 @@ function DialogContent({
             render={
               <Button
                 variant="ghost"
-                className="absolute top-2 right-2"
+                // The form sheet's bar carries Cancel — no X on phones there.
+                className={cn("absolute top-2 right-2", form && "max-sm:hidden")}
                 size="icon-sm"
               />
             }
@@ -146,6 +204,50 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="dialog-header"
       className={cn(dialogHeaderClass, className)}
+      {...props}
+    />
+  )
+}
+
+/*
+ * DialogActionBar — the top bar of a `mobile="form"` sheet on phones:
+ * `leading` (Cancel) · title · `trailing` (the primary action, as a text
+ * button). Hidden from `sm` up, where the ordinary DialogHeader / DialogFooter
+ * take over — so a form renders BOTH, gated by `useIsMobile()`, never two
+ * `DialogTitle`s at once.
+ */
+function DialogActionBar({
+  className,
+  leading,
+  trailing,
+  children,
+  ...props
+}: React.ComponentProps<"div"> & {
+  leading?: React.ReactNode
+  trailing?: React.ReactNode
+}) {
+  return (
+    <div
+      data-slot="dialog-action-bar"
+      className={cn(dialogActionBarClass, className)}
+      {...props}
+    >
+      <div className="flex min-w-0 shrink-0 items-center">{leading}</div>
+      {/* Title centred on the bar, not between the two buttons, so it
+          doesn't drift when Cancel and the action differ in width. */}
+      <div className="absolute inset-x-0 pointer-events-none flex justify-center px-20">
+        {children}
+      </div>
+      <div className="flex min-w-0 shrink-0 items-center justify-end">{trailing}</div>
+    </div>
+  )
+}
+
+function DialogFormBody({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-form-body"
+      className={cn(dialogFormBodyClass, className)}
       {...props}
     />
   )
@@ -261,6 +363,8 @@ export {
   DialogDescription,
   DialogFooter,
   DialogHeader,
+  DialogActionBar,
+  DialogFormBody,
   DialogOverlay,
   DialogPortal,
   DialogTitle,

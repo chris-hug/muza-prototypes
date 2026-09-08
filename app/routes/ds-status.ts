@@ -69,6 +69,9 @@ export function sectionSourceUrl(id: string): string | null {
  *  section `title` props exactly. Only sections with a badge live
  *  here; everything else just shows its auto "changed" date. */
 export const SECTION_STATUS: Record<string, SectionStatusEntry> = {
+  // Full-screen form presentation on phones (`mobile="form"` +
+  // DialogActionBar / DialogFormBody) — Create playlist / Edit info.
+  "Dialog": { status: "updated" },
   // Badges cleared. Add `new` / `updated` (or `concept` for "Not used
   // yet") entries here to flag a cycle's work; graduate with
   // `npm run release -- --clear`. (Phase 2 badges are a separate list —
