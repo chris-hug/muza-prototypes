@@ -60,6 +60,14 @@ queries, and what a 320px phone gets. `.grid-cards` learned this the hard way:
 its base was `repeat(1, minmax(143px, 220px))`, which on a 296px-wide viewport
 produced one stretched column with a field of empty space beside it.
 
+### Measuring a container query
+
+A container query measures the container's **content box**. Padding on the
+`@container` element therefore shrinks what everything inside it reads: the
+design system's demo frame carried `p-6` on its stage, so at the 584 rung a
+rail saw 536 and stayed in its below-560 layout while the chip said 584. Put
+the padding on a child, and keep the `@container` at the width it claims.
+
 ## Gutter
 
 `--page-px` is one knob, applied with the `px-page` utility — never `px-10`:

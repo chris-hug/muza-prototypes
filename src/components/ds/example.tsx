@@ -8,7 +8,9 @@
  * behaviour can be seen without resizing the browser. The head carries two
  * icon buttons:
  *
- *   · `</>` — the usage snippet, copyable;
+ *   · `</>` — the CALL SITE: the file that renders in the frame, showing how
+ *            the real component is used. Not its implementation — that is
+ *            behind "Source" in the section header;
  *   · `ⓘ`  — the component's docs, read straight from
  *            `docs/components/<id>.md`. Same file an agent reads, so the
  *            prose exists once.
@@ -59,7 +61,7 @@ function readWidths(): { label: string; px: number; note: string }[] {
 const WIDTHS = readWidths()
 
 /*
- * What `</>` shows: the demo file with its explanatory head removed.
+ * What `</>` shows: the call-site file with its explanatory head removed.
  *
  * The FILE is the single source of truth — it is what renders, and it is what
  * sits on GitHub. But its leading `"use client"` and block comment are there
@@ -96,8 +98,9 @@ export function Example({
   title?: string
   /** Section id whose `docs/components/<id>.md` backs the ⓘ button. */
   doc?: string
-  /** Usage snippet for the `</>` panel. Pass the demo module's own source
-   *  (`import src from "…?raw"`) so what is shown is what renders. */
+  /** The CALL SITE for the `</>` panel — pass the demo module's own source
+   *  (`import src from "…?raw"`), so what is shown is what renders. Never a
+   *  snippet typed beside the demo: that is a second copy, and it drifts. */
   code?: string
   /** Repo-relative path of that file — printed above the snippet and linked
    *  to GitHub, so the panel says where its truth lives. */
@@ -178,7 +181,8 @@ export function Example({
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label={showCode ? "Hide markup" : "Show markup"}
+                aria-label={showCode ? "Hide the call site" : "Show the call site"}
+                title="The call site — how the component is used, not how it is built"
                 aria-expanded={showCode}
                 onClick={() => setShowCode(v => !v)}
                 className={cn(showCode && "bg-secondary")}
@@ -202,8 +206,14 @@ export function Example({
         {/* Markup panel. */}
         {showCode && usage && (
           <div className="relative border-b border-border">
+            {/* Say plainly WHAT this is. It is not the component's source —
+                that sits behind "Source" in the section header. It is the
+                call site: the file that renders in the frame above, showing
+                how the real component is used. */}
             {codePath && (
               <p className="px-3 pt-3 text-2xsmall text-muted-foreground bg-muted">
+                <span className="text-foreground font-medium">Call site</span>
+                <span className="opacity-70"> — this exact file renders in the frame above; it imports the real component. </span>
                 <a
                   href={`https://github.com/chris-hug/muza-prototypes/blob/main/${codePath}`}
                   target="_blank"
@@ -212,7 +222,6 @@ export function Example({
                 >
                   {codePath}
                 </a>
-                <span className="opacity-70"> — rendered above, verbatim</span>
               </p>
             )}
             <pre className="m-0 overflow-x-auto bg-muted p-3 pr-24 text-2xsmall leading-5 text-foreground">
@@ -249,25 +258,25 @@ export function Example({
               "[background-size:12px_12px]",
             )}
           />
+          {/* The `@container` must be EXACTLY the chip's width, so padding
+              cannot live on it: a container query measures the CONTENT box,
+              so `p-6` here made every component see 48px less than the chip
+              said — at the 584 rung a rail read 536 and stayed in its
+              below-560 layout. The padding belongs to the inner surface. */}
           <div
             data-slot="example-stage"
-            // Centred: at a wide rung a component narrower than the frame
-            // would otherwise hug the left edge with a field of empty white
-            // beside it, which reads as a layout bug rather than as "this is
-            // its natural width". A demo that wants the full width can still
-            // take it — `w-full` on its own root wins over the centring.
-            // The padding belongs to the FRAME, not to the ruled ground: the
-            // white area is the simulated viewport, so the demo needs its air
-            // inside it — on the ground it would only pad left and right,
-            // since the frame shrink-wraps its content vertically.
-            className={cn(
-              "@container relative w-full bg-background flex flex-col gap-6 p-6",
-              align === "center" ? "items-center" : "items-stretch",
-              stageClassName,
-            )}
+            className="@container relative w-full"
             style={px ? { maxWidth: px } : undefined}
           >
-            {children}
+            <div
+              className={cn(
+                "bg-background flex flex-col gap-6 p-6",
+                align === "center" ? "items-center" : "items-stretch",
+                stageClassName,
+              )}
+            >
+              {children}
+            </div>
           </div>
         </div>
       </div>

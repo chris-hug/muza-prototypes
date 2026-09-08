@@ -44,6 +44,8 @@ import DialogFormExample from "@/ds-examples/dialog-form"
 import dialogFormSrc from "@/ds-examples/dialog-form.tsx?raw"
 import CardRailRowExample from "@/ds-examples/card-rail-row"
 import cardRailRowSrc from "@/ds-examples/card-rail-row.tsx?raw"
+import CardRailGridExample from "@/ds-examples/card-rail-grid"
+import cardRailGridSrc from "@/ds-examples/card-rail-grid.tsx?raw"
 import { SECTION_STATUS_BY_ID, LAST_GIT_PUSH, sectionLastChanged, sectionSourceUrl, formatStatusDate, type SectionStatus } from "./ds-status"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Badge, ContentTypeBadge } from "@/components/ui/badge"
@@ -4264,13 +4266,22 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
 </Example>
 
         <p className="text-base text-muted-foreground mt-8 mb-2 max-w-2xl">
-          <span className="text-foreground font-medium">Swipeable grid variant</span> (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">mobileGrid</code>) — opt-in denser layout for shelves with <span className="text-foreground">12+ entries</span>. On mobile (&lt; 560px) cards lay out as a <span className="text-foreground">2-row, column-major</span> grid you swipe across columns (~2× the cards per screen); desktop is unchanged. Enabling it is the host/editor's call — pass the boolean only when the shelf is long enough and an editor opted in. <span className="text-foreground">Narrow your window below 560px</span> to see the two rows.
+          <span className="text-foreground font-medium">Swipeable grid variant</span>{" "}
+          (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">mobileGrid</code>){" "}
+          — the denser layout for a shelf with 12+ entries. Set the frame to
+          Phone to see the two rows.
         </p>
-        <CardRail title="Swipeable Grid Section" mobileGrid>
-          {HOME_NEW_ALBUMS.map(a => (
-            <li key={a.id}><AlbumCard cover={a.cover} title={a.title} artist={a.artist} year={albumMetaFor(a.title).year} streamPrice={albumMetaFor(a.title).streamPrice} downloadPrice={albumMetaFor(a.title).downloadPrice} /></li>
-          ))}
-        </CardRail>
+        <Example
+          title="Grid mode — two rows, column-major"
+          doc="card-rail"
+          defaultWidth="Phone"
+          align="stretch"
+          code={cardRailGridSrc}
+          codePath="src/ds-examples/card-rail-grid.tsx"
+        >
+          <CardRailGridExample />
+        </Example>
+
       </Section>
 
       {/* ══ SONG RAIL ══ */}

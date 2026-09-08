@@ -178,10 +178,16 @@ with **no 220 floor**, so — unlike swipe mode — the calc does govern and the
 column count runs one ahead of the ladder:
 
 ```text
-container < 304    auto-cols 40%                 2 columns + a sliver
-container 304–463  (100% − 72px) / 3             3 columns · 24px peek   (93px cards at 351)
-container 464–559  (100% − 88px) / 4             4 columns · 24px peek
+container < 492    (100% − 56px) / 2             2 columns · 24px peek   (159px cards at 375)
+container 492–559  (100% − 72px) / 3             3 columns · 24px peek   (140px at 492)
 ```
+
+The count follows a **minimum cover of 140px**, not a guessed ladder:
+`n` columns fit once `C ≥ n·140 + (n−1)·16 + 24`, which puts 2 at 320 and 3 at
+492. It used to step at 304 and 464, giving three and four columns — 101px
+covers at a 375 container, past the width at which a cover can be read. The
+density of this variant comes from the second **row**; thinning the columns as
+well spends what the second row bought.
 
 The 24px peek is the 40px reserve minus one 16px gap: the next column starts
 exactly 24px before the right edge. The year on an `AlbumCard`
@@ -202,7 +208,8 @@ and any wider card overflowed sideways. Its base is now
 
 The rail's bases follow the same rule: `[&>li]:w-[60%]` in row mode is
 overridden by the 220 floor into one full card plus a peek, and
-`auto-cols-[40%]` in grid mode gives two columns plus a sliver. Neither
+`auto-cols-[calc((100%-56px)/2)]` in grid mode is itself the two-column
+layout. Neither
 depends on a `@min-[…]` step firing.
 
 ## Spacing

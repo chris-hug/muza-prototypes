@@ -270,9 +270,19 @@ export function CardRail({ title, showAllLabel = "Show all", onShowAll, showAllO
               // the meta line from crowding. Year returns on the single
               // row from 560 up.
               "@max-[559px]:[&_[data-card-year]]:hidden " +
-              "auto-cols-[40%] " +
-              "@min-[304px]:auto-cols-[calc((100%-72px)/3)] " +
-              "@min-[464px]:auto-cols-[calc((100%-88px)/4)] " +
+              // Column count below 560 follows a MINIMUM COVER of 140px, not a
+              // guessed ladder. The density of this variant comes from the
+              // second ROW; thinning the columns as well made 101px covers at
+              // a 375 container, past the point a cover can be read.
+              //
+              //   n columns fit once  C ≥ n·140 + (n−1)·16 + 24 (peek)
+              //   2 → 320   ·   3 → 492
+              //
+              // So: 2 up to 492, 3 from there to 560, where the single-row
+              // ladder takes over. Peek reserve is row mode's, so the sliver
+              // reads the same in both.
+              "auto-cols-[calc((100%-56px)/2)] " +
+              "@min-[492px]:auto-cols-[calc((100%-72px)/3)] " +
               "@min-[560px]:auto-cols-[calc((100%-32px)/3)] " +
               "@min-[692px]:auto-cols-[calc((100%-48px)/4)] " +
               "@min-[928px]:auto-cols-[calc((100%-64px)/5)] " +
