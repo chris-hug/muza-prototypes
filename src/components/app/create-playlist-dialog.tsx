@@ -24,12 +24,11 @@ import { Lock } from "lucide-react"
 
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
-  DialogFooter, DialogClose, DialogActionBar, DialogFormBody,
+  DialogFooter, DialogClose, DialogActionBar, DialogFormBody, DialogFormActions,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
-import { PlaylistCreateCard } from "@/components/ui/playlist-create-card"
 import { useToast, TOAST_CONFIRM_MS } from "@/components/ui/toast"
 import { useIsMobile } from "@/lib/use-media-query"
 import { AddMusicDialog } from "@/components/app/add-music-dialog"
@@ -105,16 +104,6 @@ export function CreatePlaylistDialog({
   const title = editing ? "Edit info" : "New Playlist"
   const action = editing ? "Save" : "Create playlist"
 
-  // Cover — the existing "create playlist" tile (tinted square + round
-  // button), relabelled for picking an image. Prototype: no picker wired, so
-  // it's a static affordance.
-  const cover = (
-    <PlaylistCreateCard
-      label={editing ? "Change cover image" : "Add cover image"}
-      className="mx-auto w-40"
-    />
-  )
-
   return (
     <Dialog open={open} onOpenChange={o => { if (!o) reset(); onOpenChange(o) }}>
       {/* Desktop width matches the Add-music step it chains into — at least
@@ -134,28 +123,27 @@ export function CreatePlaylistDialog({
             ref={barRef}
             tabIndex={-1}
             className="outline-none"
+            // Cancel only — the confirming action is the full-width button in
+            // the body (see below), so it isn't offered twice.
             leading={<DialogClose render={<Button variant="ghost" />}>Cancel</DialogClose>}
-            trailing={
-              <Button variant="ghost" className="text-primary-text" onClick={create} disabled={!name.trim()}>
-                {editing ? "Save" : "Create"}
-              </Button>
-            }
           >
             <DialogTitle className="text-base font-medium truncate">{title}</DialogTitle>
           </DialogActionBar>
         ) : (
           <DialogHeader>
-            <DialogTitle className="text-large">{title}</DialogTitle>
+            <DialogTitle className="sm:text-large">{title}</DialogTitle>
           </DialogHeader>
         )}
 
         <DialogFormBody>
-          {/* Phone: the name field comes FIRST, directly under the bar, so it
-              is on screen at any keyboard height without relying on the
-              browser scrolling it into view. The cover tile follows — it
-              isn't needed while typing. Desktop keeps the Figma order. */}
-          {!isMobile && cover}
-
+          {/* Name leads the form — it's the only required input, and on a
+              phone that puts it directly under the bar, on screen at any
+              keyboard height without relying on scroll-into-view.
+              No cover picker: naming is the job here, and an image can be
+              set later from the playlist itself. */}
+          {/* No visible label — the placeholder carries it, and on a phone
+               every line costs space above the keyboard. `aria-label` keeps
+               the field named for screen readers. */}
           <Input
             ref={inputRef}
             value={name}
@@ -165,27 +153,16 @@ export function CreatePlaylistDialog({
             aria-label="Playlist name"
           />
 
-          {isMobile && cover}
-
-          {/* Keep private — the same setting-row shape already used on staging:
-              Switch leads, lock icon sits with the label, muted description
-              underneath. See the Switch section in the design system. */}
-          <div className="flex flex-col gap-2">
-            <label className="flex items-center gap-1 cursor-pointer">
-              <Switch
-                checked={keepPrivate}
-                onCheckedChange={setKeepPrivate}
-                aria-describedby="new-playlist-private-desc"
-              />
-              <p className="text-foreground text-base ms-2 flex items-center gap-2 font-medium">
-                <Lock className="size-4" />
-                Keep private
-              </p>
-            </label>
-            <p id="new-playlist-private-desc" className="text-small text-muted-foreground">
-              Your playlist will not be visible nor accessible by anyone.
-            </p>
-          </div>
+          {/* Keep private — label + switch grouped at the RIGHT edge, aligned
+              with the field and button above. The control lands under the
+              thumb on a phone, and nothing floats alone on the left. */}
+          <label className="flex w-full items-center justify-end gap-3 cursor-pointer">
+            <span className="text-foreground text-small flex items-center gap-2 font-medium">
+              <Lock className="size-4" />
+              Keep private
+            </span>
+            <Switch checked={keepPrivate} onCheckedChange={setKeepPrivate} />
+          </label>
 
           {!isMobile && (
             <DialogFooter>
@@ -194,6 +171,20 @@ export function CreatePlaylistDialog({
             </DialogFooter>
           )}
         </DialogFormBody>
+
+        {/* Full-width confirming action, as the reference has it — but in its
+            own band below the scrolling body rather than sticky inside it, so
+            it can never overlay a field. The sheet already ends at `--kb`, so
+            this row sits directly above the keyboard. */}
+        {isMobile && (
+          <DialogFormActions>
+            {/* `lg` (48px) — the DS's largest text button, and the right touch
+                 target for the screen's primary action. */}
+            <Button size="lg" onClick={create} disabled={!name.trim()} className="w-full">
+              {action}
+            </Button>
+          </DialogFormActions>
+        )}
       </DialogContent>
     </Dialog>
   )

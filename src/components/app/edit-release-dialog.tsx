@@ -209,7 +209,7 @@ export function EditReleaseDialog({
           </div>
 
           <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-            <DialogTitle className="text-large font-semibold leading-none truncate">
+            <DialogTitle className="sm:text-large font-semibold leading-none truncate">
               {title}
             </DialogTitle>
             <DialogDescription className="flex items-center gap-1.5 text-small text-muted-foreground font-normal min-w-0">

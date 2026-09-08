@@ -77,7 +77,11 @@ export const dialogPositionClass =
 export const dialogFormPositionClass =
   "fixed z-50 duration-100 data-open:animate-in data-open:fade-in-0 " +
   "inset-x-0 top-0 bottom-[var(--kb,0px)] translate-x-0 translate-y-0 max-w-full max-h-none rounded-none " +
-  "flex flex-col gap-0 p-0 overflow-y-auto " +
+  // `overflow-hidden`, NOT `auto`: the sheet is three bands — sticky bar,
+  // scrolling body, action row — and only the BODY scrolls. If the popup
+  // itself scrolled, a sticky action row would overlay whatever passed under
+  // it (it covered the privacy toggle) instead of the body ending above it.
+  "flex flex-col gap-0 p-0 overflow-hidden " +
   "[scroll-padding-top:4rem] [scroll-padding-bottom:1rem] " +
   "data-open:slide-in-from-bottom-4 data-open:zoom-in-100 " +
   "sm:grid sm:gap-5 sm:p-6 " +
@@ -95,7 +99,17 @@ export const dialogActionBarClass =
 // `dialogFormPositionClass` zeroed, clears the home indicator at the bottom.
 // On desktop it dissolves into the modal's own grid (`display: contents`).
 export const dialogFormBodyClass =
-  "flex flex-col gap-5 p-3 pb-[max(12px,env(safe-area-inset-bottom))] sm:contents"
+  // `flex-1 min-h-0 overflow-y-auto` — the body is the only scrolling band.
+  // `gap-3` (not the desktop 20px): on a phone every gap competes with the
+  // keyboard for the same ~200px.
+  "flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto p-3 sm:contents sm:overflow-visible"
+
+// The form sheet's action row: the confirming button pinned below the body,
+// never overlapping it (the body scrolls, this doesn't). Full-bleed surface
+// so scrolled content can't show through, and it clears the home indicator.
+// Mobile only — desktop uses the ordinary `DialogFooter`.
+export const dialogFormActionsClass =
+  "shrink-0 bg-popover px-3 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] sm:hidden"
 
 export const dialogTitleClass =
   "font-heading text-base leading-none font-medium"
@@ -253,6 +267,21 @@ function DialogFormBody({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/**
+ * DialogFormActions — the confirming action of a `mobile="form"` sheet,
+ * pinned below the scrolling body. Renders nothing on desktop, where
+ * `DialogFooter` does the job.
+ */
+function DialogFormActions({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-form-actions"
+      className={cn(dialogFormActionsClass, className)}
+      {...props}
+    />
+  )
+}
+
 function DialogFooter({
   className,
   showCloseButton = false,
@@ -365,6 +394,7 @@ export {
   DialogHeader,
   DialogActionBar,
   DialogFormBody,
+  DialogFormActions,
   DialogOverlay,
   DialogPortal,
   DialogTitle,

@@ -86,7 +86,7 @@ function AddToPlaylistContent({ song, onClose }: { song: SavedSong; onClose: () 
     return (
       <DialogContent className="sm:max-w-[max(32rem,50vw)]">
         <DialogHeader>
-          <DialogTitle className="text-large">New playlist</DialogTitle>
+          <DialogTitle className="sm:text-large">New playlist</DialogTitle>
           <DialogDescription>
             “{song.title}” will be added to it.
           </DialogDescription>
@@ -110,7 +110,7 @@ function AddToPlaylistContent({ song, onClose }: { song: SavedSong; onClose: () 
   return (
     <DialogContent className="sm:max-w-[max(32rem,50vw)]">
       <DialogHeader>
-        <DialogTitle className="text-large">Add to playlist</DialogTitle>
+        <DialogTitle className="sm:text-large">Add to playlist</DialogTitle>
         <DialogDescription>
           {song.title}{song.artist ? ` · ${song.artist}` : ""}
         </DialogDescription>

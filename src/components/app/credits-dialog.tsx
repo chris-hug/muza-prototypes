@@ -171,7 +171,7 @@ function CreditsDialogContent({ credits, onClose }: { credits: Credits; onClose:
     >
       <CreditsContent
         credits={credits}
-        heading={<DialogTitle className="text-large font-medium leading-none">Album credits</DialogTitle>}
+        heading={<DialogTitle className="sm:text-large font-medium leading-none">Album credits</DialogTitle>}
         onArtist={name => go(() => openArtist(slugify(name)))}
         onAlbum={albumLinkable ? () => go(() => openAlbum(slugify(credits.album))) : undefined}
         bodyClassName="min-h-0"

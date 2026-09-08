@@ -43,7 +43,7 @@ export function FeedbackDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-large">Send feedback</DialogTitle>
+          <DialogTitle className="sm:text-large">Send feedback</DialogTitle>
           <DialogDescription>
             Spotted a bug or have an idea? Tell us — it goes straight to the team.
           </DialogDescription>

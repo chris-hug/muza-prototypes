@@ -66,7 +66,7 @@ function LoginHeading({ preview = false }: { preview?: boolean }) {
   return (
     <>
       <LogoMark className="w-7 h-auto text-foreground" />
-      <Title className="text-large">{TITLE}</Title>
+      <Title className="sm:text-large">{TITLE}</Title>
       <Desc>{DESCRIPTION}</Desc>
     </>
   )
