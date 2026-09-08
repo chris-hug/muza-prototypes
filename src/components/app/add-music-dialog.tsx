@@ -256,43 +256,43 @@ export function AddMusicDialog({
     <Dialog open={open} onOpenChange={o => { if (!o) reset(); onOpenChange(o) }}>
       {/* Desktop: at least half the viewport (with a floor so it never gets
           cramped on small laptops). Mobile is unaffected — still a sheet. */}
-      <DialogContent className="sm:max-w-[max(32rem,50vw)]">
-        <DialogHeader>
-          {/* The playlist is named in the TITLE rather than a description
-              line — it's the one piece of context that matters, and a
-              separate line costs height the keyboard is already taking. It
-              does NOT change on the Find screen: what you're filling is the
-              same job whether you're browsing or searching, and swapping in
-              "Find" would drop the only piece of context on screen. */}
-          {finding ? (
-            <div className="flex items-center gap-2 min-w-0">
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Back to browsing"
-                onClick={() => { setFinding(false); setQuery("") }}
-                className="-ml-1 shrink-0"
-              >
-                <ChevronLeft />
-              </Button>
-              <DialogTitle className="flex-1 text-center truncate">
-                {playlistName ? `Add to “${playlistName}”` : "Add music"}
-              </DialogTitle>
-              {/* Balances the chevron so the title sits optically centred. */}
-              <span aria-hidden className="size-8 shrink-0" />
-            </div>
-          ) : (
-            <DialogTitle className="sm:text-large truncate">
-              {playlistName ? `Add to “${playlistName}”` : "Add music"}
-            </DialogTitle>
-          )}
+      {/* On a phone this sheet always fills everything the keyboard leaves,
+          rather than sizing to its content: it's a picker, so more rows on
+          screen is strictly better, and a sheet that changes height as you
+          switch tabs or start typing reads as jumping. `h-…` (not just the
+          base `max-h-…`) is what pins the top edge. Desktop keeps the
+          content-sized modal, capped at 85vh. */}
+      <DialogContent className="sm:max-w-[max(32rem,50vw)] flex flex-col h-[calc(100dvh-var(--kb,0px)-8px)] sm:h-auto sm:max-h-[85vh]">
+        {/* The playlist is named in the TITLE rather than a description line
+            — it's the one piece of context that matters, and a separate line
+            costs height the keyboard is already taking. It does NOT change on
+            the Find screen: what you're filling is the same job whether
+            you're browsing or searching, and swapping in "Find" would drop
+            the only piece of context on screen. */}
+        <DialogHeader
+          className="shrink-0"
+          leading={finding ? (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Back to browsing"
+              onClick={() => { setFinding(false); setQuery("") }}
+              className="shrink-0"
+            >
+              <ChevronLeft />
+            </Button>
+          ) : undefined}
+        >
+          <DialogTitle className="sm:text-large truncate">
+            {playlistName ? `Add to “${playlistName}”` : "Add music"}
+          </DialogTitle>
         </DialogHeader>
 
         {/* An opened album takes over the sheet body; the search field and tabs
             step aside so the screen is about that one record. */}
         {album ? (
           <>
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-2 min-w-0 shrink-0">
               {/* Not just "Back" — the page chrome already owns that label,
                    so a screen reader would announce two identical controls. */}
               <Button variant="ghost" size="icon-sm" aria-label="Back to search" onClick={() => setDrill(null)}>
@@ -317,7 +317,7 @@ export function AddMusicDialog({
               </Button>
             </div>
 
-            <div className="flex flex-col gap-2 min-w-0 overflow-y-auto max-h-[min(60vh,calc(100dvh-var(--kb,0px)-14rem))] sm:max-h-[52vh] -mx-2 px-2">
+            <div className="flex flex-col gap-2 min-w-0 flex-1 min-h-0 overflow-y-auto -mx-2 px-2">
               {albumSongs.map(s => trackRow(s, s.id))}
             </div>
           </>
@@ -326,12 +326,13 @@ export function AddMusicDialog({
              keyboard up there is room for one list, so the tabs and the Add
              action wait until Back. An empty query gets an invitation rather
              than a blank sheet. */
-          /* The cap is measured against what the KEYBOARD leaves, not the
-             viewport: the field is focused here by definition, so on a 12
-             mini the sheet has ~209px, of which the header and the field
-             take ~7rem. A flat `60vh` would be taller than the whole sheet
-             and push the field out of reach. */
-          <div className="flex flex-col gap-4 min-w-0 flex-1 overflow-y-auto max-h-[min(60vh,calc(100dvh-var(--kb,0px)-6rem))] sm:max-h-[52vh] -mx-2 px-2 pb-20">
+          /* `flex-1 min-h-0`, never a `vh` cap: the sheet is a flex column
+             that already ends at `--kb`, so the list takes exactly what the
+             other bands leave. A viewport-relative cap can't know that and
+             runs the list under the footer. The floating band overlays this
+             list rather than sitting below it — a spacer at the end of the
+             content clears it. */
+          <div className="flex flex-col gap-4 min-w-0 flex-1 min-h-0 overflow-y-auto -mx-2 px-2">
             {searching ? searchResults : recent.length > 0 ? (
               // What they searched before beats anything we could guess at.
               <section className="flex flex-col gap-1">
@@ -358,6 +359,13 @@ export function AddMusicDialog({
                 <p className="text-small text-muted-foreground">Songs, albums and artists.</p>
               </div>
             )}
+
+            {/* Clears the floating band. A SPACER, not `padding-bottom` on
+                the scroller: padding sets a floor on a flex item's height
+                (`min-h-0` can't shrink a box below its own padding), so with
+                a keyboard up the list would refuse to fit and the sheet
+                would scroll instead. */}
+            <div aria-hidden className={cn("shrink-0", picked.length > 0 ? "h-36" : "h-20")} />
           </div>
         ) : (
           <>
@@ -366,7 +374,7 @@ export function AddMusicDialog({
                 source is the results; otherwise you pick between Suggested and
                 your own library. Selection appears with the first pick and
                 LEADS, so it's never scrolled off. */}
-            <div className="min-w-0">
+            <div className="min-w-0 shrink-0">
               <MobilePillTabs
                 value={tab}
                 onChange={v => setTab(v as TabKey)}
@@ -388,7 +396,14 @@ export function AddMusicDialog({
               />
             </div>
 
-            <div className="flex flex-col gap-4 min-w-0 overflow-y-auto max-h-[min(60vh,calc(100dvh-var(--kb,0px)-14rem))] sm:max-h-[52vh] -mx-2 px-2">
+            {/* The only flexible band. `min-h-0` is what lets it SHRINK — a
+                flex item defaults to `min-height: auto`, so without it the
+                list keeps its content height, overflows the sheet, and the
+                last rows are sliced by the footer.
+                `-mb-5` eats the sheet's own gap so the list runs right up to
+                the footer: the bar's edge is what cuts the content off, with
+                no strip of empty sheet between them. */}
+            <div className="flex flex-col gap-4 min-w-0 flex-1 min-h-0 overflow-y-auto -mx-2 px-2 -mb-5">
               {tab === "selection" ? (
                 // Everything picked so far, regardless of the query it came from.
                 <section className="flex flex-col gap-2">
@@ -432,62 +447,87 @@ export function AddMusicDialog({
                 </section>
               )}
             </div>
-
           </>
         )}
 
-        {/* Search sits at the BOTTOM, directly above the confirming action:
-            it's the thumb's half of the sheet on a phone, and the keyboard
-            opens against it instead of pushing the list away. Rendered ONCE,
-            outside the branches, so entering Find doesn't remount it and
-            throw away the focus that got us there. */}
-        {!album && (
-          <div
-            className={cn(
-              // On the Find screen the field FLOATS over the results instead
-              // of holding a band of its own: the list runs under it (hence
-              // the body's `pb-20`), which buys back the ~50px the keyboard
-              // took. Browsing, it's an ordinary row above the Add action.
-              finding && "absolute inset-x-3 bottom-3 z-10",
-            )}
-          ><Input
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            onFocus={() => setFinding(true)}
-            // Enter commits the query to the recent list — the same moment
-            // the on-screen keyboard's "search" key fires.
-            onKeyDown={e => { if (e.key === "Enter") remember(query) }}
-            // Browsing, the rows above are the user's OWN library, so the
-            // placeholder carries the scope. On the Find screen the header
-            // already says it, so one word is enough.
-            placeholder={finding ? "Search" : "Search all of muza"}
-            aria-label="Search all of muza for songs or albums"
-            startIcon={<Search />}
-            onClear={() => setQuery("")}
-            className={cn(
-              // 48px to match the `lg` action below it — the two form one
-              // bottom band, so they share a height.
-              "h-12",
-              // Floating, it needs its own surface and a lift: rows scroll
-              // directly beneath it.
-              finding && "bg-popover shadow-lg",
-            )}
-          />
-          </div>
-        )}
+        {/* ONE bottom band: the search field and the confirming action share
+            the footer, so the sheet has a single edge of chrome rather than a
+            field floating just above a bar. `flex-col` (not the footer's
+            default `flex-col-reverse`) puts the field on top, where the
+            keyboard opens against it.
 
-        {/* No Cancel — the sheet's own ✕ closes it, and a second dismissing
-            control next to the confirming one just splits the target.
-            Hidden while finding: the field is the bottom band there, and the
-            picks are still waiting under Selection once Back is pressed. */}
-        <DialogFooter className={cn(finding && "hidden")}>
-          <Button size="lg" onClick={done} disabled={picked.length === 0}>
-            {/* Name the unit, not just the number — "Add 4" reads as an
-                ordinal on a row of tracks. Singular when it's one. */}
-            {picked.length > 0
-              ? `Add ${picked.length} ${picked.length === 1 ? "track" : "tracks"}`
-              : "Add"}
-          </Button>
+            No Cancel — the sheet's own ✕ closes it, and a second dismissing
+            control next to the confirming one just splits the target. */}
+        <DialogFooter
+          className={cn(
+            "shrink-0 mt-0 flex-col sm:flex-row sm:items-center",
+            // On the Find screen the band leaves the flow and sits over the
+            // results (the list is cleared by a spacer at its end), which
+            // buys back the ~50px the keyboard took. The FOOTER carries this,
+            // never the field — re-parenting the field would remount it and
+            // throw away the focus that opened the Find screen.
+            //
+            // `mx-0`/`mb-0` cancel the footer's own full-bleed negative
+            // margins: on an absolutely positioned box those ADD to the
+            // insets, so the band would hang 12px outside the sheet on every
+            // side and its padding would land 12px short.
+            finding && "absolute inset-x-0 bottom-0 mx-0 mt-0 mb-0",
+            // …and its TREATMENT depends on how much it carries. One control
+            // can float: a lone pill over the rows reads as an overlay, and
+            // it needs a real inset (16px, not the sheet's 12px gutter) so it
+            // doesn't crowd them. TWO stacked controls cannot — a field and
+            // an action side by side would read as two competing primary
+            // actions over see-through content — so the band goes opaque and
+            // becomes an ordinary bar with an edge, exactly as in Browse.
+            finding && (picked.length > 0
+              ? "px-3 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]"
+              : "border-t-0 bg-transparent px-4 pt-4 pb-[max(16px,env(safe-area-inset-bottom))]"),
+          )}
+        >
+          {/* The album screen is about one record, so there's nothing to
+              search from inside it. */}
+          {!album && (
+            <div className="w-full min-w-0 sm:flex-1">
+              <Input
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                onFocus={() => setFinding(true)}
+                // Enter commits the query to the recent list — the same moment
+                // the on-screen keyboard's "search" key fires.
+                onKeyDown={e => { if (e.key === "Enter") remember(query) }}
+                // Browsing, the rows above are the user's OWN library, so the
+                // placeholder carries the scope. On the Find screen the header
+                // already says it, so one word is enough.
+                placeholder={finding ? "Search" : "Search all of muza"}
+                aria-label="Search all of muza for songs or albums"
+                startIcon={<Search />}
+                onClear={() => setQuery("")}
+                className={cn(
+                  // 48px, matching the `lg` action beside it.
+                  "h-12",
+                  // Only the LONE floating field needs its own surface and a
+                  // lift — rows scroll directly beneath it. Once the action
+                  // joins it the band is opaque and carries the separation
+                  // itself, so a shadow would just be noise.
+                  finding && picked.length === 0 && "bg-popover shadow-lg",
+                )}
+              />
+            </div>
+          )}
+
+          {/* On the Find screen the action rides along in the floating band,
+              but only once there IS something to add — an empty, disabled
+              button would take a second row of the little the keyboard
+              leaves. */}
+          {(!finding || picked.length > 0) && (
+            <Button size="lg" onClick={done} disabled={picked.length === 0} className="w-full sm:w-auto">
+              {/* Name the unit, not just the number — "Add 4" reads as an
+                  ordinal on a row of tracks. Singular when it's one. */}
+              {picked.length > 0
+                ? `Add ${picked.length} ${picked.length === 1 ? "track" : "tracks"}`
+                : "Add"}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -69,9 +69,10 @@ export function sectionSourceUrl(id: string): string | null {
  *  section `title` props exactly. Only sections with a badge live
  *  here; everything else just shows its auto "changed" date. */
 export const SECTION_STATUS: Record<string, SectionStatusEntry> = {
-  // Full-screen form presentation on phones (`mobile="form"` + the three
-  // bands: DialogActionBar / DialogFormBody / DialogFormActions) — Create
-  // playlist / Edit info. Titles are text-base on phones (`sm:text-large`).
+  // DialogHeader is now a row — leading · centred title · ✕ — and the form
+  // presentation's three bands (DialogActionBar / DialogFormBody /
+  // DialogFormActions) carry no Cancel. Titles are text-base on phones
+  // (`sm:text-large`); sheet bodies are flex children, never `vh` caps.
   "Dialog": { status: "updated" },
   // Badges cleared. Add `new` / `updated` (or `concept` for "Not used
   // yet") entries here to flag a cycle's work; graduate with

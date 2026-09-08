@@ -117,7 +117,23 @@ export const dialogTitleClass =
 export const dialogDescriptionClass =
   "text-small text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground"
 
-export const dialogHeaderClass = "flex flex-col gap-2"
+/*
+ * Header row: [leading] · title stack · [space for the ✕].
+ *
+ * On a phone a sheet reads like a screen, so the title is CENTRED and the
+ * two edges are reserved — a `leading` control (back) on the left, the
+ * close button's own width on the right — which keeps the title optically
+ * centred whether or not there's a back control. Desktop keeps the ordinary
+ * left-aligned modal title.
+ */
+// `min-h-8` matches the close button, so a title-only header is exactly as
+// tall as one with a control in it. `py-1` buys the sheet a little air
+// above the first row without touching the 12px gutter.
+export const dialogHeaderClass = "flex items-center gap-2 min-w-0 min-h-8 py-1"
+export const dialogHeaderStackClass = "flex-1 min-w-0 flex flex-col gap-1.5 text-center sm:text-left"
+/** Reserves the close button's width so the centred title isn't pushed
+ *  off-centre by it. Phone only — desktop's title is left-aligned. */
+export const dialogHeaderSpacerClass = "size-8 shrink-0 sm:hidden"
 
 // Negative margins must match the chrome's padding at BOTH sizes, or the
 // full-bleed footer stops reaching the edges. `pb` also clears the iOS home
@@ -213,13 +229,20 @@ function DialogContent({
   )
 }
 
-function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
+function DialogHeader({
+  className, children, leading, ...props
+}: React.ComponentProps<"div"> & {
+  /** Optional control at the left edge — a back chevron on a drilled-in
+   *  step. Without one the slot still holds its width on a phone, so the
+   *  title doesn't shift when a step gains or loses it. */
+  leading?: React.ReactNode
+}) {
   return (
-    <div
-      data-slot="dialog-header"
-      className={cn(dialogHeaderClass, className)}
-      {...props}
-    />
+    <div data-slot="dialog-header" className={cn(dialogHeaderClass, className)} {...props}>
+      {leading ?? <span aria-hidden className={dialogHeaderSpacerClass} />}
+      <div className={dialogHeaderStackClass}>{children}</div>
+      <span aria-hidden className={dialogHeaderSpacerClass} />
+    </div>
   )
 }
 
@@ -369,8 +392,14 @@ function DialogPreview({
   )
 }
 
-function DialogPreviewHeader({ className, ...props }: React.ComponentProps<"div">) {
-  return <div className={cn(dialogHeaderClass, className)} {...props} />
+function DialogPreviewHeader({ className, children, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div className={cn(dialogHeaderClass, className)} {...props}>
+      <span aria-hidden className={dialogHeaderSpacerClass} />
+      <div className={dialogHeaderStackClass}>{children}</div>
+      <span aria-hidden className={dialogHeaderSpacerClass} />
+    </div>
+  )
 }
 
 function DialogPreviewTitle({ className, ...props }: React.ComponentProps<"h2">) {

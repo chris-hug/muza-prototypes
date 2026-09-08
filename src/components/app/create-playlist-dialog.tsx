@@ -20,7 +20,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Lock } from "lucide-react"
+import { Lock, X } from "lucide-react"
 
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -33,6 +33,9 @@ import { useToast, TOAST_CONFIRM_MS } from "@/components/ui/toast"
 import { useIsMobile } from "@/lib/use-media-query"
 import { AddMusicDialog } from "@/components/app/add-music-dialog"
 import { CreatePlaylistContext } from "@/lib/create-playlist-context"
+import { registerPlaylists } from "@/lib/playlist-catalog"
+import { useMediaNav, slugify } from "@/lib/media-nav"
+import type { SavedSong } from "@/lib/user-library"
 
 export { useCreatePlaylist } from "@/lib/create-playlist-context"
 
@@ -46,6 +49,30 @@ export function CreatePlaylistProvider({ children }: { children: React.ReactNode
   const [addOpen, setAddOpen] = useState(false)
   const [name, setName] = useState<string | undefined>()
   const open = useCallback(() => setCreateOpen(true), [])
+  const { openPlaylist } = useMediaNav()
+
+  /*
+   * Adding the tracks ENDS the flow, so it lands on the playlist itself —
+   * the thing just made, with the tracks in it. Anything else (staying put,
+   * or dropping back to the library grid) makes the user go find it.
+   *
+   * Prototype: there is no playlist store, so the record is registered into
+   * the catalog on the way out and the detail page resolves it by slug like
+   * any other. Covers come from the picks; a real store would own both.
+   */
+  const finish = useCallback((songs: SavedSong[]) => {
+    const title = name?.trim()
+    if (!title) return
+    registerPlaylists([{
+      id: `new-${slugify(title)}`,
+      title,
+      covers: songs.map(s => s.cover).filter((c): c is string => !!c).slice(0, 4),
+      songCount: songs.length,
+      owner: "You",
+      owned: true,
+    }])
+    openPlaylist(slugify(title))
+  }, [name, openPlaylist])
 
   return (
     <CreatePlaylistContext.Provider value={{ open }}>
@@ -55,7 +82,12 @@ export function CreatePlaylistProvider({ children }: { children: React.ReactNode
         onOpenChange={setCreateOpen}
         onCreated={n => { setName(n); setAddOpen(true) }}
       />
-      <AddMusicDialog open={addOpen} onOpenChange={setAddOpen} playlistName={name} />
+      <AddMusicDialog
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        playlistName={name}
+        onAdd={finish}
+      />
     </CreatePlaylistContext.Provider>
   )
 }
@@ -123,9 +155,15 @@ export function CreatePlaylistDialog({
             ref={barRef}
             tabIndex={-1}
             className="outline-none"
-            // Cancel only — the confirming action is the full-width button in
-            // the body (see below), so it isn't offered twice.
-            leading={<DialogClose render={<Button variant="ghost" />}>Cancel</DialogClose>}
+            // No Cancel: dismissal is the ✕ at the right, the same control
+            // every other sheet in the app closes with, and the confirming
+            // action is the full-width button in the body. One leading slot
+            // stays empty so the centred title matches the Add step's bar.
+            trailing={
+              <DialogClose render={<Button variant="ghost" size="icon-sm" aria-label="Close" />}>
+                <X />
+              </DialogClose>
+            }
           >
             <DialogTitle className="text-base font-medium truncate">{title}</DialogTitle>
           </DialogActionBar>
