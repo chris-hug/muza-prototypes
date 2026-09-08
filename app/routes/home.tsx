@@ -36,6 +36,12 @@ import { CartProvider } from "@/lib/cart"
 import { UserLibraryProvider, useUserLibrary } from "@/lib/user-library"
 import { UserAccountProvider } from "@/lib/user-account"
 import { albumMetaFor, libraryIdForTitle } from "@/lib/album-meta"
+import { componentDoc } from "@/lib/component-docs"
+import { FOOTER_NAV_BELOW, SIDEBAR_COLLAPSE_BELOW } from "@/lib/use-media-query"
+import { Markdown } from "@/components/ds/markdown"
+import { Example } from "@/components/ds/example"
+import DialogFormExample from "@/ds-examples/dialog-form"
+import dialogFormSrc from "@/ds-examples/dialog-form.tsx?raw"
 import { SECTION_STATUS_BY_ID, LAST_GIT_PUSH, sectionLastChanged, sectionSourceUrl, formatStatusDate, type SectionStatus } from "./ds-status"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Badge, ContentTypeBadge } from "@/components/ui/badge"
@@ -196,6 +202,105 @@ import DesignSystem      from "./design-system"
 // scroll container when the quick-nav scrolls to it.
 type SectionUsage  = ReadonlyArray<{ label: string; href: string }>
 
+/*
+ * The ⓘ on a section header. Opens the component's Markdown docs — one file
+ * per component under `docs/components/`, rendered with the app's own tokens.
+ * Absent until that file is written, so the button is never a dead end.
+ */
+/*
+ * BreakpointTable — the app's own responsive ladder, printed.
+ *
+ * The two computed rungs are IMPORTED, not typed: `608` and `1069` are the
+ * viewport widths at which a container threshold is reached, so if anything
+ * in that chain moves the table has to move with it. A literal here would go
+ * stale silently, which is exactly what happened to the design-system's
+ * viewport chips before this existed.
+ */
+function BreakpointTable() {
+  const rows: Array<[string, number, string, string]> = [
+    ["Phone",       375,                    "reference width — iPhone 12 mini / SE class", "—"],
+    ["Phone wide",  584,                    "page gutter --page-px 12 → 24px", "app.css"],
+    ["Tablet",      FOOTER_NAV_BELOW,       "sidebar replaces the footer tab bar; Topbar replaces MobileAppHeader", "FOOTER_NAV_BELOW"],
+    ["Tablet wide", 768,                    "useIsMobile() flips — components swap outright", "useIsMobile()"],
+    ["Desktop",     SIDEBAR_COLLAPSE_BELOW, "sidebar expands from the icon rail; gutter 24 → 40px", "SIDEBAR_COLLAPSE_BELOW"],
+  ]
+  return (
+    <div className="mb-6 max-w-3xl">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-small">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="py-2 pr-4 text-left font-medium text-foreground">Name</th>
+              <th className="py-2 pr-4 text-left font-medium text-foreground tabular-nums">px</th>
+              <th className="py-2 pr-4 text-left font-medium text-foreground">What changes</th>
+              <th className="py-2 text-left font-medium text-foreground">Defined in</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(([name, px, what, where]) => (
+              <tr key={name} className="border-b border-border/60 last:border-0">
+                <td className="py-2 pr-4 align-top text-foreground whitespace-nowrap">{name}</td>
+                <td className="py-2 pr-4 align-top text-muted-foreground tabular-nums">{px}</td>
+                <td className="py-2 pr-4 align-top text-muted-foreground">{what}</td>
+                <td className="py-2 align-top text-muted-foreground">
+                  <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">{where}</code>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-3 text-xsmall text-muted-foreground max-w-2xl">
+        The names are <span className="text-foreground">width bands, not devices</span> — a 1024px
+        tablet held sideways is “Desktop” here, and that is right: what matters is the room the
+        layout has, never what the hardware is called. Tailwind&rsquo;s own
+        {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">sm</code>/
+        <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">md</code>{" "}
+        still exist inside class names; almost no page-level layout changes there.
+        {" "}<span className="text-foreground">608</span> and{" "}
+        <span className="text-foreground">1069</span> are arithmetic —{" "}
+        <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">560 + 2×24</code> and{" "}
+        <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">780 + 208 + 80 + 1</code> —
+        so never write either number into a component.
+      </p>
+    </div>
+  )
+}
+
+function SectionDocButton({ id }: { id: string }) {
+  const [open, setOpen] = useState(false)
+  const entry = componentDoc(id)
+  if (!entry) return null
+  return (
+    <>
+      <Button variant="ghost" size="icon-sm" aria-label={`About ${entry.title}`} onClick={() => setOpen(true)}>
+        <Info />
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-[min(46rem,90vw)] flex flex-col max-h-[85svh]">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="sm:text-large">{entry.title}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+            <Markdown source={entry.body} />
+            <p className="mt-6 pt-4 border-t border-border text-2xsmall text-muted-foreground">
+              Source of truth:{" "}
+              <a
+                href={`https://github.com/chris-hug/muza-prototypes/blob/main/${entry.path}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary-text hover:underline underline-offset-2"
+              >
+                {entry.path}
+              </a>
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
 function Section({
   id, title, status, phase, usage, children,
 }: {
@@ -249,8 +354,12 @@ function Section({
           {resolvedStatus === "concept" && <Badge variant="outline">Not used yet</Badge>}
           {phase === 2                  && <Badge variant="secondary">Phase 2 · Shop</Badge>}
 
-          {(changedDate || sourceUrl) && (
+          {(changedDate || sourceUrl || componentDoc(id)) && (
             <div className="ml-auto flex items-center gap-2">
+              {/* The component's own Markdown — `docs/components/<id>.md`,
+                   the same file an agent reads. Only shows once that file
+                   exists, so writing docs is what turns the button on. */}
+              <SectionDocButton id={id} />
               {changedDate && (
                 <span className="text-small text-muted-foreground tabular-nums">
                   Changed{" "}<span className="text-foreground">{formatStatusDate(changedDate)}</span>
@@ -534,55 +643,19 @@ function SemanticTokenTable() {
 function DialogsKitchenSink() {
   return (
     <div className="flex flex-col gap-8">
-      {/* ── Static previews — all variants visible without clicking ───── */}
-      <div className="flex flex-col gap-3">
-        <SubLabel>All variants (static preview — same chrome as the live Dialog)</SubLabel>
-        <div className="flex flex-wrap gap-6 items-start">
+      {/* One Example per VARIANT — its own width picker, its own snippet.
+          The ⓘ points at the COMPONENT doc: examples are variant-level,
+          documentation is component-level, so variants share one file.
+          The destructive confirm lives under AlertDialog, not here — it is a
+          different component with different rules. */}
 
-          {/* 1. Confirm-destructive (manage-v2.tsx DeleteCard pattern) */}
-          <DialogPreview>
-            <DialogPreviewHeader>
-              <DialogPreviewTitle>Delete Chase Visa?</DialogPreviewTitle>
-              <DialogPreviewDescription>
-                This will permanently remove this card from your account. This action cannot be undone.
-              </DialogPreviewDescription>
-            </DialogPreviewHeader>
-            <DialogPreviewFooter>
-              <Button variant="outline">Cancel</Button>
-              <Button variant="destructive">Delete card</Button>
-            </DialogPreviewFooter>
-          </DialogPreview>
-
-          {/* 2. Create Listing (shop-my-products AddProductDialog pattern) */}
-          <DialogPreview className="sm:max-w-[600px]">
-            <DialogPreviewHeader>
-              <DialogPreviewTitle>Create Listing</DialogPreviewTitle>
-              <DialogPreviewDescription>Choose what you want to sell.</DialogPreviewDescription>
-            </DialogPreviewHeader>
-            <RadioCardGroup value="vinyl" onValueChange={() => {}}>
-              {[
-                { v: "vinyl",    title: "Vinyl",        desc: "LPs, EPs, singles and limited pressings.",  icon: <Disc3 /> },
-                { v: "cd",       title: "Compact Disc", desc: "Albums, EPs and special editions on CD.",   icon: <Disc /> },
-                { v: "cassette", title: "Cassette",     desc: "Full releases and limited runs on tape.",   icon: <CassetteTape /> },
-              ].map(o => (
-                <RadioCard
-                  key={o.v}
-                  value={o.v}
-                  selected={o.v === "vinyl"}
-                  onSelect={() => {}}
-                  icon={o.icon}
-                  title={o.title}
-                  description={o.desc}
-                />
-              ))}
-            </RadioCardGroup>
-            <DialogPreviewFooter>
-              <Button variant="outline">Cancel</Button>
-              <Button>Create Listing</Button>
-            </DialogPreviewFooter>
-          </DialogPreview>
-        </div>
-      </div>
+      {/* 2. Create Listing (shop-my-products AddProductDialog pattern).
+             The demo and the snippet under `</>` are the SAME file, imported
+             twice — once as a component, once as raw text. A hand-written
+             snippet beside a live demo is a second copy, and it drifts. */}
+      <Example title="Form — choice list" doc="dialog" code={dialogFormSrc} codePath="src/ds-examples/dialog-form.tsx">
+        <DialogFormExample />
+      </Example>
 
       {/* ── Live triggers — real Dialog with portal, focus trap, etc. ─── */}
       <div className="flex flex-col gap-3">
@@ -2066,6 +2139,12 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         <div className="mb-6">
           <ResponsiveDiagram />
         </div>
+
+        {/* The named ladder. These are OUR widths, not Tailwind's — two of
+            them are arithmetic, so they are read from the constants that
+            compute them rather than written down a second time. The full
+            reasoning is in `docs/components/responsive.md` (the ⓘ above). */}
+        <BreakpointTable />
 
         <ul className="text-base text-muted-foreground flex flex-col gap-2 mb-2 max-w-2xl list-disc pl-5">
           <li>
@@ -4794,6 +4873,38 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
 
       {/* ══ ALERT DIALOG ══ */}
       <Section id="alertdialog" title="AlertDialog">
+      {/* 1. Confirm-destructive (manage-v2.tsx DeleteCard pattern) */}
+      <Example
+        title="Confirm — destructive"
+        doc="alertdialog"
+        code={`<Dialog>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Delete Chase Visa?</DialogTitle>
+      <DialogDescription>This action cannot be undone.</DialogDescription>
+    </DialogHeader>
+    <DialogFooter>
+      <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+      <Button variant="destructive">Delete card</Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>`}
+      >
+        <DialogPreview>
+            <DialogPreviewHeader>
+              <DialogPreviewTitle>Delete Chase Visa?</DialogPreviewTitle>
+              <DialogPreviewDescription>
+                This will permanently remove this card from your account. This action cannot be undone.
+              </DialogPreviewDescription>
+            </DialogPreviewHeader>
+            <DialogPreviewFooter>
+              <Button variant="outline">Cancel</Button>
+              <Button variant="destructive">Delete card</Button>
+            </DialogPreviewFooter>
+        </DialogPreview>
+      </Example>
+
+        <SubLabel>Trigger — open the real AlertDialog</SubLabel>
         <div className="flex flex-wrap gap-3">
           <AlertDialog>
             <AlertDialogTrigger render={<Button variant="destructive" />}>
@@ -4842,16 +4953,9 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         <p className="text-base text-muted-foreground mb-5 max-w-2xl">
           One dialog, two phone presentations. The default is the <span className="text-foreground">bottom sheet</span> (lifted above the keyboard via <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">--kb</code>, sticky footer). A dialog whose <span className="text-foreground">primary action must survive typing</span> uses <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">mobile="form"</code> instead: with the keyboard up a 12 mini in Brave has ~200px left and a title + field + toggle + footer need ~240 — lifting, capping or hiding content only moves the overlap. The form sheet removes the budget: anchored <span className="text-foreground">top</span>, full-screen, actions in a bar the keyboard can't reach.
         </p>
-        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-5 max-w-2xl list-disc pl-5">
-          <li><span className="text-foreground"><code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogHeader</code></span> — a ROW: optional <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">leading</code> (back chevron) · title · a spacer matching the ✕. Title is <span className="text-foreground">centred on phones</span>, left-aligned from <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">sm</code> up; both edge slots hold their width when empty so the title never shifts. Dismissal is always the ✕ — a form sheet's bar carries no Cancel.</li>
-          <li><span className="text-foreground"><code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">svh</code>, never <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">dvh</code></span> — on iOS the dynamic unit reports the height with the browser chrome COLLAPSED, so a <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">100dvh</code> sheet is taller than the screen while the URL bar is up and its header sits above the visible area. Subtract <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">env(safe-area-inset-top)</code> too on a full-height sheet.</li>
-          <li><span className="text-foreground">Scroll body is a flex child</span> — sheet <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">flex flex-col</code> with a fixed height, bands <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">shrink-0</code>, list <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">flex-1 min-h-0</code>. A <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">vh</code> cap can't know what the other bands cost. Note <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">padding-bottom</code> is a FLOOR on a flex item's height — clear a floating band with a spacer element, not padding.</li>
-          <li><span className="text-foreground">Three bands, one scroller</span> — <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogActionBar</code> (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">sticky top-0 shrink-0</code>) · <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogFormBody</code> (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">flex-1 min-h-0 overflow-y-auto</code>) · <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogFormActions</code> (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">shrink-0</code>). The popup is <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">overflow-hidden</code>: if it scrolled, a sticky action row would float over the body instead of the body ending above it.</li>
-          <li><span className="text-foreground"><code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogActionBar</code></span> — dismissal only: Cancel (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">ghost</code>) · <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogTitle</code>. Same frosted glass as the mobile header, safe-area inset. <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">sm:hidden</code>.</li>
-          <li><span className="text-foreground"><code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogFormActions</code></span> — the confirming action, full-width <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">size="lg"</code> (48px), in its own band below the body. The sheet ends at <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">--kb</code>, so it sits directly on the keyboard. Never offered twice — bar <span className="text-foreground">or</span> action row.</li>
-          <li><span className="text-foreground"><code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogFormBody</code></span> — restores the 12px gutter the form chrome zeroes and a tighter <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">gap-3</code> (every gap competes with the keyboard for the same ~200px), clears the home indicator; <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">sm:contents</code> so desktop is the ordinary grid. Put the <span className="text-foreground">text field first</span> so it's on screen at any keyboard height.</li>
-          <li><span className="text-foreground">Desktop unchanged</span> — render the bar on phones and <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogHeader</code> + <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogFooter</code> from <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">sm</code> up, gated by <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useIsMobile()</code> so only one <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogTitle</code> exists. No autofocus on phones (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">initialFocus</code> parked on the bar); focus the field directly on desktop.</li>
-        </ul>
+        {/* The full rules live in `docs/components/dialog.md` and open from
+            the ⓘ in this section's header — one copy, which the docs page and
+            an agent read the same way. Only the lead stays inline. */}
         <DialogsKitchenSink />
       </Section>
 

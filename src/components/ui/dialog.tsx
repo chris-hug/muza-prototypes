@@ -27,7 +27,12 @@ export const dialogChromeClass =
   // `sm` up. A bottom sheet spans the whole screen, so a 24px gutter costs
   // 48px of a 320–375px width — enough to squeeze list rows noticeably.
   // Desktop dialogs are narrow and floating, where 24 still reads right.
-  "grid w-full max-w-[calc(100%-2rem)] gap-5 rounded-xl sm:rounded-2xl bg-popover p-3 sm:p-6 text-small text-popover-foreground border border-border outline-none overflow-hidden sm:max-w-sm"
+  // 8px between bands on a phone, 20px from `sm` up. A sheet is the whole
+  // screen and its bands already read as separate — the title, the tabs,
+  // the list — so the gap only has to keep them from touching; anything
+  // more is rows the list doesn't get. Desktop modals are small and
+  // floating, where the wider rhythm still reads.
+  "grid w-full max-w-[calc(100%-2rem)] gap-2 sm:gap-5 rounded-xl sm:rounded-2xl bg-popover p-3 sm:p-6 text-small text-popover-foreground border border-border outline-none overflow-hidden sm:max-w-sm"
 
 // App-wide rule: every Dialog is a BOTTOM SHEET on mobile and a centered
 // modal on desktop (sm+). Mobile → pinned to the bottom edge, full-width,
@@ -96,7 +101,9 @@ export const dialogFormPositionClass =
 // glass as `MobileHeader` (it IS a mobile header, for a modal), sticky so
 // the actions stay put while the body scrolls beneath. Mobile only.
 export const dialogActionBarClass =
-  "sticky top-0 z-10 shrink-0 frosted-glass border-b border-border/50 " +
+  // No rule under the bar: the sheet is one surface, and a hairline right
+  // under the title reads as a header that isn't there.
+  "sticky top-0 z-10 shrink-0 frosted-glass " +
   "flex items-center justify-between gap-2 min-h-12 px-1 pt-[max(4px,env(safe-area-inset-top))] pb-1 " +
   "sm:hidden"
 
@@ -116,28 +123,45 @@ export const dialogFormBodyClass =
 export const dialogFormActionsClass =
   "shrink-0 bg-popover px-3 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] sm:hidden"
 
+/*
+ * The scrolling list band of a sheet. `-mx-2` (and NO matching padding):
+ * `MediaListItem` brings its own `pl-2`, so a symmetric `px-2` would push
+ * every cover 8px past the gutter and out of line with the title, the
+ * field and the footer. Letting the rows' hover surface bleed into the
+ * gutter is the point of the negative margin.
+ *
+ * Height comes from flex — `flex-1 min-h-0` inside a `flex flex-col`
+ * sheet — never a `vh` cap, which can't know what the other bands cost.
+ */
+export const dialogListClass =
+  "flex flex-col min-w-0 flex-1 min-h-0 overflow-y-auto -mx-2"
+
+// `text-small` (19px): a sheet title sits on the same line as the ✕ and
+// reads as a label for the screen, not a headline — 21px crowded it.
 export const dialogTitleClass =
-  "font-heading text-base leading-none font-medium"
+  "font-heading text-small leading-none font-medium"
 
 export const dialogDescriptionClass =
   "text-small text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground"
 
 /*
- * Header row: [leading] · title stack · [space for the ✕].
+ * Header: [leading control] then the title stack, both starting on the
+ * sheet's gutter line — the same left edge as the rows, the field and the
+ * footer below it. A back control takes its OWN line rather than sitting
+ * beside the title: inline it would indent the title by its own width and
+ * nothing underneath would line up.
  *
- * On a phone a sheet reads like a screen, so the title is CENTRED and the
- * two edges are reserved — a `leading` control (back) on the left, the
- * close button's own width on the right — which keeps the title optically
- * centred whether or not there's a back control. Desktop keeps the ordinary
- * left-aligned modal title.
+ * Everything is left-aligned, phones included. A centred title reads as a
+ * screen header, but it breaks the one vertical edge the sheet otherwise
+ * holds, and a title that grows then shifts against fixed content below.
  */
 // `min-h-8` matches the close button, so a title-only header is exactly as
-// tall as one with a control in it. `py-1` buys the sheet a little air
-// above the first row without touching the 12px gutter.
-export const dialogHeaderClass = "flex items-center gap-2 min-w-0 min-h-8 py-1"
-export const dialogHeaderStackClass = "flex-1 min-w-0 flex flex-col gap-1.5 text-center sm:text-left"
-/** Reserves the close button's width so the centred title isn't pushed
- *  off-centre by it. Phone only — desktop's title is left-aligned. */
+// tall as one with a control in it — and no more: on a phone the space
+// above the title is rows the list doesn't get.
+export const dialogHeaderClass = "flex flex-col items-start gap-1 min-w-0 min-h-8 justify-center"
+// `pr-8` keeps a long title clear of the ✕, which is positioned absolutely
+// in the sheet's corner and so takes no space of its own.
+export const dialogHeaderStackClass = "w-full min-w-0 flex flex-col gap-1.5 pr-8"
 export const dialogHeaderSpacerClass = "size-8 shrink-0 sm:hidden"
 
 // Negative margins must match the chrome's padding at BOTH sizes, or the
@@ -219,7 +243,12 @@ function DialogContent({
               <Button
                 variant="ghost"
                 // The form sheet's bar carries Cancel — no X on phones there.
-                className={cn("absolute top-2 right-2", form && "max-sm:hidden")}
+                // Vertically centred on the HEADER ROW, not on the sheet's
+                // corner — it sits at the gutter, exactly where the row
+                // starts, so title and ✕ share a centre line. `right-2`
+                // keeps it nearer the edge than the gutter, where a 32px
+                // target wants to be.
+                className={cn("absolute top-3 right-2 sm:top-6", form && "max-sm:hidden")}
                 size="icon-sm"
               />
             }
@@ -244,9 +273,11 @@ function DialogHeader({
 }) {
   return (
     <div data-slot="dialog-header" className={cn(dialogHeaderClass, className)} {...props}>
-      {leading ?? <span aria-hidden className={dialogHeaderSpacerClass} />}
+      {/* Optical, not box, alignment: an icon button is 32px around a 16px
+          glyph, so its box hangs 8px left for the glyph to land on the same
+          line as the content below. */}
+      {leading && <span className="shrink-0 -ml-2">{leading}</span>}
       <div className={dialogHeaderStackClass}>{children}</div>
-      <span aria-hidden className={dialogHeaderSpacerClass} />
     </div>
   )
 }
@@ -400,9 +431,7 @@ function DialogPreview({
 function DialogPreviewHeader({ className, children, ...props }: React.ComponentProps<"div">) {
   return (
     <div className={cn(dialogHeaderClass, className)} {...props}>
-      <span aria-hidden className={dialogHeaderSpacerClass} />
       <div className={dialogHeaderStackClass}>{children}</div>
-      <span aria-hidden className={dialogHeaderSpacerClass} />
     </div>
   )
 }

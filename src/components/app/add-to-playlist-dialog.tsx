@@ -21,7 +21,7 @@ import { Plus, Search } from "lucide-react"
 
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
-  DialogFooter, DialogClose,
+  DialogFooter, DialogClose, dialogListClass,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -127,7 +127,7 @@ function AddToPlaylistContent({ song, onClose }: { song: SavedSong; onClose: () 
         />
       )}
 
-      <div className="flex flex-col gap-1 overflow-y-auto max-h-[52vh] -mx-2 px-2">
+      <div className={cn(dialogListClass, "gap-1 max-h-[52vh]")}>
         {/* New playlist — pinned on top (Tidal). */}
         <Row onClick={() => setMode("create")}>
           <span className="grid size-12 shrink-0 place-items-center rounded-xs bg-secondary text-foreground [&_svg]:size-5">

@@ -30,7 +30,7 @@ import { Search, ChevronLeft, ChevronRight, Plus, Check, Clock } from "lucide-re
 import { cn } from "@/lib/utils"
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
-  DialogFooter,
+  DialogFooter, dialogListClass,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -271,13 +271,23 @@ export function AddMusicDialog({
             the only piece of context on screen. */}
         <DialogHeader
           className="shrink-0"
-          leading={finding ? (
+          /* ONE back control for the whole sheet, whatever it's showing:
+             an opened album returns to the list it came from, and the Find
+             screen returns to browsing. Nested screens each carrying their
+             own chevron put two identical controls on screen. */
+          leading={(album || finding) ? (
             <Button
               variant="ghost"
               size="icon-sm"
-              aria-label="Back to browsing"
-              onClick={() => { setFinding(false); setQuery("") }}
-              className="shrink-0"
+              aria-label={album ? "Back to the list" : "Back to browsing"}
+              onClick={() => {
+                if (album) { setDrill(null); return }
+                setFinding(false); setQuery("")
+              }}
+              // Optical, not box, alignment on desktop: the button is 32px
+              // wide around a 16px icon, so its box has to hang 8px left for
+              // the CHEVRON to sit on the same line as the covers below.
+              className="shrink-0 sm:-ml-2"
             >
               <ChevronLeft />
             </Button>
@@ -292,12 +302,9 @@ export function AddMusicDialog({
             step aside so the screen is about that one record. */}
         {album ? (
           <>
+            {/* No back control here — the header's `leading` slot owns it,
+                so there is exactly one "back" on screen at a time. */}
             <div className="flex items-center gap-2 min-w-0 shrink-0">
-              {/* Not just "Back" — the page chrome already owns that label,
-                   so a screen reader would announce two identical controls. */}
-              <Button variant="ghost" size="icon-sm" aria-label="Back to search" onClick={() => setDrill(null)}>
-                <ChevronLeft />
-              </Button>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-base text-foreground">{album.title}</p>
                 <p className="truncate text-xsmall text-muted-foreground">
@@ -317,7 +324,7 @@ export function AddMusicDialog({
               </Button>
             </div>
 
-            <div className="flex flex-col gap-2 min-w-0 flex-1 min-h-0 overflow-y-auto -mx-2 px-2">
+            <div className={cn(dialogListClass, "gap-2")}>
               {albumSongs.map(s => trackRow(s, s.id))}
             </div>
           </>
@@ -332,7 +339,7 @@ export function AddMusicDialog({
              runs the list under the footer. The floating band overlays this
              list rather than sitting below it — a spacer at the end of the
              content clears it. */
-          <div className="flex flex-col gap-4 min-w-0 flex-1 min-h-0 overflow-y-auto -mx-2 px-2">
+          <div className={cn(dialogListClass, "gap-4")}>
             {searching ? searchResults : recent.length > 0 ? (
               // What they searched before beats anything we could guess at.
               <section className="flex flex-col gap-1">
@@ -400,10 +407,10 @@ export function AddMusicDialog({
                 flex item defaults to `min-height: auto`, so without it the
                 list keeps its content height, overflows the sheet, and the
                 last rows are sliced by the footer.
-                `-mb-5` eats the sheet's own gap so the list runs right up to
+                `-mb-2 sm:-mb-5` eats the sheet's own gap so the list runs up to
                 the footer: the bar's edge is what cuts the content off, with
                 no strip of empty sheet between them. */}
-            <div className="flex flex-col gap-4 min-w-0 flex-1 min-h-0 overflow-y-auto -mx-2 px-2 -mb-5">
+            <div className={cn(dialogListClass, "gap-4 -mb-2 sm:-mb-5")}>
               {tab === "selection" ? (
                 // Everything picked so far, regardless of the query it came from.
                 <section className="flex flex-col gap-2">

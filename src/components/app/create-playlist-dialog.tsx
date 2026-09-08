@@ -143,12 +143,11 @@ export function CreatePlaylistDialog({
       <DialogContent
         mobile="form"
         className="sm:max-w-[max(32rem,50vw)]"
-        // Desktop: straight into the name field. Phone: park focus on the
-        // bar so the keyboard does NOT spring up before the sheet has been
-        // seen (Base UI would otherwise focus the first tabbable — Cancel —
-        // which is fine, but the bar is the explicit, stable choice). The
-        // user taps the field when ready to type.
-        initialFocus={() => (isMobile ? barRef.current : inputRef.current)}
+        // Straight into the name field, phone included: naming is the only
+        // thing this sheet asks for, so the keyboard coming up with it saves
+        // a tap. The sheet is anchored TOP and ends at `--kb`, so nothing it
+        // shows is behind the keyboard.
+        initialFocus={inputRef}
       >
         {isMobile ? (
           <DialogActionBar
@@ -165,7 +164,7 @@ export function CreatePlaylistDialog({
               </DialogClose>
             }
           >
-            <DialogTitle className="text-base font-medium truncate">{title}</DialogTitle>
+            <DialogTitle className="truncate">{title}</DialogTitle>
           </DialogActionBar>
         ) : (
           <DialogHeader>

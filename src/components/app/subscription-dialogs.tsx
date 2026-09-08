@@ -156,8 +156,15 @@ function PaywallContent({
         {/* RIGHT — the action. Action group centers in the upper space, fine
             print pins to the bottom (mirrors the brand lockup on the left).
             Divider + subtle tint only when two-column; one flat surface when
-            stacked. */}
-        <div className="flex flex-col items-center text-center gap-8 px-10 sm:px-12 pt-8 pb-12 @[760px]:pt-12 @[760px]:border-l border-border @[760px]:bg-background/50 @[760px]:flex-1">
+            stacked.
+
+            The tint is `bg-muted`, a real token — NOT `bg-background/50`,
+            which is what stood here. An alpha on a surface token doesn't
+            produce a lighter surface, it produces whatever happens to be
+            behind it: over the dialog's own `bg-popover` (the same hex) it
+            was invisible, and on the design-system stage it mixed with the
+            card underneath into a colour that exists in no token. */}
+        <div className="flex flex-col items-center text-center gap-8 px-10 sm:px-12 pt-8 pb-12 @[760px]:pt-12 @[760px]:border-l border-border @[760px]:bg-muted @[760px]:flex-1">
           <div className="flex w-full flex-col items-center gap-4 @[760px]:flex-1 @[760px]:justify-center">
             <p className="text-small font-medium text-foreground">
               Choose your monthly amount

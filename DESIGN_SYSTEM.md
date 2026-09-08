@@ -567,6 +567,8 @@ Tokens are **roles**, not colours. Never mix roles.
 
 ## Mobile surfaces — sheets
 
+> Component-specific detail lives in [`docs/components/<id>.md`](docs/components/README.md) — one Markdown file per component, rendered behind the ⓘ on its design-system section and read directly by agents. This file keeps the rules that span components. See [`dialog.md`](docs/components/dialog.md), [`alertdialog.md`](docs/components/alertdialog.md), [`responsive.md`](docs/components/responsive.md).
+
 Three escalating surfaces, all bottom-anchored on phones:
 
 **1. Responsive dialog → bottom sheet — the BASE DEFAULT.** **Every** `Dialog` and `AlertDialog` is a **bottom sheet on mobile** and a **centered modal on desktop (sm+)** — no per-dialog opt-in. It's baked into the base `DialogContent` / `AlertDialogContent` (`dialogPositionClass` in [`dialog.tsx`](src/components/ui/dialog.tsx)): mobile `inset-x-0 bottom-0 max-w-full rounded-t-2xl rounded-b-none slide-in-from-bottom`; desktop `sm:left-1/2 sm:top-1/2 sm:-translate-* sm:rounded-2xl zoom-in`. Individual dialogs only set their **desktop width** (`sm:max-w-*`) and any height/scroll behaviour — they must **not** re-declare the positioning. To **grow with content up to the viewport** (less scrolling): make `DialogContent` `flex flex-col max-h-[92vh] sm:max-h-[85vh]`, the header `shrink-0`, and the scroll body `min-h-0` (fills to the cap, scrolls only on overflow).
@@ -593,9 +595,11 @@ Three escalating surfaces, all bottom-anchored on phones:
 
 Used by **Create playlist / Edit info** (`CreatePlaylistDialog`). Pickers and lists (Add music, "…" menus, confirms) stay bottom sheets.
 
-**One header structure everywhere: `[leading] · title · [space for the ✕]`.** `DialogHeader` is a row, not a column: an optional `leading` control (a back chevron on a drilled-in step), the title stack, and a spacer mirroring the close button's width. On a **phone** the title is **centred** — a sheet reads like a screen — and both edge slots hold their width even when empty, so the title doesn't shift as a step gains or loses a back control. Desktop keeps the left-aligned modal title (`sm:text-left`). Dismissal is always the **✕ at the top right**, including on a `mobile="form"` sheet — its bar carries no Cancel.
+**One header structure everywhere: a column — `[leading]` above the title.** `DialogHeader` stacks an optional `leading` control (a back chevron on a drilled-in step) above the title stack, both starting on the sheet's gutter line — the same left edge as the rows, the field and the footer. Inline, a back control would indent the title by its own width and nothing underneath would line up. Titles are **left-aligned, phones included**. Dismissal is always the **✕ at the top right**, `mobile="form"` included — its bar carries no Cancel. One back control per sheet: a drilled-in screen fills the header's `leading` slot instead of adding its own.
 
-**Dialog titles are `text-base` on phones, `sm:text-large` up.** 24px over a 320px sheet eats a line the keyboard already wants; the base `dialogTitleClass` is `text-base`, so a dialog that wants the larger desktop title adds `sm:text-large` — never a bare `text-large`.
+**Dialog titles are `text-small` (19px), `sm:text-large` up.** The title shares a line with the ✕, and 21px crowded it. The base `dialogTitleClass` is `text-small`, so a dialog that wants the larger desktop title adds `sm:text-large` — never a bare `text-large`.
+
+**Sheet rhythm on a phone: 12px gutter, 8px between bands** (`p-3 sm:p-6`, `gap-2 sm:gap-5`). A sheet is the whole screen and its bands already read as separate — the title, the tabs, the list — so the gap only has to keep them from touching. Lists use **`dialogListClass`** (`flex-1 min-h-0 overflow-y-auto -mx-2`) and deliberately no matching `px-2`: `MediaListItem` brings its own `pl-2`, so symmetric padding would push every cover 8px past the gutter and out of line with everything else.
 
 **A sheet's scroll body is a FLEX child, never a `vh` cap.** Make the sheet `flex flex-col` with a fixed height (`h-[calc(100svh-var(--kb,0px)-8px-env(safe-area-inset-top))] sm:h-auto`), every band `shrink-0`, and the list `flex-1 min-h-0`. `min-h-0` is what lets it shrink — a flex item defaults to `min-height: auto`, so without it the list keeps its content height, overruns the sheet, and the sticky footer slices the last rows. A viewport-relative cap (`max-h-[60vh]`, even a `--kb`-aware one) cannot know what the other bands cost and gets this wrong at some size.
 
