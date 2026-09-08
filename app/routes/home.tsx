@@ -42,6 +42,8 @@ import { Markdown } from "@/components/ds/markdown"
 import { Example } from "@/components/ds/example"
 import DialogFormExample from "@/ds-examples/dialog-form"
 import dialogFormSrc from "@/ds-examples/dialog-form.tsx?raw"
+import CardRailRowExample from "@/ds-examples/card-rail-row"
+import cardRailRowSrc from "@/ds-examples/card-rail-row.tsx?raw"
 import { SECTION_STATUS_BY_ID, LAST_GIT_PUSH, sectionLastChanged, sectionSourceUrl, formatStatusDate, type SectionStatus } from "./ds-status"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Badge, ContentTypeBadge } from "@/components/ui/badge"
@@ -277,7 +279,14 @@ function SectionDocButton({ id }: { id: string }) {
         <Info />
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-[min(46rem,90vw)] flex flex-col max-h-[85svh]">
+        <DialogContent className="sm:max-w-[min(46rem,90vw)] flex flex-col"
+          // Inline, not a class: the base sheet sets `sm:max-h-none`, and
+          // between two utilities for the same property the GENERATED CSS
+          // order decides, not the order they are listed in — `max-h-none`
+          // wins there whatever tailwind-merge keeps. Without a cap the docs
+          // modal grew to its content: 5,490px tall in a 1,216px viewport,
+          // with its own header scrolled off the top of the screen.
+          style={{ maxHeight: "85svh" }}>
           <DialogHeader className="shrink-0">
             <DialogTitle className="sm:text-large">{entry.title}</DialogTitle>
           </DialogHeader>
@@ -369,9 +378,14 @@ function Section({
                 <Button
                   variant="secondary"
                   size="sm"
+                  // Names the file: this button points at the COMPONENT,
+                  // while the one in an Example's `</>` panel points at that
+                  // demo's own file. Two links, two different things — and
+                  // "GitHub" alone said neither.
+                  title={sourceUrl.replace(/^.*\/blob\/main\//, "")}
                   render={<a href={sourceUrl} target="_blank" rel="noreferrer" />}
                 >
-                  GitHub
+                  Source
                   <ArrowUpRight className="size-3" />
                 </Button>
               )}
@@ -4130,7 +4144,8 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
                 {/* Full rules: `docs/components/media-list-item.md`, behind the ⓘ in this
             section's header — one copy, read the same way by the page and by
             an agent. Only the lead stays inline. */}
-        <div className="max-w-[420px] flex flex-col gap-1 rounded-xl border border-border p-2">
+        <Example title="Mixed rows" doc="media-list-item" align="stretch">
+<div className="max-w-[420px] flex flex-col gap-1 rounded-xl border border-border p-2">
           <MediaListItem
             type="album"
             cover="https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/d6/a3/1d/d6a31d82-038d-a73f-5452-0380d8bd9bae/00724349532755.jpg/120x120bb.jpg"
@@ -4173,6 +4188,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             subtitle="12 albums"
           />
         </div>
+</Example>
         <p className="text-small text-muted-foreground mt-5 max-w-2xl">
           (Song row opens its album; the rest navigate. Container clicks are
           inert here — wired to real routes in the app.)
@@ -4235,26 +4251,17 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           { label: "Artist profile rails (Top Albums, Products, Curated Playlists, Similar Artists)", href: "/?page=Artist" },
         ]}>
         <p className="text-base text-muted-foreground mb-5 max-w-2xl">
-          Section divider with title + ◀ ▶ + ghost "Show all"
-          button on top, scrollable card rail below. The row hides
-          its scrollbar and uses
-          <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">touch-pan-x touch-pan-y</code>
-          so a finger on a card can still scroll the PAGE —
-          <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">pan-x</code>
-          alone forbids the vertical pan rather than passing it on.
-          Try clicking the arrows or swiping horizontally.
-        </p>
-        <p className="text-base text-muted-foreground mb-2 max-w-2xl">
-          <span className="text-foreground font-medium">Responsive behaviour</span> — the rail has two distinct modes, split at a <span className="text-foreground">560px</span> container width (synced to the <a href="/?page=DesignSystem#media-header" className="text-primary-text hover:underline underline-offset-2">MediaHeader</a>'s stacked breakpoint):
+          A horizontal shelf: section divider with title, ◀ ▶ and a ghost
+          “Show all” on top, scrollable cards below. Two modes, split at a
+          560px container width.
         </p>
                 {/* Full rules: `docs/components/card-rail.md`, behind the ⓘ in this
             section's header — one copy, read the same way by the page and by
             an agent. Only the lead stays inline. */}
-        <CardRail title="New Albums">
-          {HOME_NEW_ALBUMS.map(a => (
-            <li key={a.id}><AlbumCard cover={a.cover} title={a.title} artist={a.artist} year={albumMetaFor(a.title).year} streamPrice={albumMetaFor(a.title).streamPrice} downloadPrice={albumMetaFor(a.title).downloadPrice} /></li>
-          ))}
-        </CardRail>
+        <Example title="Row mode — peek + snap" doc="card-rail" defaultWidth="Phone" align="stretch"
+          code={cardRailRowSrc} codePath="src/ds-examples/card-rail-row.tsx">
+<CardRailRowExample />
+</Example>
 
         <p className="text-base text-muted-foreground mt-8 mb-2 max-w-2xl">
           <span className="text-foreground font-medium">Swipeable grid variant</span> (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">mobileGrid</code>) — opt-in denser layout for shelves with <span className="text-foreground">12+ entries</span>. On mobile (&lt; 560px) cards lay out as a <span className="text-foreground">2-row, column-major</span> grid you swipe across columns (~2× the cards per screen); desktop is unchanged. Enabling it is the host/editor's call — pass the boolean only when the shelf is long enough and an editor opted in. <span className="text-foreground">Narrow your window below 560px</span> to see the two rows.
@@ -5068,7 +5075,9 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
 
       {/* ══ TOAST ══ */}
       <Section id="toast" title="Toast">
-        <ToastDemo />
+        <Example title="All types · triggers" doc="toast">
+<ToastDemo />
+</Example>
       </Section>
 
       {/* ══ SKELETON ══ */}

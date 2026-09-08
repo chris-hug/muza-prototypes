@@ -286,17 +286,20 @@ export function CardRail({ title, showAllLabel = "Show all", onShowAll, showAllO
               // Peek formula: w = (100% − 40 − (N−1)·16)/N — the 40 is the
               // 16px gap plus a 24px sliver. Exact: w = (100% − (N−1)·16)/N.
               //
-              // ⚠ There used to be a `min-w-[220px]` floor here, and it made
-              // the peek RANDOM: whenever the calc fell under 220 the floor
-              // won and the leftover became the peek, whatever it happened
-              // to be — 60px at a 296 container, 115px at 351, and 8px at
-              // 480, where the arrows are hidden too, so nothing at all said
-              // there were more cards. The floor also fought the two-column
-              // rule the Library grid follows on phones. Without it the calc
-              // governs and the sliver is exactly 24px at every width.
+              // The card width has a FLOOR of 220px below 560, and the peek is
+              // whatever the container has left over. That is deliberate: on a
+              // phone a cover has to stay big enough to recognise, and cards
+              // are the content — the peek is only a cue. Dropping the floor
+              // to make the sliver a constant 24px was tried and reverted; it
+              // bought a tidy edge by shrinking every card to 120–148px.
+              //
+              // The cost is that the sliver varies with the container, and in
+              // a narrow band just above a whole number of cards (≈456–470)
+              // it nearly vanishes. Known and accepted.
               "flex gap-4 [&>li]:shrink-0 " +
-              "@min-[560px]:[&>li]:min-w-[143px] " +
-              "[&>li]:w-[calc((100%-56px)/2)] " +
+              "[&>li]:min-w-[220px] @min-[560px]:[&>li]:min-w-[143px] " +
+              "[&>li]:w-[60%] " +
+              "@min-[304px]:[&>li]:w-[calc((100%-56px)/2)] " +
               "@min-[464px]:[&>li]:w-[calc((100%-72px)/3)] " +
               "@min-[560px]:[&>li]:w-[calc((100%-32px)/3)] " +
               "@min-[692px]:[&>li]:w-[calc((100%-48px)/4)] " +

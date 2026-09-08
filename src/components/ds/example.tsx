@@ -87,6 +87,7 @@ export function Example({
   codePath,
   defaultWidth,
   controls,
+  align = "center",
   className,
   stageClassName,
   children,
@@ -105,6 +106,12 @@ export function Example({
   defaultWidth?: string
   /** Variant switches — rendered at the left of the toolbar. */
   controls?: React.ReactNode
+  /** How the demo sits in the frame. `center` (default) shrink-wraps it —
+   *  right for a dialog or a card that has its own width. `stretch` makes it
+   *  fill the frame, which is the only way a component that READS its
+   *  container width (rails, grids, anything with `@min-[…]` classes) can
+   *  react to the breakpoint chips at all. */
+  align?: "center" | "stretch"
   className?: string
   stageClassName?: string
   children: React.ReactNode
@@ -243,6 +250,7 @@ export function Example({
             )}
           />
           <div
+            data-slot="example-stage"
             // Centred: at a wide rung a component narrower than the frame
             // would otherwise hug the left edge with a field of empty white
             // beside it, which reads as a layout bug rather than as "this is
@@ -253,7 +261,8 @@ export function Example({
             // inside it — on the ground it would only pad left and right,
             // since the frame shrink-wraps its content vertically.
             className={cn(
-              "@container relative w-full bg-background flex flex-col items-center gap-6 p-6",
+              "@container relative w-full bg-background flex flex-col gap-6 p-6",
+              align === "center" ? "items-center" : "items-stretch",
               stageClassName,
             )}
             style={px ? { maxWidth: px } : undefined}
@@ -267,7 +276,14 @@ export function Example({
           tokens so the docs look like the thing they document. */}
       {entry && (
         <Dialog open={showDoc} onOpenChange={setShowDoc}>
-          <DialogContent className="sm:max-w-[min(46rem,90vw)] flex flex-col max-h-[85svh]">
+          <DialogContent className="sm:max-w-[min(46rem,90vw)] flex flex-col"
+          // Inline, not a class: the base sheet sets `sm:max-h-none`, and
+          // between two utilities for the same property the GENERATED CSS
+          // order decides, not the order they are listed in — `max-h-none`
+          // wins there whatever tailwind-merge keeps. Without a cap the docs
+          // modal grew to its content: 5,490px tall in a 1,216px viewport,
+          // with its own header scrolled off the top of the screen.
+          style={{ maxHeight: "85svh" }}>
             <DialogHeader className="shrink-0">
               <DialogTitle className="sm:text-large">{entry.title}</DialogTitle>
             </DialogHeader>
