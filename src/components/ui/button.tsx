@@ -10,7 +10,7 @@ const buttonVariants = cva(
   // Note: font weight is set per-size (sm = font-normal, all others = font-medium)
   // Property-specific transition (avoids `transition-all` which fights
   // with active-state translates / nested transforms).
-  "group/button relative inline-flex shrink-0 items-center justify-center gap-2 rounded-full border bg-clip-padding whitespace-nowrap transition-[colors,box-shadow,transform,opacity] outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-45 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 pb-px",
+  "group/button relative inline-flex shrink-0 items-center justify-center gap-2 rounded-full border bg-clip-padding whitespace-nowrap transition-[colors,box-shadow,transform,opacity] outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 pb-px",
   {
     variants: {
       variant: {
@@ -35,14 +35,14 @@ const buttonVariants = cva(
           "border-transparent hover:bg-accent text-foreground bg-clip-border",
         // Link — primary INK (legible on dark)
         link:
-          "border-transparent text-primary-text underline-offset-4 hover:underline p-0 h-auto",
+          "border-transparent text-primary-text underline-offset-4 hover:underline",
         // Destructive
         destructive:
           "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/85",
       },
       size: {
         // Figma node 37:931 — exact px values:
-        //   sm:      h-8  (32px) · px-3  · text-xsmall · font-normal
+        //   sm:      h-8  (32px) · px-3  · text-2xsmall · font-normal
         //   default: h-10 (40px) · px-[18px] · text-small · font-medium  ← matches input/select/datepicker
         //   lg:      h-12 (48px) · px-10 · text-small · font-medium
         //   icon:    size-10 (40px)
@@ -75,7 +75,16 @@ function Button({
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      // `link` is text, not a box: it must shed the size class's height and
+      // padding. Doing it inside the variant does NOT work — cva emits the
+      // variant classes BEFORE the size classes, so tailwind-merge drops the
+      // variant's `h-auto`/`p-0` and the link ends up 40px tall with 18px of
+      // side padding. Appending here puts it last, where it wins.
+      className={cn(
+        buttonVariants({ variant, size }),
+        variant === "link" && "h-auto p-0",
+        className,
+      )}
       {...props}
     />
   )

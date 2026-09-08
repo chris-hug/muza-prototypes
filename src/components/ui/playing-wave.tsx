@@ -27,7 +27,7 @@
  * this to its own compositing layer. Chromium resamples that layer
  * whenever any ancestor transitions opacity / transform — inside a
  * static wrapper (CoverPlayButton) it works great; inside a host
- * that animates its own opacity (e.g. Button's `disabled:opacity-45`)
+ * that animates its own opacity (e.g. Button's `disabled:opacity-50`)
  * it smears. Only use inside static hosts.
  *
  * NOTE — Tailwind v4 tree-shakes `@keyframes` it doesn't see

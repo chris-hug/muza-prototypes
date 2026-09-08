@@ -55,8 +55,8 @@ export interface MediaListItemProps {
   onSubtitleClick?: () => void
   /** ⋯ menu content (e.g. `AlbumCardMenuItems`). Omitted → no menu. */
   menuItems?: React.ReactNode
-  /** Bespoke trailing content instead of the ⋯ menu — e.g. a selection
-   *  Checkbox in a picker. Takes precedence over `menuItems`. */
+  /** Bespoke trailing content instead of the ⋯ menu — e.g. `SelectTrackButton`
+   *  in the Add-music picker. Takes precedence over `menuItems`. */
   trailing?: React.ReactNode
   className?: string
 }
@@ -169,8 +169,9 @@ function Leading({
     )
   }
 
-  // Artist / label — circle. (A label is shown like an artist: round
-  // avatar + name, distinguished only by its "Label" badge.)
+  // Artist / label — circle. A label is drawn exactly like an artist: round
+  // avatar + name. Nothing distinguishes the two visually — this comment
+  // used to claim a "Label" badge, which the row has never rendered.
   if (type === "artist" || type === "label") {
     return (
       <img

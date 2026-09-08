@@ -149,7 +149,7 @@ gutter at **both** sizes (`-mx-3 sm:-mx-6`) or the bar stops short of the edges.
 <div className={cn(dialogListClass, "gap-2")}>…</div>
 ```
 
-`dialogListClass` is `flex-1 min-h-0 overflow-y-auto -mx-2` — and no matching
+`dialogListClass` is `flex flex-col min-w-0 flex-1 min-h-0 overflow-y-auto -mx-2` — and no matching
 `px-2`. `MediaListItem` brings its own `pl-2`, so a symmetric padding would
 push every cover 8px past the gutter and out of line with the title, the field
 and the footer. Letting the rows' hover surface bleed into the gutter is the

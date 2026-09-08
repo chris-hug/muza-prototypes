@@ -419,18 +419,53 @@ The rule is identical: **an alias never holds a raw value; it references the pri
 
 ---
 
+## Form controls — the shared recipe
+
+`Input`, `Select`, `Combobox`, `DatePicker` and the filter trigger are **one
+control in five costumes**. The recipe lived only in the five source files
+until it was written down here, which is how `Input`'s own header comment came
+to claim `rounded-xl` for a pill.
+
+| Token | Value |
+|---|---|
+| Height | 40px `h-10` — the same as `Button` `default`, so a field and its action sit on one line |
+| Shape | `rounded-full` |
+| Border | `border border-border`, `hover:border-foreground/30` |
+| Surface | `bg-background` |
+| Focus | `focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50` |
+| Text | `text-base font-normal` (`Select` and the filter trigger use `text-small`) |
+| Vertical padding | `pt-[6px] pb-[10px]` — **asymmetric, on purpose** |
+
+**The 2px lift.** Founders Grotesk sits low in its em box, so symmetric padding
+leaves the text visually below centre in a 40px pill. 6/10 raises it by 2px to
+the optical centre. The same nudge appears as `pb-px` on `Button`, `Tabs`,
+`Chip` and `Badge` — and `FilterButton` documents why a chip does *not* take it.
+
+Right padding varies with what sits on the edge: `pr-4` plain · `pr-2` where a
+chevron is flush · `pr-3` with chevron plus count · `pr-10` when `onClear`
+reserves room for the ✕. `startIcon` reserves `pl-10`.
+
+**`className` on `Input` lands on the `<input>`, not on the affordance
+wrapper.** Positioning classes therefore have to go on a wrapper you supply —
+an `absolute` meant for the field's box will move the field inside its wrapper
+instead. See [`input.md`](docs/components/input.md).
+
 ## Buttons (Figma node 37:931)
 
 | Size | Height | H-padding | Font | Weight |
 |---|---|---|---|---|
-| `sm` | 32px `h-8` | 12px `px-3` | 15px `text-xxs` | `font-normal` |
-| `default` | 36px `h-9` | 16px `px-4` | 18px `text-sm` | `font-medium` |
-| `lg` | 40px `h-10` | 32px `px-8` | 18px `text-sm` | `font-medium` |
-| `icon-sm` | 32px `size-8` | — | — | — |
-| `icon` | 36px `size-9` | — | — | — |
-| `icon-lg` | 40px `size-10` | — | — | — |
+| `sm` | 32px `h-8` | 12px `px-3` | 15px `text-2xsmall` | `font-normal` |
 
-Ghost hover bg: `hover:bg-secondary` (NOT muted — too light)
+`sm` is the one button that is **not** `font-medium`. At 15px the medium weight
+reads as emphasis the control does not carry — it is a toolbar size, not a
+primary action.
+| `default` | 40px `h-10` | 18px `px-[18px]` | 19px `text-small` | `font-medium` |
+| `lg` | 48px `h-12` | 40px `px-10` | 19px `text-small` | `font-medium` |
+| `icon-sm` | 32px `size-8` | — | — | — |
+| `icon` | 40px `size-10` | — | — | — |
+| `icon-lg` | 48px `size-12` | — | — | — |
+
+Ghost hover bg: `hover:bg-accent`. (This line long read “`hover:bg-secondary` — NOT muted, too light”, which the component never did: in light mode `--accent` is neutrals-100, *lighter* than `--secondary` at neutrals-200. The shipped hover is the rule.)
 
 ---
 
@@ -548,7 +583,7 @@ Tokens are **roles**, not colours. Never mix roles.
 - Every token is a surface + its `-foreground` pair — always use them together
 - **NEVER** use `gray-*`, `slate-*`, `zinc-*`, `stone-*` — use `neutral-*` or semantic tokens
 - **NEVER** hardcode hex values — use CSS variable tokens
-- Dark mode managed via `.dark` class on `<html>`, ThemeProvider in `layout.tsx`
+- Dark mode managed via `.dark` class on `<html>`, ThemeProvider in `app/root.tsx`
 - Toast: `ToastProvider` wraps layout, `useToast()` works anywhere inside
 
 ---
@@ -599,7 +634,7 @@ Used by **Create playlist / Edit info** (`CreatePlaylistDialog`). Pickers and li
 
 **Dialog titles are `text-small` (19px), `sm:text-large` up.** The title shares a line with the ✕, and 21px crowded it. The base `dialogTitleClass` is `text-small`, so a dialog that wants the larger desktop title adds `sm:text-large` — never a bare `text-large`.
 
-**Sheet rhythm on a phone: 12px gutter, 8px between bands** (`p-3 sm:p-6`, `gap-2 sm:gap-5`). A sheet is the whole screen and its bands already read as separate — the title, the tabs, the list — so the gap only has to keep them from touching. Lists use **`dialogListClass`** (`flex-1 min-h-0 overflow-y-auto -mx-2`) and deliberately no matching `px-2`: `MediaListItem` brings its own `pl-2`, so symmetric padding would push every cover 8px past the gutter and out of line with everything else.
+**Sheet rhythm on a phone: 12px gutter, 8px between bands** (`p-3 sm:p-6`, `gap-2 sm:gap-5`). A sheet is the whole screen and its bands already read as separate — the title, the tabs, the list — so the gap only has to keep them from touching. Lists use **`dialogListClass`** (`flex flex-col min-w-0 flex-1 min-h-0 overflow-y-auto -mx-2`) and deliberately no matching `px-2`: `MediaListItem` brings its own `pl-2`, so symmetric padding would push every cover 8px past the gutter and out of line with everything else.
 
 **A sheet's scroll body is a FLEX child, never a `vh` cap.** Make the sheet `flex flex-col` with a fixed height (`h-[calc(100svh-var(--kb,0px)-8px-env(safe-area-inset-top))] sm:h-auto`), every band `shrink-0`, and the list `flex-1 min-h-0`. `min-h-0` is what lets it shrink — a flex item defaults to `min-height: auto`, so without it the list keeps its content height, overruns the sheet, and the sticky footer slices the last rows. A viewport-relative cap (`max-h-[60vh]`, even a `--kb`-aware one) cannot know what the other bands cost and gets this wrong at some size.
 
@@ -711,7 +746,7 @@ One flow, started from every entry point via [`create-playlist-context.ts`](src/
 
 The provider mounts both steps: **New Playlist** (cover tile, name `Input`, "Keep private" setting row) → **Add music**.
 
-**Typing in Add music switches to global search** — not a local filter. The results render with the standard search pattern: content-type **pills** (`MobilePillTabs`), songs selectable via `MediaListItem` + a trailing `Checkbox`, containers as nav rows.
+**Typing in Add music switches to global search** — not a local filter. The results render with the standard search pattern: content-type **pills** (`MobilePillTabs`), songs selectable via `MediaListItem` + a trailing `SelectTrackButton`, containers as nav rows.
 
 **"Add music" row** leads your own playlist's track list while the header is in its **stacked layout** (`@min-[560px]:hidden`) — a normal list row: `size-12` `bg-secondary` circle with the bespoke `AddMusicIcon`, then the label. Never nest a primary/filled button inside a secondary row.
 

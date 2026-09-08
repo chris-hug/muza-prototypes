@@ -279,20 +279,24 @@ export function CardRail({ title, showAllLabel = "Show all", onShowAll, showAllO
               "@min-[1164px]:auto-cols-[calc((100%-80px)/6)] " +
               "@min-[1500px]:auto-cols-[calc((100%-96px)/7)]"
             : // ── Default ROW mode ──────────────────────────────
-              // Single flex row. Mobile peek (< 560 — synced to the
-              // MediaHeader's stacked breakpoint): card width floored at
-              // the 220px max → one/two big cards + ~24px peek (swipe
-              // cue). From 560 up: exact N-per-row (no peek), aligned to
-              // the Library grids; floor drops to 143 so the calc
-              // governs. The 560 step removes the peek reserve from the
-              // 3-col width so 560–691 is a clean grid (the column COUNT
-              // steps stay at the shared 304/464/692/928/1164/1500
-              // thresholds). Peek formula: w = (100% − 40 − (N−1)·16)/N;
-              // exact formula: w = (100% − (N−1)·16)/N.
+              // Single flex row. Below 560 (synced to the MediaHeader's
+              // stacked breakpoint) the width reserves a PEEK — the sliver
+              // of the next card that says "keep swiping". From 560 up:
+              // exact N-per-row (no peek), aligned to the Library grids.
+              // Peek formula: w = (100% − 40 − (N−1)·16)/N — the 40 is the
+              // 16px gap plus a 24px sliver. Exact: w = (100% − (N−1)·16)/N.
+              //
+              // ⚠ There used to be a `min-w-[220px]` floor here, and it made
+              // the peek RANDOM: whenever the calc fell under 220 the floor
+              // won and the leftover became the peek, whatever it happened
+              // to be — 60px at a 296 container, 115px at 351, and 8px at
+              // 480, where the arrows are hidden too, so nothing at all said
+              // there were more cards. The floor also fought the two-column
+              // rule the Library grid follows on phones. Without it the calc
+              // governs and the sliver is exactly 24px at every width.
               "flex gap-4 [&>li]:shrink-0 " +
-              "[&>li]:min-w-[220px] @min-[560px]:[&>li]:min-w-[143px] " +
-              "[&>li]:w-[60%] " +
-              "@min-[304px]:[&>li]:w-[calc((100%-56px)/2)] " +
+              "@min-[560px]:[&>li]:min-w-[143px] " +
+              "[&>li]:w-[calc((100%-56px)/2)] " +
               "@min-[464px]:[&>li]:w-[calc((100%-72px)/3)] " +
               "@min-[560px]:[&>li]:w-[calc((100%-32px)/3)] " +
               "@min-[692px]:[&>li]:w-[calc((100%-48px)/4)] " +

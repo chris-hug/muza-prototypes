@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
 // Figma source: L9yw4Yaec9YtAXGxP8q4fu › node 65:533
 //
 // Spec:
-//   bg-background · border border-border · rounded-xl
+//   bg-background · border border-border · rounded-full
 //   text-base font-normal · placeholder:text-muted-foreground
 //   height: 40px (h-10)
 //

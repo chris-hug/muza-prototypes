@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
 //
 // Built on @base-ui/react/toast.
 //
-// Setup: Wrap your app (or layout.tsx) with <ToastProvider>.
+// Setup: wrap the app shell (`app/root.tsx` here) with <ToastProvider>.
 //        Place <ToastViewport /> inside it.
 //
 // Usage inside a component:
@@ -55,9 +55,10 @@ export const toastCloseButtonClass = cn(
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
 )
 
-// Icons use the same `self-start mt-[5px]` optical-center nudge as the Alert
-// component so the icon sits on the title's x-height center, not floating
-// between title and description when the description wraps.
+// Icons take the same optical-centre nudge as the Alert component so the icon
+// sits on the title's x-height centre, not floating between title and
+// description when the description wraps. (The comment said `mt-[5px]` for a
+// long time while the class was `mt-[3px]` — the class is the truth.)
 const ICON_CLS = "size-4 shrink-0 self-start mt-[3px]"
 const ToastIcon: Record<string, React.ReactNode> = {
   default: <InfoIcon        className={cn(ICON_CLS, "text-muted-foreground")} />,

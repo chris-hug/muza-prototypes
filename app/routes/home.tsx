@@ -4127,23 +4127,9 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           but a <span className="text-foreground">nav</span> row, not a player
           row.
         </p>
-        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-6 max-w-2xl list-disc pl-5">
-          <li>
-            <span className="text-foreground">Primary action per type.</span>{" "}
-            Album / Playlist / Artist <span className="text-foreground">open</span> the
-            detail page. A Song row also <span className="text-foreground">opens its
-            release</span> (the album) when an <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">onOpen</code> is given —
-            the <span className="text-foreground">cover button</span> is what plays
-            (and shows the now-playing state). With no <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">onOpen</code>, the whole song row plays.
-          </li>
-          <li>
-            <span className="text-foreground">Type badge + adaptive thumb.</span>{" "}
-            A <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">ContentTypeBadge</code> labels
-            each row; the leading slot is a square cover, a 2×2 collage
-            (playlist) or a circle (artist / <span className="text-foreground">label</span>). No heart, no duration — just
-            the <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">⋯</code> menu.
-          </li>
-        </ul>
+                {/* Full rules: `docs/components/media-list-item.md`, behind the ⓘ in this
+            section's header — one copy, read the same way by the page and by
+            an agent. Only the lead stays inline. */}
         <div className="max-w-[420px] flex flex-col gap-1 rounded-xl border border-border p-2">
           <MediaListItem
             type="album"
@@ -4239,8 +4225,9 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         as the Library views (2/3/4/5/6 cards visible at container
         widths 304/464/692/928/1164) so the home density matches the
         rest of the app. Arrow buttons scroll by one full page so
-        the row always lands on a clean N-card boundary; touch swipe
-        is free-form for natural feel.
+        the row always lands on a clean N-card boundary; a touch
+        swipe snaps too (`snap-x snap-mandatory`), so a harder flick
+        travels further but still rests on a card edge.
       */}
       <Section id="card-rail" title="Card Rail"
         usage={[
@@ -4251,54 +4238,18 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           Section divider with title + ◀ ▶ + ghost "Show all"
           button on top, scrollable card rail below. The row hides
           its scrollbar and uses
-          <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">touch-action: pan-x</code>
-          so vertical wheel/swipe passes straight through to the
-          page. Try clicking the arrows or swiping horizontally.
+          <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">touch-pan-x touch-pan-y</code>
+          so a finger on a card can still scroll the PAGE —
+          <code className="text-xsmall font-normal font-sans px-1 mx-1 rounded-sm bg-muted">pan-x</code>
+          alone forbids the vertical pan rather than passing it on.
+          Try clicking the arrows or swiping horizontally.
         </p>
         <p className="text-base text-muted-foreground mb-2 max-w-2xl">
           <span className="text-foreground font-medium">Responsive behaviour</span> — the rail has two distinct modes, split at a <span className="text-foreground">560px</span> container width (synced to the <a href="/?page=DesignSystem#media-header" className="text-primary-text hover:underline underline-offset-2">MediaHeader</a>'s stacked breakpoint):
         </p>
-        <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-5 max-w-2xl list-disc pl-5">
-          <li>
-            <span className="text-foreground">Column steps</span> — visible
-            cards step with container width on the same thresholds as
-            the Library grids:{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">304→2</code>,{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">464→3</code>,{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">692→4</code>,{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">928→5</code>,{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">1164→6</code>,{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">1500→7</code>.
-          </li>
-          <li>
-            <span className="text-foreground">Mobile (&lt; 560px) — swipe mode.</span>{" "}
-            Cards are floored at the <span className="text-foreground">220px</span> max width
-            (min = max), so they lock to one/two big cards with a <span className="text-foreground">~24px peek</span> of
-            the next at the right edge — a clear "this row scrolls" cue
-            on touch. This is the same point the MediaHeader stacks, so
-            the whole page flips to its mobile read together. The ghost
-            "Show all" also firms up into a <span className="text-foreground">secondary pill</span> here,
-            since the chevrons are gone.
-          </li>
-          <li>
-            <span className="text-foreground">Desktop (≥ 560px) — grid mode.</span>{" "}
-            Cards fit exactly N-per-row (no peek), aligned to the Library
-            grids; the ◀ ▶ arrows carry the scroll affordance.
-          </li>
-          <li>
-            <span className="text-foreground">Arrows</span> — a pointer
-            affordance for <span className="text-foreground">grid mode (≥ 560)</span> only.
-            Below 560 the swipe peek is the scroll cue, so the arrows would
-            be redundant and are hidden. On touch
-            (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">hover: none</code>)
-            they're always hidden — the peek / native swipe is the cue.
-          </li>
-          <li>
-            <span className="text-foreground">Scroll</span> — scroll-snap
-            re-aligns cards after a swipe; arrows page by one viewport +
-            one gap. Native scrollbar hidden.
-          </li>
-        </ul>
+                {/* Full rules: `docs/components/card-rail.md`, behind the ⓘ in this
+            section's header — one copy, read the same way by the page and by
+            an agent. Only the lead stays inline. */}
         <CardRail title="New Albums">
           {HOME_NEW_ALBUMS.map(a => (
             <li key={a.id}><AlbumCard cover={a.cover} title={a.title} artist={a.artist} year={albumMetaFor(a.title).year} streamPrice={albumMetaFor(a.title).streamPrice} downloadPrice={albumMetaFor(a.title).downloadPrice} /></li>
