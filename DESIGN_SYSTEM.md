@@ -146,9 +146,15 @@ The app uses **two content-growth tiers** so very wide viewports don't leave gap
 <div className="@container mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] px-10 …">
 ```
 
+**Use the `grid-cards` class** (`app.css`) rather than re-typing the ladder — it is one definition shared by every Library view, the All tab and the DS grids.
+
+**Below the ladder's first rung (container < 304px) there is no rule**, so `grid-cards`' base declaration is the entire layout there — and it's also what renders on any engine where `@container` doesn't match. It must therefore be a real layout, not the ladder's bottom step: `repeat(auto-fill, minmax(128px, 1fr))`, which holds **two columns down to a 272px container**. A fixed `repeat(1, …220px)` base shipped one narrow column with an empty band beside it on a 320px phone (iPhone mini in Display Zoom → 296px container).
+
+The **column gap is 16px** (row gap 24px). That is *not* the page gutter — `--page-px` is 12px on phones. Two columns at a 296px container = (296 − 16) ÷ 2 = 140px per card.
+
 **Grids step from 6 → 7 cards** at `@container` width ≥ `1500px` (intentionally above tier-1's 1400 cap so the 6-card layout never collapses into 7 smaller cards):
 ```tsx
-<ul className="grid grid-cols-[repeat(1,minmax(143px,220px))]
+<ul className="grid grid-cols-[repeat(auto-fill,minmax(128px,1fr))]
   @min-[304px]:grid-cols-[repeat(2,minmax(143px,220px))]
   @min-[464px]:grid-cols-[repeat(3,minmax(143px,220px))]
   @min-[692px]:grid-cols-[repeat(4,minmax(143px,220px))]

@@ -78,7 +78,9 @@ function Frame({ title, range, gutter, cols, gutterPx, nav }: FrameProps) {
 
       <div className="flex items-center justify-between text-2xsmall text-muted-foreground tabular-nums">
         <span><span className="text-foreground">{gutter}</span> gutter</span>
-        <span>{cols === 2 ? "1–2" : title === "Tablet" ? "3–4" : "5–7"} cols</span>
+        {/* Phone is 2 columns at every supported width — the auto-fill
+             fallback holds two down to a 272px container. */}
+        <span>{cols === 2 ? "2" : title === "Tablet" ? "3–4" : "5–7"} cols</span>
       </div>
     </div>
   )
@@ -95,7 +97,7 @@ function ColumnLadder() {
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-1.5 flex-wrap">
         <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted px-2 py-1 text-2xsmall text-muted-foreground">
-          <span className="tabular-nums text-foreground">&lt;304</span> 1 col
+          <span className="tabular-nums text-foreground">&lt;304</span> 2 cols
         </span>
         {STEPS.map(s => (
           <div key={s.w} className="inline-flex items-center gap-1.5">
@@ -107,7 +109,7 @@ function ColumnLadder() {
         ))}
       </div>
       <p className="text-2xsmall text-muted-foreground">
-        Container width (not viewport). Cards are <span className="text-foreground tabular-nums">143–220px</span>; a column is added only once the current ones reach their 220px cap — so cards stay large instead of splitting early.
+        Container width (not viewport), with a <span className="text-foreground tabular-nums">16px</span> column gap — separate from the page gutter above. From 304 up, cards are <span className="text-foreground tabular-nums">143–220px</span> and a column is added only once the current ones reach their 220px cap, so cards stay large instead of splitting early. Below 304 the ladder has no rung, so the grid falls back to <span className="text-foreground tabular-nums">auto-fill / 128px min</span> — two columns down to a 272px container, which is what a 320px phone (iPhone mini, Display Zoom) needs.
       </p>
     </div>
   )

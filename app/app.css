@@ -15,6 +15,11 @@
      Cards are minmax(143px,220px); each threshold sits at the N×220 cap so
      a column is added only once the current ones reach 220 (keeps cards big
      rather than splitting early like auto-fill would).
+     BELOW 304 there is no rung, so `grid-cards` falls back to
+     auto-fill/minmax(128px,1fr) — 2 columns down to a 272px container. That
+     fallback is also what renders on engines without container queries, so
+     it has to be a real layout in its own right (see `.grid-cards`).
+     Column GAP is 16px (row 24px) — not the page gutter below.
 
    MOBILE-MODE break (container 560) — MediaHeader stacks · rails switch to
      swipe-peek + drop chevrons · "Show all" firms into a pill.
