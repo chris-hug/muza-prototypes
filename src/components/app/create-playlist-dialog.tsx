@@ -12,7 +12,7 @@
  * host can open the Add-music step — see `onCreated`.
  */
 
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Lock } from "lucide-react"
 
 import {
@@ -55,23 +55,38 @@ export function CreatePlaylistProvider({ children }: { children: React.ReactNode
 
 export function CreatePlaylistDialog({
   open, onOpenChange, onCreated,
+  mode = "create", initialName = "", initialPrivate = false,
 }: {
   open: boolean
   onOpenChange: (v: boolean) => void
-  /** Called with the new playlist's name once created. */
+  /** Called with the playlist's name once created / saved. */
   onCreated?: (name: string) => void
+  /** `edit` reuses the exact same form to change an existing playlist's
+   *  details — one form, so the fields can't drift apart between the two. */
+  mode?: "create" | "edit"
+  initialName?: string
+  initialPrivate?: boolean
 }) {
   const { add: toast } = useToast()
-  const [name, setName] = useState("")
-  const [keepPrivate, setKeepPrivate] = useState(false)
+  const editing = mode === "edit"
+  const [name, setName] = useState(initialName)
+  const [keepPrivate, setKeepPrivate] = useState(initialPrivate)
 
-  const reset = () => { setName(""); setKeepPrivate(false) }
+  // Re-seed whenever the dialog opens: in edit mode it must show the CURRENT
+  // values, and the component instance outlives a single open/close cycle.
+  useEffect(() => {
+    if (open) { setName(initialName); setKeepPrivate(initialPrivate) }
+  }, [open, initialName, initialPrivate])
+
+  const reset = () => { setName(initialName); setKeepPrivate(initialPrivate) }
 
   const create = () => {
     const trimmed = name.trim()
     if (!trimmed) return
     onCreated?.(trimmed)
-    toast({ title: "Playlist created", description: `“${trimmed}” is ready.`, type: "success" })
+    toast(editing
+      ? { title: "Playlist updated", description: `“${trimmed}” saved.`, type: "success" }
+      : { title: "Playlist created", description: `“${trimmed}” is ready.`, type: "success" })
     reset()
     onOpenChange(false)
   }
@@ -82,13 +97,16 @@ export function CreatePlaylistDialog({
           viewport on desktop, still a bottom sheet on mobile. */}
       <DialogContent className="sm:max-w-[max(32rem,50vw)]">
         <DialogHeader>
-          <DialogTitle className="text-large">New Playlist</DialogTitle>
+          <DialogTitle className="text-large">{editing ? "Edit info" : "New Playlist"}</DialogTitle>
         </DialogHeader>
 
         {/* Cover — the existing "create playlist" tile (tinted square + round
             button), relabelled for picking an image. Prototype: no picker
             wired, so it's a static affordance. */}
-        <PlaylistCreateCard label="Add cover image" className="mx-auto w-40" />
+        <PlaylistCreateCard
+          label={editing ? "Change cover image" : "Add cover image"}
+          className="mx-auto w-40"
+        />
 
         <Input
           value={name}
@@ -121,7 +139,9 @@ export function CreatePlaylistDialog({
 
         <DialogFooter>
           <DialogClose render={<Button variant="ghost" />}>Cancel</DialogClose>
-          <Button onClick={create} disabled={!name.trim()}>Create playlist</Button>
+          <Button onClick={create} disabled={!name.trim()}>
+            {editing ? "Save" : "Create playlist"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

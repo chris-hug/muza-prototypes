@@ -451,7 +451,11 @@ Track visibility. Always glassmorphism: `backdrop-blur-sm bg-background/50 borde
 Always has left icon + right chevron. Statuses: `public` (Globe) · `private` (Lock)
 
 ### `<Badge>` primitives (Figma node 26:169)
-Design system base variants: `default` (neutral-950) · `secondary` · `outline` (glassmorphism) · `destructive`
+Design system base variants: `default` (neutral-950) · `secondary` · `outline` (glassmorphism) · `destructive` · `count`
+
+**`variant="count"` + `shape="pill"`** — the number badge that lives INSIDE another control (a `Chip` filter/tab). The variant owns both states: `bg-accent` at rest (one step above the chip's own fill, so it stays legible on hover) and a translucent light pill while the parent chip is selected. **Never** patch those colours in with `className` at the call site — that's the hand-crafted-badge rule below.
+
+The `pill` shape uses `px-1` (not `px-1.5`) so a **single digit lands inside `min-w-5` and renders a true 20×20 circle**; two digits widen it on their own. At 1.5 even a "3" came out 22.8×20 — a slight oval that reads as a mis-centred number. Vertical centring is handled by `pb-px` (Founders Grotesk numerals sit low in a flex-centred box); measured ink sits within 0.15px of centre.
 
 ### Where content-type badges belong — STRICT
 
@@ -672,3 +676,32 @@ Owner-only **Edit** on a playlist docks a panel on the right that **persists acr
 - **Resizable** via [`use-resizable-width.ts`](src/lib/use-resizable-width.ts): handle on the panel's left edge, width remembered in localStorage, re-clamped to the **current** viewport on restore and on window resize (a width stored on a wide screen must not crush a narrow one). While dragging, the width is written straight to the element inside a rAF — React only sees it at drag start and end.
 - **⤢ expands the drawer into the full playlist page** in four phases (`grow` → `cover` → `dissolve` → `idle`): the panel leaves the flow (`fixed` + `contain: layout paint`, with a placeholder holding its slot), grows to `main + panel` width, the editor UI fades out, and navigation commits *while covered* so the destination renders at its final width — no flash of the old page, no narrow→wide snap.
 - The in-list "Add music" row is **hidden while the drawer is editing that same playlist** — both do the same job.
+
+---
+
+## Touch & gestures — STRICT
+
+Phones are the default surface for the player, so gesture handling is a first-class rule, not polish.
+
+**Never put `touch-action: none` on content you also want to scroll past.** It tells the browser not to pan at all for gestures starting there. Card covers had it, and since the cover is most of a card's area, a swipe along a rail almost always started on one — the rail simply refused to scroll. Covers now leave `touch-action` alone; the rail owns `touch-pan-x`.
+
+**A drag is not a tap.** `useLongPress` fires its click on `pointerup`, which bypasses the browser's own "suppress the click after a scroll". It therefore has to make that judgement itself: movement past **8px** (`SLOP`) marks the gesture as a drag, which cancels both the long press *and* the click. Any hand-rolled pointer handler needs the same guard, or swiping a rail navigates to whatever card the finger landed on.
+
+**Rails snap `mandatory`, not `proximity`.** A flick keeps its full momentum — the browser lets it coast to its natural resting point and then takes the nearest snap point — but it always comes to rest on an exact card boundary. `proximity` only snapped when the rail happened to stop near an edge, so a hard swipe left a card sliced down the middle. Requires a uniform stride (card + 16px gap) and no scroll-padding on the container.
+
+**Nothing may exceed the viewport width on a phone.** Even fully clipped, iOS pans the *visual* viewport when content is wider than the layout viewport — which reads as the whole page drifting sideways. `scrollWidth` will not reveal this when an ancestor clips, so check element rects against `clientWidth`, not container overflow. Fixed paddings are the usual culprit: size hero CTAs with `clamp()` and add `max-w-full`.
+
+---
+
+## Track selection — the pick affordance
+
+`SelectTrackButton` (`src/components/ui/select-track-button.tsx`) replaces a checkbox wherever tracks are picked (Add music). A checkbox states a fact; this states the action, then confirms it.
+
+- **One mark, rearranged** — not two icons cross-fading. The plus's two strokes rotate into the check: vertical −90° → −45° (long arm), horizontal 180° → 45° + `scaleX(.43)` (short arm).
+- **Geometry** — 12px mark, 1.25px strokes (lighter than the 2px Lucide set on purpose), inside a 40px surface. Each bar is centred by half its own weight so a sub-pixel stroke sits true.
+- **Timing** — 150ms delay then 150ms `ease-out` into the check; 150ms delay then 300ms on `cubic-bezier(.75,-0.6,.14,1.59)` back to the plus. Same hold both ways, so picking and un-picking share a rhythm.
+- **Surface** — `bg-secondary`, **no border**. Once picked the surface fades to transparent and only the check remains: a filled pill per row is heavy down a long list, and the affordance has done its job.
+- The **row** is the click target; the mark is `pointer-events-none` and unfocusable.
+- Adding a track also runs `.muza-row-added` — a soft shade sweeping left→right across the row (260ms). It animates `background-position` only; an earlier `translateX` nudge read as the whole row shifting.
+
+Reference for the mark: `codepen.io/nicetransition/pen/bGdJzpZ`.

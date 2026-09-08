@@ -112,24 +112,42 @@ export function MobileSearchBar({
 }
 
 // ── Pill tabs / filters ──────────────────────────────────────────────
-export interface PillTab { value: string; label: string }
+export interface PillTab {
+  value: string
+  label: string
+  /** Optional leading glyph — for tabs that aren't a plain content type
+   *  (e.g. the "Selection" tab in the Add-music sheet). */
+  icon?: React.ReactNode
+  /** Optional trailing count badge (Chip renders it). */
+  count?: number | string
+}
 
-export function MobilePillTabs({ tabs, value, onChange }: {
+export function MobilePillTabs({ tabs, value, onChange, className }: {
   tabs: PillTab[]
   value: string
   onChange?: (v: string) => void
+  /** Override the bleed to match the HOST's gutter (default: the mobile
+   *  header's 12px). A strip that stops short of its surface edge crops
+   *  scrolled pills on a line that aligns with nothing — e.g. inside a
+   *  `p-6` dialog, pass `-mx-6 px-6`. */
+  className?: string
 }) {
   return (
-    // Bleed to the edges so pills scroll under the header gutter.
-    <div className="-mx-3 px-3 flex gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+    // Bleed to the edges so pills scroll under the host's gutter.
+    <div className={cn(
+      "-mx-3 px-3 flex gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+      className,
+    )}>
       {tabs.map(t => (
         <Chip
           key={t.value}
           size="md"
           selected={t.value === value}
+          count={t.count}
           onClick={() => onChange?.(t.value)}
-          className="shrink-0"
+          className="shrink-0 [&_svg]:size-4 [&_svg]:shrink-0"
         >
+          {t.icon}
           {t.label}
         </Chip>
       ))}

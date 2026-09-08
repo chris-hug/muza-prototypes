@@ -126,7 +126,9 @@ export function PlaylistCard({
     >
       <div
         {...coverGestures}
-        className="relative aspect-square w-full overflow-hidden cursor-pointer select-none touch-none"
+        // NOT `touch-none` — see AlbumCard: blocking touch on the cover stops
+        // the rail panning when a swipe starts on artwork.
+        className="relative aspect-square w-full overflow-hidden cursor-pointer select-none"
       >
         <CompositeCover covers={covers} title={title} />
 

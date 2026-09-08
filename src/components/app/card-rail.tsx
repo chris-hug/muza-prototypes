@@ -240,11 +240,15 @@ export function CardRail({ title, showAllLabel = "Show all", onShowAll, showAllO
           //   · `touch-action: pan-x` — touch pans only horizontally;
           //     vertical swipes pass to the page scroll.
           //   · `overscroll-behavior-x: contain` — no body rubber-band.
-          //   · `snap-x snap-proximity` — gentle snap to card/column
-          //     boundaries after swipe; each `<li>` is `snap-start`.
+          //   · `snap-x snap-mandatory` — a flick ALWAYS comes to rest on a
+          //     card boundary; each `<li>` is `snap-start`. Mandatory does
+          //     not shorten the throw: momentum runs to its natural resting
+          //     point and the browser then takes the nearest snap point.
+          //     `proximity` only snapped when the rail happened to stop near
+          //     an edge, so a hard swipe left a card sliced down the middle.
           //   · Scrollbar hidden across browsers.
           "min-w-0 items-start overflow-x-auto overflow-y-hidden " +
-          "snap-x snap-proximity scroll-smooth touch-pan-x overscroll-x-contain " +
+          "snap-x snap-mandatory scroll-smooth touch-pan-x overscroll-x-contain " +
           "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden " +
           "[&>li]:snap-start [&>li]:max-w-[220px] " +
           (mobileGrid

@@ -19,12 +19,12 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useSearchParams } from "react-router"
-import { AddMusicIcon } from "@/components/ui/media-icons"
 import { AddMusicDialog } from "@/components/app/add-music-dialog"
+import { CreatePlaylistDialog } from "@/components/app/create-playlist-dialog"
 import { usePlaylistEditor } from "@/lib/playlist-editor-context"
 import { DetailMoreButton } from "@/components/ui/detail-more-button"
 import { usePublishDetailHeader } from "@/lib/detail-actions"
-import { useFooterNav } from "@/lib/use-media-query"
+import { useFooterNav, useIsMobile } from "@/lib/use-media-query"
 
 import { MediaHeader } from "@/components/ui/media-header"
 import { SongListItem } from "@/components/ui/song-list-item"
@@ -69,6 +69,11 @@ export function PlaylistDetailView() {
   // Owner "You" = self-created (Edit/Delete); anything else = saved.
   const owned = PLAYLIST.owner === "You"
   const [addMusicOpen, setAddMusicOpen] = useState(false)
+  const [editInfoOpen, setEditInfoOpen] = useState(false)
+  // The docked editor is desktop-only (`hidden md:flex`), so below that gate
+  // Edit has to lead somewhere else — the same info dialog the create flow
+  // uses, in `edit` mode.
+  const isMobile = useIsMobile()
   // Edit (owner-only) opens the docked drawer you can drag tracks into from
   // anywhere in the app.
   const playlistEditor = usePlaylistEditor()
@@ -81,6 +86,9 @@ export function PlaylistDetailView() {
     title:  PLAYLIST.title,
     covers: PLAYLIST.covers,
   })
+  /** "Edit" / "Edit info" — drawer on desktop, info dialog on mobile. */
+  const onEdit = isMobile ? () => setEditInfoOpen(true) : openEditor
+  const onAddMusic = () => setAddMusicOpen(true)
   const playlistMenu = {
     kind: "playlist" as const,
     title: PLAYLIST.title,
@@ -97,7 +105,9 @@ export function PlaylistDetailView() {
     // Playlists navigate to their OWNER (not an artist); useDetailActions reads
     // `onGoToOwner` for the playlist kind. Only others' playlists have one.
     onGoToOwner: owned ? undefined : () => openArtist(slugify(PLAYLIST.owner)),
-    onEdit: owned ? openEditor : undefined,
+    onEdit:      owned ? onEdit : undefined,
+    // The sheet's "Add music" tile opens the SAME dialog as the header button.
+    onAddMusic:  owned ? onAddMusic : undefined,
   }
   // No `coverSrc` — playlist covers are framed on the light page, so the
   // floating back / "…" stay dark (luminance adaptation is artist-only).
@@ -128,8 +138,12 @@ export function PlaylistDetailView() {
         owner={PLAYLIST.owner}
         ownerAvatar={PLAYLIST.ownerAvatar}
         onOwnerClick={() => openArtist(slugify(PLAYLIST.owner))}
-        // Owner-only Edit → opens the docked editor drawer (desktop).
-        onEdit={openEditor}
+        // Owner-only Edit → docked editor drawer on desktop, info dialog on mobile.
+        onEdit={onEdit}
+        // Stacked layout: the third action slot is "Add music" (Edit moves
+        // into the "…" sheet), so filling the playlist is one tap from the
+        // header instead of a separate row in the list.
+        onAddMusic={owned ? onAddMusic : undefined}
         libraryType="playlist"
         libraryId={slugify(PLAYLIST.title)}
         libraryName={PLAYLIST.title}
@@ -160,27 +174,6 @@ export function PlaylistDetailView() {
            per-row covers earn their space). The album name links
            through to that album's detail page when it resolves. */}
       <ul className="flex flex-col gap-2">
-        {/* "Add music" — leads the list for your OWN playlist while the header
-             is in its STACKED layout (container < 560, same breakpoint the
-             floating "…" uses), so filling it is the first thing in reach.
-             Wider layouts have room for the action elsewhere. */}
-        {owned && !editingThis && (
-          <li className="@min-[560px]:hidden">
-            {/* Sits as a normal list row (Figma 5953:182065): a secondary
-                 tinted circle carrying the bespoke add-music glyph, then the
-                 label — same rhythm as the song rows it leads. */}
-            <button
-              type="button"
-              onClick={() => setAddMusicOpen(true)}
-              className="flex w-full items-center gap-3 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-muted active:bg-muted outline-none focus-visible:bg-muted"
-            >
-              <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground">
-                <AddMusicIcon className="size-4" />
-              </span>
-              <span className="text-base text-foreground">Add music</span>
-            </button>
-          </li>
-        )}
         {PLAYLIST.tracks.map(t => {
           const albumKey = slugify(t.album)
           return (
@@ -280,6 +273,15 @@ export function PlaylistDetailView() {
         open={addMusicOpen}
         onOpenChange={setAddMusicOpen}
         playlistName={PLAYLIST.title}
+      />
+
+      {/* "Edit info" — the create-playlist form in `edit` mode, so name,
+           cover and privacy can't drift apart between the two flows. */}
+      <CreatePlaylistDialog
+        mode="edit"
+        open={editInfoOpen}
+        onOpenChange={setEditInfoOpen}
+        initialName={PLAYLIST.title}
       />
     </div>
   )

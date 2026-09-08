@@ -114,6 +114,7 @@ import {
   ListPlus, ListStart, ListEnd, Mic, Flag, Clock, Lock, ListMusic,
 } from "lucide-react"
 import { NavRow } from "@/components/ui/nav-row"
+import { SelectTrackButton } from "@/components/ui/select-track-button"
 import { DetailMoreButton } from "@/components/ui/detail-more-button"
 import { SearchPanel } from "@/components/ui/search-panel"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
@@ -920,7 +921,19 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
       <p className="text-[clamp(2rem,_3vw,_4rem)] leading-[1.1] font-normal text-foreground mt-16">Built as a non-profit, muza exists to fix streaming's broken economics. Instead of paying artists per click, muza rewards attention — distributing revenue based on actual listening time and direct listener support. Your subscription goes only to the artists you play.</p>
       <p className="text-[clamp(2rem,_3vw,_4rem)] leading-[1.1] font-normal text-foreground mt-10">We combine subscription streaming with direct artist uploads, giving musicians full control over how their music is shared and monetised. Artists retain ownership, receive up to 90–95% of revenue, and are paid directly — no hidden intermediaries.</p>
       <div className="flex justify-center mt-24">
-        <Button size="lg" className="text-[2rem] px-[5.5rem] h-[5.5rem] rounded-full transition-transform duration-300 ease-out hover:transition-transform hover:duration-250 hover:ease-[cubic-bezier(0.22,1.8,0.36,1)] hover:scale-[1.07]" onClick={() => onNavigate("Music")}>Join muza now</Button>
+        {/* Padding and type scale with the viewport: at a flat `px-[5.5rem]`
+             this button measured 374px wide, so on a 360px phone it hung ~7px
+             off BOTH edges. Nothing here scrolls horizontally, so it was
+             clipped rather than reachable — but iOS still pans the visual
+             viewport when content exceeds it, which is the stray horizontal
+             drag on small phones. `max-w-full` is the backstop. */}
+        <Button
+          size="lg"
+          className="max-w-full text-[clamp(1.5rem,_5vw,_2rem)] px-[clamp(2rem,_12vw,_5.5rem)] h-[clamp(4rem,_14vw,_5.5rem)] rounded-full transition-transform duration-300 ease-out hover:transition-transform hover:duration-250 hover:ease-[cubic-bezier(0.22,1.8,0.36,1)] hover:scale-[1.07]"
+          onClick={() => onNavigate("Music")}
+        >
+          Join muza now
+        </Button>
       </div>
 
       {/* Discovery rails — four content rows below the call-to-action.
@@ -1963,6 +1976,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
   const [inputSelectCurrency, setInputSelectCurrency] = useState("USD")
   const [inputSelectTld, setInputSelectTld] = useState(".com")
   const [dsSearchValue, setDsSearchValue] = useState("Blue Note")
+  const [selectTrackDemo, setSelectTrackDemo] = useState(true)
   const [playing, setPlaying] = useState(false)
   const [volume, setVolume] = useState([62])
   const [progress, setProgress] = useState([38])
@@ -3135,6 +3149,35 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
               ))}
             </RadioGroup>
           </div>
+        </div>
+      </Section>
+
+      {/* ══ SELECT TRACK ══ */}
+      <Section id="select-track" title="Select Track"
+        usage={[
+          { label: "Add music → track rows", href: "/?page=Playlists" },
+        ]}>
+        <p className="text-base text-muted-foreground mb-6 max-w-2xl">
+          The pick affordance on a selectable track row, in place of a checkbox.
+          A checkbox states a fact; this states the action ("add") and then
+          confirms it — and it isn't two icons swapping: the plus's two strokes
+          rotate into the check, so it's one mark rearranging itself. Once
+          picked the secondary surface fades away and only the check remains,
+          so a long list reads as a column of marks, not a stack of filled
+          pills. The ROW is the click target; this is display-only.
+        </p>
+        <div className="flex items-center gap-8">
+          <div className="flex flex-col items-center gap-2">
+            <SelectTrackButton selected={false} />
+            <span className="text-xsmall text-muted-foreground">Unpicked</span>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <SelectTrackButton selected={selectTrackDemo} />
+            <span className="text-xsmall text-muted-foreground">Live — click →</span>
+          </div>
+          <Button variant="secondary" size="sm" onClick={() => setSelectTrackDemo(v => !v)}>
+            Toggle
+          </Button>
         </div>
       </Section>
 

@@ -23,6 +23,7 @@ import {
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { AddMusicIcon } from "@/components/ui/media-icons"
 import { ContentTypeBadge, type ContentType } from "@/components/ui/badge"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -241,7 +242,8 @@ function useDetailActions({
   const showCredits: Action = { icon: <Info />, label: "Credits", onClick: () => credits.open(slugify(title)) }
   const quick: Action[] = isPlaylist
     ? (owned
-        ? [share, { icon: <Plus />, label: "Add music", onClick: onAddMusic }, { icon: <Pencil />, label: "Edit info", onClick: onEdit }]
+        // Same glyph as the header's Add-music button — one action, one mark.
+        ? [share, { icon: <AddMusicIcon />, label: "Add music", onClick: onAddMusic }, { icon: <Pencil />, label: "Edit info", onClick: onEdit }]
         : [share, save])
     : isAlbum
       ? [share, save,

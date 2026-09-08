@@ -162,7 +162,11 @@ export function AlbumCard({
     >
       <div
         {...coverGestures}
-        className="relative aspect-square w-full overflow-hidden cursor-pointer select-none touch-none"
+        // NOT `touch-none`: the cover is most of the card's area, and blocking
+        // touch here stopped the browser panning the rail whenever a swipe
+        // started on artwork — which is nearly always. The long press is
+        // driven by a timer, so it survives leaving the gesture to the browser.
+        className="relative aspect-square w-full overflow-hidden cursor-pointer select-none"
       >
         <CoverArt src={cover} alt={title} />
 

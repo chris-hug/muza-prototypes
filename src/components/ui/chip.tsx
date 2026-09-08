@@ -103,19 +103,9 @@ function Chip({
     >
       {children}
       {count !== undefined && (
-        // Default + hover: `bg-accent` — the chip's hover bg (muted)
-        // wraps a slightly darker accent badge, so the count always
-        // reads above the chip surface without shifting under the
-        // cursor.
-        // Selected: borderless `bg-background` pill so the count
-        // stands out against the primary backdrop.
-        <Badge
-          shape="pill"
-          variant="secondary"
-          className="bg-accent group-data-[selected]/chip:bg-background/20 group-data-[selected]/chip:text-primary-foreground"
-        >
-          {count}
-        </Badge>
+        // The `count` variant owns both states (resting on the chip's fill,
+        // and inverted while the chip is selected) — no colour patching here.
+        <Badge shape="pill" variant="count">{count}</Badge>
       )}
     </button>
   )

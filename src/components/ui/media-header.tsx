@@ -39,6 +39,7 @@ import { Badge } from "@/components/ui/badge"
 import { StatusBadge, type StatusBadgeStatus } from "@/components/ui/status-badge"
 import { DetailMoreButton } from "@/components/ui/detail-more-button"
 import { ShareButton } from "@/components/ui/share-button"
+import { AddMusicIcon } from "@/components/ui/media-icons"
 import { MarqueeText } from "@/components/ui/marquee-text"
 import { useCredits } from "@/lib/credits-context"
 import { slugify } from "@/lib/media-nav"
@@ -116,6 +117,9 @@ export interface MediaHeaderProps {
   onInfo?:        () => void
   onMore?:        () => void
   onEdit?:        () => void
+  /** Owner-only "Add music" — takes the third mobile action slot on your own
+   *  playlist (Edit moves into the "…" sheet). */
+  onAddMusic?:    () => void
   onBuy?:         () => void
   onOwnerClick?:  () => void
   className?: string
@@ -146,7 +150,7 @@ export function MediaHeader({
   onAddDownload,
   onPlay, onShuffle, shuffleActive = false, playing = false, onAdd,
   libraryType, libraryId, libraryName,
-  onInfo, onMore, onEdit, onBuy, onOwnerClick,
+  onInfo, onMore, onEdit, onAddMusic, onBuy, onOwnerClick,
   className,
 }: MediaHeaderProps) {
   const isOwned     = variant === "my-album" || variant === "my-playlist"
@@ -314,17 +318,24 @@ export function MediaHeader({
           </div>
 
           {/* ── Mobile actions — single full-width row: Play | Shuffle
-               | Add/Edit | Info. The two trailing icons are Save (heart)
-               and Info (credits); Share + the rest live in the top-bar
-               "…" menu (DetailMoreButton), so they're omitted here.
-               Playlists have no release credits → no Info, leaving just
-               the heart. */}
+               | Add music / Edit / Save | Info. Share and the rest live in
+               the top-bar "…" menu (DetailMoreButton), so they're omitted
+               here. Playlists have no release credits → no Info, leaving
+               just the third slot. */}
           <div className="flex flex-col gap-3 w-full @min-[560px]:hidden">
             {ctaButton}
             <div className="flex items-center gap-2 w-full">
               {playButton("flex-1")}
               {shuffleButton("flex-1")}
-              {isOwned ? (
+              {/* Your OWN playlist: filling it is the job that matters here,
+                   so the third slot is "Add music". Edit lives in the "…"
+                   sheet (it's already a quick-action tile there) — a pencil
+                   competing with Add music would split one intent in two. */}
+              {isOwned && onAddMusic ? (
+                <Button variant="outline" size="icon-lg" onClick={onAddMusic} aria-label="Add music" className={ACTION_BTN_CLASS}>
+                  <AddMusicIcon />
+                </Button>
+              ) : isOwned ? (
                 <Button variant="outline" size="icon-lg" onClick={onEdit} aria-label="Edit" className={ACTION_BTN_CLASS}>
                   <Pencil />
                 </Button>

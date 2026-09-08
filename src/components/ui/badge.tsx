@@ -58,6 +58,15 @@ const badgeVariants = cva(
         updated:
           "bg-[#FEF8E0] text-[#5C4612] border-[#5C4612]/15 " +
           "dark:bg-[#5C4612] dark:text-[#FEF8E0] dark:border-[#FEF8E0]/15",
+        // Count inside another control (a Chip / filter pill). Sits one step
+        // above the host's surface so it stays legible on both the chip's
+        // resting and hover fills, and flips to a translucent light pill when
+        // the parent chip is selected. Owning both states here is the point:
+        // call sites used to patch this in with `className`, which is exactly
+        // the hand-crafted badge colour the rules forbid.
+        count:
+          "bg-accent text-foreground " +
+          "group-data-[selected]/chip:bg-background/20 group-data-[selected]/chip:text-primary-foreground",
         // Destructive (node 26:185)
         destructive:
           "bg-destructive text-white",
@@ -83,7 +92,11 @@ const badgeVariants = cva(
         // `border-transparent` overrides the base border so the pill
         // (typically a count inside another chip) reads as a fill,
         // not a stroked badge.
-        pill:   "rounded-full justify-center h-5 min-w-5 px-1.5 pb-px text-xsmall border-transparent",
+        // `px-1` (not 1.5) so a SINGLE digit lands inside `min-w-5` and the
+        // pill renders as a true 20×20 circle; two digits push it wider on
+        // their own. At 1.5 even a "3" came out 22.8×20 — a slight oval that
+        // reads as a mis-centred number rather than a round count.
+        pill:   "rounded-full justify-center h-5 min-w-5 px-1 pb-px text-xsmall border-transparent",
       },
     },
     defaultVariants: {
