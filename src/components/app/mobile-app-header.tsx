@@ -323,7 +323,7 @@ function ExploreHeader() {
           page instead of pushing its content down. */}
       {focused && (
         <div className="absolute inset-x-3 top-full z-40">
-          <SearchPanel query={q} onPick={run} className="max-h-[calc(100dvh-140px)] overflow-y-auto" />
+          <SearchPanel query={q} onPick={run} className="max-h-[calc(100svh-140px)] overflow-y-auto" />
         </div>
       )}
     </MobileHeader>

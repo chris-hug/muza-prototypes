@@ -574,8 +574,10 @@ Three escalating surfaces, all bottom-anchored on phones:
 **Sheet gutter is 12px on phones** (`p-3 sm:p-6`), matching `--page-px` at that width. A sheet spans the whole screen, so a 24px gutter costs 48px of a 320–375px width — enough to visibly squeeze list rows. The footer's full-bleed negative margins must match the gutter at **both** sizes (`-mx-3 sm:-mx-6`) or the bar stops short of the edges.
 
 **The keyboard is part of the layout.** iOS does NOT shrink the layout viewport when the on-screen keyboard opens — it shrinks the *visual* viewport — so a `fixed; bottom: 0` sheet sits **behind** the keyboard. Every sheet therefore:
-- sits at `bottom: var(--kb, 0px)` and is capped to `max-h-[calc(100dvh-var(--kb,0px)-8px)]`, scrolling internally, with `scroll-padding-bottom: 8rem` so a field the browser scrolls into view lands clear of the sticky footer;
+- sits at `bottom: var(--kb, 0px)` and is capped to `max-h-[calc(100svh-var(--kb,0px)-8px)]`, scrolling internally, with `scroll-padding-bottom: 8rem` so a field the browser scrolls into view lands clear of the sticky footer;
 - keeps its footer **`sticky bottom-[-0.75rem]` on mobile** so the actions can't scroll out of reach (`sm:static` — desktop doesn't scroll).
+
+**`svh`, never `dvh`, for a sheet's height.** On iOS the *dynamic* viewport unit reports the height with the browser chrome **collapsed**, so while the URL bar is expanded a sheet sized to `100dvh` is taller than the screen: its top — title, tabs, the ✕ — sits above the visible area. `100svh` is the small (chrome-visible) viewport and always fits. Subtract `env(safe-area-inset-top)` as well on a sheet that fills the height.
 
 `--kb` is published by [`useKeyboardInset`](src/lib/use-keyboard-inset.ts), mounted once in the app shell. Chrome/Android is handled declaratively by `interactive-widget=resizes-content` in the viewport meta, so `--kb` stays 0 there.
 
@@ -595,7 +597,7 @@ Used by **Create playlist / Edit info** (`CreatePlaylistDialog`). Pickers and li
 
 **Dialog titles are `text-base` on phones, `sm:text-large` up.** 24px over a 320px sheet eats a line the keyboard already wants; the base `dialogTitleClass` is `text-base`, so a dialog that wants the larger desktop title adds `sm:text-large` — never a bare `text-large`.
 
-**A sheet's scroll body is a FLEX child, never a `vh` cap.** Make the sheet `flex flex-col` with a fixed height (`h-[calc(100dvh-var(--kb,0px)-8px)] sm:h-auto`), every band `shrink-0`, and the list `flex-1 min-h-0`. `min-h-0` is what lets it shrink — a flex item defaults to `min-height: auto`, so without it the list keeps its content height, overruns the sheet, and the sticky footer slices the last rows. A viewport-relative cap (`max-h-[60vh]`, even a `--kb`-aware one) cannot know what the other bands cost and gets this wrong at some size.
+**A sheet's scroll body is a FLEX child, never a `vh` cap.** Make the sheet `flex flex-col` with a fixed height (`h-[calc(100svh-var(--kb,0px)-8px-env(safe-area-inset-top))] sm:h-auto`), every band `shrink-0`, and the list `flex-1 min-h-0`. `min-h-0` is what lets it shrink — a flex item defaults to `min-height: auto`, so without it the list keeps its content height, overruns the sheet, and the sticky footer slices the last rows. A viewport-relative cap (`max-h-[60vh]`, even a `--kb`-aware one) cannot know what the other bands cost and gets this wrong at some size.
 
 Two traps inside that rule:
 - **`padding-bottom` is a floor on a flex item's height** — `min-h-0` cannot shrink a box below its own padding. To clear a floating band, append a **spacer element** at the end of the scroll content instead.

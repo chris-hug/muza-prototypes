@@ -262,7 +262,7 @@ export function AddMusicDialog({
           switch tabs or start typing reads as jumping. `h-…` (not just the
           base `max-h-…`) is what pins the top edge. Desktop keeps the
           content-sized modal, capped at 85vh. */}
-      <DialogContent className="sm:max-w-[max(32rem,50vw)] flex flex-col h-[calc(100dvh-var(--kb,0px)-8px)] sm:h-auto sm:max-h-[85vh]">
+      <DialogContent className="sm:max-w-[max(32rem,50vw)] flex flex-col h-[calc(100svh-var(--kb,0px)-8px-env(safe-area-inset-top))] sm:h-auto sm:max-h-[85vh]">
         {/* The playlist is named in the TITLE rather than a description line
             — it's the one piece of context that matters, and a separate line
             costs height the keyboard is already taking. It does NOT change on

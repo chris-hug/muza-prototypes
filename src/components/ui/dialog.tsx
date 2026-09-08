@@ -55,7 +55,12 @@ export const dialogPositionClass =
   // chrome the keyboard leaves ~200px, which title + field + footer do not
   // fit in. Forms use `mobile="form"` (`dialogFormPositionClass`) instead.
   "inset-x-0 bottom-[var(--kb,0px)] top-auto translate-x-0 translate-y-0 max-w-full rounded-b-none rounded-t-2xl " +
-  "max-h-[calc(100dvh-var(--kb,0px)-8px)] overflow-y-auto " +
+  // `svh`, NOT `dvh`: on iOS the DYNAMIC viewport unit reports the height
+  // with the browser chrome COLLAPSED, so while the URL bar is expanded a
+  // sheet sized to `100dvh` overflows the top of the screen and its header
+  // scrolls off under the chrome. `svh` is the small (chrome-visible)
+  // viewport, which always fits.
+  "max-h-[calc(100svh-var(--kb,0px)-8px)] overflow-y-auto " +
   // The sticky footer floats OVER the scrolling content, so the browser's
   // "scroll the focused field into view" would park a field underneath it.
   // `scroll-padding-bottom` reserves the footer's height for that scroll.
