@@ -32,6 +32,25 @@ than two lists that drift: there is no per-surface item list to keep in step.
 If a card and the detail page show different rows for the same album, that is
 a bug, not a variant.
 
+## Showing it open — `DetailMenuSurface`
+
+The design-system frame does not make you click: `DetailMenuSurface` renders
+the surface itself, open and inline, off the same props `DetailMoreButton`
+takes — the dropdown from 768 up, the bottom sheet below, chosen by
+`useIsMobile()` (which inside the frame reads the window chip). It is not a
+mock: the dropdown uses the live component's own class strings
+(`dropdownMenuSurfaceClass` / `dropdownMenuItemClass`, exported by
+`dropdown-menu.tsx` and used by `DropdownMenuContent` / `DropdownMenuItem`),
+the sheet uses `DetailMenuSheetBody` — the same body the live sheet renders —
+in `standalone` mode (plain buttons instead of `SheetClose`, a `<p>` instead
+of the dialog title, because there is no Sheet root to close or label). The
+actions run for real; Save flips the library store.
+
+```tsx
+<DetailMenuSurface kind="album" title="A Love Supreme" … />   // open, inline
+<DetailMoreButton  kind="album" title="A Love Supreme" … />   // the trigger, in the app
+```
+
 ## Two surfaces, gated by the window
 
 ```tsx
@@ -54,9 +73,7 @@ sidebar becomes a footer bar. A dropdown ⇄ sheet swap is a *different
 component*, and that is the one case the 768 gate is for; cosmetic show/hide
 of a control may still use `[@media(hover:…)]`.
 
-Because the hook reads the **window**, the design-system frame's width chips
-do not flip it — they cap a `max-width`, and the browser is still wide. To see
-the sheet, narrow the browser below 768 or open the page on a phone.
+Because the hook reads the **window**, the design-system frame stands in for it: a window chip (375, 584 …) is fed to `useIsMobile()` through `WindowWidthContext`, so at "375" the "…" opens the sheet — portaled to the real browser window, full width — and from "768" up the dropdown. "Free" reads the browser you are sitting at.
 
 The desktop surface is the app `DropdownMenu` with `align="end"`,
 `sideOffset={6}` and `min-w-52`, listing the items flat in quick-actions-first

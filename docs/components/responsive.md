@@ -240,12 +240,16 @@ container queries measure the column, and that column really is 351px wide.
 - **The stage scrolls sideways** when the frame is wider than the page. It does
   not scale down: a card drawn at 60% is a card at a size the app never
   renders.
-- **The chrome is computed, not live.** `useIsMobile()` / `useFooterNav()` read
-  the real window, so the sidebar is drawn from `sidebarAt()` / `gutterAt()` —
-  pure functions of the chosen width — and deliberately muted, because it is
-  the thing taking space away, not the subject. Presentation swaps gated on
-  those hooks cannot be shown here; the table names the widths where they
-  happen.
+- **The chrome is drawn, not live.** The sidebar comes from `sidebarAt()` /
+  `gutterAt()` — pure functions of the chosen width — and is deliberately
+  muted, because it is the thing taking space away, not the subject.
+- **Inside the frame, the chip is the window.** `WindowWidthContext`
+  (`use-media-query.ts`) makes `useIsMobile()`, `useFooterNav()` and
+  `useSidebarAutoCollapsed()` read the chip instead of the browser, so a
+  component gated on them presents as it would at that window — a "375" frame
+  opens sheets, not dropdowns. Only the gates are overridden: the sheet is
+  still portaled to the real window and appears at the bottom of the browser,
+  full width. The presentation is the phone's, the geometry is yours.
 - **The arithmetic appears once**, in the sentence under the frame, in the
   order the page computes it.
 - **The first chip is `Free`** and it is the default: no fixed width, the frame
@@ -282,6 +286,24 @@ does, labelled `row`. Not because its steps are unreachable from a window
 (sweeping every width finds them), but because a window does not *determine*
 that row's width: one number in, two answers out. `PlayerBar` and
 `PlayerOverlay` belong in the same group.
+
+**A window chip is the window inside the frame** — the same `WindowWidthContext`
+as the stage — so `DetailMoreButton` at "375" opens its bottom sheet and a
+`Dialog` trigger opens a sheet; "Free" and a box chip pass the real window
+through.
+
+**Beside a drawn gutter the stage has no horizontal padding** — the hatched
+gutter *is* the page's padding, and a second `px-6` inside the column would
+inset every component 24px further than the app ever does. Only the page's
+vertical rhythm remains; without chrome ("Free", a box chip) the frame keeps
+its own `p-6`.
+
+**A chrome-level demo bleeds.** A bottom sheet spans the window and covers
+the tab bar, so an `Example` whose demo is a sheet below the presentation gate
+passes `bleed={w => w < 768}`: at those chips the frame draws no gutters, no
+tab bar and no stage padding, and the sheet touches the frame's edges. The
+Detail Menu (`DetailMenuSurface`) and the Dialog previews do this;
+`DialogPreview` itself reads the chip and takes the sheet shape.
 
 **Chrome is drawn only for a window chip.** A component that is centred or has
 an intrinsic width — a dialog, a card, a badge — gets no ladder at all: a 208px

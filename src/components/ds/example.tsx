@@ -17,10 +17,12 @@
  *
  * Width is applied with a plain `max-width` on the stage, and the stage is a
  * `@container`, so components written against container queries (cards, rails,
- * media rows) react exactly as they would at that CONTAINER width. What the
- * frame cannot do is move the viewport: anything gated on `useIsMobile()` or
- * `useFooterNav()` reads the real window and is unaffected — resize the
- * browser for those. An iframe would isolate the theme and double the work.
+ * media rows) react exactly as they would at that COLUMN width. A window chip
+ * also stands in for the window: `WindowWidthContext` makes `useIsMobile()`
+ * and `useFooterNav()` read the chip instead of the browser, so a "375" frame
+ * opens sheets where the app would. The sheet itself is still portaled to the
+ * real window (the presentation is the phone's, the geometry is yours). An
+ * iframe would isolate the theme and double the work.
  */
 
 import { useState } from "react"
@@ -34,6 +36,7 @@ import {
 import { Markdown } from "@/components/ds/markdown"
 import { componentDoc } from "@/lib/component-docs"
 import { VIEWPORTS, containerAt, sidebarAt, gutterAt } from "@/lib/breakpoints"
+import { WindowWidthContext } from "@/lib/use-media-query"
 import { ChromeSidebar, ChromeGutter, ChromeTabBar } from "@/components/ds/chrome-schematic"
 
 export type ExampleWidth = {
@@ -117,6 +120,7 @@ export function Example({
   widths = WINDOW_WIDTHS,
   widthLabel = "window",
   controls,
+  bleed: bleedFn,
   align = "center",
   className,
   stageClassName,
@@ -143,6 +147,12 @@ export function Example({
   widthLabel?: string
   /** Variant switches — rendered at the left of the toolbar. */
   controls?: React.ReactNode
+  /** When the demo is CHROME-level at a given window — a bottom sheet, which
+   *  spans the window edge to edge and covers the tab bar — return true and
+   *  the frame draws no gutters, no tab bar and no stage padding at that chip,
+   *  so the demo really touches the frame's edges. `w => w < 768` for a
+   *  component that is a sheet below the presentation gate. */
+  bleed?: (windowPx: number) => boolean
   /** How the demo sits in the frame. `center` (default) shrink-wraps it —
    *  right for a dialog or a card that has its own width. `stretch` makes it
    *  fill the frame, which is the only way a component that READS its
@@ -172,6 +182,9 @@ export function Example({
   /* Chrome is drawn only for a window chip. With none — "free", or a chip that
      is a plain box width — the stage is the frame, as before. */
   const chrome = active?.chrome
+  /* A sheet is chrome, not column: at a window chip where the demo says so it
+     fills the window, gutters and tab bar included. */
+  const bleed = !!chrome && !!bleedFn?.(chrome.window)
 
   const usage = code ? usageOf(code) : undefined
 
@@ -336,14 +349,14 @@ export function Example({
           >
             <div className="flex min-w-0 flex-1">
               {chrome && chrome.sidebar > 0 && <ChromeSidebar width={chrome.sidebar} />}
-              {chrome && <ChromeGutter width={chrome.gutter} />}
+              {chrome && !bleed && <ChromeGutter width={chrome.gutter} />}
 
               {/* The `@container` must be EXACTLY the chip's width, so padding
                   cannot live on it: a container query measures the CONTENT
                   box, so `p-6` here made every component see 48px less than
                   the chip said — at the 584 step a rail read 536 and stayed in
-                  its below-560 layout. The padding belongs to the inner
-                  surface. */}
+                  its below-560 layout. What padding there is belongs to the
+                  inner surface — and beside a drawn gutter there is none. */}
               <div
                 data-slot="example-stage"
                 className={cn("@container relative", chrome ? "min-w-0 flex-1" : "w-full")}
@@ -351,21 +364,37 @@ export function Example({
               >
                 <div
                   className={cn(
-                    "bg-background flex flex-col gap-6 p-6",
-                    align === "center" ? "items-center" : "items-stretch",
+                    "bg-background flex flex-col gap-6",
+                    /* With chrome drawn, the hatched gutter IS the page's
+                       horizontal padding — a second `px-6` inside the column
+                       inset every component 24px further than the app ever
+                       does. So: no horizontal padding beside a gutter, only
+                       the page's vertical rhythm; a sheet bleeds to all four
+                       edges; without chrome ("Free", a box chip) the frame is
+                       just a box and keeps its own breathing room. */
+                    bleed ? "p-0 items-stretch"
+                      : chrome ? cn("px-0 py-6", align === "center" ? "items-center" : "items-stretch")
+                      : cn("p-6", align === "center" ? "items-center" : "items-stretch"),
                     stageClassName,
                   )}
                 >
-                  {children}
+                  {/* A window chip is the window for everything inside: the
+                      gate hooks read it instead of the browser, so a "375"
+                      frame opens sheets, not dropdowns. "Free" and a box
+                      chip pass `null` — the real window. */}
+                  <WindowWidthContext.Provider value={chrome?.window ?? null}>
+                    {children}
+                  </WindowWidthContext.Provider>
                 </div>
               </div>
 
-              {chrome && <ChromeGutter width={chrome.gutter} />}
+              {chrome && !bleed && <ChromeGutter width={chrome.gutter} />}
             </div>
 
             {/* Costs height, not width — drawn where it actually sits, so
-                "no sidebar" does not read as "no chrome". */}
-            {chrome && chrome.sidebar === 0 && <ChromeTabBar />}
+                "no sidebar" does not read as "no chrome". A bleeding demo (a
+                sheet) covers it, so it is not drawn then. */}
+            {chrome && chrome.sidebar === 0 && !bleed && <ChromeTabBar />}
           </div>
         </div>
       </div>

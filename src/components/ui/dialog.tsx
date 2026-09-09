@@ -4,6 +4,7 @@ import * as React from "react"
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 
 import { cn } from "@/lib/utils"
+import { useIsMobile } from "@/lib/use-media-query"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
 
@@ -399,6 +400,16 @@ function DialogDescription({
 // `DialogPreviewDescription` / `DialogPreviewFooter` — these are plain
 // elements styled with the same class constants the real components use.
 
+// What the preview looks like when `useIsMobile()` says phone — inside the
+// design system's frame that is the window CHIP, not the browser. The live
+// dialog gets this shape from `md:` classes, which read the real browser and
+// so cannot follow a chip; the preview therefore restates the phone half with
+// `!` so it beats the `md:` half that still matches on a desktop screen:
+// full width, top corners only, the 12px sheet gutter and 8px band gap.
+export const dialogPreviewPhoneClass =
+  "!w-full !max-w-full !rounded-t-2xl !rounded-b-none !p-3 !gap-2 " +
+  "[&_[data-slot=dialog-preview-title]]:!text-small"
+
 function DialogPreview({
   className,
   children,
@@ -408,10 +419,12 @@ function DialogPreview({
   children: React.ReactNode
   showCloseButton?: boolean
 }) {
+  const phone = useIsMobile()
   return (
     <div
       data-slot="dialog-preview"
-      className={cn("relative", dialogChromeClass, className)}
+      data-mobile={phone ? "sheet" : undefined}
+      className={cn("relative", dialogChromeClass, className, phone && dialogPreviewPhoneClass)}
     >
       {children}
       {showCloseButton && (
@@ -437,7 +450,7 @@ function DialogPreviewHeader({ className, children, ...props }: React.ComponentP
 }
 
 function DialogPreviewTitle({ className, ...props }: React.ComponentProps<"h2">) {
-  return <h2 className={cn(dialogTitleClass, className)} {...props} />
+  return <h2 data-slot="dialog-preview-title" className={cn(dialogTitleClass, className)} {...props} />
 }
 
 function DialogPreviewDescription({ className, ...props }: React.ComponentProps<"p">) {

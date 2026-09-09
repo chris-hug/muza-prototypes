@@ -58,6 +58,16 @@ function DropdownMenuTrigger({ ...props }: MenuPrimitive.Trigger.Props) {
   return <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />
 }
 
+// ─── Desktop surface + item, as class constants ──────────────────────────────
+// Exported so a menu can be shown OPEN and INLINE without a Menu root — the
+// design system's Detail Menu frame does this (`DetailMenuSurface`). The live
+// `DropdownMenuContent` / `DropdownMenuItem` below use the same strings, so
+// the static rendering can never drift from the real one.
+export const dropdownMenuSurfaceClass =
+  "z-50 max-h-(--available-height) min-w-44 w-max origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-xl bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 outline-none data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95"
+export const dropdownMenuItemClass =
+  "group/dropdown-menu-item relative flex cursor-default items-center gap-2 rounded-lg px-2.5 py-1.5 text-base font-normal outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-inset:pl-8 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+
 function DropdownMenuContent({
   align = "start",
   alignOffset = 0,
@@ -107,7 +117,7 @@ function DropdownMenuContent({
           onPointerDown={e => e.stopPropagation()}
           onPointerUp={e => e.stopPropagation()}
           onClick={e => e.stopPropagation()}
-          className={cn("z-50 max-h-(--available-height) min-w-44 w-max origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-xl bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 outline-none data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95", className )}
+          className={cn(dropdownMenuSurfaceClass, className)}
           {...props}
         >
           {children}
@@ -186,10 +196,7 @@ function DropdownMenuItem({
       data-slot="dropdown-menu-item"
       data-inset={inset}
       data-variant={variant}
-      className={cn(
-        "group/dropdown-menu-item relative flex cursor-default items-center gap-2 rounded-lg px-2.5 py-1.5 text-base font-normal outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-inset:pl-8 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        className
-      )}
+      className={cn(dropdownMenuItemClass, className)}
       {...props}
     >
       {children}

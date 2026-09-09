@@ -237,6 +237,7 @@ would otherwise hang 12px outside the sheet on every side.
 |---|---|
 | `dialogChromeClass` | surface, gutter, gap, radius |
 | `dialogPositionClass` | bottom sheet on phones, centred modal from `md` (768) |
+| `dialogPreviewPhoneClass` | the sheet shape for the static `DialogPreview` when `useIsMobile()` says phone — in the design-system frame that is the window chip, so a "375" frame shows the sheet, edge to edge, top corners only (`!` because the live `md:` classes still match on a desktop screen) |
 | `dialogFormPositionClass` | the full-screen form presentation |
 | `dialogHeaderClass` / `dialogHeaderStackClass` | the header column |
 | `dialogTitleClass` | `text-small`, `font-medium` |

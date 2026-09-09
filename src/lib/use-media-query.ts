@@ -1,6 +1,21 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState } from "react"
+
+/*
+ * WindowWidthContext — lets the design system's demo frame STAND IN for the
+ * window. A chip labelled "window 375" promises a phone, and the components
+ * inside must keep that promise for presentation too (dropdown ⇄ sheet,
+ * dialog ⇄ sheet), not only for the column they measure. With a value here,
+ * the three gate hooks below read it instead of the real browser; with
+ * `null` (the app, and the frame in "free" mode) they read `matchMedia`.
+ *
+ * Only the GATES are overridden. The sheet a component then opens is still
+ * portaled to the real window, so on the design-system page it appears at
+ * the bottom of the browser, full width — the presentation is the phone's,
+ * the geometry is yours.
+ */
+export const WindowWidthContext = createContext<number | null>(null)
 
 /**
  * Subscribe to a CSS media query. Returns `true` when the query matches.
@@ -25,9 +40,12 @@ export function useMediaQuery(query: string): boolean {
   return matches
 }
 
-/** Convenience: true on viewports < 768px. */
+/** The PRESENTATION gate: true below 768 — sheets instead of dialogs and
+ *  dropdowns, no docked editor. The same gate as Tailwind's `md:`. */
 export function useIsMobile(): boolean {
-  return useMediaQuery("(max-width: 767px)")
+  const override = useContext(WindowWidthContext)
+  const real = useMediaQuery("(max-width: 767px)")
+  return override != null ? override < 768 : real
 }
 
 /**
@@ -66,7 +84,9 @@ export const SIDEBAR_COLLAPSE_BELOW =
  * respected until the next crossing.
  */
 export function useSidebarAutoCollapsed(): boolean {
-  return useMediaQuery(`(max-width: ${SIDEBAR_COLLAPSE_BELOW - 1}px)`)
+  const override = useContext(WindowWidthContext)
+  const real = useMediaQuery(`(max-width: ${SIDEBAR_COLLAPSE_BELOW - 1}px)`)
+  return override != null ? override < SIDEBAR_COLLAPSE_BELOW : real
 }
 
 /**
@@ -95,7 +115,10 @@ const MEDIA_HEADER_STACK = 560  // MediaHeader stacked→horizontal container
 const PAGE_GUTTER_AT_STACK = 24 // --page-px in the 584–1068 range
 export const FOOTER_NAV_BELOW = MEDIA_HEADER_STACK + 2 * PAGE_GUTTER_AT_STACK // 608
 
-/** True when the mobile footer tab bar should replace the sidebar. */
+/** The CHROME gate: true when the mobile footer tab bar should replace the
+ *  sidebar (and the mobile header the Topbar, the mini player the bar). */
 export function useFooterNav(): boolean {
-  return useMediaQuery(`(max-width: ${FOOTER_NAV_BELOW - 1}px)`)
+  const override = useContext(WindowWidthContext)
+  const real = useMediaQuery(`(max-width: ${FOOTER_NAV_BELOW - 1}px)`)
+  return override != null ? override < FOOTER_NAV_BELOW : real
 }

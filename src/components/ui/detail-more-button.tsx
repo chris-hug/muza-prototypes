@@ -28,9 +28,10 @@ import { ContentTypeBadge, type ContentType } from "@/components/ui/badge"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuTrigger,
+  dropdownMenuSurfaceClass, dropdownMenuItemClass,
 } from "@/components/ui/dropdown-menu"
 import {
-  Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger,
+  Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger,
 } from "@/components/ui/sheet"
 import { useShare } from "@/lib/use-share"
 import { useToast } from "@/components/ui/toast"
@@ -112,7 +113,9 @@ interface Action {
 
 // Rich list row (icon + label, 44px+ tap target). Closes the sheet on tap
 // unless `keepOpen` (Save toggles in place).
-function SheetRow({ icon, label, destructive, onClick, keepOpen }: Action) {
+// `dismiss` — wrap in SheetClose. Off when the body renders OUTSIDE a Sheet
+// (the design system's open, inline surface), where SheetClose has no root.
+function SheetRow({ icon, label, destructive, onClick, keepOpen, dismiss = true }: Action & { dismiss?: boolean }) {
   const cls = cn(
     "flex w-full items-center gap-3 rounded-lg px-3 py-3 text-base text-left transition-colors",
     "hover:bg-muted active:bg-muted outline-none focus-visible:bg-muted",
@@ -121,7 +124,7 @@ function SheetRow({ icon, label, destructive, onClick, keepOpen }: Action) {
       ? "text-destructive [&_svg]:text-destructive"
       : "text-foreground [&_svg]:text-muted-foreground",
   )
-  if (keepOpen) {
+  if (keepOpen || !dismiss) {
     return <button type="button" onClick={onClick} className={cls}>{icon}{label}</button>
   }
   return (
@@ -134,14 +137,14 @@ function SheetRow({ icon, label, destructive, onClick, keepOpen }: Action) {
 
 // Prominent quick-action button (icon over label, soft pill). Closes on tap
 // unless `keepOpen` (Save toggles in place).
-function QuickAction({ icon, label, shortLabel, onClick, keepOpen }: Action) {
+function QuickAction({ icon, label, shortLabel, onClick, keepOpen, dismiss = true }: Action & { dismiss?: boolean }) {
   const cls = cn(
     "flex-1 min-w-0 flex flex-col items-center justify-center gap-2 rounded-2xl bg-secondary px-2 py-3.5",
     "text-foreground transition-colors hover:bg-secondary-hover active:bg-secondary-hover",
     "outline-none focus-visible:ring-2 focus-visible:ring-ring/50 [&_svg]:size-5",
   )
   const inner = <>{icon}<span className="text-xsmall">{shortLabel ?? label}</span></>
-  if (keepOpen) {
+  if (keepOpen || !dismiss) {
     return <button type="button" onClick={onClick} className={cls}>{inner}</button>
   }
   return (
@@ -307,6 +310,92 @@ export function DetailMenuItems(props: DetailMoreButtonProps) {
   )
 }
 
+// ─── The sheet's body, on its own ─────────────────────────────────────────────
+//
+// Header · quick actions · grouped rows — everything inside the phone sheet.
+// `DetailMoreButton` renders it inside a `Sheet`; `DetailMenuSurface` renders
+// it `standalone` (no SheetClose, plain buttons, no Dialog title) so the
+// design system can show the sheet OPEN and inline instead of behind a trigger.
+export function DetailMenuSheetBody({ standalone = false, ...props }: DetailMoreButtonProps & { standalone?: boolean }) {
+  const { title, subtitle, cover, covers, meta, kind = "album" } = props
+  const { quick, groups, badgeType } = useDetailActions(props)
+  return (
+    <>
+      {/* Header — entity identity. No divider; breathing room below. */}
+      <div className="flex flex-row items-center gap-3 px-3 pt-3 pb-6">
+        <MenuCover kind={kind} cover={cover} covers={covers} title={title} />
+        <div className="min-w-0 text-left flex flex-col gap-1">
+          {standalone
+            ? <p className="truncate text-base font-medium leading-tight text-foreground">{title}</p>
+            : <SheetTitle className="truncate text-base leading-tight">{title}</SheetTitle>}
+          {subtitle && <p className="truncate text-small text-muted-foreground leading-none">{subtitle}</p>}
+          <div className="flex items-center gap-2 min-w-0">
+            <ContentTypeBadge type={badgeType} />
+            {meta && <span className="text-xsmall text-muted-foreground truncate">{meta}</span>}
+          </div>
+        </div>
+      </div>
+
+      {/* Quick actions. */}
+      <div className="flex items-stretch gap-2 px-1 pb-2">
+        {quick.map((a, i) => <QuickAction key={`${a.label}-${i}`} {...a} dismiss={!standalone} />)}
+      </div>
+
+      {/* Grouped list, dividers between groups. */}
+      <div className="flex flex-col px-1 pb-2">
+        {groups.map((group, gi) => (
+          <div key={gi} className="flex flex-col">
+            {gi > 0 && <div className="mx-2 my-1 h-px bg-border" />}
+            {group.map((a, i) => <SheetRow key={`${a.label}-${i}`} {...a} dismiss={!standalone} />)}
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
+// ─── The surface, open and inline ─────────────────────────────────────────────
+//
+// What the menu LOOKS like, without a trigger: the dropdown at desktop
+// widths, the bottom sheet at phone widths — chosen by `useIsMobile()`, which
+// inside the design system's frame reads the window chip. The same action
+// model (`useDetailActions`) and, for the dropdown, the same class strings as
+// the live `DropdownMenuContent` / `DropdownMenuItem`. Actions run for real
+// (Save flips the store); nothing closes, because nothing is open.
+export function DetailMenuSurface(props: DetailMoreButtonProps & { className?: string }) {
+  const isMobile = useIsMobile()
+  const { flat } = useDetailActions(props)
+  if (!isMobile) {
+    return (
+      <div role="menu" className={cn(dropdownMenuSurfaceClass, "min-w-52 animate-none", props.className)}>
+        {flat.map((a, i) => (
+          <button
+            key={`${a.label}-${i}`}
+            type="button"
+            role="menuitem"
+            onClick={a.onClick}
+            data-variant={a.destructive ? "destructive" : "default"}
+            className={cn(dropdownMenuItemClass, "w-full text-left cursor-pointer hover:bg-accent hover:text-accent-foreground")}
+          >
+            {a.icon}
+            {a.label}
+          </button>
+        ))}
+      </div>
+    )
+  }
+  return (
+    // Same edges as the live sheet (`side="bottom"`: `border-t`, top corners
+    // rounded, no side borders — it spans the window). Width comes from the
+    // container: the frame's window at a phone chip, or whatever box it sits in.
+    <div className={cn("w-full rounded-t-2xl border-t border-border bg-popover shadow-xl overflow-hidden px-2 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]", props.className)}>
+      {/* The sheet's drag handle, for the eye — there is nothing to drag. */}
+      <div aria-hidden className="mx-auto mb-2 h-1 w-9 shrink-0 rounded-full bg-border" />
+      <DetailMenuSheetBody {...props} standalone />
+    </div>
+  )
+}
+
 // ─── DetailMoreButton ─────────────────────────────────────────────────────────
 
 export function DetailMoreButton(props: DetailMoreButtonProps) {
@@ -348,33 +437,7 @@ export function DetailMoreButton(props: DetailMoreButtonProps) {
         {icon}
       </SheetTrigger>
       <SheetContent side="bottom" className="rounded-t-2xl">
-          {/* Header — entity identity. No divider; breathing room below. */}
-          <SheetHeader className="flex-row items-center gap-3 border-b-0 pb-6">
-            <MenuCover kind={kind} cover={cover} covers={covers} title={title} />
-            <div className="min-w-0 text-left flex flex-col gap-1">
-              <SheetTitle className="truncate text-base leading-tight">{title}</SheetTitle>
-              {subtitle && <p className="truncate text-small text-muted-foreground leading-none">{subtitle}</p>}
-              <div className="flex items-center gap-2 min-w-0">
-                <ContentTypeBadge type={badgeType} />
-                {meta && <span className="text-xsmall text-muted-foreground truncate">{meta}</span>}
-              </div>
-            </div>
-          </SheetHeader>
-
-          {/* Quick actions. */}
-          <div className="flex items-stretch gap-2 px-1 pb-2">
-            {quick.map((a, i) => <QuickAction key={`${a.label}-${i}`} {...a} />)}
-          </div>
-
-          {/* Grouped list, dividers between groups. */}
-          <div className="flex flex-col px-1 pb-2">
-            {groups.map((group, gi) => (
-              <div key={gi} className="flex flex-col">
-                {gi > 0 && <div className="mx-2 my-1 h-px bg-border" />}
-                {group.map((a, i) => <SheetRow key={`${a.label}-${i}`} {...a} />)}
-              </div>
-            ))}
-          </div>
+        <DetailMenuSheetBody {...props} />
       </SheetContent>
     </Sheet>
   )

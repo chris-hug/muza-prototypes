@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react"
 import { useSearchParams } from "react-router"
 import { cn } from "@/lib/utils"
-import { useSidebarAutoCollapsed, useFooterNav } from "@/lib/use-media-query"
+import { useSidebarAutoCollapsed, useFooterNav, WindowWidthContext } from "@/lib/use-media-query"
 import { useKeyboardInset } from "@/lib/use-keyboard-inset"
 import { FooterNav } from "@/components/app/footer-nav"
 import { MobileAppHeader } from "@/components/app/mobile-app-header"
@@ -136,7 +136,7 @@ import {
 } from "lucide-react"
 import { NavRow } from "@/components/ui/nav-row"
 import { SelectTrackButton } from "@/components/ui/select-track-button"
-import { DetailMoreButton } from "@/components/ui/detail-more-button"
+import { DetailMoreButton, DetailMenuSurface } from "@/components/ui/detail-more-button"
 import { SearchPanel } from "@/components/ui/search-panel"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import {
@@ -619,7 +619,10 @@ function DialogsKitchenSink() {
              The demo and the snippet under `</>` are the SAME file, imported
              twice — once as a component, once as raw text. A hand-written
              snippet beside a live demo is a second copy, and it drifts. */}
-      <Example title="Form — choice list" doc="dialog" code={dialogFormSrc} codePath="src/ds-examples/dialog-form.tsx">
+      {/* Below the presentation gate a dialog IS a bottom sheet — window wide,
+          over the tab bar — so the frame draws no gutters there and the
+          preview takes the sheet shape (DialogPreview reads the chip). */}
+      <Example title="Form — choice list" doc="dialog" code={dialogFormSrc} codePath="src/ds-examples/dialog-form.tsx" bleed={w => w < 768}>
         <DialogFormExample />
       </Example>
 
@@ -2946,14 +2949,17 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           align="center"
           code={detailMenuBasicExampleSrc}
           codePath="src/ds-examples/detail-menu-basic.tsx"
+          // Below the presentation gate the surface is a bottom sheet: window
+          // wide, over the tab bar — so the frame draws no gutters there.
+          bleed={w => w < 768}
         >
           <DetailMenuBasicExample />
         </Example>
 
         <p className="text-base text-muted-foreground mb-5 max-w-2xl">
           <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DetailMoreButton</code> — the
-          overflow affordance on media detail pages. <span className="text-foreground">Viewport-aware</span>{" "}
-          (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useIsMobile</code>, &lt; 768):
+          overflow affordance on media detail pages. <span className="text-foreground">Window-aware</span>{" "}
+          (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useIsMobile</code>, the 768 presentation gate — inside the frame above, the window chip):
           desktop opens an anchored <a href="/?page=DesignSystem#menu" className="text-primary-text hover:underline underline-offset-2">dropdown</a>;
           phones open an <span className="text-foreground">advanced bottom sheet</span> — one action model, two surfaces.
         </p>
@@ -2976,45 +2982,32 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             </div>
           </div>
 
-          {/* Static preview — the phone sheet (the live one only renders < 768). */}
+          {/* The phone sheet, open — the real surface, forced to a 375px
+              window through WindowWidthContext (the same override the frame
+              above uses), so nothing here is hand-built. Playlist variant:
+              2×2 collage cover, "Play radio" quick action. */}
           <div className="flex flex-col gap-2">
-            <SubLabel>Static preview · phone bottom sheet</SubLabel>
-            <div className="w-[340px] rounded-t-2xl border border-border border-b-0 bg-popover overflow-hidden shadow-xl">
-              {/* header */}
-              <div className="flex items-center gap-3 px-5 pt-5 pb-6">
-                <div className="size-[72px] shrink-0 grid grid-cols-2 grid-rows-2 overflow-hidden rounded-xs">
-                  {[
+            <SubLabel>Phone bottom sheet · playlist variant (window forced to 375)</SubLabel>
+            <div className="w-[340px]">
+              <WindowWidthContext.Provider value={375}>
+                <DetailMenuSurface
+                  kind="playlist"
+                  title="Late Night Improvisations"
+                  subtitle="by Jules"
+                  meta="8 tracks"
+                  covers={[
                     "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/01/36/a6/0136a666-36d2-caf1-efb1-da77a646d104/06UMGIM03764.rgb.jpg/120x120bb.jpg",
                     "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/23/49/49/234949c3-db74-f0eb-30f5-d715526e459b/19UMGIM73745.rgb.jpg/120x120bb.jpg",
                     "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/a8/ee/3c/a8ee3cc7-e694-f7e1-5208-2c67f9ae5ed5/13ULAIM49176.rgb.jpg/120x120bb.jpg",
                     "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/d6/a3/1d/d6a31d82-038d-a73f-5452-0380d8bd9bae/00724349532755.jpg/120x120bb.jpg",
-                  ].map((src, i) => <img key={i} src={src} alt="" draggable={false} className="size-full object-cover" />)}
-                </div>
-                <div className="min-w-0 flex flex-col gap-1">
-                  <p className="truncate text-base font-medium leading-tight text-foreground">Late Night Improvisations</p>
-                  <p className="truncate text-small text-muted-foreground leading-none">by Jules</p>
-                  <div className="flex items-center gap-2"><ContentTypeBadge type="playlist" /><span className="text-xsmall text-muted-foreground">8 tracks</span></div>
-                </div>
-              </div>
-              {/* quick actions */}
-              <div className="flex items-stretch gap-2 px-5 pb-2">
-                {[{ icon: <Share />, label: "Share" }, { icon: <Heart />, label: "Save" }, { icon: <RadioIcon />, label: "Play radio" }].map(a => (
-                  <div key={a.label} className="flex-1 flex flex-col items-center justify-center gap-2 rounded-2xl bg-secondary px-2 py-3.5 text-foreground [&_svg]:size-5">
-                    {a.icon}<span className="text-xsmall">{a.label}</span>
-                  </div>
-                ))}
-              </div>
-              {/* grouped rows */}
-              <div className="flex flex-col px-4 pb-4">
-                {[{ icon: <AddMusicIcon />, label: "Add to a playlist" }, { icon: <ListStart />, label: "Play next" }, { icon: <ListEnd />, label: "Add to queue" }].map(a => (
-                  <div key={a.label} className="flex items-center gap-3 rounded-lg px-3 py-3 text-base text-foreground [&_svg]:size-5 [&_svg]:text-muted-foreground">{a.icon}{a.label}</div>
-                ))}
-                <div className="mx-2 my-1 h-px bg-border" />
-                <div className="flex items-center gap-3 rounded-lg px-3 py-3 text-base text-foreground [&_svg]:size-5 [&_svg]:text-muted-foreground"><Info />Credits</div>
-                <div className="flex items-center gap-3 rounded-lg px-3 py-3 text-base text-foreground [&_svg]:size-5 [&_svg]:text-muted-foreground"><Mic />Go to artist</div>
-                <div className="mx-2 my-1 h-px bg-border" />
-                <div className="flex items-center gap-3 rounded-lg px-3 py-3 text-base text-destructive [&_svg]:size-5"><Flag />Report</div>
-              </div>
+                  ]}
+                  libraryType="playlist"
+                  libraryId="late-night-improvisations"
+                  libraryName="Late Night Improvisations"
+                  onGoToArtist={() => {}}
+                  onPlayRadio={() => {}}
+                />
+              </WindowWidthContext.Provider>
             </div>
           </div>
         </div>
@@ -4802,6 +4795,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       <Example
         title="Confirm — destructive"
         doc="alertdialog"
+        bleed={w => w < 768}
         code={`<Dialog>
   <DialogContent>
     <DialogHeader>

@@ -1,32 +1,30 @@
 "use client"
 
 /*
- * Detail Menu in its simplest real usage — the "…" on an album detail page,
- * with the Save pill bound to the library store.
+ * Detail Menu, OPEN — the surface the "…" on an album detail page opens,
+ * shown inline so the frame needs no click: the anchored dropdown at window
+ * chips from 768 up, the bottom sheet below. `useIsMobile()` picks, and inside
+ * the frame it reads the window chip, so the chips flip it.
  *
- * This file is a CALL SITE, not a copy: it imports and renders the real
- * `DetailMoreButton` off the real catalog, with the same config the Album
- * page publishes (`album-detail-view.tsx`). It exists only so the design
- * system can render the component AND show the same file under `</>`.
- *
- * The surface is chosen by `useIsMobile()`, which reads the VIEWPORT — the
- * width chips above only cap the frame, so they do not flip it. At 768px and
- * up the trigger opens the anchored dropdown; narrow the browser below 768
- * (or open this on a phone) and the same trigger opens the bottom sheet.
+ * This file is a CALL SITE, not a copy: it renders the real surface off the
+ * real catalog with the same config the Album page passes to
+ * `DetailMoreButton` (`album-detail-view.tsx`) — same props, same action
+ * model, Save bound to the live library store. In the app you render
+ * `<DetailMoreButton {…same props} />` and get the trigger.
  *
  * Needs a `UserLibraryProvider` above it (the store the Save pill reads) — it
  * is mounted once at the app shell, and the design-system page mounts its
  * own seeded one. Nothing is faked here for that reason.
  */
 
-import { DetailMoreButton } from "@/components/ui/detail-more-button"
+import { DetailMenuSurface } from "@/components/ui/detail-more-button"
 import { getAlbumDetail } from "@/lib/album-catalog"
 
 const ALBUM = getAlbumDetail()
 
 export default function DetailMenuBasicExample() {
   return (
-    <DetailMoreButton
+    <DetailMenuSurface
       kind="album"
       title={ALBUM.title}
       subtitle={ALBUM.artist}
@@ -36,8 +34,6 @@ export default function DetailMenuBasicExample() {
       libraryId={ALBUM.id}
       libraryName={ALBUM.title}
       onGoToArtist={() => {}}
-      triggerVariant="outline"
-      triggerSize="icon"
     />
   )
 }

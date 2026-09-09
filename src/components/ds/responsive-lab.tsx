@@ -40,7 +40,7 @@
 import { useEffect, useRef, useState } from "react"
 
 import { cn } from "@/lib/utils"
-import { SIDEBAR_COLLAPSE_BELOW } from "@/lib/use-media-query"
+import { SIDEBAR_COLLAPSE_BELOW, WindowWidthContext } from "@/lib/use-media-query"
 import {
   STACK, SIDEBAR_FULL, VIEWPORTS, DRAWER_FROM,
   gutterAt, sidebarAt, containerAt, colsAt, drawerAt, contentCapAt,
@@ -286,7 +286,9 @@ export function ResponsiveLab() {
                   <span aria-hidden className="h-3 w-px bg-muted-foreground/60" />
                 </div>
 
-                <CardRailRowExample />
+                <WindowWidthContext.Provider value={w}>
+                  <CardRailRowExample />
+                </WindowWidthContext.Provider>
               </div>
 
               <span aria-hidden className="shrink-0 self-stretch opacity-70" style={{ ...HATCH, width: gutter }} />
@@ -457,10 +459,10 @@ export function ResponsiveLab() {
         chrome that appears there costs more than the pixel gained. Every number
         is computed from{" "}
         <code className="rounded-sm bg-muted px-1 font-sans text-2xsmall font-normal">breakpoints.ts</code>;
-        presentation swaps gated on{" "}
+        inside a frame the chip IS the window — presentation swaps gated on{" "}
         <code className="rounded-sm bg-muted px-1 font-sans text-2xsmall font-normal">useIsMobile()</code>{" "}
-        read the real window and cannot be shown inside the frame — resize the
-        browser for those. A component that measures its own{" "}
+        read the chip, so a 375 frame opens sheets; the sheet itself is portaled to your real
+        window, so it appears at the bottom of the browser. A component that measures its own{" "}
         <span className="text-foreground">box</span> (song row, player bar, player overlay) has its
         own chips on its own section.
       </p>
