@@ -5257,6 +5257,14 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             as children (each a light chip on the dark pill). They can carry
             icons and inline counts.
           </li>
+          <li>
+            <span className="text-foreground">Phones.</span> The lift over the
+            footer tab bar (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">bottom-24</code>) is gated on{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useFooterNav()</code> (608), not on the 768 presentation gate — between the two there is no tab bar to clear. The pill is
+            centred by a full-width flex row (not <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">left-1/2</code>, which
+            leaves an absolute element only half the box) and <span className="text-foreground">wraps</span> its actions onto a second line
+            where count + actions + ✕ are wider than the screen (405px on a 375px phone).
+          </li>
         </ul>
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">

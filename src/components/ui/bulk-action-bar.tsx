@@ -52,7 +52,10 @@ interface BulkActionBarProps {
 /** The visual pill on its own — used by the live bar and the DS preview. */
 export function BulkActionBarContent({ count, onClear, label = "selected", children }: BulkActionBarProps) {
   return (
-    <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-foreground border border-foreground shadow-xl">
+    // `flex-wrap` — on a phone the count + two actions + ✕ are wider than the
+    // screen (405px at 375), so the actions drop to a second line instead of
+    // the pill running off the left edge.
+    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 px-4 py-3 rounded-2xl bg-foreground border border-foreground shadow-xl">
       <span className="text-small font-medium text-background tabular-nums pr-2 whitespace-nowrap">
         {count} {label}
       </span>
@@ -78,9 +81,20 @@ export function BulkActionBar(props: BulkActionBarProps) {
   const footerNav = useFooterNav()
   if (props.count === 0) return null
 
+  // A full-width, click-through row that centres the pill: `left-1/2` +
+  // translate would leave an absolute pill only the right half of the box
+  // to shrink-to-fit in, and on a phone that wrapped it into a 137px column.
   const bar = (
-    <div className={cn("absolute left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-bottom-2 duration-200", footerNav ? "bottom-24" : "bottom-6")}>
-      <BulkActionBarContent {...props} />
+    <div
+      className={cn(
+        "absolute inset-x-3 z-40 flex justify-center pointer-events-none animate-in fade-in slide-in-from-bottom-2 duration-200",
+        footerNav ? "bottom-24" : "bottom-6",
+      )}
+      data-footer-nav={footerNav ? "" : undefined}
+    >
+      <div className="pointer-events-auto max-w-full">
+        <BulkActionBarContent {...props} />
+      </div>
     </div>
   )
 
