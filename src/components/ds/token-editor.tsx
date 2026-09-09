@@ -93,6 +93,35 @@ function srgbToOklch(r: number, g: number, b: number): [number, number, number] 
 /* `oklch(L C H)` / `oklch(L C H / A)` as the browser normalises it. */
 const OKLCH = /^oklch\(\s*([\d.]+%?)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?\s*\)$/i
 
+/** The same pixel, as `#RRGGBB` — the form you paste into Figma or a comment. */
+function hexOf(color: string): string {
+  const px = pixelOf(color)
+  if (!px) return ""
+  const [r, g, b, a] = px
+  const to = (n: number) => n.toString(16).padStart(2, "0")
+  const out = `#${to(r)}${to(g)}${to(b)}`.toUpperCase()
+  return a < 255 ? `${out} · ${Math.round((a / 255) * 100)}%` : out
+}
+
+function pixelOf(color: string): [number, number, number, number] | null {
+  if (!color) return null
+  if (ctx === undefined) {
+    const canvas = document.createElement("canvas")
+    canvas.width = canvas.height = 1
+    ctx = canvas.getContext("2d", { willReadFrequently: true })
+  }
+  if (!ctx) return null
+  try {
+    ctx.clearRect(0, 0, 1, 1)
+    ctx.fillStyle = color
+    ctx.fillRect(0, 0, 1, 1)
+    const d = ctx.getImageData(0, 0, 1, 1).data
+    return [d[0], d[1], d[2], d[3]]
+  } catch {
+    return null
+  }
+}
+
 function oklchOf(color: string): string {
   if (!color) return ""
 
@@ -110,17 +139,10 @@ function oklchOf(color: string): string {
     return m[4] ? `${base} / ${parseFloat(m[4]).toFixed(2)})` : `${base})`
   }
 
-  if (ctx === undefined) {
-    const canvas = document.createElement("canvas")
-    canvas.width = canvas.height = 1
-    ctx = canvas.getContext("2d", { willReadFrequently: true })
-  }
-  if (!ctx) return color
-  try {
-    ctx.clearRect(0, 0, 1, 1)
-    ctx.fillStyle = color
-    ctx.fillRect(0, 0, 1, 1)
-    const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data
+  const px = pixelOf(color)
+  if (!px) return color
+  {
+    const [r, g, b, a] = px
     const [L, C, H] = srgbToOklch(r, g, b)
     // Same precision app.css is written in, so a value read here can be
     // pasted there without looking like a different number.
@@ -128,20 +150,28 @@ function oklchOf(color: string): string {
     // Alpha is real in this palette — `--muted-foreground` is a 75% neutral —
     // and the slash form is how CSS writes it.
     return a < 255 ? `${base} / ${(a / 255).toFixed(2)})` : `${base})`
-  } catch {
-    return color
   }
 }
 
-function Swatch({ token, mode, nonce, label, editor }: {
+function Swatch({ token, mode, nonce, label, edited, onEdit }: {
   token: string
   mode: "light" | "dark"
   nonce: number
   /** The primitive this resolves through, or the literal when it has none. */
   label: string
-  /** Replaces the label line with an input — used on the primitive rows,
-   *  where the label IS the value and the value is what you change. */
-  editor?: React.ReactNode
+  /* On a PRIMITIVE the top line is the hex and the bottom the oklch, and the
+   * top line is the input. Both lines used to print the same string for every
+   * token authored in oklch, which is most of them — a row that says a thing
+   * twice says nothing the second time. Hex on top because that is the form
+   * you paste into Figma or a comment; oklch underneath because that is the
+   * form the stylesheet is written in.
+   *
+   * The field therefore shows the MEASURED hex until you type, while the CSS
+   * view still prints the declared `oklch(…)`. They are the same colour said
+   * two ways, which is what the row is for. Type anything CSS understands and
+   * both follow. */
+  edited?: string
+  onEdit?: (value: string) => void
 }) {
   const { ref, rgb } = useResolved(token, mode, nonce)
   return (
@@ -151,7 +181,11 @@ function Swatch({ token, mode, nonce, label, editor }: {
       <span className={cn(mode, "shrink-0")}>
         <span
           ref={ref as React.Ref<HTMLDivElement>}
-          className="block size-6 rounded-md border border-border"
+          /* 36px — the height of the two lines beside it (13px mono, two
+             rows), so the chip reads as the row's subject rather than as a
+             bullet in front of it. At 24px it was smaller than its own
+             caption. */
+          className="block size-9 rounded-lg border border-border"
           style={{ background: `var(--${token})` }}
         />
       </span>
@@ -162,10 +196,12 @@ function Swatch({ token, mode, nonce, label, editor }: {
             the NAME at its hyphens, which are break opportunities already,
             and the VALUE with `break-all`, because `oklch(99.81% …` offers
             the browser nowhere to break and would otherwise overflow. */}
-        {editor ?? (
-          <span className="font-mono text-2xsmall text-foreground">{label}</span>
+        {onEdit ? (
+          <ValueField value={edited ?? hexOf(rgb)} onChange={onEdit} token={token} />
+        ) : (
+          <span className="font-mono text-3xsmall text-foreground">{label}</span>
         )}
-        <span className="break-all font-mono text-2xsmall tabular-nums text-muted-foreground/70">
+        <span className="break-all font-mono text-3xsmall tabular-nums text-muted-foreground/70">
           {oklchOf(rgb)}
         </span>
       </span>
@@ -185,7 +221,7 @@ function ValueField({ token, value, onChange }: {
       aria-label={`--${token}`}
       className={cn(
         "w-full min-w-0 rounded-md border border-transparent bg-transparent px-1.5 py-0.5",
-        "font-mono text-2xsmall text-foreground outline-none transition-colors",
+        "font-mono text-3xsmall text-foreground outline-none transition-colors",
         "hover:border-border focus:border-ring focus:bg-background",
       )}
     />
@@ -473,7 +509,7 @@ export function TokenEditor() {
             columns instead of demanding a scrollbar. */}
         <div className="min-w-0 flex-1">
           {view === "css" ? (
-            <pre className="overflow-x-auto bg-muted/40 px-4 py-3 text-2xsmall leading-5 text-foreground">
+            <pre className="overflow-x-auto bg-muted/40 px-4 py-3 text-3xsmall leading-[1.55] text-foreground">
               <code>
                 {cssGroups.map(g => (
                   <React.Fragment key={g.id}>
@@ -551,7 +587,7 @@ export function TokenEditor() {
                                   `break-all` split it mid-word. A hyphen is
                                   already a break opportunity, so normal
                                   wrapping breaks it at one. */}
-                              <span className="font-mono text-foreground">--{t.name}</span>
+                              <span className="font-mono text-3xsmall text-foreground">--{t.name}</span>
                             </td>
                             {/* Light: the chip, and what the token resolves
                                 THROUGH. On a primitive that is its own value,
@@ -565,13 +601,8 @@ export function TokenEditor() {
                                 mode="light"
                                 nonce={nonce}
                                 label={t.refers ? `--${t.refers}` : valueOf(t)}
-                                editor={section.kind === "primitive" ? (
-                                  <ValueField
-                                    token={t.name}
-                                    value={valueOf(t)}
-                                    onChange={v => set(t.name, v)}
-                                  />
-                                ) : undefined}
+                                edited={edits[t.name]}
+                                onEdit={section.kind === "primitive" ? (v => set(t.name, v)) : undefined}
                               />
                             </td>
                             <td className="px-3 py-1.5 align-top">

@@ -1055,6 +1055,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             { token: "text-sm",   px: 19 },
             { token: "text-xs",   px: 17 },
             { token: "text-xxs",  px: 15 },
+            { token: "text-3xs",  px: 13 },
           ].map(({ token, px }) => (
             <div key={token} className="flex items-baseline gap-6 py-4">
               <span className="w-32 shrink-0 text-small font-normal">{token}</span>
@@ -1089,7 +1090,8 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             { alias: "text-base",    primitive: "text-base", px: 21, weight: "font-normal",   sample: "Card-rail titles, lead paragraphs.", note: "this 21px step's semantic name equals its token name — use text-base (it's a sanctioned semantic token)." },
             { alias: "text-small",   primitive: "text-sm",   px: 19, weight: "font-normal",   sample: "Descriptions, body text, song-list rows." },
             { alias: "text-xsmall",  primitive: "text-xs",   px: 17, weight: "font-normal",   sample: "Media-card title + meta, table rows, helper text." },
-            { alias: "text-2xsmall", primitive: "text-xxs",  px: 15, weight: "font-normal",   sample: "Badges, chips, captions, meta." },
+            { alias: "text-2xsmall", primitive: "text-xxs",  px: 15, weight: "font-normal",   sample: "Badges, chips, captions, meta.", note: "the floor for anything read as language." },
+            { alias: "text-3xsmall", primitive: "text-3xs", px: 13, weight: "font-normal",   sample: "oklch(99.81% 0.0053 118.5)", note: "MONOSPACE DATA ONLY — a token name, a value, a class string in a reference table. Never prose, a label or a control." },
           ].map(({ alias, primitive, px, weight, sample, note }) => (
             <div key={alias} className="flex items-baseline gap-6 py-4">
               <span className="w-32 shrink-0 text-small font-normal">{alias}</span>

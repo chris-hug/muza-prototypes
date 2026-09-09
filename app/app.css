@@ -237,6 +237,14 @@
   /* ── Muza type scale ────────────────────────────────────────────────────
    * Primitives — raw px values, 1:1 with Figma's updated scale.
    * Semantic aliases (below) point at these via var() — never a raw value. */
+  /* 13px sits BELOW the 15px floor and is deliberately not part of the UI
+   * scale. It exists for MONOSPACE DATA only — a token name, an oklch triple,
+   * a class string in a reference table — where the row is a value to read
+   * rather than prose, and where 15px mono was wide enough to wrap a
+   * 26-character `oklch(…)` onto a second line. Never use it for prose, a
+   * label, a caption or a control: 15px remains the floor for anything a
+   * person reads as language. See DESIGN_SYSTEM.md › Typography. */
+  --text-3xs:  13px;
   --text-xxs:  15px;
   --text-xs:   17px;
   --text-sm:   19px;
@@ -261,6 +269,7 @@
    * at a primitive via var(). `text-base` (21px) is the one step whose
    * semantic name equals its primitive name — it IS a sanctioned semantic
    * token (the 21px step between small and large); use `text-base` freely. */
+  --text-3xsmall: var(--text-3xs);  /* 13px — MONO DATA ONLY       */
   --text-2xsmall: var(--text-xxs);  /* 15px — Figma "2x small"     */
   --text-xsmall:  var(--text-xs);   /* 17px — Figma "extra small"  */
   --text-small:   var(--text-sm);   /* 19px — Figma "small"        */

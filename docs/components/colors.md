@@ -74,6 +74,15 @@ has to be measured matters on the alpha primitives: a canvas stores
 premultiplied, so un-premultiplying a 50% neutral threw away half the precision
 and moved its hue from 111.4 to 106.6.
 
+On a **primitive** row the two lines are **hex over oklch**, and the hex is the
+input. They used to print the same string for every token authored in oklch,
+which is most of them — a row that says a thing twice says nothing the second
+time. Hex on top because that is the form you paste into Figma or a comment;
+oklch underneath because that is the form the stylesheet is written in. The
+field shows the measured hex until you type, while the CSS view still prints
+the declared `oklch(…)`: the same colour said two ways, which is what the row
+is for.
+
 Neither line is ever truncated. A clipped `--muza-neut…` or `oklch(99.8…` looks
 like information and is not, so both wrap instead — the name at its hyphens,
 which are break opportunities already, and the value with `break-all`, because

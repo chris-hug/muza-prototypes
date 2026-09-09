@@ -349,6 +349,7 @@ Both bugs fixed. Full upper range present; aliases use `var()` references.
 | `--text-7xl`   | primitive         | `128px` | ✅ added |
 | `--text-8xl`   | primitive         | `160px` | ✅ added |
 | `--text-9xl`   | primitive         | `200px` | ✅ added |
+| `--text-3xsmall` | semantic alias  | `var(--text-3xs)`  → 13 | ✅ **mono data only** — see below |
 | `--text-2xsmall` | semantic alias  | `var(--text-xxs)`  → 15 | ✅ wired via var() |
 | `--text-xsmall`  | semantic alias  | `var(--text-xs)`   → 17 | ✅ wired via var() |
 | `--text-small`   | semantic alias  | `var(--text-sm)`   → 19 | ✅ wired via var() |
@@ -439,8 +440,27 @@ synthesised bold breaks the fixed advance width that is the point of the face.
 
 | Class | Size | Usage |
 |---|---|---|
-| `text-xxs` | 15px | **minimum** — chips, badges, button-sm only |
+| `text-3xsmall` | 13px | **monospace data only** — see the rule below. Never prose |
+| `text-xxs` | 15px | **the floor for anything read as language** — chips, badges, button-sm |
 | `text-xs` | 17px | media-card title + meta, table rows, captions, metadata, helper text |
+
+### 13px exists, and it is not part of the UI scale
+
+`text-3xsmall` (13px) sits **below** the 15px floor and is allowed in exactly
+one situation: **monospace data** — a token name, an `oklch()` triple, a class
+string — in a reference table, where the row is a value to *read off* rather
+than language to read.
+
+It exists because 15px mono could not hold a 26-character
+`oklch(99.81% 0.0053 118.5)` on one line in the Colors table, and a value that
+wraps or clips is worse than a value that is small: a clipped one looks like
+information and is not.
+
+Never use it for prose, a label, a caption, a hint or anything inside a
+control. **15px remains the floor for anything a person reads as language**,
+and that rule did not move — a second size was added under it for a different
+kind of content, which is not the same thing as lowering the floor. If you
+reach for 13px and the text is a sentence, the answer is a wider column.
 
 **Media-card text contrast.** On cards, list rows, and media items the **title is `font-normal`** and the **meta rows are `font-light` with `tracking-[0.02em]`** (both `text-xsmall`/17px) — the weight contrast (not size) is what separates title from artist/year/price. Keep title↔meta vertical rhythm even (single `gap`); meta stays `text-muted-foreground`.
 | `text-sm` | 19px | body, labels, inputs, nav sub-items, song-list rows |
