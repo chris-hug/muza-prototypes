@@ -250,7 +250,10 @@ container queries measure the column, and that column really is 351px wide.
 
 Below the stage, one table carries the whole ladder: name, window, sidebar,
 gutter, column, column *with the editor docked*, cards, what changes, and the
-constant it is defined in. Every row is computed from `breakpoints.ts`.
+constant it is defined in. Every row is computed from `breakpoints.ts`. The
+active width is a **selected row** and wears the table's own token for it
+(`data-[state=selected]:bg-muted`); clicking a row picks that width, and the
+chip above follows.
 
 ### `Example` — every component's frame, picked in window widths
 

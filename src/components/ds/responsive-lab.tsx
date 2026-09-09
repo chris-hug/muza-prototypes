@@ -379,9 +379,21 @@ export function ResponsiveLab() {
               return (
                 <tr
                   key={v.px}
+                  // The active width is a SELECTED row and wears the table's own
+                  // token for it (`data-[state=selected]:bg-muted`, table.tsx) —
+                  // not a primary tint, which reads as a link or a focus ring.
+                  // A row is also a second way to pick that width: click it and
+                  // the chip above follows, since both read `pick`.
+                  data-state={w === v.px ? "selected" : undefined}
+                  onClick={() => setPick(v.px)}
+                  onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setPick(v.px) } }}
+                  tabIndex={0}
+                  aria-pressed={pick === v.px}
+                  title={`Show the frame at ${v.px}px`}
                   className={cn(
-                    "border-b border-border last:border-0",
-                    w === v.px && "bg-primary/5",
+                    "border-b border-border last:border-0 cursor-pointer transition-colors",
+                    "hover:bg-muted data-[state=selected]:bg-muted",
+                    "outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset",
                   )}
                 >
                   <th scope="row" className="whitespace-nowrap px-3 py-2 font-medium text-foreground">{v.name}</th>
