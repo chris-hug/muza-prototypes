@@ -91,6 +91,11 @@ The section is a live editor, and everything in it comes from the stylesheet.
   `:root`, and `.dark`, in the order `app.css` has them, with your edits
   applied. Copyable.
 
+  The rail stays, and works. The CSS is built per group rather than as one
+  string, so the same anchors the table uses exist in the text — a wall of
+  declarations is exactly where a table of contents earns its keep, and a rail
+  that is present but inert is worse than no rail.
+
 The switch between the two sits **in** the surface's header, not above it: it
 changes what the surface shows, and a control outside the thing it controls
 reads as a page-level setting.

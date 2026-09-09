@@ -113,13 +113,13 @@ function Swatch({ token, mode, nonce, label, editor }: {
 }) {
   const { ref, rgb } = useResolved(token, mode, nonce)
   return (
-    <span className="flex items-center gap-2.5">
+    <span className="flex items-center gap-2">
       {/* Only the CHIP sits in the scoped wrapper — the text beside it stays
           in the page's own theme so it is readable in either mode. */}
       <span className={cn(mode, "shrink-0")}>
         <span
           ref={ref as React.Ref<HTMLDivElement>}
-          className="block size-7 rounded-md border border-border"
+          className="block size-6 rounded-md border border-border"
           style={{ background: `var(--${token})` }}
         />
       </span>
@@ -268,26 +268,46 @@ export function TokenEditor() {
   const dirty = Object.keys(edits).length
   const valueOf = (t: TokenDecl) => edits[t.name] ?? t.value
 
-  const css = React.useMemo(() => {
-    const block = (label: string, tokens: TokenDecl[]) => {
-      const width = Math.max(...tokens.map(t => t.name.length)) + 3
-      const lines = tokens.map(t => {
-        const decl = `  --${t.name}:`.padEnd(width + 4) + `${valueOf(t)};`
-        return t.note ? `${decl.padEnd(56)}/* ${t.note} */` : decl
-      })
-      return `${label} {\n${lines.join("\n")}\n}`
+  /*
+   * The CSS view is built PER GROUP, not as one string, so the rail keeps
+   * working in it — the same anchors, the same scroll. A single `<pre>` would
+   * have left the rail present and inert, which is worse than not having it.
+   * `cssText` is the same content joined, for the clipboard.
+   */
+  const cssGroups = React.useMemo(() => {
+    const width = 26
+    const line = (t: TokenDecl) => {
+      const decl = `  --${t.name}:`.padEnd(width + 4) + `${valueOf(t)};`
+      return t.note ? `${decl.padEnd(58)}/* ${t.note} */` : decl
     }
-    /* The PRIMITIVE block is here too, and first. Editing happens on that
-       layer — it is the one with the input fields — so a CSS view that showed
-       only the semantic blocks would have answered "nothing changed" to every
-       edit the reader had just made. Order follows app.css: palette, then
-       what points at it, then what dark mode reassigns. */
-    return [
-      block(":root", PRIMITIVES),
-      block(":root", SEMANTIC_LIGHT),
-      block(".dark", SEMANTIC_DARK),
-    ].join("\n\n")
+    return SECTIONS.flatMap(section =>
+      section.groups.map((group, i) => ({
+        id: slug(group.label),
+        sectionId: i === 0 ? section.id : undefined,
+        // The selector opens on the first group of a section and closes on
+        // the last, so the text stays valid CSS you can paste.
+        open: i === 0 ? (section.kind === "primitive" ? ":root {" : ":root {") : undefined,
+        close: i === section.groups.length - 1 ? "}" : undefined,
+        label: group.label,
+        body: group.tokens.map(line).join("\n"),
+      })),
+    )
   }, [edits])
+
+  /* Dark mode is a block of its own — it redeclares the same names, so it
+     cannot be interleaved with the light ones. */
+  const darkBlock = React.useMemo(() => {
+    const width = 26
+    return `.dark {\n${SEMANTIC_DARK.map(t => `  --${t.name}:`.padEnd(width + 4) + `${valueOf(t)};`).join("\n")}\n}`
+  }, [edits])
+
+  const cssText = React.useMemo(
+    () =>
+      cssGroups
+        .map(g => [g.open, `  /* ${g.label} */`, g.body, g.close].filter(Boolean).join("\n"))
+        .join("\n\n") + "\n\n" + darkBlock,
+    [cssGroups, darkBlock],
+  )
 
   return (
     /* One surface. The switch is IN the header rather than floating above it,
@@ -336,7 +356,7 @@ export function TokenEditor() {
               variant="secondary"
               size="sm"
               onClick={() => {
-                navigator.clipboard?.writeText(css)
+                navigator.clipboard?.writeText(cssText)
                 setCopied(true)
                 setTimeout(() => setCopied(false), 1500)
               }}
@@ -348,18 +368,16 @@ export function TokenEditor() {
         </span>
       </div>
 
-      {view === "css" ? (
-        <pre className="overflow-x-auto bg-muted p-4 text-2xsmall leading-5 text-foreground">
-          <code>{css}</code>
-        </pre>
-      ) : (
-      /* One bordered surface, two columns: the rail is PART of the table, not
-         a thing standing beside it. Deliberately no `overflow-hidden` on this
-         wrapper — it is the obvious way to clip the children to the rounded
-         corner, and it silently kills `position: sticky` inside, because any
-         overflow other than `visible` makes this the sticky element's scroll
-         container and it has nothing to scroll. The surface's border lives on
-         the outer wrapper; this row only splits it into two columns. */
+      {/* One bordered surface, two columns, in BOTH views. The rail used to
+          live inside the design branch, so switching to CSS dropped it — and
+          a wall of declarations is exactly where a table of contents earns
+          its keep. The columns are the frame; only the right one changes.
+
+          Deliberately no `overflow-hidden` on this wrapper: it is the obvious
+          way to clip the children to the rounded corner, and it silently
+          kills `position: sticky` inside, because any overflow other than
+          `visible` makes this the sticky element's scroll container and it
+          has nothing to scroll. The border lives on the outer wrapper. */}
       <div className="flex">
         {/* The rail. A palette is a long page and the reader arrives looking
             for one group — "the neutrals", "the blues" — so the set of groups
@@ -416,6 +434,25 @@ export function TokenEditor() {
             simply not working. The table is `table-fixed`, so it squeezes its
             columns instead of demanding a scrollbar. */}
         <div className="min-w-0 flex-1">
+          {view === "css" ? (
+            <pre className="overflow-x-auto bg-muted/40 px-4 py-3 text-2xsmall leading-5 text-foreground">
+              <code>
+                {cssGroups.map(g => (
+                  <React.Fragment key={g.id}>
+                    {g.open && <div className="text-muted-foreground">{g.open}</div>}
+                    {/* The SAME anchor id the design view uses. Only one view
+                        is mounted at a time, so the ids never collide. */}
+                    <div id={g.id} className="scroll-mt-10">
+                      <span className="text-muted-foreground/70">{`  /* ${g.label} */`}</span>
+                      {"\n"}{g.body}{"\n"}
+                    </div>
+                    {g.close && <div className="text-muted-foreground">{g.close}{"\n"}</div>}
+                  </React.Fragment>
+                ))}
+                {"\n"}{darkBlock}
+              </code>
+            </pre>
+          ) : (
           <table className="w-full table-fixed text-left text-2xsmall">
             {/* Fixed columns, not content-driven. Auto layout let the two
                 colour cells take whatever their longest primitive name asked
@@ -462,7 +499,7 @@ export function TokenEditor() {
                         const dark = section.kind === "semantic" ? darkDecl(t.name) : undefined
                         return (
                           <tr key={t.name} className="border-b border-border last:border-0">
-                            <td className="px-3 py-2 whitespace-nowrap">
+                            <td className="px-3 py-1.5 whitespace-nowrap">
                               <span className="font-mono text-foreground">--{t.name}</span>
                             </td>
                             {/* Light: the chip, and what the token resolves
@@ -471,7 +508,7 @@ export function TokenEditor() {
                                 the layer a colour lives on is the layer you
                                 change, and an inline property on <html> would
                                 beat both modes if applied to a semantic one. */}
-                            <td className="px-3 py-2">
+                            <td className="px-3 py-1.5">
                               <Swatch
                                 token={t.name}
                                 mode="light"
@@ -486,7 +523,7 @@ export function TokenEditor() {
                                 ) : undefined}
                               />
                             </td>
-                            <td className="px-3 py-2">
+                            <td className="px-3 py-1.5">
                               {section.kind === "primitive" ? (
                                 /* A primitive is one colour and is never
                                    redeclared in `.dark`. That is the whole
@@ -509,7 +546,7 @@ export function TokenEditor() {
                                 value, so the answer to "what is this for"
                                 lives where the value does and cannot drift
                                 from it. */}
-                            <td className="px-3 py-2 text-muted-foreground">
+                            <td className="px-3 py-1.5 text-muted-foreground">
                               {section.kind === "primitive"
                                 ? <span className="text-muted-foreground/60">—</span>
                                 : t.note}
@@ -523,9 +560,9 @@ export function TokenEditor() {
               ))}
             </tbody>
           </table>
+          )}
         </div>
       </div>
-      )}
     </div>
   )
 }
