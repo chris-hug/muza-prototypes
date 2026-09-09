@@ -2,6 +2,10 @@
 title: Input
 source: src/components/ui/input.tsx
 related: [select, combobox, datepicker, chips, button, dialog, chip-input, otp-input]
+usage:
+  - Settings | /?page=Settings
+  - Playlists → Create playlist | /?page=Playlists
+  - Upload music | /?page=Music
 ---
 
 `Input` is the single-line text field. It is the reference **form control**:
@@ -45,10 +49,11 @@ the field to overflow its column instead of shrinking with it.
 
 `FIELD_CLS` in `input.tsx` is the recipe the other controls copy — Input,
 Select, Combobox, DatePicker and the filter trigger are one control in five
-costumes. The shared recipe (40px `h-10`, `rounded-full`, `border-border`
-with `hover:border-foreground/30`, `bg-background`, the `focus-visible` ring,
-`text-base font-normal`, the asymmetric `pt-[6px] pb-[10px]`, the
-right-padding variants and the `className`-lands-on-the-input rule) is
+costumes. The shared recipe (the `sm` / `default` / `lg` height and type
+ladder, `rounded-full`, `border-border` with `hover:border-foreground/30`,
+`bg-background`, the `focus-visible` ring, `text-small font-normal`, the
+asymmetric optical-lift padding, the right-padding variants and the
+`className`-lands-on-the-input rule) is
 written down once, in
 [DESIGN_SYSTEM.md › Form controls — the shared recipe](../../DESIGN_SYSTEM.md#form-controls--the-shared-recipe).
 Do not restate it per control; this section covers only what is Input's own.
@@ -57,8 +62,9 @@ Where Input differs from its siblings:
 
 | Property | Input | Siblings |
 |---|---|---|
-| Horizontal padding | `px-4` (16px) | Select and the filter trigger `pl-4`; Combobox and DatePicker `px-3` |
-| Type size | `text-base` (21px), like Combobox and DatePicker | Select and the filter trigger use `text-small` (19px) |
+| Horizontal padding | `CONTROL_PAD_X` — `px-3` / `px-4` / `px-5` | Select takes only the left half of it (`pl-3`/`pl-4`/`pl-5`) because `pr-2` stays flush to the chevron; Combobox and DatePicker are one step tighter at every size, having a glyph on each edge |
+| Size prop | `sm` · `default` · `lg` | `SelectTrigger`, `ComboboxTrigger`, `DatePicker`, `ChipInput` and `Button` take the same three. `Textarea` takes none — it is a box, not a pill, with no peer height to match |
+| Type size | `text-small` (19px) | the whole family sits here now — Select, Combobox, DatePicker, Textarea, ChipInput and `Button` `default` |
 | Focus | `focus-visible:` | Combobox uses `focus-within:` (the ring belongs to the wrapper) |
 | Disabled | `disabled:pointer-events-none` **plus** `cursor-not-allowed opacity-50` | Select, Combobox and DatePicker carry only the cursor and the 50% fade |
 | Invalid | `aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20`, dark `border-destructive/50 ring-destructive/40` | shared with Select and Textarea |
@@ -83,20 +89,21 @@ centre of a 40px pill; 6 over 10 lifts them by 2px onto the optical centre.
 The arithmetic:
 
 ```text
-h-10 box               40px  (border-box)
-minus 1px border ×2    38px
-minus pt 6 + pb 10     22px  content
-line-height (text-base) 24px
+h-10 box                40px  (border-box)
+minus 1px border ×2     38px
+minus pt 6 + pb 10      22px  content
+line box (19px × 1.5)   28.5px
 ```
 
-The 24px line box is 2px taller than the content area and the extra 4px of
-bottom padding pushes it **up** by 2px. Select, Combobox and DatePicker carry
+The line box is taller than the content area, so the text is not boxed in by
+the padding — the padding only decides where the box sits. Symmetric 8/8 would
+centre it; 6 over 10 moves it **up 2px** onto the optical centre. Select, Combobox and DatePicker carry
 the same pair so a mixed row keeps one text baseline. The same nudge appears
 as `pb-px` on Button, Tabs, Chip and Badge — a smaller lift for a heavier
 weight and a shorter line box.
 
-It is a **text-base / font-normal** recipe. The filter trigger and Chips use
-`text-small` and the Button-style `pb-px` nudge instead — `filter-button.tsx:10`
+It is a **text-small / font-normal** recipe. The filter trigger and Chips use
+the Button-style `pb-px` nudge instead — `filter-button.tsx:10`
 records that the 6/10 pair "sits too high for chips because the lighter
 `font-normal` weight exposes more empty space above the glyphs than below".
 Do not mix the two recipes inside one control.
@@ -173,7 +180,7 @@ with `h-9 pl-10 pr-9` — a migration candidate, not a second pattern.
 
 A hint is `text-2xsmall leading-snug` (15px) in `text-muted-foreground`,
 `gap-1.5` (6px) under the field. At 15px it is the smallest sanctioned step,
-which keeps it clearly subordinate to the 21px field text without dropping
+which keeps it clearly subordinate to the 19px field text without dropping
 under the type floor.
 
 With `hint` present the field is wrapped in base-ui `Field.Root`, which is
@@ -186,6 +193,16 @@ call site still sets (Textarea sets it for you from `hintTone`; Input does not).
 
 Textarea mirrors the same `hint` / `hintTone` API by hand (no base-ui
 Textarea primitive), so helper copy under a text area looks and reads the same.
+
+## Sizing
+
+Fixed, no steps. The pill is 40px tall and `w-full`: it fills whatever box
+the call site gives it and reads none of the three measures — the only
+horizontal numbers it owns are the affordance reservations (`pl-10` /
+`pr-10`). What narrows a field is its container: a phone sheet's 12px gutter,
+a dialog's column, a grid cell. The one height step is a call-site override
+— `h-12` where the field sits beside a `lg` button (the Add-music find band),
+`h-9` in the one toolbar field that has not migrated (see Open questions).
 
 ## In a sheet
 
@@ -202,8 +219,12 @@ away focus.
 - **`InputSelect`** — an `Input` with `rounded-r-none -mr-px focus-visible:z-10`
   fused to a `SelectTrigger` with `rounded-l-none`; one pill, one seam.
 - **`ChipInput`** — a text field that turns commas into chips (own section).
-- **`Textarea`** — same hint API, but `rounded-lg`, `border-input`,
-  `bg-transparent` and `min-h-16`: a multi-line box is not a pill.
+- **`Textarea`** — the same recipe and the same hint API, keeping only what a
+  multi-line box has to: `rounded-lg` instead of the pill, `min-h-16` as a
+  floor that reads as more-than-one-line before anything is typed, and no
+  `size` prop. It had drifted on four values — `border-input` (a lighter
+  border than the field above it), `bg-transparent`, `px-2.5` (its placeholder
+  started 6px left of the Input's) and no hover border. All four now match.
 - **`InputOTP`** — the six-cell code field (own section).
 
 ## The `--input` token
@@ -211,13 +232,15 @@ away focus.
 `Input` uses `bg-background`, not `bg-input` — and that is correct. `--input`
 is a **shadcn convention name** we keep because we work inside that system;
 what it actually colours here is inactive tracks and fills: `Progress`,
-`Slider`, `Meter`, the unchecked `Switch`, `Textarea`'s border, and every
-`dark:bg-input/30` surface. Pointing the field at it would repaint all of
+`Slider`, `Meter`, the unchecked `Switch`, and every `dark:bg-input/30`
+surface. `Textarea`'s border used to be on this list by accident, which is
+exactly the confusion the name invites — it is a FIELD, so it takes
+`border-border` like the rest of the family. Pointing the field at it would repaint all of
 those. The name is inherited, the usage is deliberate, and neither changes.
 
 ## Open questions
 
-- DESIGN_SYSTEM.md:400 (type-scale table) lists `text-sm` 19px for "inputs" · source says `text-base` 21px (input.tsx:44), and the Form-controls recipe at DESIGN_SYSTEM.md:436 says `text-base` too. Select and the filter trigger *are* `text-small`; Combobox and DatePicker are `text-base` like Input. The type-scale row still needs to say which.
+- ~~Type size disagreed across the family.~~ Settled: every form control is `text-small` (19px), and the `sm / default / lg` ladder is now one module (`src/lib/control-size.ts`) that `Button`, `Input`, `SelectTrigger`, `ComboboxTrigger`, `DatePicker` and `ChipInput` all read. See DESIGN_SYSTEM.md › Form controls › One size ladder.
 - `LibrarySearchField` (`library-search-field.tsx:18–36`) still hand-rolls the icon + clear wrapper with `h-9 pl-10 pr-9` instead of `startIcon` / `onClear`, and is the only 36px input in the app. Migrate, or document 36px as a sanctioned toolbar height?
 - The `absolute`-on-the-field bug is documented here from the source's class-merge order (input.tsx:69–75); no commit in history shows the offending call site, so the exact place it happened is unrecorded.
 - `disabled:pointer-events-none` (input.tsx:53) is on Input only — Select, Combobox and DatePicker use `disabled:cursor-not-allowed disabled:opacity-50` without it. Intentional (a disabled input should not show a not-allowed cursor at all?) or drift?

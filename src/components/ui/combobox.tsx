@@ -5,6 +5,7 @@ import { Combobox as ComboboxPrimitive } from "@base-ui/react/combobox"
 import { CheckIcon, ChevronDownIcon, SearchIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { CONTROL_SIZE, CONTROL_PAD_Y, type ControlSize } from "@/lib/control-size"
 
 // ─── Combobox ─────────────────────────────────────────────────────────────────
 //
@@ -30,15 +31,24 @@ interface ComboboxTriggerProps {
   placeholder?: string
   className?: string
   showSearchIcon?: boolean
+  /** Height + type step — the shared control ladder (`sm` 32 · `default` 40 ·
+   *  `lg` 48), so the field lines up with the Button beside it. */
+  size?: ControlSize
 }
 
-function ComboboxTrigger({ className, placeholder, showSearchIcon = true }: ComboboxTriggerProps) {
+function ComboboxTrigger({ className, placeholder, showSearchIcon = true, size = "default" }: ComboboxTriggerProps) {
   return (
     <ComboboxPrimitive.InputGroup
+      data-size={size}
       className={cn(
         "relative flex w-full items-center",
         "rounded-full border border-border bg-background",
-        "h-10 px-3 pt-[6px] pb-[10px] gap-2",
+        "gap-2",
+        // A search icon on the left and a chevron on the right, so the padding
+        // is symmetric and one step tighter than a plain field at every step.
+        CONTROL_SIZE[size],
+        CONTROL_PAD_Y[size],
+        { sm: "px-2.5", default: "px-3", lg: "px-4" }[size],
         "hover:border-foreground/30",
         "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50",
         "transition-colors",
@@ -50,7 +60,11 @@ function ComboboxTrigger({ className, placeholder, showSearchIcon = true }: Comb
         data-slot="combobox-input"
         placeholder={placeholder}
         className={cn(
-          "flex-1 bg-transparent text-base font-normal text-foreground outline-none",
+          // `min-w-0` is load-bearing, not tidiness. A flex item's `min-width` is
+          // `auto`, and an `<input>`'s intrinsic width is ~189px, so `flex-1`
+          // alone could not shrink it: every Combobox narrower than ~230px had
+          // its own input and chevron hanging out past the pill's right edge.
+          "min-w-0 flex-1 bg-transparent font-normal text-foreground outline-none",
           "placeholder:text-muted-foreground",
           "disabled:cursor-not-allowed disabled:opacity-50",
         )}
@@ -146,7 +160,7 @@ function ComboboxItem({
       className={cn(
         "relative flex w-full cursor-default items-center gap-2",
         "rounded-lg px-2.5 py-1.5",
-        "text-base font-normal outline-none select-none",
+        "text-small font-normal outline-none select-none",
         "focus:bg-accent focus:text-accent-foreground",
         "data-highlighted:bg-accent data-highlighted:text-accent-foreground",
         "data-disabled:pointer-events-none data-disabled:opacity-50",

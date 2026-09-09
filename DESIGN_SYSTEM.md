@@ -4,6 +4,12 @@ description: Design system overview for Muza music streaming platform — colors
 type: project
 ---
 
+> **Documenting a component?** This file is the *system* — tokens, shared
+> recipes, cross-component rules. The procedure for a single component, and
+> the wiring that keeps the design-system page in step with it, is
+> [`COMPONENT_DOC_PASS.md`](COMPONENT_DOC_PASS.md). Component prose itself
+> lives in [`docs/components/`](docs/components/README.md), one file each.
+
 ## Project
 Next.js App Router · TypeScript · Tailwind CSS v4 · @base-ui/react v1.3.0 · shadcn/ui patterns
 Figma file key: **L9yw4Yaec9YtAXGxP8q4fu**
@@ -178,15 +184,11 @@ The **column gap is 16px** (row gap 24px). That is *not* the page gutter — `--
   gap-x-4 gap-y-6">
 ```
 
-`CardRail` mirrors the same step map — see [`src/components/app/card-rail.tsx`](src/components/app/card-rail.tsx).
+`CardRail` mirrors the same step map, and switches swipe ⇄ grid mode at a **560px column** — see [docs/components/card-rail.md](docs/components/card-rail.md).
 
-**Song rail (`SongRail`, `song-rail.tsx`)** is the row-shaped sibling of `CardRail`: it stacks [Song List Item](src/components/ui/song-list-item.tsx) rows into columns of **3** and scrolls sideways (1 column < 692px with a peek, 2 ≥ 692, 3 ≥ 1164 — widths from the rail's own `100%` so columns align with `CardRail` at the same width). It is the single shared shell for **Artist › Top Songs** and **Search › Songs**; each host passes its own pre-rendered rows (`rows: ReactNode[]`) so the rail stays data-agnostic. `title` heading is `text-base`. `onShowAll` is optional (omit → no "Show all", e.g. Top Songs); when present, "Show all" + the ◀ ▶ arrows appear **only on overflow**, and the arrows are pointer-only (hidden on touch / < 692px). Shown in the DS under "Song Rail".
+**Song rail** stacks Song List Item rows three to a column and borrows the ladder's 692 / 1164 steps for its 2 / 3 columns — see [docs/components/song-rail.md](docs/components/song-rail.md). Rows are passed in pre-rendered; the shell never touches them.
 
-**Artist hero (`ArtistHero`, `artist-hero.tsx`)** uses the same dual cap (a reusable component, also shown in the DS under "Artist Header"):
-```tsx
-<section className="aspect-[1072/400] min-h-[320px] max-h-[552px] min-[1920px]:max-h-[640px] …">
-```
-Past each ceiling the photo crops horizontally via `object-cover` rather than inflating the hero.
+**Artist hero (`ArtistHero`, `artist-hero.tsx`)** locks its height to the same two caps — `552px` (1480 × 400/1072) and `640px` from 1920 — so it stops growing taller exactly where the rails stop growing wider. See [docs/components/artist-header.md](docs/components/artist-header.md).
 
 ### Bottom gutter — player clearance
 
@@ -395,9 +397,39 @@ The rule is identical: **an alias never holds a raw value; it references the pri
 | `table` | sans | 18 | — | 400 regular (bold 700) | 0 | — |
 
 **Font families**
-- `font-sans` → Founders Grotesk
-- `font-serif` → Georgia (used in headings' `font-heading` utility)
-- `font-mono` → Menlo
+- `font-sans` → Founders Grotesk (`app.css:172`) — everything the product renders
+- `font-mono` → **Founders Grotesk Mono** (`app.css:163`) — the mono cut of the
+  same family, one weight (400), loaded from
+  `public/fonts/FoundersGrotesk-Mono-Regular.woff2`
+- There is no `--font-serif`; `font-serif` falls through to Tailwind's default
+  stack and is not used anywhere.
+
+### Code is always mono
+
+Anything printed **as code** — an inline `<code>` token in prose, a fenced
+block, a class string in a table — is `font-mono`. Nothing else is: mono is the
+one signal that a string is meant to be read literally and typed back exactly.
+
+```tsx
+// inline, in prose
+<code className="font-mono text-2xsmall font-normal px-1 rounded-sm bg-muted">useIsMobile</code>
+
+// a block — `<pre>` inherits `font-mono` from Tailwind preflight
+<pre className="overflow-x-auto rounded-lg border border-border bg-muted p-3 text-2xsmall leading-5">
+  <code>{source}</code>
+</pre>
+```
+
+This used to be three treatments at once: most `<code>` in the design-system
+page carried `font-sans` (so a class name was set in the same face as the
+sentence around it), two spans carried no family at all and picked up the old
+`ui-monospace, "SF Mono"` stack from preflight, and only fenced blocks were
+reliably mono. Same page, same kind of token, three fonts. All of it is the
+Mono cut now, and the `font-mono` on an inline `<code>` is written out rather
+than inherited so the intent survives a copied-and-pasted class string.
+
+The Mono face is **regular only**. Never `font-medium` or heavier on code — a
+synthesised bold breaks the fixed advance width that is the point of the face.
 
 ---
 
@@ -455,13 +487,74 @@ to claim `rounded-xl` for a pill.
 
 | Token | Value |
 |---|---|
-| Height | 40px `h-10` — the same as `Button` `default`, so a field and its action sit on one line |
+| Height | 40px `h-10` at `default` — see the size ladder below |
 | Shape | `rounded-full` |
 | Border | `border border-border`, `hover:border-foreground/30` |
 | Surface | `bg-background` |
 | Focus | `focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50` |
-| Text | `text-base font-normal` (`Select` and the filter trigger use `text-small`) |
+| Text | `text-small font-normal` (19px) |
 | Vertical padding | `pt-[6px] pb-[10px]` — **asymmetric, on purpose** |
+
+### One size ladder, shared with Button
+
+A field and the button next to it are the same height and the same type size,
+because they use the same steps:
+
+| `size` | Height | Type | Field padding |
+|---|---|---|---|
+| `sm` | `h-8` 32px | `text-2xsmall` 16px | `px-3` |
+| `default` | `h-10` 40px | `text-small` 19px | `px-4` |
+| `lg` | `h-12` 48px | `text-small` 19px | `px-5` |
+
+The ladder lives in **`src/lib/control-size.ts`**, not in six copies. Six
+components take a `size` prop and write it back as `data-size`:
+
+| | `sm` | `default` | `lg` |
+|---|---|---|---|
+| `Button` | ✓ | ✓ | ✓ |
+| `Input` | ✓ | ✓ | ✓ |
+| `SelectTrigger` | ✓ | ✓ | ✓ |
+| `ComboboxTrigger` | ✓ | ✓ | ✓ |
+| `DatePicker` | ✓ | ✓ | ✓ |
+| `ChipInput` | ✓ | ✓ (starting height) | ✓ |
+
+So a large button gets a large field beside it, and the pairing holds for
+whichever control the form actually needs — the reason to have the ladder at
+all is that you should never have to check.
+
+`Textarea` is the one that stays out of the *ladder*: it is a multi-line box,
+not a pill, so it has no peer height to match and takes no `size`. It takes
+everything else in the recipe — border token, surface, `px-4`, hover border,
+focus ring, type size. It quietly did not, on four of those, for as long as
+nobody put it next to an Input and looked.
+
+**Type stops climbing at `default`.** 19px is the body size of the whole form
+family, and `lg` is a bigger *target*, not bigger text — a 21px control label
+beside a 19px one would put back exactly the mismatch this ladder was built to
+remove. `sm` drops one step to 16px because 19px in a 32px box leaves no
+optical room.
+
+**A control that grows still has to *start* on the ladder.** `ChipInput` did
+not: it measured 46.5px because its inner field was padded on top of its own
+line box, and `min-h-10` is a floor, so nothing caught it. Where a height is
+built up from children rather than declared, size the children
+(`CONTROL_STACK[size].child`) and let `min-h` be the floor it claims to be.
+
+**Verify it on the page, not in the file.** The design-system page's *"One size
+ladder — every control, every step"* example passes one `size` to a row of
+every control and sets no heights. A ragged row is a component that has
+drifted. It is deliberately `items-end`: centring a row hides a mismatch by
+splitting it in two.
+
+**This was not true until recently, and the mismatch was invisible.** `Input`
+sat at `text-base` (21px) while `Button`, `SelectTrigger` and `DatePicker` sat
+at `text-small` — and `button.tsx` carried a comment claiming the alignment
+held. Call sites had already voted the other way: fourteen `Input`s across the
+product passed `className="text-small font-normal"` for no reason other than
+undoing the default. `SelectItem` was a second case of the same thing — 21px in
+the list, 19px once the value landed in the trigger, so an option changed size
+as it was chosen. Both are fixed; the overrides are gone. If a control needs a
+different size, reach for the `size` prop, never a type class.
 
 **The 2px lift.** Founders Grotesk sits low in its em box, so symmetric padding
 leaves the text visually below centre in a 40px pill. 6/10 raises it by 2px to
@@ -477,67 +570,21 @@ wrapper.** Positioning classes therefore have to go on a wrapper you supply —
 an `absolute` meant for the field's box will move the field inside its wrapper
 instead. See [`input.md`](docs/components/input.md).
 
-## Buttons (Figma node 37:931)
+## Buttons
 
-| Size | Height | H-padding | Font | Weight |
-|---|---|---|---|---|
-| `sm` | 32px `h-8` | 12px `px-3` | 15px `text-2xsmall` | `font-normal` |
-
-`sm` is the one button that is **not** `font-medium`. At 15px the medium weight
-reads as emphasis the control does not carry — it is a toolbar size, not a
-primary action.
-| `default` | 40px `h-10` | 18px `px-[18px]` | 19px `text-small` | `font-medium` |
-| `lg` | 48px `h-12` | 40px `px-10` | 19px `text-small` | `font-medium` |
-| `icon-sm` | 32px `size-8` | — | — | — |
-| `icon` | 40px `size-10` | — | — | — |
-| `icon-lg` | 48px `size-12` | — | — | — |
-
-Ghost hover bg: `hover:bg-accent`. (This line long read “`hover:bg-secondary` — NOT muted, too light”, which the component never did: in light mode `--accent` is neutrals-100, *lighter* than `--secondary` at neutrals-200. The shipped hover is the rule.)
+See [docs/components/button.md](docs/components/button.md). One rule: `default` is 40px (`h-10`) to sit level with Input / Select / DatePicker, and `sm` is the only size that is `font-normal`.
 
 ---
 
-## Chips (Figma node 21232:6353 filter · 21232:6420 dismissable)
+## Chips
 
-Height: 32px (`h-8`) · Padding: 12px (`px-3`) · Gap: 8px (`gap-2`) · `rounded-full`
-Font: 15px `text-xxs` `font-normal`
-Variants: **default** (`bg-background border-border hover:bg-muted` — same as outline button) · **selected** (`bg-primary border-primary text-primary-foreground`)
-No secondary or ghost variants — those don't exist in Figma.
-Dismissable chips use `<ChipDismiss>` with X icon (14px).
+See [docs/components/chips.md](docs/components/chips.md). One rule: a `Chip`'s selection is the caller's state (`selected` + `onClick`), and the count badge's colours are never patched at the call site — the `count` variant owns both of its states.
 
 ---
 
 ## Badges
 
-Shape: `rounded-[2px]` · Padding: `pt-[4px] pb-[6px] px-1.5` · Font: `text-xxs font-medium` · Never uppercase
-
-### `<ContentTypeBadge>` (Figma node 21368:27118)
-Used on tracks/releases/artists/labels. Always `bg-secondary text-secondary-foreground` + left Lucide icon (12px).
-Types: `song` (Music2) · `album` (Disc3) · `single` (Disc3) · `ep` (Disc3) · `artist` (Mic) · `playlist` (ListMusic) · `label` (Building2 — the same icon as the "Go to label" action).
-
-### `<StatusBadge>` (Figma node 21368:27118)
-Track visibility. Always glassmorphism: `backdrop-blur-sm bg-background/50 border-[0.5px] border-neutral-500 text-muted-foreground`.
-Always has left icon + right chevron. Statuses: `public` (Globe) · `private` (Lock)
-
-### `<Badge>` primitives (Figma node 26:169)
-Design system base variants: `default` (neutral-950) · `secondary` · `outline` (glassmorphism) · `destructive` · `count`
-
-**`variant="count"` + `shape="pill"`** — the number badge that lives INSIDE another control (a `Chip` filter/tab). The variant owns both states: `bg-accent` at rest (one step above the chip's own fill, so it stays legible on hover) and a translucent light pill while the parent chip is selected. **Never** patch those colours in with `className` at the call site — that's the hand-crafted-badge rule below.
-
-The `pill` shape uses `px-1` (not `px-1.5`) so a **single digit lands inside `min-w-5` and renders a true 20×20 circle**; two digits widen it on their own. At 1.5 even a "3" came out 22.8×20 — a slight oval that reads as a mis-centred number. Vertical centring is handled by `pb-px` (Founders Grotesk numerals sit low in a flex-centred box); measured ink sits within 0.15px of centre.
-
-### Where content-type badges belong — STRICT
-
-A badge that repeats what the surrounding UI already states is noise. `ContentTypeBadge` is allowed **only** where the type isn't otherwise obvious:
-
-| Surface | Badge? | Why |
-|---|---|---|
-| Search results (rows, cards) | **no** | the category tabs already name the type |
-| Library list rows / `MediaListItem` | **no** | the view is single-type |
-| Mobile "…" sheet header | **yes** | the sheet is context-free once open — album, playlist **and artist** |
-| Artist discography rows | **yes** | Album / Single / EP is a real distinction inside one list |
-| Studio | **yes** | mixed-type inventory |
-
-Never pair a badge with a subtitle that says the same word ("Artist" under a name + an "Artist" badge).
+See [docs/components/badge.md](docs/components/badge.md) (`Badge`, `ContentTypeBadge`, and where a content-type badge belongs), [docs/components/status-badge.md](docs/components/status-badge.md), [docs/components/order-status-badge.md](docs/components/order-status-badge.md) and [docs/components/purchased-badge.md](docs/components/purchased-badge.md). One rule: a badge that repeats what the surrounding UI already states is noise — `ContentTypeBadge` only where the type is not otherwise obvious, never beside a subtitle that says the same word.
 
 ---
 
@@ -551,24 +598,8 @@ Container: `w-64 bg-popover border border-border rounded-xl py-1 shadow-lg`
 
 ## Player components
 
-### PlayerOverlay (`src/components/ui/player-overlay.tsx`) — full-screen mobile sheet
-Canonical "Now Listening" sheet. Adaptive sizing via `ResizeObserver` on the root; every element stays visible from iPhone SE (320×568) to 17 Pro Max (440×956) without scrolling.
-
-**Layout (top → bottom):**
-1. Drag handle (`Button variant="ghost"` wrapping a `h-1 w-8` pill)
-2. "Playing from:" header — `text-xxs` label + `text-xs font-medium` context line, both `text-muted-foreground`
-3. Album cover — square, `rounded-xs` (2px), sized dynamically between 140–440px. Blurred full-bleed copy sits behind everything as the background, with a `bg-background/40 dark:bg-background/70` tint for legibility.
-4. Title row — `<h2 text-lg font-medium>` with `<MarqueeText>` (auto-scrolls if it overflows) + two `Button variant="outline" size="icon"` (Plus, MoreVertical) for glass effect
-5. Artist badge — `Button variant="ghost" size="sm"` with 24px avatar (`ring-border`) + artist name
-6. Waveform row — timestamps (`text-xxs tabular-nums`) flanking a `<Waveform>` that scales 40–160px tall
-7. Secondary icons row — Info / Share / Radio as `Button variant="ghost" size="icon-sm"` (`flex-1` region, centred)
-8. Transport row (`flex-1`, `justify-center`, `gap-3`) — ShuffleToggle · SkipBack · Play · SkipForward · Repeat. All five in a tight cluster, not spread across the width.
-9. Tabs — `<Tabs variant="pill">` with Lyrics / Now listening / Up next. Tabs trigger uses `font-normal!` to win specificity. Wrapper: `pt-5 pb-6` (extra top padding so transport feels visually centred in its flex region).
-
-**Transport sizing** (via `lerp(small, large)` driven by device height 568→956):
-- Play button: 48→64px (icon 36→48)
-- Skip buttons: icon 20→28 inside `Button variant="ghost" size="icon-sm"` with `hover:bg-transparent` (no pill hover state)
-- Shuffle/Repeat: 48→64 wide × 40→56 tall, icon 20→28 — promoted to "first-class transport" footprint, not secondary
+### PlayerOverlay
+The full-screen "Now listening" sheet on phones. See [docs/components/player-overlay.md](docs/components/player-overlay.md). The one rule: when closed it must be `invisible`, not merely translated off-screen — its `.frosted-glass` backdrop-filter ignores the wrapper's `translate` and would keep painting over the tab bar and the mini bar.
 
 ### ShuffleToggle (`src/components/ui/shuffle-toggle.tsx`)
 Shared shuffle button used by PlayerBar, PlayerBar-B, and PlayerOverlay. Emphasises the control:
@@ -577,8 +608,8 @@ Shared shuffle button used by PlayerBar, PlayerBar-B, and PlayerOverlay. Emphasi
 - `key={pulseCount.current}` on the halo + icon re-triggers the animation on every toggle-on
 - Repeat keeps a plain low-key secondary toggle — asymmetry is intentional
 
-### PlayerBar (`src/components/ui/player-bar.tsx`) and PlayerBar-B
-Responsive pill with disc + transport + waveform. Uses container queries (`@min-[640px]:`, `@min-[688px]:`, `@min-[800px]:`). Player-B folds shuffle/repeat into the transport row instead of the far-right cluster.
+### PlayerBar (`src/components/ui/player-bar-b.tsx`)
+The persistent transport — the 80px glass bar from 640px of its own width, the 56px mini pill below it. See [docs/components/player-bar.md](docs/components/player-bar.md). The one rule: the compact ⇄ desktop switch is a **box** step (`@container` on the bar), never a window gate — the docked editor can leave the bar 294px wide at a 768px window.
 
 ### Shared utilities
 - **Transport icons** (`src/components/ui/transport-icons.tsx`): `SkipBackFilled`, `PlayFilledAlt`, `SkipForwardFilled` — Carbon-style filled SVGs, accept `className` + `style`
@@ -641,9 +672,7 @@ Tokens are **roles**, not colours. Never mix roles.
 
 Three escalating surfaces, all bottom-anchored on phones:
 
-**1. Responsive dialog → bottom sheet — the BASE DEFAULT.** **Every** `Dialog` and `AlertDialog` is a **bottom sheet on mobile** and a **centered modal on desktop (md+, 768)** — no per-dialog opt-in. It's baked into the base `DialogContent` / `AlertDialogContent` (`dialogPositionClass` in [`dialog.tsx`](src/components/ui/dialog.tsx)): mobile `inset-x-0 bottom-0 max-w-full rounded-t-2xl rounded-b-none slide-in-from-bottom`; desktop `md:left-1/2 md:top-1/2 md:-translate-* md:rounded-2xl zoom-in`. Individual dialogs only set their **desktop width** (`md:max-w-*`) and any height/scroll behaviour — they must **not** re-declare the positioning. To **grow with content up to the viewport** (less scrolling): make `DialogContent` `flex flex-col max-h-[92vh] md:max-h-[85vh]`, the header `shrink-0`, and the scroll body `min-h-0` (fills to the cap, scrolls only on overflow).
-
-**Sheet gutter is 12px on phones** (`p-3 md:p-6`), matching `--page-px` at that width. A sheet spans the whole screen, so a 24px gutter costs 48px of a 320–375px width — enough to visibly squeeze list rows. The footer's full-bleed negative margins must match the gutter at **both** sizes (`-mx-3 md:-mx-6`) or the bar stops short of the edges.
+**1. Responsive dialog → bottom sheet — the BASE DEFAULT.** **Every** `Dialog` and `AlertDialog` is a **bottom sheet on mobile** and a **centered modal on desktop (md+, 768)** — no per-dialog opt-in; it is baked into the base `DialogContent` / `AlertDialogContent`. Individual dialogs set their **desktop width** (`md:max-w-*`) and height only, and must **not** re-declare the positioning. Everything else about the dialog family — the 12px sheet gutter, the header column, the `text-small` title, `dialogListClass`, the flex scroll body, the footer's edge, the form sheet and the find screen — lives in [docs/components/dialog.md](docs/components/dialog.md); the alert's differences in [docs/components/alertdialog.md](docs/components/alertdialog.md).
 
 **The keyboard is part of the layout.** iOS does NOT shrink the layout viewport when the on-screen keyboard opens — it shrinks the *visual* viewport — so a `fixed; bottom: 0` sheet sits **behind** the keyboard. Every sheet therefore:
 - sits at `bottom: var(--kb, 0px)` and is capped to `max-h-[calc(100svh-var(--kb,0px)-8px)]`, scrolling internally, with `scroll-padding-bottom: 8rem` so a field the browser scrolls into view lands clear of the sticky footer;
@@ -653,39 +682,11 @@ Three escalating surfaces, all bottom-anchored on phones:
 
 `--kb` is published by [`useKeyboardInset`](src/lib/use-keyboard-inset.ts), mounted once in the app shell. Chrome/Android is handled declaratively by `interactive-widget=resizes-content` in the viewport meta, so `--kb` stays 0 there.
 
-**Forms go full-screen on phones — `<DialogContent mobile="form">`.** A bottom sheet cannot hold a form once the keyboard is up: on a 12 mini in Brave the keyboard + accessory bar leave **~200px**, and title + field + toggle + footer need ~240. Lifting the sheet, capping it, or hiding content while typing only relocates the overlap. So any dialog whose **primary action must survive typing** uses the form presentation (`dialogFormPositionClass` in [`dialog.tsx`](src/components/ui/dialog.tsx)):
-- **anchored top, filling the screen** down to `--kb` (`inset-x-0 top-0 bottom-[var(--kb)]`, `rounded-none`, chrome padding zeroed) — removes the height budget instead of negotiating with it; `scroll-padding-top: 4rem` keeps a scrolled-to field clear of the bar;
-- the sheet is **three bands**, and only the middle one scrolls: `DialogActionBar` (`sticky top-0 shrink-0`) · `DialogFormBody` (`flex-1 min-h-0 overflow-y-auto`) · `DialogFormActions` (`shrink-0`). The popup itself is `overflow-hidden` — if it scrolled, a sticky action row would float **over** the body instead of the body ending above it (it covered the privacy toggle);
-- the **`DialogActionBar`** carries dismissal only: `leading` Cancel (`ghost`) · `DialogTitle` (`text-base font-medium`). The keyboard can never reach it;
-- the **confirming action** is a full-width `size="lg"` (48px) `Button` in **`DialogFormActions`**, the band below the body — the reference pattern (TIDAL/Apple Music), and the reason it isn't sticky *inside* the body is the overlap above. The sheet already ends at `--kb`, so this row sits directly on the keyboard. It is never offered twice — bar **or** action row, not both;
-- fields sit in a **`DialogFormBody`** (restores the 12px gutter + `gap-3` — on a phone every gap competes with the keyboard for the same ~200px) with the **text field first**, directly under the bar, so it is on screen at any keyboard height without relying on scroll-into-view;
-- **no field label** where the placeholder carries it — every line costs space above the keyboard. Keep an `aria-label`;
-- **don't autofocus** the field on phones — park `initialFocus` on the bar so the keyboard doesn't spring up before the sheet has been seen; on desktop focus the field directly;
-- **desktop is untouched**: the bar is `md:hidden`, the body is `md:contents`, and the ordinary `DialogHeader` / `DialogFooter` render. Gate the two with `useIsMobile()` so there is never more than one `DialogTitle` in the DOM.
-
-Used by **Create playlist / Edit info** (`CreatePlaylistDialog`). Pickers and lists (Add music, "…" menus, confirms) stay bottom sheets.
-
-**One header structure everywhere: a column — `[leading]` above the title.** `DialogHeader` stacks an optional `leading` control (a back chevron on a drilled-in step) above the title stack, both starting on the sheet's gutter line — the same left edge as the rows, the field and the footer. Inline, a back control would indent the title by its own width and nothing underneath would line up. Titles are **left-aligned, phones included**. Dismissal is always the **✕ at the top right**, `mobile="form"` included — its bar carries no Cancel. One back control per sheet: a drilled-in screen fills the header's `leading` slot instead of adding its own.
-
-**Dialog titles are `text-small` (19px), `md:text-large` up.** The title shares a line with the ✕, and 21px crowded it. The base `dialogTitleClass` is `text-small`, so a dialog that wants the larger desktop title adds `md:text-large` — never a bare `text-large`.
-
-**Sheet rhythm on a phone: 12px gutter, 8px between bands** (`p-3 md:p-6`, `gap-2 md:gap-5`). A sheet is the whole screen and its bands already read as separate — the title, the tabs, the list — so the gap only has to keep them from touching. Lists use **`dialogListClass`** (`flex flex-col min-w-0 flex-1 min-h-0 overflow-y-auto -mx-2`) and deliberately no matching `px-2`: `MediaListItem` brings its own `pl-2`, so symmetric padding would push every cover 8px past the gutter and out of line with everything else.
-
-**A sheet's scroll body is a FLEX child, never a `vh` cap.** Make the sheet `flex flex-col` with a fixed height (`h-[calc(100svh-var(--kb,0px)-8px-env(safe-area-inset-top))] md:h-auto`), every band `shrink-0`, and the list `flex-1 min-h-0`. `min-h-0` is what lets it shrink — a flex item defaults to `min-height: auto`, so without it the list keeps its content height, overruns the sheet, and the sticky footer slices the last rows. A viewport-relative cap (`max-h-[60vh]`, even a `--kb`-aware one) cannot know what the other bands cost and gets this wrong at some size.
-
-Two traps inside that rule:
-- **`padding-bottom` is a floor on a flex item's height** — `min-h-0` cannot shrink a box below its own padding. To clear a floating band, append a **spacer element** at the end of the scroll content instead.
-- A picker sheet should be **full height, not content height** (`h-…`, not just `max-h-…`): more rows is strictly better, and a sheet that resizes as you switch tabs reads as jumping.
-
-**Let the footer's edge cut the content.** No fade, no gap: cancel the sheet's own gap on the scroll body (`-mb-5`) and the footer's `mt-2`, so the list runs right up to the bar. A strip of empty sheet between a half-row and the bar looks like a mistake; the bar's edge doing the cutting does not.
-
-**Search inside a sheet is a screen, not a field.** Focusing the search input switches the sheet to a **find screen** (`AddMusicDialog`): the browse chrome — tabs — steps aside, a back control appears in the header's `leading` slot, and the bottom band leaves the flow to sit over the results (the list is cleared by a spacer at its end). With no query it shows **recent searches** ([`useRecentSearches`](src/lib/use-recent-searches.ts) — `localStorage`, committed queries only, newest first, capped at 8), or a heading naming the scope when there are none. The **title does not change** — what you're filling is the same job either way, and swapping in "Find" would drop the only context on screen. Move the FOOTER, never the field: re-parenting the input remounts it and throws away the focus that opened the screen.
-
-**One band, and it only floats while it holds one control.** The search field and the confirming action share the footer (`flex-col` so the field sits on top, `md:flex-row`) — one edge of chrome, not a pill hovering over a bar. A lone field may float: transparent band, its own `bg-popover` + shadow, 16px inset rather than the sheet's 12px gutter. Add a second control and it must go **opaque with a border** — two stacked floating controls read as two competing primary actions, and a field is an input, not an action. (Spotify and TIDAL avoid the question entirely: a bottom field means no bottom confirm, because each row commits on tap.) Pinning a full-bleed footer with `absolute` needs `mx-0 mb-0` — negative margins ADD to the insets, so the band would otherwise hang outside the sheet.
+**Forms go full-screen on phones — `<DialogContent mobile="form">`.** A bottom sheet cannot hold a form once the keyboard is up (~200px left on a 12 mini in Brave; a title + field + toggle + footer need ~240), so any dialog whose **primary action must survive typing** uses the form presentation: anchored top, three bands, only the body scrolls, the confirming action in `DialogFormActions` on the keyboard. The bands, the header rules and the find-screen pattern are in [docs/components/dialog.md](docs/components/dialog.md).
 
 **`viewport-fit=cover` is mandatory** in the viewport meta. Without it `env(safe-area-inset-*)` resolves to **0** and every safe-area pad in the app — mobile header, footer nav, player shell, dropdown sheets, dialog footers, toasts — is silently a no-op.
 
-**2. DropdownMenu auto-sheet.** The app `DropdownMenu` already presents as a bottom sheet on touch — use it for simple "…" lists.
+**2. DropdownMenu auto-sheet.** The app `DropdownMenu` already presents as a bottom sheet below 768 — use it for simple "…" lists. See [docs/components/menu.md](docs/components/menu.md); the one rule: put the trigger on a real `Button` via `render`, and never use `…CheckboxItem` / `…RadioItem` / `…Sub*` in a menu that can render below 768 — they have no sheet counterpart.
 
 **3. Advanced bottom-sheet "…" menu** (`DetailMoreButton`, Album/Playlist/Artist). Rich, store-aware action surface, gated by `useIsMobile()`:
 - **Header** — `MenuCover` (square cover / 2×2 playlist collage / round artist avatar, **72px** ≈ the 3 text lines) + title + `ContentTypeBadge` + meta. No divider; generous `pb-6`.
@@ -707,27 +708,7 @@ Two traps inside that rule:
 
 ## Search surface
 
-The Explore page **is** the search/discover surface; results are URL-backed (`?page=Explore&q=…&scope=…`) and identical on desktop and mobile.
-
-- **`SearchPanel`** (on focus) — empty query → "Your recent searches" (clock rows, removable); typing → plain-text suggestions. localStorage-backed recents (`search-catalog`).
-- **`SearchResultsView`** — `Search for: <q>` heading (desktop; dropped on mobile since the search field shows it) · **scope** `ToggleGroup` (Muza Catalog / My Library — full-width in the mobile header, inline on desktop) · category filter (underlined `Tabs variant="line"` on desktop, `MobilePillTabs` on mobile) · results.
-- **Category tabs show only types that have results** (All is always present) — an empty type (e.g. Labels with no match) is dropped so users never click into nothing. If the active tab empties out as the query narrows, it falls back to All. No counts on tabs (they churn per keystroke and clutter the strip; matches Spotify / Apple / YT).
-- A **specific tab** (Songs / Artists / Albums / …) is a flat vertical list of **`MediaListItem`** rows (songs play / open their album, containers navigate); the `label` kind renders like an artist (round) with a "Label" badge + album count.
-
-### Search results — All composition
-
-The **All** tab is **not** a flat list — it's a Top-result hero followed by one **shelf per content type**, mirroring the Home rails so search reads as part of the same system. Rules (enforced in [`search-results-view.tsx`](src/components/app/search-results-view.tsx)):
-
-- **Top result** — the single best-ranked match, promoted to an oversized hero card (big cover, large title, content-type badge, Play button for playable kinds). It is **removed from its own type section**, so that section appears only when there are OTHER hits of that type (e.g. more artists with a similar name); a lone match never gets a redundant one-item rail repeating the hero.
-- **Section order is relevance-driven** — a type's position is set by where its best-ranked hit falls, and the Top result's type still leads when it has siblings. Tie-break order: Songs · Artists · Albums · Playlists · Labels.
-- **Songs** — the shared **`SongRail`** (same shell as Artist › Top Songs: 3 rows per column, 1 col < 692 with peek, 2 ≥ 692, 3 ≥ 1164) when there are **≥ 6** songs; a plain **vertical list** when **≤ 5** (6 = the first count that fills two full 3-row columns, so fewer would leave a ragged column).
-- **Artists / Albums / Playlists** — a **`CardRail`** of the matching cards when **≥ 2**; a **single inline card** (no rail chrome) when exactly **1**.
-- **Labels** — always a simple vertical list (no card / no detail page).
-- **Empty types are omitted** (no empty shelves).
-- **"Show all"** appears **only when the shelf actually overflows** (there's off-screen content to scroll to) → opens that type's tab. Sections that already show every hit (e.g. 3 cards that fit, or a ≤5-song list) get **no** "Show all" — it would reveal nothing. Card rails use `CardRail`'s `showAllOnlyWhenScrollable`; `SongRail` gates it on its own overflow check.
-- **Sparse query (≤ 2 total results)** → skip the shelves: Top result + a short vertical list.
-
-Needs an `@container` ancestor (the All wrapper sets one) so the rails' `@min-[…]` column steps resolve against the content area.
+The Explore page **is** the search surface; results are URL-backed (`?page=Explore&q=…&scope=…`) and identical on desktop and phone. The panel, the results view, the All-tab shelf composition (Top result · one shelf per type · overflow-gated "Show all") and its thresholds live in [docs/components/search.md](docs/components/search.md). The one rule not to miss: a search row or card carries **no** content-type badge — the tabs already name the type.
 
 ---
 
@@ -770,7 +751,7 @@ Context gating, nothing else:
 
 - **Status filters are tabs, not a dropdown** — Playlists (All / By you / Saved), Albums (All / Owned / Downloaded), Songs (All / Downloaded). **Desktop only**: on mobile the strip competes with the content-type nav and reads as clutter, so it's hidden.
 - **In-library search** is a single shared store, [`use-library-filter.ts`](src/lib/use-library-filter.ts) (`useSyncExternalStore`), so the desktop field and the mobile header field drive the same query. The header clears it on unmount — a collapsed mobile field must never leave a hidden filter applied.
-- **Playlist cards carry a byline** — "By you" for your own, "By {name}" for saved ones.
+- **Playlist cards carry a byline** — "By you" for your own, "By {name}" for saved ones; see [docs/components/playlist-card.md](docs/components/playlist-card.md).
 - **List tables** get an **Added** column + sort, and a **create row** leading the list (the same pattern as Studio's upload row).
 
 ---
@@ -817,24 +798,10 @@ Phones are the default surface for the player, so gesture handling is a first-cl
 
 ## Track selection — the pick affordance
 
-`SelectTrackButton` (`src/components/ui/select-track-button.tsx`) replaces a checkbox wherever tracks are picked (Add music). A checkbox states a fact; this states the action, then confirms it.
-
-- **One mark, rearranged** — not two icons cross-fading. The plus's two strokes rotate into the check: vertical −90° → −45° (long arm), horizontal 180° → 45° + `scaleX(.43)` (short arm).
-- **Geometry** — 12px mark, 1.25px strokes (lighter than the 2px Lucide set on purpose), inside a 40px surface. Each bar is centred by half its own weight so a sub-pixel stroke sits true.
-- **Timing** — 150ms delay then 150ms `ease-out` into the check; 150ms delay then 300ms on `cubic-bezier(.75,-0.6,.14,1.59)` back to the plus. Same hold both ways, so picking and un-picking share a rhythm.
-- **Surface** — `bg-secondary`, **no border**. Once picked the surface fades to transparent and only the check remains: a filled pill per row is heavy down a long list, and the affordance has done its job.
-- The **row** is the click target; the mark is `pointer-events-none` and unfocusable.
-- Adding a track also runs `.muza-row-added` — a soft shade sweeping left→right across the row (260ms). It animates `background-position` only; an earlier `translateX` nudge read as the whole row shifting.
-
-Reference for the mark: `codepen.io/nicetransition/pen/bGdJzpZ`.
+`SelectTrackButton` replaces a checkbox wherever tracks are picked (Add music): one plus that rearranges into a check, on a `bg-secondary` plate that fades once picked. See [docs/components/select-track.md](docs/components/select-track.md). The one rule: the **row** is the click target — the mark is `pointer-events-none`, `aria-hidden` and holds no state.
 
 ---
 
 ## Toasts — mobile shape
 
-A confirmation is a glance, not a panel. Every major player uses a slim bar at the **bottom** for "added to playlist"; ours matches, and keeps the roomier top-right card on desktop.
-
-- **Placement** — mobile: `inset-x-3`, anchored above the mini player, footer tab bar, home indicator **and the keyboard** (`bottom: calc(112px + env(safe-area-inset-bottom) + var(--kb,0px))`). Desktop: top-right, unchanged.
-- **Padding** — `px-3 py-3` on phones vs `px-4 pt-4 pb-[18px]` on desktop.
-- **No close button on phones** (`hidden md:flex`) — it auto-dismisses and can be swiped, and a dismiss target competes for width with the message.
-- **Duration** — plain confirmations ("added", "created", "saved") use `TOAST_CONFIRM_MS` (2.5s). The 5s default is for messages carrying an **action** (Undo) or a consequence worth reading; 2.5s is too short to reach an Undo.
+See [docs/components/toast.md](docs/components/toast.md) — a bottom bar on phones (lifted over the mini player, tab bar, home indicator and keyboard), the top-right card from 768. The rule not to miss: plain confirmations ("added", "created", "saved") pass `timeout: TOAST_CONFIRM_MS` (2.5s); a toast carrying an **action** (Undo) stays on the 5s default, because 2.5s is too short to read a line and reach a button.

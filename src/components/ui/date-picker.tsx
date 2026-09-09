@@ -5,6 +5,7 @@ import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { CONTROL_SIZE, CONTROL_PAD_Y, type ControlSize } from "@/lib/control-size"
 import { Button } from "@/components/ui/button"
 
 // ─── Date Picker ──────────────────────────────────────────────────────────────
@@ -44,6 +45,9 @@ interface DatePickerProps {
   disabled?: boolean
   className?: string
   id?: string
+  /** Height + type step — the shared control ladder (`sm` 32 · `default` 40 ·
+   *  `lg` 48), so the trigger lines up with the Button beside it. */
+  size?: ControlSize
 }
 
 function DatePicker({
@@ -53,6 +57,7 @@ function DatePicker({
   disabled = false,
   className,
   id,
+  size = "default",
 }: DatePickerProps) {
   const today = new Date()
   const [viewYear, setViewYear] = React.useState(
@@ -117,10 +122,17 @@ function DatePicker({
       <PopoverPrimitive.Trigger
         id={id}
         disabled={disabled}
+        data-size={size}
         className={cn(
-          "flex h-10 w-full items-center justify-between gap-2",
+          "flex w-full items-center justify-between gap-2",
           "rounded-full border border-border hover:border-foreground/30 bg-background",
-          "px-3 pt-[6px] pb-[10px] text-base font-normal",
+          "font-normal",
+          // Height, type and the optical lift come from the shared ladder.
+          // The calendar glyph sits inside the right padding, so the box is
+          // symmetric and one step tighter than a plain field.
+          CONTROL_SIZE[size],
+          CONTROL_PAD_Y[size],
+          { sm: "px-2.5", default: "px-3", lg: "px-4" }[size],
           "transition-colors outline-none select-none",
           "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
           "disabled:cursor-not-allowed disabled:opacity-50",

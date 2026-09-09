@@ -15,7 +15,7 @@
  *   · Clicking anywhere on the wrapper focuses the input
  *
  * The visual treatment matches the project's standard rounded-full
- * input — same border, height, focus ring. Pending chips inside use
+ * input — same 40px height, border, focus ring. Pending chips inside use
  * the same `bg-muted` pill shape used by `<ChipDismiss>` so the
  * pending chips read as a less-final variant of the committed ones
  * sitting above.
@@ -24,17 +24,27 @@
 import { useRef, useState } from "react"
 import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { CONTROL_STACK, type ControlSize } from "@/lib/control-size"
 
 export interface ChipInputProps {
+  /** Put on the inner `<input>` so a `<label htmlFor>` can point at it.
+   *  Without this the control cannot be labelled at all — it is the one
+   *  form control in the set that took no id, which is why every call site
+   *  ended up with a caption floating above an anonymous field. */
+  id?: string
   placeholder?: string
   /** Fires when the user presses Enter — receives every pending chip
    *  plus any trailing typed text as one batch. Host appends them to
    *  its committed list. */
   onCommit: (values: string[]) => void
   className?: string
+  /** Height + type step — the shared control ladder (`sm` 32 · `default` 40 ·
+   *  `lg` 48). Unlike the other controls this is a STARTING height: the pill
+   *  grows by whole chip rows as they wrap. */
+  size?: ControlSize
 }
 
-export function ChipInput({ placeholder, onCommit, className }: ChipInputProps) {
+export function ChipInput({ id, placeholder, onCommit, className, size = "default" }: ChipInputProps) {
   const [pending, setPending] = useState<string[]>([])
   const [text,    setText]    = useState("")
   const ref = useRef<HTMLInputElement>(null)
@@ -67,8 +77,18 @@ export function ChipInput({ placeholder, onCommit, className }: ChipInputProps) 
   return (
     <div
       onClick={() => ref.current?.focus()}
+      data-size={size}
       className={cn(
-        "min-h-10 w-full rounded-full border border-border bg-background flex items-center flex-wrap gap-1.5 px-2 py-1 transition-colors cursor-text",
+        // The height is built from the INSIDE OUT and lands exactly on the
+        // shared ladder: every child (the pending chip and the field alike) is
+        // `CONTROL_STACK[size].child`, and child + padding + 2px border is 32 /
+        // 40 / 48. `min-h` is the floor rather than the thing doing the work —
+        // it was the other way around for as long as this measured 46.5px.
+        // A wrapped row adds one child height + the 6px gap, so the pill grows
+        // in whole rows instead of drifting.
+        "w-full rounded-full border border-border bg-background flex items-center flex-wrap gap-1.5 px-2 transition-colors cursor-text",
+        CONTROL_STACK[size].min,
+        CONTROL_STACK[size].pad,
         "hover:border-foreground/30",
         "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50",
         className,
@@ -77,7 +97,10 @@ export function ChipInput({ placeholder, onCommit, className }: ChipInputProps) 
       {pending.map((p, i) => (
         <span
           key={`${p}-${i}`}
-          className="inline-flex items-center gap-1.5 rounded-full bg-muted text-foreground h-7 pl-3 pr-1.5 text-2xsmall font-normal"
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-full bg-muted text-foreground pl-3 pr-1.5 text-2xsmall font-normal",
+            CONTROL_STACK[size].child,
+          )}
         >
           <span className="truncate max-w-[180px]">{p}</span>
           <button
@@ -95,6 +118,7 @@ export function ChipInput({ placeholder, onCommit, className }: ChipInputProps) 
         </span>
       ))}
       <input
+        id={id}
         ref={ref}
         value={text}
         onChange={(e) => ingest(e.target.value)}
@@ -115,7 +139,15 @@ export function ChipInput({ placeholder, onCommit, className }: ChipInputProps) 
           if (pending.length > 0 || text.trim()) commitAll()
         }}
         placeholder={pending.length === 0 ? placeholder : ""}
-        className="flex-1 min-w-[80px] bg-transparent outline-none text-base font-normal text-foreground placeholder:text-muted-foreground px-2 py-1"
+        // A fixed child height and NOT vertical padding: the 19px line box is
+        // 28.5px on its own, so any `py-*` here stacked on top of it and pushed
+        // the whole control to 46.5px — 6.5px taller than every other field on
+        // the page, with `min-h-10` powerless to stop it.
+        className={cn(
+          "flex-1 min-w-[80px] bg-transparent outline-none font-normal text-foreground placeholder:text-muted-foreground px-2 py-0",
+          size === "sm" ? "text-2xsmall" : "text-small",
+          CONTROL_STACK[size].child,
+        )}
       />
     </div>
   )

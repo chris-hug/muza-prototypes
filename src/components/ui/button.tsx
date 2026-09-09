@@ -43,7 +43,9 @@ const buttonVariants = cva(
       size: {
         // Figma node 37:931 — exact px values:
         //   sm:      h-8  (32px) · px-3  · text-2xsmall · font-normal
-        //   default: h-10 (40px) · px-[18px] · text-small · font-medium  ← matches input/select/datepicker
+        //   default: h-10 (40px) · px-[18px] · text-small · font-medium  ← the shared
+        //            form-control ladder: Input, SelectTrigger, Textarea, ChipInput,
+        //            DatePicker and Combobox all sit at h-10 / text-small here.
         //   lg:      h-12 (48px) · px-10 · text-small · font-medium
         //   icon:    size-10 (40px)
         //   icon-sm: size-8  (32px)

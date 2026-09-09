@@ -2,6 +2,9 @@
 title: Select
 source: src/components/ui/select.tsx
 related: [input, combobox, datepicker, single-select, multi-select, chips]
+usage:
+  - Orders › Order detail (carrier) | /?page=Orders
+  - Upload music | /?page=Music
 ---
 
 `Select` is the **form-field** dropdown: one value out of a short, fixed list,
@@ -9,6 +12,8 @@ sitting inside a form beside `Input`, `Combobox` and `DatePicker`. It wears the
 same 40px pill as those controls so a form row reads as one family. It is not
 the toolbar picker — sort and filter triggers above a list are `SingleSelect`
 and `MultiSelect`, which are menus with a `Button`-style trigger, not fields.
+Below the presentation gate it goes full width and opens as a **bottom sheet**,
+like every other menu surface in the app.
 
 ## Anatomy
 
@@ -32,7 +37,7 @@ Seven parts, all thin wrappers over `@base-ui/react/select`:
 | `SelectTrigger` | the pill; appends the chevron after `children` | the form-control recipe, `w-fit`, `pr-2 pl-4` |
 | `SelectValue` | the picked item's text, or `placeholder` | `flex flex-1 text-left` |
 | `SelectContent` | portal → positioner → popup, with the scroll arrows and `List` inside | popup surface, see below |
-| `SelectItem` | a row with the ✓ indicator on the right | `rounded-lg py-1.5 pr-8 pl-3 text-base font-normal` |
+| `SelectItem` | a row with the ✓ indicator on the right | `rounded-lg py-1.5 pr-8 pl-3 text-small font-normal` |
 | `SelectGroup` / `SelectLabel` | a titled cluster of items | `scroll-my-1 p-1` / `px-1.5 py-1 text-xsmall text-muted-foreground` |
 | `SelectSeparator` | a hairline | `-mx-1 my-1 h-px bg-border` |
 
@@ -60,7 +65,7 @@ only what is Select's own.
 |---|---|---|
 | Width | `w-fit` | a field sizes to its longest option, not to its column — pass `className="w-full"` to fill a grid cell (`cart-drawer.tsx:294`, `shipping-zone-editor.tsx:167`) |
 | Horizontal padding | `pl-4 pr-2` | text starts on the same 16px line as `Input`'s `px-4`; the chevron is flush at 8px because it is a glyph, not text |
-| Type size | `text-small` (19px) | shared with the filter trigger; `Input`, `Combobox` and `DatePicker` are `text-base` (21px) |
+| Type size | `text-small` (19px) | shared with every form control — see DESIGN_SYSTEM.md › Form controls › One size ladder |
 | Value / icon gap | `gap-1.5` (6px) | — |
 | Placeholder | `data-placeholder:text-muted-foreground` | base-ui exposes a `placeholder` state on the trigger while nothing is picked (`SelectTrigger.js:227`, `placeholder: !hasSelectedValue`), so the placeholder greys out without a class on `SelectValue` |
 | Disabled | `disabled:cursor-not-allowed disabled:opacity-50` | no `pointer-events-none` — see Open questions |
@@ -97,22 +102,92 @@ leading icon in a `SelectItem` that is echoed into the trigger arrives at 16px.
 
 ### Width and the popup
 
-The popup is `w-(--anchor-width)`: exactly as wide as the trigger, with a
-`min-w-36` (144px) floor. A `w-fit` trigger is therefore only as wide as its
-*current* text, and a popup pinned to it can clip longer options. Two call
-sites have escaped this in two different ways:
+The popup is **at least** the trigger's width and grows to its content:
 
-```tsx
-// shipping-zone-editor.tsx:175 — size to content, never narrower than the trigger
-<SelectContent className="w-auto min-w-(--anchor-width)">
-
-// upload-music-dialog.tsx:1398 — override the variable itself
-<SelectContent className="min-w-64 [--anchor-width:max-content]">
+```
+min-w-[max(9rem,var(--anchor-width))]   floor — never narrower than the trigger
+max-w-[min(28rem,var(--available-width))]   cap — never out to the screen edge
 ```
 
-Both work; neither is the documented one yet (see Open questions). Until it
-is, prefer the first: it keeps the popup's left edge on the trigger's and only
-grows to the right.
+It used to be `w-(--anchor-width)` — *exactly* the trigger — and the trigger
+is `w-fit`, so it is only as wide as whatever happens to be selected. Pick a
+short album and the list shrank with it, clipping "A Love Supreme" and "Maiden
+Voyage" mid-word: item text is `whitespace-nowrap` inside an `overflow-x-hidden`
+popup, so there is nothing to wrap and nothing to scroll to.
+
+Two call sites had escaped this in two different ways —
+`shipping-zone-editor.tsx` with `w-auto min-w-(--anchor-width)`, and
+`upload-music-dialog.tsx` with `min-w-64 [--anchor-width:max-content]`. Both
+are now redundant; neither is harmful, and both can go the next time those
+files are touched.
+
+## Sizing
+
+### The size ladder
+
+`size` is `"sm"` (32px) · `"default"` (40px) · `"lg"` (48px) — the shared ladder
+from `src/lib/control-size.ts`, the same one `Button` and every other form
+control takes, so a large button gets a large field beside it. Type stops
+climbing at `default`: 19px at both `default` and `lg`, 16px at `sm`. See
+DESIGN_SYSTEM.md › Form controls › One size ladder, and the *"One size ladder —
+every control, every step"* example on the design-system page.
+
+**Below the presentation gate the trigger is full width**, and the popup is a
+bottom sheet. Above it, the trigger is `w-fit` — it sizes to its current text,
+not to its column — and the popup is anchored to it.
+
+`w-fit` is a desktop habit. On a 296px column it leaves a stubby pill in a form
+whose every other field runs edge to edge, and a tap target narrower than it
+needs to be. The `w-full` sits after the base class string so tailwind-merge
+drops `w-fit`, and before `className` so a call site can still override it.
+
+The popup caps its height at what is left to the viewport edge
+(`max-h-(--available-height)`), so it never asks for a cap at the call site the
+way `Combobox` does; below the gate that cap becomes `75svh`.
+
+### The sheet is a restyle, not a swap
+
+`DropdownMenu` swaps its root for a `Sheet` on mobile. Select does **not**, and
+the difference is deliberate: a menu is a list of commands, so swapping it
+costs nothing, but a Select owns a **value** — `Select.Value` renders the
+chosen item's text, typeahead jumps to it, `ItemIndicator` ticks it. Re-housing
+that in a Sheet means re-implementing it, and the copy drifts.
+
+So the primitive stays and only its geometry moves. The one obstacle is that
+Base UI positions the popup with an inline `style`; an `!important` declaration
+in a stylesheet beats a non-important inline style, which is what the arbitrary
+utilities in `sheetPositionerClass` are for. Note the syntax: **Tailwind v4
+marks a utility important with a trailing `!`** (`[inset:auto_0_0_0]!`).
+`!important` inside the brackets silently produces no rule at all — the popup
+stays anchored and nothing warns you.
+
+The scrim is `Select.Backdrop`, the primitive's own, so it keeps the open/close
+state and click-to-dismiss. Rows go to a 44px target below the gate, matching
+the bottom-sheet menu rows.
+
+## Labels: why the trigger showed `a01`
+
+Base UI's `Select.Value` renders the raw **value** unless the root is given an
+`items` map of value → label. None of the eleven Selects in this repo passed
+one, so every trigger printed its own id back at you the moment something was
+picked, and a `defaultValue` showed an id from the start.
+
+`Select` now builds that map itself, by walking the elements handed to it and
+reading each `SelectItem`'s `value` and children (recursing, so items inside a
+`SelectGroup` are found). Nothing is required at the call site.
+
+Two things that do **not** work, both tried:
+
+- **A mount-time registry.** Items are not rendered while the Select is closed
+  — `keepMounted` on the Portal does not change that — so nothing has ever
+  registered when the trigger first paints. The element tree is the right
+  source: JSX children exist as objects whether or not they render.
+- **`items` alone.** It resolves the value the Select *starts* with, but after
+  a selection the primitive reads the label off the selected item, and that
+  item unmounts with the popup — so the trigger fell back to the id the moment
+  the list closed. `SelectValue` therefore resolves the label itself, from the
+  same map. `items` is still passed, because it is what makes typeahead match
+  on "A Love Supreme" rather than on "a03".
 
 ## The popup
 
@@ -169,12 +244,16 @@ overflows in that direction, and never for a touch-opened list
 </SelectContent>
 ```
 
-An item is `flex items-center gap-1.5 rounded-lg py-1.5 pr-8 pl-3 text-base
+An item is `flex items-center gap-1.5 rounded-lg py-1.5 pr-8 pl-3 text-small
 font-normal`. The asymmetry is the ✓: `ItemIndicator` is `absolute right-2`
 in a `size-4` box, so `pr-8` (32px) reserves 8px inset + 16px glyph + 8px gap
 on the right of every row, picked or not, and labels stay on one left edge
-when the selection moves. The row is 21px `text-base` while the trigger is
-19px `text-small` — the list is where you read, the pill is where you glance.
+when the selection moves.
+
+The row used to be 21px `text-base` against a 19px trigger, justified as "the
+list is where you read, the pill is where you glance". In practice it meant an
+option **changed size as it was chosen** — the same words, two sizes, a step
+apart. Both are `text-small` now.
 
 `ItemText` is `flex flex-1 shrink-0 items-center gap-2 whitespace-nowrap`, so
 children are laid out as a row: a leading icon (auto-sized to 16px), the label,
@@ -225,16 +304,15 @@ bands); keep an `aria-label` on the trigger then.
   because the ring belongs to the wrapper, not the input.
 - **`SingleSelect`** / **`MultiSelect`** — toolbar pickers over a list or
   grid. Same chevron, but a `Button` or `filterTriggerCls` trigger with the
-  `pb-px` nudge, not the field recipe. `home.tsx:2945` draws the line: those
+  `pb-px` nudge, not the field recipe. [`single-select.md`](single-select.md) draws the line: those
   sit in toolbars, `Select` lives inside forms.
 
 ## Open questions
 
-- `select.tsx:44` header comment claims `rounded-xl, text-base` · source says `rounded-full` and `text-small` on the same line (`select.tsx:45`). The identical stale comment in `input.tsx` was already corrected; this one was not.
+- ~~`select.tsx` header comment claimed `rounded-xl, text-base` while the class beside it said `rounded-full` and `text-small`.~~ Corrected (`select.tsx:137–139`), and the line now records what it used to claim.
 - `disabled:cursor-not-allowed disabled:opacity-50` only (`select.tsx:45`) — `Input` adds `disabled:pointer-events-none` (`input.tsx:53`). Already open in `input.md`; recorded here because Select is one of the controls named there.
 - `data-[size=sm]:rounded-full` and `data-[size=sm]:text-small` (`select.tsx:45`) restate the base `rounded-full` and `text-small` on the same class list — no-ops. Leftovers from a shadcn recipe where `sm` differed, or placeholders for a size that was meant to diverge?
 - `size="sm"` keeps the default `pt-[6px] pb-[10px]` inside a 32px box (`select.tsx:45`); no call site passes `size="sm"` (grep over `src` and `app`), so the compact trigger has never been checked for optical centring against `Button sm` / `QtyStepper sm`, which `qty-stepper.tsx:17` says it aligns with.
-- Popup width escape: `shipping-zone-editor.tsx:175` uses `w-auto min-w-(--anchor-width)`, `upload-music-dialog.tsx:1398` uses `min-w-64 [--anchor-width:max-content]`. Two solutions to one problem — one should become the rule (or a `SelectContent` prop) and the other migrate.
-- Item text is `text-base` 21px (`select.tsx:121`) while the trigger is `text-small` 19px (`select.tsx:45`); `Combobox` items are also `text-base` (`combobox.tsx:149`) but its input is `text-base` too, so only Select changes size between pill and list. Intentional?
-- Label-to-field gap: the design-system section and `shipping-zone-editor` use `gap-1.5` (`home.tsx:2871`), `order-detail-view.tsx:504` uses `gap-2`. Which is the rule?
-- The design-system section (`home.tsx:2869–2908`) has no descriptive paragraph, unlike its `MultiSelect` and `SingleSelect` neighbours, and no `usage` links; the real call sites are `cart-drawer.tsx`, `order-detail-view.tsx`, `report-view.tsx`, `shipping-zone-editor.tsx`, `upload-music-dialog.tsx` and `input-select.tsx`.
+- ~~Item text was `text-base` 21px against a `text-small` trigger.~~ Settled: the whole form-control family is `text-small`, so nothing changes size between list and pill.
+- Label-to-field gap: the design-system call site (`select-basic.tsx`) and `shipping-zone-editor` use `gap-1.5`, `order-detail-view.tsx:504` uses `gap-2`. Which is the rule?
+- The real call sites are `cart-drawer.tsx`, `order-detail-view.tsx`, `report-view.tsx`, `shipping-zone-editor.tsx`, `upload-music-dialog.tsx` and `input-select.tsx`; the section's `usage` links point at the ones reachable from the prototype's pages.

@@ -34,7 +34,10 @@ export interface InputSelectOption {
   label: string
 }
 
-interface InputSelectProps extends React.ComponentProps<"input"> {
+/* Same omission as `Input`: `size` here is the design-system ladder, not the
+   native character-width attribute. */
+interface InputSelectProps extends Omit<React.ComponentProps<"input">, "size"> {
+  size?: "sm" | "default" | "lg"
   selectValue: string
   onSelectChange: (value: string) => void
   options: InputSelectOption[]
