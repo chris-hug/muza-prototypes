@@ -39,6 +39,7 @@ import { Markdown, MarkdownInline } from "@/components/ds/markdown"
 import { Example, WINDOW_WIDTHS } from "@/components/ds/example"
 import { FOOTER_NAV_BELOW } from "@/lib/use-media-query"
 import { ResponsiveLab } from "@/components/ds/responsive-lab"
+import { TokenEditor } from "@/components/ds/token-editor"
 import DialogFormExample from "@/ds-examples/dialog-form"
 import dialogFormSrc from "@/ds-examples/dialog-form.tsx?raw"
 import CardRailRowExample from "@/ds-examples/card-rail-row"
@@ -597,128 +598,6 @@ function SubLabel({ children, className }: { children: React.ReactNode; classNam
   )
 }
 
-// ─── Semantic token table ─────────────────────────────────────────────────────
-//
-// Renders every semantic CSS variable with its LIVE light + dark swatches.
-// Swatches use `var(--TOKEN)` inside scoped `<div class="light">` and
-// `<div class="dark">` wrappers, so they always reflect what app.css
-// currently defines. Hex values are derived from `getComputedStyle()` after
-// mount, so changes to the underlying tokens automatically flow through.
-//
-// The only thing kept hardcoded is the primitive-name label per row
-// (--muza-neutrals-X etc.) — that's documentation of which primitive each
-// semantic token currently maps to. Keep in sync with the var(...)
-// assignments in app.css's :root / .dark blocks.
-
-interface SemanticToken {
-  token:  string  // CSS variable name, e.g. "--background"
-  /** Display alias when the token is rendered (used when the token covers
-   *  multiple aliases like `--card / --popover`). Falls back to `token`. */
-  alias?: string
-  lPrim:  string  // light-mode primitive label
-  dPrim:  string  // dark-mode primitive label
-}
-
-const SEMANTIC_TOKENS: SemanticToken[] = [
-  { token: "--background",         lPrim: "--muza-white",            dPrim: "--muza-black"            },
-  { token: "--foreground",         lPrim: "--muza-neutrals-950",     dPrim: "--muza-neutrals-50"      },
-  { token: "--card",   alias: "--card / --popover",
-                                   lPrim: "--muza-white",            dPrim: "--muza-neutrals-950"     },
-  { token: "--primary",            lPrim: "--muza-blue-200",         dPrim: "--muza-blue-200"         },
-  { token: "--primary-foreground", lPrim: "--muza-neutrals-50",      dPrim: "--muza-neutrals-50"      },
-  { token: "--primary-text",       lPrim: "--muza-blue-200",         dPrim: "--muza-blue-100"         },
-  { token: "--secondary",          lPrim: "--muza-neutrals-200",     dPrim: "--muza-neutrals-800"     },
-  { token: "--secondary-hover",    lPrim: "--muza-neutrals-300",     dPrim: "--muza-neutrals-700"     },
-  { token: "--muted",              lPrim: "--muza-neutrals-50",      dPrim: "--muza-neutrals-900"     },
-  { token: "--muted-foreground",   lPrim: "--muza-neutrals-a75-700", dPrim: "--muza-neutrals-a50-50"  },
-  { token: "--accent",             lPrim: "--muza-neutrals-100",     dPrim: "--muza-neutrals-800"     },
-  { token: "--accent-foreground",  lPrim: "--muza-neutrals-900",     dPrim: "--muza-neutrals-50"      },
-  { token: "--destructive",        lPrim: "--tw-red-600",            dPrim: "--tw-red-900"            },
-  { token: "--border",             lPrim: "--muza-neutrals-300",     dPrim: "--muza-neutrals-700"     },
-  { token: "--input",              lPrim: "--muza-neutrals-200",     dPrim: "--muza-neutrals-800"     },
-  { token: "--ring",               lPrim: "--muza-neutrals-900",     dPrim: "--muza-neutrals-300"     },
-]
-
-/** rgb(R, G, B[, A]) → "#RRGGBB" (alpha dropped) or pass-through for
- *  values the browser doesn't normalise (e.g. "transparent"). */
-function rgbToHex(rgb: string): string {
-  const m = rgb.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+))?\)/)
-  if (!m) return rgb
-  const [, r, g, b, a] = m
-  const hex = "#" + [r, g, b].map(n => Number(n).toString(16).padStart(2, "0").toUpperCase()).join("")
-  return a && Number(a) < 1
-    ? `${hex} · ${Math.round(Number(a) * 100)}%`
-    : hex
-}
-
-function TokenSwatch({ token, mode, primLabel }: {
-  token:     string
-  mode:      "light" | "dark"
-  primLabel: string
-}) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [hex, setHex] = useState("")
-
-  useEffect(() => {
-    if (!ref.current) return
-    const compute = () => {
-      const bg = getComputedStyle(ref.current!).backgroundColor
-      setHex(rgbToHex(bg))
-    }
-    compute()
-    // Re-read on theme toggle (so any computed values that depend on the
-    // page mode update — though our .light/.dark scopes pin them).
-    const observer = new MutationObserver(compute)
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] })
-    return () => observer.disconnect()
-  }, [token])
-
-  // Only the SWATCH lives in the scoped .light / .dark wrapper — the
-  // text labels stay in the page's natural theme scope so they remain
-  // readable when the user's currently in the opposite mode.
-  return (
-    <div className="flex gap-2">
-      <div className={cn(mode, "shrink-0 self-center")}>
-        <div
-          ref={ref}
-          className="size-10 rounded-xl border border-border"
-          style={{ background: `var(${token})` }}
-        />
-      </div>
-      <div>
-        <span className="block text-foreground">{primLabel}</span>
-        <span className="text-muted-foreground tabular-nums">{hex || "…"}</span>
-      </div>
-    </div>
-  )
-}
-
-function SemanticTokenTable() {
-  return (
-    <table className="w-full text-xsmall border-collapse">
-      <thead>
-        <tr className="border-b border-border text-left">
-          <th className="pb-2 pr-8 font-normal text-foreground">Token</th>
-          <th className="pb-2 pr-8 font-normal text-foreground">Light</th>
-          <th className="pb-2 font-normal text-foreground">Dark</th>
-        </tr>
-      </thead>
-      <tbody>
-        {SEMANTIC_TOKENS.map(r => (
-          <tr key={r.token} className="border-b border-border">
-            <td className="py-2 pr-8 text-foreground whitespace-nowrap">{r.alias ?? r.token}</td>
-            <td className="py-2 pr-8">
-              <TokenSwatch token={r.token} mode="light" primLabel={r.lPrim} />
-            </td>
-            <td className="py-2">
-              <TokenSwatch token={r.token} mode="dark" primLabel={r.dPrim} />
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  )
-}
 
 // ─── Home view ────────────────────────────────────────────────────────────────
 // The hero logo tracks the viewport in CSS, not in React — a resize listener
@@ -1039,26 +918,6 @@ function StudioView({ page, onOpenUpload }: { page: string; onOpenUpload?: () =>
 // Borderless list table — pattern used by Artist › Discography list
 // view. Demo wires a small set of releases with hover + active-row
 // states + sortable headers + kebab menu.
-// ─── Hex → OKLch converter ────────────────────────────────────────────────────
-function hexToOklch(hex: string): string {
-  const r = parseInt(hex.slice(1, 3), 16) / 255
-  const g = parseInt(hex.slice(3, 5), 16) / 255
-  const b = parseInt(hex.slice(5, 7), 16) / 255
-  const lin = (c: number) => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
-  const lr = lin(r), lg = lin(g), lb = lin(b)
-  const lms  = 0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb
-  const mms  = 0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb
-  const sms  = 0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb
-  const l_ = Math.cbrt(lms), m_ = Math.cbrt(mms), s_ = Math.cbrt(sms)
-  const L  =  0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_
-  const a  =  1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_
-  const bb =  0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_
-  const C  = Math.sqrt(a * a + bb * bb)
-  let   H  = Math.atan2(bb, a) * 180 / Math.PI
-  if (H < 0) H += 360
-  return `${(L * 100).toFixed(2)}% ${C.toFixed(4)} ${H.toFixed(1)}`
-}
-
 // ─── Kitchen sink (Explore view) ──────────────────────────────────────────────
 export function ExploreView({ showHero = true, showQuickNav = true }: { showHero?: boolean; showQuickNav?: boolean } = {}) {
   const [playing, setPlaying] = useState(false)
@@ -1155,81 +1014,13 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
 
       {/* ══ COLORS ══ */}
       <Section id="colors" title="Colors">
-        {/* oklch legend */}
-        <p className="text-xsmall text-muted-foreground mb-6 leading-relaxed">
-          Colors are defined in <span className="text-foreground">oklch</span> — a perceptually uniform space where equal numeric steps look equal to the human eye.
-          Each swatch shows three values: <span className="text-foreground">L</span> lightness (0–100%),{" "}
-          <span className="text-foreground">C</span> chroma/saturation (0 = grey, ~0.37 = max), and{" "}
-          <span className="text-foreground">H</span> hue angle (0–360°).
-        </p>
-        {/* Primitive scales */}
-        <div className="flex flex-col gap-6 mb-10">
-          {[
-            {
-              label: "muza-white / muza-black",
-              stops: [
-                { name: "white", hex: "#FEFFFB" },
-                { name: "black", hex: "#0D0D04" },
-              ],
-            },
-            {
-              label: "muza-neutrals",
-              stops: [
-                { name: "50",  hex: "#F9FAF0" },
-                { name: "100", hex: "#F1F3E6" },
-                { name: "200", hex: "#ECEEDF" },
-                { name: "300", hex: "#DADDCD" },
-                { name: "400", hex: "#B5B7A7" },
-                { name: "500", hex: "#86887C" },
-                { name: "600", hex: "#69695D" },
-                { name: "700", hex: "#3C3D33" },
-                { name: "800", hex: "#2E2C24" },
-                { name: "900", hex: "#1D1C18" },
-                { name: "950", hex: "#0D0D04" },
-              ],
-            },
-            {
-              label: "muza-blue",
-              stops: [
-                { name: "50",  hex: "#3E79FF" },
-                { name: "100", hex: "#3F66FF" },
-                { name: "200", hex: "#1E34D8" },
-                { name: "300", hex: "#1121C2" },
-                { name: "400", hex: "#030AB1" },
-                { name: "500", hex: "#000DA2" },
-                { name: "600", hex: "#001183" },
-                { name: "700", hex: "#000E69" },
-                { name: "800", hex: "#000A4E" },
-                { name: "900", hex: "#000734" },
-                { name: "950", hex: "#000318" },
-              ],
-            },
-          ].map((scale) => (
-            <div key={scale.label}>
-              <p className="text-xsmall font-normal text-muted-foreground mb-2">{scale.label}</p>
-              <div className="flex gap-2">
-                {scale.stops.map((s) => (
-                  <div key={s.name} className="flex-1 flex flex-col items-start gap-1">
-                    <div className="w-full h-14 rounded-xl border border-border" style={{ background: s.hex }} />
-                    <span className="text-2xsmall text-foreground leading-tight">{s.name}</span>
-                    {hexToOklch(s.hex).split(" ").map((v, i) => (
-                      <span key={i} className="text-2xsmall text-muted-foreground leading-tight">
-                        <span className="text-muted-foreground/40">{["L","C","H"][i]} </span>{v}
-                      </span>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Semantic token table — swatches + hex values are read LIVE from
-             the stylesheet (via .light / .dark scope wrappers + computed
-             style), so changing a token in app.css automatically updates
-             this table. Only the primitive-name labels are hand-mapped;
-             keep them in sync with the var(...) assignments in app.css. */}
-        <SemanticTokenTable />
+        {/* NO PALETTE HERE. Every value comes from `app.css` via
+            `src/lib/tokens.ts`. This section used to carry three hand-kept
+            copies of it: the primitive hexes as JSX arrays, and
+            `SEMANTIC_TOKENS`, which mapped each token to its primitive by
+            hand, once per mode. The chain is already written in the CSS
+            (`--primary: var(--muza-blue-500)`), so it is read, not restated. */}
+        <TokenEditor />
       </Section>
 
       {/* ══ TYPOGRAPHY ══ */}

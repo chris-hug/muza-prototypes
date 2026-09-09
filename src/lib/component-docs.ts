@@ -116,7 +116,12 @@ function parse(path: string, raw: string): ComponentDoc {
         ? { label: entry.trim() }
         : { label: entry.slice(0, at).trim(), href: entry.slice(at + 1).trim() }
     }),
-    summary: blocks.summary ?? [],
+    /* A block-list line may be quoted — YAML wants it when the value starts
+       with a character it would otherwise read as syntax, and `**bold**` is
+       one. We do not parse YAML, so the quotes would print. Strip them. */
+    summary: (blocks.summary ?? []).map(line =>
+      line.replace(/^(['"])([\s\S]*)\1$/, "$2"),
+    ),
     body,
     // `path` from the glob is absolute-from-root; store it repo-relative so
     // it can be pasted into a GitHub URL or opened in an editor as-is.
