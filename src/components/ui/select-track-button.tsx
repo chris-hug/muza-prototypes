@@ -68,13 +68,15 @@ export function SelectTrackButton({ selected, className }: {
         className,
       )}
     >
-      {/* The pop. The morph alone gave the CHECK a flat ease-out while the
-          return to a plus had the spring — so undoing felt livelier than
-          confirming, which is backwards. `muzaMarkPop` overshoots once and
-          settles, and it is keyed on `selected` so it replays on every pick
-          rather than only on mount. */}
+      {/* The pop, on top of the morph — NOT instead of it.
+       *
+       * The first attempt keyed this span on `selected`, which remounts it on
+       * every toggle. That threw away the bars' transition: a transform only
+       * animates when the SAME element changes state, so the plus stopped
+       * springing back and both directions just snapped. No key. The class is
+       * added and removed with `selected`, and adding it is enough to start
+       * the animation again on the next pick. */}
       <span
-        key={selected ? "on" : "off"}
         className={cn("relative block", selected && "animate-[muzaMarkPop_320ms_ease-out]")}
         style={{ width: LEN, height: LEN }}
       >
