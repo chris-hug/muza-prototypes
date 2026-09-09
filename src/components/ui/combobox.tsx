@@ -6,6 +6,8 @@ import { CheckIcon, ChevronDownIcon, SearchIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { CONTROL_SIZE, CONTROL_PAD_Y, type ControlSize } from "@/lib/control-size"
+import { useIsMobile } from "@/lib/use-media-query"
+import { sheetPositionerClass, sheetPopupClass } from "@/components/ui/dialog"
 
 // ─── Combobox ─────────────────────────────────────────────────────────────────
 //
@@ -95,11 +97,21 @@ function ComboboxContent({
   sideOffset = 4,
   ...props
 }: ComboboxContentProps) {
+  const mobile = useIsMobile()
   return (
     <ComboboxPrimitive.Portal keepMounted>
+      {/* Below the presentation gate the list is a BOTTOM SHEET, like Select
+          and DatePicker. A `w-(--anchor-width)` popup is a desktop shape: it
+          inherits the field's width and opens next to it, which on a phone
+          means a narrow list halfway up the screen, away from the thumb, with
+          the keyboard about to cover whatever is left. Same two class strings
+          the other two import from `dialog.tsx`. */}
+      {mobile && (
+        <ComboboxPrimitive.Backdrop className="fixed inset-0 z-40 bg-foreground/20 data-open:animate-in data-open:fade-in-0" />
+      )}
       <ComboboxPrimitive.Positioner
-        className="isolate z-50"
-        sideOffset={sideOffset}
+        className={cn("isolate z-50", mobile && sheetPositionerClass)}
+        sideOffset={mobile ? 0 : sideOffset}
       >
         <ComboboxPrimitive.Popup
           data-slot="combobox-content"
@@ -111,6 +123,7 @@ function ComboboxContent({
             "duration-100",
             "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
             "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",
+            mobile && cn(sheetPopupClass, "data-open:zoom-in-100 data-open:slide-in-from-bottom-4"),
             className
           )}
           {...props}

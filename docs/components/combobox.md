@@ -108,6 +108,13 @@ flex item's `min-width` is `auto` and an `<input>`'s intrinsic width is about
 ~230px used to push its own input and chevron out past the pill's right edge —
 found by putting three of them in a 170px column in the size-ladder example.
 
+Below the presentation gate the list is a **bottom sheet**, like `Select` and
+`DatePicker`. A `w-(--anchor-width)` popup is a desktop shape: it inherits the
+field's width and opens beside it, which on a phone means a narrow list
+halfway up the screen, away from the thumb, with the keyboard about to cover
+whatever is left. Same two class strings the other two import from
+`dialog.tsx` — one definition, three surfaces.
+
 ## Behaviour
 
 - Typing filters (with `items`); ↑ / ↓ move the highlight while DOM focus
