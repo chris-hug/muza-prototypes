@@ -849,7 +849,6 @@ function StepRelease({
   musicians, onAddMusician, onRemoveMusician,
   additionalRoles, onAdditionalRolesChange,
   onSelectRelease, onCreateNew, onChangeRelease,
-  onContinue,
 }: {
   entityId: string; onEntityChange: (id: string) => void
   searchQuery: string; onSearchChange: (q: string) => void
@@ -862,7 +861,6 @@ function StepRelease({
   onRemoveMusician: (id: string) => void
   additionalRoles: AdditionalRoles
   onAdditionalRolesChange: (r: AdditionalRoles) => void
-  onContinue: () => void
 }) {
   // Visual mode within step 1
   type StepMode = "input" | "results" | "details" | "create"
@@ -1111,9 +1109,6 @@ function StepRelease({
         additionalRoles={additionalRoles}
         onChangeRelease={() => { onChangeRelease(); setStepMode("input") }}
       />
-      <div className="flex justify-end">
-        <Button onClick={onContinue}>Next</Button>
-      </div>
     </div>
     </div>
   )
@@ -1150,9 +1145,6 @@ function StepRelease({
         musicians={musicians} onAddMusician={onAddMusician} onRemoveMusician={onRemoveMusician}
         additionalRoles={additionalRoles} onAdditionalRolesChange={onAdditionalRolesChange}
       />
-      <div className="flex justify-end">
-        <Button onClick={onContinue}>Next</Button>
-      </div>
     </div>
     </div>
   )
@@ -1166,14 +1158,12 @@ function StepMonetisation({
   downloadPrice, onDownloadPriceChange,
   nameYourPrice, onNameYourPriceChange,
   nameYourPriceDownload, onNameYourPriceDownloadChange,
-  onContinue,
 }: {
   monetization: MonetizationType; onMonetizationChange: (t: MonetizationType) => void
   listenPrice: string; onListenPriceChange: (v: string) => void
   downloadPrice: string; onDownloadPriceChange: (v: string) => void
   nameYourPrice: boolean; onNameYourPriceChange: (v: boolean) => void
   nameYourPriceDownload: boolean; onNameYourPriceDownloadChange: (v: boolean) => void
-  onContinue: () => void
 }) {
   const [currency, setCurrency] = useState("USD")
   return (
@@ -1254,9 +1244,6 @@ function StepMonetisation({
         </RadioCard>
       </RadioCardGroup>
 
-      <div className="flex justify-end">
-        <Button size="default" onClick={onContinue}>Next</Button>
-      </div>
     </div>
     </div>
   )
@@ -1269,11 +1256,10 @@ const TM_MIN: Record<TCol, number> = { track: 100, file: 140, composer: 100, lyr
 const TM_INIT: Record<TCol, number> = { track: 180, file: 260, composer: 140, lyricist: 140 }
 
 function StepTrackMatching({
-  release, isNew, newForm, tracks, onTracksChange, files, onContinue,
+  release, isNew, newForm, tracks, onTracksChange, files,
 }: {
   release: Release | null; isNew: boolean; newForm: ReleaseForm
   tracks: TrackRow[]; onTracksChange: (t: TrackRow[]) => void; files: UploadFile[]
-  onContinue: () => void
 }) {
   const matched = tracks.filter(t => t.matchScore >= 60).length
   const [colW, setColW] = useState<Record<TCol, number>>(TM_INIT)
@@ -1456,9 +1442,6 @@ function StepTrackMatching({
         </table>
       </div>
 
-      <div className="flex justify-end">
-        <Button size="default" onClick={onContinue}>Next</Button>
-      </div>
 
     </div>
   )
@@ -1467,10 +1450,9 @@ function StepTrackMatching({
 // ─── StepConfirmation ─────────────────────────────────────────────────────────
 
 function StepConfirmation({
-  release, isNew, newForm, tracks, onPublish,
+  release, isNew, newForm, tracks,
 }: {
   release: Release | null; isNew: boolean; newForm: ReleaseForm; tracks: TrackRow[]
-  onPublish: () => void
 }) {
   const [hoveredTrack, setHoveredTrack] = useState<string | null>(null)
   const title   = isNew ? (newForm.title || "Untitled") : (release?.title ?? "")
@@ -1572,10 +1554,6 @@ function StepConfirmation({
         ))}
       </div>
 
-      {/* Publish button */}
-      <div className="flex justify-end">
-        <Button size="default" onClick={onPublish}>Publish</Button>
-      </div>
     </div>
   )
 }
@@ -1837,13 +1815,12 @@ export function UploadMusicDialog({
                 <StepTrackMatching
                   release={selectedRelease} isNew={isCreatingNew} newForm={newForm}
                   tracks={tracks} onTracksChange={setTracks} files={files}
-                  onContinue={handleNext}
                 />
               )}
               {step === 4 && (
                 <StepConfirmation
                   release={selectedRelease} isNew={isCreatingNew} newForm={newForm}
-                  tracks={tracks} onPublish={handleNext}
+                  tracks={tracks}
                 />
               )}
           </div>
@@ -1861,7 +1838,6 @@ export function UploadMusicDialog({
                   onChangeRelease={handleChangeRelease} onNewFormChange={setNewForm}
                   musicians={musicians} onAddMusician={addMusician} onRemoveMusician={removeMusician}
                   additionalRoles={additionalRoles} onAdditionalRolesChange={setAdditionalRoles}
-                  onContinue={handleNext}
                 />
               )}
               {step === 2 && (
@@ -1871,7 +1847,6 @@ export function UploadMusicDialog({
                   downloadPrice={downloadPrice} onDownloadPriceChange={setDownloadPrice}
                   nameYourPrice={nameYourPrice} onNameYourPriceChange={setNameYourPrice}
                   nameYourPriceDownload={nameYourPriceDownload} onNameYourPriceDownloadChange={setNameYourPriceDownload}
-                  onContinue={handleNext}
                 />
               )}
             </div>

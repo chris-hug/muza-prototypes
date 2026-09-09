@@ -74,7 +74,7 @@ after the form, not before it.
 
 | Prop | Type | Notes |
 |---|---|---|
-| `steps` | `readonly string[]` | Labels in order. One or two words — they sit side by side, so a long one costs every other step its width. |
+| `steps` | `readonly (string \| { label, description? })[]` | In order. One or two words — every step gets the same `1fr`, so a long label truncates rather than stealing the row. The object form adds a line of detail under the label, as [Ant Design](https://ant.design/components/steps/) and MUI both offer. |
 | `current` | `number` | 1-based. |
 | `onStepSelect` | `(step: number) => void` | Makes **visited** steps clickable. Omit for a read-only stepper. |
 | `maxWidth` | `number` (600) | Where the track stops stretching. Centred in whatever row it is given. |
@@ -84,43 +84,112 @@ flow validates as it goes, so jumping ahead would skip the check that gates
 the step. Backward navigation is never restricted — restricting it is a
 [known driver of abandonment](https://uxpatterns.dev/patterns/advanced/wizard).
 
+## The connector belongs to the step, not to the gap between labels
+
+This is the part the first build got wrong, and it is worth stating plainly
+because the failure looked cosmetic and was structural.
+
+That build made each step `flex-1` and put a fixed 32px rule **next to the
+label column, in the flow**:
+
+```tsx
+<li className="flex flex-1 items-center">
+  <div className="flex flex-1 flex-col items-center">…circle + label…</div>
+  {notLast && <span className="mt-3 h-px w-8" />}   ← a sibling of the column
+</li>
+```
+
+Two things go wrong, and they compound. The rule lands between the two
+**labels** rather than between the two **circles**. And the last step, having
+no rule, hands its label column 32px more room than every other one — so equal
+steps end up with unequal columns, the circles drift off centre, and the rules
+read as scattered stubs at arbitrary points.
+
+Both [MUI](https://mui.com/material-ui/api/step-connector/) and
+[Chakra](https://chakra-ui.com/docs/components/steps) anchor the connector to
+the indicator instead — MUI as a `::after` pseudo-element of the Step, Chakra
+as a `StepSeparator` living inside it. Same idea here: the rule is **absolute
+inside its own step**, spanning from the previous circle's centre to this
+one's, pinned to the circle's centre line.
+
+```tsx
+<span aria-hidden className="absolute -left-1/2 right-1/2 top-4 mx-7 h-px -translate-y-1/2" />
+```
+
+- `-left-1/2` is one step-width back — the previous circle's centre, because
+  every step is exactly `1fr`.
+- `right-1/2` is this step's centre.
+- `mx-7` (28px) insets both ends: 16px of circle radius plus a 12px gap.
+- `top-4` is half of `size-8`, so the rule sits on the circles' centre line
+  whatever the label below does.
+
+Being out of flow is what makes every column exactly `1fr` — and that is what
+lets labels `truncate` instead of forcing the row wider.
+
+Measured in the open wizard: four columns of 150px, circle centres exactly one
+column apart, and every rule starting 28px after one centre and ending 28px
+before the next — 94px of line between 32px circles.
+
 ## Anatomy
 
 | Part | Value |
 |---|---|
-| Circle | `size-6` (24px), `rounded-full`, `text-xsmall` |
-| Circle — done / active | `bg-foreground text-background`; done shows `Check` at `size-3` |
+| Step | `relative flex min-w-0 flex-1 flex-col items-center`, `data-state="done \| active \| ahead"` |
+| Circle | `size-8` (32px), `rounded-full`, `text-xsmall` |
+| Circle — done / active | `bg-foreground text-background`; done shows `Check` at `size-4` |
 | Circle — ahead | `bg-secondary text-muted-foreground` |
-| Label | `text-small font-normal leading-tight whitespace-nowrap` |
-| Label — active | `text-foreground`; everything else `text-muted-foreground` |
-| Connector | `h-px w-8 mx-2 mt-3`, `bg-foreground/40` once passed, else `bg-border` |
+| Label | `w-full truncate text-center text-small font-normal leading-tight` |
+| Label — done / active | `text-foreground` |
+| Label — ahead | `text-muted-foreground` |
+| Description | `text-2xsmall text-muted-foreground`, also truncating |
+| Connector | `absolute -left-1/2 right-1/2 top-4 mx-7 h-px`, `bg-foreground/25` once passed, else `bg-border/70` |
 | Track | `mx-auto w-full`, capped at `maxWidth` |
 
-`mt-3` on the connector is half of `size-6` — it puts the rule on the circles'
-centre line. The connector is `aria-hidden`: it is punctuation, and the order
-is already carried by the list.
+A step you have **finished** is not the same as one you have not reached, so
+`done` keeps full label contrast and only `ahead` recedes. The connector is
+`aria-hidden`: it is punctuation, and the order is already carried by the
+list.
+
+The rule stays **1px** and gets its lightness from colour rather than height.
+`h-[0.5px]` is tempting and wrong: at 1x device-pixel ratio some engines round
+it to nothing, so the connector would vanish on exactly the displays that
+need it most.
 
 ## Semantics
 
 It renders an `<ol>` of `<li>`, so the order is in the markup rather than only
-in the paint. The active step carries `aria-current="step"`, and each button is
-labelled `Step 2 of 4: Monetisation` — the number alone is not a label, and the
-visual state announces nothing on its own. Steps that cannot be reached are
-`disabled`, so they are skipped rather than offered and refused.
+in the paint — a screen reader announces "2 of 4" without being told. The
+active step carries `aria-current="step"`.
+
+**A step you cannot go to is not a disabled button — it is text.** The first
+build rendered every step as a `<button>` and set `disabled` on the ones that
+were not reachable, which announces them as controls that refuse you. Now only
+a clickable step is a `<button>`; the rest are `<span>`. The `aria-label`
+(`Step 2 of 4: Monetisation`) goes on the button only, because on a plain span
+it is at best ignored and at worst replaces the visible text.
 
 ## Sizing
 
-Fixed, no steps, and it reads none of the three measures. `maxWidth` caps the
-track and `mx-auto` centres it, so the component takes the full row and uses as
-much of it as the cap allows. Four steps at 600px is comfortable down to an
-860px window (a 652px row) with 26px to spare — measured, with the sidebar
-collapsed to its icon rail.
+No steps, and it reads none of the three measures. `maxWidth` caps the track
+and `mx-auto` centres it, so the component takes the full row and uses as much
+of it as the cap allows — then **shrinks past the cap rather than overflowing**,
+because the columns are `1fr` and the labels truncate.
 
-Below that it has no answer, and does not need one yet: the upload wizard is
-the only user and is **switched off on mobile**. A future stepper in a phone
+Measured, with the wizard open and the sidebar collapsed to its icon rail:
+
+| Window | Track | Column | Labels |
+|---|---|---|---|
+| 1324 | 600 (the cap) | 150 | full |
+| 860 | 600 | 150 | full, 26px clearance |
+| 820 | 564 | 141 | full |
+| 640 | 384 | 96 | truncating, no page overflow |
+
+Truncation is a floor, not a design: below ~800 the labels stop being readable
+even though nothing breaks. It does not need a better answer yet — the upload
+wizard is the only user and is **switched off on mobile**. A stepper in a phone
 context should reduce to "Step 2 of 4" plus a rule, the way
 [PatternFly collapses its sidebar into a dropdown](https://www.patternfly.org/components/wizard/design-guidelines/) —
-not shrink four labels until they collide again.
+not shrink four labels until they are three letters each.
 
 ## Open questions
 

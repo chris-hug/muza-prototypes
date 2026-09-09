@@ -778,6 +778,7 @@ The rule is not tidiness. Progress wants the centre and actions want the right e
 - **Back is never restricted**, and visited steps are clickable — `onStepSelect` on `Stepper`. Going back used to cost one Back press per step.
 - **Forward jumps are not offered.** The flow validates as it goes, so a jump ahead would skip the check that gates the step.
 - **The primary action is bottom-right**, where it is read after the form rather than before it.
+- **The footer is the ONLY way forward.** Every step in Upload music also drew its own Next (and the last one its own Publish) at the end of its content — five buttons doing what the footer now does, in five places, each with its own size and alignment. A step renders content, not navigation.
 
 Carbon, Atlassian and PatternFly all land on this split; PatternFly is the closest reference since it ships an actual wizard component.
 

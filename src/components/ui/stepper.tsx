@@ -5,40 +5,49 @@
  *
  * It is a PROGRESS indicator that happens to be navigable, not a tab bar: the
  * steps run in a fixed order, and a step you have not reached yet is not a
- * place you can go. Visited steps are buttons; the current step and everything
- * ahead of it are plain text.
+ * place you can go. Visited steps are buttons; everything else is text.
  *
- * It owns its row. The upload wizard used to centre its stepper absolutely
- * across a header that also held Cancel / Next on the right, so the stepper
- * was centred on the whole header rather than on the space left over — and
- * the two collided by arithmetic, not by accident:
+ * ── The connector belongs to the STEP, not between the labels ──────────────
  *
- *   stepper right = left + w/2 + 300      (600px wide, centred)
- *   buttons left  = left + w − 244        (220px of buttons + 24px inset)
- *   overlap when    w/2 + 300 > w − 244   →   w < 1088
+ * The first build made each step `flex-1` and put a fixed 32px rule NEXT TO
+ * the label column, in the flow. Two things went wrong, and they compounded:
+ * the rule landed between the two labels rather than between the two circles,
+ * and the last step — having no rule — gave its label column 32px more room
+ * than every other. Equal steps with unequal columns: the circles drifted off
+ * centre and the rules looked scattered at arbitrary heights.
  *
- * At a 1088px header they touch; below it the labels run under the buttons.
- * With a 208px sidebar that is a 1296px window — an ordinary laptop. Giving
- * the stepper its own row is what makes the centring real, and it is why the
- * actions moved to a footer (see DESIGN_SYSTEM.md › Wizard).
+ * Both MUI and Chakra anchor the connector to the indicator instead — MUI as
+ * a `::after` pseudo-element of the Step, Chakra as a `StepSeparator` inside
+ * it. Same idea here: the rule is ABSOLUTE inside its own step, spanning from
+ * the previous circle's centre (`-left-1/2`, one step-width back) to this
+ * one's (`right-1/2`), pinned to the circle's centre line. Out of flow, so
+ * every column is exactly `1fr` and the circles sit where they belong.
+ *
+ * That is also what lets labels truncate instead of forcing the row wider.
  */
 
 import * as React from "react"
 import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+/** A step is a label, or a label with a line of detail under it. */
+export type StepperStep = string | { label: string; description?: string }
+
 export interface StepperProps extends Omit<React.ComponentProps<"ol">, "onSelect"> {
-  /** Step labels, in order. Keep them to one or two words — they sit side by
-   *  side, so a long one costs every other step its width. */
-  steps: readonly string[]
+  /** Steps in order. Keep labels to one or two words — every step gets the
+   *  same `1fr`, so a long one truncates rather than stealing the row. */
+  steps: readonly StepperStep[]
   /** The active step, 1-based. */
   current: number
   /** Makes VISITED steps clickable. Without it the stepper is read-only —
-   *  which is the right default for a flow that validates as it goes. */
+   *  the right default for a flow that validates as it goes. */
   onStepSelect?: (step: number) => void
-  /** Caps how wide the track runs before the connectors stop stretching.
-   *  Default 600px, centred in whatever row it is given. */
+  /** Caps how wide the track runs. Centred in whatever row it is given. */
   maxWidth?: number
+}
+
+function normalise(step: StepperStep) {
+  return typeof step === "string" ? { label: step, description: undefined } : step
 }
 
 function Stepper({ steps, current, onStepSelect, maxWidth = 600, className, ...props }: StepperProps) {
@@ -49,65 +58,93 @@ function Stepper({ steps, current, onStepSelect, maxWidth = 600, className, ...p
       style={{ maxWidth }}
       {...props}
     >
-      {steps.map((label, i) => {
-        const num      = i + 1
-        const done     = current > num
-        const active   = current === num
+      {steps.map((step, i) => {
+        const { label, description } = normalise(step)
+        const num    = i + 1
+        const done   = current > num
+        const active = current === num
         // A step ahead of you is not somewhere you can go: the flow validates
         // as it goes, so jumping forward would skip the check that gates it.
         const clickable = !!onStepSelect && done
+        // Non-interactive steps are NOT disabled buttons — they are text. A
+        // disabled button is still announced as a control that refuses you.
+        const Tag = clickable ? "button" : "span"
 
         return (
-          <li key={label} className="flex flex-1 items-center">
-            <div className="flex flex-1 flex-col items-center gap-1">
-              <button
-                type="button"
-                // `aria-current` is what tells a screen reader which step is
-                // live; the visual state alone says nothing.
-                aria-current={active ? "step" : undefined}
-                aria-label={`Step ${num} of ${steps.length}: ${label}`}
-                disabled={!clickable}
-                onClick={clickable ? () => onStepSelect(num) : undefined}
+          <li
+            key={label}
+            data-state={done ? "done" : active ? "active" : "ahead"}
+            className="relative flex min-w-0 flex-1 flex-col items-center"
+          >
+            {/* The rule to the previous step. Spans centre to centre — one
+                step-width back to this one's middle — inset by 28px at each
+                end (16px of circle + a 12px gap). `top-4` is half of `size-8`,
+                so it sits on the circles' centre line whatever the label does.
+                `aria-hidden` because it is punctuation: the order is already
+                carried by the list. */}
+            {i > 0 && (
+              <span
+                aria-hidden
                 className={cn(
-                  "flex flex-col items-center gap-1 rounded-lg outline-none",
-                  "focus-visible:ring-3 focus-visible:ring-ring/50",
-                  clickable ? "cursor-pointer group/step" : "cursor-default",
+                  "absolute -left-1/2 right-1/2 top-4 mx-7 h-px -translate-y-1/2 transition-colors",
+                  // 1px is the floor: `h-[0.5px]` renders as nothing at 1x DPR
+                  // in some engines, so a lighter rule is a lighter COLOUR,
+                  // not a smaller height.
+                  done || active ? "bg-foreground/25" : "bg-border/70",
+                )}
+              />
+            )}
+
+            <Tag
+              {...(clickable
+                ? {
+                    type: "button" as const,
+                    onClick: () => onStepSelect(num),
+                    // Only the BUTTON gets a label. On a plain `<span>` an
+                    // `aria-label` is either ignored or, worse, replaces the
+                    // text — and the position is already announced: this is an
+                    // `<ol>`, so the row reads as "2 of 4" on its own.
+                    "aria-label": `Step ${num} of ${steps.length}: ${label}`,
+                  }
+                : {})}
+              aria-current={active ? "step" : undefined}
+              className={cn(
+                "flex w-full min-w-0 flex-col items-center gap-1.5 rounded-lg px-1 outline-none",
+                "focus-visible:ring-3 focus-visible:ring-ring/50",
+                clickable && "group/step cursor-pointer",
+              )}
+            >
+              <span
+                className={cn(
+                  "relative flex size-8 shrink-0 items-center justify-center rounded-full text-xsmall font-normal transition-colors",
+                  done || active
+                    ? "bg-foreground text-background"
+                    : "bg-secondary text-muted-foreground",
+                  clickable && "group-hover/step:bg-foreground/80",
                 )}
               >
+                {done ? <Check className="size-4" /> : num}
+              </span>
+
+              <span className="flex w-full min-w-0 flex-col items-center gap-0.5">
                 <span
                   className={cn(
-                    "flex size-6 shrink-0 items-center justify-center rounded-full text-xsmall font-normal transition-colors",
-                    done || active
-                      ? "bg-foreground text-background"
-                      : "bg-secondary text-muted-foreground",
-                    clickable && "group-hover/step:bg-foreground/80",
-                  )}
-                >
-                  {done ? <Check className="size-3" /> : num}
-                </span>
-                <span
-                  className={cn(
-                    "whitespace-nowrap text-center text-small font-normal leading-tight transition-colors",
-                    active ? "text-foreground" : "text-muted-foreground",
-                    clickable && "group-hover/step:text-foreground",
+                    "w-full truncate text-center text-small font-normal leading-tight transition-colors",
+                    // A step you have finished is not the same as one you have
+                    // not reached: `done` keeps full contrast, `ahead` recedes.
+                    active || done ? "text-foreground" : "text-muted-foreground",
+                    clickable && "group-hover/step:underline group-hover/step:underline-offset-[3px]",
                   )}
                 >
                   {label}
                 </span>
-              </button>
-            </div>
-            {/* The rule between two steps. `mt-3` puts it on the circles'
-                centre line (half of size-6), and it is `aria-hidden` because
-                it is punctuation — the order is already in the list. */}
-            {i < steps.length - 1 && (
-              <span
-                aria-hidden
-                className={cn(
-                  "mt-3 mx-2 h-px w-8 shrink-0 transition-colors",
-                  done ? "bg-foreground/40" : "bg-border",
+                {description && (
+                  <span className="w-full truncate text-center text-2xsmall font-normal leading-tight text-muted-foreground">
+                    {description}
+                  </span>
                 )}
-              />
-            )}
+              </span>
+            </Tag>
           </li>
         )
       })}
