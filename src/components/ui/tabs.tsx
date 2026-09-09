@@ -130,9 +130,43 @@ function TabsList({
       data-slot="tabs-list"
       data-variant={variant}
       data-size={variant === "default" ? size : undefined}
-      className={cn(tabsListVariants({ variant, size }), className)}
+      className={cn("relative", tabsListVariants({ variant, size }), className)}
       {...props}
-    />
+    >
+      {props.children}
+      {/* The travelling underline, `line` variant only.
+       *
+       * Each trigger used to draw its own `::after` and cross-fade it, so the
+       * mark did not move: it vanished under the old tab and appeared under
+       * the new one, and the eye lost the thread between them. Base UI's
+       * `Indicator` is ONE element positioned over the active tab from
+       * `--active-tab-left` / `--active-tab-width`, so the same mark travels
+       * and the transition has something to interpolate.
+       *
+       * 180ms — snappy. The bar is a pointer, not an event; anything slower
+       * and the content has already changed while it is still sliding. */}
+      <TabsPrimitive.Indicator
+        className={cn(
+          // Shared: one element, positioned over the active tab and sliding
+          // between them. `z-0` with the triggers' own `relative` puts it
+          // BEHIND the labels, so a filled indicator does not cover its text.
+          "pointer-events-none absolute left-0 z-0",
+          "w-[var(--active-tab-width)] translate-x-[var(--active-tab-left)]",
+          "transition-[translate,width,transform] duration-[180ms] ease-out",
+          // Nothing to point at before a tab is chosen, and nothing while the
+          // list is still being measured — otherwise it flashes at width 0.
+          "data-[activation-direction=none]:opacity-0",
+          // The mark itself, per variant. `line` is a hairline under the
+          // label; `default` and `pill` are the FILL that used to belong to
+          // the active trigger — moved here so it travels instead of
+          // switching on in one place and off in another.
+          variant === "line" && "bottom-0 h-px rounded-full bg-foreground",
+          variant === "default" &&
+            "top-1 bottom-1 rounded-full border border-border/40 bg-background dark:bg-input/30",
+          variant === "pill" && "top-0 bottom-0 rounded-full bg-accent",
+        )}
+      />
+    </TabsPrimitive.List>
   )
 }
 
@@ -143,7 +177,7 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
       className={cn(
         // Base — `pb-px` matches the optical-center nudge used on Button;
         // Founders Grotesk sits visually high in a flex-centered box without it.
-        "relative inline-flex items-center justify-center gap-1.5 whitespace-nowrap font-medium transition-[colors,box-shadow,transform,opacity] outline-none pb-px",
+        "relative z-10 inline-flex items-center justify-center gap-1.5 whitespace-nowrap font-medium transition-[colors,box-shadow,transform,opacity] outline-none pb-px",
         "disabled:pointer-events-none disabled:opacity-50",
         "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
@@ -163,11 +197,9 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
         "group-data-[variant=default]/tabs-list:text-muted-foreground",
         "group-data-[variant=default]/tabs-list:hover:text-foreground",
         // Active: white bg + visible border colour (border width is always on)
-        "group-data-[variant=default]/tabs-list:data-active:bg-background",
-        "group-data-[variant=default]/tabs-list:data-active:border-border/40",
+        // (fill moved to the travelling Indicator)
         "group-data-[variant=default]/tabs-list:data-active:text-foreground",
         // Dark active
-        "dark:group-data-[variant=default]/tabs-list:data-active:bg-input/30",
 
         // ── Line/underline variant ──────────────────────────────────────
         "group-data-[variant=line]/tabs-list:rounded-none",
@@ -177,7 +209,9 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
         "group-data-[variant=line]/tabs-list:hover:text-foreground",
         // Active: just foreground text + bottom border
         "group-data-[variant=line]/tabs-list:data-active:text-foreground",
-        "group-data-[variant=line]/tabs-list:data-active:after:opacity-100",
+        // `line` no longer draws its own underline — the travelling
+        // `Indicator` on the list does, so two marks do not stack.
+        "group-data-[variant=line]/tabs-list:after:hidden",
         // The underline indicator. Default sits 1px BELOW the trigger
         // (`-bottom-px`) to overlap the container's hairline; but the
         // scrollable line/pill list clips overflow-y, which would cut that
@@ -193,7 +227,6 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
         "group-data-[variant=pill]/tabs-list:text-muted-foreground",
         "group-data-[variant=pill]/tabs-list:hover:bg-muted",
         "group-data-[variant=pill]/tabs-list:hover:text-foreground",
-        "group-data-[variant=pill]/tabs-list:data-active:bg-accent",
         "group-data-[variant=pill]/tabs-list:data-active:text-foreground",
 
         className
