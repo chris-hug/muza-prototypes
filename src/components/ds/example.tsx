@@ -26,15 +26,10 @@
  */
 
 import { useState } from "react"
-import { Code2, Info, Check, Copy } from "lucide-react"
+import { Code2, Check, Copy } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog"
-import { Markdown } from "@/components/ds/markdown"
-import { componentDoc } from "@/lib/component-docs"
 import { VIEWPORTS, containerAt, sidebarAt, gutterAt } from "@/lib/breakpoints"
 import { WindowWidthContext } from "@/lib/use-media-query"
 import { ChromeSidebar, ChromeGutter, ChromeTabBar } from "@/components/ds/chrome-schematic"
@@ -181,9 +176,7 @@ export function Example({
 }) {
   const [width, setWidth] = useState<string | null>(defaultWidth ?? null)
   const [showCode, setShowCode] = useState(false)
-  const [showDoc, setShowDoc] = useState(false)
   const [copied, setCopied] = useState(false)
-  const entry = componentDoc(doc ?? "")
   const active = widths.find(w => w.label === width)
   const px = active?.px
 
@@ -290,16 +283,12 @@ export function Example({
                 <Code2 />
               </Button>
             )}
-            {entry && (
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label={`About ${entry.title}`}
-                onClick={() => setShowDoc(true)}
-              >
-                <Info />
-              </Button>
-            )}
+            {/* NO docs button here. The section header carries one, and it
+                opens the same file: every `doc` prop on this page equals its
+                section's id, so a second button was the same document behind
+                a different icon — and the two had already drifted, one with
+                the file path in its header and one with it in a footer. One
+                document, one door. */}
           </div>
         </div>
 
@@ -358,14 +347,20 @@ export function Example({
           // left edge. Inline because Tailwind has no utility for it.
           style={{ justifyContent: "safe center" }}
         >
-          <div
-            aria-hidden
-            className={cn(
-              "pointer-events-none absolute inset-0 opacity-40",
-              "bg-[linear-gradient(to_right,var(--color-border)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-border)_1px,transparent_1px)]",
-              "[background-size:12px_12px]",
-            )}
-          />
+          {/* The 12px graph paper. It is a RULER — it exists to make the
+              stage read as a measured surface when a frame is showing you how
+              wide something is. Frameless has no stage and nothing to measure,
+              so the grid there was just lines behind the content. */}
+          {!frameless && (
+            <div
+              aria-hidden
+              className={cn(
+                "pointer-events-none absolute inset-0 opacity-40",
+                "bg-[linear-gradient(to_right,var(--color-border)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-border)_1px,transparent_1px)]",
+                "[background-size:12px_12px]",
+              )}
+            />
+          )}
           {/* The chrome, drawn around the stage whenever the chip is a WINDOW
               width. It is what makes the ladder's one baffling step legible:
               584 leaves 536px of content, 608 leaves 508 — the window grew and
@@ -433,38 +428,6 @@ export function Example({
         </div>
       </div>
 
-      {/* Docs modal — the component's own Markdown, rendered with the app's
-          tokens so the docs look like the thing they document. */}
-      {entry && (
-        <Dialog open={showDoc} onOpenChange={setShowDoc}>
-          <DialogContent className="md:max-w-[min(46rem,90vw)] flex flex-col"
-          // Inline, not a class: the base sheet sets `md:max-h-none`, and
-          // between two utilities for the same property the GENERATED CSS
-          // order decides, not the order they are listed in — `max-h-none`
-          // wins there whatever tailwind-merge keeps. Without a cap the docs
-          // modal grew to its content: 5,490px tall in a 1,216px viewport,
-          // with its own header scrolled off the top of the screen.
-          style={{ maxHeight: "85svh" }}>
-            <DialogHeader className="shrink-0">
-              <DialogTitle className="md:text-large">{entry.title}</DialogTitle>
-            </DialogHeader>
-            <div className="flex-1 min-h-0 overflow-y-auto pr-1">
-              <Markdown source={entry.body} />
-              <p className="mt-6 pt-4 border-t border-border text-2xsmall text-muted-foreground">
-                Source of truth:{" "}
-                <a
-                  href={`https://github.com/chris-hug/muza-prototypes/blob/main/${entry.path}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-primary-text hover:underline underline-offset-2"
-                >
-                  {entry.path}
-                </a>
-              </p>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   )
 }

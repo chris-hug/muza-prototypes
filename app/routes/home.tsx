@@ -39,6 +39,7 @@ import { Markdown, MarkdownInline } from "@/components/ds/markdown"
 import { Example, WINDOW_WIDTHS } from "@/components/ds/example"
 import { FOOTER_NAV_BELOW } from "@/lib/use-media-query"
 import { ResponsiveLab } from "@/components/ds/responsive-lab"
+import { DocsButton } from "@/components/ds/docs-dialog"
 import { TokenEditor } from "@/components/ds/token-editor"
 import DialogFormExample from "@/ds-examples/dialog-form"
 import dialogFormSrc from "@/ds-examples/dialog-form.tsx?raw"
@@ -358,60 +359,6 @@ type SectionUsage  = ReadonlyArray<{ label: string; href: string }>
  * per component under `docs/components/`, rendered with the app's own tokens.
  * Absent until that file is written, so the button is never a dead end.
  */
-function SectionDocButton({ id }: { id: string }) {
-  const [open, setOpen] = useState(false)
-  const entry = componentDoc(id)
-  if (!entry) return null
-  return (
-    <>
-      {/* Named "Docs", and a real button.
-       *
-       * As a bare ⓘ it was the most valuable thing on a section and the
-       * quietest — the modal holds the component's whole write-up: anatomy,
-       * the arithmetic behind its numbers, behaviour, and the open questions
-       * nobody has answered yet. That is not "info" in the tooltip sense, it
-       * is THE document, and `docs/components/<id>.md` is literally what it
-       * renders — so the word on the button is the word for the file.
-       *
-       * `Source` beside it opens the same file on GitHub; this opens it here.
-       * Two doors, one room, and both now say which. */}
-      <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
-        <BookOpen className="size-3.5" />
-        Docs
-      </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="md:max-w-[min(46rem,90vw)] flex flex-col"
-          // Inline, not a class: the base sheet sets `md:max-h-none`, and
-          // between two utilities for the same property the GENERATED CSS
-          // order decides, not the order they are listed in — `max-h-none`
-          // wins there whatever tailwind-merge keeps. Without a cap the docs
-          // modal grew to its content: 5,490px tall in a 1,216px viewport,
-          // with its own header scrolled off the top of the screen.
-          style={{ maxHeight: "85svh" }}>
-          <DialogHeader className="shrink-0">
-            <DialogTitle className="md:text-large">{entry.title}</DialogTitle>
-            {/* The file, beside the title rather than at the very bottom.
-                It answers "where does this text live" — a question you ask
-                BEFORE reading, when deciding whether to trust it, not after
-                scrolling three thousand words to find out. */}
-            <a
-              href={`https://github.com/chris-hug/muza-prototypes/blob/main/${entry.path}`}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-1 block w-fit font-mono text-3xsmall text-muted-foreground hover:text-foreground hover:underline underline-offset-2 transition-colors"
-            >
-              {entry.path}
-            </a>
-          </DialogHeader>
-          <div className="flex-1 min-h-0 overflow-y-auto pr-1">
-            <Markdown source={entry.body} />
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
-  )
-}
-
 function Section({
   id, title, status, phase, usage, children,
 }: {
@@ -472,7 +419,7 @@ function Section({
               GitHub link are things you check on the way out. Only shows once
               `docs/components/<id>.md` exists, so writing the doc is what
               turns it on. */}
-          <SectionDocButton id={id} />
+          <DocsButton id={id} />
           {resolvedStatus === "new"     && <Badge variant="new">New</Badge>}
           {resolvedStatus === "updated" && <Badge variant="updated">Updated</Badge>}
           {/* `concept` = built but not yet wired into the prototype.
