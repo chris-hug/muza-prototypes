@@ -21,7 +21,10 @@ import { useCallback, useState } from "react"
 import {
   Dialog, DialogContent, DialogTitle,
 } from "@/components/ui/dialog"
+import { X as XIcon } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useIsMobile } from "@/lib/use-media-query"
 import { getCredits, hasAlbumDetail, type Credits } from "@/lib/album-catalog"
 import { CreditsContext } from "@/lib/credits-context"
 import { useMediaNav, slugify } from "@/lib/media-nav"
@@ -166,7 +169,13 @@ function CreditsDialogContent({ credits, onClose }: { credits: Credits; onClose:
         // sizing: a flex column so the metadata body fills up to the height cap
         // and the sheet grows with its content, never past ~92vh.
         "md:max-w-md",
-        "p-0 gap-0 overflow-hidden flex flex-col max-h-[92vh] md:max-h-[85vh]",
+        // `md:p-0` / `md:gap-0` are NOT redundant beside `p-0 gap-0`. The base
+        // chrome sets `md:p-6 md:gap-5`, and tailwind-merge keeps a variant
+        // and its unprefixed twin side by side — so from 768 up the base won
+        // and put 24px of padding around the full-bleed cover hero, which is
+        // meant to touch three edges. Cancel the variant with a variant.
+        "p-0 gap-0 md:p-0 md:gap-0",
+        "overflow-hidden flex flex-col max-h-[92vh] md:max-h-[85vh]",
       )}
     >
       <CreditsContent
@@ -183,14 +192,37 @@ function CreditsDialogContent({ credits, onClose }: { credits: Credits; onClose:
 /*
  * CreditsDialogPreview — static, non-modal render for the design system
  * (no portal / backdrop / links). Shows the dialog body inside a card.
+ *
+ * Reads `useIsMobile()` the way `DialogPreview` does: inside the design
+ * system's frame that is the window CHIP, so a "375" frame shows the sheet
+ * shape — full width, top corners only — instead of the desktop card.
  */
 export function CreditsDialogPreview({ albumKey = "a07" }: { albumKey?: string }) {
+  const phone = useIsMobile()
   return (
-    <div className="w-full max-w-md rounded-xl md:rounded-2xl border border-border bg-popover overflow-hidden">
+    <div
+      data-mobile={phone ? "sheet" : undefined}
+      className={cn(
+        "relative w-full border border-border bg-popover overflow-hidden",
+        phone ? "max-w-full rounded-t-2xl rounded-b-none" : "max-w-md rounded-xl md:rounded-2xl",
+      )}
+    >
       <CreditsContent
         credits={getCredits(albumKey)}
         heading={<p className="text-large font-medium leading-none text-foreground">Album credits</p>}
       />
+      {/* The real dialog gets its ✕ from `DialogContent`; this preview builds
+          its own card, so it has to carry one or the frame documents a dialog
+          you cannot close. Same position and size as `DialogPreview`'s, inert
+          on purpose — there is nothing to dismiss. */}
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        className="absolute top-2 right-2"
+        aria-label="Close (preview)"
+      >
+        <XIcon />
+      </Button>
     </div>
   )
 }

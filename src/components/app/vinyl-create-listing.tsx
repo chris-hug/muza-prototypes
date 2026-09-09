@@ -27,6 +27,7 @@ import { Badge, ContentTypeBadge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { FormItem, FormLabel, FormControl, FormDescription } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Chip, ChipDismiss, ChipGroup } from "@/components/ui/chip"
@@ -78,12 +79,22 @@ function Field({
   children: React.ReactNode
   className?: string
 }) {
+  /* `FormItem` / `FormLabel` / `FormControl` without react-hook-form: the id
+     is generated and put in the label's `htmlFor` and on the control, so the
+     label actually labels something. `children` is typed as an element rather
+     than a node because `FormControl` clones exactly one child. */
   return (
-    <div className={`flex flex-col gap-2 ${className ?? ""}`}>
-      <Label>{label}</Label>
-      {children}
-      {hint && <p className="text-2xsmall text-muted-foreground">{hint}</p>}
-    </div>
+    <FormItem className={`gap-2 ${className ?? ""}`}>
+      <FormLabel>{label}</FormLabel>
+      {/* `FormControl` clones exactly one child, so it only wraps when the
+          field IS one control. Two fields here are "chips above, input below"
+          and pass several children — those wrap their own input, so the label
+          still points at something. */}
+      {React.isValidElement(children) && React.Children.count(children) === 1
+        ? <FormControl>{children}</FormControl>
+        : children}
+      {hint && <FormDescription>{hint}</FormDescription>}
+    </FormItem>
   )
 }
 
@@ -736,11 +747,11 @@ function PricingInventorySection() {
     <FormSection title="Pricing & Inventory">
       {/* Single-column layout — price, stock, optional extras all stack
            flush to match the rest of the form's rhythm. */}
-      <div className="flex flex-col gap-2">
+      <FormItem className="gap-2">
         {/* Header row — label left, "Let fans pay more if they want" switch
              right. Flipping the switch turns "Price" into "Minimum Price". */}
         <div className="flex items-center justify-between">
-          <Label>{nameYourPrice ? "Minimum Price" : "Price"}</Label>
+          <FormLabel>{nameYourPrice ? "Minimum Price" : "Price"}</FormLabel>
           <label className="flex items-center gap-1.5 cursor-pointer">
             <span className="text-xsmall text-muted-foreground font-normal">
               Let fans pay more if they want
@@ -751,15 +762,15 @@ function PricingInventorySection() {
             />
           </label>
         </div>
-        <InputSelect
+        <FormControl><InputSelect
           placeholder={nameYourPrice ? "0.00 (leave blank for free)" : "1.00"}
           value={price}
           onChange={e => setPrice(e.target.value)}
           selectValue={currency}
           onSelectChange={setCurrency}
           options={CURRENCIES}
-        />
-      </div>
+        /></FormControl>
+      </FormItem>
 
       <Field label="Stock Quantity">
         <Input

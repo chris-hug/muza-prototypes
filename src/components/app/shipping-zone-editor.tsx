@@ -111,7 +111,8 @@ export function ShippingZoneEditor({
 
   return (
     <div className="flex flex-col gap-3">
-      {label && <Label>{label}</Label>}
+      {/* Captions the whole zone table, not a single control. */}
+      {label && <p className="text-small leading-none font-normal text-foreground">{label}</p>}
 
       {/* Column header row — only shown once we have ≥ 1 zone. Gives each
            field its own identity so the empty Region pill's chevron

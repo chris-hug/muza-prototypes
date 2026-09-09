@@ -5,6 +5,7 @@ import { Plus, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { FormItem, FormLabel, FormControl } from "@/components/ui/form"
 import { Separator } from "@/components/ui/separator"
 
 // ─── Payment method logo ───────────────────────────────────────────────────────
@@ -137,31 +138,31 @@ function EditPanel({ name, detail, logo, onClose }: EditPanelProps) {
 
       {/* Fields */}
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <Label>Name of card</Label>
-          <Input defaultValue={name} />
-        </div>
+        <FormItem className="gap-2">
+        <FormLabel>Name of card</FormLabel>
+        <FormControl><Input defaultValue={name} /></FormControl>
+      </FormItem>
 
-        <div className="flex flex-col gap-2">
-          <Label>Card Number</Label>
-          <Input placeholder="**** **** **** ****" />
-        </div>
+        <FormItem className="gap-2">
+        <FormLabel>Card Number</FormLabel>
+        <FormControl><Input placeholder="**** **** **** ****" /></FormControl>
+      </FormItem>
 
         <div className="flex gap-3">
-          <div className="flex flex-col gap-2 flex-1">
-            <Label>Expiration Month</Label>
-            <Input placeholder="MM" />
-          </div>
-          <div className="flex flex-col gap-2 flex-1">
-            <Label>Expiration Year</Label>
-            <Input placeholder="YY" />
-          </div>
+          <FormItem className="gap-2 flex-1">
+        <FormLabel>Expiration Month</FormLabel>
+        <FormControl><Input placeholder="MM" /></FormControl>
+      </FormItem>
+          <FormItem className="gap-2 flex-1">
+        <FormLabel>Expiration Year</FormLabel>
+        <FormControl><Input placeholder="YY" /></FormControl>
+      </FormItem>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <Label>CVV</Label>
-          <Input placeholder="•••" type="password" className="max-w-[120px]" />
-        </div>
+        <FormItem className="gap-2">
+        <FormLabel>CVV</FormLabel>
+        <FormControl><Input placeholder="•••" type="password" className="max-w-[120px]" /></FormControl>
+      </FormItem>
       </div>
 
       {/* Actions */}

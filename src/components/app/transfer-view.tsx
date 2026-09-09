@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { FormItem, FormLabel, FormControl } from "@/components/ui/form"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 
@@ -39,17 +40,17 @@ export function TransferView() {
             <TabsContent value="withdraw" className="mt-10 flex flex-col gap-10">
               <div className="flex flex-col gap-6">
                 {/* Amount */}
-                <div className="flex flex-col gap-2">
-                  <Label>How much?</Label>
+                <FormItem className="gap-2">
+                  <FormLabel>How much?</FormLabel>
                   <div className="flex flex-col gap-2">
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-                      <Input
+                      <FormControl><Input
                         className="pl-8"
                         placeholder="00.00"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
-                      />
+                      /></FormControl>
                     </div>
                     <p className="text-xsmall text-muted-foreground">
                       You have ${BALANCE.toFixed(2)} in your balance
@@ -62,16 +63,16 @@ export function TransferView() {
                   >
                     Withdraw all your balance
                   </Button>
-                </div>
+                </FormItem>
 
                 {/* Connected account */}
-                <div className="flex flex-col gap-2">
-                  <Label>Connected Account</Label>
-                  <Input
-                    readOnly
-                    value="Jane's Main Account  - Chase Saving (..8643)"
-                  />
-                </div>
+                <FormItem className="gap-2">
+        <FormLabel>Connected Account</FormLabel>
+        <FormControl><Input
+                      readOnly
+                      value="Jane's Main Account  - Chase Saving (..8643)"
+                    /></FormControl>
+      </FormItem>
 
                 {/* Note */}
                 <Textarea
@@ -84,22 +85,22 @@ export function TransferView() {
             {/* ── Transfer fields ──────────────────────────────────────── */}
             <TabsContent value="transfer" className="mt-10 flex flex-col gap-10">
               <div className="flex flex-col gap-6">
-                <div className="flex flex-col gap-2">
-                  <Label>How much?</Label>
+                <FormItem className="gap-2">
+                  <FormLabel>How much?</FormLabel>
                   <div className="flex flex-col gap-2">
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-                      <Input className="pl-8" placeholder="00.00" />
+                      <FormControl><Input className="pl-8" placeholder="00.00" /></FormControl>
                     </div>
                     <p className="text-xsmall text-muted-foreground">
                       You have ${BALANCE.toFixed(2)} in your balance
                     </p>
                   </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label>Recipient</Label>
-                  <Input placeholder="Name or account" />
-                </div>
+                </FormItem>
+                <FormItem className="gap-2">
+        <FormLabel>Recipient</FormLabel>
+        <FormControl><Input placeholder="Name or account" /></FormControl>
+      </FormItem>
                 <Textarea placeholder="Note (optional)" rows={4} />
               </div>
             </TabsContent>

@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { FormItem, FormLabel, FormControl } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -501,12 +502,15 @@ function FulfillmentSection({ d, status, onStatusChange }: {
   return (
     <Section title="Fulfillment">
       <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-4 items-end">
-        <div className="flex flex-col gap-2 min-w-0">
-          <Label>Carrier</Label>
+        <FormItem className="gap-2 min-w-0">
+          <FormLabel>Carrier</FormLabel>
           <Select value={carrier} onValueChange={(v) => setCarrier(v ?? "")}>
-            <SelectTrigger>
+            {/* `FormControl` wraps the TRIGGER, not the `Select` root: the
+                root renders no DOM, so the generated id has to land on the
+                button the label points at. */}
+            <FormControl><SelectTrigger>
               <SelectValue placeholder="Pick a carrier" />
-            </SelectTrigger>
+            </SelectTrigger></FormControl>
             <SelectContent>
               <SelectItem value="DHL">DHL</SelectItem>
               <SelectItem value="UPS">UPS</SelectItem>
@@ -517,15 +521,15 @@ function FulfillmentSection({ d, status, onStatusChange }: {
               <SelectItem value="Other">Other</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-        <div className="flex flex-col gap-2 min-w-0">
-          <Label>Tracking number</Label>
-          <Input
-            placeholder="e.g. 1Z999AA10123456784"
-            value={tracking}
-            onChange={(e) => setTracking(e.target.value)}
-          />
-        </div>
+        </FormItem>
+        <FormItem className="gap-2 min-w-0">
+        <FormLabel>Tracking number</FormLabel>
+        <FormControl><Input
+              placeholder="e.g. 1Z999AA10123456784"
+              value={tracking}
+              onChange={(e) => setTracking(e.target.value)}
+            /></FormControl>
+      </FormItem>
         {forwardAction}
       </div>
 
@@ -774,8 +778,10 @@ function ComposeEmailDialog({
 
         <div className="flex flex-col gap-4">
           {/* Subject — locked */}
+          {/* "Subject" captions a locked readout, not a control — a plain
+              caption, because a `<label>` with nothing to label is the bug. */}
           <div className="flex flex-col gap-1.5">
-            <Label>Subject</Label>
+            <p className="text-small leading-none font-normal text-foreground">Subject</p>
             <div className="rounded-full border border-border bg-muted/40 px-4 h-10 flex items-center text-small text-foreground">
               {meta.subject(order.number)}
             </div>

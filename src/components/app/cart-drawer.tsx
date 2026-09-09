@@ -52,6 +52,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Label } from "@/components/ui/label"
+import { FormItem, FormLabel, FormControl } from "@/components/ui/form"
 import {
   useCart, formatShortDate, CURRENCIES, formatAddress,
   type CartLine, type ShopGroup, type ShippingAddress,
@@ -825,15 +826,15 @@ function TopUpWalletDialog({
 
         <div className="flex flex-col gap-4">
           {/* Amount */}
-          <div className="flex flex-col gap-2">
-            <Label>Amount</Label>
+          <FormItem className="gap-2">
+            <FormLabel>Amount</FormLabel>
             <div className="relative">
               {cart.currency.side === "prefix" && (
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-small text-muted-foreground pointer-events-none tabular-nums">
                   {cart.currency.symbol}
                 </span>
               )}
-              <Input
+              <FormControl><Input
                 inputMode="decimal"
                 value={draft}
                 onChange={e => setDraft(e.target.value)}
@@ -842,7 +843,7 @@ function TopUpWalletDialog({
                   cart.currency.side === "prefix" ? "pl-7" : "pr-9",
                 )}
                 autoFocus
-              />
+              /></FormControl>
               {cart.currency.side === "suffix" && (
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-small text-muted-foreground pointer-events-none tabular-nums">
                   {cart.currency.symbol}
@@ -862,11 +863,14 @@ function TopUpWalletDialog({
                 </button>
               ))}
             </div>
-          </div>
+          </FormItem>
 
-          {/* Payment method (mock — single saved card) */}
+          {/* Payment method (mock — single saved card). "Pay with" is NOT a
+              field label: what follows is a static card summary, not a
+              control. A `<label>` with nothing to label is the defect, so this
+              is a plain caption. */}
           <div className="flex flex-col gap-2">
-            <Label>Pay with</Label>
+            <p className="text-small leading-none font-normal text-foreground">Pay with</p>
             <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border">
               <CreditCard className="size-4 text-muted-foreground shrink-0" />
               <div className="flex-1 min-w-0">

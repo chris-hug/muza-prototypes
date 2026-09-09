@@ -6,6 +6,7 @@ import {
   type FieldValues,
   FormProvider,
   useFormContext,
+  type UseFormReturn,
 } from "react-hook-form"
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
@@ -41,16 +42,44 @@ function FormField<
 }
 
 // ─── useFormField ─────────────────────────────────────────────────────────────
+/*
+ * Two jobs, deliberately separable:
+ *
+ *   1. IDs — generate one and hand out `formItemId` / `formDescriptionId` /
+ *      `formMessageId`, so `FormLabel` gets an `htmlFor`, the control gets a
+ *      matching `id`, and the hint is wired into `aria-describedby`.
+ *   2. FIELD STATE — the react-hook-form error for this field.
+ *
+ * Job 1 needs no react-hook-form, and coupling the two is what split this
+ * codebase in half. `useFormField` used to throw outside a `FormField`, so a
+ * plain labelled field could not use these parts at all — and every such
+ * field in the product went on to hand-roll the stack instead. The result:
+ * 45 of 74 `<Label>`s in `src/components/app` carry no `htmlFor`, so a click
+ * focuses nothing and a screen reader announces the control unlabelled.
+ * `Input`'s `Field.Root` does not cover it — that wires the HINT, and only
+ * when a `hint` is passed.
+ *
+ * So the hook now degrades instead of throwing. Inside a `FormField` it
+ * behaves exactly as before. Outside one it still gives the ids, and reports
+ * no error — which is correct, because without react-hook-form there is no
+ * validation to report. A field can therefore be wired for accessibility
+ * today and gain validation later by wrapping it, with no restructuring.
+ */
 function useFormField() {
   const fieldContext = React.useContext(FormFieldContext)
   const itemContext = React.useContext(FormItemContext)
-  const { getFieldState, formState } = useFormContext()
+  // `useFormContext()` returns null outside a `FormProvider`; without a
+  // `FormField` there is no field to ask about either.
+  const form = useFormContext()
+  const bound = !!fieldContext.name && !!form
 
-  if (!fieldContext.name) {
-    throw new Error("useFormField must be used within <FormField>")
+  if (!itemContext.id) {
+    throw new Error("useFormField must be used within <FormItem>")
   }
 
-  const fieldState = getFieldState(fieldContext.name, formState)
+  const fieldState = bound
+    ? form.getFieldState(fieldContext.name, form.formState)
+    : ({} as ReturnType<UseFormReturn["getFieldState"]>)
   const { id } = itemContext
 
   return {

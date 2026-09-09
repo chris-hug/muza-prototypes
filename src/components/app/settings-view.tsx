@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { FormItem, FormLabel, FormControl } from "@/components/ui/form"
 import { CheckboxField } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -938,12 +939,23 @@ function VerificationSubmitForm({ onSubmit }: { onSubmit: () => void }) {
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+/*
+ * One labelled field. Built on the `Form` parts, WITHOUT react-hook-form:
+ * `FormItem` generates the id, `FormLabel` puts it in `htmlFor` and
+ * `FormControl` clones it onto the control. Nine call sites in this file used
+ * to render a bare `<Label>` with no `htmlFor`, so clicking the label focused
+ * nothing and a screen reader read the input as unlabelled.
+ *
+ * `Form` is not needed for that — only `FormField` binds to react-hook-form,
+ * and `useFormField` degrades without it. A view that later wants validation
+ * wraps these in `<Form>` / `<FormField>` and this helper is unchanged.
+ */
+function Field({ label, children }: { label: string; children: React.ReactElement }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <Label>{label}</Label>
-      {children}
-    </div>
+    <FormItem>
+      <FormLabel>{label}</FormLabel>
+      <FormControl>{children}</FormControl>
+    </FormItem>
   )
 }
 

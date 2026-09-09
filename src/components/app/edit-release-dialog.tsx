@@ -26,6 +26,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { FormItem, FormLabel, FormControl } from "@/components/ui/form"
 import { Switch } from "@/components/ui/switch"
 import { InputSelect } from "@/components/ui/input-select"
 import { ContentTypeBadge } from "@/components/ui/badge"
@@ -242,7 +243,9 @@ export function EditReleaseDialog({
                card always shows its price inputs; the selected radio is
                the only thing that changes when the user picks. */}
           <div className="flex flex-col gap-3">
-            <Label>Monetisation</Label>
+            {/* Captions a RadioCardGroup — a group of controls, not one, so
+                there is nothing for `htmlFor` to point at. */}
+            <p className="text-small leading-none font-normal text-foreground">Monetisation</p>
             <RadioCardGroup
               value={monetization}
               onValueChange={v => setMonetization(v as MonetizationType)}
@@ -263,9 +266,9 @@ export function EditReleaseDialog({
                 title="For purchase"
                 description="Fans pay to unlock · you set your price"
               >
-                <div className="flex flex-col gap-3">
+                <FormItem className="gap-3">
                   <div className="flex items-center justify-between">
-                    <Label>Price for listening</Label>
+                    <FormLabel>Price for listening</FormLabel>
                     <label className="flex items-center gap-1.5 cursor-pointer">
                       <span className="text-xsmall text-muted-foreground font-normal">Let fans pay more if they want</span>
                       <Switch
@@ -275,22 +278,21 @@ export function EditReleaseDialog({
                       />
                     </label>
                   </div>
-                  <InputSelect
+                  <FormControl><InputSelect
                     value={listenPrice}
                     onChange={e => setListenPrice((e.target as HTMLInputElement).value)}
                     placeholder={nameYourPriceListen ? "0.00 (leave blank for free)" : "1.00"}
-                    className="text-small font-normal"
                     selectValue={currency}
                     onSelectChange={setCurrency}
                     options={CURRENCY_OPTIONS}
-                  />
-                </div>
+                  /></FormControl>
+                </FormItem>
 
-                <div className="flex flex-col gap-3">
+                <FormItem className="gap-3">
                   <div className="flex items-center justify-between">
-                    <Label>
+                    <FormLabel>
                       Price for download <span className="opacity-60">(optional)</span>
-                    </Label>
+                    </FormLabel>
                     <label className="flex items-center gap-1.5 cursor-pointer">
                       <span className="text-xsmall text-muted-foreground font-normal">Let fans pay more if they want</span>
                       <Switch
@@ -300,16 +302,15 @@ export function EditReleaseDialog({
                       />
                     </label>
                   </div>
-                  <InputSelect
+                  <FormControl><InputSelect
                     value={downloadPrice}
                     onChange={e => setDownloadPrice((e.target as HTMLInputElement).value)}
                     placeholder="Leave blank to skip"
-                    className="text-small font-normal"
                     selectValue={currency}
                     onSelectChange={setCurrency}
                     options={CURRENCY_OPTIONS}
-                  />
-                </div>
+                  /></FormControl>
+                </FormItem>
               </RadioCard>
             </RadioCardGroup>
           </div>
@@ -318,7 +319,7 @@ export function EditReleaseDialog({
                Read-only for MusicBrainz-matched releases; editable inputs
                for original uploads (`isNew`). */}
           <div className="flex flex-col gap-3">
-            <Label>General info</Label>
+            <p className="text-small leading-none font-normal text-foreground">General info</p>
             {canEditMetadata ? (
               <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                 <div className="flex flex-col gap-1.5 col-span-2">

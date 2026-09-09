@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge, ContentTypeBadge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
+import { FormItem, FormLabel, FormControl } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -48,7 +49,7 @@ interface ReleaseForm {
 interface UploadFile { id: string; name: string; size: string; progress: number; done: boolean }
 interface TrackRow {
   id: string; fileName: string; trackName: string; composer: string; lyricist: string
-  duration: string; matchScore: number; assignedFile: string
+  duration: string; matchScore: number; assignedFile: string | null
 }
 interface MusicianEntry {
   id: string; name: string; instrument: string; matched: boolean
@@ -197,7 +198,7 @@ function InfoField({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-0.5">
       <p className="text-xsmall text-muted-foreground font-normal">{label}</p>
-      <p className="text-small font-normal">{value}</p>
+      <p>{value}</p>
     </div>
   )
 }
@@ -580,14 +581,12 @@ function AddMusicianRow({ onAdd }: { onAdd: (name: string, instrument: string) =
         onChange={e => setName(e.target.value)}
         onKeyDown={onKey}
         placeholder="Name"
-        className="text-small font-normal"
       />
       <Input
         value={instrument}
         onChange={e => setInstrument(e.target.value)}
         onKeyDown={onKey}
         placeholder="Instrument"
-        className="text-small font-normal"
       />
       <Button
         type="button"
@@ -626,7 +625,9 @@ function CreditsSection({
            are filled. No chip / commit gymnastics — this is just a
            table of musicians. */}
       <div className="flex flex-col gap-2">
-        <Label>Musicians</Label>
+        {/* Captions the whole musicians table — several rows of controls, so
+            there is nothing for one `htmlFor` to point at. */}
+        <p className="text-small leading-none font-normal text-foreground">Musicians</p>
 
         {/* Committed musicians — flat rows. Read as "in the system". */}
         {musicians.map(m => (
@@ -666,7 +667,7 @@ function CreditsSection({
           const label = key === "coverArt" ? "Cover art" : key[0].toUpperCase() + key.slice(1)
           return (
             <div key={key} className="flex flex-col gap-1.5">
-              <Label>{label}</Label>
+              <Label htmlFor={`credit-${key}`}>{label}</Label>
               {additionalRoles[key].length > 0 && (
                 <ChipGroup className="mb-1">
                   {additionalRoles[key].map((name, i) => (
@@ -683,6 +684,7 @@ function CreditsSection({
                 </ChipGroup>
               )}
               <ChipInput
+                id={`credit-${key}`}
                 placeholder={`Add ${label.toLowerCase()}…`}
                 onCommit={(values) => onAdditionalRolesChange({
                   ...additionalRoles,
@@ -692,15 +694,15 @@ function CreditsSection({
             </div>
           )
         })}
-        <div className="flex flex-col gap-1.5">
-          <Label>Liner notes</Label>
-          <Textarea
+        <FormItem>
+        <FormLabel>Liner notes</FormLabel>
+        <FormControl><Textarea
             value={additionalRoles.linerNotes}
             onChange={e => onAdditionalRolesChange({ ...additionalRoles, linerNotes: e.target.value })}
             placeholder="Liner notes text…"
             className="resize-none min-h-[80px] text-small font-normal"
-          />
-        </div>
+          /></FormControl>
+      </FormItem>
       </div>
     </div>
   )
@@ -716,7 +718,7 @@ function NewReleaseForm({ form, onChange, entityName }: { form: ReleaseForm; onC
            entity, locked. Additional artists render as dismissable
            chips; the single Input below accepts a name on Enter. */}
       <div className="flex flex-col gap-1.5">
-        <Label>Main Artist(s)</Label>
+        <Label htmlFor="main-artists">Main Artist(s)</Label>
         <ChipGroup className="mb-1">
           <span className="inline-flex items-center rounded-full border border-border bg-muted px-3 h-8 text-2xsmall font-normal pb-px">
             {entityName}
@@ -740,6 +742,7 @@ function NewReleaseForm({ form, onChange, entityName }: { form: ReleaseForm; onC
           ))}
         </ChipGroup>
         <ChipInput
+          id="main-artists"
           placeholder="Add a collaborator…"
           onCommit={(values) => onChange({ ...form, mainArtists: [...form.mainArtists, ...values] })}
         />
@@ -749,97 +752,91 @@ function NewReleaseForm({ form, onChange, entityName }: { form: ReleaseForm; onC
       </div>
 
       {/* 2. Release title — free-form, no validation */}
-      <div className="flex flex-col gap-1.5">
-        <Label>Release title</Label>
-        <Input
+      <FormItem>
+        <FormLabel>Release title</FormLabel>
+        <FormControl><Input
           autoFocus
           value={form.title}
           onChange={e => onChange({ ...form, title: e.target.value })}
           placeholder="Title"
-          className="text-small font-normal"
-        />
-      </div>
+        /></FormControl>
+      </FormItem>
 
       {/* 3. Band name — free-form */}
-      <div className="flex flex-col gap-1.5">
-        <Label>Band name</Label>
-        <Input
+      <FormItem>
+        <FormLabel>Band name</FormLabel>
+        <FormControl><Input
           value={form.band}
           onChange={e => onChange({ ...form, band: e.target.value })}
           placeholder="Band / ensemble"
-          className="text-small font-normal"
-        />
-      </div>
+        /></FormControl>
+      </FormItem>
 
       {/* 4. Label — free-form */}
-      <div className="flex flex-col gap-1.5">
-        <Label>Label</Label>
-        <Input
+      <FormItem>
+        <FormLabel>Label</FormLabel>
+        <FormControl><Input
           value={form.label}
           onChange={e => onChange({ ...form, label: e.target.value })}
           placeholder="Record label"
-          className="text-small font-normal"
-        />
-      </div>
+        /></FormControl>
+      </FormItem>
 
       {/* 5. Catalog number — per artist/label, no expected format */}
-      <div className="flex flex-col gap-1.5">
-        <Label>Catalog number</Label>
-        <Input
+      <FormItem>
+        <FormLabel>Catalog number</FormLabel>
+        <FormControl><Input
           value={form.catalogNumber}
           onChange={e => onChange({ ...form, catalogNumber: e.target.value })}
           placeholder="e.g. ABC-123"
-          className="text-small font-normal"
-        />
-      </div>
+        /></FormControl>
+      </FormItem>
 
       {/* 6. Release type */}
-      <div className="flex flex-col gap-1.5">
-        <Label>Release type</Label>
+      <FormItem>
+        <FormLabel>Release type</FormLabel>
         <Select value={form.type} onValueChange={v => onChange({ ...form, type: v as ContentType })}>
-          <SelectTrigger className="w-full">
+          {/* The trigger, not the root: `Select` renders no DOM of its own. */}
+          <FormControl><SelectTrigger className="w-full">
             <SelectValue />
-          </SelectTrigger>
+          </SelectTrigger></FormControl>
           <SelectContent>
             <SelectItem value="album">Album</SelectItem>
             <SelectItem value="single">Single</SelectItem>
             <SelectItem value="ep">EP</SelectItem>
           </SelectContent>
         </Select>
-      </div>
+      </FormItem>
 
       {/* 7. Recording year */}
-      <div className="flex flex-col gap-1.5">
-        <Label>Recording year</Label>
-        <Input
+      <FormItem>
+        <FormLabel>Recording year</FormLabel>
+        <FormControl><Input
           value={form.recordingDate}
           onChange={e => onChange({ ...form, recordingDate: e.target.value })}
           placeholder="1973"
-          className="text-small font-normal"
-        />
-      </div>
+        /></FormControl>
+      </FormItem>
 
       {/* 8. Tracks */}
-      <div className="flex flex-col gap-1.5">
-        <Label>Number of tracks</Label>
-        <Input
+      <FormItem>
+        <FormLabel>Number of tracks</FormLabel>
+        <FormControl><Input
           value={form.tracks}
           onChange={e => onChange({ ...form, tracks: e.target.value })}
           placeholder="12"
-          className="text-small font-normal"
-        />
-      </div>
+        /></FormControl>
+      </FormItem>
 
       {/* 9. Country */}
-      <div className="flex flex-col gap-1.5">
-        <Label>Country</Label>
-        <Input
+      <FormItem>
+        <FormLabel>Country</FormLabel>
+        <FormControl><Input
           value={form.country}
           onChange={e => onChange({ ...form, country: e.target.value })}
           placeholder="e.g. US"
-          className="text-small font-normal"
-        />
-      </div>
+        /></FormControl>
+      </FormItem>
     </div>
   )
 }
@@ -936,8 +933,9 @@ function StepRelease({
 
   const EntityCombobox = (
     <div className="flex flex-col gap-1.5">
-      <Label>Upload as</Label>
+      <Label htmlFor="upload-as">Upload as</Label>
       <Combobox
+        id="upload-as"
         value={entityId}
         onValueChange={(v) => {
           if (v) { onEntityChange(v as string); setEntityInputValue(ENTITIES.find(e => e.id === v)?.name ?? "") }
@@ -984,11 +982,12 @@ function StepRelease({
       </div>
       {EntityCombobox}
       <div className="flex flex-col gap-1.5">
-        <Label>Release title</Label>
+        <Label htmlFor="release-title-search">Release title</Label>
         <div className="relative">
           <div className="flex items-center gap-2 h-10 px-3 rounded-full border border-border bg-background focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 transition-colors">
             <Search className="size-4 text-muted-foreground shrink-0" />
             <input
+              id="release-title-search"
               ref={inputRef}
               value={searchQuery}
               onChange={e => { onSearchChange(e.target.value); setShowSuggestions(true); setFocusedIndex(-1) }}
@@ -1046,10 +1045,11 @@ function StepRelease({
           </div>
           {EntityCombobox}
           <div className="flex flex-col gap-1.5">
-            <Label>Release title</Label>
+            <Label htmlFor="release-title-search-2">Release title</Label>
             <div className="flex items-center gap-2 h-10 px-3 rounded-full border border-border bg-background focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 transition-colors">
               <Search className="size-4 text-muted-foreground shrink-0" />
               <input
+              id="release-title-search-2"
                 value={searchQuery}
                 onChange={e => { onSearchChange(e.target.value); if (!e.target.value) setStepMode("input") }}
                 placeholder="Enter your title"
@@ -1207,7 +1207,7 @@ function StepMonetisation({
         >
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <Label>Price for listening</Label>
+              <Label htmlFor="price-listen">Price for listening</Label>
               <label className="flex items-center gap-1.5 cursor-pointer">
                 <span className="text-xsmall text-muted-foreground font-normal">Let fans pay more if they want</span>
                 <Switch
@@ -1218,10 +1218,10 @@ function StepMonetisation({
               </label>
             </div>
             <InputSelect
+              id="price-listen"
               value={listenPrice}
               onChange={e => onListenPriceChange((e.target as HTMLInputElement).value)}
               placeholder={nameYourPrice ? "0.00 (leave blank for free)" : "1.00"}
-              className="text-small font-normal"
               selectValue={currency}
               onSelectChange={setCurrency}
               options={CURRENCY_OPTIONS}
@@ -1230,7 +1230,7 @@ function StepMonetisation({
 
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <Label>
+              <Label htmlFor="price-download">
                 Price for download <span className="opacity-60">(optional)</span>
               </Label>
               <label className="flex items-center gap-1.5 cursor-pointer">
@@ -1243,10 +1243,10 @@ function StepMonetisation({
               </label>
             </div>
             <InputSelect
+              id="price-download"
               value={downloadPrice}
               onChange={e => onDownloadPriceChange((e.target as HTMLInputElement).value)}
               placeholder="Leave blank to skip"
-              className="text-small font-normal"
               selectValue={currency}
               onSelectChange={setCurrency}
               options={CURRENCY_OPTIONS}
