@@ -6,17 +6,23 @@ anywhere else: the design-system page reads these files at build time and
 renders them, so prose lives in exactly one place and an agent can read the
 same file directly.
 
-## Every component has four outputs, from one source
+The procedure for writing or revising one of these — where to gather from,
+what else has to move with it, and how the section is wired — is
+[`COMPONENT_DOC_PASS.md`](../../COMPONENT_DOC_PASS.md) at the repo root.
+
+## Every component has five outputs, from one source
 
 | Output | Where it comes from |
 |---|---|
+| **"Used in:" links** under the section title | the frontmatter's `usage` list — `Label \| href` per line. An entry with no `\| href` renders as plain text, so a component nothing uses still answers the question. **Never leave it out**: an absent line reads as forgotten. Do not pass the `usage` prop in the page |
 | **Section intro** on the design-system page | the doc's **lead** — its first paragraph — rendered automatically by `Section` (`home.tsx`). Do not write an intro paragraph in the page. |
 | **ⓘ modal** | the whole doc (`component-docs.ts` globs `docs/components/*.md`) |
 | **`</>` call site** | `src/ds-examples/<id>-basic.tsx` — a real usage, imported by the page twice: once as a component, once as raw text (`?raw`). Never a snippet typed beside the demo |
 | **The frame** | `<Example doc="<id>" code={…} codePath="src/ds-examples/…">` — the live component at the picked **window** chip, chrome drawn around it |
 
-So a component section in `home.tsx` is: `<Section id title usage>` →
-one or more `<Example>` frames → nothing else. Variant switches go in the
+So a component section in `home.tsx` is: `<Section id title>` →
+one or more `<Example>` frames → nothing else. Not one line of its prose is
+written there. Variant switches go in the
 frame's `controls`; explanation goes in the doc.
 
 ## Format
@@ -27,6 +33,12 @@ title: Dialog
 status: updated          # new | updated | concept — optional
 source: src/components/ui/dialog.tsx
 related: [toast, drawer] # other section ids — optional
+usage:                   # "Used in:" links — REQUIRED, one per line.
+  - Add to playlist | /?page=Playlists     # a real surface
+  - Upload music | /?page=Music
+  # An entry with no `| href` renders as plain text — that is how a
+  # component nothing uses still answers the question. Never omit the key:
+  #   - nothing yet — no view has adopted it
 ---
 
 Lead paragraph. One or two sentences on what the component is FOR. This is
@@ -85,6 +97,18 @@ these where it does — in this order, so a reader knows where to look:
 | Intrinsic / centred (button, badge, input, card, dialog preview) | window chips (default); `align="center"` |
 | Presentation-swapped, a sheet below 768 (dialog previews, menus, drawers, toasts) | `bleed={w => w < 768}` — at those chips the frame draws no gutters, no tab bar, no stage padding, and the demo touches the edges as a sheet does. Inside the frame the chip **is** the window (`WindowWidthContext`), so `useIsMobile()` follows it |
 | Box-measuring (`SongListItem`, `PlayerBar`, `PlayerOverlay`) | `widths={…}` with the component's own steps and `widthLabel="row"` / `"bar"`; no chrome is drawn |
+
+Two rules for what goes INTO the frame:
+
+- **Respect the column.** A demo is `w-full` (or narrower) and never sets a
+  fixed width above what the narrowest column offers (296px at a 320px
+  window). The hatched gutter is the page's padding: nothing crosses it, and
+  nothing adds a second padding, border or box of its own beside it. If a
+  field gets clipped at the 375 chip, the demo is wrong, not the frame.
+- **Only the component.** No trigger buttons, labels or wrappers that the
+  app does not render around it. Triggers and variant switches go in the
+  frame's `controls`; a toast frame shows the toast, not the button that
+  opens one; a header frame shows the header, not a card around it.
 
 ## Who reads this
 

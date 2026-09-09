@@ -10,8 +10,9 @@
  *   · nothing has to be fetched at runtime, so the info modal opens instantly
  *     and works in a static export.
  *
- * Frontmatter is a deliberately tiny subset of YAML — `key: value` and
- * `key: [a, b]`. A real parser would be a dependency for four fields.
+ * Frontmatter is a deliberately tiny subset of YAML — `key: value`,
+ * `key: [a, b]`, and a block list of `- Label | href` lines for `usage`.
+ * A real parser would be a dependency for five fields.
  */
 
 const FILES = import.meta.glob("/docs/components/*.md", {
@@ -29,6 +30,14 @@ export interface ComponentDoc {
   source?: string
   /** Other section ids worth reading next. */
   related: string[]
+  /** Where the component is used in the product — the section's "Used in:"
+   *  line. Frontmatter, not a prop on the page: these links are prose about
+   *  the component, so they belong with the rest of its prose.
+   *
+   *  An entry with no `href` renders as plain text rather than a link, which
+   *  is how a component that nothing uses yet still ANSWERS the question. A
+   *  blank "Used in:" is indistinguishable from a forgotten one. */
+  usage: Array<{ label: string; href?: string }>
   /** Everything after the frontmatter block. */
   body: string
   /** The first paragraph of the body — one or two sentences on what the
@@ -44,10 +53,20 @@ function parse(path: string, raw: string): ComponentDoc {
   const m = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/)
   const body = m ? raw.slice(m[0].length) : raw
   const meta: Record<string, string> = {}
+  /* Block lists: a key whose value is empty, followed by `  - …` lines. Only
+     `usage` uses one today; collecting them generically keeps the parser from
+     needing another special case the next time. */
+  const blocks: Record<string, string[]> = {}
   if (m) {
+    let openKey: string | null = null
     for (const line of m[1].split(/\r?\n/)) {
+      const item = line.match(/^\s+-\s+(.*)$/)
+      if (item && openKey) { blocks[openKey].push(item[1].trim()); continue }
       const kv = line.match(/^(\w+):\s*(.*)$/)
-      if (kv) meta[kv[1]] = kv[2].trim()
+      if (!kv) continue
+      const [, key, value] = kv
+      if (value.trim() === "") { openKey = key; blocks[key] = [] }
+      else { openKey = null; meta[key] = value.trim() }
     }
   }
   const list = (v?: string) =>
@@ -78,6 +97,15 @@ function parse(path: string, raw: string): ComponentDoc {
     status:  meta.status || undefined,
     source:  meta.source || undefined,
     related: list(meta.related),
+    /* `Label | href` per line. The pipe rather than YAML mapping syntax so a
+       label can hold the `›` and `·` these lines are full of without quoting,
+       and so the parser stays four lines long. */
+    usage: (blocks.usage ?? []).map(entry => {
+      const at = entry.lastIndexOf("|")
+      return at === -1
+        ? { label: entry.trim() }
+        : { label: entry.slice(0, at).trim(), href: entry.slice(at + 1).trim() }
+    }),
     body,
     // `path` from the glob is absolute-from-root; store it repo-relative so
     // it can be pasted into a GitHub URL or opened in an editor as-is.

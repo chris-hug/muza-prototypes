@@ -3,6 +3,8 @@ title: Detail Menu
 status: updated
 source: src/components/ui/detail-more-button.tsx
 related: [dialog, menu, drawer, song-list-item, mobile-header]
+usage:
+  - Album / Playlist / Artist detail — header “…” | /?page=Album
 ---
 
 `DetailMoreButton` is the "…" overflow on a media detail page — Album,

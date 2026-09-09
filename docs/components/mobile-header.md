@@ -3,6 +3,10 @@ title: Mobile Header
 status: updated
 source: src/components/ui/mobile-header.tsx
 related: [footer-nav, responsive, dialog, search]
+usage:
+  - Phone layouts (< 608px) — Home | /?page=Home
+  - Library (Albums / Artists / …) | /?page=Albums
+  - Explore search | /?page=Explore
 ---
 
 The frosted top bar for phone layouts. It is the **same glass** as the bottom
@@ -34,6 +38,19 @@ It renders **inside the shell's scroll container** as a `sticky top-0`
 element, not above it: that is what lets page content pass under the glass.
 A header outside the scroller would sit on a solid strip and the blur would
 have nothing to blur.
+
+## Sizing
+
+**Window, chrome gate only.** The header exists below `useFooterNav()` —
+608, `FOOTER_NAV_BELOW = 560 + 2 × 24` — and from 608 up the `Topbar`
+replaces it in the same instant. Inside, it is **fixed, no steps**: one
+gutter (`px-3`), one title size, one pill height; the only thing that
+changes with width is how many pills fit before the strip scrolls.
+
+In the frame the chip is the window, so at 375 the header is drawn
+window-wide with no gutters (it bleeds, as chrome does); at 608 and above
+the frame still renders it inside the column, which is a state the app
+never shows — there the desktop `Topbar` would be.
 
 ## The glass, and the two insets
 
@@ -160,11 +177,22 @@ Two of them carry rules worth knowing:
 
 ## Open questions
 
-- claims "five primitives" (`MobileTitleRow`, `MobileSearchBar`, `MobilePillTabs`, `MobileScopeToggle`, `MobileIconButton`) · source exports six — `MobileAvatar` is missing from both lists (app/routes/home.tsx:4540 and src/components/ui/mobile-header.tsx:9 vs src/components/ui/mobile-header.tsx:66)
-- claims `MobileScopeToggle` is the Explore focused-state scope switch · source's live `ExploreHeader` uses the shared `ToggleGroup`, and `MobileScopeToggle` has no call site outside the design-system page (app/routes/home.tsx:4635 vs src/components/app/mobile-app-header.tsx:310)
-- claims Explore is "focus → scope toggle, Enter → result filters" in the header · source shows the `ToggleGroup` only when `!focused && query`, shows the `SearchPanel` while focused, and the result filter pills render in the page body via `SearchResultsView` (src/components/app/mobile-app-header.tsx:17 vs src/components/app/mobile-app-header.tsx:309, :324 and src/components/app/search-results-view.tsx:130)
-- claims a "Library — search mode (Cancel + tabs)" built from `MobileSearchBar` with Cancel · source's `LibraryHeader` uses its own growing pill with a trailing `✕`, never `MobileSearchBar` (app/routes/home.tsx:4591 vs src/components/app/mobile-app-header.tsx:234)
-- claims an "Explore — scrolled (search collapses up)" state · source has no scroll-driven state in `ExploreHeader`; the title hides on focus or with an active query (app/routes/home.tsx:4621 vs src/components/app/mobile-app-header.tsx:296)
-- claims the glass background is "~80%" and "blurred + saturated" · source is 58% in light and 92% in dark, and deliberately has no `saturate()` (app/app.css:274 vs app/app.css:289, :306, :285)
-- claims the host places the panel "inline below the mobile search bar" · source positions it `absolute … top-full` as an overlay (src/components/ui/search-panel.tsx:12 vs src/components/app/mobile-app-header.tsx:325)
-- the `140px` in `max-h-[calc(100svh-140px)]` has no derivation anywhere in source (src/components/app/mobile-app-header.tsx:326)
+- mobile-header.tsx:9–13 lists five primitives · the file exports six —
+  `MobileAvatar` (mobile-header.tsx:66) is missing from its own header
+  comment
+- `MobileScopeToggle` (mobile-header.tsx:159) has no call site outside the
+  design-system page · the live `ExploreHeader` uses the shared
+  `ToggleGroup` for the Catalog / Library scope (mobile-app-header.tsx:310)
+- mobile-app-header.tsx:17 says Explore is "focus → scope toggle, Enter →
+  result filters" in the header · the code shows the `ToggleGroup` only
+  when `!focused && query`, shows the `SearchPanel` while focused, and the
+  result filter pills render in the page body via `SearchResultsView`
+  (mobile-app-header.tsx:310, :326; search-results-view.tsx:121)
+- app.css:280–281 says the glass background is "~80%" · it is 58% in
+  light and 92% in dark (app.css:293, :310), and deliberately has no
+  `saturate()` (app.css:289)
+- search-panel.tsx:12 says the host places the panel "inline below the
+  mobile search bar" · the host positions it `absolute … top-full` as an
+  overlay (mobile-app-header.tsx:326)
+- the `140px` in `max-h-[calc(100svh-140px)]` has no derivation anywhere
+  in source (mobile-app-header.tsx:326)

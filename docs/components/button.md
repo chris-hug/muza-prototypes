@@ -1,7 +1,11 @@
 ---
 title: Button
 source: src/components/ui/button.tsx
-related: [input, select, datepicker, chips, spinner, tabs, dialog, typography, colors]
+related: [input, select, datepicker, chips, toggle, toolbar, spinner, tabs, dialog, typography, colors]
+usage:
+  - Everywhere — 37 files in src/components/app | /?page=Home
+  - Upload music — 18 in that dialog alone | /?page=Music
+  - Settings — 17 | /?page=Settings
 ---
 
 `Button` is the one clickable pill in Muza. Every text button and every
@@ -223,6 +227,16 @@ primary button, foreground on an outline, blue on a link, without any
 per-variant colour. `size="sm"` is `size-4`, the same 16px as a glyph, so
 swapping an icon for a spinner does not move the label.
 
+## Sizing
+
+Fixed, no steps. A Button is `inline-flex shrink-0 whitespace-nowrap`: it
+is as wide as its label plus padding and reads none of the three measures
+(window, column, box). Where a button must fill its row — the `lg`
+confirming action in a `mobile="form"` dialog — the call site says so with
+`className="w-full"`; the component never stretches on its own. The one
+size that responds to anything is `icon-sm`'s 40×40 hit area, and that is a
+pointer concern, not a width one.
+
 ## Do not
 
 - **Do not reach for `text-primary` on a button label.** Use `link` or
@@ -241,4 +255,5 @@ swapping an icon for a spinner does not move the label.
 - button.tsx:13 skips the press nudge for `aria-haspopup` — no reason is recorded anywhere in the repo. This doc states the rule only.
 - button.tsx:13 keeps `bg-clip-padding` plus a permanent 1px `border` on every variant, so filled variants paint 1px inside their box — no reason for keeping it (rather than `bg-clip-border` everywhere) is recorded; album-card.tsx:45 works around it with `border-0`.
 - button.tsx:51 uses `px-[18px]` for `default`; the original Figma comment (commit e46f939) listed `px-4` (16px) for that size while the class was already 18px. Which is the frame's value, and why 18 over `px-4`, is not recorded.
-- DESIGN_SYSTEM.md:396 names the primitive `text-xxs` for "chips, badges, button-sm only" · the source uses the semantic alias `text-2xsmall` (button.tsx:52), per the no-primitive-tokens rule. The button table at DESIGN_SYSTEM.md:457 already uses the alias; the type-scale row does not.
+- DESIGN_SYSTEM.md's type-scale table names the primitive `text-xxs` for "chips, badges, button-sm only" · the source uses the semantic alias `text-2xsmall` (button.tsx:52), per the no-primitive-tokens rule. The size table above uses the alias; the type-scale row does not.
+- home.tsx `button` section carries no "Used in" links, although every surface mounts one; which two or three to point at is not recorded.

@@ -3,6 +3,9 @@ title: Dialog
 status: updated
 source: src/components/ui/dialog.tsx
 related: [drawer, toast, detail-more-button]
+usage:
+  - Library › + / create tile — New Playlist (full-screen form on phones) | /?page=Playlists
+  - Playlist detail › … → Edit info (same form) | /?page=Playlist
 ---
 
 **Every** `Dialog` and `AlertDialog` is a bottom sheet on mobile and a centred
@@ -247,3 +250,43 @@ would otherwise hang 12px outside the sheet on every side.
 
 `dialogHeaderSpacerClass` is **deprecated** — the header no longer centres its
 title, so nothing has to be balanced against the ✕.
+
+## Sizing
+
+Reads the **window**, one step: **768** — `md:` in the class strings and
+`useIsMobile()` in `DialogPreview`, the same gate. Below it every dialog is a
+bottom sheet (`inset-x-0 bottom-[var(--kb,0px)] max-w-full`, capped at
+`100svh − --kb − 8px`, scrolling internally); from 768 it is a centred modal
+at `md:max-w-sm` (384px) unless the dialog sets its own `md:max-w-*`, and
+`md:max-h-none` unless it caps itself. The width is never the column's: a
+sheet spans the window and a modal floats over it.
+
+One dialog measures a box of its own — the [paywall](paywall.md), whose body
+goes two-column at 760px of *dialog* width because the dialog is `80vw`.
+
+Inside the design-system frame the chip is the window: `DialogPreview` reads
+it through `useIsMobile()` and takes the sheet shape (`dialogPreviewPhoneClass`)
+at 320–584, so a "375" frame shows the sheet without a click, while a live
+trigger opens the real, portaled sheet at the bottom of the browser.
+
+## Behaviour
+
+- **Modal** (Base UI default): focus is trapped, page scroll is locked,
+  pointer interaction outside is disabled.
+- **Closes** on the ✕, any `DialogClose`, a click on the backdrop and
+  `Escape` (`disablePointerDismissal` is left at its default, `false`).
+  `onOpenChange(false)` fires for all of them, so a caller resets its own
+  state there.
+- **Keyboard.** On iOS the sheet rises with `--kb`; `scroll-padding-bottom:
+  8rem` keeps a focused field clear of the sticky footer. A `mobile="form"`
+  sheet focuses its field on open (`initialFocus`), because it is anchored
+  top and nothing it shows is behind the keyboard.
+- **Backdrop** is `bg-black/10` with a light blur — the page stays legible
+  behind a picker; the [alert dialog](alertdialog.md) darkens it to `/40`.
+
+## Open questions
+
+- DESIGN_SYSTEM.md "Forms go full-screen" · says "don't autofocus the field on phones — park `initialFocus` on the bar" · `create-playlist-dialog.tsx:150` passes `initialFocus={inputRef}` and this doc says focus goes straight to the field. The DESIGN_SYSTEM bullet predates the top-anchored form sheet.
+- DESIGN_SYSTEM.md, same section · says the `DialogActionBar` carries "`leading` Cancel (ghost) · `DialogTitle` (`text-base font-medium`)" · `dialog.tsx`: the bar's title is `dialogTitleClass` (`text-small`) and dismissal is the ✕ in `trailing`; there is no Cancel (this doc, "Header").
+- dialog.tsx `dialogChromeClass` is `p-3 md:p-6 gap-2 md:gap-5`. A dialog that passes `p-0 gap-0` to own its bands (Purchase, Paywall, Checkout, Credits) cancels only the phone half: tailwind-merge keeps `md:p-6 md:gap-5` (a variant is a separate key), and at ≥768 the media-query rule outranks bare `p-0`. If a desktop screen shows 24px of chrome padding around those dialogs' own `px-6` sections, the fix is `md:p-0 md:gap-0` at each call site — not verified here (no browser).
+- `dialogPreviewPhoneClass` forces `!p-3 !gap-2` on every preview at a phone chip, including the `p-0 gap-0` previews above, so a 375 chip shows them with a 12px gutter the live sheet does not have.

@@ -3,6 +3,8 @@ title: Responsive
 status: updated
 source: src/lib/breakpoints.ts
 related: [dialog, card-rail, song-list-item, mobile-header, toast]
+usage:
+  - not a component — the width rules every section is measured against
 ---
 
 Muza measures width in **three ways, and only three**. Every number in the

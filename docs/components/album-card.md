@@ -2,6 +2,11 @@
 title: Album Card
 source: src/components/ui/album-card.tsx
 related: [card-rail, responsive, detail-more-button, button]
+usage:
+  - Library › Albums | /?page=Albums
+  - Artist › Top Albums | /?page=Artist
+  - Artist › Discography (grid) | /?page=Artist
+  - Home › New Albums rail | /
 ---
 
 An `AlbumCard` is a square cover over two lines of text — title, then
@@ -242,10 +247,8 @@ intentional. The card passes it no classes, so the cover has **no radius**.
 
 - claims "Cover area: tap to play, long-press to call `onMore`" (`album-card.tsx:73`) · source: the tap opens the detail page (`album-card.tsx:150–152`, `goAlbum` at `:134`); playing is the Play button only.
 - claims the kebab stops `pointerup` "which is where useLongPress fires its tap → onPlay" (`cover-card-menu.tsx:122–125`) · source: `useLongPress` fires on the browser's `click`, not `pointerup` (`use-long-press.ts:69–79`), and the cover's tap opens rather than plays (`album-card.tsx:151`).
-- claims the hover cluster is "Hidden on touch" (`app/routes/home.tsx:3744`, `album-card.tsx:181–183`) · source hides it with `opacity-0` only (`album-card.tsx:193`) — no `pointer-events-none`, no `[@media(hover:none)]:hidden` — so the invisible Play / heart / ⋯ still receive taps on a touch screen, and the wrapper's `stopPropagation` (`:189–192`) then also swallows tap-to-open over that strip of the cover.
-- claims "long-press → bottom sheet", "parent renders Sheet" (`app/routes/home.tsx:3744`, `album-card.tsx:12`) · no host in `src/` or `app/` passes `onMore` to an `AlbumCard` (only `playlist-card.tsx` and `media-header.tsx` declare it), so a long press on an album card currently does nothing anywhere in the app. The bottom sheet that does exist is the ⋯ menu's viewport-gated `DropdownMenu` sheet (`dropdown-menu.tsx:18–33`), which is inside the cluster above.
+- claims the hover cluster is "Hidden on touch" (`album-card.tsx:181–183`) · source hides it with `opacity-0` only (`album-card.tsx:193`) — no `pointer-events-none`, no `[@media(hover:none)]:hidden` — so the invisible Play / heart / ⋯ still receive taps on a touch screen, and the wrapper's `stopPropagation` (`:189–192`) then also swallows tap-to-open over that strip of the cover.
+- claims "long-press → bottom sheet", "parent renders Sheet" (`album-card.tsx:12`) · no host in `src/` or `app/` passes `onMore` to an `AlbumCard` (only `playlist-card.tsx` and `media-header.tsx` declare it), so a long press on an album card currently does nothing anywhere in the app. The bottom sheet that does exist is the ⋯ menu's viewport-gated `DropdownMenu` sheet (`dropdown-menu.tsx:18–33`), which is inside the cluster above.
 - claims card titles are a `font-medium` exception to the sub-18px rule (`DESIGN_SYSTEM.md:414`, `:418`) · source title is `font-normal` (`album-card.tsx:258`), as `DESIGN_SYSTEM.md:399` itself says.
-- claims the kebab offers "Go to album" (`app/routes/home.tsx:3738–3739`) · source only renders it when a host passes `onGoToAlbum`, and says the card should not have one because the card *is* the album (`album-card.tsx:229–232`).
 - claims `purchased` "Surfaces the 'Owned' pill" (`album-card.tsx:60–61`) · source: `PurchasedBadge` is glyph + label with no pill chrome, the pill was tried and dropped (`purchased-badge.tsx:7–10`).
 - claims the 17px step is `text-xs` (`DESIGN_SYSTEM.md:397`) · source uses the semantic alias `text-xsmall` (`album-card.tsx:116–117`, `app.css:251`), which is the rule elsewhere in the system.
-- the design-system demo grids use `grid-cols-[repeat(1,minmax(143px,220px))]` as their base (`app/routes/home.tsx:3760`, `:3801`, `:3830`) · `app.css:56–72` records that exact base as the one that rendered a single narrow column on a 296px container and replaced it with `auto-fill, minmax(128px, 1fr)` in `.grid-cards`. Should the demos use `.grid-cards`?

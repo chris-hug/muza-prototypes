@@ -3,6 +3,9 @@ title: Card Rail
 status: updated
 source: src/components/app/card-rail.tsx
 related: [responsive, album-card, song-rail]
+usage:
+  - Home › New Albums / Playlists / Artists rails | /
+  - Artist profile rails (Top Albums, Products, Curated Playlists, Similar Artists) | /?page=Artist
 ---
 
 A `CardRail` is a section divider — separator, title, "Show all", ◀ ▶ — over a
@@ -228,8 +231,8 @@ depends on a `@min-[…]` step firing.
 ## Open questions
 
 - **Peek arithmetic below 560 is undecided.** The doc above records the measured behaviour; the comments and the design-system page still describe a different one, and nobody has ruled which is the intent:
-  - `card-rail.tsx:38` and `home.tsx:4278` claim a "~24px peek" in swipe (row) mode · source floors `<li>` at 220px below 560 (card-rail.tsx:293) and the calc never exceeds 203px there, so the peek is `container − k·236`: 60px at 296, 115px at 351, 8px at 480, 87px at 559. 24px is what the `mobileGrid` formula yields (40 reserve − 16 gap, card-rail.tsx:274), not the row mode.
-  - `home.tsx:4268–4273` lists visible cards stepping `304→2, 464→3` · in row mode below 560 the 220 floor overrides those widths (card-rail.tsx:293–296): a 304 container shows 1 card, two full cards appear only from 472. The classes step there; the visible count does not.
-  - `card-rail.tsx:56` and `home.tsx:4311` claim `mobileGrid` shows "~2× the cards per screen" · at a 351 container it is 2 rows × 3 columns = 6 full cards (card-rail.tsx:267, 274) against 1 full card in row mode — closer to 6×.
+  - `card-rail.tsx:38` claims a "~24px peek" in swipe (row) mode · source floors `<li>` at 220px below 560 (card-rail.tsx:293) and the calc never exceeds 203px there, so the peek is `container − k·236`: 60px at 296, 115px at 351, 8px at 480, 87px at 559. 24px is what the `mobileGrid` formula yields (40 reserve − 16 gap, card-rail.tsx:274), not the row mode.
+  - the rail's width ladder steps `304→2, 464→3` like the grid's · in row mode below 560 the 220 floor overrides those widths (card-rail.tsx:293–296): a 304 container shows 1 card, two full cards appear only from 472. The classes step there; the visible count does not.
+  - `card-rail.tsx:56` claims `mobileGrid` shows "~2× the cards per screen" · at a 351 container it is 2 rows × 3 columns = 6 full cards (card-rail.tsx:267, 274) against 1 full card in row mode — closer to 6×.
   - `mobileGrid` at a 296 container yields 75px columns (`(296 − 72) / 3`, card-rail.tsx:274) with no floor. Is `AlbumCard` meant to render that small?
 - **The 472–496 near-blind band.** In row mode a container of 472–496 shows the third card at 0–24px, so the "peek is the cue" argument has a near-blind band right where the arrows are also hidden (card-rail.tsx:194, 293). Intended?

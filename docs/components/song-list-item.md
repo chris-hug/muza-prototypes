@@ -2,6 +2,9 @@
 title: Song List Item
 source: src/components/ui/song-list-item.tsx
 related: [media-list-item, song-rail, detail-more-button, responsive]
+usage:
+  - Artist › Top Songs | /?page=Artist
+  - Album detail (track list) | /?page=Album
 ---
 
 `SongListItem` is one row in a list of **songs** — Top Songs on an artist
@@ -343,9 +346,8 @@ inside a 60px row read as busy.
 ## Open questions
 
 - song-list-item.tsx:19–20 (header comment) claims the duration is `text-small text-muted-foreground` · source renders it `text-xsmall` (song-list-item.tsx:514). Documented above as `text-xsmall`.
-- song-list-item.tsx:341–342 says "year drops first (≤380), then album (≤260)" and :511 says the duration is "Dropped on very tight rows (≤300)" · the variants are `@max-[380px]` / `@max-[260px]` / `@max-[300px]`, which Tailwind v4 compiles to `@container (width < N)` — exclusive, so a row exactly 380px wide still shows the year. The DS page's list (home.tsx:4021–4024: "≥ 380 · 300–379 · 260–299 · < 260") matches the compiled CSS; the source comments are off by one.
+- song-list-item.tsx:341–342 says "year drops first (≤380), then album (≤260)" and :511 says the duration is "Dropped on very tight rows (≤300)" · the variants are `@max-[380px]` / `@max-[260px]` / `@max-[300px]`, which Tailwind v4 compiles to `@container (width < N)` — exclusive, so a row exactly 380px wide still shows the year. The table above matches the compiled CSS; the source comments are off by one.
 - song-list-item.tsx:99–101 documents `onAddToLibrary` as the "Always-visible quick action — saves the song to the library (Heart)" · the visible heart is `LibraryHeartButton` (song-list-item.tsx:410, 508), which never calls `onAddToLibrary`; the only caller is `handleSongLibrary` (song-list-item.tsx:238), reached from the compact touch sheet's first action (song-list-item.tsx:440). Documented above without that claim.
-- home.tsx:4012 says "title / artist / album are independent links" · no `SongListItem` host passes `onTitleClick` (the `onTitleClick` hits in `src/components/app` are all on cards), so in the app the title is a `<button>` that swallows the tap and does nothing (song-list-item.tsx:333–339). Documented above as observed.
-- home.tsx:4052–4127 passes `menuItems={<AlbumCardMenuItems />}` — the album menu — to every song row on the DS page · song-list-item.tsx:104–108 says `menuItems` is a "legacy escape hatch" and DESIGN_SYSTEM.md:701 says two surfaces showing different items for the same object is a bug; the built-in `SongMenuItems` needs no prop. The call site here passes none.
+- The title is a `<button>` whether or not `onTitleClick` is passed (song-list-item.tsx:333–339) · no `SongListItem` host passes `onTitleClick` (the `onTitleClick` hits in `src/components/app` are all on cards), so in the app the title swallows the tap and does nothing. Documented above as observed.
 - The ⓘ button calls `onInfo` directly (song-list-item.tsx:498) while the menu's "Show credits" uses `showCredits` — `credits.open(slugify(album))` when `album` is set, else `onInfo` (song-list-item.tsx:228). A cover-mode row with an `album` but no `onInfo` (playlist, library, search) has a working "Show credits" and an inert ⓘ. Recorded as observed; unclear whether ⓘ should also fall back to the album credits.
 - song-list-item.tsx:527 claims a "44px+ hit target" for `SheetAction` · the classes are `px-3 py-3 text-base` with no explicit min-height; the 44 depends on `text-base`'s line height, which is not stated in the file.

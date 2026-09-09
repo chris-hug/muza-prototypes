@@ -2,6 +2,10 @@
 title: Toast
 source: src/components/ui/toast.tsx
 related: [dialog, player-bar]
+usage:
+  - Add to playlist — confirmation | /?page=Playlists
+  - Playlist editor — saved / undo | /?page=Playlists
+  - Purchases — download started | /?page=Purchases
 ---
 
 A toast is a short, self-dismissing acknowledgement that something the user
@@ -30,6 +34,10 @@ add({ title: "Track uploaded!", type: "success" })
 
 `useToast()` is Base UI's `useToastManager()` re-exported, so `add` takes the
 Base UI toast object: `title`, `description`, `type`, `timeout`, `data`.
+
+Wrong: a toast that asks a question. "Delete this playlist? [Undo]" is a
+confirm dressed as a confirmation — that is an [alert dialog](alertdialog.md).
+The toast's Undo is for reversing something already done.
 
 ## Types
 
@@ -106,6 +114,15 @@ lift — and every other safe-area pad in the app: mobile header, footer nav,
 player shell, dialog footers — is silently a no-op on notched phones. Nothing
 errors; the bar just sits under the home indicator.
 
+## Sizing
+
+Reads the **window**, one step: **768** (`md:`), the presentation gate —
+the same gate `useIsMobile()` reads. Below it the viewport is a bar the
+width of the window minus `inset-x-3`; from 768 it is a fixed **380px** card.
+No column or box step: a toast is chrome, and where it sits is decided by the
+window alone. `ToastPreview` is `w-[380px] max-w-full`, so in a narrow frame
+it fills the column, in a wide one it is the desktop card.
+
 ## Shape — compact on phones, a card on desktop
 
 ```tsx
@@ -131,7 +148,9 @@ Title and description are both `text-small leading-5`; the title adds
 `flex-1 min-w-0` so a long title truncates or wraps inside the bar instead of
 pushing the action button out of it.
 
-## Dismissal
+## Behaviour
+
+### Dismissal
 
 - **Auto-dismiss.** `ToastProvider` defaults `timeout` to 5000ms. Every toast
   clears itself; nothing depends on the user closing it.
@@ -229,3 +248,5 @@ so a chrome change updates both — no drift between the gallery and the app.
 
 - toast.tsx:33 (comment) says the old phone padding was "4px/18px" · the desktop classes that were kept are `px-4 pt-4 pb-[18px]` = 16/16/18px; "4px" is probably the Tailwind step, not pixels. Not migrated as a number.
 - "Swipe" dismissal (DESIGN_SYSTEM.md, toast.tsx:49–50) is true only via Base UI's default `swipeDirection = ['down','right']` (`@base-ui/react` 1.3.0) — `toast.tsx` sets nothing (toast.tsx:111–115). A Base UI upgrade that changes the default would silently remove it; consider passing it explicitly.
+- `ToastPreview` does not read `useIsMobile()`: its `md:` classes read the real browser, so at a 375 window chip it still shows the desktop padding and the close button while the live toast would be the slim bar with no ✕. `DialogPreview` restates its phone half for the chip (`dialogPreviewPhoneClass`); the toast preview has no equivalent.
+- DESIGN_SYSTEM.md › "Toasts — mobile shape" now points here; its one kept rule is the duration split.
