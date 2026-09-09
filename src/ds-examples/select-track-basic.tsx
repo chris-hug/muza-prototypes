@@ -40,7 +40,12 @@ export default function SelectTrackBasicExample() {
             subtitle={ALBUM.artist}
             meta={ALBUM.title}
             onOpen={() => toggle(t.id)}
-            className={cn(on && "bg-muted")}
+            /* A picked row is tinted with a GRADIENT that fades out to the
+               right, not a flat block. The mark sits on the right, so the
+               tint is heaviest where the row starts and lightest where the
+               check already says "in" — the fill leads the eye to the answer
+               instead of restating it across the whole width. */
+            className={cn(on && "bg-linear-to-r from-muted via-muted to-transparent")}
             trailing={<SelectTrackButton selected={on} />}
           />
         )

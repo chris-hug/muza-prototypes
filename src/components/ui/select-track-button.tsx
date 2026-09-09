@@ -53,8 +53,12 @@ export function SelectTrackButton({ selected, className }: {
   // wobbled when you undid a pick and not when you made one — livelier for
   // the lesser action. One curve, both ways: the arms swing past their
   // destination and settle, going and coming.
+  // No delay. The strokes used to wait 150ms while `muzaMarkPop` was already
+  // scaling from 0ms, so the mark bounced as a PLUS and only then rotated into
+  // a check — two halves of one gesture, arriving separately, which reads as
+  // no bounce on the check at all. They start together now.
   const timing =
-    "transition-transform duration-300 [transition-timing-function:cubic-bezier(.68,-0.9,.27,1.85)] [transition-delay:150ms]"
+    "transition-transform duration-300 [transition-timing-function:cubic-bezier(.68,-0.9,.27,1.85)]"
 
   return (
     <span
