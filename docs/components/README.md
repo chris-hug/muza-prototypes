@@ -16,6 +16,7 @@ what else has to move with it, and how the section is wired — is
 |---|---|
 | **"Used in:" links** under the section title | the frontmatter's `usage` list — `Label \| href` per line. An entry with no `\| href` renders as plain text, so a component nothing uses still answers the question. **Never leave it out**: an absent line reads as forgotten. Do not pass the `usage` prop in the page |
 | **Section intro** on the design-system page | the doc's **lead** — its first paragraph — rendered automatically by `Section` (`home.tsx`). Do not write an intro paragraph in the page. |
+| **Summary lines** under the intro | the frontmatter's optional `summary` list, one line each, Markdown-inline. Only for a section that is a **rule the page is measured against** rather than a component you can look at — Responsive has one, almost nothing else should. It exists so that "the page needs three more lines here" never again means typing them into `home.tsx` |
 | **ⓘ modal** | the whole doc (`component-docs.ts` globs `docs/components/*.md`) |
 | **`</>` call site** | `src/ds-examples/<id>-basic.tsx` — a real usage, imported by the page twice: once as a component, once as raw text (`?raw`). Never a snippet typed beside the demo |
 | **The frame** | `<Example doc="<id>" code={…} codePath="src/ds-examples/…">` — the live component at the picked **window** chip, chrome drawn around it |
@@ -39,6 +40,9 @@ usage:                   # "Used in:" links — REQUIRED, one per line.
   # An entry with no `| href` renders as plain text — that is how a
   # component nothing uses still answers the question. Never omit the key:
   #   - nothing yet — no view has adopted it
+summary:                 # OPTIONAL, and usually wrong. Three or four lines
+  - **Window** — …       # rendered under the intro when the lead alone is not
+  - **Column** — …       # enough to USE the section. A rule, not a component.
 ---
 
 Lead paragraph. One or two sentences on what the component is FOR. This is

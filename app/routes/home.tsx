@@ -512,6 +512,22 @@ function Section({
             <MarkdownInline source={docEntry.lead} />
           </p>
         )}
+        {/* The doc's `summary` frontmatter — three or four lines for a section
+            that is a RULE rather than a component you can look at. Same
+            principle as the lead and the "Used in" links: it comes out of the
+            MD, so the page cannot hold a version the file does not. The
+            Responsive section used to carry a hand-written copy of its own
+            table here, in JSX, four bullets deep. */}
+        {docEntry?.summary && docEntry.summary.length > 0 && (
+          <ul className="mt-4 flex max-w-2xl flex-col gap-1.5 text-small text-muted-foreground">
+            {docEntry.summary.map((line, i) => (
+              <li key={i} className="flex gap-2">
+                <span aria-hidden className="select-none text-border">—</span>
+                <span className="text-pretty"><MarkdownInline source={line} /></span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
       {/* One example's frame used to sit flush against the next one's title,
           so a title read as a caption on the frame above it. 48px between
@@ -1120,41 +1136,16 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
 
       {/* ══ RESPONSIVE & POINTER ══ */}
       <Section id="responsive" title="Responsive & Pointer">
-        {/* SUMMARY ONLY. The full write-up — arithmetic, ladders, why the two
-            window gates are not one, the duplication map, what the stage can
-            and cannot show — is docs/components/responsive.md behind ⓘ, and
-            prose lives in exactly one place (docs/components/README.md). This
-            section states the rule, shows it happening, and points. */}
-        <p className="text-base text-muted-foreground mb-5 max-w-2xl">
-          The common ground every component builds on: how it adapts to <span className="text-foreground">width</span> and to{" "}
-          <span className="text-foreground">pointer type</span>. Width is measured <span className="text-foreground">three ways, and only three</span> —
-          the full account, with the arithmetic, is behind ⓘ; each component's own steps live in its section.
-        </p>
-        <ul className="text-base text-muted-foreground flex flex-col gap-2 mb-5 max-w-2xl list-disc pl-5">
-          <li>
-            <span className="text-foreground">Window</span> — the browser — decides the <span className="text-foreground">chrome</span> and how a thing is <span className="text-foreground">presented</span>.
-            Two gates, each with a job: <span className="text-foreground">608 = chrome</span> (<code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">useFooterNav</code>: tab bar ⇄ icon rail, mobile header, mini player) and{" "}
-            <span className="text-foreground">768 = presentation</span> (<code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">useIsMobile</code> and Tailwind <code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">md:</code>, the same gate in TS and CSS: sheets ⇄ dialogs and dropdowns, toast placement, the docked editor).
-            <code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">sm:</code> / <code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">lg:</code> reflow in-page content only.
-          </li>
-          <li>
-            <span className="text-foreground">Column</span> — what the window leaves after chrome, cap and editor — decides <span className="text-foreground">how many fit</span>:
-            cards step at <code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">304→2 · 464→3 · 692→4 · 928→5 · 1164→6 · 1500→7</code>, rails and the MediaHeader change mode at <span className="text-foreground">560</span> (a 660px window, not 608 — the icon rail arrives there and takes the column back to 508).
-            Steps are written <code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">@min-[N]</code> / <code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">@max-[N]</code>; Tailwind's <code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">@max-[N]</code> is exclusive.
-          </li>
-          <li>
-            <span className="text-foreground">Box</span> — a component's own width — only where the same window can hand it two widths (a song row in a list vs a rail cell, the player bar beside the docked editor), and then the container is <span className="text-foreground">named</span>.
-          </li>
-          <li>
-            <span className="text-foreground">Pointer, not width</span>, for touch: hover is pointer-only (Tailwind wraps <code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">hover:</code> in <code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">@media (hover: hover)</code>);
-            show/hide a control with <code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">[@media(hover:none)]:!hidden</code>; swap a <span className="text-foreground">component</span> on the window, never on hover. Cards tap with <code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">useLongPress</code> on the browser's real click; rails pan both axes and snap <code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">mandatory</code>.
-          </li>
-        </ul>
+        {/* NO PROSE HERE. The intro is the doc's lead, the three measures are
+            its `summary` frontmatter, and the full account — arithmetic,
+            ladders, why the two window gates are not one, the duplication map
+            — is docs/components/responsive.md behind ⓘ.
 
-        <p className="text-base text-muted-foreground mb-3 max-w-2xl">
-          <span className="text-foreground font-medium">The window decides, the column pays</span> —
-          pick a width and watch it happen to real components:
-        </p>
+            This section used to hold four JSX bullets restating that table by
+            hand. They were not stale, and that was luck: nothing kept them in
+            step with `breakpoints.ts` or the MD, so the page could have
+            described a ladder the app no longer had. The section states the
+            rule, shows it happening, and points. */}
         <ResponsiveLab />
 
         <p className="text-small text-muted-foreground max-w-2xl">

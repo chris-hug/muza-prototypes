@@ -5,6 +5,11 @@ source: src/lib/breakpoints.ts
 related: [dialog, card-rail, song-list-item, mobile-header, toast]
 usage:
   - not a component — the width rules every section is measured against
+summary:
+  - **Window** — the browser. Decides the **chrome** and how a thing is **presented**. Two gates: **608** chrome (tab bar ⇄ icon rail, mobile header, mini player) and **768** presentation (`useIsMobile` and `md:`, the same gate in TS and CSS — sheets ⇄ dialogs, toasts, the docked editor).
+  - **Column** — what the window leaves after chrome, cap and editor. Decides **how many fit**: card steps, rail peek, MediaHeader tier. Written `@min-[N]` / `@max-[N]`.
+  - **Box** — a component's own width. Only where the same window can hand it two widths (a song row in a list vs a rail cell), and then the container is **named**.
+  - **Pointer, not width**, for touch: hover is pointer-only, and a component swaps on the window — never on hover.
 ---
 
 Muza measures width in **three ways, and only three**. Every number in the

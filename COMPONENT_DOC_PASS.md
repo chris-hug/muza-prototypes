@@ -22,6 +22,7 @@ the index.
 | Surface | What it renders | Where |
 |---|---|---|
 | "Used in:" links under the title | the frontmatter's **`usage`** list | `componentDoc(id).usage` |
+| Summary lines under the intro (rare) | the frontmatter's **`summary`** list | `componentDoc(id).summary` |
 | Section intro (the paragraph under the section title) | the doc's **lead** — its first non-heading paragraph | `home.tsx`, via `componentDoc(id).lead` |
 | ⓘ info modal (section header, and each `Example` frame) | the doc's **whole body** | `Markdown source={entry.body}` |
 
@@ -44,6 +45,8 @@ usage:
   - Upload music | /?page=Music
 ---
 ```
+
+`summary` came later and needed no parser change, which is the point of collecting block lists generically. Use it only where a section is a RULE the rest of the page is measured against — Responsive carried four hand-written JSX bullets restating its own table until it got one. They were not stale, and that was luck: nothing kept them in step with `breakpoints.ts`.
 
 `usage` is `Label | href` per line. A pipe rather than YAML mapping syntax, so a label can carry the `›` and `·` these lines are full of without quoting, and so the parser stays short. Block lists are parsed generically, so the next such field needs no new special case.
 

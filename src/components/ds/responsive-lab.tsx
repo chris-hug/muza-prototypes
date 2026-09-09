@@ -159,9 +159,105 @@ export function ResponsiveLab() {
 
   return (
     <div className="mb-8 flex flex-col gap-3">
-      {/* Chips right, live readout beside them — the same place every width
-          picker in this design system sits. These are VIEWPORT widths; the
-          `Example` frame's chips are CONTAINER widths. */}
+      {/* The ladder first, the frame second. Every width band is a row and
+          the active one is SELECTED, so the table is the picker as well as
+          the reference — you read the list, choose a band, and the stage
+          below shows that one happening to real components. The frame used
+          to come first, which asked the reader to interpret a picture
+          before knowing what the set of pictures was. */}
+      <div className="mt-4 overflow-x-auto rounded-xl border border-border">
+        <table className="w-full text-left text-xsmall tabular-nums">
+          <thead className="border-b border-border bg-muted text-muted-foreground">
+            <tr>
+              <th scope="col" className="px-3 py-2 font-medium">Name</th>
+              <th scope="col" className="px-3 py-2 font-medium">Window</th>
+              <th scope="col" className="px-3 py-2 font-medium">Sidebar</th>
+              <th scope="col" className="px-3 py-2 font-medium">Gutter</th>
+              <th scope="col" className="px-3 py-2 font-medium">Column</th>
+              {/* The second content column is the point of the table now: the
+                  same window, with the editor docked, is a different app. */}
+              <th scope="col" className="px-3 py-2 font-medium">…with editor</th>
+              <th scope="col" className="px-3 py-2 font-medium">Cards</th>
+              {/* No separate "Defined in" column: only four of these widths
+                  have a constant to name, so it was five empty cells and a
+                  header. The constant now sits at the end of the sentence it
+                  belongs to. */}
+              <th scope="col" className="px-3 py-2 font-medium">What changes here</th>
+            </tr>
+          </thead>
+          <tbody>
+            {VIEWPORTS.map(v => {
+              const c = containerAt(v.px)
+              const prev = containerAt(v.px - 1)
+              const lost = prev - c
+              const d = drawerAt(v.px)
+              const withDrawer = d > 0 ? containerAt(v.px, { drawer: d }) : null
+              return (
+                <tr
+                  key={v.px}
+                  // The active width is a SELECTED row and wears the table's own
+                  // token for it (`data-[state=selected]:bg-muted`, table.tsx) —
+                  // not a primary tint, which reads as a link or a focus ring.
+                  // A row is also a second way to pick that width: click it and
+                  // the chip above follows, since both read `pick`.
+                  data-state={w === v.px ? "selected" : undefined}
+                  onClick={() => setPick(v.px)}
+                  onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setPick(v.px) } }}
+                  tabIndex={0}
+                  aria-pressed={pick === v.px}
+                  title={`Show the frame at ${v.px}px`}
+                  className={cn(
+                    "border-b border-border last:border-0 cursor-pointer transition-colors",
+                    "hover:bg-muted data-[state=selected]:bg-muted",
+                    "outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset",
+                  )}
+                >
+                  <th scope="row" className="whitespace-nowrap px-3 py-2 font-medium text-foreground">{v.name}</th>
+                  <td className="px-3 py-2 text-foreground">{v.px}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{sidebarAt(v.px) || "—"}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{gutterAt(v.px)}</td>
+                  <td className="px-3 py-2 text-foreground">
+                    {c}
+                    {/* The counter-intuitive part, marked only where it is
+                        true: the page grew and the content shrank. */}
+                    {lost > 0 && (
+                      <span className="ml-1.5 text-muted-foreground">−{lost} vs {v.px - 1}px</span>
+                    )}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">
+                    {withDrawer == null
+                      ? <span title={`The editor is hidden below ${DRAWER_FROM}px`}>—</span>
+                      : <>{withDrawer}<span className="ml-1.5 text-muted-foreground/70">−{c - withDrawer}</span></>}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">
+                    {colsAt(c)}{c < STACK && " · peek"}
+                  </td>
+                  <td className="px-3 py-2 text-muted-foreground">
+                    {v.note}
+                    {/* The constant to import instead of typing the number —
+                        `608` and `1069` are arithmetic and move if anything in
+                        their chain does. Named here rather than in a column
+                        of its own, since most widths have none. */}
+                    {v.where !== "—" && (
+                      <>
+                        {" · "}
+                        <code className="rounded-sm bg-muted px-1 font-mono text-2xsmall font-normal">{v.where}</code>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* The picker sits DIRECTLY above the frame it controls, not above
+          the table. A control belongs next to the thing it changes: over
+          the table it read as a filter on the rows, which is not what it
+          does. The table is the reference and picks a width by row; these
+          chips set the width of the frame directly beneath them. They are
+          WINDOW widths — the `Example` frame's chips are CONTAINER widths. */}
       <div className="flex flex-wrap items-center gap-3">
         <p className="text-small text-muted-foreground">
           <span className="font-medium text-foreground">Pick a window width</span> — the frame
@@ -348,95 +444,6 @@ export function ResponsiveLab() {
           </span>
         )}
       </p>
-
-      {/* What the frame cannot show, and the shape of the whole ladder — the
-          IRIS pattern: one stage, then a plain table. */}
-      <div className="mt-4 overflow-x-auto rounded-xl border border-border">
-        <table className="w-full text-left text-xsmall tabular-nums">
-          <thead className="border-b border-border bg-muted text-muted-foreground">
-            <tr>
-              <th scope="col" className="px-3 py-2 font-medium">Name</th>
-              <th scope="col" className="px-3 py-2 font-medium">Window</th>
-              <th scope="col" className="px-3 py-2 font-medium">Sidebar</th>
-              <th scope="col" className="px-3 py-2 font-medium">Gutter</th>
-              <th scope="col" className="px-3 py-2 font-medium">Column</th>
-              {/* The second content column is the point of the table now: the
-                  same window, with the editor docked, is a different app. */}
-              <th scope="col" className="px-3 py-2 font-medium">…with editor</th>
-              <th scope="col" className="px-3 py-2 font-medium">Cards</th>
-              {/* No separate "Defined in" column: only four of these widths
-                  have a constant to name, so it was five empty cells and a
-                  header. The constant now sits at the end of the sentence it
-                  belongs to. */}
-              <th scope="col" className="px-3 py-2 font-medium">What changes here</th>
-            </tr>
-          </thead>
-          <tbody>
-            {VIEWPORTS.map(v => {
-              const c = containerAt(v.px)
-              const prev = containerAt(v.px - 1)
-              const lost = prev - c
-              const d = drawerAt(v.px)
-              const withDrawer = d > 0 ? containerAt(v.px, { drawer: d }) : null
-              return (
-                <tr
-                  key={v.px}
-                  // The active width is a SELECTED row and wears the table's own
-                  // token for it (`data-[state=selected]:bg-muted`, table.tsx) —
-                  // not a primary tint, which reads as a link or a focus ring.
-                  // A row is also a second way to pick that width: click it and
-                  // the chip above follows, since both read `pick`.
-                  data-state={w === v.px ? "selected" : undefined}
-                  onClick={() => setPick(v.px)}
-                  onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setPick(v.px) } }}
-                  tabIndex={0}
-                  aria-pressed={pick === v.px}
-                  title={`Show the frame at ${v.px}px`}
-                  className={cn(
-                    "border-b border-border last:border-0 cursor-pointer transition-colors",
-                    "hover:bg-muted data-[state=selected]:bg-muted",
-                    "outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset",
-                  )}
-                >
-                  <th scope="row" className="whitespace-nowrap px-3 py-2 font-medium text-foreground">{v.name}</th>
-                  <td className="px-3 py-2 text-foreground">{v.px}</td>
-                  <td className="px-3 py-2 text-muted-foreground">{sidebarAt(v.px) || "—"}</td>
-                  <td className="px-3 py-2 text-muted-foreground">{gutterAt(v.px)}</td>
-                  <td className="px-3 py-2 text-foreground">
-                    {c}
-                    {/* The counter-intuitive part, marked only where it is
-                        true: the page grew and the content shrank. */}
-                    {lost > 0 && (
-                      <span className="ml-1.5 text-muted-foreground">−{lost} vs {v.px - 1}px</span>
-                    )}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">
-                    {withDrawer == null
-                      ? <span title={`The editor is hidden below ${DRAWER_FROM}px`}>—</span>
-                      : <>{withDrawer}<span className="ml-1.5 text-muted-foreground/70">−{c - withDrawer}</span></>}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">
-                    {colsAt(c)}{c < STACK && " · peek"}
-                  </td>
-                  <td className="px-3 py-2 text-muted-foreground">
-                    {v.note}
-                    {/* The constant to import instead of typing the number —
-                        `608` and `1069` are arithmetic and move if anything in
-                        their chain does. Named here rather than in a column
-                        of its own, since most widths have none. */}
-                    {v.where !== "—" && (
-                      <>
-                        {" · "}
-                        <code className="rounded-sm bg-muted px-1 font-mono text-2xsmall font-normal">{v.where}</code>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
 
       <p className="max-w-2xl text-2xsmall text-muted-foreground">
         The names are <span className="text-foreground">width bands, not devices</span> — a 1024px

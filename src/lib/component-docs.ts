@@ -11,8 +11,8 @@
  *     and works in a static export.
  *
  * Frontmatter is a deliberately tiny subset of YAML — `key: value`,
- * `key: [a, b]`, and a block list of `- Label | href` lines for `usage`.
- * A real parser would be a dependency for five fields.
+ * `key: [a, b]`, and block lists of `- …` lines (`usage`, `summary`).
+ * A real parser would be a dependency for six fields.
  */
 
 const FILES = import.meta.glob("/docs/components/*.md", {
@@ -38,6 +38,16 @@ export interface ComponentDoc {
    *  is how a component that nothing uses yet still ANSWERS the question. A
    *  blank "Used in:" is indistinguishable from a forgotten one. */
   usage: Array<{ label: string; href?: string }>
+  /** The three or four lines a reader needs ON the page, when the lead alone
+   *  is not enough to use the section. Frontmatter, like `usage`, so it stays
+   *  in the same file as the rest of the prose instead of being typed into
+   *  `home.tsx` — which is exactly how the Responsive section ended up with a
+   *  hand-written second copy of its own table.
+   *
+   *  Rendered as `**Lead** — the rest`, Markdown-inline, under the intro.
+   *  Most sections need none: write one only when the section is a RULE the
+   *  page is measured against rather than a component you can look at. */
+  summary: string[]
   /** Everything after the frontmatter block. */
   body: string
   /** The first paragraph of the body — one or two sentences on what the
@@ -53,9 +63,9 @@ function parse(path: string, raw: string): ComponentDoc {
   const m = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/)
   const body = m ? raw.slice(m[0].length) : raw
   const meta: Record<string, string> = {}
-  /* Block lists: a key whose value is empty, followed by `  - …` lines. Only
-     `usage` uses one today; collecting them generically keeps the parser from
-     needing another special case the next time. */
+  /* Block lists: a key whose value is empty, followed by `  - …` lines.
+     Collected generically — which is why `summary` needed no parser change
+     when it was added after `usage`. */
   const blocks: Record<string, string[]> = {}
   if (m) {
     let openKey: string | null = null
@@ -106,6 +116,7 @@ function parse(path: string, raw: string): ComponentDoc {
         ? { label: entry.trim() }
         : { label: entry.slice(0, at).trim(), href: entry.slice(at + 1).trim() }
     }),
+    summary: blocks.summary ?? [],
     body,
     // `path` from the glob is absolute-from-root; store it repo-relative so
     // it can be pasted into a GitHub URL or opened in an editor as-is.
