@@ -174,6 +174,8 @@ import toastBasicExampleSrc from "@/ds-examples/toast-basic.tsx?raw"
 import ToastLiveExample from "@/ds-examples/toast-live"
 import toastLiveExampleSrc from "@/ds-examples/toast-live.tsx?raw"
 import ButtonBasicExample from "@/ds-examples/button-basic"
+import ButtonCatalogueExample from "@/ds-examples/button-catalogue"
+import buttonCatalogueExampleSrc from "@/ds-examples/button-catalogue.tsx?raw"
 import buttonBasicExampleSrc from "@/ds-examples/button-basic.tsx?raw"
 import ToggleBasicExample from "@/ds-examples/toggle-basic"
 import toggleBasicExampleSrc from "@/ds-examples/toggle-basic.tsx?raw"
@@ -300,7 +302,7 @@ import {
   Settings, User, LogOut, Upload, MoreHorizontal,
   Plus, Search, ChevronDown, Trash2, Maximize2,
   Radio as RadioIcon, ShoppingBag, Disc3, Disc, CassetteTape, Shirt, Ghost,
-  ChevronLeft, ChevronRight, Globe, X, Sun, Moon, MapPin, CircleCheckBig,
+  ChevronLeft, ChevronRight, Globe, X, Sun, Moon, MapPin, CircleCheckBig, BookOpen,
   ArrowUpRight,
   ListPlus, ListStart, ListEnd, Mic, Flag, Clock, Lock, ListMusic,
 } from "lucide-react"
@@ -362,8 +364,20 @@ function SectionDocButton({ id }: { id: string }) {
   if (!entry) return null
   return (
     <>
-      <Button variant="ghost" size="icon-sm" aria-label={`About ${entry.title}`} onClick={() => setOpen(true)}>
-        <Info />
+      {/* Named "Docs", and a real button.
+       *
+       * As a bare ⓘ it was the most valuable thing on a section and the
+       * quietest — the modal holds the component's whole write-up: anatomy,
+       * the arithmetic behind its numbers, behaviour, and the open questions
+       * nobody has answered yet. That is not "info" in the tooltip sense, it
+       * is THE document, and `docs/components/<id>.md` is literally what it
+       * renders — so the word on the button is the word for the file.
+       *
+       * `Source` beside it opens the same file on GitHub; this opens it here.
+       * Two doors, one room, and both now say which. */}
+      <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
+        <BookOpen className="size-3.5" />
+        Docs
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="md:max-w-[min(46rem,90vw)] flex flex-col"
@@ -376,20 +390,21 @@ function SectionDocButton({ id }: { id: string }) {
           style={{ maxHeight: "85svh" }}>
           <DialogHeader className="shrink-0">
             <DialogTitle className="md:text-large">{entry.title}</DialogTitle>
+            {/* The file, beside the title rather than at the very bottom.
+                It answers "where does this text live" — a question you ask
+                BEFORE reading, when deciding whether to trust it, not after
+                scrolling three thousand words to find out. */}
+            <a
+              href={`https://github.com/chris-hug/muza-prototypes/blob/main/${entry.path}`}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1 block w-fit font-mono text-3xsmall text-muted-foreground hover:text-foreground hover:underline underline-offset-2 transition-colors"
+            >
+              {entry.path}
+            </a>
           </DialogHeader>
           <div className="flex-1 min-h-0 overflow-y-auto pr-1">
             <Markdown source={entry.body} />
-            <p className="mt-6 pt-4 border-t border-border text-2xsmall text-muted-foreground">
-              Source of truth:{" "}
-              <a
-                href={`https://github.com/chris-hug/muza-prototypes/blob/main/${entry.path}`}
-                target="_blank"
-                rel="noreferrer"
-                className="text-primary-text hover:underline underline-offset-2"
-              >
-                {entry.path}
-              </a>
-            </p>
           </div>
         </DialogContent>
       </Dialog>
@@ -452,6 +467,12 @@ function Section({
               the rule alone. `font-medium` stays — it is the heaviest weight
               in the system outside h1. */}
           <p className="text-xlarge font-medium text-foreground">{title}</p>
+          {/* Beside the title, not banished to the right rail with the
+              metadata: it is the way INTO the section, and the date and the
+              GitHub link are things you check on the way out. Only shows once
+              `docs/components/<id>.md` exists, so writing the doc is what
+              turns it on. */}
+          <SectionDocButton id={id} />
           {resolvedStatus === "new"     && <Badge variant="new">New</Badge>}
           {resolvedStatus === "updated" && <Badge variant="updated">Updated</Badge>}
           {/* `concept` = built but not yet wired into the prototype.
@@ -460,12 +481,8 @@ function Section({
           {resolvedStatus === "concept" && <Badge variant="outline">Not used yet</Badge>}
           {phase === 2                  && <Badge variant="secondary">Phase 2 · Shop</Badge>}
 
-          {(changedDate || sourceUrl || componentDoc(id)) && (
+          {(changedDate || sourceUrl) && (
             <div className="ml-auto flex items-center gap-2">
-              {/* The component's own Markdown — `docs/components/<id>.md`,
-                   the same file an agent reads. Only shows once that file
-                   exists, so writing docs is what turns the button on. */}
-              <SectionDocButton id={id} />
               {changedDate && (
                 <span className="text-small text-muted-foreground tabular-nums">
                   Changed{" "}<span className="text-foreground">{formatStatusDate(changedDate)}</span>
@@ -1170,12 +1187,25 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
              for the same reason: a catalogue is a list, and centring it made
              the rows drift with the widest label. */
           responsive={false}
-          frameless
-          align="stretch"
           code={buttonBasicExampleSrc}
           codePath="src/ds-examples/button-basic.tsx"
         >
           <ButtonBasicExample />
+        </Example>
+
+        {/* Everything else is a CATALOGUE — you scan it for the one you need
+            rather than study it — so it sits outside the frame, on the page's
+            own background, with no rules between the rows. */}
+        <Example
+          title="Sizes · icon-only · states"
+          doc="button"
+          responsive={false}
+          frameless
+          align="stretch"
+          code={buttonCatalogueExampleSrc}
+          codePath="src/ds-examples/button-catalogue.tsx"
+        >
+          <ButtonCatalogueExample />
         </Example>
       </Section>
 

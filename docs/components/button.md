@@ -251,15 +251,22 @@ pointer concern, not a width one.
 
 ## The catalogue has no frame
 
-The Button section renders `frameless` — no border, no surface, no window
-chips. A frame is a claim that the component has an **edge** worth showing: a
-card, a dialog, a rail that reacts to its container. A Button has none. It
-takes its size from a prop and renders identically at 320 and at 1920, so a box
-around it invents a container the button never has and spends the reader's
-attention on a rectangle that means nothing.
+One thing sits in a frame: the seven variants, all at `default`. That is the
+thing you look **at** — what a Button is, in the size nine calls out of ten
+use.
 
-The `</>` and ⓘ affordances stay — they are about the call site and the doc,
-not about the frame.
+Everything else — the size ladder, the icon-only set, disabled and loading —
+is `frameless`: no border, no surface, no window chips, and no rules between
+the rows. It is a **catalogue**, scanned rather than studied. A frame is a
+claim that the component has an *edge* worth showing (a card, a dialog, a rail
+that reacts to its container), and a Button has none: it takes its size from a
+prop and renders identically at 320 and at 1920. The grid lines went for the
+same reason — they drew a table around things that are not table data, and
+every rule was one more edge competing with the buttons' own, which are the
+only edges here that mean anything.
+
+The `</>` and **Docs** affordances stay on both — they are about the call site
+and the doc, not about the frame.
 
 ## Open questions
 
