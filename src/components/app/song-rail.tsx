@@ -74,7 +74,7 @@ export function SongRail({ title, rows, onShowAll }: {
                   variant="ghost"
                   size="sm"
                   onClick={onShowAll}
-                  className="@max-[559px]:!bg-secondary @max-[559px]:!text-secondary-foreground @max-[559px]:hover:!bg-secondary-hover"
+                  className="@max-[560px]:!bg-secondary @max-[560px]:!text-secondary-foreground @max-[560px]:hover:!bg-secondary-hover"
                 >
                   Show all
                 </Button>

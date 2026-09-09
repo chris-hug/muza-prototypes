@@ -222,7 +222,7 @@ export function MediaHeader({
           keep their room instead of the owner truncating away. Fires on the
           smallest phones (viewport 320–343, stacked) and in the icon-rail
           band where the container sits at 560–619 (viewport 660–719). */}
-      {year && <span className="pb-px shrink-0 @max-[319px]/meta:hidden">{year}</span>}
+      {year && <span className="pb-px shrink-0 @max-[320px]/meta:hidden">{year}</span>}
       {isOwned && visibility && (
         <StatusBadge status={visibility} onStatusChange={onVisibilityChange} />
       )}

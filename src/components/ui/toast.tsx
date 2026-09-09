@@ -32,7 +32,7 @@ export const toastShellClass = cn(
   // player uses a slim single-line bar at the bottom for "added to playlist";
   // 4px/18px of padding around two stacked lines took a quarter of a small
   // screen. Desktop keeps the roomier card.
-  "rounded-xl border border-border bg-popover px-3 py-3 sm:px-4 sm:pt-4 sm:pb-[18px] shadow-lg",
+  "rounded-xl border border-border bg-popover px-3 py-3 md:px-4 md:pt-4 md:pb-[18px] shadow-lg",
   "text-popover-foreground transition-[transform,opacity] duration-200",
 )
 const toastShell = toastShellClass
@@ -49,7 +49,7 @@ export const toastCloseButtonClass = cn(
   // Hidden on phones: the toast auto-dismisses and can be swiped away, and a
   // dismiss target competes for width with the message itself. Platform
   // snackbars don't carry one either.
-  "hidden sm:flex",
+  "hidden md:flex",
   "shrink-0 self-start mt-[3px] rounded-lg p-0.5 text-muted-foreground",
   "hover:bg-accent hover:text-accent-foreground transition-colors",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
@@ -91,12 +91,14 @@ function ToastViewport({ className }: { className?: string }) {
     <ToastPrimitive.Viewport
       className={cn(
         "fixed z-[100] flex flex-col gap-2 outline-none",
-        // Mobile → a bar along the BOTTOM, which is where every player puts
-        // its confirmations (thumb-side, out of the content's way). Lifted
-        // clear of the mini player + footer tab bar and the home indicator.
+        // Below `md` → a bar along the BOTTOM, which is where every player
+        // puts its confirmations (thumb-side, out of the content's way). The
+        // 112px clears the mini player + footer tab bar (below 608) and, in
+        // the 608–767 band where the tab bar is gone, the desktop player bar
+        // (bottom-5 + 80px = 100px) — so one lift serves both chromes.
         "inset-x-3 bottom-[calc(112px+env(safe-area-inset-bottom)+var(--kb,0px))] w-auto",
         // Desktop → the familiar top-right card.
-        "sm:inset-x-auto sm:right-4 sm:top-4 sm:bottom-auto sm:w-[380px] sm:max-w-[calc(100vw-2rem)]",
+        "md:inset-x-auto md:right-4 md:top-4 md:bottom-auto md:w-[380px] md:max-w-[calc(100vw-2rem)]",
         className
       )}
     >

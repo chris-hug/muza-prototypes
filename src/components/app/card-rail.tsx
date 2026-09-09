@@ -181,7 +181,7 @@ export function CardRail({ title, showAllLabel = "Show all", onShowAll, showAllO
                 variant="ghost"
                 size="sm"
                 onClick={onShowAll}
-                className="@max-[559px]:!bg-secondary @max-[559px]:!text-secondary-foreground @max-[559px]:hover:!bg-secondary-hover"
+                className="@max-[560px]:!bg-secondary @max-[560px]:!text-secondary-foreground @max-[560px]:hover:!bg-secondary-hover"
               >
                 {showAllLabel}
               </Button>
@@ -194,7 +194,7 @@ export function CardRail({ title, showAllLabel = "Show all", onShowAll, showAllO
                  only on a pointer device at ≥ 560 container, while the
                  rail can still scroll. */}
             {showArrows && (
-              <div className="flex items-center gap-1 [@media(hover:none)]:!hidden @max-[559px]:hidden">
+              <div className="flex items-center gap-1 [@media(hover:none)]:!hidden @max-[560px]:hidden">
                 <Button
                   variant="outline"
                   size="icon-sm"
@@ -272,7 +272,7 @@ export function CardRail({ title, showAllLabel = "Show all", onShowAll, showAllO
               // (AlbumCard tags it `data-card-year`) below 560 to keep
               // the meta line from crowding. Year returns on the single
               // row from 560 up.
-              "@max-[559px]:[&_[data-card-year]]:hidden " +
+              "@max-[560px]:[&_[data-card-year]]:hidden " +
               // Column count below 560 follows a MINIMUM COVER of 140px, not a
               // guessed ladder. The density of this variant comes from the
               // second ROW; thinning the columns as well made 101px covers at

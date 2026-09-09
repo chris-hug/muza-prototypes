@@ -439,7 +439,7 @@ function AddProductDialog({ open, onOpenChange, onSelect }: {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] p-8 gap-0 shadow-none">
+      <DialogContent className="md:max-w-[600px] p-8 gap-0 shadow-none">
         <DialogHeader className="mb-8 gap-0.5">
           <DialogTitle className="text-large font-semibold leading-none">Create Listing</DialogTitle>
           <DialogDescription className="text-small text-muted-foreground">

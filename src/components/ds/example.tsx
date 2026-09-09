@@ -57,9 +57,10 @@ export type ExampleWidth = {
  *
  * This replaced a second ladder of raw container steps (304 · 464 · 692 · 928
  * · 1164 · 1500). Those were the card grid's own switch points, which made
- * them exact but unreal: the app never produces a 464px column. Two unlabelled
- * number sets on one page read as a contradiction, and labelling them did not
- * fix it — it only named the contradiction. Nothing was lost by dropping them:
+ * them exact but unlabelled: a 464px column does exist (a 488px window), but
+ * nothing on the page said so. Two unlabelled number sets on one page read as
+ * a contradiction, and labelling them did not fix it — it only named the
+ * contradiction. Nothing was lost by dropping them:
  * stepping through these nine windows yields column counts 2·2·3·3·3·4·5·6·7,
  * so every step of the card ladder is still reachable, at a width that
  * actually occurs.
@@ -373,8 +374,8 @@ export function Example({
           tokens so the docs look like the thing they document. */}
       {entry && (
         <Dialog open={showDoc} onOpenChange={setShowDoc}>
-          <DialogContent className="sm:max-w-[min(46rem,90vw)] flex flex-col"
-          // Inline, not a class: the base sheet sets `sm:max-h-none`, and
+          <DialogContent className="md:max-w-[min(46rem,90vw)] flex flex-col"
+          // Inline, not a class: the base sheet sets `md:max-h-none`, and
           // between two utilities for the same property the GENERATED CSS
           // order decides, not the order they are listed in — `max-h-none`
           // wins there whatever tailwind-merge keeps. Without a cap the docs
@@ -382,7 +383,7 @@ export function Example({
           // with its own header scrolled off the top of the screen.
           style={{ maxHeight: "85svh" }}>
             <DialogHeader className="shrink-0">
-              <DialogTitle className="sm:text-large">{entry.title}</DialogTitle>
+              <DialogTitle className="md:text-large">{entry.title}</DialogTitle>
             </DialogHeader>
             <div className="flex-1 min-h-0 overflow-y-auto pr-1">
               <Markdown source={entry.body} />

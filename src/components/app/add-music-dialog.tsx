@@ -262,7 +262,7 @@ export function AddMusicDialog({
           switch tabs or start typing reads as jumping. `h-…` (not just the
           base `max-h-…`) is what pins the top edge. Desktop keeps the
           content-sized modal, capped at 85vh. */}
-      <DialogContent className="sm:max-w-[max(32rem,50vw)] flex flex-col h-[calc(100svh-var(--kb,0px)-8px-env(safe-area-inset-top))] sm:h-auto sm:max-h-[85vh]">
+      <DialogContent className="md:max-w-[max(32rem,50vw)] flex flex-col h-[calc(100svh-var(--kb,0px)-8px-env(safe-area-inset-top))] md:h-auto md:max-h-[85vh]">
         {/* The playlist is named in the TITLE rather than a description line
             — it's the one piece of context that matters, and a separate line
             costs height the keyboard is already taking. It does NOT change on
@@ -287,13 +287,13 @@ export function AddMusicDialog({
               // Optical, not box, alignment on desktop: the button is 32px
               // wide around a 16px icon, so its box has to hang 8px left for
               // the CHEVRON to sit on the same line as the covers below.
-              className="shrink-0 sm:-ml-2"
+              className="shrink-0 md:-ml-2"
             >
               <ChevronLeft />
             </Button>
           ) : undefined}
         >
-          <DialogTitle className="sm:text-large truncate">
+          <DialogTitle className="md:text-large truncate">
             {playlistName ? `Add to “${playlistName}”` : "Add music"}
           </DialogTitle>
         </DialogHeader>
@@ -387,7 +387,7 @@ export function AddMusicDialog({
                 onChange={v => setTab(v as TabKey)}
                 // Match the dialog's own gutter so scrolled pills run to the
                 // sheet edge instead of being cropped inside it.
-                className="-mx-3 px-3 sm:-mx-6 sm:px-6"
+                className="-mx-3 px-3 md:-mx-6 md:px-6"
                 tabs={[
                   ...(picked.length > 0
                     ? [{ value: "selection", label: "Selection", icon: <AddMusicIcon />, count: picked.length }]
@@ -407,10 +407,10 @@ export function AddMusicDialog({
                 flex item defaults to `min-height: auto`, so without it the
                 list keeps its content height, overflows the sheet, and the
                 last rows are sliced by the footer.
-                `-mb-2 sm:-mb-5` eats the sheet's own gap so the list runs up to
+                `-mb-2 md:-mb-5` eats the sheet's own gap so the list runs up to
                 the footer: the bar's edge is what cuts the content off, with
                 no strip of empty sheet between them. */}
-            <div className={cn(dialogListClass, "gap-4 -mb-2 sm:-mb-5")}>
+            <div className={cn(dialogListClass, "gap-4 -mb-2 md:-mb-5")}>
               {tab === "selection" ? (
                 // Everything picked so far, regardless of the query it came from.
                 <section className="flex flex-col gap-2">
@@ -467,7 +467,7 @@ export function AddMusicDialog({
             control next to the confirming one just splits the target. */}
         <DialogFooter
           className={cn(
-            "shrink-0 mt-0 flex-col sm:flex-row sm:items-center",
+            "shrink-0 mt-0 flex-col md:flex-row md:items-center",
             // On the Find screen the band leaves the flow and sits over the
             // results (the list is cleared by a spacer at its end), which
             // buys back the ~50px the keyboard took. The FOOTER carries this,
@@ -494,7 +494,7 @@ export function AddMusicDialog({
           {/* The album screen is about one record, so there's nothing to
               search from inside it. */}
           {!album && (
-            <div className="w-full min-w-0 sm:flex-1">
+            <div className="w-full min-w-0 md:flex-1">
               <Input
                 value={query}
                 onChange={e => setQuery(e.target.value)}
@@ -527,7 +527,7 @@ export function AddMusicDialog({
               button would take a second row of the little the keyboard
               leaves. */}
           {(!finding || picked.length > 0) && (
-            <Button size="lg" onClick={done} disabled={picked.length === 0} className="w-full sm:w-auto">
+            <Button size="lg" onClick={done} disabled={picked.length === 0} className="w-full md:w-auto">
               {/* Name the unit, not just the number — "Add 4" reads as an
                   ordinal on a row of tracks. Singular when it's one. */}
               {picked.length > 0

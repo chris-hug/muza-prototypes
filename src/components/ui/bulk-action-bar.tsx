@@ -18,6 +18,7 @@
  */
 
 import { createPortal } from "react-dom"
+import { useFooterNav } from "@/lib/use-media-query"
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -71,10 +72,14 @@ export function BulkActionBarContent({ count, onClear, label = "selected", child
 
 /** Live, portaled bar. Renders nothing when `count` is 0. */
 export function BulkActionBar(props: BulkActionBarProps) {
+  // The lift clears the footer tab bar + mini player, which exist below 608
+  // (`useFooterNav`), NOT below the 768 presentation gate — between the two
+  // the desktop player bar is on screen and `bottom-6` already sits over it.
+  const footerNav = useFooterNav()
   if (props.count === 0) return null
 
   const bar = (
-    <div className="absolute bottom-6 max-[767px]:bottom-24 left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-bottom-2 duration-200">
+    <div className={cn("absolute left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-bottom-2 duration-200", footerNav ? "bottom-24" : "bottom-6")}>
       <BulkActionBarContent {...props} />
     </div>
   )

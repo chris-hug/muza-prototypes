@@ -142,7 +142,7 @@ export function CreatePlaylistDialog({
           half the viewport. Phones get the full-screen form sheet. */}
       <DialogContent
         mobile="form"
-        className="sm:max-w-[max(32rem,50vw)]"
+        className="md:max-w-[max(32rem,50vw)]"
         // Straight into the name field, phone included: naming is the only
         // thing this sheet asks for, so the keyboard coming up with it saves
         // a tap. The sheet is anchored TOP and ends at `--kb`, so nothing it
@@ -168,7 +168,7 @@ export function CreatePlaylistDialog({
           </DialogActionBar>
         ) : (
           <DialogHeader>
-            <DialogTitle className="sm:text-large">{title}</DialogTitle>
+            <DialogTitle className="md:text-large">{title}</DialogTitle>
           </DialogHeader>
         )}
 

@@ -108,7 +108,7 @@ const TABS: PillTab[] = [
   pseudo-element).
 - **`className` overrides the bleed to match the host.** The default only
   fits a 12px gutter. Inside a dialog the gutter is 12px on phones and 24px
-  from `sm`, so the Add-music sheet passes `-mx-3 px-3 sm:-mx-6 sm:px-6`;
+  from `md`, so the Add-music sheet passes `-mx-3 px-3 md:-mx-6 md:px-6`;
   `SearchResultsView` uses the strip in the page body under `sm:hidden`.
 
 ## The search panel floats

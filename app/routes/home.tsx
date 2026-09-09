@@ -231,8 +231,8 @@ function SectionDocButton({ id }: { id: string }) {
         <Info />
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-[min(46rem,90vw)] flex flex-col"
-          // Inline, not a class: the base sheet sets `sm:max-h-none`, and
+        <DialogContent className="md:max-w-[min(46rem,90vw)] flex flex-col"
+          // Inline, not a class: the base sheet sets `md:max-h-none`, and
           // between two utilities for the same property the GENERATED CSS
           // order decides, not the order they are listed in — `max-h-none`
           // wins there whatever tailwind-merge keeps. Without a cap the docs
@@ -240,7 +240,7 @@ function SectionDocButton({ id }: { id: string }) {
           // with its own header scrolled off the top of the screen.
           style={{ maxHeight: "85svh" }}>
           <DialogHeader className="shrink-0">
-            <DialogTitle className="sm:text-large">{entry.title}</DialogTitle>
+            <DialogTitle className="md:text-large">{entry.title}</DialogTitle>
           </DialogHeader>
           <div className="flex-1 min-h-0 overflow-y-auto pr-1">
             <Markdown source={entry.body} />
@@ -649,7 +649,7 @@ function DialogsKitchenSink() {
             <DialogTrigger render={<Button variant="outline" />}>
               Open: Create Listing
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="md:max-w-[600px]">
               <DialogHeader>
                 <DialogTitle>Create Listing</DialogTitle>
                 <DialogDescription>Choose what you want to sell.</DialogDescription>
@@ -4996,7 +4996,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         <p className="text-base text-muted-foreground mb-5 max-w-2xl">
           Passwordless <span className="text-foreground">email → one-time passcode</span> entry. A plain
           dialog (not the paywall's landing-page split) — muza mark, semantic type, a single pill CTA. It sets
-          only its desktop width (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">sm:max-w-md</code>);
+          only its desktop width (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">md:max-w-md</code>);
           the bottom-sheet-on-mobile behaviour is inherited from the base <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogContent</code>.
         </p>
         <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-5 max-w-2xl list-disc pl-5">

@@ -139,9 +139,9 @@ export function ArtistHero({ name, cover, avatar, bio, artistId, isPlaying, onPl
         a divider, then the bio in a roomy, easy-to-read body. Wider than the
         default modal so long copy isn't cramped. */}
     <Dialog open={bioOpen} onOpenChange={setBioOpen}>
-      <DialogContent className="sm:max-w-xl p-0 gap-0 overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[85vh]">
+      <DialogContent className="md:max-w-xl p-0 gap-0 overflow-hidden flex flex-col max-h-[92vh] md:max-h-[85vh]">
         {/* Header — avatar + name / type, mirroring the search Top-result row. */}
-        <div className="flex items-center gap-4 px-6 pt-6 pb-5 sm:px-8 sm:pt-8">
+        <div className="flex items-center gap-4 px-6 pt-6 pb-5 md:px-8 md:pt-8">
           <img
             src={avatar ?? cover}
             alt={name}
@@ -157,7 +157,7 @@ export function ArtistHero({ name, cover, avatar, bio, artistId, isPlaying, onPl
         <Separator />
 
         {/* Bio — generous line-height + spacing so it's comfortable to read. */}
-        <div className="px-6 py-6 sm:px-8 sm:py-7 overflow-y-auto min-h-0">
+        <div className="px-6 py-6 md:px-8 md:py-7 overflow-y-auto min-h-0">
           <p className="text-base leading-8 text-foreground/80 whitespace-pre-line">
             {bio}
           </p>

@@ -68,7 +68,7 @@ export function SubscriptionPromptDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!w-[80vw] !max-w-[980px] sm:!max-w-[980px] p-0 gap-0 overflow-hidden bg-muted">
+      <DialogContent className="md:w-[80vw] md:max-w-[980px] p-0 gap-0 overflow-hidden bg-muted">
         {/* Visible heading lives inside PaywallContent; these keep the
             dialog accessible (aria-labelledby / describedby). */}
         <DialogTitle className="sr-only">Support your artists.</DialogTitle>
@@ -131,7 +131,7 @@ function PaywallContent({
         {/* LEFT — the why. The brand lockup + claim sit pinned to the
             bottom-left (two-column); pitch left-aligned when wide so the
             copy is readable (centered long copy is the weak spot). */}
-        <div className="flex flex-col gap-8 px-10 sm:px-12 pt-12 pb-10 @[760px]:pb-12 items-center @[760px]:items-start text-center @[760px]:text-left @[760px]:flex-1 @[760px]:justify-between">
+        <div className="flex flex-col gap-8 px-10 md:px-12 pt-12 pb-10 @[760px]:pb-12 items-center @[760px]:items-start text-center @[760px]:text-left @[760px]:flex-1 @[760px]:justify-between">
           <div className="flex flex-col items-center @[760px]:items-start gap-5">
             <h2 className="text-2xlarge @[760px]:text-4xlarge leading-[1.05] font-medium text-foreground tracking-[-0.02em] max-w-[16ch]">
               Support your artists.
@@ -164,7 +164,7 @@ function PaywallContent({
             behind it: over the dialog's own `bg-popover` (the same hex) it
             was invisible, and on the design-system stage it mixed with the
             card underneath into a colour that exists in no token. */}
-        <div className="flex flex-col items-center text-center gap-8 px-10 sm:px-12 pt-8 pb-12 @[760px]:pt-12 @[760px]:border-l border-border @[760px]:bg-muted @[760px]:flex-1">
+        <div className="flex flex-col items-center text-center gap-8 px-10 md:px-12 pt-8 pb-12 @[760px]:pt-12 @[760px]:border-l border-border @[760px]:bg-muted @[760px]:flex-1">
           <div className="flex w-full flex-col items-center gap-4 @[760px]:flex-1 @[760px]:justify-center">
             <p className="text-small font-medium text-foreground">
               Choose your monthly amount
@@ -339,7 +339,7 @@ export function SubscriptionCheckoutDialogPreview({
         )}
       </div>
 
-      <div className="m-0 shrink-0 flex justify-end gap-2 border-t border-border bg-muted px-6 py-4 rounded-b-xl sm:rounded-b-2xl">
+      <div className="m-0 shrink-0 flex justify-end gap-2 border-t border-border bg-muted px-6 py-4 rounded-b-xl md:rounded-b-2xl">
         <Button variant="ghost">Cancel</Button>
         <Button disabled={!emailValid || (!freeTrial && monthlyAmount < MIN_AMOUNT)}>
           {freeTrial ? "Start free month" : `Subscribe — ${formattedMonthly}`}
@@ -401,7 +401,7 @@ export function SubscriptionCheckoutDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl max-h-[90vh] p-0 gap-0 flex flex-col">
+      <DialogContent className="md:max-w-xl max-h-[90vh] p-0 gap-0 flex flex-col">
         {step === "summary" && (
           <>
             <div className="shrink-0 flex flex-col gap-3 px-6 pt-6 pb-4 border-b border-border">
@@ -491,7 +491,7 @@ export function SubscriptionCheckoutDialog({
               )}
             </div>
 
-            <DialogFooter className="m-0 shrink-0 border-t border-border bg-muted px-6 py-4 rounded-b-xl sm:rounded-b-2xl">
+            <DialogFooter className="m-0 shrink-0 border-t border-border bg-muted px-6 py-4 rounded-b-xl md:rounded-b-2xl">
               <DialogClose render={<Button variant="ghost" />}>Cancel</DialogClose>
               <Button onClick={handleSubscribe} disabled={!emailValid || (!freeTrial && !paidValid)}>
                 {freeTrial ? "Start free month" : `Subscribe — ${formattedMonthly}`}

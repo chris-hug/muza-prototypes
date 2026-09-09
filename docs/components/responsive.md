@@ -7,9 +7,12 @@ related: [dialog, card-rail, mobile-header]
 
 Muza has **its own breakpoints**, and they are not Tailwind's. The generic
 scale (`sm` 640, `md` 768, `lg` 1024, `xl` 1280) is still used inside class
-names, but almost nothing about the page layout changes at those widths. The
-widths where something actually changes are these five — and two of them are
-*calculated*, not chosen.
+names, but almost nothing about the page layout changes at those widths. One
+of them is load-bearing: **`md:` (768) is `useIsMobile()` in CSS**, and it is
+the only Tailwind screen allowed to switch a presentation (dialog ⇄ sheet,
+toast placement, the docked editor). `sm:` and `lg:` reflow in-page content
+only. The widths where something actually changes are these five — and two of
+them are *calculated*, not chosen.
 
 ## The ladder
 
@@ -17,8 +20,8 @@ widths where something actually changes are these five — and two of them are
 |---|---|---|---|
 | **Phone** | 375 | Nothing switches here — it is the reference phone (iPhone 12 mini / SE class), the narrowest width this app is tested at | — |
 | **Phone wide** | 584 | Page gutter `--page-px` 12 → 24px | `app.css` |
-| **Tablet** | 608 | Sidebar replaces the footer tab bar; `Topbar` replaces `MobileAppHeader` | `FOOTER_NAV_BELOW` |
-| **Tablet wide** | 768 | `useIsMobile()` flips — components swap outright (dropdown ⇄ bottom sheet, inline toggle ⇄ header toggle). Also where the docked playlist editor starts to exist | `useIsMobile()`, `DRAWER_FROM` |
+| **Tablet** | 608 | **Chrome gate.** Sidebar replaces the footer tab bar; `Topbar` replaces `MobileAppHeader`; anything lifted over the tab bar (`BulkActionBar`) drops. Kept separate from 768 on purpose — see `DESIGN_SYSTEM.md`, gating rules | `FOOTER_NAV_BELOW` |
+| **Tablet wide** | 768 | **Presentation gate.** `useIsMobile()` and Tailwind `md:` flip — components swap outright (dropdown ⇄ bottom sheet, inline toggle ⇄ header toggle). Also where the docked playlist editor starts to exist | `useIsMobile()`, `DRAWER_FROM` |
 | **Desktop** | 1069 | Sidebar expands from the icon rail; page gutter 24 → 40px | `SIDEBAR_COLLAPSE_BELOW` |
 
 The names describe **width bands, not devices**. A 1024px tablet held sideways

@@ -172,10 +172,10 @@ export function PurchaseAlbumDialog({
       {/* Sticky-footer layout: outer is flex column with `p-0
            gap-0` so we control padding per section. Header pinned
            at top; middle scrolls; footer pinned at bottom with the
-           Pay button always reachable. `sm:max-w-xl` overrides the
-           base `sm:max-w-sm` (same breakpoint required for the
+           Pay button always reachable. `md:max-w-xl` overrides the
+           base `md:max-w-sm` (same breakpoint required for the
            cascade). */}
-      <DialogContent className="sm:max-w-xl max-h-[90vh] p-0 gap-0 flex flex-col">
+      <DialogContent className="md:max-w-xl max-h-[90vh] p-0 gap-0 flex flex-col">
         {step === "summary" && (
           <>
             {/* ── Sticky header section ─────────────────────────────
@@ -335,7 +335,7 @@ export function PurchaseAlbumDialog({
                  `p-0` flex layout so we want zero outer margin and
                  plain `shrink-0` so the row stays pinned to the
                  dialog's bottom edge. */}
-            <DialogFooter className="m-0 shrink-0 border-t border-border bg-muted px-6 py-4 rounded-b-xl sm:rounded-b-2xl">
+            <DialogFooter className="m-0 shrink-0 border-t border-border bg-muted px-6 py-4 rounded-b-xl md:rounded-b-2xl">
               <DialogClose render={<Button variant="ghost" />}>
                 Cancel
               </DialogClose>
@@ -576,7 +576,7 @@ export function PurchaseAlbumDialogPreview({
   return (
     <DialogPreview
       showCloseButton={false}
-      className={cn("sm:max-w-xl max-h-[600px] p-0 gap-0 flex flex-col", className)}
+      className={cn("md:max-w-xl max-h-[600px] p-0 gap-0 flex flex-col", className)}
     >
       {/* Sticky header */}
       <div className="shrink-0 flex flex-col gap-4 px-6 pt-6 pb-4 border-b border-border">
@@ -695,7 +695,7 @@ export function PurchaseAlbumDialogPreview({
       </div>
 
       {/* Sticky footer (preview chrome — no real submit) */}
-      <DialogPreviewFooter className="m-0 shrink-0 border-t border-border bg-muted px-6 py-4 rounded-b-xl sm:rounded-b-2xl">
+      <DialogPreviewFooter className="m-0 shrink-0 border-t border-border bg-muted px-6 py-4 rounded-b-xl md:rounded-b-2xl">
         <Button variant="ghost">Cancel</Button>
         <Button>Confirm and pay {price}</Button>
       </DialogPreviewFooter>

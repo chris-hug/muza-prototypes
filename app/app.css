@@ -29,7 +29,7 @@
      <584 → 12px.  1069 = sidebar-collapse point; 584 = the 560 mobile-mode
      boundary expressed in viewport px at the 12px gutter (560 + 2×12).
 
-   NAV CHROME (viewport):  <768 → footer tab bar replaces sidebar ·
+   NAV CHROME (viewport):  <608 → footer tab bar replaces sidebar (FOOTER_NAV_BELOW) · <768 → useIsMobile: sheets, no docked editor ·
      <1069 → sidebar auto-collapses to the icon rail.
    ═════════════════════════════════════════════════════════════════════════ */
 

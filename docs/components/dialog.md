@@ -17,7 +17,7 @@ On a phone there are two presentations: the default **bottom sheet**, and a
 
 ```tsx
 // Pickers, lists, confirms — the default. No opt-in needed.
-<DialogContent className="sm:max-w-[max(32rem,50vw)]">…</DialogContent>
+<DialogContent className="md:max-w-[max(32rem,50vw)]">…</DialogContent>
 
 // A form whose primary action must survive the keyboard.
 <DialogContent mobile="form">…</DialogContent>
@@ -46,7 +46,7 @@ left edge as the rows, the field and the footer below it.
 
 ```tsx
 <DialogHeader leading={<Button variant="ghost" size="icon-sm" aria-label="Back"><ChevronLeft /></Button>}>
-  <DialogTitle className="sm:text-large">Add to “Smoky Ballads”</DialogTitle>
+  <DialogTitle className="md:text-large">Add to “Smoky Ballads”</DialogTitle>
 </DialogHeader>
 ```
 
@@ -65,7 +65,7 @@ left edge as the rows, the field and the footer below it.
 - Dismissal is always the **✕ at the top right**, `mobile="form"` included.
   Its bar carries no Cancel.
 
-Titles are `text-small` (19px), `sm:text-large` where a dialog wants the
+Titles are `text-small` (19px), `md:text-large` where a dialog wants the
 larger desktop title — never a bare `text-large`. 21px crowded the line the
 ✕ shares.
 
@@ -103,7 +103,7 @@ a no-op.
 A sheet's scroll body is a **flex child**, never a `vh` cap.
 
 ```tsx
-<DialogContent className="flex flex-col h-[calc(100svh-var(--kb,0px)-8px-env(safe-area-inset-top))] sm:h-auto sm:max-h-[85vh]">
+<DialogContent className="flex flex-col h-[calc(100svh-var(--kb,0px)-8px-env(safe-area-inset-top))] md:h-auto md:max-h-[85vh]">
   <DialogHeader className="shrink-0">…</DialogHeader>
   <div className={dialogListClass}>…</div>
   <DialogFooter>…</DialogFooter>
@@ -125,23 +125,23 @@ Two traps inside that rule:
   you switch tabs reads as jumping.
 
 **Let the footer's edge cut the content.** No fade, no gap: cancel the sheet's
-gap on the scroll body (`-mb-2 sm:-mb-5`) and the footer's `mt-2`, so the list
+gap on the scroll body (`-mb-2 md:-mb-5`) and the footer's `mt-2`, so the list
 runs right up to the bar. A strip of empty sheet between a half-row and the
 bar looks like a mistake; the bar's edge doing the cutting does not.
 
 ## Spacing
 
-| Token | Phone | `sm` and up |
+| Token | Phone | `md` (768) and up |
 |---|---|---|
 | Gutter (`p-…`) | 12px | 24px |
 | Gap between bands | 8px | 20px |
 | Header height | `min-h-8` (matches the ✕) | same |
-| ✕ offset | `top-3` | `sm:top-6` |
+| ✕ offset | `top-3` | `md:top-6` |
 
 The gutter matches `--page-px` at phone width. A sheet spans the whole screen,
 so a 24px gutter would cost 48px of a 320–375px width — enough to visibly
 squeeze list rows. The footer's full-bleed negative margins must match the
-gutter at **both** sizes (`-mx-3 sm:-mx-6`) or the bar stops short of the edges.
+gutter at **both** sizes (`-mx-3 md:-mx-6`) or the bar stops short of the edges.
 
 ## Lists inside a sheet
 
@@ -178,7 +178,7 @@ Only the middle one scrolls.
   rule underneath: the sheet is one surface, and a hairline right under the
   title reads as a header that isn't there. Same **frosted glass** as
   `MobileHeader` — it *is* a mobile header, for a modal — with the top
-  safe-area inset, and `sm:hidden`.
+  safe-area inset, and `md:hidden`.
 - The confirming action is a full-width `size="lg"` (48px) button in
   `DialogFormActions`, the band below the body. The sheet already ends at
   `--kb`, so it sits directly on the keyboard. Never offered twice — bar
@@ -187,7 +187,7 @@ Only the middle one scrolls.
   gap competes with the keyboard for the same ~200px.
 - **No field label** where the placeholder carries it — every line costs space
   above the keyboard. Keep an `aria-label`.
-- **Desktop is untouched**: the bar is `sm:hidden`, the body is `sm:contents`
+- **Desktop is untouched**: the bar is `md:hidden`, the body is `md:contents`
   (it dissolves into the modal's ordinary grid), and the usual
   `DialogHeader` / `DialogFooter` render. Gate the two with `useIsMobile()` so
   there is never more than one `DialogTitle` in the DOM.
@@ -219,7 +219,7 @@ the results.
 
 **One band, and it only floats while it holds one control.** The search field
 and the confirming action share the footer (`flex-col` so the field sits on
-top, `sm:flex-row`) — one edge of chrome, not a pill hovering over a bar. A
+top, `md:flex-row`) — one edge of chrome, not a pill hovering over a bar. A
 lone field may float: transparent band, its own `bg-popover` and shadow, 16px
 inset rather than the sheet's 12px gutter. Add a second control and the band
 goes **opaque with a border** — two stacked floating controls read as two
@@ -236,7 +236,7 @@ would otherwise hang 12px outside the sheet on every side.
 | Constant | What it is |
 |---|---|
 | `dialogChromeClass` | surface, gutter, gap, radius |
-| `dialogPositionClass` | bottom sheet on phones, centred modal from `sm` |
+| `dialogPositionClass` | bottom sheet on phones, centred modal from `md` (768) |
 | `dialogFormPositionClass` | the full-screen form presentation |
 | `dialogHeaderClass` / `dialogHeaderStackClass` | the header column |
 | `dialogTitleClass` | `text-small`, `font-medium` |

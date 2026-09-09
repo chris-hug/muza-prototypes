@@ -157,7 +157,7 @@ function CreditsDialogContent({ credits, onClose }: { credits: Credits; onClose:
   return (
     // p-0 so the image header bleeds to the edges; the metadata below
     // gets its own padding. Mobile → bottom sheet (full-width, bottom-
-    // anchored, top-rounded, slides up); desktop (sm+) → the centered
+    // anchored, top-rounded, slides up); desktop (md+, 768) → the centered
     // md dialog with its normal zoom-in.
     <DialogContent
       className={cn(
@@ -165,13 +165,13 @@ function CreditsDialogContent({ credits, onClose }: { credits: Credits; onClose:
         // DialogContent. Here we only set the desktop width + grow-with-content
         // sizing: a flex column so the metadata body fills up to the height cap
         // and the sheet grows with its content, never past ~92vh.
-        "sm:max-w-md",
-        "p-0 gap-0 overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[85vh]",
+        "md:max-w-md",
+        "p-0 gap-0 overflow-hidden flex flex-col max-h-[92vh] md:max-h-[85vh]",
       )}
     >
       <CreditsContent
         credits={credits}
-        heading={<DialogTitle className="sm:text-large font-medium leading-none">Album credits</DialogTitle>}
+        heading={<DialogTitle className="md:text-large font-medium leading-none">Album credits</DialogTitle>}
         onArtist={name => go(() => openArtist(slugify(name)))}
         onAlbum={albumLinkable ? () => go(() => openAlbum(slugify(credits.album))) : undefined}
         bodyClassName="min-h-0"
@@ -186,7 +186,7 @@ function CreditsDialogContent({ credits, onClose }: { credits: Credits; onClose:
  */
 export function CreditsDialogPreview({ albumKey = "a07" }: { albumKey?: string }) {
   return (
-    <div className="w-full max-w-md rounded-xl sm:rounded-2xl border border-border bg-popover overflow-hidden">
+    <div className="w-full max-w-md rounded-xl md:rounded-2xl border border-border bg-popover overflow-hidden">
       <CreditsContent
         credits={getCredits(albumKey)}
         heading={<p className="text-large font-medium leading-none text-foreground">Album credits</p>}

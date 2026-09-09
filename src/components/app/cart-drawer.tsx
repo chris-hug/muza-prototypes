@@ -536,9 +536,9 @@ function ShippingAddressLink() {
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         {/* Narrower than default — address forms read better in a
-             tight single column. `sm:max-w-sm` (384px) gives room for
+             tight single column. `md:max-w-sm` (384px) gives room for
              two-column pairs without padding them out. */}
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="md:max-w-sm">
           <DialogHeader>
             <DialogTitle>Shipping address</DialogTitle>
             <DialogDescription>

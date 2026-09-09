@@ -30,7 +30,7 @@ export default function DialogFormExample() {
   const [kind, setKind] = useState("vinyl")
 
   return (
-    <DialogPreview className="sm:max-w-[600px]">
+    <DialogPreview className="md:max-w-[600px]">
       <DialogPreviewHeader>
         <DialogPreviewTitle>Create Listing</DialogPreviewTitle>
         <DialogPreviewDescription>Choose what you want to sell.</DialogPreviewDescription>

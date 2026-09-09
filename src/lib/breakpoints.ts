@@ -141,7 +141,8 @@ export function containerAt(
  * The viewport widths worth looking at. Real devices plus every width where
  * the chrome changes; the last two exist because the ladder's top steps are
  * otherwise unreachable (6 columns needs a 1164 container, 7 needs 1500 —
- * with the sidebar and gutter that is a 1452 and a 1788 viewport).
+ * with the sidebar and gutter that is a 1452 viewport for 6; 7 is only reachable
+ * from 1920, because the 1480 wrapper cap holds the column at 1400 below that).
  */
 export const VIEWPORTS = [
   { px: 320,  name: "Phone small", where: "—",

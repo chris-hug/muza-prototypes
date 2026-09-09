@@ -49,7 +49,7 @@ The gate is **`useIsMobile()`, never a `hover:` media query**. Two reasons:
 
 `useIsMobile()` keys off width alone and is reliable on real devices. The
 cutoff is **768px** (`(max-width: 767px)`), the project's "components swap"
-step — not `sm` (640), which is where dialogs recentre, and not 608, where the
+step — not `md` (768), which is where dialogs recentre, and not 608, where the
 sidebar becomes a footer bar. A dropdown ⇄ sheet swap is a *different
 component*, and that is the one case the 768 gate is for; cosmetic show/hide
 of a control may still use `[@media(hover:…)]`.

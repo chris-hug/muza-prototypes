@@ -7,7 +7,7 @@ related: [dialog, toast]
 
 A confirm for an action that **cannot be undone**. It shares every surface
 rule with [Dialog](docs/components/dialog.md) — bottom sheet on phones,
-centred modal from `sm` up, the same gutter, gap and header structure — and
+centred modal from `md` (768) up, the same gutter, gap and header structure — and
 differs only in what it demands of the user.
 
 ## When it is the right component

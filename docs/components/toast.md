@@ -60,7 +60,7 @@ share one baseline.
 // phone → a bar along the bottom
 "inset-x-3 bottom-[calc(112px+env(safe-area-inset-bottom)+var(--kb,0px))] w-auto"
 // sm and up → the top-right card
-"sm:inset-x-auto sm:right-4 sm:top-4 sm:bottom-auto sm:w-[380px] sm:max-w-[calc(100vw-2rem)]"
+"md:inset-x-auto md:right-4 md:top-4 md:bottom-auto md:w-[380px] md:max-w-[calc(100vw-2rem)]"
 ```
 
 **Phone — a bottom bar.** Every major player puts its confirmations at the
@@ -75,7 +75,7 @@ mini player bar       h-[56px]                    =  56px
 + var(--kb, 0px)                the on-screen keyboard, when open
 ```
 
-The 112px is the player shell — the footer nav and the mini player that rests
+The 112px is the player shell (and, between 608 and 767 — bottom bar still, tab bar gone — it also clears the desktop player bar's `bottom-5` + 80px = 100px) — the footer nav and the mini player that rests
 flush on top of it (`app-player.tsx` pins the mini bar at
 `bottom-[calc(56px+max(10px,env(safe-area-inset-bottom)))]`). The safe-area
 term keeps the bar above the home indicator.
@@ -95,9 +95,9 @@ the keyboard height. `--kb` is published by
 Android, where `interactive-widget=resizes-content` in the viewport meta
 resizes the layout viewport natively.
 
-**Desktop — top-right.** From `sm` the horizontal inset is released
-(`sm:inset-x-auto`), the bar becomes a `380px` card at `right-4 top-4`, and
-`sm:bottom-auto` cancels the phone anchor. `sm:max-w-[calc(100vw-2rem)]` keeps
+**Desktop — top-right.** From `md` (768) the horizontal inset is released
+(`md:inset-x-auto`), the bar becomes a `380px` card at `right-4 top-4`, and
+`md:bottom-auto` cancels the phone anchor. `md:max-w-[calc(100vw-2rem)]` keeps
 the card inside a narrow desktop window with the same 16px margin on each side.
 
 **`viewport-fit=cover` is mandatory** in the viewport meta (`app/root.tsx`).
@@ -111,11 +111,11 @@ errors; the bar just sits under the home indicator.
 ```tsx
 // toastShellClass
 "relative flex w-full items-start gap-2.5"
-"rounded-xl border border-border bg-popover px-3 py-3 sm:px-4 sm:pt-4 sm:pb-[18px] shadow-lg"
+"rounded-xl border border-border bg-popover px-3 py-3 md:px-4 md:pt-4 md:pb-[18px] shadow-lg"
 "text-popover-foreground transition-[transform,opacity] duration-200"
 ```
 
-| | Phone | `sm` and up |
+| | Phone | `md` (768) and up |
 |---|---|---|
 | Padding | `px-3 py-3` (12px) | `px-4 pt-4 pb-[18px]` (16 / 16 / 18px) |
 | Width | full width minus `inset-x-3` | `380px` |
@@ -138,7 +138,7 @@ pushing the action button out of it.
 - **Swipe.** Base UI's `ToastRoot` defaults `swipeDirection` to
   `['down', 'right']`, so a toast can be flicked away on touch without
   `toast.tsx` configuring anything.
-- **Close button — desktop only** (`hidden sm:flex`). On a phone the toast
+- **Close button — desktop only** (`hidden md:flex`). On a phone the toast
   auto-dismisses and can be swiped, and a dismiss target would compete for
   width with the message itself on a bar that is already only
   `100vw - 24px` wide. Platform snackbars do not carry one either.

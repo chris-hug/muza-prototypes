@@ -6,7 +6,7 @@
  * Content/flow referenced from a generic "create account or log in" modal,
  * rebuilt in the Muza language: muza mark, semantic type scale, pill primary
  * (no gradient), rounded form control. Mobile behaviour is inherited from the
- * base `DialogContent` — bottom sheet < 640px, centered modal ≥ 640px — so we
+ * base `DialogContent` — bottom sheet < 768px, centered modal ≥ 768px (`md`, the same gate as `useIsMobile`) — so we
  * set ONLY the desktop width here (see DESIGN_SYSTEM.md › "Responsive dialog →
  * bottom sheet — the BASE DEFAULT").
  *
@@ -66,7 +66,7 @@ function LoginHeading({ preview = false }: { preview?: boolean }) {
   return (
     <>
       <LogoMark className="w-7 h-auto text-foreground" />
-      <Title className="sm:text-large">{TITLE}</Title>
+      <Title className="md:text-large">{TITLE}</Title>
       <Desc>{DESCRIPTION}</Desc>
     </>
   )
@@ -84,7 +84,7 @@ export function LoginDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {/* Desktop width only — mobile bottom-sheet comes from the base. */}
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="md:max-w-md">
         <DialogHeader>
           <LoginHeading />
         </DialogHeader>
@@ -100,7 +100,7 @@ export function LoginDialog({
 // ─── Static preview (DS kitchen sink) ─────────────────────────────────────────
 export function LoginDialogPreview({ className }: { className?: string }) {
   return (
-    <DialogPreview className={className ?? "sm:max-w-md"}>
+    <DialogPreview className={className ?? "md:max-w-md"}>
       <DialogPreviewHeader>
         <LoginHeading preview />
       </DialogPreviewHeader>

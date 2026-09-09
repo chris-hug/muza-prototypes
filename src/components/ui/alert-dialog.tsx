@@ -66,12 +66,12 @@ function AlertDialogContent({
         data-slot="alert-dialog-content"
         className={cn(
           // Position — same app-wide rule as Dialog: bottom sheet on mobile,
-          // centered modal on desktop (sm+).
+          // centered modal on desktop (md+, 768).
           "fixed z-50 w-full",
           "inset-x-0 bottom-0 top-auto translate-x-0 translate-y-0 max-w-full rounded-b-none rounded-t-2xl",
           "data-open:slide-in-from-bottom-4 data-open:zoom-in-100",
-          "sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-md sm:rounded-2xl",
-          "sm:data-open:slide-in-from-bottom-0 sm:data-open:zoom-in-95",
+          "md:inset-x-auto md:bottom-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-md md:rounded-2xl",
+          "md:data-open:slide-in-from-bottom-0 md:data-open:zoom-in-95",
           // Surface — bg-background (never bg-white)
           "bg-background border border-border",
           // Spacing
