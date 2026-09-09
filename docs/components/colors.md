@@ -27,15 +27,32 @@ light and dark. Every value on this page is read out of
 ```
 
 `--primary` never holds a colour. Dark mode does not darken anything: it
-re-points. This is why **Value** is a column in the token table rather than a
-footnote: on a semantic row it prints the pointer (and the dark one under it
-when they differ), on a primitive row the colour itself. It is the only place
-the mechanism is visible.
+re-points. That is why a colour cell leads with a **name** and not a hex: the
+question "what is `--border` in dark mode?" is answered by
+`--muza-neutrals-700`, and the hex underneath is only the check. Two name
+columns side by side are the mechanism, visible.
 
 A component may name `--primary`, `bg-background`, `text-muted-foreground`. It
 may never name `--muza-blue-500`, and it may never write a hex. A literal opts
 that element out of dark mode **silently** — nothing errors, nothing warns, and
 the bug shows up as one wrong rectangle on a dark screen months later.
+
+## "Used for" lives in the stylesheet
+
+The last column is the **trailing comment on the declaration** in `app.css`:
+
+```css
+--border: var(--muza-neutrals-300);   /* every hairline: field borders, dividers, table rules */
+```
+
+Written beside the value, so the answer to "what is this for" sits where the
+value sits and cannot drift from it. It is also the more useful place: someone
+reading the stylesheet gets the same sentence as someone reading this page,
+and a new token is undocumented in exactly one place instead of silently
+undocumented everywhere.
+
+A primitive has none, and its cell reads `—`. It is a colour; what it is *for*
+is whichever semantic tokens point at it, and those are the rows above.
 
 ## Why oklch
 
@@ -54,8 +71,15 @@ visible rather than believed.
 The section is a live editor, and everything in it comes from the stylesheet.
 
 - **Design** — **one table**, both layers, in the order the system resolves
-  them: Token · Light · Dark · Value, with *Semantic* and *Primitive* as
-  sections inside it and a sticky rail listing every group.
+  them: **Name · Light mode · Dark mode · Used for**, with *Semantic* and
+  *Primitive* as sections inside it. The group rail is a column **of** that
+  table rather than a thing standing beside it.
+
+  Three things stick, in a stack: the surface header at `top-0`, then the
+  table head and the rail at `top-10` — the header's own height — so nothing
+  slides under anything else. The rail's COLUMN stretches and the rail inside
+  it sticks; sticking the column itself sized it to its content, and the
+  table lost its left border for the rest of its height.
 
   They were two panels — a table and a swatch grid — and that made them look
   like two subjects. They are one subject read twice: `--primary` and
@@ -66,6 +90,10 @@ The section is a live editor, and everything in it comes from the stylesheet.
 - **CSS** — the same tokens as text: the primitive `:root`, the semantic
   `:root`, and `.dark`, in the order `app.css` has them, with your edits
   applied. Copyable.
+
+The switch between the two sits **in** the surface's header, not above it: it
+changes what the surface shows, and a control outside the thing it controls
+reads as a page-level setting.
 
 Editing writes an inline custom property on `<html>`, which is the last word in
 the cascade, so a change lands on the **whole page** — the sidebar, every card,

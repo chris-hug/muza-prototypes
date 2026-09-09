@@ -464,55 +464,55 @@
 
 /* ─── Light mode ─────────────────────────────────────────────────────── */
 :root {
-  --background:              var(--muza-white);
-  --foreground:              var(--muza-neutrals-950);
+  --background:              var(--muza-white);               /* the page itself, and every surface that is not lifted off it */
+  --foreground:              var(--muza-neutrals-950);        /* body text and icons on --background */
 
-  --card:                    var(--muza-white);
-  --card-foreground:         var(--muza-neutrals-950);
+  --card:                    var(--muza-white);               /* a lifted surface — Card, and the Example frames */
+  --card-foreground:         var(--muza-neutrals-950);        /* text on a card */
 
-  --popover:                 var(--muza-white);
-  --popover-foreground:      var(--muza-neutrals-950);
+  --popover:                 var(--muza-white);               /* anything floating: menus, select popups, tooltips, sheets */
+  --popover-foreground:      var(--muza-neutrals-950);        /* text inside a floating surface */
 
-  --primary:                 var(--muza-blue-200);
-  --primary-hover:           color-mix(in srgb, black 20%, var(--muza-blue-200));
-  --primary-foreground:      var(--muza-neutrals-50);
+  --primary:                 var(--muza-blue-200);            /* the one filled action per view — Button default, the player scrubber */
+  --primary-hover:           color-mix(in srgb, black 20%, var(--muza-blue-200));/* that fill on hover; a computed mix, not a pointer */
+  --primary-foreground:      var(--muza-neutrals-50);         /* ink ON a primary fill */
   /* Primary as INK on neutral surfaces (links, ghost/outline-primary
      labels, accent icons). On white this matches --primary (AA at ~8.8:1);
      dark mode lifts it — see .dark. NOT the same as --primary-foreground,
      which is the near-white ink that sits ON a primary fill. */
-  --primary-text:            var(--muza-blue-200);
+  --primary-text:            var(--muza-blue-200);            /* primary as INK on a neutral surface — links, ghost labels */
 
-  --secondary:               var(--muza-neutrals-200);
-  --secondary-foreground:    var(--muza-neutrals-900);
-  --secondary-hover:         var(--muza-neutrals-300);
+  --secondary:               var(--muza-neutrals-200);        /* the quiet fill — Button secondary, Chips, badge surfaces */
+  --secondary-foreground:    var(--muza-neutrals-900);        /* text on a secondary fill */
+  --secondary-hover:         var(--muza-neutrals-300);        /* secondary one step more emphatic; hover only */
 
-  --muted:                   var(--muza-neutrals-50);
-  --muted-foreground:        var(--muza-neutrals-a75-700);
+  --muted:                   var(--muza-neutrals-50);         /* the recessive surface — hovered rows, table heads, code blocks */
+  --muted-foreground:        var(--muza-neutrals-a75-700);    /* captions, meta, placeholders. Opacity-based, never flattened */
 
-  --accent:                  var(--muza-neutrals-100);
-  --accent-foreground:       var(--muza-neutrals-900);
+  --accent:                  var(--muza-neutrals-100);        /* keyboard focus and hover inside menus — not a brand colour */
+  --accent-foreground:       var(--muza-neutrals-900);        /* text on an accent surface */
 
-  --destructive:             var(--tw-red-600);
-  --destructive-foreground:  var(--tw-red-50);
+  --destructive:             var(--tw-red-600);               /* delete and its confirmation, and nothing else */
+  --destructive-foreground:  var(--tw-red-50);                /* ink on a destructive fill */
 
-  --border:                  var(--muza-neutrals-300);
-  --input:                   var(--muza-neutrals-200);
-  --ring:                    var(--muza-neutrals-900);
+  --border:                  var(--muza-neutrals-300);        /* every hairline: field borders, dividers, table rules */
+  --input:                   var(--muza-neutrals-200);        /* inactive tracks and fills — Progress, Slider, Meter, Switch off */
+  --ring:                    var(--muza-neutrals-900);        /* the focus ring, at 3px and 50% opacity */
 
-  --chart-1: oklch(58.62% 0.1069 166.5);
-  --chart-2: oklch(67.66% 0.1574 35.5);
-  --chart-3: oklch(34.6%  0.0327 228.2);
-  --chart-4: oklch(83.31% 0.1175 88.2);
-  --chart-5: oklch(73%    0.1557 57.4);
+  --chart-1: oklch(58.62% 0.1069 166.5);                      /* chart series 1 */
+  --chart-2: oklch(67.66% 0.1574 35.5);                       /* chart series 2 */
+  --chart-3: oklch(34.6%  0.0327 228.2);                      /* chart series 3 */
+  --chart-4: oklch(83.31% 0.1175 88.2);                       /* chart series 4 */
+  --chart-5: oklch(73%    0.1557 57.4);                       /* chart series 5 */
 
-  --sidebar-background:           var(--muza-white);
-  --sidebar-foreground:           var(--muza-neutrals-900);
-  --sidebar-primary:              var(--muza-neutrals-200);
-  --sidebar-primary-foreground:   var(--muza-neutrals-900);
-  --sidebar-accent:               var(--muza-neutrals-50);
-  --sidebar-accent-foreground:    var(--muza-neutrals-900);
-  --sidebar-border:               var(--muza-neutrals-200);
-  --sidebar-ring:                 var(--muza-neutrals-400);
+  --sidebar-background:           var(--muza-white);          /* the sidebar surface — same value as the page, by design */
+  --sidebar-foreground:           var(--muza-neutrals-900);   /* sidebar nav labels, in every state */
+  --sidebar-primary:              var(--muza-neutrals-200);   /* the ACTIVE nav row — emphatic */
+  --sidebar-primary-foreground:   var(--muza-neutrals-900);   /* text on the active nav row */
+  --sidebar-accent:               var(--muza-neutrals-50);    /* the HOVERED nav row — subtle */
+  --sidebar-accent-foreground:    var(--muza-neutrals-900);   /* text on a hovered nav row */
+  --sidebar-border:               var(--muza-neutrals-200);   /* the sidebar's right edge and its internal rules */
+  --sidebar-ring:                 var(--muza-neutrals-400);   /* focus ring inside the sidebar */
 }
 
 /* ─── Dark mode ──────────────────────────────────────────────────────── */

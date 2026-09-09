@@ -92,22 +92,45 @@ function hex(color: string): string {
   }
 }
 
-function Swatch({ token, mode, nonce, size = "size-8" }: {
-  token: string; mode: "light" | "dark"; nonce: number; size?: string
+/*
+ * A colour cell: the chip, then what the token RESOLVES THROUGH, then the
+ * measured value under it.
+ *
+ * The name is the primary line because that is the answer to the question the
+ * table is asked — "what is `--border` in dark mode?" is answered by
+ * "`--muza-neutrals-700`", not by a hex. The hex is the check, so it sits
+ * underneath in the muted size.
+ */
+function Swatch({ token, mode, nonce, label, editor }: {
+  token: string
+  mode: "light" | "dark"
+  nonce: number
+  /** The primitive this resolves through, or the literal when it has none. */
+  label: string
+  /** Replaces the label line with an input — used on the primitive rows,
+   *  where the label IS the value and the value is what you change. */
+  editor?: React.ReactNode
 }) {
   const { ref, rgb } = useResolved(token, mode, nonce)
   return (
-    <span className="flex items-center gap-2">
-      {/* Only the SWATCH sits in the scoped wrapper — the label beside it
-          stays in the page's own theme so it is readable either way. */}
+    <span className="flex items-center gap-2.5">
+      {/* Only the CHIP sits in the scoped wrapper — the text beside it stays
+          in the page's own theme so it is readable in either mode. */}
       <span className={cn(mode, "shrink-0")}>
         <span
           ref={ref as React.Ref<HTMLDivElement>}
-          className={cn(size, "block rounded-lg border border-border")}
+          className="block size-7 rounded-md border border-border"
           style={{ background: `var(--${token})` }}
         />
       </span>
-      <span className="font-mono text-2xsmall tabular-nums text-muted-foreground">{hex(rgb)}</span>
+      <span className="flex min-w-0 flex-1 flex-col leading-tight">
+        {editor ?? (
+          <span className="truncate font-mono text-2xsmall text-foreground">{label}</span>
+        )}
+        <span className="truncate px-1.5 font-mono text-2xsmall tabular-nums text-muted-foreground/70">
+          {hex(rgb)}
+        </span>
+      </span>
     </span>
   )
 }
@@ -267,9 +290,16 @@ export function TokenEditor() {
   }, [edits])
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Toolbar — the view switch, and the state of the edits. */}
-      <div className="flex flex-wrap items-center gap-3">
+    /* One surface. The switch is IN the header rather than floating above it,
+       because it changes what the surface shows — a control that sits outside
+       the thing it controls reads as a page-level setting. */
+    <div className="rounded-xl border border-border">
+      {/* Sticky, opaque, and the top of a three-layer stack: this header at 0,
+          then the table head and the rail at `top-10` — its own 40px height —
+          so nothing ever slides under anything else. `bg-background` is not
+          decoration here; a transparent sticky bar shows the rows travelling
+          through it. */}
+      <div className="sticky top-0 z-20 flex h-10 flex-wrap items-center gap-3 rounded-t-xl border-b border-border bg-background px-3">
         <span className="flex gap-0.5 rounded-full bg-muted p-0.5">
           {(["design", "css"] as const).map(v => (
             <button
@@ -319,11 +349,18 @@ export function TokenEditor() {
       </div>
 
       {view === "css" ? (
-        <pre className="overflow-x-auto rounded-xl border border-border bg-muted p-4 text-2xsmall leading-5 text-foreground">
+        <pre className="overflow-x-auto bg-muted p-4 text-2xsmall leading-5 text-foreground">
           <code>{css}</code>
         </pre>
       ) : (
-      <div className="flex gap-8">
+      /* One bordered surface, two columns: the rail is PART of the table, not
+         a thing standing beside it. Deliberately no `overflow-hidden` on this
+         wrapper — it is the obvious way to clip the children to the rounded
+         corner, and it silently kills `position: sticky` inside, because any
+         overflow other than `visible` makes this the sticky element's scroll
+         container and it has nothing to scroll. The surface's border lives on
+         the outer wrapper; this row only splits it into two columns. */
+      <div className="flex">
         {/* The rail. A palette is a long page and the reader arrives looking
             for one group — "the neutrals", "the blues" — so the set of groups
             has to be visible without scrolling through it first. It is the
@@ -331,10 +368,16 @@ export function TokenEditor() {
             headings that appear there and nothing else. Sticky, so it stays
             available while the rows scroll past; hidden below the
             presentation gate, where there is no room for a second column. */}
+        {/* The COLUMN stretches, the rail inside it sticks.
+            Sticking the column itself (`self-start`) sized it to its own
+            content, so its border and background stopped a few rows down and
+            the table lost its left edge for the rest of its height. A sticky
+            element cannot be the thing that draws a full-height column. */}
+        <div className="hidden w-44 shrink-0 border-r border-border bg-muted/30 md:block">
         <nav
           aria-label="Token groups"
           data-active={active}
-          className="sticky top-6 hidden h-fit w-40 shrink-0 flex-col gap-0.5 md:flex"
+          className="sticky top-10 flex flex-col gap-0.5 p-2"
         >
           {NAV.map(item => (
             <button
@@ -357,22 +400,44 @@ export function TokenEditor() {
             </button>
           ))}
         </nav>
+        </div>
 
         {/* ── ONE table ────────────────────────────────────────────────────
             Both layers, in the order the system resolves them, under the same
             four headings. They were two panels — a table and a swatch grid —
             and that made them look like two subjects. They are one subject
             read twice: `--primary` and `--muza-blue-500` are the same colour
-            at two levels of naming, and putting them in one column set is
-            what makes the "Points at" value a place you can look UP. */}
-        <div className="min-w-0 flex-1 overflow-x-auto rounded-xl border border-border">
-          <table className="w-full text-left text-2xsmall">
-            <thead className="border-b border-border bg-muted text-muted-foreground">
+            at two levels of naming, and one column set is what makes a
+            pointer something you can look UP. */}
+        {/* No `overflow-x-auto` here. Setting one axis to `auto` makes the
+            OTHER axis a scroll container too, which made this div the sticky
+            head's scroll parent — the header then stuck to the top of a box
+            that was itself scrolling off screen, so it looked like sticky was
+            simply not working. The table is `table-fixed`, so it squeezes its
+            columns instead of demanding a scrollbar. */}
+        <div className="min-w-0 flex-1">
+          <table className="w-full table-fixed text-left text-2xsmall">
+            {/* Fixed columns, not content-driven. Auto layout let the two
+                colour cells take whatever their longest primitive name asked
+                for, which pushed "Used for" off the right edge entirely — the
+                column was there and invisible. The prose column is the widest
+                because it is the only one holding a sentence. */}
+            <colgroup>
+              <col className="w-[19%]" />
+              <col className="w-[23%]" />
+              <col className="w-[23%]" />
+              <col className="w-[35%]" />
+            </colgroup>
+            {/* Sticky, because the table is 70-odd rows and four columns of
+                hex look alike: without the header, "which of these is dark
+                mode" becomes a scroll back up. `top-10` clears the surface
+                header, which sticks at 0 and is 40px tall. */}
+            <thead className="sticky top-10 z-10 border-b border-border bg-muted text-muted-foreground">
               <tr>
-                <th scope="col" className="px-3 py-2 font-medium">Token</th>
-                <th scope="col" className="px-3 py-2 font-medium">Light</th>
-                <th scope="col" className="px-3 py-2 font-medium">Dark</th>
-                <th scope="col" className="px-3 py-2 font-medium">Value</th>
+                <th scope="col" className="px-3 py-2 font-medium">Name</th>
+                <th scope="col" className="px-3 py-2 font-medium">Light mode</th>
+                <th scope="col" className="px-3 py-2 font-medium">Dark mode</th>
+                <th scope="col" className="px-3 py-2 font-medium">Used for</th>
               </tr>
             </thead>
             <tbody>
@@ -400,43 +465,54 @@ export function TokenEditor() {
                             <td className="px-3 py-2 whitespace-nowrap">
                               <span className="font-mono text-foreground">--{t.name}</span>
                             </td>
+                            {/* Light: the chip, and what the token resolves
+                                THROUGH. On a primitive that is its own value,
+                                so the cell is where the value is edited —
+                                the layer a colour lives on is the layer you
+                                change, and an inline property on <html> would
+                                beat both modes if applied to a semantic one. */}
                             <td className="px-3 py-2">
-                              <Swatch token={t.name} mode="light" nonce={nonce} />
+                              <Swatch
+                                token={t.name}
+                                mode="light"
+                                nonce={nonce}
+                                label={t.refers ? `--${t.refers}` : valueOf(t)}
+                                editor={section.kind === "primitive" ? (
+                                  <ValueField
+                                    token={t.name}
+                                    value={valueOf(t)}
+                                    onChange={v => set(t.name, v)}
+                                  />
+                                ) : undefined}
+                              />
                             </td>
                             <td className="px-3 py-2">
-                              {section.kind === "primitive"
-                                /* A primitive is one colour. It is not
-                                   redefined in `.dark` — that is the whole
-                                   point of the layer above it — so the column
-                                   says so rather than repeating the swatch. */
-                                ? <span className="text-muted-foreground/60">same</span>
-                                : dark
-                                  ? <Swatch token={t.name} mode="dark" nonce={nonce} />
-                                  : <span className="text-muted-foreground/60">same</span>}
-                            </td>
-                            <td className="px-3 py-2 font-mono text-muted-foreground">
                               {section.kind === "primitive" ? (
-                                /* Editable, because this is the layer where a
-                                   change is MEANT to happen: retune a
-                                   primitive and every semantic token pointing
-                                   at it moves with it. */
-                                <ValueField
+                                /* A primitive is one colour and is never
+                                   redeclared in `.dark`. That is the whole
+                                   point of the layer above it, so the cell
+                                   says so rather than repeating the chip. */
+                                <span className="text-muted-foreground/60">not redeclared</span>
+                              ) : dark ? (
+                                <Swatch
                                   token={t.name}
-                                  value={valueOf(t)}
-                                  onChange={v => set(t.name, v)}
+                                  mode="dark"
+                                  nonce={nonce}
+                                  label={dark.refers ? `--${dark.refers}` : dark.value}
                                 />
                               ) : (
-                                <>
-                                  <span className="block">
-                                    {t.refers ? `--${t.refers}` : t.value}
-                                  </span>
-                                  {dark && dark.value !== t.value && (
-                                    <span className="block text-muted-foreground/60">
-                                      dark: {dark.refers ? `--${dark.refers}` : dark.value}
-                                    </span>
-                                  )}
-                                </>
+                                <span className="text-muted-foreground/60">same as light</span>
                               )}
+                            </td>
+                            {/* "Used for" is the trailing comment on the
+                                declaration in app.css — written beside the
+                                value, so the answer to "what is this for"
+                                lives where the value does and cannot drift
+                                from it. */}
+                            <td className="px-3 py-2 text-muted-foreground">
+                              {section.kind === "primitive"
+                                ? <span className="text-muted-foreground/60">—</span>
+                                : t.note}
                             </td>
                           </tr>
                         )
