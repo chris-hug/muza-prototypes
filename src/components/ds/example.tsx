@@ -76,7 +76,7 @@ export type ExampleWidth = {
  * wide in a list and 363px in a `SongRail` cell — one number in, two answers
  * out. Only its own box says which, so its chips are its own box.
  */
-const WINDOW_WIDTHS: ExampleWidth[] = VIEWPORTS.map(v => {
+export const WINDOW_WIDTHS: ExampleWidth[] = VIEWPORTS.map(v => {
   const container = containerAt(v.px)
   const sidebar = sidebarAt(v.px)
   const gutter = gutterAt(v.px)
@@ -119,6 +119,7 @@ export function Example({
   defaultWidth,
   widths = WINDOW_WIDTHS,
   widthLabel = "window",
+  responsive = true,
   controls,
   bleed: bleedFn,
   align = "center",
@@ -145,6 +146,11 @@ export function Example({
   /** What the chips measure, named beside them. `window` by default; say
    *  `row` (or whatever the box is) when passing `widths`. */
   widthLabel?: string
+  /** `false` for a component that does not answer to width at all — Button,
+   *  Badge, Spinner, Avatar. The width picker is hidden and the stage runs
+   *  full width; `</>` and ⓘ stay. Chips on such a component advertise a
+   *  responsiveness it does not have. */
+  responsive?: boolean
   /** Variant switches — rendered at the left of the toolbar. */
   controls?: React.ReactNode
   /** When the demo is CHROME-level at a given window — a bottom sheet, which
@@ -196,11 +202,21 @@ export function Example({
   }
 
   return (
-    <div className={cn("flex flex-col gap-2", className)}>
+    /* `data-slot` is not decoration: `Section` uses it to space CONSECUTIVE
+       examples apart (`[data-slot=ds-example]+[data-slot=ds-example]`) without
+       also pushing the prose paragraphs some sections put between them. A
+       plain `gap` on the children would have stacked on top of their own
+       margins. */
+    <div data-slot="ds-example" className={cn("flex flex-col gap-2", className)}>
       {/* Title row — name at the left, the width picker at the right. */}
       <div className="flex items-center gap-3 min-w-0">
         {title && <p className="text-small font-medium text-foreground truncate">{title}</p>}
-        <div className="ml-auto flex items-center gap-1 shrink-0">
+        {/* No picker for a component that does not answer to width. A Button
+            takes its size from a prop and renders identically at 320 and at
+            1920, so a row of chips beside it promises a behaviour it does not
+            have — and invites the reader to hunt for a difference that is not
+            there. The `</>` and ⓘ buttons stay: those are useful either way. */}
+        <div className={cn("ml-auto flex items-center gap-1 shrink-0", !responsive && "hidden")}>
           {/* Named, because a bare row of numbers beside a component invites
               exactly one question — "which width is that?" — and the page used
               to answer it differently in two places. Everything here is a

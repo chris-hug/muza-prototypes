@@ -34,7 +34,7 @@ const SORTS = [
 export default function SelectBasicExample() {
   return (
     <div className="flex flex-wrap gap-6 items-start">
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1.5 w-full @min-[560px]:w-auto">
         <Label htmlFor="select-album">Album</Label>
         <Select>
           <SelectTrigger id="select-album">
@@ -53,7 +53,7 @@ export default function SelectBasicExample() {
         </Select>
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1.5 w-full @min-[560px]:w-auto">
         <Label htmlFor="select-sort">Sort by</Label>
         <Select defaultValue="recent">
           <SelectTrigger id="select-sort">
@@ -67,7 +67,7 @@ export default function SelectBasicExample() {
         </Select>
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1.5 w-full @min-[560px]:w-auto">
         <Label htmlFor="select-disabled">Disabled</Label>
         <Select disabled>
           <SelectTrigger id="select-disabled">

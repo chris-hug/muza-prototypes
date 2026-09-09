@@ -41,7 +41,7 @@ export default function MobileHeaderBasicExample() {
   const [tab, setTab] = useState("all")
 
   return (
-    <div className="w-full max-w-[375px] h-[320px] overflow-y-auto rounded-xl border border-border bg-background">
+    <div className="w-full h-[320px] overflow-y-auto bg-background">
       <MobileHeader>
         <MobileTitleRow
           title="Library"

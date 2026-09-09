@@ -31,7 +31,10 @@ export const SECTION_SOURCE: Record<string, string> = {
   chips:         "src/components/ui/chip.tsx",
   "chip-input":  "src/components/ui/chip-input.tsx",
   input:         "src/components/ui/input.tsx",
+  numberfield:   "src/components/ui/qty-stepper.tsx",
   select:        "src/components/ui/select.tsx",
+  "multi-select": "src/components/ui/multi-select.tsx",
+  "single-select":"src/components/ui/single-select.tsx",
   "filter-menu": "src/components/ui/filter-button.tsx",
   combobox:      "src/components/ui/combobox.tsx",
   menu:          "src/components/ui/dropdown-menu.tsx",
@@ -77,6 +80,7 @@ export const SECTION_SOURCE: Record<string, string> = {
   search:            "src/components/app/search-results-view.tsx",
   "mobile-header": "src/components/ui/mobile-header.tsx",
   "footer-nav":   "src/components/app/footer-nav.tsx",
+  "page-section": "src/components/app/section.tsx",
   items:          "src/components/app/items-section.tsx",
 
   // Overlays
