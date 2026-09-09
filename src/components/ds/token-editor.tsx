@@ -136,22 +136,41 @@ function ValueField({ token, value, onChange }: {
    can disagree with what is on screen. */
 const slug = (s: string) => "tok-" + s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
 
-const NAV: Array<{ id: string; label: string; level: 0 | 1 }> = [
-  { id: "tok-semantic", label: "Semantic", level: 0 },
-  ...semanticGroups().map(g => ({
-    id: slug(g.label),
-    // The group comments in app.css are written for a reader of the
-    // stylesheet, so they carry parentheticals the rail has no room for.
-    label: g.label.replace(/\s*\(.*$/, ""),
-    level: 1 as const,
-  })),
-  { id: "tok-primitive", label: "Primitive", level: 0 },
-  ...primitiveGroups().map(g => ({
-    id: slug(g.label),
-    label: g.label.replace(/^muza colors\//, "").replace(/^tailwind colors\//, "tw ").replace(/\s*\(.*$/, ""),
-    level: 1 as const,
-  })),
+/*
+ * The two layers as ONE list, in resolution order. Both the rail and the
+ * table are built from this, so a heading in the rail and a heading in the
+ * table cannot disagree about what exists or what it is called.
+ */
+const SECTIONS = [
+  {
+    kind: "semantic" as const,
+    id: "tok-semantic",
+    title: "Semantic",
+    blurb: "what a component names — never a raw colour",
+    groups: semanticGroups(),
+  },
+  {
+    kind: "primitive" as const,
+    id: "tok-primitive",
+    title: "Primitive",
+    blurb: "the raw palette — never named by a component",
+    groups: primitiveGroups(),
+  },
 ]
+
+/* The group comments in app.css are written for someone reading the
+   stylesheet, so they carry prefixes and parentheticals the rail has no room
+   for. Shortened for the rail only — the table prints them as written. */
+const railLabel = (label: string) =>
+  label
+    .replace(/^muza colors\//, "")
+    .replace(/^tailwind colors\//, "tw ")
+    .replace(/\s*\(.*$/, "")
+
+const NAV: Array<{ id: string; label: string; level: 0 | 1 }> = SECTIONS.flatMap(section => [
+  { id: section.id, label: section.title, level: 0 as const },
+  ...section.groups.map(g => ({ id: slug(g.label), label: railLabel(g.label), level: 1 as const })),
+])
 
 export function TokenEditor() {
   const [view, setView]     = React.useState<View>("design")
@@ -308,12 +327,15 @@ export function TokenEditor() {
         {/* The rail. A palette is a long page and the reader arrives looking
             for one group — "the neutrals", "the blues" — so the set of groups
             has to be visible without scrolling through it first. It is the
-            table of contents of the thing beside it, which is why it lists
-            exactly the headings that appear there and nothing else. Sticky,
-            so it stays available while the palette scrolls past it, and
-            hidden below the presentation gate where there is no room for a
-            second column. */}
-        <nav aria-label="Token groups" data-active={active} className="sticky top-6 hidden h-fit w-40 shrink-0 flex-col gap-0.5 md:flex">
+            table of contents of the table beside it, listing exactly the
+            headings that appear there and nothing else. Sticky, so it stays
+            available while the rows scroll past; hidden below the
+            presentation gate, where there is no room for a second column. */}
+        <nav
+          aria-label="Token groups"
+          data-active={active}
+          className="sticky top-6 hidden h-fit w-40 shrink-0 flex-col gap-0.5 md:flex"
+        >
           {NAV.map(item => (
             <button
               key={item.id}
@@ -325,7 +347,7 @@ export function TokenEditor() {
               className={cn(
                 "truncate rounded-lg px-2 py-1 text-left text-2xsmall transition-colors",
                 item.level === 0
-                  ? "mt-2 font-medium text-foreground first:mt-0"
+                  ? "mt-3 font-medium text-foreground first:mt-0"
                   : active === item.id
                     ? "bg-secondary text-foreground"
                     : "text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -336,39 +358,43 @@ export function TokenEditor() {
           ))}
         </nav>
 
-        <div className="flex min-w-0 flex-1 flex-col gap-8">
-          {/* ── Semantic ─────────────────────────────────────────────────
-              The token a component names. Four columns, in resolution
-              order: the name you write, what it looks like light, what it
-              looks like dark, and the primitive each mode points at. */}
-          <section id="tok-semantic" className="flex scroll-mt-6 flex-col gap-3">
-            <div className="flex items-baseline gap-2">
-              <h4 className="text-small font-medium text-foreground">Semantic</h4>
-              <p className="text-2xsmall text-muted-foreground">
-                what a component names — never a raw colour
-              </p>
-            </div>
-
-            <div className="overflow-x-auto rounded-xl border border-border">
-              <table className="w-full text-left text-2xsmall">
-                <thead className="border-b border-border bg-muted text-muted-foreground">
-                  <tr>
-                    <th scope="col" className="px-3 py-2 font-medium">Token</th>
-                    <th scope="col" className="px-3 py-2 font-medium">Light</th>
-                    <th scope="col" className="px-3 py-2 font-medium">Dark</th>
-                    <th scope="col" className="px-3 py-2 font-medium">Points at</th>
+        {/* ── ONE table ────────────────────────────────────────────────────
+            Both layers, in the order the system resolves them, under the same
+            four headings. They were two panels — a table and a swatch grid —
+            and that made them look like two subjects. They are one subject
+            read twice: `--primary` and `--muza-blue-500` are the same colour
+            at two levels of naming, and putting them in one column set is
+            what makes the "Points at" value a place you can look UP. */}
+        <div className="min-w-0 flex-1 overflow-x-auto rounded-xl border border-border">
+          <table className="w-full text-left text-2xsmall">
+            <thead className="border-b border-border bg-muted text-muted-foreground">
+              <tr>
+                <th scope="col" className="px-3 py-2 font-medium">Token</th>
+                <th scope="col" className="px-3 py-2 font-medium">Light</th>
+                <th scope="col" className="px-3 py-2 font-medium">Dark</th>
+                <th scope="col" className="px-3 py-2 font-medium">Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {SECTIONS.map(section => (
+                <React.Fragment key={section.kind}>
+                  <tr id={section.id} className="scroll-mt-6 border-b border-border bg-secondary">
+                    <td colSpan={4} className="px-3 py-2">
+                      <span className="font-medium text-foreground">{section.title}</span>
+                      <span className="ml-2 text-muted-foreground">{section.blurb}</span>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {semanticGroups().map(group => (
+
+                  {section.groups.map(group => (
                     <React.Fragment key={group.label}>
-                      <tr id={slug(group.label)} className="scroll-mt-6 border-b border-border bg-muted/40">
+                      <tr id={slug(group.label)} className="scroll-mt-6 border-b border-border bg-muted/50">
                         <td colSpan={4} className="px-3 py-1.5 text-muted-foreground">
                           {group.label}
                         </td>
                       </tr>
+
                       {group.tokens.map(t => {
-                        const dark = darkDecl(t.name)
+                        const dark = section.kind === "semantic" ? darkDecl(t.name) : undefined
                         return (
                           <tr key={t.name} className="border-b border-border last:border-0">
                             <td className="px-3 py-2 whitespace-nowrap">
@@ -378,19 +404,38 @@ export function TokenEditor() {
                               <Swatch token={t.name} mode="light" nonce={nonce} />
                             </td>
                             <td className="px-3 py-2">
-                              {dark
-                                ? <Swatch token={t.name} mode="dark" nonce={nonce} />
-                                : <span className="text-muted-foreground/60">same</span>}
+                              {section.kind === "primitive"
+                                /* A primitive is one colour. It is not
+                                   redefined in `.dark` — that is the whole
+                                   point of the layer above it — so the column
+                                   says so rather than repeating the swatch. */
+                                ? <span className="text-muted-foreground/60">same</span>
+                                : dark
+                                  ? <Swatch token={t.name} mode="dark" nonce={nonce} />
+                                  : <span className="text-muted-foreground/60">same</span>}
                             </td>
-                            {/* The pointer, both modes. This is the column the
-                                hand-written table existed to provide, and the
-                                one it could silently get wrong. */}
                             <td className="px-3 py-2 font-mono text-muted-foreground">
-                              <span className="block">{t.refers ? `--${t.refers}` : valueOf(t)}</span>
-                              {dark && dark.refers !== t.refers && (
-                                <span className="block text-muted-foreground/60">
-                                  dark: {dark.refers ? `--${dark.refers}` : dark.value}
-                                </span>
+                              {section.kind === "primitive" ? (
+                                /* Editable, because this is the layer where a
+                                   change is MEANT to happen: retune a
+                                   primitive and every semantic token pointing
+                                   at it moves with it. */
+                                <ValueField
+                                  token={t.name}
+                                  value={valueOf(t)}
+                                  onChange={v => set(t.name, v)}
+                                />
+                              ) : (
+                                <>
+                                  <span className="block">
+                                    {t.refers ? `--${t.refers}` : t.value}
+                                  </span>
+                                  {dark && dark.value !== t.value && (
+                                    <span className="block text-muted-foreground/60">
+                                      dark: {dark.refers ? `--${dark.refers}` : dark.value}
+                                    </span>
+                                  )}
+                                </>
                               )}
                             </td>
                           </tr>
@@ -398,59 +443,10 @@ export function TokenEditor() {
                       })}
                     </React.Fragment>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          {/* ── Primitive ────────────────────────────────────────────────
-              The raw palette. Editable, because this is the layer where a
-              change is meant to happen: retune a primitive and every
-              semantic token pointing at it moves with it — which is the
-              behaviour the two-layer system exists to give you, and it is
-              visible here in one click. */}
-          <section id="tok-primitive" className="flex scroll-mt-6 flex-col gap-3">
-            <div className="flex items-baseline gap-2">
-              <h4 className="text-small font-medium text-foreground">Primitive</h4>
-              <p className="text-2xsmall text-muted-foreground">
-                the raw palette — never named by a component
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-5">
-              {primitiveGroups().map(group => (
-                <div key={group.label} id={slug(group.label)} className="flex scroll-mt-6 flex-col gap-2">
-                  <p className="text-2xsmall text-muted-foreground">{group.label}</p>
-                  <div className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(232px,1fr))]">
-                    {group.tokens.map(t => (
-                      <div
-                        key={t.name}
-                        className={cn(
-                          "flex items-center gap-2 rounded-lg border p-1.5 transition-colors",
-                          edits[t.name] ? "border-ring bg-muted/50" : "border-transparent",
-                        )}
-                      >
-                        <span
-                          className="size-8 shrink-0 rounded-lg border border-border"
-                          style={{ background: `var(--${t.name})` }}
-                        />
-                        <span className="flex min-w-0 flex-1 flex-col">
-                          <span className="truncate font-mono text-2xsmall text-foreground">
-                            {t.name.replace(/^muza-|^tw-/, "")}
-                          </span>
-                          <ValueField
-                            token={t.name}
-                            value={valueOf(t)}
-                            onChange={v => set(t.name, v)}
-                          />
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                </React.Fragment>
               ))}
-            </div>
-          </section>
+            </tbody>
+          </table>
         </div>
       </div>
       )}

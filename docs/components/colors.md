@@ -27,8 +27,10 @@ light and dark. Every value on this page is read out of
 ```
 
 `--primary` never holds a colour. Dark mode does not darken anything: it
-re-points. This is why "Points at" is a column in the token table rather than a
-footnote — it is the only place the mechanism is visible.
+re-points. This is why **Value** is a column in the token table rather than a
+footnote: on a semantic row it prints the pointer (and the dark one under it
+when they differ), on a primitive row the colour itself. It is the only place
+the mechanism is visible.
 
 A component may name `--primary`, `bg-background`, `text-muted-foreground`. It
 may never name `--muza-blue-500`, and it may never write a hex. A literal opts
@@ -51,9 +53,16 @@ visible rather than believed.
 
 The section is a live editor, and everything in it comes from the stylesheet.
 
-- **Design** — the two layers. Semantic tokens as a table (token · light ·
-  dark · what it points at); primitives as a palette with an editable value
-  per swatch.
+- **Design** — **one table**, both layers, in the order the system resolves
+  them: Token · Light · Dark · Value, with *Semantic* and *Primitive* as
+  sections inside it and a sticky rail listing every group.
+
+  They were two panels — a table and a swatch grid — and that made them look
+  like two subjects. They are one subject read twice: `--primary` and
+  `--muza-blue-500` are the same colour at two levels of naming, and only a
+  shared column set makes a pointer something you can look **up**. Change a
+  primitive and the semantic row's swatch moves a screen away, in the same
+  table, which is the mechanism happening in front of you.
 - **CSS** — the same tokens as text: the primitive `:root`, the semantic
   `:root`, and `.dark`, in the order `app.css` has them, with your edits
   applied. Copyable.
@@ -63,6 +72,16 @@ the cascade, so a change lands on the **whole page** — the sidebar, every card
 every other section — not on a preview rectangle. A token can only be judged in
 company. Edit a primitive and every semantic token pointing at it moves with
 it, which is the two-layer system demonstrating itself in one keystroke.
+
+Only **primitives** are editable, and that is not an omission. An inline
+property on `<html>` beats both `:root` and `.dark`, so editing `--primary`
+directly would pin it to one colour in *both* modes — it would break the very
+mechanism the table is there to show. The layer where a colour actually lives
+is the layer you change.
+
+A primitive's Dark column reads "same" for the same reason: a primitive is one
+colour and is never redeclared in `.dark`. That is the point of the layer above
+it.
 
 Nothing persists. Reset removes the inline properties; leaving the section does
 the same, so a half-finished experiment does not follow you around the app.
@@ -87,7 +106,8 @@ source order, group headings from the comments.
   semantic block). Renaming that token would silently empty the table. Worth a
   build-time assertion, or is a visibly empty table its own alarm?
 - `--primary-hover` is a `color-mix(in srgb, black 20%, …)` rather than a
-  pointer, so it has no "Points at" — the table prints the expression. Should
+  pointer, so its Value is neither a colour nor a name — the table prints the
+  expression. Should
   computed tokens be a third kind with their own column, or is showing the
   expression enough?
 - Editing is per-token and unstructured — a text field, not a colour picker.
