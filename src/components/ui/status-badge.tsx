@@ -2,9 +2,11 @@
 
 import * as React from "react"
 import { ChevronDown, Globe, Lock, Check } from "lucide-react"
-import { Menu as MenuPrimitive } from "@base-ui/react/menu"
 
 import { cn } from "@/lib/utils"
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+} from "@/components/ui/dropdown-menu"
 
 // ─── StatusBadge ──────────────────────────────────────────────────────────────
 //
@@ -48,45 +50,38 @@ const STATUS_TRIGGER_CLS = cn(
 
 function StatusBadge({ status, onStatusChange, className }: StatusBadgeProps) {
   const { label, icon: Icon } = statusConfig[status]
+  /*
+   * The project's `DropdownMenu`, not Base UI's `Menu` directly. That is the
+   * whole point of it: below the presentation gate it swaps the popup for a
+   * bottom sheet with big tappable rows, and every other menu in the app
+   * already goes through it. This badge was talking to the primitive, so on a
+   * phone it opened a 7rem dropdown with 1.5-line-high rows — a desktop menu
+   * on a touch screen, and the one menu in the app that behaved differently
+   * from all the others.
+   */
   return (
-    <MenuPrimitive.Root>
-      <MenuPrimitive.Trigger
+    <DropdownMenu>
+      <DropdownMenuTrigger
         data-slot="status-badge"
         className={cn(STATUS_TRIGGER_CLS, className)}
       >
         <Icon aria-hidden />
         {label}
         <ChevronDown className="opacity-80 transition-transform duration-200 [[aria-expanded=true]_&]:rotate-180" aria-hidden />
-      </MenuPrimitive.Trigger>
+      </DropdownMenuTrigger>
 
-      <MenuPrimitive.Portal keepMounted>
-        <MenuPrimitive.Positioner side="bottom" align="start" sideOffset={4}>
-          <MenuPrimitive.Popup className={cn(
-            "z-50 min-w-[7rem] rounded-xl border border-border bg-popover p-1 shadow-md outline-none",
-            "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
-          )}>
-            {(Object.entries(statusConfig) as [StatusBadgeStatus, { label: string; icon: React.ElementType }][]).map(
-              ([key, { label: itemLabel, icon: ItemIcon }]) => (
-                <MenuPrimitive.Item
-                  key={key}
-                  className={cn(
-                    "relative flex cursor-pointer select-none items-center gap-2 rounded-lg px-2.5 py-1.5",
-                    "text-xsmall outline-none transition-colors",
-                    "data-highlighted:bg-accent data-highlighted:text-accent-foreground",
-                    "data-disabled:pointer-events-none data-disabled:opacity-50",
-                  )}
-                  onClick={() => onStatusChange?.(key)}
-                >
-                  <ItemIcon className="size-3 shrink-0" aria-hidden />
-                  {itemLabel}
-                  {key === status && <Check className="ml-auto size-3 text-primary-text" aria-hidden />}
-                </MenuPrimitive.Item>
-              )
-            )}
-          </MenuPrimitive.Popup>
-        </MenuPrimitive.Positioner>
-      </MenuPrimitive.Portal>
-    </MenuPrimitive.Root>
+      <DropdownMenuContent align="start" className="min-w-[7rem]">
+        {(Object.entries(statusConfig) as [StatusBadgeStatus, { label: string; icon: React.ElementType }][]).map(
+          ([key, { label: itemLabel, icon: ItemIcon }]) => (
+            <DropdownMenuItem key={key} onClick={() => onStatusChange?.(key)}>
+              <ItemIcon className="size-3 shrink-0" aria-hidden />
+              {itemLabel}
+              {key === status && <Check className="ml-auto size-3 text-primary-text" aria-hidden />}
+            </DropdownMenuItem>
+          )
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 

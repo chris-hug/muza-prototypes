@@ -18,6 +18,14 @@ function Toolbar({ className, ...props }: ToolbarPrimitive.Root.Props) {
       data-slot="toolbar"
       className={cn(
         "inline-flex items-center gap-1 rounded-full border border-border bg-background p-1",
+        /* A toolbar holds whatever a caller puts in it, so it cannot know
+           which label to drop when the room runs out — it scrolls instead.
+           `max-w-full` keeps the pill inside its column (six labelled buttons
+           are ~430px and overflowed a 296px phone column), and the children
+           stay `shrink-0` so a button never squashes into an unreadable
+           sliver. The pill's own shape is preserved, unlike wrapping. */
+        "max-w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        "[&>*]:shrink-0",
         className,
       )}
       {...props}
