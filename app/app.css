@@ -135,6 +135,16 @@
   font-weight: 700; font-style: italic; font-display: swap;
 }
 
+/* The mono cut of the same family. One weight only — code is never bold here,
+   and a synthesised bold would break the fixed advance width that is the whole
+   point of the face. woff2 first, woff as the fallback. */
+@font-face {
+  font-family: "Founders Grotesk Mono";
+  src: url("/fonts/FoundersGrotesk-Mono-Regular.woff2") format("woff2"),
+       url("/fonts/FoundersGrotesk-Mono-Regular.woff") format("woff");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+
 /* Dark mode via .dark class */
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -160,7 +170,7 @@
 @theme inline {
   /* Typography */
   --font-sans: "Founders Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", "Fira Code", monospace;
+  --font-mono: "Founders Grotesk Mono", ui-monospace, "SF Mono", monospace;
 
   /* Semantic colors */
   --color-background:              var(--background);

@@ -427,7 +427,7 @@ export function ResponsiveLab() {
                     {v.where !== "—" && (
                       <>
                         {" · "}
-                        <code className="rounded-sm bg-muted px-1 font-sans text-2xsmall font-normal">{v.where}</code>
+                        <code className="rounded-sm bg-muted px-1 font-mono text-2xsmall font-normal">{v.where}</code>
                       </>
                     )}
                   </td>
@@ -444,13 +444,13 @@ export function ResponsiveLab() {
         layout has, never what the hardware is called. Two of them are gates with a job:{" "}
         <span className="text-foreground">608 = chrome</span> (tab bar, mobile header, mini player) and{" "}
         <span className="text-foreground">768 = presentation</span> (sheets ⇄ dialogs, the docked editor) — Tailwind’s{" "}
-        <code className="rounded-sm bg-muted px-1 font-sans text-2xsmall font-normal">md:</code> is that second gate in CSS, and the only screen token allowed to switch a presentation;{" "}
-        <code className="rounded-sm bg-muted px-1 font-sans text-2xsmall font-normal">sm:</code> /{" "}
-        <code className="rounded-sm bg-muted px-1 font-sans text-2xsmall font-normal">lg:</code> reflow in-page content only.{" "}
+        <code className="rounded-sm bg-muted px-1 font-mono text-2xsmall font-normal">md:</code> is that second gate in CSS, and the only screen token allowed to switch a presentation;{" "}
+        <code className="rounded-sm bg-muted px-1 font-mono text-2xsmall font-normal">sm:</code> /{" "}
+        <code className="rounded-sm bg-muted px-1 font-mono text-2xsmall font-normal">lg:</code> reflow in-page content only.{" "}
         <span className="text-foreground">608</span> and{" "}
         <span className="text-foreground">1069</span> are arithmetic —{" "}
-        <code className="rounded-sm bg-muted px-1 font-sans text-2xsmall font-normal">560 + 2×24</code> and{" "}
-        <code className="rounded-sm bg-muted px-1 font-sans text-2xsmall font-normal">780 + 208 + 80 + 1</code>{" "}
+        <code className="rounded-sm bg-muted px-1 font-mono text-2xsmall font-normal">560 + 2×24</code> and{" "}
+        <code className="rounded-sm bg-muted px-1 font-mono text-2xsmall font-normal">780 + 208 + 80 + 1</code>{" "}
         — so never write either number into a component.
       </p>
 
@@ -458,9 +458,9 @@ export function ResponsiveLab() {
         Three of these widths make the page wider and the column narrower — the
         chrome that appears there costs more than the pixel gained. Every number
         is computed from{" "}
-        <code className="rounded-sm bg-muted px-1 font-sans text-2xsmall font-normal">breakpoints.ts</code>;
+        <code className="rounded-sm bg-muted px-1 font-mono text-2xsmall font-normal">breakpoints.ts</code>;
         inside a frame the chip IS the window — presentation swaps gated on{" "}
-        <code className="rounded-sm bg-muted px-1 font-sans text-2xsmall font-normal">useIsMobile()</code>{" "}
+        <code className="rounded-sm bg-muted px-1 font-mono text-2xsmall font-normal">useIsMobile()</code>{" "}
         read the chip, so a 375 frame opens sheets; the sheet itself is portaled to your real
         window, so it appears at the bottom of the browser. A component that measures its own{" "}
         <span className="text-foreground">box</span> (song row, player bar, player overlay) has its
