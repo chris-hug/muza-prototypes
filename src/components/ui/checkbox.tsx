@@ -5,6 +5,7 @@ import { Checkbox as CheckboxPrimitive } from "@base-ui/react/checkbox"
 import { CheckIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { useTick, TICK_CLASS } from "@/lib/use-tick"
 
 // ─── Checkbox ─────────────────────────────────────────────────────────────────
 //
@@ -17,21 +18,14 @@ import { cn } from "@/lib/utils"
 // ─────────────────────────────────────────────────────────────────────────────
 
 function Checkbox({ className, onCheckedChange, ...props }: CheckboxPrimitive.Root.Props) {
-  const [anim, setAnim] = React.useState(false)
-  const timer = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  React.useEffect(() => () => clearTimeout(timer.current), [])
+  const { tickProps, tick } = useTick()
 
   return (
     <CheckboxPrimitive.Root
       data-slot="checkbox"
-      data-anim={anim || undefined}
+      {...tickProps}
       onCheckedChange={(checked, details) => {
-        setAnim(false)
-        // Two frames: clearing and re-adding the attribute in one paint does
-        // not restart a CSS animation, so the second tick would not move.
-        requestAnimationFrame(() => requestAnimationFrame(() => setAnim(true)))
-        clearTimeout(timer.current)
-        timer.current = setTimeout(() => setAnim(false), 400)
+        tick()
         onCheckedChange?.(checked, details)
       }}
       className={cn(
@@ -57,14 +51,11 @@ function Checkbox({ className, onCheckedChange, ...props }: CheckboxPrimitive.Ro
         // Checked state
         "data-checked:border-primary data-checked:bg-primary data-checked:text-primary-foreground",
         "dark:data-checked:bg-primary",
-        /* The spring runs on CHANGE, not on state — `data-checked:animate-…`
-           fires on mount too, so every pre-ticked box in a form bounced on
-           page load. `data-anim` is set from `onCheckedChange` and cleared
-           after the run, which also gets the other half of it: unticking
-           springs as well. `muzaTick` is the pick mark's bounce at half
-           amplitude — a checkbox is ticked in rows of six, and the louder
-           curve repeated down a form reads as fidgeting. */
-        "data-[anim]:animate-[muzaTick_360ms_cubic-bezier(.22,1,.36,1)]",
+        /* The spring, from `useTick` — driven by the CHANGE, not the state.
+           `muzaTick` is the pick mark's bounce at half amplitude: a checkbox
+           is ticked in rows of six, and the louder curve repeated down a form
+           reads as fidgeting. */
+        TICK_CLASS,
         className
       )}
       {...props}

@@ -51,7 +51,14 @@ function Switch({
       <SwitchPrimitive.Thumb
         data-slot="switch-thumb"
         className={cn(
-          "pointer-events-none block rounded-full bg-background ring-0 transition-transform",
+          "pointer-events-none block rounded-full bg-background ring-0",
+          /* The thumb SLIDES, so it gets its spring in the travel rather than
+             in a scale: an `animate-[muzaTick]` would set `transform: scale()`
+             and overwrite the very translate that moves it. Same overshoot
+             curve the pick mark's strokes use — it runs a little past the end
+             of the track and settles back, which is what a physical toggle
+             does. */
+          "transition-transform duration-300 [transition-timing-function:cubic-bezier(.68,-0.55,.27,1.55)]",
           // Thumb sizes per track size
           "group-data-[size=default]/switch:size-4",
           "group-data-[size=sm]/switch:size-3",

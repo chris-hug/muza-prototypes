@@ -4,6 +4,7 @@ import { Radio as RadioPrimitive } from "@base-ui/react/radio"
 import { RadioGroup as RadioGroupPrimitive } from "@base-ui/react/radio-group"
 
 import { cn } from "@/lib/utils"
+import { useTick, TICK_CLASS } from "@/lib/use-tick"
 
 // ─── RadioGroup ───────────────────────────────────────────────────────────────
 //
@@ -23,10 +24,18 @@ function RadioGroup({ className, ...props }: RadioGroupPrimitive.Props) {
   )
 }
 
-function RadioGroupItem({ className, ...props }: RadioPrimitive.Root.Props) {
+function RadioGroupItem({ className, onClick, ...props }: RadioPrimitive.Root.Props) {
+  /* Driven by the CLICK, not by `checked`. A radio has no per-item change
+     event — the group owns the value — and a `data-checked:` selector would
+     fire on mount, bouncing whichever option is already chosen every time the
+     form renders. Clicking is the only way one gets picked. */
+  const { tickProps, tick } = useTick()
+
   return (
     <RadioPrimitive.Root
       data-slot="radio-group-item"
+      {...tickProps}
+      onClick={e => { tick(); onClick?.(e) }}
       className={cn(
         "group/radio-group-item peer relative flex aspect-square size-4 shrink-0 rounded-full border border-muted-foreground outline-none",
         // Touch target
@@ -42,6 +51,8 @@ function RadioGroupItem({ className, ...props }: RadioPrimitive.Root.Props) {
         // Checked state — filled primary
         "data-checked:border-primary data-checked:bg-primary data-checked:text-primary-foreground",
         "dark:data-checked:bg-primary",
+        // Same spring as the Checkbox — same gesture, different geometry.
+        TICK_CLASS,
         className
       )}
       {...props}
