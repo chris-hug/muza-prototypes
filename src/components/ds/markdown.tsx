@@ -22,8 +22,11 @@ function inline(text: string, keyBase: string): React.ReactNode[] {
   return text.split(INLINE).filter(Boolean).map((part, i) => {
     const key = `${keyBase}-${i}`
     if (part.startsWith("`") && part.endsWith("`")) {
+      // `px-1.5 py-0.5` and `rounded`: at 4px/1px the tint hugged the glyphs
+      // so tightly it read as a highlighter smear rather than a token, and
+      // 1px of vertical padding gave the corner radius nothing to round.
       return (
-        <code key={key} className="text-2xsmall font-normal font-mono px-1 py-px rounded-sm bg-muted text-foreground">
+        <code key={key} className="text-2xsmall font-normal font-mono px-1.5 py-0.5 rounded bg-muted text-foreground">
           {part.slice(1, -1)}
         </code>
       )
