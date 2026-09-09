@@ -179,7 +179,11 @@ export default function DesignSystem() {
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
-              size="icon-sm"
+              /* `icon` (40px), not `icon-sm` (32): the size that matters is
+                 the ToggleGroup's OUTER height beside it — its 32px toggles
+                 sit inside a 4px track — so a 32px button next to it read as
+                 the smaller of two things that should be one row. */
+              size="icon"
               onClick={goBackToPrototype}
               title="Back to prototype"
               aria-label="Back to prototype"
@@ -188,8 +192,6 @@ export default function DesignSystem() {
             </Button>
             <ThemeSwitch className="ml-auto" />
           </div>
-          <h2 className="text-small font-medium text-foreground">Design system</h2>
-
           {/* Component search — filters the nav (Enter jumps to first match). */}
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
