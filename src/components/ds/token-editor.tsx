@@ -55,22 +55,61 @@ function useResolved(token: string, mode: "light" | "dark", nonce: number) {
 }
 
 /*
- * Computed colour → hex, via a canvas.
+ * Computed colour → oklch, via a canvas.
  *
- * NOT by parsing the string. `getComputedStyle().backgroundColor` returns
- * whatever colour space the value was authored in — our tokens are `oklch()`,
- * so it comes back as `oklch(99.81% 0.0053 118.5)`. Reading its three numbers
- * as if they were R/G/B turned muza-white into a navy `#010077`, and it looked
- * plausible enough on a table full of numbers to miss.
+ * NOT by reading the string. `getComputedStyle().backgroundColor` hands back
+ * whatever space the value was authored in — `oklch()` for most of this
+ * palette, but `rgb()` for the handful of primitives still written as hex.
+ * Printing that raw would mean a column in two notations, and reading its
+ * three numbers as if they were always the same three numbers is how
+ * muza-white once rendered as a navy `#010077`.
  *
- * So the colour is PAINTED and the pixel read back. Reading `ctx.fillStyle`
- * alone is not enough — Chrome hands an `oklch()` string straight back rather
- * than normalising it — but a 1×1 `fillRect` plus `getImageData` gives the
- * actual sRGB bytes the screen shows, which is what a hex is.
+ * So: reformat when it is already oklch, and otherwise PAINT the colour and
+ * read the pixel back — a 1×1 `fillRect` plus `getImageData` gives the actual
+ * sRGB bytes on screen — then convert. One notation, the same one the
+ * stylesheet is written in, and no needless trip through 8 bits.
  */
 let ctx: CanvasRenderingContext2D | null | undefined
-function hex(color: string): string {
+
+function srgbToOklch(r: number, g: number, b: number): [number, number, number] {
+  const lin = (c: number) => {
+    const v = c / 255
+    return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+  }
+  const lr = lin(r), lg = lin(g), lb = lin(b)
+  // sRGB → LMS → Oklab (Björn Ottosson's matrices), then Lab → LCh.
+  const l = Math.cbrt(0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb)
+  const m = Math.cbrt(0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb)
+  const s2 = Math.cbrt(0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb)
+  const L = 0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s2
+  const a = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s2
+  const bb = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s2
+  const C = Math.hypot(a, bb)
+  let H = (Math.atan2(bb, a) * 180) / Math.PI
+  if (H < 0) H += 360
+  return [L, C, H]
+}
+
+/* `oklch(L C H)` / `oklch(L C H / A)` as the browser normalises it. */
+const OKLCH = /^oklch\(\s*([\d.]+%?)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?\s*\)$/i
+
+function oklchOf(color: string): string {
   if (!color) return ""
+
+  /* If the browser already hands back oklch — which it does for everything in
+     this palette authored that way — reformat it and stop. Sending it through
+     the canvas would round-trip it through 8-bit sRGB, and on the alpha
+     primitives that is not a rounding error but a real shift: a 50% neutral
+     came back at hue 106.6 against the 111.4 in the file, because the canvas
+     stores premultiplied and un-premultiplying at a = 0.5 throws away half the
+     precision. Measure only what has to be measured. */
+  const m = color.match(OKLCH)
+  if (m) {
+    const L = m[1].endsWith("%") ? parseFloat(m[1]) : parseFloat(m[1]) * 100
+    const base = `oklch(${L.toFixed(2)}% ${parseFloat(m[2]).toFixed(4)} ${parseFloat(m[3]).toFixed(1)}`
+    return m[4] ? `${base} / ${parseFloat(m[4]).toFixed(2)})` : `${base})`
+  }
+
   if (ctx === undefined) {
     const canvas = document.createElement("canvas")
     canvas.width = canvas.height = 1
@@ -82,25 +121,18 @@ function hex(color: string): string {
     ctx.fillStyle = color
     ctx.fillRect(0, 0, 1, 1)
     const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data
-    const to = (n: number) => n.toString(16).padStart(2, "0")
-    const out = `#${to(r)}${to(g)}${to(b)}`.toUpperCase()
-    // Alpha is real in this palette — `--muted-foreground` is a 50% neutral —
-    // so say so rather than printing an opaque hex that is not what you see.
-    return a < 255 ? `${out} · ${Math.round((a / 255) * 100)}%` : out
+    const [L, C, H] = srgbToOklch(r, g, b)
+    // Same precision app.css is written in, so a value read here can be
+    // pasted there without looking like a different number.
+    const base = `oklch(${(L * 100).toFixed(2)}% ${C.toFixed(4)} ${H.toFixed(1)}`
+    // Alpha is real in this palette — `--muted-foreground` is a 75% neutral —
+    // and the slash form is how CSS writes it.
+    return a < 255 ? `${base} / ${(a / 255).toFixed(2)})` : `${base})`
   } catch {
     return color
   }
 }
 
-/*
- * A colour cell: the chip, then what the token RESOLVES THROUGH, then the
- * measured value under it.
- *
- * The name is the primary line because that is the answer to the question the
- * table is asked — "what is `--border` in dark mode?" is answered by
- * "`--muza-neutrals-700`", not by a hex. The hex is the check, so it sits
- * underneath in the muted size.
- */
 function Swatch({ token, mode, nonce, label, editor }: {
   token: string
   mode: "light" | "dark"
@@ -124,11 +156,17 @@ function Swatch({ token, mode, nonce, label, editor }: {
         />
       </span>
       <span className="flex min-w-0 flex-1 flex-col leading-tight">
+        {/* Never `truncate` here. Both lines are the ANSWER — a clipped
+            `--muza-neut…` or `oklch(99.8…` is worse than a second line,
+            because it looks like information and is not. They wrap instead:
+            the NAME at its hyphens, which are break opportunities already,
+            and the VALUE with `break-all`, because `oklch(99.81% …` offers
+            the browser nowhere to break and would otherwise overflow. */}
         {editor ?? (
-          <span className="truncate font-mono text-2xsmall text-foreground">{label}</span>
+          <span className="font-mono text-2xsmall text-foreground">{label}</span>
         )}
-        <span className="truncate px-1.5 font-mono text-2xsmall tabular-nums text-muted-foreground/70">
-          {hex(rgb)}
+        <span className="break-all font-mono text-2xsmall tabular-nums text-muted-foreground/70">
+          {oklchOf(rgb)}
         </span>
       </span>
     </span>
@@ -457,13 +495,19 @@ export function TokenEditor() {
             {/* Fixed columns, not content-driven. Auto layout let the two
                 colour cells take whatever their longest primitive name asked
                 for, which pushed "Used for" off the right edge entirely — the
-                column was there and invisible. The prose column is the widest
-                because it is the only one holding a sentence. */}
+                column was there and invisible. The two colour columns get the
+                most because they carry the longest strings — a full
+                `oklch(99.81% 0.0053 118.5)` is 26 characters ≈ 234px at the
+                15px mono, and must not be clipped. 30% clears that from a
+                ~1000px table; narrower than that it wraps to a second line,
+                which is the right failure — a clipped value looks like
+                information and is not. The prose column takes the remainder
+                because prose wraps without losing anything. */}
             <colgroup>
-              <col className="w-[19%]" />
-              <col className="w-[23%]" />
-              <col className="w-[23%]" />
-              <col className="w-[35%]" />
+              <col className="w-[16%]" />
+              <col className="w-[30%]" />
+              <col className="w-[30%]" />
+              <col className="w-[24%]" />
             </colgroup>
             {/* Sticky, because the table is 70-odd rows and four columns of
                 hex look alike: without the header, "which of these is dark
@@ -499,7 +543,14 @@ export function TokenEditor() {
                         const dark = section.kind === "semantic" ? darkDecl(t.name) : undefined
                         return (
                           <tr key={t.name} className="border-b border-border last:border-0">
-                            <td className="px-3 py-1.5 whitespace-nowrap">
+                            <td className="px-3 py-1.5 align-top">
+                              {/* Plain wrapping, not `nowrap` and not
+                                  `break-all`. `nowrap` made the longest token
+                                  (`--sidebar-primary-foreground`) run OUT of
+                                  its cell into the colour beside it;
+                                  `break-all` split it mid-word. A hyphen is
+                                  already a break opportunity, so normal
+                                  wrapping breaks it at one. */}
                               <span className="font-mono text-foreground">--{t.name}</span>
                             </td>
                             {/* Light: the chip, and what the token resolves
@@ -508,7 +559,7 @@ export function TokenEditor() {
                                 the layer a colour lives on is the layer you
                                 change, and an inline property on <html> would
                                 beat both modes if applied to a semantic one. */}
-                            <td className="px-3 py-1.5">
+                            <td className="px-3 py-1.5 align-top">
                               <Swatch
                                 token={t.name}
                                 mode="light"
@@ -523,7 +574,7 @@ export function TokenEditor() {
                                 ) : undefined}
                               />
                             </td>
-                            <td className="px-3 py-1.5">
+                            <td className="px-3 py-1.5 align-top">
                               {section.kind === "primitive" ? (
                                 /* A primitive is one colour and is never
                                    redeclared in `.dark`. That is the whole
@@ -546,7 +597,7 @@ export function TokenEditor() {
                                 value, so the answer to "what is this for"
                                 lives where the value does and cannot drift
                                 from it. */}
-                            <td className="px-3 py-1.5 text-muted-foreground">
+                            <td className="px-3 py-1.5 align-top text-muted-foreground">
                               {section.kind === "primitive"
                                 ? <span className="text-muted-foreground/60">—</span>
                                 : t.note}

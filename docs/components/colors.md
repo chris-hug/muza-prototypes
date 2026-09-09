@@ -62,9 +62,22 @@ middle of it always comes out muddy. Here `--muza-neutrals-400` and `-500` are
 one step apart in the file and one step apart to the eye.
 
 The `/* #RRGGBB */` after each value is a convenience for Figma and for
-copy-paste, not a second source. The hex shown on the page is measured from the
-**painted pixel**, not read from that comment, so a comment that drifts is
-visible rather than believed.
+copy-paste, not a second source — and it is **not** what the page shows. The
+table prints oklch, in the same notation and the same precision the stylesheet
+is written in, so a value read here can be pasted there without looking like a
+different number.
+
+Where the browser already reports oklch, that value is reformatted and printed.
+Where it does not — the handful of primitives still authored as hex — the
+colour is painted to a 1×1 canvas and the pixel converted. Measuring only what
+has to be measured matters on the alpha primitives: a canvas stores
+premultiplied, so un-premultiplying a 50% neutral threw away half the precision
+and moved its hue from 111.4 to 106.6.
+
+Neither line is ever truncated. A clipped `--muza-neut…` or `oklch(99.8…` looks
+like information and is not, so both wrap instead — the name at its hyphens,
+which are break opportunities already, and the value with `break-all`, because
+an oklch triple offers the browser nowhere to break.
 
 ## The editor
 
