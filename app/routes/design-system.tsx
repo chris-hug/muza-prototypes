@@ -7,8 +7,10 @@
  * renders the existing `ExploreView` kitchen sink with its inline
  * chip-nav suppressed.
  *
- * Top of the sidebar holds a "← Back to prototype" link so the docs
- * never trap the user away from the product.
+ * Top of the sidebar holds an icon-only back button so the docs never trap
+ * the user away from the product, and the light/dark switch beside it — the
+ * app's real theme, since every section here is a claim about how something
+ * looks and half of those are only checkable in the other mode.
  */
 
 import { useEffect, useState } from "react"
@@ -16,6 +18,8 @@ import { useSearchParams } from "react-router"
 import { ArrowLeft, Search, X } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { ThemeSwitch } from "@/components/ds/theme-switch"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import { ExploreView } from "./home"
@@ -164,14 +168,26 @@ export default function DesignSystem() {
         {/* Top — back link, title, component search, phase-2 toggle.
             Borderless / minimal; the nav below carries its own spacing. */}
         <div className="shrink-0 px-4 pt-6 pb-4 flex flex-col gap-4 border-b border-border">
-          <button
-            type="button"
-            onClick={goBackToPrototype}
-            className="inline-flex items-center gap-1.5 text-xsmall font-normal text-muted-foreground hover:text-foreground transition-colors w-fit cursor-pointer"
-          >
-            <ArrowLeft className="size-3.5" />
-            Back to prototype
-          </button>
+          {/* Two controls, one row: leave, and change the light. Both are
+              chrome for the shell rather than content, so they sit above the
+              title and read as the window's own buttons.
+
+              The back link is icon-only now: `title` and `aria-label` carry
+              "Back to prototype", which is what a ← in the top-left corner
+              already means. The words cost a line of the sidebar to say it
+              twice. */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={goBackToPrototype}
+              title="Back to prototype"
+              aria-label="Back to prototype"
+            >
+              <ArrowLeft />
+            </Button>
+            <ThemeSwitch className="ml-auto" />
+          </div>
           <h2 className="text-small font-medium text-foreground">Design system</h2>
 
           {/* Component search — filters the nav (Enter jumps to first match). */}

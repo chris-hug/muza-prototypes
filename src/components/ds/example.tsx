@@ -123,6 +123,7 @@ export function Example({
   controls,
   bleed: bleedFn,
   align = "center",
+  frameless = false,
   className,
   stageClassName,
   children,
@@ -165,6 +166,15 @@ export function Example({
    *  container width (rails, grids, anything with `@min-[…]` classes) can
    *  react to the breakpoint chips at all. */
   align?: "center" | "stretch"
+  /** Drops the frame: no border, no surface, no chrome — just the demo, in the
+   *  page's own background, with the toolbar still above it.
+   *
+   *  A frame is a claim that the component has an EDGE worth showing: a card,
+   *  a dialog, a rail that reacts to its container. A row of buttons has no
+   *  edge — it sizes from a prop and renders identically at 320 and at 1920 —
+   *  so boxing it invents a container the component never has, and the reader
+   *  spends attention on a rectangle that means nothing. */
+  frameless?: boolean
   className?: string
   stageClassName?: string
   children: React.ReactNode
@@ -259,9 +269,12 @@ export function Example({
         </div>
       </div>
 
-      <div className="rounded-xl border border-border overflow-hidden">
+      <div className={cn(!frameless && "rounded-xl border border-border overflow-hidden")}>
         {/* Toolbar — variant controls left, code + docs right. */}
-        <div className="flex items-center gap-3 px-3 py-2 border-b border-border bg-muted min-h-11">
+        <div className={cn(
+          "flex items-center gap-3 px-3 py-2 border-b border-border min-h-11",
+          frameless ? "bg-transparent px-0" : "bg-muted",
+        )}>
           <div className="flex-1 min-w-0 flex items-center gap-2">{controls}</div>
           <div className="shrink-0 flex items-center gap-1">
             {code && (
@@ -380,7 +393,11 @@ export function Example({
               >
                 <div
                   className={cn(
-                    "bg-background flex flex-col gap-6",
+                    "flex flex-col gap-6",
+                    /* Frameless keeps the page's own background: painting
+                       `bg-background` inside a box that has no border would
+                       still draw a rectangle, just a borderless one. */
+                    frameless ? "bg-transparent" : "bg-background",
                     /* With chrome drawn, the hatched gutter IS the page's
                        horizontal padding — a second `px-6` inside the column
                        inset every component 24px further than the app ever
@@ -390,6 +407,7 @@ export function Example({
                        just a box and keeps its own breathing room. */
                     bleed ? "p-0 items-stretch"
                       : chrome ? cn("px-0 py-6", align === "center" ? "items-center" : "items-stretch")
+                      : frameless ? cn("px-0 py-6", align === "center" ? "items-center" : "items-stretch")
                       : cn("p-6", align === "center" ? "items-center" : "items-stretch"),
                     stageClassName,
                   )}

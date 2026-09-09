@@ -263,7 +263,6 @@ import { Separator } from "@/components/ui/separator"
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
 import { Toggle } from "@/components/ui/toggle"
 import { ToggleGroup } from "@/components/ui/toggle-group"
-import { useTheme } from "@/components/app/theme-provider"
 import {
   Collapsible, CollapsibleTrigger, CollapsiblePanel,
 } from "@/components/ui/collapsible"
@@ -395,36 +394,6 @@ function SectionDocButton({ id }: { id: string }) {
         </DialogContent>
       </Dialog>
     </>
-  )
-}
-
-/* ─── Theme switch ────────────────────────────────────────────────────────────
- * The app's real theme, not a preview: `useTheme()` toggles the `.dark` class
- * on <html> and writes the same localStorage key the product does, so the
- * choice survives a reload and follows you out of the design system.
- *
- * Same shape as the one in Settings — a two-value `ToggleGroup` rather than a
- * `Switch`, because the two states are named and equal. A switch would imply
- * dark is "on" and light is the absence of it. */
-function ThemeSwitch({ className }: { className?: string }) {
-  const { theme, setTheme } = useTheme()
-  return (
-    <ToggleGroup
-      value={[theme]}
-      onValueChange={values => {
-        const next = values[0]
-        if (next) setTheme(next as "light" | "dark")
-      }}
-      aria-label="Theme"
-      className={className}
-    >
-      <Toggle value="light" aria-label="Light mode" className="aspect-square px-0">
-        <Sun className="size-[14px]" />
-      </Toggle>
-      <Toggle value="dark" aria-label="Dark mode" className="aspect-square px-0">
-        <Moon className="size-[14px]" />
-      </Toggle>
-    </ToggleGroup>
   )
 }
 
@@ -967,19 +936,6 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       <div className="bg-muted border-b border-border pt-24 pb-[3.75rem]">
         <div className="max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto px-page flex flex-col gap-3">
           <h1 className="text-5xl font-medium leading-none tracking-[-0.025em]">The muza design system</h1>
-          {/* The switch rides the META row, not the title. Beside a 72px
-              display face a 32px control has nothing to line up with and
-              reads as floating; on this row it sits with type its own size,
-              and its right edge lands on the same 1600px the section rules
-              and every table below use.
-
-              It belongs on THIS page more than any other: every section is a
-              claim about how something looks, and half of those claims are
-              only checkable in the other mode. It drives the app's own
-              `ThemeProvider` — the same `.dark` class on <html>, the same
-              localStorage key — so what you switch is the real thing, and it
-              follows you out of the design system. */}
-          <div className="flex items-center gap-6">
           <p className="text-small text-muted-foreground">
             {LAST_GIT_PUSH && (
               <>
@@ -989,8 +945,6 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             )}
             Sections with a <span className="text-foreground">New</span> or <span className="text-foreground">Updated</span> badge landed in this release.
           </p>
-          <ThemeSwitch className="ml-auto shrink-0" />
-          </div>
         </div>
       </div>
       )}
@@ -1203,12 +1157,21 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         <Example
           title="Variants × sizes — text and icon-only"
           doc="button"
-          align="center"
           /* No width picker: a Button takes its size from a prop and renders
              identically at 320 and at 1920. Chips here would advertise a
              responsiveness it does not have and send the reader looking for a
-             difference between two chips that is not there. */
+             difference between two chips that is not there.
+
+             And no frame either. A frame is a claim that the component has an
+             EDGE worth showing — a card, a dialog, a rail that reacts to its
+             container. A row of buttons has none: it sizes from a prop, so
+             the box invents a container the button never has and asks the
+             reader to look at a rectangle that means nothing. `align="left"`
+             for the same reason: a catalogue is a list, and centring it made
+             the rows drift with the widest label. */
           responsive={false}
+          frameless
+          align="stretch"
           code={buttonBasicExampleSrc}
           codePath="src/ds-examples/button-basic.tsx"
         >

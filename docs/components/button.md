@@ -249,6 +249,18 @@ pointer concern, not a width one.
 - **Do not wrap a Button in something that translates it** without absorbing
   the transform in the wrapper; the press nudge is a translate too.
 
+## The catalogue has no frame
+
+The Button section renders `frameless` — no border, no surface, no window
+chips. A frame is a claim that the component has an **edge** worth showing: a
+card, a dialog, a rail that reacts to its container. A Button has none. It
+takes its size from a prop and renders identically at 320 and at 1920, so a box
+around it invents a container the button never has and spends the reader's
+attention on a rectangle that means nothing.
+
+The `</>` and ⓘ affordances stay — they are about the call site and the doc,
+not about the frame.
+
 ## Open questions
 
 - button.tsx:44 (comment) still calls the size block "Figma node 37:931 — exact px values" · the listed values now match the source, but `default`, `lg`, `icon` and `icon-lg` have all moved off that frame's original values (9f31908, 881fd40). Is the Figma frame updated, or is the heading stale?
