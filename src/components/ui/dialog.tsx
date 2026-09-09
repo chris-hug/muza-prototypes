@@ -416,6 +416,29 @@ export const dialogPreviewPhoneClass =
   "!w-full !max-w-full !rounded-t-2xl !rounded-b-none !p-3 !gap-2 " +
   "[&_[data-slot=dialog-preview-title]]:!text-small"
 
+/*
+ * The bottom-sheet recipe for an ANCHORED popup — a Select list, a DatePicker
+ * calendar — below the 768 presentation gate.
+ *
+ * It lives here, with the rest of the sheet vocabulary, because more than one
+ * component needs it: it was private to `select.tsx`, and the DatePicker then
+ * had to either copy it or stay a floating popover on a phone. Two copies of
+ * a shape is how two surfaces stop matching.
+ *
+ * Tailwind v4 marks a utility important with a TRAILING `!`, not with
+ * `!important` inside the brackets — the latter silently produces no rule.
+ * The important is load-bearing: Base UI writes the anchored position as an
+ * inline style, and an inline style loses only to `!important`.
+ */
+export const sheetPositionerClass =
+  "[position:fixed]! [inset:auto_0_0_0]! [transform:none]! " +
+  "[min-width:0]! [max-width:100%]! [width:100%]!"
+
+export const sheetPopupClass =
+  "[width:100%]! [max-width:100%]! [max-height:75svh]! " +
+  "rounded-b-none rounded-t-2xl border-t border-border p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] " +
+  "shadow-[0_-8px_32px_rgba(0,0,0,0.18)]"
+
 function DialogPreview({
   className,
   children,

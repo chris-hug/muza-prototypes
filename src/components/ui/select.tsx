@@ -4,6 +4,7 @@ import * as React from "react"
 import { Select as SelectPrimitive } from "@base-ui/react/select"
 
 import { cn } from "@/lib/utils"
+import { sheetPositionerClass, sheetPopupClass } from "@/components/ui/dialog"
 import { CONTROL_SIZE, CONTROL_PAD_Y, type ControlSize } from "@/lib/control-size"
 import { useIsMobile } from "@/lib/use-media-query"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
@@ -24,16 +25,6 @@ import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
  * inline style, which is what these arbitrary utilities are for — the sheet
  * geometry wins, the behaviour is untouched.
  */
-const sheetPositionerClass =
-  // Tailwind v4 marks a utility important with a TRAILING `!`, not with
-  // `!important` inside the brackets — the latter silently produces no rule.
-  "[position:fixed]! [inset:auto_0_0_0]! [transform:none]! " +
-  "[min-width:0]! [max-width:100%]! [width:100%]!"
-
-const sheetPopupClass =
-  "[width:100%]! [max-width:100%]! [max-height:75svh]! " +
-  "rounded-b-none rounded-t-2xl border-t border-border p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] " +
-  "shadow-[0_-8px_32px_rgba(0,0,0,0.18)]"
 
 /*
  * Label map — why the trigger showed "a01" instead of "A Love Supreme".

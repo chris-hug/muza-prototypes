@@ -16,10 +16,24 @@ import { cn } from "@/lib/utils"
 // States: unchecked · checked · indeterminate · disabled
 // ─────────────────────────────────────────────────────────────────────────────
 
-function Checkbox({ className, ...props }: CheckboxPrimitive.Root.Props) {
+function Checkbox({ className, onCheckedChange, ...props }: CheckboxPrimitive.Root.Props) {
+  const [anim, setAnim] = React.useState(false)
+  const timer = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  React.useEffect(() => () => clearTimeout(timer.current), [])
+
   return (
     <CheckboxPrimitive.Root
       data-slot="checkbox"
+      data-anim={anim || undefined}
+      onCheckedChange={(checked, details) => {
+        setAnim(false)
+        // Two frames: clearing and re-adding the attribute in one paint does
+        // not restart a CSS animation, so the second tick would not move.
+        requestAnimationFrame(() => requestAnimationFrame(() => setAnim(true)))
+        clearTimeout(timer.current)
+        timer.current = setTimeout(() => setAnim(false), 400)
+        onCheckedChange?.(checked, details)
+      }}
       className={cn(
         // Layout
         "peer relative flex size-4 shrink-0 items-center justify-center",
@@ -43,12 +57,14 @@ function Checkbox({ className, ...props }: CheckboxPrimitive.Root.Props) {
         // Checked state
         "data-checked:border-primary data-checked:bg-primary data-checked:text-primary-foreground",
         "dark:data-checked:bg-primary",
-        // The same spring the pick mark uses (`muzaMarkPop`, app.css): four
-        // decaying swings rather than one overshoot, because a transition
-        // curve can only lean past its target once. Ticking a box is a
-        // confirmation, and it should reply like one — the affordance is
-        // shared, so the motion is too.
-        "data-checked:animate-[muzaMarkPop_520ms_cubic-bezier(.22,1,.36,1)]",
+        /* The spring runs on CHANGE, not on state — `data-checked:animate-…`
+           fires on mount too, so every pre-ticked box in a form bounced on
+           page load. `data-anim` is set from `onCheckedChange` and cleared
+           after the run, which also gets the other half of it: unticking
+           springs as well. `muzaTick` is the pick mark's bounce at half
+           amplitude — a checkbox is ticked in rows of six, and the louder
+           curve repeated down a form reads as fidgeting. */
+        "data-[anim]:animate-[muzaTick_360ms_cubic-bezier(.22,1,.36,1)]",
         className
       )}
       {...props}

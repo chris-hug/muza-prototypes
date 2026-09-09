@@ -96,9 +96,17 @@ DESIGN_SYSTEM.md › Form controls › One size ladder, and the *"One size ladde
 every control, every step"* example on the design-system page.
 
 The trigger fills whatever column it is given (`w-full`);
-the popup is always 288px and always a popover — there is no sheet below 768,
-the same as `Select` and `Combobox`: field popups do not swap presentation,
-menus do.
+Below the presentation gate the calendar is a **bottom sheet**, like every
+other popup in the app. It used to be "always 288px, always a popover", on the
+theory that field popups do not swap presentation and menus do — but `Select`
+had already stopped obeying that, and the rule was left describing one
+component. A 288px card floating beside a full-width field is a desktop shape;
+on a phone it lands wherever the field happens to sit rather than where the
+thumb is.
+
+Same recipe as `Select`, and literally the same two class strings: they moved
+out of `select.tsx` into `dialog.tsx` when the second caller appeared, because
+two copies of a shape is how two surfaces stop matching.
 
 ## Behaviour
 

@@ -5,6 +5,8 @@ import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { useIsMobile } from "@/lib/use-media-query"
+import { sheetPositionerClass, sheetPopupClass } from "@/components/ui/dialog"
 import { CONTROL_SIZE, CONTROL_PAD_Y, type ControlSize } from "@/lib/control-size"
 import { Button } from "@/components/ui/button"
 
@@ -59,6 +61,7 @@ function DatePicker({
   id,
   size = "default",
 }: DatePickerProps) {
+  const mobile = useIsMobile()
   const today = new Date()
   const [viewYear, setViewYear] = React.useState(
     value ? value.getFullYear() : today.getFullYear()
@@ -147,9 +150,18 @@ function DatePicker({
       </PopoverPrimitive.Trigger>
 
       <PopoverPrimitive.Portal keepMounted>
+        {/* Below the presentation gate the calendar is a BOTTOM SHEET, like
+            every other popup in the app: a 288px card floating beside a
+            full-width field is a desktop shape, and on a phone it lands
+            wherever the field happens to sit rather than where the thumb is.
+            Same recipe as `Select` — it moved into `dialog.tsx` so the two
+            cannot drift. */}
+        {mobile && (
+          <PopoverPrimitive.Backdrop className="fixed inset-0 z-40 bg-foreground/20 data-open:animate-in data-open:fade-in-0" />
+        )}
         <PopoverPrimitive.Positioner
-          className="isolate z-50"
-          sideOffset={6}
+          className={cn("isolate z-50", mobile && sheetPositionerClass)}
+          sideOffset={mobile ? 0 : 6}
           side="bottom"
           align="start"
         >
@@ -159,6 +171,9 @@ function DatePicker({
               "shadow-md ring-1 ring-foreground/10",
               "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
               "duration-150 outline-none",
+              // The sheet is full width, so the calendar grid inside gets the
+              // room instead of staying pinned to a 288px card.
+              mobile && cn(sheetPopupClass, "p-4 data-open:zoom-in-100 data-open:slide-in-from-bottom-4"),
             )}
           >
             {/* Month navigation */}

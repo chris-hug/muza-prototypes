@@ -841,6 +841,17 @@ img[class*="object-cover"] {
   100% { transform: scale(1); }
 }
 
+/* The checkbox's quieter cousin. Same idea as `muzaMarkPop`, half the
+ * amplitude and two swings instead of four: a checkbox is ticked in rows of
+ * six, and the pick mark's bounce repeated down a form reads as fidgeting. */
+@keyframes muzaTick {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.16); }
+  65%  { transform: scale(0.95); }
+  85%  { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
 @keyframes muzaCarouselFloat {
   0%, 100% { transform: translateY(0);        }
   50%      { transform: translateY(-1.5px);   }
