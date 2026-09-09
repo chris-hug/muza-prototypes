@@ -43,12 +43,20 @@ function Checkbox({ className, ...props }: CheckboxPrimitive.Root.Props) {
         // Checked state
         "data-checked:border-primary data-checked:bg-primary data-checked:text-primary-foreground",
         "dark:data-checked:bg-primary",
+        // The same spring the pick mark uses (`muzaMarkPop`, app.css): four
+        // decaying swings rather than one overshoot, because a transition
+        // curve can only lean past its target once. Ticking a box is a
+        // confirmation, and it should reply like one — the affordance is
+        // shared, so the motion is too.
+        "data-checked:animate-[muzaMarkPop_520ms_cubic-bezier(.22,1,.36,1)]",
         className
       )}
       {...props}
     >
       <CheckboxPrimitive.Indicator
         data-slot="checkbox-indicator"
+        // The glyph rides the box's spring rather than fading in on its own:
+        // two animations on one mark read as a stutter.
         className="grid place-content-center text-current transition-none [&>svg]:size-3.5"
       >
         <CheckIcon />
