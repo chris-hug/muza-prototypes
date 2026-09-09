@@ -36,7 +36,7 @@ import { albumMetaFor, libraryIdForTitle } from "@/lib/album-meta"
 import { AddMusicIcon } from "@/components/ui/media-icons"
 import { componentDoc } from "@/lib/component-docs"
 import { Markdown, MarkdownInline } from "@/components/ds/markdown"
-import { Example, WINDOW_WIDTHS } from "@/components/ds/example"
+import { Example, WINDOW_WIDTHS, PHONE_WIDTHS } from "@/components/ds/example"
 import { FOOTER_NAV_BELOW } from "@/lib/use-media-query"
 import { ResponsiveLab } from "@/components/ds/responsive-lab"
 import { DocsButton } from "@/components/ds/docs-dialog"
@@ -2062,6 +2062,12 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         <Example
           doc="artist-header"
           align="stretch"
+          /* Flush, no gutter. The artist hero is one of the few surfaces that
+             runs edge to edge under the page padding — the cover art IS the
+             page's top edge — so drawing the hatched gutter beside it would
+             show an inset the app never applies. `bleed` is the same prop the
+             sheets use for the same reason. */
+          bleed={() => true}
           code={artistHeaderBasicExampleSrc}
           codePath="src/ds-examples/artist-header-basic.tsx"
         >
@@ -2078,6 +2084,8 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           <Example
             title="Library — title row · actions · pill tabs"
             doc="mobile-header"
+            /* Phone widths only — see PHONE_WIDTHS. */
+            widths={PHONE_WIDTHS}
             defaultWidth="375"
             align="stretch"
             bleed={w => w < 608}
@@ -2089,6 +2097,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           <Example
             title="Explore — title · avatar · search field"
             doc="mobile-header"
+            widths={PHONE_WIDTHS}
             defaultWidth="375"
             align="stretch"
             bleed={w => w < 608}
@@ -2108,6 +2117,11 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             rail instead. */}
         <Example
           doc="footer-nav"
+          /* Phone widths only: above 608 this component is not rendered at
+             all — the icon rail replaces it — so a 1920 chip would show a
+             tab bar stretched across a desktop box, a rendering the app never
+             produces. */
+          widths={PHONE_WIDTHS}
           defaultWidth="375"
           align="stretch"
           bleed={w => w < 608}

@@ -31,6 +31,7 @@ import { Code2, Check, Copy } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { VIEWPORTS, containerAt, sidebarAt, gutterAt } from "@/lib/breakpoints"
+import { FOOTER_NAV_BELOW } from "@/lib/use-media-query"
 import { WindowWidthContext } from "@/lib/use-media-query"
 import { ChromeSidebar, ChromeGutter, ChromeTabBar } from "@/components/ds/chrome-schematic"
 
@@ -83,6 +84,21 @@ export const WINDOW_WIDTHS: ExampleWidth[] = VIEWPORTS.map(v => {
     chrome: { window: v.px, sidebar, gutter },
   }
 })
+
+/*
+ * The phone half of the same ladder, for components that only exist below the
+ * chrome gate — `FooterNav` (the tab bar) and `MobileHeader`. Offering them a
+ * 1920 chip is offering a width at which they are not rendered at all, and the
+ * frame then shows a phone bar stretched across a desktop box: a rendering the
+ * app never produces, which is worse than no frame.
+ *
+ * Derived, not typed out: it is `WINDOW_WIDTHS` filtered by the same
+ * `FOOTER_NAV_BELOW` constant the app gates on, so if that number moves the
+ * chips move with it.
+ */
+export const PHONE_WIDTHS: ExampleWidth[] = WINDOW_WIDTHS.filter(
+  w => Number(w.label) < FOOTER_NAV_BELOW,
+)
 
 /*
  * What `</>` shows: the call-site file with its explanatory head removed.
@@ -400,6 +416,15 @@ export function Example({
                        the page's vertical rhythm; a sheet bleeds to all four
                        edges; without chrome ("Free", a box chip) the frame is
                        just a box and keeps its own breathing room. */
+                    /* `[&>*]:w-full` where the demo is meant to STRETCH.
+                       `align-items: stretch` is not enough on its own: an auto
+                       horizontal margin on the child beats it, and several
+                       call sites render the app's page wrapper
+                       (`max-w-[1480px] mx-auto px-page`) — so the demo
+                       shrink-wrapped to its content and a 1302px stage showed
+                       a 557px page. The child is told to fill instead of
+                       being asked to. */
+                    align === "stretch" && "[&>*]:w-full [&>*]:min-w-0",
                     bleed ? "p-0 items-stretch"
                       : chrome ? cn("px-0 py-6", align === "center" ? "items-center" : "items-stretch")
                       : frameless ? cn("px-0 py-6", align === "center" ? "items-center" : "items-stretch")
