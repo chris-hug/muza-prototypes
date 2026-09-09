@@ -7,7 +7,7 @@
  * (`onOpen`), the mark is display only — exactly the Add-music row.
  */
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { MediaListItem } from "@/components/ui/media-list-item"
 import { SelectTrackButton } from "@/components/ui/select-track-button"
@@ -20,12 +20,28 @@ const TRACKS = ALBUM.tracks.slice(0, 3)
 export default function SelectTrackBasicExample() {
   const [picked, setPicked] = useState<Set<string>>(() => new Set([TRACKS[0].id]))
 
-  const toggle = (id: string) =>
+  const [flashed, setFlashed] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!flashed) return
+    const timer = setTimeout(() => setFlashed(null), 300)
+    return () => clearTimeout(timer)
+  }, [flashed])
+
+  const toggle = (id: string) => {
+    // Off, then on a tick later: re-adding the class within one render does
+    // not restart the animation, so picking the same row twice would not
+    // sweep the second time. A timer rather than `requestAnimationFrame` —
+    // rAF is throttled to nothing in a hidden tab, and the flash then never
+    // arrived at all.
+    setFlashed(null)
+    setTimeout(() => setFlashed(id), 0)
     setPicked(prev => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id); else next.add(id)
       return next
     })
+  }
 
   return (
     <div className="flex flex-col">
@@ -40,12 +56,16 @@ export default function SelectTrackBasicExample() {
             subtitle={ALBUM.artist}
             meta={ALBUM.title}
             onOpen={() => toggle(t.id)}
-            /* A picked row is tinted with a GRADIENT that fades out to the
-               right, not a flat block. The mark sits on the right, so the
-               tint is heaviest where the row starts and lightest where the
-               check already says "in" — the fill leads the eye to the answer
-               instead of restating it across the whole width. */
-            className={cn(on && "bg-linear-to-r from-muted via-muted to-transparent")}
+            /* `.muza-row-added` is the app's own confirmation sweep, already
+               built for Add music: a soft shade runs left to right across the
+               row and settles at the affordance that was just hit, with a 3px
+               shake under it. Reused rather than reinvented — it is the same
+               gesture, so it is the same motion.
+
+               `flashed` is cleared on a timer so re-picking the same row
+               replays it; the class has to outlive the 260ms animation or it
+               is pulled mid-run. */
+            className={cn(on && "bg-muted", flashed === t.id && "muza-row-added")}
             trailing={<SelectTrackButton selected={on} />}
           />
         )
