@@ -31,6 +31,10 @@ export interface ComponentDoc {
   related: string[]
   /** Everything after the frontmatter block. */
   body: string
+  /** The first paragraph of the body — one or two sentences on what the
+   *  component is FOR. The design-system section renders it as its intro,
+   *  so the page's prose is a slice of this file, never a second copy. */
+  lead: string
   /** Repo-relative path of the doc itself — for the GitHub link. */
   path: string
 }
@@ -49,8 +53,27 @@ function parse(path: string, raw: string): ComponentDoc {
   const list = (v?: string) =>
     v ? v.replace(/^\[|\]$/g, "").split(",").map(s => s.trim()).filter(Boolean) : []
 
+  // First paragraph = the first block that is not a heading, fence, list,
+  // table or blank line. Fences are skipped whole so a doc that opens with a
+  // usage snippet still yields its sentence, not the code.
+  let lead = ""
+  {
+    const blocks = body.split(/\r?\n\s*\r?\n/)
+    let inFence = false
+    for (const b of blocks) {
+      const t = b.trim()
+      if (!t) continue
+      if (t.startsWith("```")) { inFence = !t.endsWith("```") || t === "```"; continue }
+      if (inFence) { if (t.endsWith("```")) inFence = false; continue }
+      if (/^(#|[-*] |\d+\. |\||>)/.test(t)) continue
+      lead = t.replace(/\s*\n\s*/g, " ")
+      break
+    }
+  }
+
   return {
     id,
+    lead,
     title:   meta.title || id,
     status:  meta.status || undefined,
     source:  meta.source || undefined,

@@ -53,6 +53,12 @@ function inline(text: string, keyBase: string): React.ReactNode[] {
   })
 }
 
+/** One paragraph's worth of inline Markdown, no block wrapper — the section
+ *  header renders a doc's lead through this, inside its own `<p>`. */
+export function MarkdownInline({ source }: { source: string }) {
+  return <>{inline(source, "lead")}</>
+}
+
 /* ── block level ───────────────────────────────────────────────────────── */
 
 export function Markdown({ source, className }: { source: string; className?: string }) {

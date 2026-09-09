@@ -37,7 +37,7 @@ import { UserAccountProvider } from "@/lib/user-account"
 import { albumMetaFor, libraryIdForTitle } from "@/lib/album-meta"
 import { AddMusicIcon } from "@/components/ui/media-icons"
 import { componentDoc } from "@/lib/component-docs"
-import { Markdown } from "@/components/ds/markdown"
+import { Markdown, MarkdownInline } from "@/components/ds/markdown"
 import { Example } from "@/components/ds/example"
 import { ResponsiveLab } from "@/components/ds/responsive-lab"
 import DialogFormExample from "@/ds-examples/dialog-form"
@@ -288,6 +288,7 @@ function Section({
   // 99% of usages driven by the single source of truth.
   const entry           = SECTION_STATUS_BY_ID[id]
   const resolvedStatus  = status ?? entry?.status
+  const docEntry        = componentDoc(id)
   // "Changed …" date — auto-derived from git (last commit that
   // touched this section's backing file, per `ds-sources.ts`). null
   // when the section has no mapped file / git was missing at build.
@@ -355,6 +356,15 @@ function Section({
                 </a>
               </span>
             ))}
+          </p>
+        )}
+        {/* The intro is the doc's LEAD — the first paragraph of
+             docs/components/<id>.md — so the page's prose is a slice of the
+             single source of truth, never a second copy. A section without
+             a doc shows no intro; write the doc to get one. */}
+        {docEntry?.lead && (
+          <p className="text-base text-muted-foreground mt-4 max-w-2xl text-pretty">
+            <MarkdownInline source={docEntry.lead} />
           </p>
         )}
       </div>
