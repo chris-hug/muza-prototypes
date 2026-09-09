@@ -34,7 +34,7 @@ hover cluster on the cover; they never navigate.
 
 The card has **no width of its own** — `w-full min-w-0` — so the parent
 decides: a `.grid-cards` track (`minmax(143px, 220px)`, see
-[Responsive](responsive.md#the-other-ladder-container-columns)) or a
+[Responsive](responsive.md#the-column-ladder)) or a
 [Card Rail](card-rail.md) `<li>`. Drop it in without a sized parent and it
 fills whatever it is in.
 
@@ -138,7 +138,7 @@ cluster.
 Touch gets the same actions another way: a long press on the cover calls
 `onMore`, and the host renders a bottom sheet. The ⋯ button's own menu is a
 `DropdownMenu`, which below a **768px** viewport (`useIsMobile`) presents as a
-bottom sheet rather than a popover — a viewport gate, not a hover gate,
+bottom sheet rather than a popover — a window gate (768, presentation), not a hover gate,
 because the headless preview reports `hover: hover` at phone width and hybrid
 laptops do too.
 

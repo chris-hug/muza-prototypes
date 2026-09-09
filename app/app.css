@@ -4,11 +4,15 @@
 @custom-variant 3xl (@media (width >= 1920px));
 
 /* ═══ RESPONSIVE LADDER — single reference ════════════════════════════════
-   Two coordinate systems, by design:
-     • VIEWPORT media queries  → page chrome: gutters, sidebar/footer nav.
-     • CONTAINER queries (@container) → content that must also react to the
-       sidebar: card grids, rails, MediaHeader.
-       container width ≈ viewport − sidebar − 2×gutter.
+   Three measures, by design (vocabulary: window / column / box):
+     • WINDOW media queries     → page chrome + presentation: gutters,
+       sidebar / rail / tab bar (608), sheets ⇄ dialogs (768 = `md`).
+     • COLUMN container queries (@container on the page shell) → how many
+       fit: card grids, rails, MediaHeader. The column is what the window
+       LEAVES — not a formula of it: the wrapper cap and the docked editor
+       both take from it. See `containerAt()` in breakpoints.ts.
+     • BOX — a NAMED @container on a component that the same window can
+       hand two widths (SongListItem, PlayerBar, PlayerOverlay).
 
    COLUMN LADDER (container) — shared by `grid-cards`, Card Rail, Top Songs:
        304→2 · 464→3 · 692→4 · 928→5 · 1164→6 · 1500→7  columns.

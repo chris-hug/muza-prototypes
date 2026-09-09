@@ -129,32 +129,32 @@ Raw numeric values that the semantic aliases resolve to. These are the **source 
 ### Max-width
 `xs` 320 · `sm` 384 · `md` 448 · `lg` 512 · `xl` 576 · `2xl` 672 · `3xl` 768 · `4xl` 896 · `5xl` 1024 · `6xl` 1152 · `7xl` 1280
 
-### Breakpoints
-`sm` 640 · `md` 768 · `lg` 1024 · `xl` 1280 · `2xl` 1536
+### Tailwind screens
+`sm` 640 · `md` 768 · `lg` 1024 · `xl` 1280 · `2xl` 1536 — Tailwind's tokens, unchanged. Only **`md` gates a presentation** (it is `useIsMobile()` in CSS); `sm` / `lg` reflow in-page content only. The app's own width system — window, column, box — is in *Responsive & pointer* below and in [`docs/components/responsive.md`](docs/components/responsive.md).
 
 ### Layout — page max-width tiers
 
-The app uses **two content-growth tiers** so very wide viewports don't leave gaping white margins, while medium widths stay grid-aligned and the artist hero never dominates the page.
+The app uses **two content-growth tiers** so very wide windows don't leave gaping white margins, while medium widths stay grid-aligned and the artist hero never dominates the page.
 
 | Tier | Trigger | Container `max-w` | Content area (px-10) | Grid cards | Hero `max-h` |
 |---|---|---|---|---|---|
-| 1 (default) | viewport < 1920px | `1480px` | 1400px | 6 × 220 | 552px (= 1480 × 400/1072) |
-| 2 (wide screen) | viewport ≥ **1920px** | `1716px` | 1636px | 7 × 220 | 640px (= 1716 × 400/1072) |
+| 1 (default) | window < 1920px | `1480px` | 1400px | 6 × 220 | 552px (= 1480 × 400/1072) |
+| 2 (wide screen) | window ≥ **1920px** | `1716px` | 1636px | 7 × 220 | 640px (= 1716 × 400/1072) |
 
 **Apply the tier-aware cap on every top-level page wrapper:**
 ```tsx
 <div className="@container mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] px-page …">
 ```
 
-**The content width does not follow from the viewport.** Two things besides
-the sidebar take from it, and code that assumes `viewport − sidebar − gutter`
+**The column does not follow from the window.** Two things besides
+the sidebar take from it, and code that assumes `window − sidebar − gutter`
 will be wrong:
 
-- the cap above — from a 1688px viewport up the column stops growing and the
+- the cap above — from a 1688px window up the column stops growing and the
   extra pixels become margin;
 - the **docked playlist editor**, a flex sibling of `<main>` (`hidden md:flex`,
   `w-[30%] min-w-[374px] max-w-[550px]`, draggable to `min(900, 60vw)`). With
-  it open a 768px viewport leaves **294px** of content — less than a 320px
+  it open a 768px window leaves **294px** of column — less than a 320px
   phone. The expanded sidebar is resizable too (208–291px).
 
 Use `containerAt(viewport, { sidebar, drawer })` from `breakpoints.ts` rather
@@ -162,9 +162,9 @@ than re-deriving it; `drawerAt()` and `contentCapAt()` supply the defaults.
 
 **Use the `grid-cards` class** (`app.css`) rather than re-typing the ladder — it is one definition shared by every Library view, the All tab and the DS grids.
 
-**Below the ladder's first step (container < 304px) there is no rule**, so `grid-cards`' base declaration is the entire layout there — and it's also what renders on any engine where `@container` doesn't match. It must therefore be a real layout, not the ladder's bottom step: `repeat(auto-fill, minmax(128px, 1fr))`, which holds **two columns down to a 272px container**. A fixed `repeat(1, …220px)` base shipped one narrow column with an empty band beside it on a 320px phone (iPhone mini in Display Zoom → 296px container).
+**Below the ladder's first step (column < 304px) there is no rule**, so `grid-cards`' base declaration is the entire layout there — and it's also what renders on any engine where `@container` doesn't match. It must therefore be a real layout, not the ladder's bottom step: `repeat(auto-fill, minmax(128px, 1fr))`, which holds **two columns down to a 272px container**. A fixed `repeat(1, …220px)` base shipped one narrow column with an empty band beside it on a 320px phone (iPhone mini in Display Zoom → 296px container).
 
-The **column gap is 16px** (row gap 24px). That is *not* the page gutter — `--page-px` is 12px on phones. Two columns at a 296px container = (296 − 16) ÷ 2 = 140px per card.
+The **column gap is 16px** (row gap 24px). That is *not* the page gutter — `--page-px` is 12px on phones. Two columns at a 296px column (a 320px phone) = (296 − 16) ÷ 2 = 140px per card.
 
 **Grids step from 6 → 7 cards** at `@container` width ≥ `1500px` (intentionally above tier-1's 1400 cap so the 6-card layout never collapses into 7 smaller cards):
 ```tsx
@@ -617,15 +617,21 @@ Tokens are **roles**, not colours. Never mix roles.
 
 ## Responsive & pointer — gating rules
 
-**Breakpoints / hooks (the real ones):**
-- **Two window gates, each with a job.** **608 = chrome** (`useFooterNav()`): tab bar, `MobileAppHeader`, mini player — derived from the MediaHeader's 560 stack point so mobile chrome and a stacked header travel together. **768 = presentation** (`useIsMobile()` / `md:`): sheets, dialogs, toast placement, docked editor. They are not folded into one on purpose: with the tab bar up to 767 the MediaHeader would go horizontal under the mobile detail bar (built for the centred cover) and the mini player slot would receive the 80px desktop bar from a 664px window. Anything that lifts over the tab bar (`BulkActionBar`) gates on `useFooterNav()`, never on `md`.
-- `useFooterNav()` → **608px** viewport: sidebar ⇄ bottom tab bar; desktop Topbar ⇄ frosted `MobileAppHeader`.
-- `useIsMobile()` → **< 768px** viewport: the canonical phone gate for **swapping a component for a different one** (e.g. dropdown ⇄ bottom sheet).
-- **Tailwind `md:` (768) is the same gate in CSS.** Dialog ⇄ bottom sheet, AlertDialog, Toast placement and every `md:max-w-*` dialog width switch at `md`, so a component that is "mobile" for `useIsMobile()` is never "desktop" for its own classes. `sm:` (640) and `lg:` (1024) may reflow **in-page content** (a form going two-column, a table hiding a column) and nothing else — never a chrome or presentation switch. (Before this rule, dialogs recentred at `sm` while `useIsMobile()` still said phone: at 640–767 the create-playlist form rendered its phone branch with its actions hidden by `sm:hidden`.)
-- `--page-px` gutter tiers: ≥1069 → 40px, 584–1068 → 24px, < 584 → 12px.
-- Container-query column steps (cards/rails/library grids): `304→2 · 464→3 · 692→4 · 928→5 · 1164→6 · 1500→7`. The mobile↔desktop **behaviour** boundary (rail swipe-peek, MediaHeader stacking) is **560px container**.
+**Three measures, and only three.** *Window* (the browser viewport — `useFooterNav()`, `useIsMobile()`, `@media`, Tailwind `md:`) decides the **chrome** and how a thing is **presented**. *Column* (the page content area, what the window leaves after chrome, cap and editor — `@container` on the page shell) decides **how many fit**. *Box* (a component's own width, a **named** `@container/<name>`) is allowed only where the same window can hand a component two different widths, and decides internal reflow only. The words "breakpoint" and "viewport" are reserved for Tailwind's tokens and the browser's own terms. Full write-up, arithmetic and duplication map: [`docs/components/responsive.md`](docs/components/responsive.md).
 
-**Gate on viewport, NOT `hover:` media queries, when choosing between two component renders.** `[@media(hover:none/hover)]:!hidden` is fine for *cosmetic* show/hide of a control, but to render a *different component* (dropdown vs sheet) use `useIsMobile()`. Reasons: the headless preview reports `hover: hover` even at phone width (so a hover-gated sheet never appears there), and hybrid touch-laptops report `hover: hover` too. Example: `DetailMoreButton` does `if (isMobile) return <Sheet>…; return <DropdownMenu>…`.
+**Window — two gates, each with a job:**
+- **608 = chrome** (`useFooterNav()`, `FOOTER_NAV_BELOW` = 560 + 2×24): tab bar ⇄ icon rail, `MobileAppHeader` ⇄ `Topbar`, mini player ⇄ desktop bar. Anything lifted over the tab bar (`BulkActionBar`) gates here, never on `md`.
+- **768 = presentation** (`useIsMobile()` and Tailwind `md:` — the same gate in TS and CSS): dialogs, alert dialogs and toasts leave their sheet / bottom-bar form, dropdowns stop presenting as sheets, the docked playlist editor starts to exist. `sm:` (640) and `lg:` (1024) may reflow **in-page content** (a form going two-column, a table hiding a column) and nothing else — never a chrome or presentation switch. (Before this rule dialogs recentred at `sm` while the hook still said phone: at 640–767 the create-playlist form rendered its phone branch with every action hidden by `sm:hidden`.)
+- They are **not folded into one** on purpose: with the tab bar up to 767 the MediaHeader would go horizontal under the mobile detail bar (built for the centred cover), and the mini player slot would receive the 80px desktop bar from a 664px window.
+- **1069 = sidebar expands** (`SIDEBAR_COLLAPSE_BELOW` = 780 + 208 + 80 + 1); gutter 24 → 40px. **584** is a gutter-only step (12 → 24px), not a mode. `--page-px` tiers: ≥1069 → 40px, 584–1068 → 24px, < 584 → 12px.
+
+**Column — the ladder:** `304→2 · 464→3 · 692→4 · 928→5 · 1164→6 · 1500→7` card columns (`.grid-cards`, Card Rail; Song Rail borrows 692 / 1164 for its own 2 / 3 song columns). Derived from the cover (143–220px, 16px gap): `N×220 + (N−1)×16` for 464 … 1164; 304 and 1500 are declared exceptions (see responsive.md). The mobile ⇄ desktop **behaviour** boundary (rail swipe mode, MediaHeader stacking) is **560px column** — reached at a **660px window**, not 608: the icon rail arrives at 608 and takes the column back to 508. MediaHeader's full action cluster: 780.
+
+**Box — the four that measure themselves:** `SongListItem` (`@container/row`, 260 / 300 / 380), `PlayerBar` (640 / 688 / 800 — the 640 compact ⇄ desktop switch stays a box step because the docked editor can leave the bar 294px at a 768px window), `PlayerOverlay` (`@container/overlay`, 380), the paywall's two-column split (760). Name the container; an unnamed one binds to whatever ancestor is nearest.
+
+**`@max-[N]` means below N.** Tailwind v4 compiles `@max-[560px]` to `width < 560px` and `max-md:` to `width < 768px` — exclusive — so a step at 560 is `@min-[560px]` / `@max-[560px]`, never `@max-[559px]` (that left the 559px column, a 607px window, matching neither side).
+
+**Gate on the window, NOT `hover:` media queries, when choosing between two component renders.** `[@media(hover:none/hover)]:!hidden` is fine for *cosmetic* show/hide of a control, but to render a *different component* (dropdown vs sheet) use `useIsMobile()`. Reasons: the headless preview reports `hover: hover` even at phone width (so a hover-gated sheet never appears there), and hybrid touch-laptops report `hover: hover` too. Example: `DetailMoreButton` does `if (isMobile) return <Sheet>…; return <DropdownMenu>…`.
 
 ---
 

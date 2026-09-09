@@ -1,35 +1,39 @@
 /*
  * breakpoints — the page's ladders, in ONE place.
  *
- * Muza measures width in two different ways here, and confusing them is the
- * mistake this file exists to prevent:
+ * Muza measures width in THREE ways, and confusing them is the mistake this
+ * file exists to prevent. The prose vocabulary is window / column / box; the
+ * identifiers below keep their older names (VIEWPORTS, containerAt) and this
+ * comment maps them:
  *
- *   · VIEWPORT width decides the page chrome — the sidebar, the footer tab
- *     bar, the page gutter. It is read from the real window by
- *     `useIsMobile()` / `useFooterNav()`, so nothing on a page can fake it.
- *   · CONTAINER width decides how many card columns fit and whether a rail
- *     peeks — it is what a `@container` query reads, and it is what the
- *     design system's demo frame can actually change.
- *
- * There is a THIRD measuring point, and pretending there are only two is how
- * this file misled people before: a component can measure ITSELF rather than
- * the page column. Exactly one does — `SongListItem`, because a `SongRail`
- * puts it in a cell far narrower than the column (248px on a 320px phone)
- * and because the docked drawer narrows the column with no rail involved.
- * Its steps live with the component, not here: they are its own, and they
- * come from where a line of text stops fitting, not from the column ladder.
+ *   · WINDOW (`VIEWPORTS`, `useIsMobile()`, `useFooterNav()`) decides the
+ *     page chrome — sidebar, icon rail, tab bar, gutter — and how a thing is
+ *     PRESENTED (sheet or dialog, the docked editor). Two gates, each with a
+ *     job: 608 = chrome (`FOOTER_NAV_BELOW`), 768 = presentation
+ *     (`useIsMobile()`, Tailwind `md:`). It is read from the real browser, so
+ *     nothing on a page can fake it.
+ *   · COLUMN (`containerAt()`, `COLUMN_STEPS`) is what the window leaves —
+ *     and it is NOT a function of the window: the wrapper cap and the docked
+ *     editor both take from it. It decides how many fit, and it is what a
+ *     `@container` query on the page shell reads.
+ *   · BOX is a component's own width, measured by a NAMED container on the
+ *     component itself. Allowed only where the same window can hand the
+ *     component two different widths — `SongListItem` (a rail cell vs a list,
+ *     `ROW_STEPS`), `PlayerBar` (640 / 688 / 800), `PlayerOverlay` (380), the
+ *     paywall split (760). Their steps live with the component, not here.
  *
  * Both ladders were written out separately in three places — the responsive
- * diagram, the demo frame's chips and the schematic — and drifted: one list
- * was missing 1500, another mixed the two kinds, a third listed viewport
- * widths under a container heading. Everything now derives from here.
+ * diagram, the demo frame's chips and the schematic — and drifted. Everything
+ * now derives from here.
  *
  * The copies that CANNOT live here are the Tailwind ones: `@min-[304px]` is a
  * class name, and Tailwind cannot read a TypeScript constant. `app.css` and
  * `card-rail.tsx` / `song-rail.tsx` carry the column ladder that way, and
  * `song-list-item.tsx` carries its own steps (mirrored beside them as
  * `ROW_STEPS`, so the design system can offer chips at them). Those files and
- * this one are the only places a ladder number may appear.
+ * this one are the only places a ladder number may appear. Steps are written
+ * `@min-[N]` / `@max-[N]` — Tailwind v4's `@max-[N]` is `width < N`, so the
+ * pair shares one number.
  */
 
 import { FOOTER_NAV_BELOW, SIDEBAR_COLLAPSE_BELOW } from "@/lib/use-media-query"
@@ -150,11 +154,11 @@ export const VIEWPORTS = [
   { px: 375,  name: "Phone", where: "—",
     note: "iPhone 12 mini — the reference phone. Nothing switches here" },
   { px: 584,  name: "Phone wide", where: "app.css",
-    note: "page gutter --page-px steps 12 → 24px" },
+    note: "page gutter --page-px steps 12 → 24px — a spacing step, not a mode" },
   { px: FOOTER_NAV_BELOW, name: "Tablet", where: "FOOTER_NAV_BELOW",
-    note: "sidebar icon rail replaces the footer tab bar; Topbar replaces MobileAppHeader" },
+    note: "chrome gate — icon rail replaces the tab bar; Topbar replaces MobileAppHeader; mini player becomes the desktop bar" },
   { px: 768,  name: "Tablet wide", where: "useIsMobile()",
-    note: "useIsMobile() flips — components swap outright (dropdown ⇄ bottom sheet)" },
+    note: "presentation gate — useIsMobile() and md: flip together: sheets ⇄ dialogs and dropdowns, toast placement; the docked editor starts to exist" },
   { px: SIDEBAR_COLLAPSE_BELOW, name: "Desktop", where: "SIDEBAR_COLLAPSE_BELOW",
     note: "sidebar expands from the icon rail; gutter 24 → 40px" },
   { px: 1440, name: "Laptop", where: "—", note: "a typical laptop — nothing switches" },
@@ -163,5 +167,5 @@ export const VIEWPORTS = [
     note: "wide monitor — the only width that reaches 7 columns" },
 ] as const
 
-/** The reference phone as a CONTAINER width — derived, never typed twice. */
+/** The reference phone as a COLUMN width — derived, never typed twice. */
 export const PHONE_CONTAINER = containerAt(375)

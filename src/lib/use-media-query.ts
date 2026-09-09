@@ -5,11 +5,11 @@ import { useEffect, useState } from "react"
 /**
  * Subscribe to a CSS media query. Returns `true` when the query matches.
  *
- * Common breakpoints (Tailwind defaults):
- *   sm  640
- *   md  768   ← typical "is mobile" cutoff: `useMediaQuery("(max-width: 767px)")`
- *   lg  1024
- *   xl  1280
+ * The app's WINDOW gates live below (see `breakpoints.ts` for the vocabulary):
+ *   608  chrome        — `useFooterNav()`   tab bar ⇄ rail, mobile header, mini player
+ *   768  presentation  — `useIsMobile()`    sheets ⇄ dialogs; == Tailwind `md:` in CSS
+ *  1069  sidebar       — `useSidebarAutoCollapsed()`
+ * Tailwind's `sm` (640) and `lg` (1024) gate in-page content reflow only.
  *
  * SSR-safe: returns `false` until the first `useEffect` runs.
  */

@@ -32,7 +32,7 @@ than two lists that drift: there is no per-surface item list to keep in step.
 If a card and the detail page show different rows for the same album, that is
 a bug, not a variant.
 
-## Two surfaces, gated by viewport
+## Two surfaces, gated by the window
 
 ```tsx
 const isMobile = useIsMobile()          // (max-width: 767px)
@@ -54,7 +54,7 @@ sidebar becomes a footer bar. A dropdown ⇄ sheet swap is a *different
 component*, and that is the one case the 768 gate is for; cosmetic show/hide
 of a control may still use `[@media(hover:…)]`.
 
-Because the hook reads the **viewport**, the design-system frame's width chips
+Because the hook reads the **window**, the design-system frame's width chips
 do not flip it — they cap a `max-width`, and the browser is still wide. To see
 the sheet, narrow the browser below 768 or open the page on a phone.
 

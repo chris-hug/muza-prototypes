@@ -80,7 +80,7 @@ const WINDOW_WIDTHS: ExampleWidth[] = VIEWPORTS.map(v => {
   return {
     label: String(v.px),
     px: container,
-    note: `${v.note} — leaves ${container}px of content`,
+    note: `${v.note} — leaves a ${container}px column`,
     readout: `${v.px} → ${container}px`,
     chrome: { window: v.px, sidebar, gutter },
   }

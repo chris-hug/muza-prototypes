@@ -172,7 +172,7 @@ export function ResponsiveLab() {
               are WINDOW widths — the whole browser, chrome included. */}
           <span
             className="text-2xsmall text-muted-foreground/70 max-sm:hidden"
-            title="These are WINDOW widths — the whole browser. What the component inside measures is the content width, printed on the frame."
+            title="These are WINDOW widths — the whole browser. What the component inside measures is the column, printed on the frame."
           >
             window
           </span>
@@ -226,7 +226,7 @@ export function ResponsiveLab() {
             disabled={w < DRAWER_FROM}
             title={w < DRAWER_FROM
               ? `The editor is hidden below ${DRAWER_FROM}px`
-              : "Dock the playlist editor — it takes its width off the content"}
+              : "Dock the playlist editor — it takes its width off the column"}
             className={cn(
               "h-6 cursor-pointer rounded-full border px-2.5 text-2xsmall font-medium transition-colors",
               "disabled:cursor-not-allowed disabled:opacity-50",
@@ -281,7 +281,7 @@ export function ResponsiveLab() {
                 <div className="mb-3 flex items-center gap-2 text-2xsmall">
                   <span aria-hidden className="h-3 w-px bg-muted-foreground/60" />
                   <span aria-hidden className="flex-1 border-t border-muted-foreground/40" />
-                  <span className="tabular-nums text-foreground">{container} px content</span>
+                  <span className="tabular-nums text-foreground">{container} px column</span>
                   <span aria-hidden className="flex-1 border-t border-muted-foreground/40" />
                   <span aria-hidden className="h-3 w-px bg-muted-foreground/60" />
                 </div>
@@ -332,7 +332,7 @@ export function ResponsiveLab() {
                 <> − <span className="text-foreground">{drawerW}px</span> editor</>
               )}</>}
         {" "}− <span className="text-foreground">2 × {gutter}px</span> gutter (hatched)
-        {" "}= <span className="text-foreground">{container}px</span> content
+        {" "}= <span className="text-foreground">{container}px</span> column
         {" · "}{cols} card {cols === 1 ? "column" : "columns"}
         {peek ? ", rail cuts its last card as a swipe cue" : ", rail ends flush"}
         {sidebar === 0 && (
@@ -342,7 +342,7 @@ export function ResponsiveLab() {
         )}
         {drawerW > 0 && (
           <span className="ml-2 text-muted-foreground/80">
-            With the editor docked the content is no longer a function of the window.
+            With the editor docked the column is no longer a function of the window.
           </span>
         )}
       </p>
@@ -357,7 +357,7 @@ export function ResponsiveLab() {
               <th scope="col" className="px-3 py-2 font-medium">Window</th>
               <th scope="col" className="px-3 py-2 font-medium">Sidebar</th>
               <th scope="col" className="px-3 py-2 font-medium">Gutter</th>
-              <th scope="col" className="px-3 py-2 font-medium">Content</th>
+              <th scope="col" className="px-3 py-2 font-medium">Column</th>
               {/* The second content column is the point of the table now: the
                   same window, with the editor docked, is a different app. */}
               <th scope="col" className="px-3 py-2 font-medium">…with editor</th>
@@ -427,10 +427,12 @@ export function ResponsiveLab() {
       <p className="max-w-2xl text-2xsmall text-muted-foreground">
         The names are <span className="text-foreground">width bands, not devices</span> — a 1024px
         tablet held sideways is “Desktop” here, and that is right: what matters is the room the
-        layout has, never what the hardware is called. Tailwind’s own{" "}
-        <code className="rounded-sm bg-muted px-1 font-sans text-2xsmall font-normal">sm</code> /{" "}
-        <code className="rounded-sm bg-muted px-1 font-sans text-2xsmall font-normal">md</code>{" "}
-        still exist inside class names; almost no page-level layout changes there.{" "}
+        layout has, never what the hardware is called. Two of them are gates with a job:{" "}
+        <span className="text-foreground">608 = chrome</span> (tab bar, mobile header, mini player) and{" "}
+        <span className="text-foreground">768 = presentation</span> (sheets ⇄ dialogs, the docked editor) — Tailwind’s{" "}
+        <code className="rounded-sm bg-muted px-1 font-sans text-2xsmall font-normal">md:</code> is that second gate in CSS, and the only screen token allowed to switch a presentation;{" "}
+        <code className="rounded-sm bg-muted px-1 font-sans text-2xsmall font-normal">sm:</code> /{" "}
+        <code className="rounded-sm bg-muted px-1 font-sans text-2xsmall font-normal">lg:</code> reflow in-page content only.{" "}
         <span className="text-foreground">608</span> and{" "}
         <span className="text-foreground">1069</span> are arithmetic —{" "}
         <code className="rounded-sm bg-muted px-1 font-sans text-2xsmall font-normal">560 + 2×24</code> and{" "}
@@ -439,14 +441,16 @@ export function ResponsiveLab() {
       </p>
 
       <p className="max-w-2xl text-2xsmall text-muted-foreground">
-        Three of these widths make the page wider and the content narrower — the
+        Three of these widths make the page wider and the column narrower — the
         chrome that appears there costs more than the pixel gained. Every number
         is computed from{" "}
         <code className="rounded-sm bg-muted px-1 font-sans text-2xsmall font-normal">breakpoints.ts</code>;
-        component swaps gated on{" "}
+        presentation swaps gated on{" "}
         <code className="rounded-sm bg-muted px-1 font-sans text-2xsmall font-normal">useIsMobile()</code>{" "}
         read the real window and cannot be shown inside the frame — resize the
-        browser for those.
+        browser for those. A component that measures its own{" "}
+        <span className="text-foreground">box</span> (song row, player bar, player overlay) has its
+        own chips on its own section.
       </p>
     </div>
   )

@@ -38,7 +38,7 @@ cap rule targets `[&>li]`. A card wrapped in anything else gets none of them.
 | `showAllLabel` | `"Show all"` | label of the trailing ghost button; `null` removes the button |
 | `onShowAll` | — | click handler for that button |
 | `showAllOnlyWhenScrollable` | `false` | render "Show all" only while the rail actually overflows |
-| `mobileGrid` | `false` | 2-row swipeable grid below a 560px container (see below) |
+| `mobileGrid` | `false` | 2-row swipeable grid below a 560px column (see below) |
 
 Used by Home (New Albums, Playlists / Artists / Albums of the week), the artist
 page (Top Albums, Products, Curated Playlists, Similar Artists), album and
@@ -56,18 +56,20 @@ Search "All" wrapper sets one for exactly this reason).
 
 The column ladder itself — `304→2 · 464→3 · 692→4 · 928→5 · 1164→6 · 1500→7`,
 16px column gap, 220px card cap — is shared with `.grid-cards` and the Song
-Rail and is documented once in [Responsive](responsive.md#the-other-ladder-container-columns).
+Rail and is documented once in [Responsive](responsive.md#the-column-ladder).
 Card width at each step is `(100% − (N−1)·16px) / N`, so N cards and N−1 gaps
 fill the row exactly and the rail's tracks land on the grid's tracks.
 
-## Two modes, split at a 560px container
+## Two modes, split at a 560px column
 
 The column ladder decides *how many*; a second threshold decides *how the row
 behaves*. Below a **560px** container the rail is in **swipe mode**; from 560
-up it is in **grid mode**. 560 is the MediaHeader's stacking breakpoint, so a
-page flips to its phone reading in one go rather than component by component.
-With the sidebar collapsing below 1069px viewport, container ≈ viewport − 133,
-and the two land at the same viewport width.
+up it is in **grid mode**. 560 is the MediaHeader's stacking step, so a page
+flips to its phone reading in one go rather than component by component. A
+560px column is reached at a **660px window** (660 − 52 rail − 2 × 24 gutter),
+not at the 608 chrome gate: the rail arrives there and takes the column from
+559 back to 508. The step is written `@min-[560px]` / `@max-[560px]` —
+Tailwind's `@max-[N]` is `width < N`, so one number serves both sides.
 
 ### Grid mode (≥ 560)
 
@@ -145,7 +147,7 @@ The arrows are a **pointer affordance for grid mode only**, gated three ways:
 |---|---|---|
 | rail actually overflows | `showArrows` state | arrows on a row that cannot scroll read as broken |
 | pointer device | `[@media(hover:none)]:!hidden` | on touch the native swipe is the cue |
-| container ≥ 560 | `@max-[559px]:hidden` | below 560 the cut-off card is the cue, so arrows would be redundant |
+| column ≥ 560 | `@max-[560px]:hidden` | below 560 the cut-off card is the cue, so arrows would be redundant |
 
 `showArrows` is recomputed on scroll, on a `ResizeObserver` (window resize
 *and* sidebar collapse both change `clientWidth`) and on a `MutationObserver`
@@ -204,7 +206,7 @@ bottom step. `.grid-cards` learned this the hard way: its base was
 phone in Display Zoom) produced one narrow column with an empty band beside it,
 and any wider card overflowed sideways. Its base is now
 `repeat(auto-fill, minmax(128px, 1fr))` — see
-[Responsive](responsive.md#the-other-ladder-container-columns).
+[Responsive](responsive.md#the-column-ladder).
 
 The rail's bases follow the same rule: `[&>li]:w-[60%]` in row mode is
 overridden by the 220 floor into one full card plus a peek, and

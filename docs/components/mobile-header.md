@@ -160,7 +160,6 @@ Two of them carry rules worth knowing:
 
 ## Open questions
 
-- claims "Phone layouts (< 768px)" for where the header appears · source gates it on `useFooterNav()`, i.e. below `FOOTER_NAV_BELOW` = 608 (app/routes/home.tsx:4526 vs app/routes/home.tsx:5692 and src/lib/use-media-query.ts:91; the Footer Nav section says "< 608px" at app/routes/home.tsx:4675)
 - claims "five primitives" (`MobileTitleRow`, `MobileSearchBar`, `MobilePillTabs`, `MobileScopeToggle`, `MobileIconButton`) · source exports six — `MobileAvatar` is missing from both lists (app/routes/home.tsx:4540 and src/components/ui/mobile-header.tsx:9 vs src/components/ui/mobile-header.tsx:66)
 - claims `MobileScopeToggle` is the Explore focused-state scope switch · source's live `ExploreHeader` uses the shared `ToggleGroup`, and `MobileScopeToggle` has no call site outside the design-system page (app/routes/home.tsx:4635 vs src/components/app/mobile-app-header.tsx:310)
 - claims Explore is "focus → scope toggle, Enter → result filters" in the header · source shows the `ToggleGroup` only when `!focused && query`, shows the `SearchPanel` while focused, and the result filter pills render in the page body via `SearchResultsView` (src/components/app/mobile-app-header.tsx:17 vs src/components/app/mobile-app-header.tsx:309, :324 and src/components/app/search-results-view.tsx:130)

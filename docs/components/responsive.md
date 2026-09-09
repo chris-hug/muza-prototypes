@@ -1,64 +1,90 @@
 ---
 title: Responsive
 status: updated
-source: src/lib/use-media-query.ts
-related: [dialog, card-rail, mobile-header]
+source: src/lib/breakpoints.ts
+related: [dialog, card-rail, song-list-item, mobile-header, toast]
 ---
 
-Muza has **its own breakpoints**, and they are not Tailwind's. The generic
-scale (`sm` 640, `md` 768, `lg` 1024, `xl` 1280) is still used inside class
-names, but almost nothing about the page layout changes at those widths. One
-of them is load-bearing: **`md:` (768) is `useIsMobile()` in CSS**, and it is
-the only Tailwind screen allowed to switch a presentation (dialog ⇄ sheet,
-toast placement, the docked editor). `sm:` and `lg:` reflow in-page content
-only. The widths where something actually changes are these five — and two of
-them are *calculated*, not chosen.
+Muza measures width in **three ways, and only three**. Every number in the
+app belongs to one of them, and the mistake this page exists to prevent is
+reading a number from one as if it were from another.
 
-## The ladder
-
-| Name | px | What changes at this width | Defined in |
+| Measure | What it is | Read by | May decide |
 |---|---|---|---|
-| **Phone** | 375 | Nothing switches here — it is the reference phone (iPhone 12 mini / SE class), the narrowest width this app is tested at | — |
-| **Phone wide** | 584 | Page gutter `--page-px` 12 → 24px | `app.css` |
-| **Tablet** | 608 | **Chrome gate.** Sidebar replaces the footer tab bar; `Topbar` replaces `MobileAppHeader`; anything lifted over the tab bar (`BulkActionBar`) drops. Kept separate from 768 on purpose — see `DESIGN_SYSTEM.md`, gating rules | `FOOTER_NAV_BELOW` |
-| **Tablet wide** | 768 | **Presentation gate.** `useIsMobile()` and Tailwind `md:` flip — components swap outright (dropdown ⇄ bottom sheet, inline toggle ⇄ header toggle). Also where the docked playlist editor starts to exist | `useIsMobile()`, `DRAWER_FROM` |
-| **Desktop** | 1069 | Sidebar expands from the icon rail; page gutter 24 → 40px | `SIDEBAR_COLLAPSE_BELOW` |
+| **window** | the browser viewport | `useFooterNav()`, `useIsMobile()`, `useSidebarAutoCollapsed()`, `@media`, Tailwind `md:` | the page **chrome** and how a thing is **presented**: sidebar / icon rail / tab bar, the gutter, dialog-as-sheet, dropdown-as-sheet, the docked editor, where a toast sits |
+| **column** | the page content area — what the window leaves after chrome, cap and editor | `@container` on the page shell: `.grid-cards`, `@min-[N]:` in rails and headers | **how many fit**: card columns, rail peek, MediaHeader tier |
+| **box** | a component's own width, when the same window can hand it two different widths | a **named** `@container/<name>` on the component itself | internal reflow only: which meta field drops, which player tier |
+
+**The rule, in one sentence:** the window decides the chrome and how a thing
+is presented; the column decides how many fit; a component may measure its own
+box only if the same window can hand it two different widths — and then it
+must name the box.
+
+The words "breakpoint" and "viewport" are not used for any of these. Tailwind
+calls its screen tokens breakpoints, and that is the one place the word
+belongs; "viewport" stays for the browser's own terms (`viewport-fit`, the
+visual viewport under a keyboard). Code identifiers keep their names —
+`VIEWPORTS`, `containerAt()`, `@container` — this page says what they mean.
+
+## Window: two gates, each with a job
+
+| Name | px | Gate | What changes | Defined in |
+|---|---|---|---|---|
+| **Phone** | 375 | — | Nothing switches — the reference phone (iPhone 12 mini / SE class), the narrowest width the app is tested at | — |
+| **Phone wide** | 584 | gutter only | `--page-px` 12 → 24px. A spacing step, not a mode | `app.css` |
+| **Tablet** | 608 | **chrome** | Icon rail replaces the tab bar; `Topbar` replaces `MobileAppHeader`; the mini player becomes the desktop bar; anything lifted over the tab bar (`BulkActionBar`) drops | `FOOTER_NAV_BELOW` |
+| **Tablet wide** | 768 | **presentation** | `useIsMobile()` and Tailwind `md:` flip together: dialogs, alert dialogs and toasts leave their sheet / bottom-bar form, dropdowns stop presenting as sheets, the docked playlist editor starts to exist | `useIsMobile()`, `DRAWER_FROM`, `md:` |
+| **Desktop** | 1069 | chrome | Sidebar expands from the icon rail; gutter 24 → 40px | `SIDEBAR_COLLAPSE_BELOW` |
+| **Wide** | 1920 | cap | The page wrapper's ceiling rises from 1480 to 1716px | `CONTENT_CAP_WIDE_FROM` |
 
 The names describe **width bands, not devices**. A 1024px tablet held sideways
-is "Desktop" here, and that is correct: what matters is how much room the
-layout has, never what the hardware is called.
+is "Desktop" here, and that is correct: what matters is the room the layout
+has, never what the hardware is called.
 
-## Two of them are arithmetic
+**Why 608 and 768 are not one gate.** They could be, and one number fewer
+would be tidier — but with the tab bar kept up to 767 the MediaHeader would go
+horizontal (its column reaches 560 at 608 without a sidebar) underneath the
+mobile detail bar, which is built for the centred, stacked cover; and the mini
+player slot would receive the 80px desktop bar from a 664px window, because
+the bar's own box passes 640 there. Folding them means touching both; until
+then, 608 is chrome and 768 is presentation, and each is named for it.
 
-`608` and `1069` are not taste. They are the viewport widths at which a
-*container* threshold is reached, so they must be recomputed if anything in
-that chain moves — which is why they are exported constants and not literals:
+**Tailwind's screens, stated.** `md:` (768) is `useIsMobile()` in CSS and is
+the only screen token that may switch a presentation. `sm:` (640) and `lg:`
+(1024) may reflow **in-page content** — a settings form going two-column, a
+report table hiding a column — and nothing else. Before this rule the dialog
+family recentred at `sm` while the hook still said phone: between 640 and 767
+the create-playlist form rendered its phone branch with every action hidden
+by `sm:hidden`. `xl` and `2xl` gate nothing.
+
+### Two of them are arithmetic
 
 ```text
-Tablet   608 = 560 (MediaHeader stacks)     + 2 × 24 (gutter in that band)
-Desktop 1069 = 780 (MediaHeader full)  + 208 (sidebar) + 80 (px-10 × 2) + 1 (border)
+Tablet   608 = 560 (MediaHeader stacks)  + 2 × 24 (gutter in that band)
+Desktop 1069 = 780 (MediaHeader full)    + 208 (sidebar) + 80 (px-10 × 2) + 1 (border)
 ```
 
 Both live in [`use-media-query.ts`](src/lib/use-media-query.ts) as
-`FOOTER_NAV_BELOW` and `SIDEBAR_COLLAPSE_BELOW`, with the arithmetic in the
-comment above each. Never write `608` or `1069` into a component.
+`FOOTER_NAV_BELOW` and `SIDEBAR_COLLAPSE_BELOW`. Never write `608` or `1069`
+into a component.
 
-**Read `608` carefully.** It is the last viewport at which a *sidebarless*
-page still has a container under 560 — it is **not** the width where the
-container reaches 560. At 608 the 52px icon rail appears in the same instant,
-so the container goes `559 → 508`: it gets **narrower as the page gets
-wider**. The MediaHeader stays stacked and rails stay in swipe-peek until
-viewport **660**, where `660 − 52 − 48 = 560`.
+**Read 608 carefully.** It is the last window at which a *sidebarless* page
+still has a column under 560 — not the width where the column reaches 560. At
+608 the 52px icon rail appears in the same instant, so the column goes
+`559 → 508`: it gets **narrower as the page gets wider**. The MediaHeader stays
+stacked and rails stay in swipe mode until window **660**, where
+`660 − 52 − 48 = 560`.
 
-This is the general shape, not a one-off: the container is **not monotonic**
-in the viewport. Wherever chrome appears, it takes more than the extra pixel
-gives back. `ResponsiveLab` counts those widths at runtime rather than listing
-them here, so the count cannot go stale.
+**Read 1069 with the sidebar's floor in mind.** The derivation uses the
+sidebar's 208px minimum. It can be dragged to 291 (`MAX_W` in `sidebar.tsx`),
+and then the header's full tier needs a 1152px window; between 1069 and 1151 a
+widened sidebar leaves the header in its intermediate tier. Accepted: deriving
+from 291 would delay the expanded sidebar by 83px on every laptop.
 
-## The content width is not a function of the window
+## Column: not a function of the window
 
 `containerAt()` used to read `viewport − sidebar − 2 × gutter`. That is wrong
-twice over, and both corrections matter:
+twice over:
 
 **The page wrapper is capped.** Every page shell carries
 `max-w-[1480px] min-[1920px]:max-w-[1716px]`. From a 1688px window up the
@@ -70,38 +96,34 @@ sibling of `<main>` (`hidden md:flex`, `w-[30%] min-w-[374px] max-w-[550px]`,
 draggable within `[374, min(900, 60% of the window)]`), so with it open:
 
 ```text
-768px window  → 52 rail + 2×24 gutter + 374 editor → 294px content
-1440px window, editor dragged to 864              → 288px content
+768px window  → 52 rail + 2×24 gutter + 374 editor → 294px column
+1440px window, editor dragged to 864              → 288px column
 ```
 
-A 768px window with the editor docked gives less content than a 320px phone.
-That is the designed state, not an edge case — the editor exists so you can
-browse and drag tracks in. Anything that assumes content follows from the
-window will be wrong there.
+A 768px window with the editor docked gives less column than a 320px phone.
+That is the designed state, not an edge case.
 
-The **sidebar is resizable too** (208–291px when expanded), so it is a third
-input the formula cannot assume.
+`containerAt(viewport, { sidebar, drawer })` takes what is actually on screen;
+`drawerAt()` and `contentCapAt()` give the defaults. The column is
+**non-monotonic** in the window at three widths — 584 (559 → 536), 608
+(559 → 508) and 1069 (968 → 781) — wherever chrome appears, it takes more than
+the extra pixel gives back. `ResponsiveLab` marks those rows at runtime.
 
-`containerAt(viewport, { sidebar, drawer })` takes what is actually on
-screen; `drawerAt()` and `contentCapAt()` give the defaults.
+### The column ladder
 
-## The other ladder: container columns
-
-Card grids and rails do not step on viewport width at all — they step on
-their own **container** width, so a rail inside a narrow column behaves like
-a rail on a narrow phone:
+Card grids and rails step on the **column**, so a rail inside a narrow column
+behaves like a rail on a narrow phone:
 
 ```text
 304 → 2 columns · 464 → 3 · 692 → 4 · 928 → 5 · 1164 → 6 · 1500 → 7
 ```
 
-Plus two container thresholds inside components: **560** (MediaHeader stacks,
-rails switch to swipe-peek) and **780** (MediaHeader shows its full action
-cluster).
+Plus two column steps inside components: **560** (MediaHeader stacks, rails
+switch to swipe mode) and **780** (MediaHeader shows its full action cluster).
 
-Those numbers are not arbitrary either. The card ladder comes from the
-**cover**, which must stay between 143 and 220px wide with a 16px gap — each
-step is where the current column count would push a cover past 220:
+The ladder comes from the **cover**, which stays between 143 and 220px wide
+with a 16px gap — each step is where the current column count would push a
+cover past 220:
 
 ```text
 2 × 220 + 1 × 16 = 456  → 464 (3 columns)
@@ -110,138 +132,164 @@ step is where the current column count would push a cover past 220:
 5 × 220 + 4 × 16 = 1164 → 1164 (6)
 ```
 
-The first step follows the opposite rule — `2 × 143 + 16 = 302 → 304`, "two
-covers just fit".
+Two steps are declared, not derived. The **first** is "two covers just fit":
+`2 × 143 + 16 = 302`, written **304** — a 2px rounding with no visible effect,
+because the auto-fill base under the ladder already yields two columns at
+302. The **last** is the one deliberate exception: the rule would put it at
+`6 × 220 + 5 × 16 = 1400`, the ladder says **1500**, set above the tier-1 cap
+(1480 − 80 = 1400) on purpose so a six-card row never collapses into seven
+smaller ones the moment it reaches full width. Between 1400 and 1500 six
+covers sit at their 220px cap with 100px of slack — that slack is the point.
+Seven columns therefore first appear at a **1920px window** (column 1632);
+below that the cap holds the column at 1400.
 
-The last step is the one deliberate exception. The rule would put it at
-`6 × 220 + 5 × 16 = 1400`; the ladder says **1500**, set above that cap on
-purpose so a six-card row never collapses into seven smaller ones the moment
-it reaches full width. Between 1400 and 1500 six covers therefore sit at their
-220px cap with 100px of slack — that slack is the point, not an oversight.
-(`DESIGN_SYSTEM.md`, "Grids step from 6 → 7 cards".)
+Where each column count first appears with the default chrome, swept over
+every window from 320 to 2560:
 
-## The third measuring point
+```text
+2 → 320 (296)   3 → 488 (464)   4 → 792 (692)
+5 → 1028 (928)  6 → 1452 (1164) 7 → 1920 (1632)
+```
 
-`breakpoints.ts` used to say there were two measurements. There are three, and
-the third is what makes the design system's two chip scales look like a
-contradiction when they are not:
+## Box: the components that measure themselves
 
-1. **Window** — decides the chrome. Nothing above the page can be measured, so
-   this one is irreducible.
-2. **The page column** — what is left. Card grids, rails, `MediaHeader`,
-   search and every library/detail view measure this.
-3. **A component's own box** — exactly one component does this:
-   [`SongListItem`](song-list-item.md), because a `SongRail` puts it in a cell
-   far narrower than the column, and because the docked editor narrows the
-   column with no rail involved. Its steps (260 / 300 / 380) are its own and
-   live with the component, not here: they come from where a line of text
-   stops fitting, not from where a cover stops fitting.
+A box step is allowed only where the window does not determine the
+component's width. Four components qualify, and each names its container so
+the query can never bind to an ancestor by accident — `PlayerOverlay` once
+carried an unnamed `@min-[380px]` with no container of its own: in the app it
+never matched, on the design-system page it always did (the page wrapper is a
+1400px container), so the phone frames showed a lyric size no phone renders.
 
-`MediaHeader`'s meta line is a fourth *technically*, but it is a
-component-internal detail rather than a placement: the fixed 268px cover and
-its gaps make that line `column − 300` in the horizontal tier, wherever the
-header sits.
+| Component | Box | Steps | Why the window cannot say |
+|---|---|---|---|
+| [`SongListItem`](song-list-item.md) | `@container/row` | 260 · 300 · 380 | at a 1069px window the same row is 765px in a list and 363px in a `SongRail` cell; beside the docked editor the column itself is 294px |
+| `PlayerBar` | its own root | 640 · 688 · 800 | the bar is `main − 2 × gutter`, not the column: 640 is reached at a 740px window with the rail — and with the editor docked at 768 the bar's box is 294px, which is why the compact ⇄ desktop switch must stay a box step and not a window gate |
+| `PlayerOverlay` | `@container/overlay` | 380 | mounted in a sheet and on the design-system page |
+| Paywall content | `@container` inside a `max-w-[980px]` dialog | 760 | the dialog is `80vw`, so 760 is reached at a 950px window |
 
-Two things that looked like this regime were removed after an audit showed
-they could never fire: `MediaListItem`'s 240px step (narrowest real width 296)
-and `MediaHeader`'s 240px type-chip step (narrowest meta width 260).
+`MediaHeader`'s meta line is a fifth *technically*: the fixed 268px cover and
+its gaps make that line `column − 300` in the horizontal tier, and its year
+drops below 320 (`@max-[320px]/meta`).
 
-**Name your container.** `PlayerOverlay` carried a `@min-[380px]` step with no
-container ancestor at all: in the app it never matched, and on the
-design-system page it always did, because the nearest container there is the
-page's own 1400px wrapper — so the phone frames showed a lyric size no phone
-renders. An unnamed query silently binds to whatever ancestor happens to be
-closest.
+Two things that looked like box steps were removed after an audit showed they
+could never fire: `MediaListItem`'s 240px step (narrowest real width 296) and
+`MediaHeader`'s 240px type-chip step (narrowest meta width 260).
 
-The base declaration under a container-query ladder must be a **real layout**,
-not the ladder's bottom step — it is what renders in engines without container
-queries, and what a 320px phone gets. `.grid-cards` learned this the hard way:
-its base was `repeat(1, minmax(143px, 220px))`, which on a 296px-wide viewport
-produced one stretched column with a field of empty space beside it.
+**Folding box steps into the column ladder is not worth it.** Rounding
+`SongListItem`'s 260 up to 304 drops the album line on every phone list (a
+320px phone's column is 296); rounding 380 up to 464 drops the year on every
+phone.
 
-### The stage: `ResponsiveLab`
+## Writing a step: `@max-[N]` means "below N"
 
-The Responsive section is one stage, then one table — the IRIS studio's layout
-pattern. It lives in
-[`responsive-lab.tsx`](src/components/ds/responsive-lab.tsx) and replaced four
-things that each carried their own copy of the ladder: a static three-tier
-diagram, a separate column ladder, a schematic lab on an abstract pixel scale,
-and a printed breakpoint table.
+Tailwind v4 compiles `@max-[560px]` to `@container (width < 560px)` and
+`max-md:` to `@media (width < 48rem)` — **exclusive**. So the pair for a step
+at 560 is `@min-[560px]` / `@max-[560px]`, never `@max-[559px]`: that left
+the 559px column (a 607px window) matching neither side of CardRail. The same
+holds for `max-md:` against `useIsMobile()` (`max-width: 767px`, inclusive) —
+they agree; `max-[767px]` (`< 767`) did not.
 
-**The stage is not a diagram.** A frame is set to the chosen viewport width in
-*real* pixels and contains the real page chrome at its real size, with the real
-`CardRail` and real `AlbumCard`s inside the content column. Pick 375 and the
-rail cuts its last card, because it is the rail deciding that — its
-`@min-[560px]` container queries measure the content column, and that column
-really is 351px wide.
+The base declaration under a container-query ladder must be a **real
+layout**, not the ladder's bottom step — it is what renders in engines
+without container queries, and what a 320px phone gets. `.grid-cards` learned
+this the hard way: its base was `repeat(1, minmax(143px, 220px))`, which on a
+296px column produced one stretched column with a field of empty space
+beside it.
 
-Consequences worth knowing before changing it:
+## Where a number lives twice
+
+Tailwind cannot read a TypeScript constant, so a class literal is a **forced**
+copy. Everything else should be one import.
+
+| Number | Copies | Forced? | Kept in sync by |
+|---|---|---|---|
+| 304 … 1500 | `app.css` `.grid-cards`, `card-rail.tsx`, `song-rail.tsx` (692 / 1164), `COLUMN_STEPS` | class copies forced | comments — and the design-system page, which renders the real components against `COLUMN_STEPS` |
+| 560 · 780 | `media-header.tsx`, `card-rail.tsx`, `song-rail.tsx`; `STACK` / `MEDIA_HEADER_STACK`, `SIDEBAR_FULL_HEADER` | class copies forced; the second TypeScript copy is not | comments |
+| 12 / 24 / 40 · 584 · 1069 | `app.css` media queries; `gutterAt()` | forced (CSS custom property) | comments |
+| 143 / 220 | `.grid-cards`, rails, cards | not forced — no token yet | nothing |
+| 1480 / 1716 / 1920 | 17 class copies of the wrapper cap | not forced — one utility would do | grep |
+| 208 / 52 / 374 … | `sidebar.tsx`, `playlist-edit-drawer.tsx`, `breakpoints.ts`, `use-media-query.ts` | not forced | nothing |
+
+Where a comment says "must match", nothing executable checks it yet; a test
+that reads the class literals out of the files and compares them to the
+constants is the cheapest thing that would.
+
+## The design system's stage
+
+### `ResponsiveLab` — a real page at a chosen width
+
+The Responsive section is one stage, then one table. It lives in
+[`responsive-lab.tsx`](src/components/ds/responsive-lab.tsx) and replaced
+four things that each carried their own copy of the ladder.
+
+**The stage is not a diagram.** A frame is set to the chosen window width in
+*real* pixels and contains the real page chrome at its real size, with the
+real `CardRail` and real `AlbumCard`s inside the column. Pick 375 and the rail
+cuts its last card, because it is the rail deciding that — its `@min-[560px]`
+container queries measure the column, and that column really is 351px wide.
 
 - **The stage scrolls sideways** when the frame is wider than the page. It does
   not scale down: a card drawn at 60% is a card at a size the app never
-  renders, which is exactly the mistake the schematic version made.
+  renders.
 - **The chrome is computed, not live.** `useIsMobile()` / `useFooterNav()` read
-  the real window, so a real `Sidebar` dropped into the frame would show the
-  browser's state inside a box claiming to be 375px. The sidebar is drawn from
-  `sidebarAt()` / `gutterAt()` — pure functions of the chosen width — and it is
-  deliberately muted, because it is the thing taking space away, not the
-  subject. Component-level swaps gated on those hooks cannot be shown here; the
-  table names the widths where they happen.
+  the real window, so the sidebar is drawn from `sidebarAt()` / `gutterAt()` —
+  pure functions of the chosen width — and deliberately muted, because it is
+  the thing taking space away, not the subject. Presentation swaps gated on
+  those hooks cannot be shown here; the table names the widths where they
+  happen.
 - **The arithmetic appears once**, in the sentence under the frame, in the
   order the page computes it.
 - **The first chip is `Free`** and it is the default: no fixed width, the frame
   fills whatever room the section has, and the chip whose band the measured
-  width falls into lights up. This is the honest version of "follow the
-  window" — a frame that literally followed `window.innerWidth` would always be
-  wider than the space it has, being the whole window drawn inside a fraction
-  of that same window.
-- **An `Editor docked` toggle**, because the docked playlist editor is the one
-  fact that breaks "content follows from the window", and nothing else on the
-  page can show it. Switch it on at 768 and the content drops to 294px — a
-  tablet-width window rendering narrower than a phone.
+  width falls into lights up.
+- **An `Editor docked` toggle**, because the docked editor is the one fact
+  that breaks "column follows from the window". Switch it on at 768 and the
+  column drops to 294px.
 - **The wrapper's cap is modelled**, so past a 1688px window the frame shows
-  the extra pixels becoming margin instead of content.
+  the extra pixels becoming margin instead of column.
 
 Below the stage, one table carries the whole ladder: name, window, sidebar,
-gutter, content, content *with the editor docked*, cards, what changes, and the
-constant it is defined in. Every row is computed from `breakpoints.ts` —
-including the `−187 vs 1068px` marks, which appear only where the content
-actually loses width.
+gutter, column, column *with the editor docked*, cards, what changes, and the
+constant it is defined in. Every row is computed from `breakpoints.ts`.
 
-### The design system's frame moves the CONTAINER, not the viewport
+### `Example` — every component's frame, picked in window widths
 
-Its **default** chips are the page column's ladder — 304 · 464 · 692 · 928 ·
-1164 · 1500 — plus two widths that are not column steps: **560**, where the
-MediaHeader stacks and rails switch to swipe-peek, and a **Phone** reference
-at 351 (what a 375px phone leaves after its 12px gutter). They are labelled
-`content` beside the chips, because the Responsive section's own frame is
-picked in **window** widths and two unlabelled ladders on one page read as a
-contradiction rather than as two different measurements.
+Every component demo carries the **same window ladder** as chips
+(320 · 375 · 584 · 608 · 768 · 1069 · 1440 · 1512 · 1920). The frame is still
+a container — it sets itself to what that window *leaves*, and the readout
+prints both (`1069 → 781px`), with the chrome drawn around the stage so the
+counter-intuitive steps are legible (584 leaves 536; 608 leaves 508, because
+the icon rail arrives).
 
-They cannot simulate the window ladder: `useIsMobile()` and `useFooterNav()`
-read the real window, so sidebar ⇄ tab bar and component-level swaps only
-happen when the browser itself is resized. Chips named for those widths would
-promise a change the frame cannot produce.
+This replaced a second ladder of raw column steps (304 · 464 · 692 · 928 ·
+1164 · 1500). Nothing was lost: stepping through the nine windows still yields
+column counts 2·2·3·3·3·4·5·6·7, at widths that actually occur.
 
-A component with steps of its own passes `widths` and gets chips that mean
-something for it — `SongListItem` does, labelled `row`. Before that, three of
-its four documented steps were below the default ladder's first chip and so
-could not be demonstrated at all. When passing row-level widths, remember the
-frame sets the OUTER width while a container query reads the CONTENT box.
+A **box** component is the exception and passes `widths` — `SongListItem`
+does, labelled `row`. Not because its steps are unreachable from a window
+(sweeping every width finds them), but because a window does not *determine*
+that row's width: one number in, two answers out. `PlayerBar` and
+`PlayerOverlay` belong in the same group.
+
+**Chrome is drawn only for a window chip.** A component that is centred or has
+an intrinsic width — a dialog, a card, a badge — gets no ladder at all: a 208px
+sidebar drawn beside a 400px card implies a relation that does not exist.
 
 ### Measuring a container query
 
 A container query measures the container's **content box**. Padding on the
 `@container` element therefore shrinks what everything inside it reads: the
-design system's demo frame carried `p-6` on its stage, so at the 584 step a
-rail saw 536 and stayed in its below-560 layout while the chip said 584. Put
-the padding on a child, and keep the `@container` at the width it claims.
+demo frame once carried `p-6` on its stage, so at the 584 step a rail saw 536
+and stayed in its below-560 layout while the chip said 584. Put the padding on
+a child, and keep the `@container` at the width it claims. The same applies
+to `SongListItem`'s `row` chips: the frame sets the OUTER width while the
+query reads the CONTENT box, so its `framePx` adds the row's own padding back.
 
 ## Gutter
 
 `--page-px` is one knob, applied with the `px-page` utility — never `px-10`:
 
-| Viewport | Gutter |
+| Window | Gutter |
 |---|---|
 | ≥ 1069 | 40px |
 | 584–1068 | 24px |
@@ -261,6 +309,6 @@ and there is no sticky-hover after a tap.
   `[@media(hover:none)]:!hidden` / `[@media(hover:hover)]:!hidden`. The `!` is
   required — Tailwind v4 sorts pointer/hover variants *before* base
   `flex`/`hidden`, so without it the base wins and the gate is a silent no-op.
-- To **swap a component**, gate on width (`useIsMobile()`), never on hover: the
-  headless preview reports `hover: hover` at phone width, and hybrid
+- To **swap a component**, gate on the window (`useIsMobile()`), never on
+  hover: the headless preview reports `hover: hover` at phone width, and hybrid
   touch-laptops do too — a hover-gated sheet would simply never appear.

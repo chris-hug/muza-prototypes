@@ -2094,7 +2094,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       {/* ══ RESPONSIVE & POINTER ══ */}
       <Section id="responsive" title="Responsive & Pointer">
         <p className="text-base text-muted-foreground mb-5 max-w-2xl">
-          The shared foundations for how Muza components adapt to <span className="text-foreground">viewport / container width</span> and <span className="text-foreground">pointer type</span> (mouse vs touch). Each component documents its own specific behaviour in its own section — this is just the common ground they all build on.
+          The shared foundations for how Muza components adapt to width — measured three ways, <span className="text-foreground">window</span>, <span className="text-foreground">column</span> and <span className="text-foreground">box</span> — and to <span className="text-foreground">pointer type</span> (mouse vs touch). Each component documents its own specific behaviour in its own section — this is just the common ground they all build on.
         </p>
 
         {/* ONE thing, not four. This section used to carry a static three-tier
@@ -2105,9 +2105,11 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             it, and the ladder table sits under it as one table. */}
         <p className="text-base text-muted-foreground mb-3 max-w-2xl">
           <span className="text-foreground font-medium">The window decides, the content pays</span> —
-          the window width decides which chrome appears (sidebar, icon rail or bottom tab bar) and how
-          wide the page gutter is. What is left over is the{" "}
-          <span className="text-foreground">content width</span>, and that is what the cards measure.
+          the window decides which chrome appears (sidebar, icon rail or bottom tab bar), how
+          wide the page gutter is, and how a thing is presented (sheet or dialog). What is left over is the{" "}
+          <span className="text-foreground">column</span>, and that is what the cards measure — how many fit.
+          A component measures its own <span className="text-foreground">box</span> only when the same window can hand it two
+          different widths (a song row in a list vs in a rail cell), and then it names the container.
           Pick a width and watch it happen to real components:
         </p>
         <ResponsiveLab />
@@ -2129,18 +2131,19 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">flex</code>/<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">hidden</code>, so without it the base wins and the gate is a silent no-op.
           </li>
           <li>
-            <span className="text-foreground">Swap components by viewport, not hover.</span>{" "}
+            <span className="text-foreground">Swap components by window width, not hover.</span>{" "}
             When a phone needs a <span className="text-foreground">different component</span> (dropdown ⇄ bottom sheet, inline toggle ⇄ full-width header toggle), gate on
             {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useIsMobile()</code> (&lt; 768px) — e.g.{" "}
             <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">{`if (isMobile) return <Sheet>… ; return <DropdownMenu>…`}</code>.
             Don't use <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">hover:</code> for this: the headless preview reports{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">hover: hover</code> at phone width (a hover-gated sheet never shows there) and hybrid touch-laptops do too. Breakpoint hooks:{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useFooterNav</code> (608 — sidebar⇄tab bar, Topbar⇄MobileAppHeader),{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useIsMobile</code> (768).
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">hover: hover</code> at phone width (a hover-gated sheet never shows there) and hybrid touch-laptops do too. Two window gates, each with a job:{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useFooterNav</code> (<span className="text-foreground">608 = chrome</span>: tab bar ⇄ icon rail, MobileAppHeader ⇄ Topbar, mini player ⇄ desktop bar) and{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useIsMobile</code> (<span className="text-foreground">768 = presentation</span>: sheets ⇄ dialogs and dropdowns, toast placement, the docked editor). Tailwind's{" "}
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">md:</code> is the 768 gate in CSS and the only screen token that may switch a presentation — <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">sm:</code> / <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">lg:</code> reflow in-page content only.
           </li>
           <li>
             <span className="text-foreground">Mobile surfaces escalate to sheets.</span>{" "}
-            <span className="text-foreground">Every</span> dialog (and alert dialog) becomes a bottom sheet — it's the <span className="text-foreground">base default</span> of <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogContent</code>, not a per-dialog opt-in; tall ones grow to{" "}
+            Below <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">md</code> (768) <span className="text-foreground">every</span> dialog (and alert dialog) is a bottom sheet — it's the <span className="text-foreground">base default</span> of <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogContent</code>, not a per-dialog opt-in; tall ones grow to{" "}
             <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">max-h-[92vh]</code> with a <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">min-h-0</code> scroll body;
             <span className="text-foreground">forms</span> (a text field whose primary action must survive the keyboard) go <span className="text-foreground">full-screen</span> instead via <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">mobile="form"</code> — actions in a top bar, see <a href="/?page=DesignSystem#dialog" className="text-primary-text hover:underline underline-offset-2">Dialog</a>;
             simple "…" lists use the auto-sheet <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DropdownMenu</code>; rich "…" actions use the advanced{" "}
@@ -2153,14 +2156,14 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           </li>
           <li>
             <span className="text-foreground">Shared column steps.</span> Library
-            grids, Card Rail and Top Songs step columns at the same container widths —{" "}
+            grids, Card Rail and Top Songs step columns at the same <span className="text-foreground">column</span> widths —{" "}
             <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">304→2</code>,{" "}
             <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">464→3</code>,{" "}
             <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">692→4</code>,{" "}
             <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">928→5</code>,{" "}
             <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">1164→6</code>,{" "}
             <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">1500→7</code>.
-            {" "}These are column-<span className="text-foreground">count</span> steps. The mobile↔desktop boundary for <span className="text-foreground">behaviours</span> (rail swipe-peek, MediaHeader stacking) is <span className="text-foreground">560px</span> container — and the sidebar auto-collapses below <span className="text-foreground">~1069px</span> viewport so that boundary lands at the same point across the app.
+            {" "}These are column-<span className="text-foreground">count</span> steps. The mobile↔desktop boundary for <span className="text-foreground">behaviours</span> (rail swipe-peek, MediaHeader stacking) is <span className="text-foreground">560px</span> column — reached at a <span className="text-foreground">660px</span> window, not at 608: the icon rail arrives at 608 and takes the column back to 508. The sidebar's collapse at 1069 is a different derivation (780 + 208 + 80 + 1): it keeps the MediaHeader's full action tier alive as the window narrows. Steps are written <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">@min-[560px]</code> / <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">@max-[560px]</code> — Tailwind's <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">@max-[N]</code> is exclusive (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">width &lt; N</code>), so a 559 there leaves one column width matching neither side.
           </li>
         </ul>
         <p className="text-small text-muted-foreground max-w-2xl">
@@ -4665,7 +4668,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         ]}>
         <p className="text-base text-muted-foreground mb-5 max-w-2xl">
           The mobile bottom tab bar that replaces the sidebar below the
-          footer-nav breakpoint (synced to the <a href="/?page=DesignSystem#media-header" className="text-primary-text hover:underline underline-offset-2">Media Header</a>'s
+          footer-nav gate, 608 (synced to the <a href="/?page=DesignSystem#media-header" className="text-primary-text hover:underline underline-offset-2">Media Header</a>'s
           stacking point). Three tabs — Home · Library · Search — on the
           same <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">.frosted-glass</code> surface
           as the <span className="text-foreground">Mobile Header</span>, so the two bookend the screen.
@@ -5556,7 +5559,7 @@ export default function Home() {
     }, { replace: true })
   }
 
-  // Sidebar auto-collapses at a breakpoint synced to the MediaHeader's
+  // Sidebar auto-collapses at a window gate (1069) synced to the MediaHeader's
   // full-cluster tier (see `useSidebarAutoCollapsed`): below ~1069px the
   // expanded 208px sidebar would push the detail-page header out of its
   // richest layout, so we collapse it to reclaim that width. "Auto wins
@@ -5565,7 +5568,7 @@ export default function Home() {
   const autoCollapsed = useSidebarAutoCollapsed()
   const [collapsed, setCollapsed] = useState(false)
   useEffect(() => { setCollapsed(autoCollapsed) }, [autoCollapsed])
-  // Below the phone breakpoint the sidebar is swapped for a bottom tab bar.
+  // Below the chrome gate (608, useFooterNav) the sidebar is swapped for a bottom tab bar.
   const footerNav = useFooterNav()
   const [uploadOpen, setUploadOpen] = useState(false)
   const [uploadMinimized, setUploadMinimized] = useState(false)
@@ -5730,7 +5733,7 @@ export default function Home() {
         {LISTENING_PAGES.has(activeNav) && <AppPlayer footerNav={footerNav} />}
 
         {/* Mobile bottom tab bar — replaces the sidebar below the
-            footer-nav breakpoint. Absolute within main so it overlays
+            footer-nav gate (608). Absolute within main so it overlays
             the (full-width) content. */}
         {footerNav && <FooterNav activeNav={activeNav} onNavChange={navigate} />}
 
