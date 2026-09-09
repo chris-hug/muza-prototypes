@@ -68,7 +68,16 @@ export function SelectTrackButton({ selected, className }: {
         className,
       )}
     >
-      <span className="relative block" style={{ width: LEN, height: LEN }}>
+      {/* The pop. The morph alone gave the CHECK a flat ease-out while the
+          return to a plus had the spring — so undoing felt livelier than
+          confirming, which is backwards. `muzaMarkPop` overshoots once and
+          settles, and it is keyed on `selected` so it replays on every pick
+          rather than only on mount. */}
+      <span
+        key={selected ? "on" : "off"}
+        className={cn("relative block", selected && "animate-[muzaMarkPop_320ms_ease-out]")}
+        style={{ width: LEN, height: LEN }}
+      >
         {/* Vertical stroke → the check's long arm. */}
         <span
           className={cn(bar, timing)}

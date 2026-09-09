@@ -828,6 +828,16 @@ img[class*="object-cover"] {
    so the whole 3D ensemble floats up/down while the inner stage
    rotates. Slow (3.5s) and small amplitude (1.5px) so it reads as
    "alive" rather than active. */
+/* The pick mark's pop. The plus→check morph had a spring only on the way
+ * BACK — selecting used a flat ease-out, so confirming felt weaker than
+ * undoing, which is the wrong way round. This overshoots once and settles. */
+@keyframes muzaMarkPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.28); }
+  70%  { transform: scale(0.94); }
+  100% { transform: scale(1); }
+}
+
 @keyframes muzaCarouselFloat {
   0%, 100% { transform: translateY(0);        }
   50%      { transform: translateY(-1.5px);   }

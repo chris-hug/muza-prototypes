@@ -38,7 +38,7 @@ const GROUPS: ReadonlyArray<{ title: string; items: ReadonlyArray<string> }> = [
   { title: "Atoms",            items: ["Button", "Toggle", "ToggleGroup", "Toolbar", "Badge", "Status Badge", "Order Status Badge", "Purchased Badge", "Chips"] },
   { title: "Inputs",           items: ["Input", "Chip Input", "NumberField", "Select", "MultiSelect", "SingleSelect", "Combobox", "Menu", "Detail Menu", "Nav Row", "NavigationMenu", "DatePicker", "Checkbox & Radio", "Select Track", "Radio Card", "Switch", "Slider"] },
   { title: "Indicators",       items: ["Progress", "Meter", "Spinner", "Top Progress Bar", "Stepper", "Separator", "Avatar", "User Avatar"] },
-  { title: "Containers",       items: ["Tabs", "Tooltip", "ScrollArea", "Collapsible", "Accordion"] },
+  { title: "Containers",       items: ["Tabs", "Tooltip", "Collapsible", "Accordion"] },
   { title: "Cards & lists",    items: ["Album Card", "Artist Card", "Playlist Card", "Cover Play Button", "Song List Item", "Media List Item", "Search", "Card Rail", "Song Rail", "Product Card", "Checkout Card"] },
   { title: "Page composition", items: ["Media Header", "Artist Header", "Mobile Header", "Footer Nav", "Page Section", "Items"] },
   { title: "Overlays",         items: ["Alerts", "AlertDialog", "Dialog", "Purchase Album Dialog", "Paywall", "Login", "Credits Dialog", "Drawer", "Toast"] },

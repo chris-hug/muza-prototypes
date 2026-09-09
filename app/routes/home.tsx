@@ -117,8 +117,6 @@ import TabsSizesExample from "@/ds-examples/tabs-sizes"
 import tabsSizesExampleSrc from "@/ds-examples/tabs-sizes.tsx?raw"
 import TooltipBasicExample from "@/ds-examples/tooltip-basic"
 import tooltipBasicExampleSrc from "@/ds-examples/tooltip-basic.tsx?raw"
-import ScrollAreaBasicExample from "@/ds-examples/scrollarea-basic"
-import scrollAreaBasicExampleSrc from "@/ds-examples/scrollarea-basic.tsx?raw"
 import CollapsibleBasicExample from "@/ds-examples/collapsible-basic"
 import collapsibleBasicExampleSrc from "@/ds-examples/collapsible-basic.tsx?raw"
 import AccordionBasicExample from "@/ds-examples/accordion-basic"
@@ -275,7 +273,6 @@ import {
 import {
   Meter, MeterLabel, MeterValue, MeterTrack, MeterIndicator,
 } from "@/components/ui/meter"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Toolbar, ToolbarButton, ToolbarGroup, ToolbarSeparator,
 } from "@/components/ui/toolbar"
@@ -941,7 +938,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           "Colors","Typography","Responsive","Button","Toggle","ToggleGroup","Toolbar","Badge","Status Badge","Order Status Badge","Chips",
           "Input","NumberField","Select","Filter Menu","Combobox","Menu","Sort Button","NavigationMenu",
           "DatePicker","Checkbox","Radio Card","Switch","Slider","Meter","Progress","Separator",
-          "Avatar","Tabs","Tooltip","ScrollArea","Collapsible","Accordion",
+          "Avatar","Tabs","Tooltip","Collapsible","Accordion",
           "Album Card","Artist Card","Playlist Card","Song List Item","Product Card","Page Section","Items","Alerts","AlertDialog","Dialog","Paywall","Drawer","Toast","Skeleton",
           "Popover","Table","List Table","Pagination","Command","OTP Input","Form",
           "Player Bar","Player Overlay",
@@ -1732,18 +1729,6 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           codePath="src/ds-examples/tooltip-basic.tsx"
         >
           <TooltipBasicExample />
-        </Example>
-      </Section>
-
-      {/* ══ SCROLL AREA ══ */}
-      <Section id="scrollarea" title="ScrollArea">
-        <Example
-          doc="scrollarea"
-          align="center"
-          code={scrollAreaBasicExampleSrc}
-          codePath="src/ds-examples/scrollarea-basic.tsx"
-        >
-          <ScrollAreaBasicExample />
         </Example>
       </Section>
 

@@ -60,7 +60,6 @@ export const SECTION_SOURCE: Record<string, string> = {
   // Containers
   tabs:          "src/components/ui/tabs.tsx",
   tooltip:       "src/components/ui/tooltip.tsx",
-  scrollarea:    "src/components/ui/scroll-area.tsx",
   collapsible:   "src/components/ui/collapsible.tsx",
   accordion:     "src/components/ui/accordion.tsx",
 
