@@ -12,6 +12,12 @@
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
+    // React Router's typegen writes `.react-router/types/app/routes/+types/*`,
+    // whose imports (`../home.js`) are relative to the GENERATED tree and only
+    // resolve when that tree is overlaid on the project root. Without it every
+    // generated file reported "Cannot find module ../home.js" — 11 errors that
+    // had nothing to do with the code.
+    "rootDirs": [".", "./.react-router/types"],
     "paths": {
       "@/*": ["./src/*"]
     }

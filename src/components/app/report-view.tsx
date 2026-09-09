@@ -4,6 +4,7 @@ import { useState } from "react"
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts"
+import type { TooltipPayload } from "recharts"
 import { Users, Activity, DollarSign, Zap, TrendingUp, TrendingDown, TrendingUpIcon, BarChart2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -272,11 +273,21 @@ function RankCard({ rank, title, stats }: {
 
 // ─── Custom X-axis tick — highlights the current period label ─────────────────
 
-function XTick({ x, y, payload, currentLabel }: { x?: number; y?: number; payload?: { value: string }; currentLabel: string }) {
+/* The prop types mirror what RECHARTS actually hands a custom tick: `x` / `y`
+   arrive as `string | number` (it forwards the SVG attribute values), and the
+   payload's `value` is untyped. Declaring them as `number` and `string` meant
+   the whole tick spread had to be forced through at the call site — the cast
+   hid the mismatch rather than resolving it. */
+function XTick({ x, y, payload, currentLabel }: {
+  x?: string | number
+  y?: string | number
+  payload?: { value?: string | number }
+  currentLabel: string
+}) {
   const isCurrent = payload?.value === currentLabel
   return (
     <text
-      x={x} y={(y ?? 0) + 12}
+      x={x} y={Number(y ?? 0) + 12}
       textAnchor="middle"
       fontSize={14}
       fontWeight={400}
@@ -289,14 +300,21 @@ function XTick({ x, y, payload, currentLabel }: { x?: number; y?: number; payloa
 
 // ─── Chart tooltip ────────────────────────────────────────────────────────────
 
+/* Same reason as `XTick`: recharts' tooltip payload is READONLY and its
+   `value` is untyped, so `payload as { value: number }[]` was a cast between
+   two types that do not overlap. `TooltipPayload` is recharts' own exported
+   type for it, so both call sites hand it over untouched. */
 function ChartTooltip({ active, payload, label, metric }: {
-  active?: boolean; payload?: { value: number }[]; label?: string; metric: Metric
+  active?: boolean
+  payload?: TooltipPayload
+  label?: string | number
+  metric: Metric
 }) {
   if (!active || !payload?.length) return null
   return (
     <div className="bg-background border border-border rounded-lg px-3 py-2 shadow-sm text-xsmall">
       <p className="text-muted-foreground mb-0.5">{label}</p>
-      <p className="font-medium text-foreground tabular-nums">{fmt(payload[0].value, metric)}</p>
+      <p className="font-medium text-foreground tabular-nums">{fmt(Number(payload[0].value ?? 0), metric)}</p>
     </div>
   )
 }
@@ -410,7 +428,7 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
                 <XAxis dataKey="label" axisLine={false} tickLine={false}
                   tick={(props) => <XTick {...props} currentLabel={CURRENT_LABEL[period]} />} />
                 <Tooltip content={({ active, payload, label }) =>
-                  <ChartTooltip active={active} payload={payload as { value: number }[]} label={label} metric={metric} />}
+                  <ChartTooltip active={active} payload={payload} label={label} metric={metric} />}
                   cursor={{ stroke: "var(--border)", strokeWidth: 1 }} />
                 <ReferenceLine x={CURRENT_LABEL[period]} stroke="var(--border)" strokeDasharray="3 3" />
                 <Area type="monotone" dataKey={metric} stroke="var(--primary)" strokeWidth={2}
@@ -425,7 +443,7 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
                 <XAxis dataKey="label" axisLine={false} tickLine={false}
                   tick={(props) => <XTick {...props} currentLabel={CURRENT_LABEL[period]} />} />
                 <Tooltip content={({ active, payload, label }) =>
-                  <ChartTooltip active={active} payload={payload as { value: number }[]} label={label} metric={metric} />}
+                  <ChartTooltip active={active} payload={payload} label={label} metric={metric} />}
                   cursor={{ fill: "var(--muted)", opacity: 0.5 }} />
                 <ReferenceLine x={CURRENT_LABEL[period]} stroke="var(--border)" strokeDasharray="3 3" />
                 <Bar dataKey={metric} fill="var(--primary)" radius={[3, 3, 0, 0]} />

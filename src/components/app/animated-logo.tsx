@@ -22,10 +22,18 @@ export function AnimatedLogo({ size = 240, className, ambient = false }: Animate
   const tiltWrapperRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const container   = containerRef.current
-    const carousel    = carouselRef.current
-    const tiltWrapper = tiltWrapperRef.current
-    if (!container || !carousel || !tiltWrapper) return
+    /* Read, guard, then RE-BIND. The guard alone was not enough: every
+       handler below is a hoisted `function` declaration, and TypeScript will
+       not carry a narrowing into one of those — a hoisted function could in
+       principle run before the check. Re-binding makes the locals genuinely
+       `HTMLDivElement`, so nothing inside needs narrowing at all. */
+    const containerEl   = containerRef.current
+    const carouselEl    = carouselRef.current
+    const tiltWrapperEl = tiltWrapperRef.current
+    if (!containerEl || !carouselEl || !tiltWrapperEl) return
+    const container: HTMLDivElement   = containerEl
+    const carousel: HTMLDivElement    = carouselEl
+    const tiltWrapper: HTMLDivElement = tiltWrapperEl
 
     // ── rotation state ────────────────────────────────────────────────────────
     let currdeg        = 0

@@ -70,13 +70,40 @@ function collectItemLabels(
 
 const SelectLabelsContext = React.createContext<Record<string, React.ReactNode>>({})
 
-function Select({ children, ...props }: React.ComponentProps<typeof SelectPrimitive.Root>) {
+/*
+ * Every Select in this app picks a STRING. Base UI's Root is generic and
+ * types the value as `unknown`, so `onValueChange={v => setCarrier(v)}` did
+ * not compile at any of the four call sites that wrote the obvious thing —
+ * each of which would otherwise need its own cast. Narrowed once, here.
+ *
+ * `value` / `defaultValue` stay as the primitive types them (they accept
+ * `null` for "nothing selected"); it is only the CALLBACK that is pinned.
+ */
+type SelectRootProps = Omit<
+  SelectPrimitive.Root.Props<string, false>,
+  "onValueChange"
+> & {
+  /** `null` means "cleared"; every call site in this app wants a string, so
+   *  it arrives as `""` rather than as something to null-check. */
+  onValueChange?: (
+    value: string,
+    eventDetails: SelectPrimitive.Root.ChangeEventDetails,
+  ) => void
+}
+
+function Select({ children, onValueChange, ...props }: SelectRootProps) {
   const items = React.useMemo(() => collectItemLabels(children), [children])
   return (
     <SelectLabelsContext.Provider value={items}>
       {/* `items` is passed too, and not only for the label: it is what lets
           typeahead match on "A Love Supreme" rather than on "a03". */}
-      <SelectPrimitive.Root items={items} {...props}>
+      <SelectPrimitive.Root<string, false>
+        items={items}
+        onValueChange={
+          onValueChange && ((value, details) => onValueChange(value ?? "", details))
+        }
+        {...props}
+      >
         {children}
       </SelectPrimitive.Root>
     </SelectLabelsContext.Provider>
@@ -183,7 +210,13 @@ function SelectContent({
   >) {
   const mobile = useIsMobile()
   return (
-    <SelectPrimitive.Portal keepMounted>
+    /* No `keepMounted`. It was on the Portal and it never did anything: Base
+       UI's `SelectPortal` takes no such prop (it lives on the anchor
+       positioning options), so it was a type error that also explained why a
+       mount-time label registry could never fill — the items are simply not
+       rendered while the Select is closed. The labels come from walking the
+       element tree instead, which needs nothing mounted. */
+    <SelectPrimitive.Portal>
       <>
       {/* The scrim, and the primitive's own — not a hand-rolled div, so it
           keeps the open/close state and the click-to-dismiss that come with

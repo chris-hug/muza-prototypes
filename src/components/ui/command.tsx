@@ -17,10 +17,17 @@ function Command({ className, ...props }: React.ComponentProps<typeof CommandPri
   )
 }
 
+/* `children` is re-typed as plain `ReactNode`. Our `Dialog` root inherits
+   Base UI's, whose children may also be a render FUNCTION — but here they are
+   forwarded into `<Command>`, which renders them, so a function would be a
+   runtime error rather than a feature. Narrowing the prop says so at the
+   call site instead of at the seam. */
 function CommandDialog({
   children,
   ...props
-}: React.ComponentProps<typeof Dialog>) {
+}: Omit<React.ComponentProps<typeof Dialog>, "children"> & {
+  children?: React.ReactNode
+}) {
   return (
     <Dialog {...props}>
       <DialogContent className="overflow-hidden p-0" showCloseButton={false}>

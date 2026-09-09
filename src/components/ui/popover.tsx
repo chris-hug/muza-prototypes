@@ -9,9 +9,12 @@ function PopoverTrigger({ ...props }: PopoverPrimitive.Trigger.Props) {
   return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
 }
 
-function PopoverAnchor({ ...props }: PopoverPrimitive.Anchor.Props) {
-  return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />
-}
+/* No `PopoverAnchor`: Base UI's popover no longer ships an `Anchor` part
+   (`index.parts` exports Root / Trigger / Portal / Positioner / Popup / Arrow
+   / Backdrop / Title / Description / Close / Viewport). The wrapper stayed
+   behind after the upgrade, referencing a namespace member that is gone, and
+   nothing in the app imported it. To anchor a popup to something other than
+   its trigger, pass `anchor` to the Positioner. */
 
 function PopoverContent({
   className,
@@ -44,4 +47,4 @@ function PopoverContent({
   )
 }
 
-export { Popover, PopoverTrigger, PopoverAnchor, PopoverContent }
+export { Popover, PopoverTrigger, PopoverContent }
