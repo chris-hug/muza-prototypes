@@ -57,6 +57,15 @@ family recentred at `sm` while the hook still said phone: between 640 and 767
 the create-playlist form rendered its phone branch with every action hidden
 by `sm:hidden`. `xl` and `2xl` gate nothing.
 
+**What "presentation" covers below 768.** Every `Dialog` and `AlertDialog` is
+a bottom sheet (the base default of `DialogContent`, no opt-in; a form whose
+primary action must survive the keyboard goes full-screen via
+`mobile="form"` — see [`dialog.md`](dialog.md)); `DropdownMenu` presents as a
+sheet; the rich "…" menu is `DetailMoreButton`'s sheet; the toast is a bottom
+bar; the docked playlist editor does not exist. Panels that open under the
+sticky header (search suggestions) are `absolute`, out of flow, so they
+overlay rather than push content.
+
 ### Two of them are arithmetic
 
 ```text
@@ -315,3 +324,16 @@ and there is no sticky-hover after a tap.
 - To **swap a component**, gate on the window (`useIsMobile()`), never on
   hover: the headless preview reports `hover: hover` at phone width, and hybrid
   touch-laptops do too — a hover-gated sheet would simply never appear.
+
+## Touch
+
+- **Cards** use `useLongPress`: tap = primary action, long-press = bottom
+  sheet. The tap is the browser's **real** `click`, never one synthesised on
+  `pointerup` — only the browser knows a touch became a scroll and withholds
+  the click.
+- **Rails** use `touch-pan-x touch-pan-y` — both axes. `pan-x` alone forbids
+  vertical panning for any touch that starts in the rail, so scrolling the
+  page with a finger on a card did nothing. Plus `overscroll-x-contain` (no
+  body rubber-band) and `snap-x snap-mandatory`: a flick keeps its momentum
+  and always comes to rest on a card boundary; `proximity` left cards sliced
+  down the middle after a hard swipe.

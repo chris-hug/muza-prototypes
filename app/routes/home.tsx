@@ -2093,81 +2093,45 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
 
       {/* ══ RESPONSIVE & POINTER ══ */}
       <Section id="responsive" title="Responsive & Pointer">
+        {/* SUMMARY ONLY. The full write-up — arithmetic, ladders, why the two
+            window gates are not one, the duplication map, what the stage can
+            and cannot show — is docs/components/responsive.md behind ⓘ, and
+            prose lives in exactly one place (docs/components/README.md). This
+            section states the rule, shows it happening, and points. */}
         <p className="text-base text-muted-foreground mb-5 max-w-2xl">
-          The shared foundations for how Muza components adapt to width — measured three ways, <span className="text-foreground">window</span>, <span className="text-foreground">column</span> and <span className="text-foreground">box</span> — and to <span className="text-foreground">pointer type</span> (mouse vs touch). Each component documents its own specific behaviour in its own section — this is just the common ground they all build on.
+          The common ground every component builds on: how it adapts to <span className="text-foreground">width</span> and to{" "}
+          <span className="text-foreground">pointer type</span>. Width is measured <span className="text-foreground">three ways, and only three</span> —
+          the full account, with the arithmetic, is behind ⓘ; each component's own steps live in its section.
         </p>
+        <ul className="text-base text-muted-foreground flex flex-col gap-2 mb-5 max-w-2xl list-disc pl-5">
+          <li>
+            <span className="text-foreground">Window</span> — the browser — decides the <span className="text-foreground">chrome</span> and how a thing is <span className="text-foreground">presented</span>.
+            Two gates, each with a job: <span className="text-foreground">608 = chrome</span> (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useFooterNav</code>: tab bar ⇄ icon rail, mobile header, mini player) and{" "}
+            <span className="text-foreground">768 = presentation</span> (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useIsMobile</code> and Tailwind <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">md:</code>, the same gate in TS and CSS: sheets ⇄ dialogs and dropdowns, toast placement, the docked editor).
+            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">sm:</code> / <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">lg:</code> reflow in-page content only.
+          </li>
+          <li>
+            <span className="text-foreground">Column</span> — what the window leaves after chrome, cap and editor — decides <span className="text-foreground">how many fit</span>:
+            cards step at <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">304→2 · 464→3 · 692→4 · 928→5 · 1164→6 · 1500→7</code>, rails and the MediaHeader change mode at <span className="text-foreground">560</span> (a 660px window, not 608 — the icon rail arrives there and takes the column back to 508).
+            Steps are written <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">@min-[N]</code> / <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">@max-[N]</code>; Tailwind's <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">@max-[N]</code> is exclusive.
+          </li>
+          <li>
+            <span className="text-foreground">Box</span> — a component's own width — only where the same window can hand it two widths (a song row in a list vs a rail cell, the player bar beside the docked editor), and then the container is <span className="text-foreground">named</span>.
+          </li>
+          <li>
+            <span className="text-foreground">Pointer, not width</span>, for touch: hover is pointer-only (Tailwind wraps <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">hover:</code> in <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">@media (hover: hover)</code>);
+            show/hide a control with <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">[@media(hover:none)]:!hidden</code>; swap a <span className="text-foreground">component</span> on the window, never on hover. Cards tap with <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useLongPress</code> on the browser's real click; rails pan both axes and snap <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">mandatory</code>.
+          </li>
+        </ul>
 
-        {/* ONE thing, not four. This section used to carry a static three-tier
-            diagram, a separate column ladder, a schematic lab on an abstract
-            pixel scale and a printed breakpoint table — the same page showed
-            1069 and 560 as if they were measured the same way. `ResponsiveLab`
-            is now a real page at a chosen width with the real CardRail inside
-            it, and the ladder table sits under it as one table. */}
         <p className="text-base text-muted-foreground mb-3 max-w-2xl">
-          <span className="text-foreground font-medium">The window decides, the content pays</span> —
-          the window decides which chrome appears (sidebar, icon rail or bottom tab bar), how
-          wide the page gutter is, and how a thing is presented (sheet or dialog). What is left over is the{" "}
-          <span className="text-foreground">column</span>, and that is what the cards measure — how many fit.
-          A component measures its own <span className="text-foreground">box</span> only when the same window can hand it two
-          different widths (a song row in a list vs in a rail cell), and then it names the container.
-          Pick a width and watch it happen to real components:
+          <span className="text-foreground font-medium">The window decides, the column pays</span> —
+          pick a width and watch it happen to real components:
         </p>
         <ResponsiveLab />
 
-        <ul className="text-base text-muted-foreground flex flex-col gap-2 mb-2 max-w-2xl list-disc pl-5">
-          <li>
-            <span className="text-foreground">Hover is pointer-only.</span> Every
-            {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">hover:</code> /
-            {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">group-hover:</code>
-            {" "}utility is auto-wrapped in <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">@media (hover: hover)</code> (Tailwind v4 default), so hover states never fire on touch — and there's no sticky-hover after a tap.
-          </li>
-          <li>
-            <span className="text-foreground">Cosmetic device gating.</span> To
-            merely show/hide a control by pointer we use
-            {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">[@media(hover:none)]:!hidden</code> (hide on touch) /
-            {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">[@media(hover:hover)]:!hidden</code> (hide on pointer).
-            The <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">!</code> is required — Tailwind v4 sorts the
-            {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">pointer-*</code> / hover variant rules before base
-            {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">flex</code>/<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">hidden</code>, so without it the base wins and the gate is a silent no-op.
-          </li>
-          <li>
-            <span className="text-foreground">Swap components by window width, not hover.</span>{" "}
-            When a phone needs a <span className="text-foreground">different component</span> (dropdown ⇄ bottom sheet, inline toggle ⇄ full-width header toggle), gate on
-            {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useIsMobile()</code> (&lt; 768px) — e.g.{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">{`if (isMobile) return <Sheet>… ; return <DropdownMenu>…`}</code>.
-            Don't use <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">hover:</code> for this: the headless preview reports{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">hover: hover</code> at phone width (a hover-gated sheet never shows there) and hybrid touch-laptops do too. Two window gates, each with a job:{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useFooterNav</code> (<span className="text-foreground">608 = chrome</span>: tab bar ⇄ icon rail, MobileAppHeader ⇄ Topbar, mini player ⇄ desktop bar) and{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useIsMobile</code> (<span className="text-foreground">768 = presentation</span>: sheets ⇄ dialogs and dropdowns, toast placement, the docked editor). Tailwind's{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">md:</code> is the 768 gate in CSS and the only screen token that may switch a presentation — <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">sm:</code> / <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">lg:</code> reflow in-page content only.
-          </li>
-          <li>
-            <span className="text-foreground">Mobile surfaces escalate to sheets.</span>{" "}
-            Below <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">md</code> (768) <span className="text-foreground">every</span> dialog (and alert dialog) is a bottom sheet — it's the <span className="text-foreground">base default</span> of <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DialogContent</code>, not a per-dialog opt-in; tall ones grow to{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">max-h-[92vh]</code> with a <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">min-h-0</code> scroll body;
-            <span className="text-foreground">forms</span> (a text field whose primary action must survive the keyboard) go <span className="text-foreground">full-screen</span> instead via <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">mobile="form"</code> — actions in a top bar, see <a href="/?page=DesignSystem#dialog" className="text-primary-text hover:underline underline-offset-2">Dialog</a>;
-            simple "…" lists use the auto-sheet <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">DropdownMenu</code>; rich "…" actions use the advanced{" "}
-            <a href="/?page=DesignSystem#detail-more-button" className="text-primary-text hover:underline underline-offset-2">bottom-sheet menu</a>.
-            Panels that open under the sticky header (search suggestions) are <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">absolute</code> (out of flow) so they overlay rather than push content.
-          </li>
-          <li>
-            <span className="text-foreground">Touch gestures.</span> Cards use
-            {" "}<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">useLongPress</code> (tap = primary action, long-press = bottom sheet). The tap is the browser's REAL <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">click</code>, never one synthesised on pointerup — only the browser knows a touch became a scroll and withholds the click. Rails use <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">touch-pan-x pan-y</code> (both axes — <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">pan-x</code> alone forbids scrolling the page from a card) + <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">overscroll-x-contain</code> + scroll-snap.
-          </li>
-          <li>
-            <span className="text-foreground">Shared column steps.</span> Library
-            grids, Card Rail and Top Songs step columns at the same <span className="text-foreground">column</span> widths —{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">304→2</code>,{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">464→3</code>,{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">692→4</code>,{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">928→5</code>,{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">1164→6</code>,{" "}
-            <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">1500→7</code>.
-            {" "}These are column-<span className="text-foreground">count</span> steps. The mobile↔desktop boundary for <span className="text-foreground">behaviours</span> (rail swipe-peek, MediaHeader stacking) is <span className="text-foreground">560px</span> column — reached at a <span className="text-foreground">660px</span> window, not at 608: the icon rail arrives at 608 and takes the column back to 508. The sidebar's collapse at 1069 is a different derivation (780 + 208 + 80 + 1): it keeps the MediaHeader's full action tier alive as the window narrows. Steps are written <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">@min-[560px]</code> / <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">@max-[560px]</code> — Tailwind's <code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">@max-[N]</code> is exclusive (<code className="text-xsmall font-normal font-sans px-1 rounded-sm bg-muted">width &lt; N</code>), so a 559 there leaves one column width matching neither side.
-          </li>
-        </ul>
         <p className="text-small text-muted-foreground max-w-2xl">
-          Per-component specifics live in each component's section (e.g. <a href="/?page=DesignSystem#card-rail" className="text-primary-text hover:underline underline-offset-2">Card Rail</a>, <a href="/?page=DesignSystem#song-list-item" className="text-primary-text hover:underline underline-offset-2">Song List Item</a>).
+          Per-component specifics live in each component's section (e.g. <a href="/?page=DesignSystem#card-rail" className="text-primary-text hover:underline underline-offset-2">Card Rail</a>, <a href="/?page=DesignSystem#song-list-item" className="text-primary-text hover:underline underline-offset-2">Song List Item</a>, <a href="/?page=DesignSystem#dialog" className="text-primary-text hover:underline underline-offset-2">Dialog</a>); the sheet rules that span components sit in <a href="/?page=DesignSystem#detail-more-button" className="text-primary-text hover:underline underline-offset-2">Detail Menu</a> and Dialog.
         </p>
       </Section>
 
