@@ -833,8 +833,11 @@ img[class*="object-cover"] {
  * undoing, which is the wrong way round. This overshoots once and settles. */
 @keyframes muzaMarkPop {
   0%   { transform: scale(1); }
-  40%  { transform: scale(1.28); }
-  70%  { transform: scale(0.94); }
+  28%  { transform: scale(1.38); }
+  48%  { transform: scale(0.88); }
+  66%  { transform: scale(1.16); }
+  82%  { transform: scale(0.96); }
+  92%  { transform: scale(1.04); }
   100% { transform: scale(1); }
 }
 

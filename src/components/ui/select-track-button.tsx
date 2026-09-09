@@ -54,7 +54,7 @@ export function SelectTrackButton({ selected, className }: {
   // the lesser action. One curve, both ways: the arms swing past their
   // destination and settle, going and coming.
   const timing =
-    "transition-transform duration-300 [transition-timing-function:cubic-bezier(.75,-0.6,.14,1.59)] [transition-delay:150ms]"
+    "transition-transform duration-300 [transition-timing-function:cubic-bezier(.68,-0.9,.27,1.85)] [transition-delay:150ms]"
 
   return (
     <span
@@ -81,7 +81,7 @@ export function SelectTrackButton({ selected, className }: {
        * added and removed with `selected`, and adding it is enough to start
        * the animation again on the next pick. */}
       <span
-        className={cn("relative block", selected && "animate-[muzaMarkPop_320ms_ease-out]")}
+        className={cn("relative block", selected && "animate-[muzaMarkPop_520ms_cubic-bezier(.22,1,.36,1)]")}
         style={{ width: LEN, height: LEN }}
       >
         {/* Vertical stroke → the check's long arm. */}
