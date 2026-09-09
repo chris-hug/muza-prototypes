@@ -18,6 +18,7 @@ import { RadioCard, RadioCardGroup } from "@/components/ui/radio-card"
 import { InputSelect } from "@/components/ui/input-select"
 import { ChipDismiss, ChipGroup } from "@/components/ui/chip"
 import { ChipInput } from "@/components/ui/chip-input"
+import { Stepper } from "@/components/ui/stepper"
 import { cn } from "@/lib/utils"
 import {
   Search, X, Check, CloudUpload, ImagePlus, Music2, Disc3,
@@ -205,70 +206,68 @@ function InfoField({ label, value }: { label: string; value: string }) {
 
 // ─── Top nav bar ──────────────────────────────────────────────────────────────
 
-function TopNavBar({
-  step, onBack, onCancel, onMinimize, onContinue, canContinue, isLastStep,
+/*
+ * The wizard chrome, in three parts — and the split is the point.
+ *
+ * This was ONE row: a stepper centred absolutely across the whole header with
+ * Cancel / Next sitting on top of it at `ml-auto`. Centring on the header
+ * rather than on the space left over meant the two collided below a 1088px
+ * header (see the arithmetic in `stepper.tsx`) — a 1296px window, an ordinary
+ * laptop. Nothing degraded; the labels simply ran under the buttons.
+ *
+ * Now: identity in the header, progress on its own row, actions in a footer.
+ * Every design system that ships a modal wizard splits it this way — Carbon
+ * and Atlassian both make header / body / footer the modal's three zones, and
+ * PatternFly puts Back / Next / Cancel in the footer with the steps elsewhere.
+ * The reason is not tidiness: progress and actions want opposite corners, so
+ * sharing a row makes them fight for the same middle.
+ */
+function WizardHeader({ onMinimize, onCancel }: { onMinimize: () => void; onCancel: () => void }) {
+  return (
+    <header className="shrink-0 flex items-center gap-3 px-6 py-4 border-b border-border">
+      <p className="text-base font-medium text-foreground">Upload music</p>
+      <div className="ml-auto flex items-center gap-1">
+        <Button variant="ghost" size="icon" onClick={onMinimize} aria-label="Minimise">
+          <Minimize2 className="size-4" />
+        </Button>
+        <Button variant="ghost" size="icon" onClick={onCancel} aria-label="Close">
+          <X className="size-4" />
+        </Button>
+      </div>
+    </header>
+  )
+}
+
+/* The stepper's own row. It can be centred honestly here because nothing
+   else is in it. `onStepSelect` makes VISITED steps clickable — going back
+   used to mean pressing Back once per step. */
+function WizardSteps({ step, onStepSelect }: { step: Step; onStepSelect: (n: number) => void }) {
+  return (
+    <div className="shrink-0 px-6 py-4 border-b border-border">
+      <Stepper steps={STEP_LABELS} current={step} onStepSelect={onStepSelect} />
+    </div>
+  )
+}
+
+/* Actions, bottom-right, where they are read AFTER the form rather than
+   before it. Cancel stays for the whole flow: it used to be replaced by Back
+   at step 2, so from there on the only way out was to minimise. */
+function WizardFooter({
+  step, onBack, onCancel, onContinue, canContinue, isLastStep,
 }: {
   step: Step; onBack: () => void; onCancel: () => void
-  onMinimize: () => void; onContinue: () => void
-  canContinue: boolean; isLastStep: boolean
+  onContinue: () => void; canContinue: boolean; isLastStep: boolean
 }) {
   return (
-    <header className="shrink-0 relative flex items-center px-6 border-b border-border py-6">
-      {/* Stepper — absolutely centered, never shifts with button changes */}
-      <div className="absolute inset-x-0 flex justify-center pointer-events-none">
-        <div className="flex items-start" style={{ width: 600 }}>
-          {STEP_LABELS.map((label, i) => {
-            const num    = (i + 1) as Step
-            const done   = step > num
-            const active = step === num
-            return (
-              <div key={num} className="flex items-center flex-1">
-                {/* Step column */}
-                <div className="flex flex-col items-center gap-1 flex-1">
-                  <div className={cn(
-                    "size-6 rounded-full flex items-center justify-center text-xsmall font-normal transition-colors shrink-0",
-                    done || active ? "bg-foreground text-background" : "bg-secondary text-muted-foreground"
-                  )}>
-                    {done ? <Check className="size-3" /> : num}
-                  </div>
-                  <p className={cn(
-                    "text-small font-normal text-center leading-tight whitespace-nowrap transition-colors",
-                    active ? "text-foreground" : "text-muted-foreground"
-                  )}>
-                    {label}
-                  </p>
-                </div>
-                {/* Connector: 8px gap from each circle edge */}
-                {i < STEP_LABELS.length - 1 && (
-                  <div
-                    className={cn("h-px shrink-0 transition-colors mt-3", done ? "bg-foreground/40" : "bg-border")}
-                    style={{ width: 32, marginLeft: 8, marginRight: 8 }}
-                  />
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Right: minimize + back/cancel + continue */}
+    <footer className="shrink-0 flex items-center gap-2 px-6 py-4 border-t border-border">
+      <Button variant="ghost" onClick={onCancel}>Cancel</Button>
       <div className="ml-auto flex items-center gap-2">
-        <button
-          onClick={onMinimize}
-          className="size-9 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-colors"
-          title="Minimise"
-        >
-          <Minimize2 className="size-4" />
-        </button>
-        {step > 1
-          ? <Button variant="secondary" onClick={onBack}>Back</Button>
-          : <Button variant="secondary" onClick={onCancel}>Cancel</Button>
-        }
+        {step > 1 && <Button variant="secondary" onClick={onBack}>Back</Button>}
         <Button onClick={onContinue} disabled={!canContinue}>
           {isLastStep ? "Publish" : "Next"}
         </Button>
       </div>
-    </header>
+    </footer>
   )
 }
 
@@ -1826,16 +1825,8 @@ export function UploadMusicDialog({
 
   return (
     <div className="relative flex flex-col h-full bg-background">
-      {/* Top nav — stepper + navigation */}
-      <TopNavBar
-        step={step}
-        onBack={handleBack}
-        onCancel={onClose}
-        onMinimize={onMinimize}
-        onContinue={handleNext}
-        canContinue={canContinue}
-        isLastStep={step === 4}
-      />
+      <WizardHeader onMinimize={onMinimize} onCancel={onClose} />
+      <WizardSteps step={step} onStepSelect={(n) => setStep(n as Step)} />
 
       {/* Body */}
       <div className="flex flex-1 min-h-0">
@@ -1895,6 +1886,15 @@ export function UploadMusicDialog({
           </>
         )}
       </div>
+
+      <WizardFooter
+        step={step}
+        onBack={handleBack}
+        onCancel={onClose}
+        onContinue={handleNext}
+        canContinue={canContinue}
+        isLastStep={step === 4}
+      />
 
       {/* ── Published success modal ───────────────────────────────────── */}
       {published && (

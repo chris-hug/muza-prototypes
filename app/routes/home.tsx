@@ -125,6 +125,8 @@ import InputBasicExample from "@/ds-examples/input-basic"
 import inputBasicExampleSrc from "@/ds-examples/input-basic.tsx?raw"
 import ControlSizeLadderExample from "@/ds-examples/control-size-ladder"
 import controlSizeLadderExampleSrc from "@/ds-examples/control-size-ladder.tsx?raw"
+import StepperBasicExample from "@/ds-examples/stepper-basic"
+import stepperBasicExampleSrc from "@/ds-examples/stepper-basic.tsx?raw"
 import InputComposedExample from "@/ds-examples/input-composed"
 import inputComposedExampleSrc from "@/ds-examples/input-composed.tsx?raw"
 import ChipInputBasicExample from "@/ds-examples/chip-input-basic"
@@ -1858,6 +1860,19 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           codePath="src/ds-examples/top-progress-bar-basic.tsx"
         >
           <TopProgressBarBasicExample />
+        </Example>
+      </Section>
+
+      {/* ══ STEPPER ══ */}
+      <Section id="stepper" title="Stepper">
+        <Example
+          title="Four steps, in a row of their own"
+          doc="stepper"
+          align="stretch"
+          code={stepperBasicExampleSrc}
+          codePath="src/ds-examples/stepper-basic.tsx"
+        >
+          <StepperBasicExample />
         </Example>
       </Section>
 

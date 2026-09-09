@@ -51,6 +51,7 @@ export const SECTION_SOURCE: Record<string, string> = {
   progress:        "src/components/ui/progress.tsx",
   spinner:         "src/components/ui/spinner.tsx",
   "top-progress-bar": "src/components/ui/top-progress-bar.tsx",
+  stepper:         "src/components/ui/stepper.tsx",
   separator:       "src/components/ui/separator.tsx",
   avatar:          "src/components/ui/avatar.tsx",
   "user-avatar":     "src/components/ui/user-avatar.tsx",

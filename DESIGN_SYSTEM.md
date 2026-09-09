@@ -756,6 +756,33 @@ Context gating, nothing else:
 
 ---
 
+## Wizard — header · steps · body · footer
+
+A multi-step flow has **four zones, and progress never shares a row with the actions.**
+
+```text
+┌──────────────────────────────────────────────┐
+│ Upload music                          ⤡   ✕  │  identity + window controls
+├──────────────────────────────────────────────┤
+│      ①─Release Info ─ ②─Monetisation ─ ③ ─ ④ │  Stepper, alone in its row
+├──────────────────────────────────────────────┤
+│  body — the only part that scrolls           │
+├──────────────────────────────────────────────┤
+│  Cancel                       Back      Next │  actions, primary bottom-right
+└──────────────────────────────────────────────┘
+```
+
+The rule is not tidiness. Progress wants the centre and actions want the right edge, so a shared row makes them fight over the same middle — and the loser is whichever one is positioned absolutely. Upload music centred a 600px stepper across the **whole header** while Cancel / Next sat on it at `ml-auto`, which collided below a 1088px header: a 1296px window with the sidebar, an ordinary laptop. It did not truncate or reflow; the labels went under the buttons and stayed there. The arithmetic is in [`stepper.tsx`](src/components/ui/stepper.tsx) and [the Stepper doc](docs/components/stepper.md).
+
+- **Cancel stays for the whole flow.** It used to be swapped for Back at step 2, so from there the only way out was to minimise.
+- **Back is never restricted**, and visited steps are clickable — `onStepSelect` on `Stepper`. Going back used to cost one Back press per step.
+- **Forward jumps are not offered.** The flow validates as it goes, so a jump ahead would skip the check that gates the step.
+- **The primary action is bottom-right**, where it is read after the form rather than before it.
+
+Carbon, Atlassian and PatternFly all land on this split; PatternFly is the closest reference since it ships an actual wizard component.
+
+---
+
 ## Create playlist / Add music
 
 One flow, started from every entry point via [`create-playlist-context.ts`](src/lib/create-playlist-context.ts) — `useCreatePlaylist().open()`. Entry points: sidebar "+" (expanded header row and collapsed rail), mobile Library header "+", the Playlists grid tile. Same pattern for `useAddToPlaylist()`.
