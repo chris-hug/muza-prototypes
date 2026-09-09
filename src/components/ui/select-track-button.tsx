@@ -48,9 +48,13 @@ export function SelectTrackButton({ selected, className }: {
   // Same 150ms hold in both directions, so picking and un-picking have the
   // same rhythm — the reference delays only the return, which made adding
   // feel snappier than removing.
-  const timing = selected
-    ? "transition-transform duration-150 ease-out [transition-delay:150ms]"
-    : "transition-transform duration-300 [transition-timing-function:cubic-bezier(.75,-0.6,.14,1.59)] [transition-delay:150ms]"
+  // The SAME overshoot in both directions. It used to spring only on the way
+  // back to a plus and arrive at the check on a flat `ease-out`, so the mark
+  // wobbled when you undid a pick and not when you made one — livelier for
+  // the lesser action. One curve, both ways: the arms swing past their
+  // destination and settle, going and coming.
+  const timing =
+    "transition-transform duration-300 [transition-timing-function:cubic-bezier(.75,-0.6,.14,1.59)] [transition-delay:150ms]"
 
   return (
     <span

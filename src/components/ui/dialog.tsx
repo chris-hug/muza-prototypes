@@ -249,7 +249,13 @@ function DialogContent({
                 // starts, so title and ✕ share a centre line. `right-2`
                 // keeps it nearer the edge than the gutter, where a 32px
                 // target wants to be.
-                className={cn("absolute top-3 right-2 md:top-6", form && "max-md:hidden")}
+                /* One inset, both axes, both breakpoints. It was
+                   `top-3 right-2 md:top-6` — three different numbers, so the
+                   ✕ measured 25px from the top and 9px from the right and sat
+                   visibly low and tight in the corner. A corner control has
+                   exactly one distance to get right, and it is the same one
+                   twice. */
+                className={cn("absolute top-4 right-4", form && "max-md:hidden")}
                 size="icon-sm"
               />
             }
@@ -431,7 +437,7 @@ function DialogPreview({
         <Button
           variant="ghost"
           size="icon-sm"
-          className="absolute top-2 right-2"
+          className="absolute top-4 right-4"
           aria-label="Close (preview)"
         >
           <XIcon />
