@@ -1760,13 +1760,14 @@ img {
     gap: 0.5rem;
   }
   [data-kb="open"] [data-slot="dialog-form-actions"] {
-    /* Sits ON the keyboard while one is up. No safe-area term here: the home
-       indicator is BEHIND the keyboard, so reserving room for it only opens a
-       gap between the pill and the accessory bar — and a gap under a floating
-       action reads as a band, which is the thing this row does not have. */
+    /* Sits ON the keyboard while one is up — `padding-bottom: 0`, so the
+       pill's own edge is the last thing before the accessory bar. No
+       safe-area term either: the home indicator is BEHIND the keyboard, so
+       reserving room for it only opens a gap, and a gap under a floating
+       action reads as the band this row does not have. */
     padding-inline: 0.75rem;
     padding-top: 0.5rem;
-    padding-bottom: 0.25rem;
+    padding-bottom: 0;
   }
 
   /* Heights of the two bands that OVERLAY the find screen's list, so the
