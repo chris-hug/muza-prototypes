@@ -33,16 +33,13 @@ export function useKeyboardInset() {
       /* How much of the layout viewport is hidden below the visual one. The
          offsetTop term matters while the page is scrolled under the keyboard.
 
-         Measured with `clientHeight`, NOT `innerHeight`. A sheet is
-         `position: fixed`, so its `bottom` is the LAYOUT viewport's bottom,
-         and that is what `documentElement.clientHeight` reports.
-         `window.innerHeight` on iOS is the LARGE viewport — the page area with
-         the browser's bottom toolbar collapsed away — so on a browser that
-         keeps a bottom toolbar (Brave) it runs a toolbar-height too tall, and
-         `--kb` came out that much too big: the sheet's bottom edge floated
-         well clear of the keyboard's accessory bar. */
-      const layout = document.documentElement.clientHeight || window.innerHeight
-      const hidden = layout - vv.height - vv.offsetTop
+         `window.innerHeight`, deliberately: `documentElement.clientHeight` was
+         tried here to explain a sheet whose bottom edge floated clear of the
+         keyboard's accessory bar, and it made the sheet COLLAPSE instead — on
+         iOS with `interactive-widget=resizes-content` in the meta, the two do
+         not differ the way the theory needed. Read the live numbers with
+         `?kbdebug` (`KeyboardProbe`) before touching this again. */
+      const hidden = window.innerHeight - vv.height - vv.offsetTop
       // Small values are address-bar chrome, not a keyboard — ignore them so
       // sheets don't drift on every scroll.
       const open = hidden > 80
