@@ -1302,7 +1302,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           <ChipsBasicExample />
         </Example>
         <Example
-          title="Ghost + count — not used yet"
+          title="Count pills — md and sm"
           doc="chips"
           align="center"
           code={chipsCountExampleSrc}
