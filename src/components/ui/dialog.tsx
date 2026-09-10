@@ -243,7 +243,9 @@ function DialogOverlay({
         // by `useSheetDrag`), the same coupling Base UI's Drawer gives its own
         // backdrop. The page brightening under the finger is what makes the
         // sheet feel attached to it.
-        "opacity-[calc(1-var(--sheet-drag-progress,0))]",
+        // Opacity and its coupling to the drag live in `app.css` — a Tailwind
+        // arbitrary value cannot hold `calc(1 - var(--x, 0))`. Here: timing.
+        "transition-opacity duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
         className
       )}
       {...props}

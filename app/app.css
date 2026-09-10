@@ -1594,6 +1594,34 @@ img {
   -webkit-touch-callout: none;
 }
 
+/* A sheet's backdrop, thinning as the sheet is dragged away.
+   
+   The page brightening under the finger is most of what makes a sheet feel
+   attached to it rather than merely followed by it. Base UI's Drawer
+   publishes the drag as `--drawer-swipe-progress` (0 → 1); `useSheetDrag`
+   publishes the same thing as `--sheet-drag-progress` for the dialog-family
+   sheets, so both behave alike.
+
+   Plain CSS, not a Tailwind arbitrary value: `opacity-[calc(1-var(--x,0))]`
+   is mangled by the comma in the var fallback and resolves to 0 — which made
+   the backdrop invisible in every state, dragging or not. */
+[data-slot="sheet-overlay"] {
+  opacity: calc(1 - var(--drawer-swipe-progress, 0));
+}
+[data-slot="dialog-overlay"] {
+  opacity: calc(1 - var(--sheet-drag-progress, 0));
+}
+/* …except while closing, where the exit owns the value. Base UI drops the
+   drag variable BEFORE the exit state lands, so without this the backdrop
+   snapped back to full for a frame or two on release: the page going dark
+   again on its way out, which is the flicker. */
+[data-slot="sheet-overlay"][data-closed],
+[data-slot="sheet-overlay"][data-ending-style],
+[data-slot="dialog-overlay"][data-closed],
+[data-slot="dialog-overlay"][data-ending-style] {
+  opacity: 0;
+}
+
 /* A card being HELD. `useCardPressMenu` sets `data-pressing` from the moment
    the finger lands until the menu opens or the hold is abandoned; this is what
    makes the wait legible — the card is visibly taken, not merely un-tapped.

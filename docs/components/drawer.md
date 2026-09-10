@@ -55,13 +55,22 @@ max-w-[640px] p-0 gap-0`), the **Studio switcher** in the footer tab bar
 [Detail Menu](detail-more-button.md) (`side="bottom"`).
 
 **So does the backdrop, and it follows the swipe.** Its opacity is
-`calc(1 - var(--drawer-swipe-progress, 0))`, so the page brightens under the
-finger as the sheet leaves — which is what makes the sheet feel attached to it
+`calc(1 - var(--drawer-swipe-progress, 0))` — declared in `app.css`, NOT as a
+Tailwind arbitrary value: the comma in the var's fallback is mangled and
+`opacity-[calc(1-var(--x,0))]` resolves to 0, which makes the backdrop
+invisible in every state. It brightens under the finger as the sheet leaves — which is what makes the sheet feel attached to it
 rather than merely following it. With a keyframe `fade-out` instead, the
 backdrop snapped back to full the moment the finger lifted and only then faded:
 the page going bright, dark, then bright again, in about a fifth of a second.
 `useSheetDrag` publishes the same signal as `--sheet-drag-progress` for the
 dialog-family sheets, so both behave alike.
+
+**`[data-closed]` sets the opacity to 0 as well**, and that is what stops the
+flicker: on release Base UI drops the swipe variable BEFORE the exit state
+lands, so for a frame or two the backdrop returned to its resting `1` — the
+page going dark again on its way out. `data-closed` arrives with the close, so
+the target is 0 from the first frame and the fade runs from wherever the drag
+left it. Measured: 0.40 → 0.11 → 0.04 → 0, monotonic.
 
 **The popup TRANSITIONS; it does not run keyframes.** Base UI writes an inline
 transform while the finger is down, and a CSS animation overrides inline styles

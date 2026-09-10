@@ -68,9 +68,15 @@ function SheetOverlay({
            leaves. A keyframe `fade-out` instead re-darkened the page to full
            opacity the moment the finger lifted and only then faded, which is
            the flicker after a dismissal. */
-        "opacity-[calc(1-var(--drawer-swipe-progress,0))]",
-        "transition-opacity duration-300 ease-[cubic-bezier(0.2,0,0,1)] data-swiping:transition-none",
-        "data-starting-style:opacity-0 data-ending-style:opacity-0",
+        /* Opacity — including the coupling to the drag and the closing
+           target — lives in `app.css`: a Tailwind arbitrary value cannot hold
+           `calc(1 - var(--x, 0))` (the comma in the fallback is mangled and
+           the whole declaration resolves to 0). Here: only the timing.
+           150ms, not 300 — the backdrop is following a finger, and at 300 it
+           lags far enough behind the sheet to read as a separate thing
+           catching up. */
+        "transition-opacity duration-150 ease-[cubic-bezier(0.2,0,0,1)]",
+        "data-starting-style:opacity-0",
         className,
       )}
       {...props}
