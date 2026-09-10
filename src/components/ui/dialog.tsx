@@ -278,6 +278,58 @@ function DialogContent({
      dialog's own close button, so focus goes back where it came from. */
   const [popupEl, setPopupEl] = React.useState<HTMLDivElement | null>(null)
 
+  /* A sheet opened at its content's height leaves a strip of dimmed page
+     above it — the peek that says there is a page behind this. The moment the
+     reader scrolls, that strip has outlived its job: they are reading, not
+     glancing. So the FIRST scroll grows the sheet to the full screen instead
+     of scrolling, the scroll position is put back, and everything after that
+     is an ordinary scroll. Two detents, in the phrasing iOS uses, moved
+     between by the reader's own gesture rather than a handle.
+
+     Bottom sheets only — a form sheet already fills the screen — and only
+     when there is something to take: a short sheet, or one that opened at the
+     cap already because its content is long, returns `false` and keeps the
+     scroll.
+
+     The growth is animated from a MEASURED pixel height, since CSS cannot
+     interpolate from `height: auto`; `max-height` is lifted with it, or the
+     sheet animates into the very cap that made the gap. */
+  React.useEffect(() => {
+    if (!popupEl || form) return
+    let grown = false
+
+    const grow = () => {
+      const from = popupEl.getBoundingClientRect().height
+      const to = Math.round(window.innerHeight - 8)
+      if (to <= from + 8) return false
+      popupEl.style.height = `${Math.round(from)}px`
+      void popupEl.offsetHeight
+      popupEl.style.transition = "height 280ms cubic-bezier(0.2, 0, 0, 1)"
+      popupEl.style.height = `${to}px`
+      popupEl.style.maxHeight = `${to}px`
+      const done = () => {
+        popupEl.style.transition = ""
+        popupEl.removeEventListener("transitionend", done)
+      }
+      popupEl.addEventListener("transitionend", done)
+      return true
+    }
+
+    // Capture, because the scroll happens on a descendant and scroll does not
+    // bubble. The popup's own scroll is pinned elsewhere, so anything arriving
+    // here is a band inside it.
+    const onScroll = (e: Event) => {
+      if (grown) return
+      const box = e.target as HTMLElement
+      if (!box || box === popupEl || box.scrollTop <= 0) return
+      grown = true
+      if (grow()) box.scrollTop = 0
+    }
+
+    popupEl.addEventListener("scroll", onScroll, { capture: true, passive: true })
+    return () => popupEl.removeEventListener("scroll", onScroll, { capture: true })
+  }, [popupEl, form])
+
   /* A sheet's own box must never scroll. `overflow-hidden` stops a FINGER
      from scrolling it, but not the browser: focusing a field near the bottom
      makes the engine scroll the nearest scrollable ancestor to reveal the

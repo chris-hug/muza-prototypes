@@ -79,11 +79,16 @@ function Field({ label, value, onClick }: { label: string; value: string; onClic
  */
 export function CreditsContent({
   credits, heading, onArtist, onAlbum, bodyClassName = "max-h-[50vh]",
+  scrollRef, onScroll,
 }: {
   credits:   Credits
   heading:   React.ReactNode
   onArtist?: (name: string) => void
   onAlbum?:  () => void
+  /** The scroll box, for a host that reacts to its scrolling (the live sheet
+   *  grows to full height on the first one — see `CreditsDialogContent`). */
+  scrollRef?: React.Ref<HTMLDivElement>
+  onScroll?:  React.UIEventHandler<HTMLDivElement>
   /** Sizing for the scroll region — which is now the WHOLE sheet body, cover
    *  included. Defaults to a fixed `max-h-[50vh]` (static preview / desktop);
    *  the live sheet passes `min-h-0` so it grows with the parent's height cap
@@ -98,7 +103,11 @@ export function CreditsContent({
        cover away hands that space to the list; scrolling back brings it
        returns. The sheet still cannot scroll ITSELF (`DialogContent` pins
        that), so this box is the only thing that moves. */
-    <div className={cn("flex flex-col flex-1 min-h-0 overflow-y-auto", bodyClassName)}>
+    <div
+      ref={scrollRef}
+      onScroll={onScroll}
+      className={cn("flex flex-col flex-1 min-h-0 overflow-y-auto", bodyClassName)}
+    >
       {/* 3:2 header — blurred, stretched cover fills the gaps; the real
            square cover floats centred on top. */}
       <div className="relative aspect-[3/2] w-full shrink-0 overflow-hidden bg-muted">

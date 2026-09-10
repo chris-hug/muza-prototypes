@@ -301,6 +301,25 @@ hand asks first. One song can go into several playlists in one visit, which is
 the point: the alternative is reopening the same sheet from the same "…" three
 times to file a track in three places.
 
+## The first scroll takes the gap
+
+A bottom sheet opens at its content's height, and what is left above it is a
+strip of dimmed page — the peek that says there is a page behind this. The
+moment the reader scrolls, that strip has outlived its job: they are reading,
+not glancing.
+
+So the **first scroll grows the sheet to the full screen instead of
+scrolling** — the scroll position is put back to where it was, and everything
+after that is an ordinary scroll. Two detents, in the phrasing iOS uses, moved
+between by the reader's own gesture rather than by a handle. It lives in
+`DialogContent`, so every bottom sheet has it.
+
+The growth animates from a MEASURED pixel height (CSS cannot interpolate from
+`height: auto`) and lifts `max-height` with it — the cap is what made the gap,
+so growing to the cap would be growing to where the sheet already is. Nothing
+happens when there is nothing to take: a short sheet keeps its scroll, and so
+does one already at the full height (`mobile="form"` never grows at all).
+
 ## A sheet you can flick away is one you can flick away by accident
 
 A bottom sheet holding work confirms before it closes. `AddMusicDialog`
