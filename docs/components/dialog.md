@@ -288,6 +288,12 @@ intercepts `onOpenChange(false)` while anything is picked and raises an
 *Discard* — with the sheet still mounted behind it, so cancelling returns to
 the same screen, query and selection.
 
+The gesture and the confirmation have to agree about this: `useSheetDrag`
+carries the sheet out of frame before it asks the dialog to close, so when the
+close is refused it puts the sheet back (`data-open` still set a frame later =
+refused). Without that, answering "Keep picking" left a backdrop over an empty
+screen with the sheet parked below the bottom edge.
+
 It guards **every** exit, not just the gesture: the ✕, the backdrop and Escape
 lose exactly as much as a pull-down does. That is the platform rule — iOS
 bounces the swipe on a modal with unsaved input and asks; Material asks too —

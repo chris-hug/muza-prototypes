@@ -106,17 +106,31 @@ export function useSheetDrag(
       const velocity = lastT ? (e.clientY - lastY) / Math.max(1, e.timeStamp - lastT) : 0
       const dismiss = dy > DISTANCE || (dy > 24 && velocity > VELOCITY)
 
+      const springBack = () => {
+        el.style.transition = "transform 220ms cubic-bezier(0.2, 0, 0, 1)"
+        el.style.transform = ""
+      }
+
       if (dismiss) {
-        // Carry the sheet the rest of the way out, then let the dialog's own
-        // close run — its exit animation takes over from here.
+        // Carry the sheet the rest of the way out, then ask to close.
         el.style.transition = "transform 140ms cubic-bezier(0.4, 0, 1, 1)"
         el.style.transform = `translate3d(0, ${el.offsetHeight}px, 0)`
-        window.setTimeout(onClose, 120)
+        window.setTimeout(() => {
+          onClose()
+          /* The close can be REFUSED — a sheet holding unsaved work answers a
+             dismissal with a confirmation and stays open. Then the sheet is
+             still here, still translated off the bottom of the screen, and
+             all the user sees is a backdrop over nothing. `data-open` is the
+             dialog's own answer: still open a frame later means refused, so
+             the sheet comes back. */
+          requestAnimationFrame(() => {
+            if (el.isConnected && el.hasAttribute("data-open")) springBack()
+          })
+        }, 120)
         return
       }
 
-      el.style.transition = "transform 220ms cubic-bezier(0.2, 0, 0, 1)"
-      el.style.transform = ""
+      springBack()
     }
 
     const down = (e: PointerEvent) => {
