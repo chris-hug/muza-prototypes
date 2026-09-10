@@ -21,8 +21,9 @@ import { useEffect, useState } from "react"
 import { Pencil, Radio as RadioIcon, ShoppingBag, Globe, Lock } from "lucide-react"
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
-  DialogDescription, DialogClose,
+  DialogDescription, DialogClose, DialogActionBar,
 } from "@/components/ui/dialog"
+import { useIsMobile } from "@/lib/use-media-query"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -124,6 +125,7 @@ export function EditReleaseDialog({
   const [downloadPrice,         setDownloadPrice]         = useState(initialDownloadPrice)
   const [nameYourPriceDownload, setNameYourPriceDownload] = useState(false)
   const [currency,              setCurrency]              = useState("USD")
+  const isMobile = useIsMobile()
 
   // Seed form state whenever a release is opened.
   useEffect(() => {
@@ -143,6 +145,9 @@ export function EditReleaseDialog({
 
   if (!release) return null
   const canEditMetadata = release.isNew === true
+  // The ✕ and the footer are the desktop's way out and way forward; on a
+  // phone the bar carries Save and the sheet is dismissed by pulling it down.
+  const phone = isMobile
 
   const save = () => {
     onSave({
@@ -169,6 +174,7 @@ export function EditReleaseDialog({
           Height is capped at `min(90vh, 900px)` on DESKTOP; on a phone the
           sheet keeps DialogContent's own keyboard-aware cap. */}
       <DialogContent
+        showCloseButton={!phone}
         className={cn(
           // Mobile bottom sheet / desktop centered modal come from the base
           // DialogContent. Here: desktop width (600px) + grow-to-cap sizing.
@@ -194,6 +200,25 @@ export function EditReleaseDialog({
         {/* Phone paddings are the page's gutter, not the desktop dialog's
             32px: at 375 this header was 251px — a third of the sheet — before
             a single field. Measured after: 150. */}
+        {/* ── The bar: Save, and nothing else ──────────────────────────
+             Top-right, where the ✕ used to be, and the ✕ goes with it: a
+             sheet is dismissed by pulling it down, so a phone does not need
+             a control that repeats the gesture — and the footer it replaces
+             was 61px of a screen with ~169 above the keyboard. iOS puts the
+             confirming action of a sheet in this corner for the same reason.
+
+             No title in the bar: the identity below carries the one
+             `DialogTitle`, and a second would be both a duplicate landmark
+             and a repetition of what is 40px underneath it. `md:hidden`
+             comes with the bar — desktop keeps its header and footer. */}
+        <DialogActionBar
+          trailing={
+            <Button size="sm" onClick={save} className="touch-target shrink-0">
+              Save
+            </Button>
+          }
+        />
+
         {/* ── The one scrolling band: identity + form ───────────────────
              The release identity does NOT hold the top. It is a label saying
              which release this is, not a control, and holding it there costs
@@ -274,6 +299,18 @@ export function EditReleaseDialog({
             {/* Captions a RadioCardGroup — a group of controls, not one, so
                 there is nothing for `htmlFor` to point at. */}
             <p className="text-small leading-none font-normal text-foreground">Monetisation</p>
+            {/* A private release is not listened to and not sold, so neither
+                option is available to it — offering both and letting the user
+                set a price that can never be charged is the kind of form that
+                lies. The section states the condition and the switch above is
+                the way out of it, rather than the cards sitting there greyed
+                with no explanation. */}
+            {status === "private" ? (
+              <p className="text-xsmall font-normal text-muted-foreground">
+                A private release is not streamed and not sold. Make it public
+                to earn from it.
+              </p>
+            ) : (
             <RadioCardGroup
               value={monetization}
               onValueChange={v => setMonetization(v as MonetizationType)}
@@ -349,6 +386,7 @@ export function EditReleaseDialog({
                 </FormItem>
               </RadioCard>
             </RadioCardGroup>
+            )}
           </div>
 
           {/* ── General info ────────────────────────────────────────────
@@ -415,7 +453,7 @@ export function EditReleaseDialog({
             in the corner is how every other sheet in the app is dismissed, and
             two stacked full-width buttons were 153px of the 731 the sheet
             had. Measured after: 72. */}
-        <DialogFooter className="shrink-0 mx-0 mb-0 p-3 md:p-8">
+        <DialogFooter className="hidden md:flex shrink-0 mx-0 mb-0 p-3 md:p-8">
           {/* `lg` (48px) is the house default for a form's own actions — the
               same rung `Input` and `InputSelect` already default to, so the
               button that submits a stack of 48px fields is not 40. */}

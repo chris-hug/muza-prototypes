@@ -73,9 +73,17 @@ Fixed, no steps. `w-fit shrink-0 whitespace-nowrap`; the popup is anchored
   `--ring` as Button and the form controls. The old question — whether its
   thinner `ring-2` against everyone else's `ring-3` was deliberate for a 27px
   control — is closed: there is one ring now.
-- The menu opens even with no `onStatusChange` (studio-music.tsx:561 renders
-  it read-only) · `OrderStatusBadge` renders a plain `Badge` in that case.
-  Whether a handlerless StatusBadge should be inert is not recorded.
+- The menu opens even with no `onStatusChange`, which is a menu that answers
+  and then does nothing. The Studio's mobile card was the one place doing
+  that: the badge showed the release's visibility, opened its sheet, and
+  changed nothing, so publishing a release meant opening the edit sheet to
+  find the switch. It passes the handler now, and it carries `touch-target`
+  because the badge paints at ~22px. The card had to stop being a `<button>`
+  for it — a button inside a button is invalid markup — and now uses the same
+  arrangement as `SongListItem`'s rows: the card handles the click and
+  declines any press that landed on a control inside it.
+  `OrderStatusBadge` renders a plain `Badge` when it has no handler; whether
+  a handlerless `StatusBadge` should be inert too is still not recorded.
 - DESIGN_SYSTEM.md's former `<StatusBadge>` entry (now this file) said
   `backdrop-blur-sm` and `border-[0.5px] border-neutral-500` · the source is
   `backdrop-blur-[8px]` and `border border-border` (status-badge.tsx:39–40).

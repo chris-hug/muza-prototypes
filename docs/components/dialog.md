@@ -354,6 +354,36 @@ If a sheet needs BOTH a pinned title and pinned actions while typing, it is
 the wrong shape and wants `mobile="form"`, where the actions move into the top
 bar and the keyboard can never reach them.
 
+Better still, when the sheet has only ONE action: put it in the bar and keep
+no pinned band at all. `EditReleaseDialog` renders a `DialogActionBar` whose
+`trailing` is Save and whose title is empty — the identity 40px below carries
+the one `DialogTitle` — and hides its `DialogFooter` under `md`. The ✕ goes
+with the footer (`showCloseButton={!isMobile}`): a bottom sheet is dismissed
+by pulling it down, so a phone does not need a control that repeats the
+gesture, and the corner it was sitting in is where iOS puts the confirming
+action of a sheet. Chrome above the keyboard: 40px, all of it the bar.
+
+## When the sheet shrinks, the focused field has to be found again
+
+The browser scrolls a field into view when it is focused — and at that moment
+the sheet is still its full height, so there is usually nothing to do and it
+does nothing. The keyboard arrives a beat later, the sheet collapses to the
+~170px above it, and the scrolling band keeps the offset it had. What is on
+screen is then whatever happened to be at that offset: tapping a price field
+showed the monetisation card two rows above it, with the caret somewhere
+below the fold.
+
+There is no event for "the keyboard finished opening", but there is one for
+"this box changed size", and that is the thing that actually breaks the scroll
+position. So `DialogContent` keeps a `ResizeObserver` on the popup: while a
+field inside it holds focus, any change to the popup's height re-reveals that
+field with `scrollIntoView({ block: "center" })` — centred, because a band
+this short has no room for the browser's default nearest-edge answer, and the
+field's own label belongs on screen with it. The scroll is deferred a frame,
+since scrolling from inside a resize callback is both ignored and a
+loop-detection warning, and the observer's first report (the size the sheet
+opened at) is skipped.
+
 ## A sheet you can flick away is one you can flick away by accident
 
 A bottom sheet holding work confirms before it closes. `AddMusicDialog`

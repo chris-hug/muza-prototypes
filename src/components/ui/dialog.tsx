@@ -348,6 +348,46 @@ function DialogContent({
     return () => popupEl.removeEventListener("scroll", onScroll, { capture: true })
   }, [popupEl, form])
 
+  /* When the sheet SHRINKS, the focused field has to be found again.
+     
+     The browser scrolls a field into view when it is focused — and at that
+     moment the sheet is still its full height, so usually there is nothing to
+     do and it does nothing. The keyboard arrives a beat later, the sheet
+     collapses to the ~170px above it, and the scrolling band keeps the
+     offset it had: what is now on screen is whatever happened to be at that
+     offset, which is not the field. Tapping a price field showed the
+     monetisation card two rows above it, with the caret somewhere below.
+     
+     There is no event for "the keyboard finished opening", but there is one
+     for "this box changed size", and that is the thing that actually breaks
+     the scroll position. So: while a field inside the popup holds focus, any
+     change to the popup's height re-reveals it. `block: "center"` because a
+     band this short has no room for the browser's default nearest-edge
+     answer, and the field's own label belongs on screen with it.
+     
+     Skipped for the first measurement, which is the observer reporting the
+     size the sheet opened at. */
+  React.useEffect(() => {
+    if (!popupEl) return
+    let first = true
+    let frame = 0
+    const observer = new ResizeObserver(() => {
+      if (first) { first = false; return }
+      const el = document.activeElement as HTMLElement | null
+      if (!el || el === popupEl || !popupEl.contains(el)) return
+      if (!el.matches("input, textarea, select, [contenteditable]")) return
+      // Next frame: the observer fires DURING layout, and scrolling from
+      // inside it is both ignored and a loop-detection warning.
+      if (frame) cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => {
+        frame = 0
+        el.scrollIntoView({ block: "center" })
+      })
+    })
+    observer.observe(popupEl)
+    return () => { observer.disconnect(); if (frame) cancelAnimationFrame(frame) }
+  }, [popupEl])
+
   /* A sheet's own box must never scroll. `overflow-hidden` stops a FINGER
      from scrolling it, but not the browser: focusing a field near the bottom
      makes the engine scroll the nearest scrollable ancestor to reveal the

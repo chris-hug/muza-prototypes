@@ -507,19 +507,35 @@ function MusicRow({ release, visibleCols, isSelected, onSelect, status, onStatus
 // stacks it into a tappable card. The whole card opens the edit dialog —
 // no hover-only affordances, no per-cell controls.
 function MusicCard({
-  release, status, onEdit }: {
+  release, status, onEdit, onStatusChange }: {
   release: Release
   status:  ReleaseStatus
   onEdit:  (id: string) => void
+  onStatusChange: (status: ReleaseStatus) => void
 }) {
   const dimmed = status === "private"
+  /* Not a `<button>` any more — the card holds one (the status badge is a
+     menu trigger), and a button inside a button is invalid markup whose
+     click behaviour is then anyone's guess. Same arrangement `SongListItem`
+     uses for its rows: the card handles the click and DECLINES any press
+     that landed on a control inside it. */
+  const open = (e: React.MouseEvent) => {
+    if ((e.target as Element).closest("button, a")) return
+    onEdit(release.id)
+  }
   return (
-    <button
-      type="button"
-      onClick={() => onEdit(release.id)}
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={open}
+      onKeyDown={e => {
+        if (e.target !== e.currentTarget) return
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onEdit(release.id) }
+      }}
       className={cn(
-        "w-full flex items-center gap-3 px-3 py-3 rounded-xl border border-border bg-background text-left",
+        "w-full flex items-center gap-3 px-3 py-3 rounded-xl border border-border bg-background text-left cursor-pointer",
         "transition-colors hover:bg-muted active:bg-muted",
+        "outline-none focus-ring",
       )}
     >
       <img
@@ -543,13 +559,22 @@ function MusicCard({
         </p>
         <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
           <ContentTypeBadge type={release.type} />
-          <StatusBadge status={status} />
+          {/* Changeable from the overview. It was read-only here — the badge
+              rendered without a handler, so its menu opened and did nothing,
+              and the only way to publish a release was to open the sheet and
+              find the switch. `touch-target` because the badge paints at
+              ~22px and this is a phone. */}
+          <StatusBadge
+            status={status}
+            onStatusChange={onStatusChange}
+            className="relative touch-target"
+          />
           <span className="text-2xsmall text-muted-foreground">
             <MonetisationCell state={mockMonetisation(release.id)} dimmed={dimmed} />
           </span>
         </div>
       </div>
-    </button>
+    </div>
   )
 }
 
@@ -607,7 +632,11 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
   const editingRelease = editingId
     ? (() => {
         const r = RELEASES.find(r => r.id === editingId)
-        return r ? { ...r, label: mockLabel(r.catalog) } : null
+        // `statuses`, not the record's own `status`: the lifted store is what
+        // the badge, the bulk actions and the sheet's own Save all write to,
+        // so seeding the sheet from the static row would open it showing the
+        // visibility the release had before anything was changed.
+        return r ? { ...r, status: statuses[r.id] ?? r.status, label: mockLabel(r.catalog) } : null
       })()
     : null
 
@@ -970,6 +999,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
                   release={r}
                   status={statuses[r.id] ?? r.status}
                   onEdit={setEditingId}
+                  onStatusChange={next => setReleaseStatus(r.id, next)}
                 />
               ))}
             </div>
