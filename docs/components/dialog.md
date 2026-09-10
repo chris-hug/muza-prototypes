@@ -458,6 +458,21 @@ late once a finger is already moving; and the release velocity comes from 120ms
 of samples rather than the last two, which routinely read as zero (same
 timestamp) or as a flick (2px apart).
 
+**The backdrop thins as the sheet leaves.** The drag publishes its own
+progress as `--sheet-drag-progress` on the root, and `[data-slot="dialog-
+overlay"]` takes `opacity: calc(1 - var(--sheet-drag-progress, 0))` — the same
+way Base UI's Drawer publishes `--drawer-swipe-progress`, so both families of
+sheet behave alike. The page brightening under the finger is what makes the
+sheet feel attached to it rather than merely following it.
+
+Two things went wrong here and the first hid the second. Tailwind mangles
+`opacity-[calc(1-var(--x,0))]` on the comma inside the var fallback, so the
+backdrop was simply always transparent — plain CSS, not a utility. And Base UI
+drops the swipe variable *before* the exit state, so `[data-closed]` and
+`[data-ending-style]` need their own `opacity: 0` rule or the backdrop flashes
+back to full on the way out. On dismissal the variable is removed rather than
+driven to 1, so the backdrop fades from wherever the drag left it.
+
 The gesture and the confirmation have to agree about this: `useSheetDrag`
 carries the sheet out of frame before it asks the dialog to close, so when the
 close is refused it puts the sheet back (`data-open` still set a frame later =

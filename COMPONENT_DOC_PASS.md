@@ -130,6 +130,17 @@ started raising their own sheet; and `menu.md` never mentioned `state-fade`,
 which is on every row it documents. The missing prose and the bug usually have
 the same root: nobody had stated what the attribute meant.
 
+**Run it, do not eyeball it: `npm run doc-sweep`.** Both lists above are in
+`scripts/doc-sweep.mjs`, which walks every component in `src/components/ui`,
+greps its source for them, and reports anything present in the code and absent
+from its doc. Exit 1 when something is open, so it can gate a push or a CI
+job. It carries a **baseline** of debt that predates it — that list is a
+to-do, not an exemption: delete a line, watch it stay green, and it has
+shrunk.
+
+What it cannot do is tell you a doc is confidently wrong about a number. That
+is the consistency half, and it needs a reader.
+
 **A doc gap is sometimes a code smell.** `rounded-t-[28px]` showed up in five
 call sites and in none of their docs — the honest fix was not five paragraphs
 but moving the corner into `SIDE_CLASSES.bottom`, where it belongs, after
