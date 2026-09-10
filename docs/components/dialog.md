@@ -269,10 +269,19 @@ Only the middle one scrolls.
   disabled pill needs an opaque colour rather than `opacity-50`, and that now
   lives on `Button`'s filled variants (`.disabled-solid`) instead of at this
   call site, where it kept being lost every time the pill moved.
-- **With the keyboard up the pill sits ON it** — `padding-bottom: 0.25rem`
-  under `data-kb="open"`, and no safe-area term, because the home indicator is
-  behind the keyboard and reserving room for it only opens a gap. A gap under
-  a floating action reads as the band it does not have.
+- **With the keyboard up the pill sits ON it** — `padding-bottom: 0` under
+  `data-kb="open"`, so the button's own edge is the last thing before the
+  accessory bar. No safe-area term either: the home indicator is behind the
+  keyboard, and reserving room for it only opens a gap. A gap under a floating
+  action reads as the band it does not have.
+- **Every bottom sheet draws a `SheetGrabber`** (`sheet.tsx`) — phones only,
+  and never on a `mobile="form"` sheet, which fills the screen and is not
+  dismissed by dragging. Overlaid rather than in the flow: these sheets open
+  with a bar or a header across the top, and a band of its own would spend a
+  row on a 4px pill. Centred, so it clears the bar's leading and trailing
+  controls; above the bar's top inset, so it clears a centred title (measured
+  at 375: grabber 7–11, title top 20). A sheet with a ✕ could go without one —
+  a sheet whose only way out is the gesture cannot.
 - **The pill names the verb only** — "Create", not "Create playlist". The
   title two bands above already says what is being made, and there is no
   second action to distinguish it from. The desktop footer keeps the long

@@ -83,7 +83,7 @@ the 220px cap.
   detail page raises, not a card-specific menu. A phone gets one menu shape
   per entity, wherever it was reached from. There is still no ⋯: an artist
   tile is a portrait and a name, and a kebab on it would be the only chrome.
-  See [Gesture](gesture.md) for the press itself.
+  `useLongPress` drives it; see [Gesture](gesture.md) for the shared numbers.
 - **What the sheet offers.** Save (store-bound, so the tile and the detail
   page agree), **Play radio** — only when a `radioTrack` exists, because an
   action that cannot start is worse than an absent one — and **Artist info**,

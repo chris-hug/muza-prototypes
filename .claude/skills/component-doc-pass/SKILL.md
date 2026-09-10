@@ -32,5 +32,16 @@ Two things are worth carrying in your head before you open the file:
   silently overwrite. That step has surfaced more wrong documentation than
   wrong code.
 - **Coverage, not just consistency.** "Does the doc describe every behaviour
-  the component has" is its own sweep. The grep list for that is in the repo
-  file.
+  the component has" is its own sweep. The grep lists for that are in the repo
+  file — there are **two**: motion/state, and touch/pointer.
+- **Touch is its own set of questions**, and they are invisible to a grep for
+  class names: what a long press does, whether the hold is visible, whether a
+  drag can be mistaken for a tap, what sits inside the primary tap area, the
+  painted size against the target size, whether iOS wants the same gesture,
+  what happens with the keyboard up, and whether the deciding gate is the
+  window or the pointer. The repo file lists them; answer each in the doc even
+  when the answer is "nothing", because a reader who cannot find that decision
+  will make a different one.
+- **A doc gap can be a code smell.** When the sweep flags the same token
+  across several components, ask whether it belongs to them at all before
+  writing the same paragraph several times.

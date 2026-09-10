@@ -554,7 +554,7 @@ export function SongListItem({
               <SheetTrigger render={<Button variant="ghost" size="icon-sm" aria-label="More options" />}>
                 <MoreHorizontal />
               </SheetTrigger>
-              <SheetContent side="bottom" className="rounded-t-[28px]">
+              <SheetContent side="bottom">
                 <SheetHeader className="flex-row items-center gap-3">
                   {cover && (
                     <img src={cover} alt="" draggable={false} className="size-11 rounded-xs object-cover shrink-0 art-edge" />

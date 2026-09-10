@@ -101,7 +101,9 @@ Two failure modes, and the second is the one that hides:
   weakest area, because animation ships faster than prose.
 
 Coverage is mechanical enough to audit. Grep the component for the shared
-motion and state utilities and check each against its doc:
+utilities and check each against its doc.
+
+**Motion and state:**
 
 ```
 state-fade · state-fade-quick · press-ripple · card-sweep
@@ -109,12 +111,63 @@ link-underline · link-underline-group · focus-ring · focus-ring-within
 invalid-ring · art-edge · page-enter · useTick · @container · animate-[…]
 ```
 
-Anything present in the code and absent from the `.md` is a gap. Two real
+**Touch and pointer** — the second sweep, added after a touch pass shipped
+behaviour that no doc described:
+
+```
+touch-target · data-pressing · useLongPress · useSheetDrag · useCoarsePointer
+sheet-glass · SheetGrabber · disabled-solid · touch-callout · touch-action
+--kb · data-kb · --sheet-bar-h · --sheet-band-h · --sheet-drag-progress
+```
+
+Anything present in the code and absent from the `.md` is a gap. Four real
 examples of what that catches: `togglegroup.md` had no motion section until
-the travelling pill was built there, and `tabs.md` said nothing about the
+the travelling pill was built there; `tabs.md` said nothing about the
 travelling `Indicator` — writing that prose surfaced a live bug, because the
-indicator was hidden until the first click. The missing prose and the bug had
+indicator was hidden until the first click; all three card docs still said a
+long press called an `onMore` prop no host passed, months after the cards had
+started raising their own sheet; and `menu.md` never mentioned `state-fade`,
+which is on every row it documents. The missing prose and the bug usually have
 the same root: nobody had stated what the attribute meant.
+
+**A doc gap is sometimes a code smell.** `rounded-t-[28px]` showed up in five
+call sites and in none of their docs — the honest fix was not five paragraphs
+but moving the corner into `SIDE_CLASSES.bottom`, where it belongs, after
+which there was nothing left to document per component. When the sweep flags
+the same token in several components at once, ask whether it should be theirs
+at all.
+
+### The touch questions
+
+Ask these of any component a finger can reach. Each one is a real bug this
+project shipped, and each is invisible to the motion sweep above:
+
+1. **What does a long press do here, and does the component say so?** If it
+   raises a menu, is it the *same* menu the entity gets elsewhere?
+2. **Is the hold visible from the first frame?** A hold with no feedback reads
+   as a tap that did not register, so people lift and try again — which is a
+   tap.
+3. **Is a drag ever mistaken for a tap?** The browser suppresses a click after
+   a scroll, but not after a short drag the scroller declined to follow.
+4. **Does anything inside the primary tap area navigate away?** A link inside
+   a row that is mostly one action is a coin toss under a thumb — and missing
+   costs a page load, not just a miss.
+5. **What is the painted size, and what is the target size?** 24×24 is the AA
+   floor, 44×44 is what a fingertip wants, and two targets closer than 12px
+   are worse than two small ones.
+6. **Does iOS want this gesture too?** A long press on an image raises
+   Safari's own menu unless `-webkit-touch-callout` says otherwise, and it has
+   to be declined before the finger lands.
+7. **What happens when the keyboard is up?** Which band is pinned, what does
+   the sheet's height resolve to, and does the focused field stay visible when
+   the sheet shrinks under it?
+8. **Which gate decides — window, or pointer?** Width says how much room there
+   is; `useCoarsePointer()` says what is doing the pointing. Answering one
+   with the other is its own bug.
+
+Record the answers in the doc even when the answer is "nothing": *"no long
+press"* is a documented decision, and a reader who cannot find it will add
+one.
 
 **3 · Consolidate — into the Markdown.**
 

@@ -112,7 +112,12 @@ const SIDE_CLASSES: Record<SheetSide, string> = {
     "inset-x-0 top-0 w-dvw border-b [transform:translateY(var(--drawer-swipe-movement-y,0px))] " +
     "data-starting-style:[transform:translateY(-100%)] data-ending-style:[transform:translateY(-100%)]",
   bottom:
-    "inset-x-0 bottom-0 w-dvw border-t [transform:translateY(var(--drawer-swipe-movement-y,0px))] " +
+    /* The corner belongs to the SIDE, not to five call sites. `rounded-t-[28px]`
+       is derived from the control a sheet's bar has to hold — a 40px pill,
+       radius 20, inset 8 — so 28 = 20 + 8 and the curves are parallel; see
+       `drawer.md`. Every bottom sheet was writing it out, which is how one of
+       them ends up at 18 after a refactor. */
+    "inset-x-0 bottom-0 w-dvw border-t rounded-b-none rounded-t-[28px] [transform:translateY(var(--drawer-swipe-movement-y,0px))] " +
     "data-starting-style:[transform:translateY(100%)] data-ending-style:[transform:translateY(100%)]",
 }
 

@@ -439,7 +439,7 @@ export function DetailMoreButton(props: DetailMoreButtonProps) {
       >
         {icon}
       </SheetTrigger>
-      <SheetContent side="bottom" className="rounded-t-[28px]">
+      <SheetContent side="bottom">
         <DetailMenuSheetBody {...props} />
       </SheetContent>
     </Sheet>

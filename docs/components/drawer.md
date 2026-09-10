@@ -82,7 +82,9 @@ a decorative bar would add a landmark that does nothing.
 ## The corner is 28, and that is not on the radius ladder
 
 Every bottom sheet's top corner is `rounded-t-[28px]`: dialog sheets, `Sheet`,
-the mobile dropdown sheet, the mobile alert. It is derived from the control it
+the mobile dropdown sheet, the mobile alert. **`SIDE_CLASSES.bottom` carries
+it**, so a call site never writes it — five of them used to, which is how one
+ends up at 18 after a refactor and nobody notices. It is derived from the control it
 has to hold, not from a step in the scale.
 
 A `Button` is a pill, so at 40px tall its corner radius is 20, and the sheet's

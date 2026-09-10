@@ -81,6 +81,7 @@ string, so the two cannot drift.
 | Height | `max-h-(--available-height) overflow-y-auto` | base-ui measures the room to the viewport edge |
 | Surface | `rounded-xl bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10` | the same card as `Select` and `Combobox`; a ring, not a border, so it adds no width |
 | Motion | `data-open:animate-in fade-in-0 zoom-in-95 duration-100` + an 8px `slide-in-from-*` per `data-[side=…]` | 100ms — attached, not presented; there is no `data-closed` exit, it disappears at once |
+| Row state | `state-fade` on every item, sub-trigger and checkbox/radio item | the app's shared hover/focus timing, so a menu row settles like a nav row rather than snapping |
 | Stacking | `isolate z-50` on positioner and popup | the layer every portalled popup in the app shares |
 
 The popup stops `pointerdown`, `pointerup` and `click` from bubbling

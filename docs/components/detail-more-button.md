@@ -13,6 +13,14 @@ Playlist, Artist — and the one menu those objects have anywhere else. It is
 bottom sheet on phones. The items are the same on both; only the chrome
 differs.
 
+## The sheet's own furniture
+
+The bottom sheet draws a **`SheetGrabber`** (36 × 4, `bg-border`,
+`aria-hidden`) and no ✕: the pill says "drag me", and a row tap closes the
+sheet anyway. It is a component rather than the six classes written out here
+and in `dropdown-menu.tsx` — see [Drawer](drawer.md), which also explains why
+the sheet's top corner is 28 and why a call site never writes it.
+
 ## One action model, three consumers
 
 `useDetailActions()` builds the item list once, and three things render it:
