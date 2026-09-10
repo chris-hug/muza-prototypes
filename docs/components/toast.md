@@ -39,10 +39,21 @@ Wrong: a toast that asks a question. "Delete this playlist? [Undo]" is a
 confirm dressed as a confirmation — that is an [alert dialog](alertdialog.md).
 The toast's Undo is for reversing something already done.
 
-## One line on a phone
+## One line on a phone, at the control step
 
-The phone toast is a single 42px line: icon, title, timer. The **description
-is desktop-only** (`hidden md:block`) and the title truncates. A confirmation
+The phone toast is `h-12` with a pill radius — **the same box as an `lg` field
+or button**, in the same 12px gutter. That is what lets it land ON the control
+it is answering (the search field at the foot of a sheet) and cover it
+outright: measured, the toast is `[12, 434, 363, 482]` against the field's
+`[13, 433, 362, 481]`, a pixel of bleed on every side. It carries `shadow-xl`,
+because it is now sitting on top of another control rather than beside it.
+
+Its timer is **inset** on a phone (`inset-x-4 bottom-1.5 h-[3px] rounded-full`)
+— a full-bleed rule clipped to a pill comes out as a curved sliver — and runs
+along the bottom edge on desktop, where the card has corners to run to.
+
+The **description is desktop-only** (`hidden md:block`) and the title
+truncates. A confirmation
 is a glance, not a panel — on a 375px screen a two-line card with 18px of
 padding took a fifth of the screen to say "added", and the title already says
 it. Anything that does not fit in one line is not a toast.
@@ -81,16 +92,23 @@ share one baseline.
 
 **Phone — a bottom bar, ON the player.** Every major player puts its
 confirmations at the bottom: thumb-side, out of the content's way. The bar
-spans the width with a 12px inset (`inset-x-3`) and sits 8px above the footer
-tab bar, whose height it reads from `--footer-nav-h`:
+spans the width with a 12px inset (`inset-x-3`) and clears whichever piece of
+chrome is actually there:
 
 ```text
---footer-nav-h    published by FooterNav, measured (ResizeObserver, BORDER box
-                  — the bar is mostly padding, including the home-indicator
-                  inset: 48px content against 67px real on an iPhone)
-+ 8px             the toast's own gap above it
-+ var(--kb, 0px)  the on-screen keyboard, when open
+bottom: max(
+  calc(var(--kb, 0px) + 4px),          the keyboard, when one is up
+  calc(var(--footer-nav-h, 0px) + 8px) the tab bar otherwise
+)
 ```
+
+`max()`, not a sum: the two are never both in play, and adding them lifts the
+toast a third of the way up the screen. `--footer-nav-h` is published by
+`FooterNav` with a ResizeObserver on its BORDER box — the bar is mostly
+padding, including the home-indicator inset, so the content box reads 48px
+against a real 67px. The 4px over the keyboard is not a guess either: it is
+what a sheet's own bottom band uses (`max(4px, safe-area)`), which is how the
+toast lands exactly on the field it covers.
 
 **It covers the mini player, deliberately.** The lift used to clear the player
 too (112px of stacked chrome), which parked a message about something the user

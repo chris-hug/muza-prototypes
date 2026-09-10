@@ -28,15 +28,16 @@ type ToastType = "default" | "success" | "error" | "warning" | "info" | "loading
 // previews can render the same shell without forking the styles.
 export const toastShellClass = cn(
   "relative flex w-full items-center gap-2.5 md:items-start",
-  // A phone toast is ONE LINE: a confirmation is a glance, not a panel, and
-  // on a 375px screen a two-line card with 18px of padding is a fifth of the
-  // screen for "added". The description is desktop-only for the same reason —
-  // the title already says it. Desktop keeps the roomier card.
-  "rounded-2xl border border-border bg-popover shadow-lg",
-  "px-3 py-2.5 md:px-4 md:pt-4 md:pb-[18px]",
-  // `overflow-hidden` clips the timer bar to the rounded corners; the timer
-  // is the only child that reaches the edges.
-  "overflow-hidden text-popover-foreground transition-[transform,opacity] duration-200",
+  // A phone toast is ONE LINE, at the CONTROL step: `h-12` and a pill radius,
+  // the same box as an `lg` field or button. It lands on top of the control
+  // it is answering — the search field at the foot of a sheet, say — and
+  // covers it outright instead of hanging over half of it. The description is
+  // desktop-only for the same reason the box is one line: the title already
+  // says it, and a two-line card with 18px of padding was a fifth of a 375px
+  // screen for the word "added". Desktop keeps the roomier card.
+  "h-12 rounded-full px-4 shadow-xl md:h-auto md:rounded-xl md:px-4 md:pt-4 md:pb-[18px] md:shadow-lg",
+  "border border-border bg-popover",
+  "text-popover-foreground transition-[transform,opacity] duration-200",
   // The swipe belongs to the toast, not to the page scrolling behind it.
   "touch-none",
 )
@@ -101,14 +102,20 @@ function ToastViewport({ className }: { className?: string }) {
       className={cn(
         "group/toasts fixed z-[100] flex flex-col gap-2 outline-none",
         // Below `md` → a bar along the BOTTOM, thumb-side and out of the
-        // content's way. It sits ON the tab bar (`--footer-nav-h`, published
+        // content's way, 8px above whatever chrome is there: the KEYBOARD
+        // when one is up, the tab bar otherwise (`--footer-nav-h`, published
         // by `FooterNav` — measured, because the home-indicator inset is in
-        // it), which means it covers the mini player for the couple of
-        // seconds it lives. That is the trade: the player is one tap from
-        // coming back and the toast is gone on its own, whereas lifting the
-        // toast clear of both bars parked it a third of the way up a phone
-        // screen for a message about something the user just did.
-        "inset-x-3 bottom-[calc(var(--footer-nav-h,0px)+8px+var(--kb,0px))] w-auto",
+        // it). `max()` rather than a sum: they are never both in play, and
+        // adding them lifts the toast a third of the way up the screen.
+        //
+        // 4px above the keyboard is exactly where a sheet puts its own bottom
+        // control (`max(4px, safe-area)` on the band, measured: the field's
+        // bottom edge lands 5px above the sheet's), so the toast lands ON that
+        // control — same height, same gutter, same radius — and covers it
+        // outright rather than hanging over half of it. Over the tab bar it
+        // covers the mini player for the couple of seconds it lives; the
+        // player is one tap from coming back.
+        "inset-x-3 bottom-[max(calc(var(--kb,0px)+4px),calc(var(--footer-nav-h,0px)+8px))] w-auto",
         // Desktop → the familiar top-right card.
         "md:inset-x-auto md:right-4 md:top-4 md:bottom-auto md:w-[380px] md:max-w-[calc(100vw-2rem)]",
         className
@@ -139,12 +146,19 @@ function ToastViewport({ className }: { className?: string }) {
                 stops the timer itself on hover. */}
             <span
               aria-hidden="true"
-              className="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-brand-500 animate-[toastTimer_linear_forwards] group-hover/toasts:[animation-play-state:paused]"
+              /* Inset on a phone, where the shell is a pill: a full-bleed rule
+                 clipped to that radius comes out as a curved sliver. Along the
+                 bottom edge on desktop, where the card has corners to run to. */
+              className={cn(
+                "absolute origin-left bg-brand-500 animate-[toastTimer_linear_forwards] group-hover/toasts:[animation-play-state:paused]",
+                "inset-x-4 bottom-1.5 h-[3px] rounded-full",
+                "md:inset-x-0 md:bottom-0 md:h-0.5 md:rounded-none",
+              )}
               style={{ animationDuration: `${t.timeout ?? TOAST_DEFAULT_MS}ms` }}
             />
             {icon}
 
-            <div className="flex flex-1 flex-col gap-1 min-w-0">
+            <div className="flex flex-1 flex-col gap-1 min-w-0 max-md:pb-1">
               {t.title && (
                 <ToastPrimitive.Title className="truncate md:whitespace-normal text-small font-medium leading-5">
                   {t.title}
