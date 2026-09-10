@@ -70,14 +70,34 @@ function SheetOverlay({
 
 type SheetSide = "right" | "left" | "top" | "bottom"
 
+/*
+ * Each variant pins the popup to one edge and animates on that axis. Width /
+ * height defaults can be overridden via className.
+ *
+ * TRANSITIONS, not keyframes. The popup follows the finger through an inline
+ * transform Base UI writes while swiping, and a keyframe animation overrides
+ * inline styles — so `slide-out-to-bottom`, whose frames start at 0, yanked a
+ * swiped sheet back up to its resting place and only then played the exit.
+ * That is the "it jumps up before it disappears" every sheet in the app had.
+ *
+ * A transition interpolates from whatever the element is at, which is exactly
+ * where the finger left it. The resting transform reads Base UI's own swipe
+ * offset (`--drawer-swipe-movement-*`), so the same declaration carries the
+ * drag, the release and the exit.
+ */
 const SIDE_CLASSES: Record<SheetSide, string> = {
-  // Each variant pins the popup to one edge. Width/height defaults can be
-  // overridden via className. Swipe direction matches the edge so users
-  // can drag to dismiss in the natural way (right drawer → swipe right).
-  right:  "inset-y-0 right-0 h-dvh data-open:slide-in-from-right data-closed:slide-out-to-right border-l",
-  left:   "inset-y-0 left-0  h-dvh data-open:slide-in-from-left  data-closed:slide-out-to-left  border-r",
-  top:    "inset-x-0 top-0    w-dvw data-open:slide-in-from-top    data-closed:slide-out-to-top    border-b",
-  bottom: "inset-x-0 bottom-0 w-dvw data-open:slide-in-from-bottom data-closed:slide-out-to-bottom border-t",
+  right:
+    "inset-y-0 right-0 h-dvh border-l [transform:translateX(var(--drawer-swipe-movement-x,0px))] " +
+    "data-starting-style:[transform:translateX(100%)] data-ending-style:[transform:translateX(100%)]",
+  left:
+    "inset-y-0 left-0 h-dvh border-r [transform:translateX(var(--drawer-swipe-movement-x,0px))] " +
+    "data-starting-style:[transform:translateX(-100%)] data-ending-style:[transform:translateX(-100%)]",
+  top:
+    "inset-x-0 top-0 w-dvw border-b [transform:translateY(var(--drawer-swipe-movement-y,0px))] " +
+    "data-starting-style:[transform:translateY(-100%)] data-ending-style:[transform:translateY(-100%)]",
+  bottom:
+    "inset-x-0 bottom-0 w-dvw border-t [transform:translateY(var(--drawer-swipe-movement-y,0px))] " +
+    "data-starting-style:[transform:translateY(100%)] data-ending-style:[transform:translateY(100%)]",
 }
 
 interface SheetContentProps extends DrawerPrimitive.Popup.Props {
@@ -109,7 +129,11 @@ function SheetContent({
         // `swipeDirection` is read off the Drawer.Root context — we set it
         // there, not here. Popup keeps only visual classes.
         className={cn(
-          "pointer-events-auto fixed z-50 flex flex-col bg-background text-popover-foreground border-border outline-none duration-200 data-open:animate-in data-closed:animate-out",
+          "pointer-events-auto fixed z-50 flex flex-col bg-background text-popover-foreground border-border outline-none",
+          // The one transition for open, close and swipe-release. `data-swiping`
+          // turns it off: while the finger is down the popup must track it
+          // exactly, not chase it.
+          "transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] data-swiping:transition-none",
           SIDE_CLASSES[side],
           className,
         )}

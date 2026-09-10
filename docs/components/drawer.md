@@ -54,6 +54,20 @@ max-w-[640px] p-0 gap-0`), the **Studio switcher** in the footer tab bar
 (`footer-nav.tsx`, `side="bottom" rounded-t-2xl`), and the phone surface of
 [Detail Menu](detail-more-button.md) (`side="bottom"`).
 
+**The popup TRANSITIONS; it does not run keyframes.** Base UI writes an inline
+transform while the finger is down, and a CSS animation overrides inline styles
+— so `slide-out-to-bottom`, whose frames begin at 0, yanked a swiped sheet back
+up to its resting place and only then played the exit. That is the "it jumps up
+before it disappears" every sheet in the app had. A transition interpolates
+from wherever the element actually is, which is where the finger left it.
+
+The resting transform reads Base UI's own swipe offset
+(`translateY(var(--drawer-swipe-movement-y, 0px))`) and `data-starting-style` /
+`data-ending-style` carry it off-edge, so one declaration serves the open, the
+drag, the release and the exit. `data-swiping:transition-none` turns the
+transition off for the duration of the drag: while the finger is down the popup
+must track it exactly, not chase it.
+
 **A `Drawer.Viewport` is required for the swipe to exist at all.** Base UI puts
 `useSwipeDismiss` in the viewport; the popup only reads the resulting state
 through context. `SheetContent` renders one — a transparent `fixed inset-0`
