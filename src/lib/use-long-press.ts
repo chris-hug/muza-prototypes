@@ -3,8 +3,7 @@
 import { useRef, useCallback, useState } from "react"
 
 /** Movement past this (px) turns the gesture into a drag: the long press is
- *  cancelled. The CLICK is left to the browser, which applies its own, more
- *  informed rule (see below). */
+ *  cancelled AND the click that follows is swallowed. */
 const SLOP = 8
 
 /**
@@ -15,13 +14,20 @@ const SLOP = 8
  * `pointerup`. The browser already knows things we don't: whether the touch
  * turned into a scroll, whether the page was still gliding, whether the
  * finger left the element. It withholds the click in all of those cases. A
- * hand-rolled pointerup click throws that away — a light upward flick to
- * scroll a page of large covers would open one instead, because from the
- * element's point of view the finger went down and came up.
+ * hand-rolled pointerup click throws that away.
  *
- * So the only thing this hook has to do for the click is get OUT of the way,
- * and suppress the one case the browser can't know about: the click that
- * follows a completed long press.
+ * But the browser's rule is not enough on its own, and this is what made the
+ * cards feel trigger-happy: a SHORT drag — the beginning of a rail swipe, a
+ * flick that the scroller decides not to follow — is not a scroll as far as
+ * the browser is concerned, so the click still lands and the card opens the
+ * album the user was trying to swipe past. Every second attempt, in practice,
+ * because it depends on how far the finger got.
+ *
+ * So the hook adds its own rule ON TOP of the browser's: a pointer that moved
+ * more than `SLOP` between down and up does not click, whatever the browser
+ * thinks. That is the same threshold that cancels the long press, so one
+ * gesture cannot be both. It suppresses the click after a completed long press
+ * for the same reason.
  *
  * It also reports the hold as it happens. The returned props carry
  * `data-pressing` while the finger is down, which `app.css` turns into 98%
@@ -43,6 +49,7 @@ export function useLongPress({
   const timer      = useRef<ReturnType<typeof setTimeout> | null>(null)
   const triggered  = useRef(false)
   const startPoint = useRef<{ x: number; y: number } | null>(null)
+  const moved      = useRef(false)
   const [pressing, setPressing] = useState(false)
 
   const clear = useCallback(() => {
@@ -56,6 +63,7 @@ export function useLongPress({
     "data-pressing": pressing || undefined,
     onPointerDown: (e: React.PointerEvent) => {
       triggered.current  = false
+      moved.current      = false
       startPoint.current = { x: e.clientX, y: e.clientY }
       clear()
       // Only touch shows the hold: a mouse has hover, and the menu it would
@@ -71,7 +79,10 @@ export function useLongPress({
       if (!startPoint.current) return
       const dx = e.clientX - startPoint.current.x
       const dy = e.clientY - startPoint.current.y
-      if (Math.hypot(dx, dy) > SLOP) clear()
+      if (Math.hypot(dx, dy) > SLOP) {
+        moved.current = true
+        clear()
+      }
     },
     onPointerUp: () => {
       clear()
@@ -89,9 +100,12 @@ export function useLongPress({
     onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
     onClick: (e: React.MouseEvent) => {
       // The long press already acted (it opened the menu) — swallow the click
-      // the browser sends afterwards so the press doesn't ALSO navigate.
-      if (triggered.current) {
+      // the browser sends afterwards so the press doesn't ALSO navigate. Same
+      // for a click that arrives at the end of a DRAG: the finger was going
+      // somewhere, and the card is not it.
+      if (triggered.current || moved.current) {
         triggered.current = false
+        moved.current = false
         e.preventDefault()
         e.stopPropagation()
         return

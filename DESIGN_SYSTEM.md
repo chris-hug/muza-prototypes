@@ -756,6 +756,14 @@ still exists and a call site can still ask for it; what changed is which step
 you get by not choosing. 40px was a desktop-first number for something you
 type into on a phone.
 
+**A drag is never a tap.** `useLongPress` swallows the click if the pointer
+moved more than 8px between down and up — the same threshold that cancels the
+hold, so one gesture cannot be both. The browser's own rule (no click after a
+scroll) is not enough: a SHORT drag, the beginning of a rail swipe or a flick
+the scroller declines to follow, is not a scroll as far as the browser is
+concerned, so the click landed and the card opened the album the finger was
+trying to swipe past.
+
 **Hold a card, get its menu.** (And `img { -webkit-touch-callout: none }`, or
 iOS answers the same gesture with its own menu — Share / Save to Photos / Copy
 Subject — on top of ours. It has to be in force before the finger lands, so it
