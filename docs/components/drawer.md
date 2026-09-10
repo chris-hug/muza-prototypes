@@ -6,7 +6,7 @@ usage:
   - Cart drawer (topbar 🛒 button) | /
   - Footer tab bar › Studio switcher (bottom sheet) | /
 contract:
-  - **A bottom sheet's top corner is owned by `SIDE_CLASSES.bottom`.** No call site writes it: the value is derived from the control the bar has to hold, so it is stated once, where that arithmetic lives.
+  - "[touch] **A bottom sheet's top corner is owned by `SIDE_CLASSES.bottom`.** No call site writes it: the value is derived from the control the bar has to hold, so it is stated once, where that arithmetic lives."
 ---
 
 `Sheet` is the edge-anchored drawer — the cart from the right, the Studio

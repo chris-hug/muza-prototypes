@@ -8,6 +8,10 @@ summary:
   - "**Two layers.** A **primitive** is a colour (`--muza-brand-500`). A **semantic token** is a *pointer* to one (`--primary: var(--muza-brand-500)`). Components name the second kind, only ever the second kind."
   - "**Dark mode reassigns the pointer, not the colour.** `--primary` moves from `brand-500` to `brand-200`; neither blue changes. That is the entire mechanism."
   - "**Never a hex in a component.** `bg-primary`, not `bg-[#000DA2]` — a literal opts out of dark mode silently, and nothing catches it."
+contract:
+  - "[color] **A component names a semantic token, never a primitive and never a hex.** `bg-primary`, not `bg-[#000DA2]` and not the primitive behind it: a literal opts out of dark mode silently, and nothing catches it."
+  - "[color] **Dark mode reassigns the pointer, not the colour.** `--primary` moves from one primitive to another; neither primitive changes. That is the entire mechanism, and it is why a hard-coded colour cannot follow."
+  - "[color] **Always `oklch`, and never a clipped value.** A colour that falls outside the display gamut is silently clamped, so two tokens that read as different in the file render identically on screen."
 ---
 
 Colour in Muza is **two layers and one rule**: a component names a *semantic

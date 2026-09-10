@@ -33,24 +33,32 @@ import { join } from "node:path"
 
 const DOCS = "docs/components"
 const SYSTEM = "DESIGN_SYSTEM.md"
-const BEGIN = "<!-- BEGIN GENERATED: touch-contract -->"
-const END = "<!-- END GENERATED: touch-contract -->"
-
-/* The pages that own a piece of the touch contract, in reading order:
-   what decides, then what a gesture owes, then what a surface owes. */
-const ORDER = [
-  "responsive",
-  "gesture",
-  "detail-more-button",
-  "song-list-item",
-  "button",
-  "dialog",
-  "drawer",
-  "keyboard",
-]
+/* Every block the system file generates, and the pages that feed it, in
+   reading order — what decides, then what a thing owes. A page may feed more
+   than one block: `responsive.md` owns both the width gates and the pointer
+   gate, and tags each line accordingly. */
+const BLOCKS = {
+  color: ["colors"],
+  type: ["typography"],
+  width: ["responsive"],
+  touch: [
+    "responsive", "gesture", "detail-more-button", "song-list-item",
+    "button", "dialog", "drawer", "keyboard",
+  ],
+}
 
 /* Pull a block list out of the tiny frontmatter subset the docs use — the
-   same shape `component-docs.ts` reads, so there is one format to learn. */
+   same shape `component-docs.ts` reads, so there is one format to learn.
+   Each line is tagged with the block it belongs to: `[touch] **The gate…**`. */
+/* The docs quote a frontmatter line whenever it contains a colon, which most
+   of these do. Strip the wrapper and unescape, so a rule reads the same
+   whether or not YAML made the author quote it. */
+function unquote(v) {
+  return v.startsWith('"') && v.endsWith('"')
+    ? v.slice(1, -1).replace(/\\"/g, '"')
+    : v
+}
+
 function contractOf(id) {
   const text = readFileSync(join(DOCS, `${id}.md`), "utf8")
   const fm = text.startsWith("---") ? text.slice(3, text.indexOf("\n---", 3)) : ""
@@ -62,36 +70,47 @@ function contractOf(id) {
   for (const line of lines.slice(start + 1)) {
     if (/^\S/.test(line)) break // next top-level key
     const m = line.match(/^\s+-\s+(.*)$/)
-    if (m) out.push(m[1].trim())
+    if (m) out.push(unquote(m[1].trim()))
     else if (out.length && line.trim()) out[out.length - 1] += " " + line.trim() // wrapped
   }
   return out
 }
 
-const body = ORDER.flatMap(id =>
-  contractOf(id).map(rule => `${rule} → [${id}.md](${DOCS}/${id}.md)`),
-).join("\n\n")
+let next = readFileSync(SYSTEM, "utf8")
+const counts = {}
 
-const generated = [
-  BEGIN,
-  "<!-- Written by scripts/sync-system-doc.mjs from the `contract:` frontmatter",
-  "     of the pages listed below. Do not edit between these markers — edit the",
-  "     page that owns the rule and re-run `npm run sync-docs`. -->",
-  "",
-  body,
-  "",
-  END,
-].join("\n")
+for (const [block, pages] of Object.entries(BLOCKS)) {
+  const BEGIN = `<!-- BEGIN GENERATED: ${block}-contract -->`
+  const END = `<!-- END GENERATED: ${block}-contract -->`
 
-const system = readFileSync(SYSTEM, "utf8")
-const a = system.indexOf(BEGIN)
-const b = system.indexOf(END)
-if (a === -1 || b === -1) {
-  console.error(`sync-system-doc: markers not found in ${SYSTEM}`)
-  process.exit(2)
+  const body = pages.flatMap(id =>
+    contractOf(id)
+      .filter(r => r.startsWith(`[${block}]`))
+      .map(r => `${r.slice(block.length + 2).trim()} → [${id}.md](${DOCS}/${id}.md)`),
+  ).join("\n\n")
+  counts[block] = body ? body.split("\n\n").length : 0
+
+  const generated = [
+    BEGIN,
+    "<!-- Written by scripts/sync-system-doc.mjs from the `contract:` frontmatter",
+    "     of the pages that own these rules. Do not edit between these markers —",
+    "     edit the owning page and re-run `npm run sync-docs`. -->",
+    "",
+    body,
+    "",
+    END,
+  ].join("\n")
+
+  const a = next.indexOf(BEGIN)
+  const b = next.indexOf(END)
+  if (a === -1 || b === -1) {
+    console.error(`sync-system-doc: ${block} markers not found in ${SYSTEM}`)
+    process.exit(2)
+  }
+  next = next.slice(0, a) + generated + next.slice(b + END.length)
 }
 
-const next = system.slice(0, a) + generated + system.slice(b + END.length)
+const system = readFileSync(SYSTEM, "utf8")
 
 if (process.argv.includes("--check")) {
   if (next === system) {
@@ -99,7 +118,7 @@ if (process.argv.includes("--check")) {
     process.exit(0)
   }
   console.error(
-    "sync-system-doc: DESIGN_SYSTEM.md's generated block is out of date.\n" +
+    "sync-system-doc: DESIGN_SYSTEM.md's generated blocks are out of date.\n" +
     "A `contract:` line changed in a component doc and the system file still\n" +
     "carries the old wording. Run `npm run sync-docs` and commit the result.",
   )
@@ -107,5 +126,8 @@ if (process.argv.includes("--check")) {
 }
 
 writeFileSync(SYSTEM, next)
-const count = body ? body.split("\n\n").length : 0
-console.log(`sync-system-doc: wrote ${count} contract lines from ${ORDER.length} pages.`)
+console.log(
+  "sync-system-doc: " +
+  Object.entries(counts).map(([b, n]) => `${b} ${n}`).join(" · ") +
+  " contract lines written.",
+)

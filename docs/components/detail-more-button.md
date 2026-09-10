@@ -6,7 +6,7 @@ related: [dialog, menu, drawer, song-list-item, mobile-header]
 usage:
   - Album / Playlist / Artist detail — header “…” | /?page=Album
 contract:
-  - **One menu shape per entity.** A long press raises the same sheet the entity's detail page raises — never the component's own dropdown rendered as a sheet. The kebab keeps the anchored dropdown, which is the right shape for a mouse.
+  - "[touch] **One menu shape per entity.** A long press raises the same sheet the entity's detail page raises — never the component's own dropdown rendered as a sheet. The kebab keeps the anchored dropdown, which is the right shape for a mouse."
 ---
 
 `DetailMoreButton` is the "…" overflow on a media detail page — Album,

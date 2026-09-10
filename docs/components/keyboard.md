@@ -12,7 +12,7 @@ summary:
   - **`svh`, never `dvh`** — the dynamic unit reports the height with the browser chrome collapsed.
   - **Android needs none of this**: `interactive-widget=resizes-content` in the viewport meta does it declaratively, so `--kb` stays 0 there.
 contract:
-  - **The keyboard is measured, not guessed.** `--kb` and `data-kb="open"` are published by `useKeyboardInset`; a media query cannot see the squeeze, because the layout viewport does not shrink. Cap sheet heights with `svh` — never `vh` or `dvh` — and scope any `max-h` of your own to `md:`.
+  - "[touch] **The keyboard is measured, not guessed.** `--kb` and `data-kb=\"open\"` are published by `useKeyboardInset`; a media query cannot see the squeeze, because the layout viewport does not shrink. Cap sheet heights with `svh` — never `vh` or `dvh` — and scope any `max-h` of your own to `md:`."
 ---
 
 The on-screen keyboard is invisible to CSS. iOS shrinks the **visual**

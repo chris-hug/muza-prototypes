@@ -66,6 +66,19 @@ Instead: **inject the capture script + a floating dev-only "📸 Capture to Figm
 
 ## Color Variables — ALWAYS use these, never hardcode hex or Tailwind defaults
 
+<!-- BEGIN GENERATED: color-contract -->
+<!-- Written by scripts/sync-system-doc.mjs from the `contract:` frontmatter
+     of the pages that own these rules. Do not edit between these markers —
+     edit the owning page and re-run `npm run sync-docs`. -->
+
+**A component names a semantic token, never a primitive and never a hex.** `bg-primary`, not `bg-[#000DA2]` and not the primitive behind it: a literal opts out of dark mode silently, and nothing catches it. → [colors.md](docs/components/colors.md)
+
+**Dark mode reassigns the pointer, not the colour.** `--primary` moves from one primitive to another; neither primitive changes. That is the entire mechanism, and it is why a hard-coded colour cannot follow. → [colors.md](docs/components/colors.md)
+
+**Always `oklch`, and never a clipped value.** A colour that falls outside the display gamut is silently clamped, so two tokens that read as different in the file render identically on screen. → [colors.md](docs/components/colors.md)
+
+<!-- END GENERATED: color-contract -->
+
 ### Semantic tokens (mode-aware, use in all components)
 
 | Token | Light value | Dark value | Usage |
@@ -715,41 +728,28 @@ synthesised bold breaks the fixed advance width that is the point of the face.
 
 ## Typography — Founders Grotesk
 
-### Type scale (explicit px in globals.css to avoid rem ambiguity)
+<!-- BEGIN GENERATED: type-contract -->
+<!-- Written by scripts/sync-system-doc.mjs from the `contract:` frontmatter
+     of the pages that own these rules. Do not edit between these markers —
+     edit the owning page and re-run `npm run sync-docs`. -->
 
-| Class | Size | Usage |
-|---|---|---|
-| `text-3xsmall` | 13px | **monospace data only** — see the rule below. Never prose |
-| `text-xxs` | 15px | **the floor for anything read as language** — chips, badges, button-sm |
-| `text-xs` | 17px | media-card title + meta, table rows, captions, metadata, helper text |
+**Name the semantic alias, never the primitive and never a literal.** `text-small` rather than `text-sm` or `text-[17px]`: the alias is where a decision lives, and a literal opts out of every later change to the scale silently. → [typography.md](docs/components/typography.md)
 
-### 13px exists, and it is not part of the UI scale
+**15px is the floor for anything read as language.** 13px (`text-3xsmall`) is allowed for monospace data in a reference table and nowhere else — not for prose, a label, a caption, a hint, or anything inside a control. If the text is a sentence and 13px is tempting, the answer is a wider column. → [typography.md](docs/components/typography.md)
 
-`text-3xsmall` (13px) sits **below** the 15px floor and is allowed in exactly
-one situation: **monospace data** — a token name, an `oklch()` triple, a class
-string — in a reference table, where the row is a value to *read off* rather
-than language to read.
+**Weight, not size, separates a title from its metadata.** On cards, list rows and media items the title is `font-normal` and the meta rows are `font-light` with `tracking-[0.02em]`, both at 17px. → [typography.md](docs/components/typography.md)
 
-It exists because 15px mono could not hold a 26-character
-`oklch(99.81% 0.0053 118.5)` on one line in the Colors table, and a value that
-wraps or clips is worse than a value that is small: a clipped one looks like
-information and is not.
+**Bold is never used, semibold hardly ever** (H1 and H2 only), and anything under 18px is `font-normal` — except a button label, a tab label or a card title, which are the three named exceptions. → [typography.md](docs/components/typography.md)
 
-Never use it for prose, a label, a caption, a hint or anything inside a
-control. **15px remains the floor for anything a person reads as language**,
-and that rule did not move — a second size was added under it for a different
-kind of content, which is not the same thing as lowering the floor. If you
-reach for 13px and the text is a sentence, the answer is a wider column.
+<!-- END GENERATED: type-contract -->
 
-**Media-card text contrast.** On cards, list rows, and media items the **title is `font-normal`** and the **meta rows are `font-light` with `tracking-[0.02em]`** (both `text-xsmall`/17px) — the weight contrast (not size) is what separates title from artist/year/price. Keep title↔meta vertical rhythm even (single `gap`); meta stays `text-muted-foreground`.
-| `text-sm` | 19px | body, labels, inputs, nav sub-items, song-list rows |
-| `text-base` | 21px | lead text, nav items, primary content; Card Rail section titles |
-| `text-lg` | 24px | large body |
-| `text-xl` | 30px | H4 |
-| `text-2xl` | 36px | H3 |
-| `text-3xl` | 48px | H2 |
-| `text-4xl` | 60px | display |
-| `text-5xl` | 72px | H1 |
+### Type scale
+
+The full scale, the semantic aliases, the 13px exception and the weight rules
+are in [`typography.md`](docs/components/typography.md) — including the
+media-card contrast rule (title `font-normal`, meta `font-light` with
+`tracking-[0.02em]`, both 17px), which is weight doing the work rather than
+size.
 
 ### Font weight rules (strict)
 
@@ -759,8 +759,6 @@ reach for 13px and the text is a sentence, the answer is a wider column.
 | Medium 500 | `font-medium` | **Emphasis & headlines** — headings ≥18px, nav items ≥18px, button labels, tab labels, card titles |
 | Semibold 600 | `font-semibold` | **Hardly ever** — only H1 and H2 |
 | Bold 700 | `font-bold` | **Never** |
-
-**Sub-18px rule: anything < 18px (text-sm, text-xs) must be `font-normal` UNLESS it is a button label, tab label, or card title (which are explicit exceptions).**
 
 ---
 
@@ -1086,8 +1084,8 @@ Tokens are **roles**, not colours. Never mix roles.
 
 <!-- BEGIN GENERATED: touch-contract -->
 <!-- Written by scripts/sync-system-doc.mjs from the `contract:` frontmatter
-     of the pages listed below. Do not edit between these markers — edit the
-     page that owns the rule and re-run `npm run sync-docs`. -->
+     of the pages that own these rules. Do not edit between these markers —
+     edit the owning page and re-run `npm run sync-docs`. -->
 
 **The gate is the POINTER, not the window.** `useCoarsePointer()` asks what is doing the pointing; the three width measures ask how much room there is. Answering one with the other is how a phone ends up with a mouse's affordances at 375px. → [responsive.md](docs/components/responsive.md)
 
@@ -1157,7 +1155,25 @@ Phones are the default surface for the player, so gesture handling is a first-cl
 
 ## Responsive & pointer — gating rules
 
-**Three measures, and only three.** *Window* (the browser viewport — `useFooterNav()`, `useIsMobile()`, `@media`, Tailwind `md:`) decides the **chrome** and how a thing is **presented**. *Column* (the page content area, what the window leaves after chrome, cap and editor — `@container` on the page shell) decides **how many fit**. *Box* (a component's own width, a **named** `@container/<name>`) is allowed only where the same window can hand a component two different widths, and decides internal reflow only. The words "breakpoint" and "viewport" are reserved for Tailwind's tokens and the browser's own terms. Full write-up, arithmetic and duplication map: [`docs/components/responsive.md`](docs/components/responsive.md).
+<!-- BEGIN GENERATED: width-contract -->
+<!-- Written by scripts/sync-system-doc.mjs from the `contract:` frontmatter
+     of the pages that own these rules. Do not edit between these markers —
+     edit the owning page and re-run `npm run sync-docs`. -->
+
+**Three measures, and only three.** *Window* decides the chrome and how a thing is presented; *column* decides how many fit; *box* decides a component's own internal reflow, and only where the same window can hand it two widths. Reading a number from one as if it came from another is the mistake this vocabulary exists to prevent. → [responsive.md](docs/components/responsive.md)
+
+**Two window gates, each with a job.** 608 is chrome (tab bar ⇄ rail, mobile header, mini player); 768 is presentation (`useIsMobile()` and Tailwind `md:` — sheets ⇄ dialogs, dropdowns ⇄ sheets). `sm:` and `lg:` may reflow in-page content and nothing else — never a chrome or presentation switch. → [responsive.md](docs/components/responsive.md)
+
+**Gate a different RENDER on the window, never on `hover:`.** The headless preview reports `hover: hover` at phone width and hybrid laptops do too, so a hover-gated sheet simply never appears there. `hover:` is for cosmetic show/hide only. → [responsive.md](docs/components/responsive.md)
+
+**Name a box container.** An unnamed `@container` binds to whatever ancestor is nearest, which is how the player overlay ended up measuring a 1400px page wrapper instead of itself. → [responsive.md](docs/components/responsive.md)
+
+<!-- END GENERATED: width-contract -->
+
+The words "breakpoint" and "viewport" are reserved for Tailwind's tokens and
+the browser's own terms. The arithmetic behind every number below — the column
+ladder, the derivations, the duplication map — is in
+[`responsive.md`](docs/components/responsive.md).
 
 **Window — two gates, each with a job:**
 - **608 = chrome** (`useFooterNav()`, `FOOTER_NAV_BELOW` = 560 + 2×24): tab bar ⇄ icon rail, `MobileAppHeader` ⇄ `Topbar`, mini player ⇄ desktop bar. Anything lifted over the tab bar (`BulkActionBar`) gates here, never on `md`.
@@ -1170,8 +1186,6 @@ Phones are the default surface for the player, so gesture handling is a first-cl
 **Box — the four that measure themselves:** `SongListItem` (`@container/row`, 260 / 300 / 380), `PlayerBar` (640 / 688 / 800 — the 640 compact ⇄ desktop switch stays a box step because the docked editor can leave the bar 294px at a 768px window), `PlayerOverlay` (`@container/overlay`, 380), the paywall's two-column split (760). Name the container; an unnamed one binds to whatever ancestor is nearest.
 
 **`@max-[N]` means below N.** Tailwind v4 compiles `@max-[560px]` to `width < 560px` and `max-md:` to `width < 768px` — exclusive — so a step at 560 is `@min-[560px]` / `@max-[560px]`, never `@max-[559px]` (that left the 559px column, a 607px window, matching neither side).
-
-**Gate on the window, NOT `hover:` media queries, when choosing between two component renders.** `[@media(hover:none/hover)]:!hidden` is fine for *cosmetic* show/hide of a control, but to render a *different component* (dropdown vs sheet) use `useIsMobile()`. Reasons: the headless preview reports `hover: hover` even at phone width (so a hover-gated sheet never appears there), and hybrid touch-laptops report `hover: hover` too. Example: `DetailMoreButton` does `if (isMobile) return <Sheet>…; return <DropdownMenu>…`.
 
 ---
 

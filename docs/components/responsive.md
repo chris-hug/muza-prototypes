@@ -11,7 +11,11 @@ summary:
   - **Box** — a component's own width. Only where the same window can hand it two widths (a song row in a list vs a rail cell), and then the container is **named**.
   - **Pointer, not width**, for touch: hover is pointer-only, and a component swaps on the window — never on hover. The one gate that reads the pointer itself is `useCoarsePointer()`, and it is a fourth thing, not a fourth width.
 contract:
-  - **The gate is the POINTER, not the window.** `useCoarsePointer()` asks what is doing the pointing; the three width measures ask how much room there is. Answering one with the other is how a phone ends up with a mouse's affordances at 375px.
+  - "[touch] **The gate is the POINTER, not the window.** `useCoarsePointer()` asks what is doing the pointing; the three width measures ask how much room there is. Answering one with the other is how a phone ends up with a mouse's affordances at 375px."
+  - "[width] **Three measures, and only three.** *Window* decides the chrome and how a thing is presented; *column* decides how many fit; *box* decides a component's own internal reflow, and only where the same window can hand it two widths. Reading a number from one as if it came from another is the mistake this vocabulary exists to prevent."
+  - "[width] **Two window gates, each with a job.** 608 is chrome (tab bar ⇄ rail, mobile header, mini player); 768 is presentation (`useIsMobile()` and Tailwind `md:` — sheets ⇄ dialogs, dropdowns ⇄ sheets). `sm:` and `lg:` may reflow in-page content and nothing else — never a chrome or presentation switch."
+  - "[width] **Gate a different RENDER on the window, never on `hover:`.** The headless preview reports `hover: hover` at phone width and hybrid laptops do too, so a hover-gated sheet simply never appears there. `hover:` is for cosmetic show/hide only."
+  - "[width] **Name a box container.** An unnamed `@container` binds to whatever ancestor is nearest, which is how the player overlay ended up measuring a 1400px page wrapper instead of itself."
 ---
 
 Muza measures width in **three ways, and only three**. Every number in the

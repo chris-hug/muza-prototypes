@@ -7,7 +7,7 @@ usage:
   - Library › + / create tile — New Playlist (full-screen form on phones) | /?page=Playlists
   - Playlist detail › … → Edit info (same form) | /?page=Playlist
 contract:
-  - **Sheet chrome is shared, and breaks quietly from a call site.** `.sheet-glass` only works because the bar OVERLAYS the content — glass over nothing is a colour — and `--sheet-bar-h` must equal the bar's real height, or the list under an absolute bar loses its first rows.
+  - "[touch] **Sheet chrome is shared, and breaks quietly from a call site.** `.sheet-glass` only works because the bar OVERLAYS the content — glass over nothing is a colour — and `--sheet-bar-h` must equal the bar's real height, or the list under an absolute bar loses its first rows."
 ---
 
 **Every** `Dialog` and `AlertDialog` is a bottom sheet on mobile and a centred
