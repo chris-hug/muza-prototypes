@@ -99,15 +99,25 @@ share one baseline.
 
 **Phone — a bottom bar, ON the player.** Every major player puts its
 confirmations at the bottom: thumb-side, out of the content's way. The bar
-spans the width with a 12px inset (`inset-x-3`) and clears whichever piece of
-chrome is actually there:
+spans the width with a 12px inset (`inset-x-3`) and sits wherever the surface
+under it says:
 
 ```text
-bottom: max(
-  calc(var(--kb, 0px) + 4px),          the keyboard, when one is up
-  calc(var(--footer-nav-h, 0px) + 8px) the tab bar otherwise
-)
+bottom: var(--toast-anchor, max(
+  calc(var(--kb, 0px) + 4px),           the keyboard, when one is up
+  calc(var(--footer-nav-h, 0px) + 8px)  the tab bar otherwise
+))
 ```
+
+**`--toast-anchor`** is a sheet asking for the toast to be somewhere exact —
+`AddMusicDialog` publishes its search field's top edge plus 8px, so the toast
+lands directly above the field and never over it. Measured from the element on
+every render (plus a `ResizeObserver`), not derived from paddings: the field
+sits at one height on the browse screen (an Add button below it), another on
+the find screen (nothing below it), and both move again with the keyboard —
+arithmetic would be right in one state and clipping the control in the others.
+The move is eased (`transition-[bottom] 200ms`) because a sheet often publishes
+its anchor a frame after the toast has already appeared.
 
 `max()`, not a sum: the two are never both in play, and adding them lifts the
 toast a third of the way up the screen. `--footer-nav-h` is published by

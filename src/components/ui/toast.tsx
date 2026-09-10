@@ -35,7 +35,7 @@ export const toastShellClass = cn(
   // desktop-only for the same reason the box is one line: the title already
   // says it, and a two-line card with 18px of padding was a fifth of a 375px
   // screen for the word "added". Desktop keeps the roomier card.
-  "h-12 rounded-full px-4 shadow-xl md:h-auto md:rounded-xl md:px-4 md:pt-4 md:pb-[18px] md:shadow-lg",
+  "h-12 rounded-full px-4 shadow-2xl md:h-auto md:rounded-xl md:px-4 md:pt-4 md:pb-[18px] md:shadow-lg",
   "border border-border bg-popover",
   // A PILL, like the field it lands on — same height, same gutter, same
   // radius — so it reads as that control rather than as a card parked over
@@ -111,6 +111,10 @@ function ToastViewport({ className }: { className?: string }) {
     <ToastPrimitive.Viewport
       className={cn(
         "group/toasts fixed z-[100] flex flex-col gap-2 outline-none",
+        // The anchor can arrive a frame after the toast does — a sheet that
+        // publishes one is often opening in the same beat — so the move is
+        // eased rather than jumped.
+        "transition-[bottom] duration-200 ease-[cubic-bezier(0.2,0,0,1)]",
         // Below `md` → a bar along the BOTTOM, thumb-side and out of the
         // content's way, 8px above whatever chrome is there: the KEYBOARD
         // when one is up, the tab bar otherwise (`--footer-nav-h`, published
@@ -125,7 +129,13 @@ function ToastViewport({ className }: { className?: string }) {
         // outright rather than hanging over half of it. Over the tab bar it
         // covers the mini player for the couple of seconds it lives; the
         // player is one tap from coming back.
-        "inset-x-3 bottom-[max(calc(var(--kb,0px)+4px),calc(var(--footer-nav-h,0px)+8px))] w-auto",
+        // `--toast-anchor` is where a sheet wants the toast: the distance from
+        // the bottom of the screen to just above its own bottom control, so
+        // the toast sits ON TOP OF nothing (see `AddMusicDialog`, which
+        // publishes its search field's top edge plus a gap). It wins when it
+        // exists. Without one, clear whichever chrome is there: the keyboard,
+        // or the tab bar.
+        "inset-x-3 bottom-[var(--toast-anchor,max(calc(var(--kb,0px)+4px),calc(var(--footer-nav-h,0px)+8px)))] w-auto",
         // Desktop → the familiar top-right card.
         "md:inset-x-auto md:right-4 md:top-4 md:bottom-auto md:w-[380px] md:max-w-[calc(100vw-2rem)]",
         className
