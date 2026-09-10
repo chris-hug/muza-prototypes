@@ -31,11 +31,15 @@ jobs:
     name: Component docs cover the code
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      # Pinned rather than inherited: the sweep is plain ESM against node's
+      # standard library, and 22 is the LTS the runners will keep. v4 of these
+      # actions still targets node 20, which the runners now force onto 24 and
+      # annotate every run about.
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
 
       # No install step: the sweep reads files and uses nothing but node's own
       # standard library. Keeping it dependency-free is what makes it a
