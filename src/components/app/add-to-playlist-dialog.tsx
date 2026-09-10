@@ -16,7 +16,7 @@
  * membership store yet) — wire to a real playlist-tracks store when it lands.
  */
 
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useMemo, useRef, useState } from "react"
 import { ChevronLeft, Plus, Search, X } from "lucide-react"
 
 import {
@@ -31,6 +31,11 @@ import { navRowClass } from "@/components/ui/nav-row"
 import { useToast } from "@/components/ui/toast"
 import { useIsMobile } from "@/lib/use-media-query"
 import { MediaListItem } from "@/components/ui/media-list-item"
+import { SelectTrackButton } from "@/components/ui/select-track-button"
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from "@/components/ui/alert-dialog"
 import { getAllPlaylists } from "@/lib/playlist-catalog"
 import { AddToPlaylistContext } from "@/lib/add-to-playlist-context"
 import type { SavedSong } from "@/lib/user-library"
@@ -40,22 +45,42 @@ export { useAddToPlaylist } from "@/lib/add-to-playlist-context"
 export function AddToPlaylistProvider({ children }: { children: React.ReactNode }) {
   const [song, setSong] = useState<SavedSong | null>(null)
   const open = useCallback((s: SavedSong) => setSong(s), [])
+  /* The sheet holds picks, and the dialog that can be flicked away lives out
+     here — so the CONTENT registers a veto and the root asks it before every
+     close. Returning true means "I have taken over" (a confirmation is up);
+     the dialog stays open until the answer comes back. */
+  const guard = useRef<() => boolean>(() => false)
 
   return (
     <AddToPlaylistContext.Provider value={{ open }}>
       {children}
-      <Dialog open={!!song} onOpenChange={o => { if (!o) setSong(null) }}>
+      <Dialog
+        open={!!song}
+        onOpenChange={o => {
+          if (!o && guard.current()) return
+          if (!o) setSong(null)
+        }}
+      >
         {song && (
           // key by the song so the dialog's mode / filter state resets each
           // time it's reopened for a different track.
-          <AddToPlaylistContent key={song.id} song={song} onClose={() => setSong(null)} />
+          <AddToPlaylistContent
+            key={song.id}
+            song={song}
+            guard={guard}
+            onClose={() => setSong(null)}
+          />
         )}
       </Dialog>
     </AddToPlaylistContext.Provider>
   )
 }
 
-function AddToPlaylistContent({ song, onClose }: { song: SavedSong; onClose: () => void }) {
+function AddToPlaylistContent({ song, guard, onClose }: {
+  song: SavedSong
+  guard: React.RefObject<() => boolean>
+  onClose: () => void
+}) {
   const { add: toast } = useToast()
   // The header is a BAR on a phone and the ordinary header on desktop; the
   // create step is a form sheet below `md` and a modal above it.
@@ -63,6 +88,12 @@ function AddToPlaylistContent({ song, onClose }: { song: SavedSong; onClose: () 
   const [mode, setMode] = useState<"list" | "create">("list")
   const [query, setQuery] = useState("")
   const [name, setName] = useState("")
+  /* One song goes into MANY playlists in one visit — Spotify's model, and the
+   * right one: the alternative is reopening the same sheet from the same "…"
+   * three times to file a track in three places. So a row PICKS rather than
+   * commits, and the bar's action commits the lot. */
+  const [picked, setPicked] = useState<string[]>([])
+  const [confirmDiscard, setConfirmDiscard] = useState(false)
 
   // You add to playlists you OWN. Newest-feeling first would need dates; the
   // catalog order is fine for the prototype.
@@ -81,8 +112,32 @@ function AddToPlaylistContent({ song, onClose }: { song: SavedSong; onClose: () 
     onClose()
   }
 
+  /** Commit every pick at once — the bar's action. */
+  const commit = () => {
+    if (picked.length === 0) return
+    toast({
+      title: picked.length === 1 ? "Added to playlist" : `Added to ${picked.length} playlists`,
+      // One name reads better than a count; past one, the count does.
+      description: `“${song.title}” → ${picked.join(", ")}`,
+      type: "success",
+    })
+    onClose()
+  }
 
-  const addTo = (playlistTitle: string) => done(playlistTitle)
+  /* Closing with picks in hand asks first — the platform rule for a modal
+     with unsaved input, and this sheet's whole point is that the picks are
+     not committed until Done. Registered on every render so it sees the
+     current count. */
+  guard.current = () => {
+    if (picked.length === 0) return false
+    setConfirmDiscard(true)
+    return true
+  }
+
+  const toggle = (playlistTitle: string) =>
+    setPicked(prev => prev.includes(playlistTitle)
+      ? prev.filter(t => t !== playlistTitle)
+      : [...prev, playlistTitle])
   const create = () => {
     const trimmed = name.trim()
     if (!trimmed) return
@@ -185,11 +240,17 @@ function AddToPlaylistContent({ song, onClose }: { song: SavedSong; onClose: () 
         <DialogActionBar
           className="absolute inset-x-0 top-0 z-10 px-1"
           leading={<span className="size-8 shrink-0" />}
-          trailing={
+          /* Dismissal until there is something to commit, then the commit —
+             the trade the Add-music bar makes. Nothing is lost: the sheet
+             still closes by pulling it down or tapping the backdrop, and with
+             picks in hand both ask first. */
+          trailing={picked.length > 0 ? (
+            <Button size="sm" onClick={commit} className="touch-target shrink-0">Done</Button>
+          ) : (
             <DialogClose render={<Button variant="ghost" size="icon-sm" aria-label="Close" className="touch-target" />}>
               <X />
             </DialogClose>
-          }
+          )}
         >
           {/* The SONG is the context here, and the bar has one line for it —
               so it goes in the title rather than a description underneath. */}
@@ -228,18 +289,25 @@ function AddToPlaylistContent({ song, onClose }: { song: SavedSong; onClose: () 
             <span className="text-small font-medium text-foreground">New playlist</span>
           </Row>
 
-          {/* The shared media row — same component the search / library lists
-              use, so the 2×2 collage + title/meta treatment is identical. */}
-          {filtered.map(p => (
-            <MediaListItem
-              key={p.id}
-              type="playlist"
-              covers={p.covers}
-              title={p.title}
-              meta={`${p.songCount} songs`}
-              onOpen={() => addTo(p.title)}
-            />
-          ))}
+          {/* The same row as the tracks in the Add-music sheet, down to the
+              +/✓ on the right: both screens are "pick things from a list", and
+              a row that COMMITS on tap while looking like a row that picks is
+              a difference nobody reads in advance. */}
+          {filtered.map(p => {
+            const on = picked.includes(p.title)
+            return (
+              <MediaListItem
+                key={p.id}
+                type="playlist"
+                covers={p.covers}
+                title={p.title}
+                meta={`${p.songCount} songs`}
+                onOpen={() => toggle(p.title)}
+                className={cn(on && "bg-muted")}
+                trailing={<SelectTrackButton selected={on} />}
+              />
+            )
+          })}
         </div>
       )}
 
@@ -268,8 +336,34 @@ function AddToPlaylistContent({ song, onClose }: { song: SavedSong; onClose: () 
             />
           </div>
         )}
-        {!isMobile && <DialogClose render={<Button variant="ghost" />}>Cancel</DialogClose>}
+        {!isMobile && (
+          <>
+            <DialogClose render={<Button variant="ghost" />}>Cancel</DialogClose>
+            <Button onClick={commit} disabled={picked.length === 0}>Done</Button>
+          </>
+        )}
       </DialogFooter>
+
+      {/* Asked, not assumed — the sheet stays mounted behind it, so "Keep
+          picking" returns to the same list with the same ticks. */}
+      <AlertDialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Discard {picked.length} {picked.length === 1 ? "playlist" : "playlists"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              “{song.title}” hasn't been added to {picked.length === 1 ? "it" : "them"} yet.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep picking</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setConfirmDiscard(false); setPicked([]); onClose() }}>
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DialogContent>
   )
 }

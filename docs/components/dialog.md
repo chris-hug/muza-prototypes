@@ -287,6 +287,20 @@ Only the middle one scrolls.
 Used by **Create playlist / Edit info** (`CreatePlaylistDialog`). Pickers and
 lists stay bottom sheets.
 
+## Picking is not committing
+
+Two sheets in the product are "pick things from a list": Add-music (tracks into
+a playlist) and Add-to-playlist (a track into playlists). They use **the same
+row** — `MediaListItem` with a `SelectTrackButton` on the right — because a row
+that COMMITS on tap while looking like a row that picks is a difference nobody
+reads in advance.
+
+So a tap toggles, the bar's trailing slot carries the commit (`Add 4`, `Done`)
+and is dismissal until there is something to commit, and closing with picks in
+hand asks first. One song can go into several playlists in one visit, which is
+the point: the alternative is reopening the same sheet from the same "…" three
+times to file a track in three places.
+
 ## A sheet you can flick away is one you can flick away by accident
 
 A bottom sheet holding work confirms before it closes. `AddMusicDialog`
