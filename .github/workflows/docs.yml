@@ -1,0 +1,44 @@
+# The coverage half of the Component Doc Pass, enforced.
+#
+# `doc-sweep` greps every component in src/components/ui for the design
+# system's shared vocabulary — motion and state, touch and pointer — and fails
+# when something is in the code and absent from that component's doc. An
+# undocumented behaviour is one nobody is checking, and the failure mode this
+# gates against is slow: a component gains a gesture, its doc goes on
+# describing the version before it, and the next person reads the doc.
+#
+# It carries a baseline of pre-existing gaps (see scripts/doc-sweep.mjs), so a
+# red run means something NEW went undocumented, not that the repo has debt.
+#
+# What this cannot catch: a doc that is confidently wrong about a number. That
+# is the consistency half of the pass, and it needs a reader.
+
+name: Docs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A second push supersedes the first — the sweep has nothing to say about a
+# commit that is already replaced.
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  doc-sweep:
+    name: Component docs cover the code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # No install step: the sweep reads files and uses nothing but node's own
+      # standard library. Keeping it dependency-free is what makes it a
+      # second-long check rather than a two-minute one.
+      - name: npm run doc-sweep
+        run: node scripts/doc-sweep.mjs

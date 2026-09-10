@@ -130,7 +130,13 @@ started raising their own sheet; and `menu.md` never mentioned `state-fade`,
 which is on every row it documents. The missing prose and the bug usually have
 the same root: nobody had stated what the attribute meant.
 
-**Run it, do not eyeball it: `npm run doc-sweep`.** Both lists above are in
+**It gates.** `.github/workflows/docs.yml` runs the sweep on every pull
+request and every push to `main`, so a component that gains a behaviour and
+does not gain the prose fails before anyone reads the stale version. A red run
+means something NEW went undocumented — the baseline covers what was already
+there.
+
+**Run it locally too, do not eyeball it: `npm run doc-sweep`.** Both lists above are in
 `scripts/doc-sweep.mjs`, which walks every component in `src/components/ui`,
 greps its source for them, and reports anything present in the code and absent
 from its doc. Exit 1 when something is open, so it can gate a push or a CI
