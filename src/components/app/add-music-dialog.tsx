@@ -327,6 +327,11 @@ export function AddMusicDialog({
             `useIsMobile` so only ONE `DialogTitle` is ever mounted. */}
         {isMobile ? (
           <DialogActionBar
+            /* `plain`: no glass. It earns its keep on the form sheet, where
+               the body scrolls under the bar. Here the list is its own scroll
+               box and nothing ever passes beneath, so the tint was just a
+               faint band across the top of the sheet. */
+            plain
             className="-mx-3 -mt-3 px-1"
             leading={back ?? <span className="size-8 shrink-0" />}
             trailing={
@@ -517,6 +522,11 @@ export function AddMusicDialog({
         <DialogFooter
           className={cn(
             "shrink-0 mt-0 flex-col md:flex-row md:items-center",
+            // On the Find screen the band carries the field alone, and a
+            // field is not a bar: no surface, no edge. It still sits in the
+            // flow, so nothing scrolls under it — there is simply nothing
+            // between the sheet's own surface and the input.
+            finding && "border-t-0 bg-transparent",
             // The band stays IN THE FLOW on the Find screen too. It used to
             // go absolute there — floating over the results, to buy back the
             // ~50px the keyboard takes — and that is precisely what made the

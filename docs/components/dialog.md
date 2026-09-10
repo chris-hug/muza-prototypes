@@ -205,7 +205,11 @@ Only the middle one scrolls.
   rule underneath: the sheet is one surface, and a hairline right under the
   title reads as a header that isn't there. Same **frosted glass** as
   `MobileHeader` — it *is* a mobile header, for a modal — with the top
-  safe-area inset, and `md:hidden`.
+  safe-area inset, and `md:hidden`. Pass **`plain`** to drop the glass: it
+  earns its keep only where the body scrolls under the bar, and on a sheet
+  whose list is its own scroll box the tint is just a faint band across the
+  top. (A utility class can't override it — `.frosted-glass` is unlayered CSS
+  — so the bar has to leave it off.)
 - The confirming action is a full-width `size="lg"` (48px) button in
   `DialogFormActions`, the band below the body. The sheet pads itself off the
   keyboard, so the action sits directly on it. Never offered twice — bar
@@ -290,6 +294,13 @@ shape as the form sheet, for the same reason.
   to buy back the ~50px the keyboard costs — and that is what let the field
   scroll away with the content. 50px is not worth a search field that leaves
   the screen while you read what it returned.
+
+**The find screen's band carries no surface** — `border-t-0 bg-transparent`.
+A field is an input, not a bar, and in the flow nothing scrolls under it
+anyway, so there is nothing between the sheet's own surface and the input. It
+also sits as close to the keyboard as the padding allows (`max(4px, …)` under
+`data-kb="open"`): the accessory bar is the next thing below it, and a gap
+between the two reads as a stray band.
 
 **One band.** The search field and the confirming action share the footer
 (`flex-col` so the field sits on top, `md:flex-row`) — one edge of chrome, not

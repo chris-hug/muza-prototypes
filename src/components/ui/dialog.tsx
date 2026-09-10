@@ -107,12 +107,14 @@ export const dialogFormPositionClass =
 // The form sheet's top bar: Cancel · title · primary action. Same frosted
 // glass as `MobileHeader` (it IS a mobile header, for a modal), sticky so
 // the actions stay put while the body scrolls beneath. Mobile only.
-export const dialogActionBarClass =
-  // No rule under the bar: the sheet is one surface, and a hairline right
-  // under the title reads as a header that isn't there.
-  "sticky top-0 z-10 shrink-0 frosted-glass " +
+// No rule under the bar: the sheet is one surface, and a hairline right under
+// the title reads as a header that isn't there.
+const dialogActionBarBase =
+  "sticky top-0 z-10 shrink-0 " +
   "flex items-center justify-between gap-2 min-h-12 px-1 pt-[max(4px,env(safe-area-inset-top))] pb-1 " +
   "md:hidden"
+
+export const dialogActionBarClass = "frosted-glass " + dialogActionBarBase
 
 // Body of a form sheet on mobile: restores the chrome's gutter + gap that
 // `dialogFormPositionClass` zeroed, clears the home indicator at the bottom.
@@ -328,15 +330,22 @@ function DialogActionBar({
   leading,
   trailing,
   children,
+  plain = false,
   ...props
 }: React.ComponentProps<"div"> & {
   leading?: React.ReactNode
   trailing?: React.ReactNode
+  /** Drop the frosted surface. The glass earns its keep where the BODY
+   *  scrolls under the bar; on a sheet whose list is its own scroll box
+   *  nothing ever passes beneath it, and the tint reads as a faint band
+   *  across the top. `.frosted-glass` is unlayered CSS, so a utility class
+   *  can't override it — the bar has to leave it off. */
+  plain?: boolean
 }) {
   return (
     <div
       data-slot="dialog-action-bar"
-      className={cn(dialogActionBarClass, className)}
+      className={cn(plain ? dialogActionBarBase : dialogActionBarClass, className)}
       {...props}
     >
       <div className="flex min-w-0 shrink-0 items-center">{leading}</div>

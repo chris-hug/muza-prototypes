@@ -1582,7 +1582,11 @@ img[class*="object-cover"] {
    Phones only — the desktop modal never sees a keyboard inset. */
 @media (width < 48rem) {
   [data-kb="open"] [data-slot="dialog-action-bar"] {
-    min-height: 2.5rem;
+    /* 32px is the height of the controls in it, so the bar becomes exactly
+       its buttons — the title's line costs nothing extra. */
+    min-height: 2rem;
+    padding-top: max(2px, env(safe-area-inset-top));
+    padding-bottom: 0;
   }
   [data-kb="open"] [data-slot="dialog-form-body"] {
     /* Less at the bottom than the top: the band below already carries 8px,
@@ -1604,7 +1608,9 @@ img[class*="object-cover"] {
     gap: 0.25rem;
   }
   [data-kb="open"] [data-slot="dialog-content"][data-mobile="sheet"] [data-slot="dialog-footer"] {
+    /* Close to the keyboard on purpose: the accessory bar is the next thing
+       under it, and a gap between the two reads as a stray band. */
     padding-top: 0.5rem;
-    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    padding-bottom: max(4px, env(safe-area-inset-bottom));
   }
 }
