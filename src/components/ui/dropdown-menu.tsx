@@ -181,8 +181,14 @@ function DropdownMenuItem({
               // 18 (the sheet) − 8 (its side padding) = 10. It used to be
               // `rounded-xl` (16), all but the sheet's own corner, so a
               // pressed row looked like it was fighting its container.
-              "flex w-full items-center gap-3 rounded-md px-3 py-3 text-base font-normal text-foreground text-left transition-colors active:bg-muted [@media(hover:hover)]:hover:bg-muted outline-none focus-visible:bg-muted disabled:opacity-50 disabled:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0 [&_svg]:text-muted-foreground",
-              variant === "destructive" && "text-destructive [&_svg]:text-destructive",
+              // The icon rules reach DIRECT children only. `[&_svg]` reached
+              // every glyph in the row, including one inside a control the row
+              // happens to contain — which is how a checked `Checkbox` in a
+              // multi-select ended up with a muted-foreground tick on its
+              // primary fill: dark on blue, unreadable, and nothing to do with
+              // this row's own leading icon.
+              "flex w-full items-center gap-3 rounded-md px-3 py-3 text-base font-normal text-foreground text-left transition-colors active:bg-muted [@media(hover:hover)]:hover:bg-muted outline-none focus-visible:bg-muted disabled:opacity-50 disabled:pointer-events-none [&>svg]:size-5 [&>svg]:shrink-0 [&>svg]:text-muted-foreground",
+              variant === "destructive" && "text-destructive [&>svg]:text-destructive",
               className,
             )}
           />
