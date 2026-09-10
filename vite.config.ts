@@ -75,7 +75,28 @@ export default defineConfig({
     // Dev-only: the ramp controller's Save button writes through this.
     themeWriter(),
   ],
-server: {
+  build: {
+    rollupOptions: {
+      /* 268 lines of "Error when using sourcemap for reporting an error" —
+         one per file, all at (1:0), which is the `"use client"` line.
+         Rollup warns that a module-level directive is ignored when bundling
+         (MODULE_LEVEL_DIRECTIVE), then fails to map its own warning back
+         through the sourcemap and reports THAT instead. Both are noise:
+         the directives are correct to keep — they mark the client boundary
+         if SSR is ever turned back on — and nothing is actually wrong.
+
+         Only those two are dropped. Everything else still reaches the
+         default handler, including the chunk-size warning, which is a real
+         thing to know about a 649KB entry. A build that prints 268 harmless
+         errors is a build nobody reads. */
+      onwarn(warning, defaultHandler) {
+        if (warning.code === "MODULE_LEVEL_DIRECTIVE") return
+        if (warning.message?.includes("Error when using sourcemap for reporting an error")) return
+        defaultHandler(warning)
+      },
+    },
+  },
+  server: {
     port: parseInt(process.env.PORT || "5173"),
     strictPort: true,
   },
