@@ -208,7 +208,20 @@ handlers — a card that passes none shows Share and Report. As wired today:
 |---|---|---|
 | Album | Copy link/Share · Save (store-bound) · Credits · Go to album · Go to artist · Report | **Add to a playlist** — the flow adds a SONG to playlists; adding an album's tracks has no implementation. **Go to label** — no label data on a card. **Play next / Add to queue** — the player has no queue. |
 | Playlist | Copy link/Share · Save (store-bound) · Go to playlist · Go to owner · Report | **Add music / Edit info / Make private / Delete** on an owned playlist — the card is not the owner surface; those live on the playlist page. |
-| Artist | Copy link/Share · Save (store-bound) · Report | **Play radio** and **Artist info** — neither exists anywhere in the app; the menu drops a row whose handler is missing rather than showing a dead one. |
+| Artist | Copy link/Share · Save (store-bound) · **Play radio** · **Artist info** · Report | — |
+
+**Play radio** starts the artist's first track from the app's search index
+with the player's "playing from" line naming the station (`John Coltrane
+radio`). There is no queue in the player yet, so a station is one track and a
+label rather than a generated run — when a queue lands, this is where it feeds
+from. The track is resolved when the card renders, not when the row is tapped,
+so an artist whose records carry no track list shows **no Play radio row at
+all** rather than one that apologises when pressed.
+
+**Artist info** opens what the catalogue actually knows: portrait, name,
+release count (and track count where the track lists exist), and the first few
+titles. The prose bio lives on the artist page; this is the glance you get
+without leaving the row you were browsing.
 
 Save is bound through `libraryType` + `libraryId` on all three, not through
 `onAdd`/`onRemove` props: those are optional at most call sites, so the tile
