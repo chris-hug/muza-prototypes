@@ -80,6 +80,14 @@ export function AddMusicDialog({
    * keyboard up none of it is reachable anyway. Back returns to browsing.
    * Same move TIDAL and Apple Music make on the equivalent step. */
   const [finding, setFinding] = useState(false)
+  /* On the Find screen the query is only SUBMITTED once the user presses the
+   * keyboard's search key (or picks a recent term). Typing alone doesn't count,
+   * even though the results list updates as you type: while the caret is still
+   * in the field the next thing anyone reaches for is "show me these", and a
+   * blue action sitting under the field gets read as that button. So the Add
+   * action waits until the query has been committed and the results are what
+   * the user is looking at. Editing the query again takes it back away. */
+  const [submitted, setSubmitted] = useState(false)
   const { recent, remember, clear: clearRecent } = useRecentSearches()
   // Picks are kept as full songs, not ids: a track chosen under "blue" must
   // still be listed (and removable) after the query changes to "red", when
@@ -88,6 +96,10 @@ export function AddMusicDialog({
   // Row that was just added — drives the one-shot confirmation animation.
   const [flashed, setFlashed] = useState<string | null>(null)
   const pickedKeys = useMemo(() => new Set(picked.map(songKey)), [picked])
+  /* Browsing, the action is always there. On the Find screen it needs BOTH
+   * something to add and a submitted query — see `submitted`. It decides the
+   * footer's treatment too: one control floats, two make a bar. */
+  const showAdd = !finding || (picked.length > 0 && submitted)
 
   // Typing runs the app's GLOBAL search (the same `searchCatalog` the Explore
   // results use), then keeps only what can actually go into a playlist.
@@ -180,7 +192,7 @@ export function AddMusicDialog({
   }, [tab, picked.length, searching])
 
   const reset = () => {
-    setQuery(""); setTab("recent"); setDrill(null); setPicked([]); setFlashed(null); setFinding(false)
+    setQuery(""); setTab("recent"); setDrill(null); setPicked([]); setFlashed(null); setFinding(false); setSubmitted(false)
   }
 
   const done = () => {
@@ -282,7 +294,7 @@ export function AddMusicDialog({
               aria-label={album ? "Back to the list" : "Back to browsing"}
               onClick={() => {
                 if (album) { setDrill(null); return }
-                setFinding(false); setQuery("")
+                setFinding(false); setQuery(""); setSubmitted(false)
               }}
               // Optical, not box, alignment on desktop: the button is 32px
               // wide around a 16px icon, so its box has to hang 8px left for
@@ -351,7 +363,7 @@ export function AddMusicDialog({
                   <button
                     key={q}
                     type="button"
-                    onClick={() => setQuery(q)}
+                    onClick={() => { setQuery(q); setSubmitted(true) }}
                     className="flex w-full items-center gap-3 rounded-md px-2 py-2.5 text-left text-xsmall text-foreground transition-colors hover:bg-muted cursor-pointer"
                   >
                     <Clock className="size-4 shrink-0 text-muted-foreground" />
@@ -486,7 +498,7 @@ export function AddMusicDialog({
             // an action side by side would read as two competing primary
             // actions over see-through content — so the band goes opaque and
             // becomes an ordinary bar with an edge, exactly as in Browse.
-            finding && (picked.length > 0
+            finding && (showAdd
               ? "px-3 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]"
               : "border-t-0 bg-transparent px-4 pt-4 pb-[max(16px,env(safe-area-inset-bottom))]"),
           )}
@@ -497,18 +509,20 @@ export function AddMusicDialog({
             <div className="w-full min-w-0 md:flex-1">
               <Input
                 value={query}
-                onChange={e => setQuery(e.target.value)}
+                onChange={e => { setQuery(e.target.value); setSubmitted(false) }}
                 onFocus={() => setFinding(true)}
                 // Enter commits the query to the recent list — the same moment
-                // the on-screen keyboard's "search" key fires.
-                onKeyDown={e => { if (e.key === "Enter") remember(query) }}
+                // the on-screen keyboard's "search" key fires — and hands the
+                // screen over to the results, which is what brings the Add
+                // action back.
+                onKeyDown={e => { if (e.key === "Enter") { remember(query); setSubmitted(true) } }}
                 // Browsing, the rows above are the user's OWN library, so the
                 // placeholder carries the scope. On the Find screen the header
                 // already says it, so one word is enough.
                 placeholder={finding ? "Search" : "Search all of muza"}
                 aria-label="Search all of muza for songs or albums"
                 startIcon={<Search />}
-                onClear={() => setQuery("")}
+                onClear={() => { setQuery(""); setSubmitted(false) }}
                 className={cn(
                   // 48px, matching the `lg` action beside it.
                   "h-12",
@@ -516,17 +530,18 @@ export function AddMusicDialog({
                   // lift — rows scroll directly beneath it. Once the action
                   // joins it the band is opaque and carries the separation
                   // itself, so a shadow would just be noise.
-                  finding && picked.length === 0 && "bg-popover shadow-lg",
+                  finding && !showAdd && "bg-popover shadow-lg",
                 )}
               />
             </div>
           )}
 
           {/* On the Find screen the action rides along in the floating band,
-              but only once there IS something to add — an empty, disabled
-              button would take a second row of the little the keyboard
-              leaves. */}
-          {(!finding || picked.length > 0) && (
+              but only once there IS something to add AND the query has been
+              submitted — an empty, disabled button would take a second row of
+              the little the keyboard leaves, and one sitting under a field the
+              user is still typing into gets mistaken for "show results". */}
+          {showAdd && (
             <Button size="lg" onClick={done} disabled={picked.length === 0} className="w-full md:w-auto">
               {/* Name the unit, not just the number — "Add 4" reads as an
                   ordinal on a row of tracks. Singular when it's one. */}
