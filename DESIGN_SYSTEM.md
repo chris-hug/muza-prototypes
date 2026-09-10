@@ -1146,7 +1146,7 @@ Tokens are **roles**, not colours. Never mix roles.
 
 **The gate is the POINTER, not the window.** `useCoarsePointer()` asks what is doing the pointing; the three width measures ask how much room there is. Answering one with the other is how a phone ends up with a mouse's affordances at 375px. → [responsive.md](docs/components/responsive.md)
 
-**One module owns both gestures' numbers.** Slop, the dismiss thresholds, the "is every scroller at its top" test and the velocity trail live in `src/lib/gesture.ts`. Never re-declare one at a call site — the sheet once carried its own slop against the cards', which is how two gestures on one screen start feeling like two apps. → [gesture.md](docs/components/gesture.md)
+**A gesture comes from the library unless it cannot.** Sheets pull down because they are Base UI `Drawer`s — dialogs presented as bottom sheets included. The one hand-rolled gesture left is the long press, and its slop lives in `src/lib/gesture.ts` rather than at a call site: the sheet drag once carried its own against the cards', which is how two gestures on one screen start feeling like two apps. → [gesture.md](docs/components/gesture.md)
 
 **A drag is never a tap, and a press must be visible.** Any component that adds a hold gets both from `useLongPress`: the click is swallowed if the finger travelled, and `data-pressing` paints the hold from the first frame. A hold with no feedback reads as a tap that did not register. → [gesture.md](docs/components/gesture.md)
 

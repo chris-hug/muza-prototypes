@@ -6,46 +6,57 @@ related: [album-card, playlist-card, artist-card, dialog, drawer, song-list-item
 usage:
   - not a component — the numbers and tests every pointer gesture in the app shares
 summary:
-  - **One module, two gestures.** `useLongPress` (is this finger a tap, a drag or a hold?) and `useSheetDrag` (pull a sheet down to dismiss it) answer different questions and stay separate, but they read their thresholds from the same place.
-  - **`SLOP = 8`** — how far a finger may travel before it is going somewhere rather than pressing something. Cancels a long press, starts a sheet drag, and disqualifies the click at the end of either.
-  - **`DISMISS_DISTANCE = 88` · `DISMISS_VELOCITY = 0.45`** — past that much travel a sheet is released rather than sprung back, or below it if the finger was still moving that fast (px/ms).
-  - **`scrollersAtTop`** — the question a downward drag must answer before it may mean anything.
-  - **`createTrail(120)`** — release velocity from a window of samples, never from the last two.
+  - **One hand-rolled gesture left.** `useLongPress` asks whether a finger is a tap, a drag or a hold. The pull-down is the library's — a `Dialog` presented as a bottom sheet renders as a Base UI `Drawer`, so the gesture comes from the primitive.
+  - **`SLOP = 8`** — how far a finger may travel before it is going somewhere rather than pressing something. Cancels a long press and disqualifies the click at the end of one.
+  - **A drag is never a tap.** The browser suppresses a click after a scroll, but not after a short drag the scroller declined to follow — which is how a card opened the album a finger was swiping past.
+  - **`data-pressing`** paints the hold from the first frame, or the wait reads as a tap that did not register.
   - **`useCoarsePointer()`** is the input gate, not a width gate: it asks what is doing the pointing.
 contract:
-  - "[touch] **One module owns both gestures' numbers.** Slop, the dismiss thresholds, the \"is every scroller at its top\" test and the velocity trail live in `src/lib/gesture.ts`. Never re-declare one at a call site — the sheet once carried its own slop against the cards', which is how two gestures on one screen start feeling like two apps."
+  - "[touch] **A gesture comes from the library unless it cannot.** Sheets pull down because they are Base UI `Drawer`s — dialogs presented as bottom sheets included. The one hand-rolled gesture left is the long press, and its slop lives in `src/lib/gesture.ts` rather than at a call site: the sheet drag once carried its own against the cards', which is how two gestures on one screen start feeling like two apps."
   - "[touch] **A drag is never a tap, and a press must be visible.** Any component that adds a hold gets both from `useLongPress`: the click is swallowed if the finger travelled, and `data-pressing` paints the hold from the first frame. A hold with no feedback reads as a tap that did not register."
   - "[touch] **iOS wants your long press too.** `img { -webkit-touch-callout: none }` is global and has to be: it must be in force before the finger lands, so it cannot come from a press handler."
 ---
 
-Two hand-rolled gestures, one set of numbers. `useLongPress` asks whether a
-finger is a tap, a drag or a hold; `useSheetDrag` pulls a bottom sheet down to
-dismiss it. They answer different questions, so they stay separate — but they
-each used to carry their own copy of the same four decisions, with their own
-values, which is how two gestures on one screen drift into feeling like two
-different apps. The sheet's slop was 6px against the cards' 8.
+**One hand-rolled gesture, and it is deliberately the only one.**
+`useLongPress` asks whether a finger is a tap, a drag or a hold. Everything
+else a finger does to a surface comes from Base UI: a `Sheet` is a `Drawer`,
+and a `Dialog` presented as a bottom sheet renders as one too, so the
+pull-down is the library's.
 
-The numbers are the ones the phone taught us, and changing one changes both
-gestures on purpose.
+There used to be a second — `useSheetDrag`, two hundred lines giving the
+dialog-family sheets a gesture the Drawer already had. It is gone, and the
+dismiss thresholds, the velocity trail and the scroller test went with it,
+because nothing else used them.
 
-## The numbers
+## The number
 
 | Constant | Value | What it decides |
 |---|---|---|
-| `SLOP` | `8` | Travel past which a press becomes a movement. Cancels a hold, starts a sheet drag, disqualifies the click at the end of either. |
-| `DISMISS_DISTANCE` | `88` | A sheet dragged this far is released rather than sprung back. |
-| `DISMISS_VELOCITY` | `0.45` px/ms | …or below that distance, if the finger was still moving this fast. |
-| trail window | `120` ms | How much history the release velocity is measured over. |
+| `SLOP` | `8` | Travel past which a press becomes a movement. Cancels a hold, and disqualifies the click at the end of one. |
 
-**Velocity from the last two samples is noise.** They can share a timestamp,
-which reads as a dead stop, or land 2px apart, which reads as a flick. A
-window of samples is what the finger was actually doing at the end, which is
-why `createTrail` exists rather than a subtraction at the end of the drag.
+A module with one export earns its place for the reason it was written: the
+sheet drag once carried its own slop, 6px against the cards' 8, and two
+gestures on one screen that disagree by 2px feel like two apps. A number a
+second gesture would want is a number that belongs in one place.
 
-**`scrollersAtTop(node, boundary)`** is the test a downward drag has to pass
-before it may mean anything at all: a sheet is mostly list, and inside one the
-same movement means "scroll up". Only when every scrollable box between the
-finger and the sheet is already at its top is the gesture unambiguous.
+## What the deleted gesture had to get right
+
+Kept because the reasoning outlived the code — this is what any
+pull-to-dismiss has to handle, and therefore what Base UI's Drawer is doing
+for us now:
+
+- **It must not eat a scroll.** A sheet is mostly list, and inside one the same
+  downward drag means "scroll up". The gesture may only begin when every
+  scrollable box under the finger is already at its top.
+- **Velocity from the last two samples is noise.** They can share a timestamp,
+  which reads as a dead stop, or land 2px apart, which reads as a flick. A
+  window of samples is what the finger was actually doing at the end.
+- **A CSS animation beats an inline transform.** A keyframe exit whose frames
+  start at translate 0 yanks a swiped sheet back to where it was before
+  playing — which is why both families move by *transition*, not animation.
+- **A refused close has to spring back.** A sheet holding unsaved work answers
+  a dismissal with a confirmation and stays open; without the spring you get a
+  backdrop over an empty screen and the sheet parked below the fold.
 
 ## A drag is never a tap
 
@@ -97,46 +108,33 @@ hid its links there would be lying about the machine it is running on.
 Its first use is the song row's meta line — see
 [song-list-item](song-list-item.md).
 
-## `useSheetDrag` is a workaround, and says so
+## The move that deleted it
 
-*(`src/lib/use-sheet-drag.ts` — the long-press half lives in
-`src/lib/use-long-press.ts`, and both read `src/lib/gesture.ts`.)*
+Below `md`, `Dialog` used to be presented as a bottom sheet by CSS alone — the
+right shape, with no gesture, because a Dialog is not a Drawer. `useSheetDrag`
+supplied one.
 
-`Sheet` gets pull-to-dismiss from Base UI's Drawer, which has a better-tuned
-version of this gesture. `useSheetDrag` exists only because a **Dialog is not
-a Drawer**: below `md` a Dialog is presented as a bottom sheet by CSS alone,
-and a bottom sheet that answers only its ✕ feels broken under a thumb.
+It renders as a `Drawer` now. The two families cannot be mixed — every part
+reads its own root's context, so a `Dialog.Title` inside a `Drawer.Root` finds
+nothing — which is why the root has to know the presentation before the
+content renders, and why **`mobile` moved from `DialogContent` up to
+`Dialog`**. How a dialog is presented is a property of the dialog, not of the
+box inside it.
 
-What it has to get right, each rule earned:
+`mobile="form"` stays a Dialog on purpose: a Drawer always carries a swipe,
+and a downward flick over a half-filled form should not discard it.
 
-- **Keyed on the ELEMENT, not a ref.** A dialog's popup is not in the tree
-  until the dialog opens, while the component holding the ref mounts with the
-  page — so an effect keyed on a ref object runs once, against `null`, and
-  never again.
-- **Capture phase, all four listeners.** Rows inside a sheet have their own
-  pointer handling and some stop the event before it reaches the popup.
-- **One transform per FRAME.** Pointer moves arrive faster than the screen
-  refreshes (120Hz reporting against a 60Hz paint is routine), and writing a
-  transform per event makes the sheet stutter against its own updates instead
-  of tracking the finger.
-- **Re-base on where the drag began**, not where the finger landed, or the
-  sheet jumps by the slop the moment it starts moving.
-- **`touch-action` is read when a gesture STARTS**, so setting it mid-drag
-  does nothing — refusing the browser's scroll needs a non-passive
-  `touchmove`.
-- **It closes by clicking the sheet's own close button**, which is always in
-  the tree, so the dialog's close semantics and focus restoration are the
-  dialog's.
-- **A refused close springs back.** A sheet holding unsaved work answers a
-  dismissal with a confirmation and stays open; `data-open` a frame later
-  means refused.
-
-**When the sheet-shaped dialogs move onto Drawer, this hook and half of
-`gesture.ts` go with them.** That is phase 2, deferred on purpose.
+Three things had to come across by hand, and they are the reason this was a
+move rather than a deletion: the popup must opt back into pointer events (the
+Drawer's viewport is `pointer-events: none` so the backdrop still takes a
+tap), the enter must be a transition rather than a keyframe, and the backdrop
+reads `--drawer-swipe-progress` where it used to read a variable of ours.
 
 ## Open questions
 
 - The 450–500ms hold is not a shared constant — it lives in `useLongPress`'s
-  default. It probably belongs here with the rest.
-- Nothing reads `DISMISS_VELOCITY` except the sheet. If a card ever gains a
-  flick, the two should agree, and it is not written down which way.
+  default. With the sheet drag gone there is only one gesture to disagree
+  with itself, so it matters less, but the module is still where it belongs.
+- ~~Nothing reads `DISMISS_VELOCITY` except the sheet~~ — **answered by the
+  Drawer move**: the constant is gone, along with the gesture that read it.
+  Base UI's release threshold is the library's business now.

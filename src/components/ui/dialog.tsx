@@ -2,11 +2,11 @@
 
 import * as React from "react"
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
+import { Drawer as DrawerPrimitive } from "@base-ui/react/drawer"
 
 import { cn } from "@/lib/utils"
 import { SheetGrabber } from "@/components/ui/sheet"
 import { useIsMobile } from "@/lib/use-media-query"
-import { useSheetDrag } from "@/lib/use-sheet-drag"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
 
@@ -64,7 +64,7 @@ const dialogDesktopPositionClass =
   "md:data-open:slide-in-from-bottom-0 md:data-open:zoom-in-95"
 
 export const dialogPositionClass =
-  "fixed z-50 duration-100 transition-none data-open:animate-in data-open:fade-in-0 " +
+  "fixed z-50 duration-100 " +
   // mobile → bottom sheet, sitting ON TOP of the on-screen keyboard (`--kb`,
   // published by `useKeyboardInset`; 0 when there is none) and capped to the
   // space that leaves, scrolling internally. Anchoring to `bottom: 0` would
@@ -90,8 +90,36 @@ export const dialogPositionClass =
   // "scroll the focused field into view" would park a field underneath it.
   // `scroll-padding-bottom` reserves the footer's height for that scroll.
   "[scroll-padding-bottom:8rem] " +
-  "data-open:slide-in-from-bottom-4 data-open:zoom-in-100 " +
   dialogDesktopPositionClass
+
+/* The phone sheet's enter, for the DIALOG rendering only.
+ *
+ * Below `md` a sheet is a Drawer, and a Drawer moves by transition — the
+ * library drives `--drawer-swipe-movement-y` and expects to interpolate it. A
+ * CSS animation beats an inline transform in the cascade, so leaving these on
+ * pinned the popup at its starting keyframe: the sheet mounted, sat one
+ * screen-height below the fold, and never came up. Hence two classes, applied
+ * to the two families, rather than one class with an override on top. */
+const dialogAnimationClass =
+  "transition-none data-open:animate-in data-open:fade-in-0 " +
+  "data-open:slide-in-from-bottom-4 data-open:zoom-in-100"
+
+/* …and the Drawer's equivalent: follow the finger, transition rather than
+   animate, and hold still while the finger is down. Mirrors
+   `SIDE_CLASSES.bottom` in `sheet.tsx`, which is the same surface reached
+   through the other component family. */
+const dialogDrawerMotionClass =
+  /* The Viewport covers the screen and is `pointer-events: none`, so that the
+     backdrop underneath still takes a tap. The popup has to opt back IN, or
+     the sheet renders perfectly and nothing inside it can be clicked — every
+     press falls through to the backdrop and closes it. `Sheet` carries the
+     same class for the same reason. */
+  "pointer-events-auto " +
+  "[transform:translateY(var(--drawer-swipe-movement-y,0px))] " +
+  "transition-[transform,opacity] duration-[240ms] ease-[cubic-bezier(0.2,0,0,1)] " +
+  "data-swiping:transition-none " +
+  "data-starting-style:[transform:translateY(100%)] " +
+  "data-ending-style:[transform:translateY(100%)]"
 
 // `mobile="form"` — the full-screen FORM sheet (Apple Music "New Playlist").
 // Anchored to the TOP of the screen and filling it, with the actions in a
@@ -105,7 +133,7 @@ export const dialogPositionClass =
 // `DialogFormBody` re-applies the 12px gutter. Desktop is the same centered
 // modal as everything else — the bar hides, the ordinary header/footer show.
 export const dialogFormPositionClass =
-  "fixed z-50 duration-100 transition-none data-open:animate-in data-open:fade-in-0 " +
+  "fixed z-50 duration-100 " +
   // The sheet reaches the bottom of the screen and holds the keyboard off with
   // PADDING, rather than ending at `bottom: var(--kb)`. Same content position
   // either way, but the surface keeps going: iOS draws its accessory bar as a
@@ -119,7 +147,6 @@ export const dialogFormPositionClass =
   // it (it covered the privacy toggle) instead of the body ending above it.
   "flex flex-col gap-0 p-0 overflow-hidden " +
   "[scroll-padding-top:4rem] [scroll-padding-bottom:1rem] " +
-  "data-open:slide-in-from-bottom-4 data-open:zoom-in-100 " +
   "md:grid md:gap-5 md:p-6 " +
   dialogDesktopPositionClass
 
@@ -244,28 +271,99 @@ export const dialogFooterClass =
 
 // ─── Live Dialog (portal-rendered, modal) ────────────────────────────────────
 
-function Dialog({ ...props }: DialogPrimitive.Root.Props) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+/*
+ * A bottom sheet on a phone is a DRAWER, and says so to the library.
+ *
+ * Below `md` a `mobile="sheet"` dialog renders Base UI's `Drawer` instead of
+ * its `Dialog`: same markup, same classes, but the pull-down gesture comes
+ * from the primitive rather than from 200 lines of ours. `useSheetDrag` — the
+ * hook that used to supply it — is gone with this, and half of `gesture.ts`
+ * with it.
+ *
+ * Why the two families cannot simply be mixed: every part reads its own
+ * root's context, so a `Dialog.Title` inside a `Drawer.Root` finds nothing.
+ * The root therefore has to know the presentation BEFORE the content renders,
+ * which is why `mobile` moved from `DialogContent` up to `Dialog` — where it
+ * arguably belonged anyway. How a dialog is presented is a property of the
+ * dialog, not of the box inside it.
+ *
+ * `mobile="form"` stays a Dialog on purpose. It is the full-screen form sheet,
+ * and a Drawer always carries a swipe: a downward flick over a half-filled
+ * form is not a gesture that should discard it.
+ */
+/* The two families take the same props at runtime and different ones in the
+   types — the event-detail objects are named differently and nothing else
+   diverges. Loosening the COMPONENT rather than the props keeps every call
+   site's props checked against the Dialog types, which is where the app's
+   own API lives. */
+type AnyPart = React.ComponentType<Record<string, unknown>>
+function pick(drawer: boolean, a: unknown, b: unknown) {
+  return (drawer ? a : b) as AnyPart
+}
+
+interface DialogMode {
+  mobile: "sheet" | "form"
+  /** True when this dialog is currently rendering as a Drawer. */
+  asDrawer: boolean
+}
+const DialogModeContext = React.createContext<DialogMode>({ mobile: "sheet", asDrawer: false })
+const useDialogMode = () => React.useContext(DialogModeContext)
+
+function Dialog({
+  mobile = "sheet",
+  ...props
+}: DialogPrimitive.Root.Props & {
+  /** Phone presentation. `sheet` (default) — a bottom sheet, which below `md`
+   *  is a Base UI `Drawer` and answers a pull-down. `form` — the full-screen
+   *  sheet anchored to the top, actions in a `DialogActionBar`; use it for
+   *  anything with a text field whose primary action must survive the
+   *  keyboard. Desktop is identical either way. */
+  mobile?: "sheet" | "form"
+}) {
+  const isMobile = useIsMobile()
+  const asDrawer = isMobile && mobile === "sheet"
+  const Root = DrawerPrimitive.Root as AnyPart
+  const mode = React.useMemo(() => ({ mobile, asDrawer }), [mobile, asDrawer])
+  return (
+    <DialogModeContext.Provider value={mode}>
+      {asDrawer
+        /* `down`, and on the ROOT: the popup reads the direction from context,
+           so it cannot be derived from what the content declares. */
+        /* The two roots take the same props with differently-named event
+           detail types; the runtime shape is identical, so the cast is the
+           honest way to say "same call, different family". */
+        ? <Root data-slot="dialog" swipeDirection="down" {...props} />
+        : <DialogPrimitive.Root data-slot="dialog" {...props} />}
+    </DialogModeContext.Provider>
+  )
 }
 
 function DialogTrigger({ ...props }: DialogPrimitive.Trigger.Props) {
-  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
+  const { asDrawer } = useDialogMode()
+  const P = pick(asDrawer, DrawerPrimitive.Trigger, DialogPrimitive.Trigger)
+  return <P data-slot="dialog-trigger" {...props} />
 }
 
 function DialogPortal({ ...props }: DialogPrimitive.Portal.Props) {
-  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
+  const { asDrawer } = useDialogMode()
+  const P = pick(asDrawer, DrawerPrimitive.Portal, DialogPrimitive.Portal)
+  return <P data-slot="dialog-portal" {...props} />
 }
 
 function DialogClose({ ...props }: DialogPrimitive.Close.Props) {
-  return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
+  const { asDrawer } = useDialogMode()
+  const P = pick(asDrawer, DrawerPrimitive.Close, DialogPrimitive.Close)
+  return <P data-slot="dialog-close" {...props} />
 }
 
 function DialogOverlay({
   className,
   ...props
 }: DialogPrimitive.Backdrop.Props) {
+  const { asDrawer } = useDialogMode()
+  const Backdrop = pick(asDrawer, DrawerPrimitive.Backdrop, DialogPrimitive.Backdrop)
   return (
-    <DialogPrimitive.Backdrop
+    <Backdrop
       data-slot="dialog-overlay"
       className={cn(
         "fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0",
@@ -287,17 +385,16 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
-  mobile = "sheet",
   ref,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
-  /** Phone presentation. `sheet` (default) — bottom sheet, actions in the
-   *  footer. `form` — full-screen sheet anchored top, actions in a
-   *  `DialogActionBar`; use for anything with a text field whose primary
-   *  action must survive the keyboard. Desktop is identical either way. */
-  mobile?: "sheet" | "form"
 }) {
+  /* The presentation is the ROOT's, not the content's — see `Dialog`. A
+     content component cannot choose it, because by the time it renders the
+     family is already decided. */
+  const { mobile, asDrawer } = useDialogMode()
+  const Popup = pick(asDrawer, DrawerPrimitive.Popup, DialogPrimitive.Popup)
   const form = mobile === "form"
 
   /* Pull-down-to-dismiss. A `Sheet` inherits this from Base UI's Drawer; a
@@ -437,10 +534,6 @@ function DialogContent({
     return () => popupEl.removeEventListener("scroll", pin)
   }, [popupEl])
   const closeRef = React.useRef<HTMLButtonElement>(null)
-  useSheetDrag(popupEl, {
-    enabled: !form,
-    onClose: React.useCallback(() => closeRef.current?.click(), []),
-  })
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -460,11 +553,20 @@ function DialogContent({
           className="fixed inset-x-0 bottom-0 z-50 h-[var(--kb,0px)] bg-popover md:hidden"
         />
       )}
-      <DialogPrimitive.Popup
+      {/* `Drawer.Viewport` is where the swipe lives — the popup alone does not
+          carry it. Fixed and inert, so it covers the screen for the gesture
+          without taking pointer events from the page behind. */}
+      <MaybeViewport on={asDrawer}>
+      <Popup
         ref={useMergedRefs(setPopupEl, ref)}
         data-slot="dialog-content"
         data-mobile={mobile}
-        className={cn(dialogChromeClass, form ? dialogFormPositionClass : dialogPositionClass, className)}
+        className={cn(
+          dialogChromeClass,
+          form ? dialogFormPositionClass : dialogPositionClass,
+          asDrawer ? dialogDrawerMotionClass : dialogAnimationClass,
+          className,
+        )}
         {...props}
       >
         {children}
@@ -484,9 +586,9 @@ function DialogContent({
         {!form && <SheetGrabber className="absolute left-1/2 top-1.5 z-20 -translate-x-1/2 md:hidden" />}
         {/* The gesture's own exit door: always mounted, even when the visible
             ✕ is not, so a pull-down works on a sheet that hides its ✕. */}
-        <DialogPrimitive.Close ref={closeRef} className="hidden" aria-hidden="true" tabIndex={-1} />
+        <DialogClose ref={closeRef} className="hidden" aria-hidden="true" tabIndex={-1} />
         {showCloseButton && (
-          <DialogPrimitive.Close
+          <DialogClose
             data-slot="dialog-close"
             render={
               <Button
@@ -511,10 +613,23 @@ function DialogContent({
             <XIcon
             />
             <span className="sr-only">Close</span>
-          </DialogPrimitive.Close>
+          </DialogClose>
         )}
-      </DialogPrimitive.Popup>
+      </Popup>
+      </MaybeViewport>
     </DialogPortal>
+  )
+}
+
+/* The Drawer's swipe surface, and nothing at all when the dialog is a Dialog.
+   A wrapper rather than a branch around the whole tree, so the popup and its
+   children are written once. */
+function MaybeViewport({ on, children }: { on: boolean; children: React.ReactNode }) {
+  if (!on) return children
+  return (
+    <DrawerPrimitive.Viewport className="fixed inset-0 z-50 pointer-events-none">
+      {children}
+    </DrawerPrimitive.Viewport>
   )
 }
 

@@ -1637,18 +1637,18 @@ img {
    
    The page brightening under the finger is most of what makes a sheet feel
    attached to it rather than merely followed by it. Base UI's Drawer
-   publishes the drag as `--drawer-swipe-progress` (0 → 1); `useSheetDrag`
-   publishes the same thing as `--sheet-drag-progress` for the dialog-family
-   sheets, so both behave alike.
+   publishes the drag as `--drawer-swipe-progress` (0 → 1), and both families
+   of sheet are Drawers now — a `Dialog` presented as a bottom sheet renders
+   as one below `md`. There used to be a second variable here,
+   `--sheet-drag-progress`, published by a hand-rolled hook; it went when the
+   hook did.
 
    Plain CSS, not a Tailwind arbitrary value: `opacity-[calc(1-var(--x,0))]`
    is mangled by the comma in the var fallback and resolves to 0 — which made
    the backdrop invisible in every state, dragging or not. */
-[data-slot="sheet-overlay"] {
-  opacity: calc(1 - var(--drawer-swipe-progress, 0));
-}
+[data-slot="sheet-overlay"],
 [data-slot="dialog-overlay"] {
-  opacity: calc(1 - var(--sheet-drag-progress, 0));
+  opacity: calc(1 - var(--drawer-swipe-progress, 0));
 }
 /* …except while closing, where the exit owns the value. Base UI drops the
    drag variable BEFORE the exit state lands, so without this the backdrop

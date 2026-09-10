@@ -43,6 +43,7 @@ import type { SavedSong } from "@/lib/user-library"
 export { useAddToPlaylist } from "@/lib/add-to-playlist-context"
 
 export function AddToPlaylistProvider({ children }: { children: React.ReactNode }) {
+  const [mode, setMode] = useState<"list" | "create">("list")
   const [song, setSong] = useState<SavedSong | null>(null)
   const open = useCallback((s: SavedSong) => setSong(s), [])
   /* The sheet holds picks, and the dialog that can be flicked away lives out
@@ -60,6 +61,12 @@ export function AddToPlaylistProvider({ children }: { children: React.ReactNode 
           if (!o && guard.current()) return
           if (!o) setSong(null)
         }}
+        /* The presentation is the root's now (a sheet is a Drawer below `md`,
+           a form sheet is not), and this flow has two steps with two
+           presentations — so the step lives up here rather than inside the
+           content. `list` is a bottom sheet you can pull down; `create` is a
+           form whose field must survive the keyboard. */
+        mobile={mode === "create" ? "form" : "sheet"}
       >
         {song && (
           // key by the song so the dialog's mode / filter state resets each
@@ -67,6 +74,8 @@ export function AddToPlaylistProvider({ children }: { children: React.ReactNode 
           <AddToPlaylistContent
             key={song.id}
             song={song}
+            mode={mode}
+            setMode={setMode}
             guard={guard}
             onClose={() => setSong(null)}
           />
@@ -76,16 +85,19 @@ export function AddToPlaylistProvider({ children }: { children: React.ReactNode 
   )
 }
 
-function AddToPlaylistContent({ song, guard, onClose }: {
+function AddToPlaylistContent({ song, guard, onClose, mode, setMode }: {
   song: SavedSong
   guard: React.RefObject<() => boolean>
   onClose: () => void
+  /** Lifted to the provider: the step decides the ROOT's presentation, and the
+   *  root renders before this does. */
+  mode: "list" | "create"
+  setMode: (m: "list" | "create") => void
 }) {
   const { add: toast } = useToast()
   // The header is a BAR on a phone and the ordinary header on desktop; the
   // create step is a form sheet below `md` and a modal above it.
   const isMobile = useIsMobile()
-  const [mode, setMode] = useState<"list" | "create">("list")
   const [query, setQuery] = useState("")
   const [name, setName] = useState("")
   /* One song goes into MANY playlists in one visit — Spotify's model, and the
@@ -154,7 +166,7 @@ function AddToPlaylistContent({ song, guard, onClose }: {
          field cannot be a bottom sheet — the keyboard leaves ~170px, and the
          action ends up behind it. The form presentation anchors top and puts
          the action in its own band. */
-      <DialogContent mobile="form" showCloseButton={!isMobile} className="md:max-w-[max(32rem,50vw)]">
+      <DialogContent showCloseButton={!isMobile} className="md:max-w-[max(32rem,50vw)]">
         {isMobile ? (
           <DialogActionBar
             className="-mx-3 -mt-3"
