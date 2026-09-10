@@ -69,21 +69,24 @@ export function useKeyboardInset() {
       if (open) root.dataset.kb = "open"
       else delete root.dataset.kb
 
-      /* The keyboard leaves the WINDOW scrolled, and the app cannot scroll it
-         back on its own.
+      /* The window must never be scrolled, and iOS scrolls it anyway.
          
-         Focusing a field inside a sheet makes iOS scroll the window itself to
-         bring the caret into view — not the sheet's scroll box, the window,
-         which the app otherwise never scrolls because its shell is exactly one
-         viewport tall. When the keyboard closes, the layout viewport is whole
-         again but that scroll offset stays: the shell ends partway up the
-         screen and the rest is blank page below it. Reported from the "add to
-         playlist" flow, where the search field is the first thing you touch.
+         Focusing a field inside a sheet makes iOS scroll the WINDOW to bring
+         the caret into view — not the sheet's own scroll box, the window,
+         which this app otherwise never scrolls: the shell is exactly one
+         viewport tall and the body is `overflow: hidden`. Nothing good comes
+         of that offset. `position: fixed` is anchored to the LAYOUT viewport,
+         so a scrolled window carries every fixed thing off the top of the
+         screen — the app header, and the top of the sheet itself, which is
+         why a sheet could answer a tap with blank space and a field at the
+         bottom. And when the keyboard closes the offset stays, leaving the
+         shell parked partway up the screen.
          
-         So: when the keyboard has just closed, put the window back. Guarded on
-         the transition rather than run on every event, because scrolling the
-         window during a normal scroll would fight the user. */
-      if (wasOpen && !open && window.scrollY !== 0) window.scrollTo(0, 0)
+         So it is pinned, on every measurement rather than only on the
+         keyboard's closing edge: there is no legitimate window scroll in this
+         app to fight with, and the caret is already in view because the sheet
+         resized around `--kb`. */
+      if (window.scrollY !== 0) window.scrollTo(0, 0)
       wasOpen = open
     }
 
@@ -100,12 +103,17 @@ export function useKeyboardInset() {
     apply()
     vv.addEventListener("resize", apply)
     vv.addEventListener("scroll", apply)
+    // The window's own scroll is the event that matters for the pin above:
+    // iOS fires it as it drags the caret into view, and the sooner it is put
+    // back the less of the jump is visible.
+    window.addEventListener("scroll", apply, { passive: true })
     window.addEventListener("focusin", settle)
     window.addEventListener("focusout", settle)
     window.addEventListener("orientationchange", settle)
     return () => {
       vv.removeEventListener("resize", apply)
       vv.removeEventListener("scroll", apply)
+      window.removeEventListener("scroll", apply)
       window.removeEventListener("focusin", settle)
       window.removeEventListener("focusout", settle)
       window.removeEventListener("orientationchange", settle)

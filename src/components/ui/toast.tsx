@@ -35,11 +35,14 @@ export const toastShellClass = cn(
   // desktop-only for the same reason the box is one line: the title already
   // says it, and a two-line card with 18px of padding was a fifth of a 375px
   // screen for the word "added". Desktop keeps the roomier card.
-  "h-12 rounded-2xl px-4 shadow-xl md:h-auto md:rounded-xl md:px-4 md:pt-4 md:pb-[18px] md:shadow-lg",
+  "h-12 rounded-full px-4 shadow-xl md:h-auto md:rounded-xl md:px-4 md:pt-4 md:pb-[18px] md:shadow-lg",
   "border border-border bg-popover",
-  // `overflow-hidden` so the timer can run to the edges and be clipped by the
-  // radius. An 18px corner over the 24px pill of a field COVERS it — the
-  // rounder shape is the smaller one — which a pill-shaped toast did not.
+  // A PILL, like the field it lands on — same height, same gutter, same
+  // radius — so it reads as that control rather than as a card parked over
+  // it. 18px was tried on the theory that the rounder shape is the smaller
+  // one and would therefore cover the field's corners: true, and it still
+  // looked like a different object. `overflow-hidden` keeps the drain inside
+  // the curve.
   "overflow-hidden",
   "text-popover-foreground transition-[transform,opacity] duration-200",
   // The swipe belongs to the toast, not to the page scrolling behind it.
@@ -153,10 +156,17 @@ function ToastViewport({ className }: { className?: string }) {
                 stops the timer itself on hover. */}
             <span
               aria-hidden="true"
-              /* Inset on a phone, where the shell is a pill: a full-bleed rule
-                 clipped to that radius comes out as a curved sliver. Along the
-                 bottom edge on desktop, where the card has corners to run to. */
-              className="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-brand-500 animate-[toastTimer_linear_forwards] group-hover/toasts:[animation-play-state:paused]"
+              /* A solid brand rule, never a tint over the surface: a
+                 translucent wash across a toast reads as the toast itself
+                 being disabled, or as a second colour the palette does not
+                 have. On a phone it is inset from the pill's curve so its ends
+                 stay square; on desktop it runs the full bottom edge of the
+                 card. */
+              className={cn(
+                "absolute origin-left bg-brand-500 animate-[toastTimer_linear_forwards] group-hover/toasts:[animation-play-state:paused]",
+                "inset-x-5 bottom-[6px] h-[3px] rounded-full",
+                "md:inset-x-0 md:bottom-0 md:h-0.5 md:rounded-none",
+              )}
               style={{ animationDuration: `${t.timeout ?? TOAST_DEFAULT_MS}ms` }}
             />
             {icon}

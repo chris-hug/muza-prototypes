@@ -41,19 +41,21 @@ The toast's Undo is for reversing something already done.
 
 ## One line on a phone, at the control step
 
-The phone toast is `h-12` with an 18px radius — **the same box as an `lg`
-field or button**, in the same 12px gutter. Not a pill, deliberately: the
-rounder shape is the SMALLER one, so a pill-shaped toast left the corners of
-the pill-shaped field it sits on peeking out. 18px over 24px covers. That is what lets it land ON the control
+The phone toast is `h-12` and a **pill** — the same box AND the same shape as
+the `lg` field it lands on, in the same 12px gutter, so it reads as that
+control rather than as a card parked over it. (18px was tried, on the theory
+that the rounder shape is the smaller one and would cover the field's corners.
+True, and it still looked like a different object.) That is what lets it land ON the control
 it is answering (the search field at the foot of a sheet) and cover it
 outright: measured, the toast is `[12, 434, 363, 482]` against the field's
 `[13, 433, 362, 481]`, a pixel of bleed on every side. It carries `shadow-xl`,
 because it is now sitting on top of another control rather than beside it.
 
-Its timer runs along the bottom edge at both sizes, clipped by the radius
-(`overflow-hidden`). At 18px that is a straight rule; it was inset while the
-shell was a pill, because a full-bleed rule clipped to a pill comes out as a
-curved sliver that reads as an underline under the title.
+Its timer is a **solid `brand-500` rule** — inset from the pill's curve on a
+phone (`inset-x-5 bottom-[6px] h-[3px] rounded-full`) so its ends stay square,
+full-bleed along the bottom edge on desktop. Never a translucent wash across
+the surface: a tinted toast reads as a disabled one, or as a colour the
+palette does not have.
 
 The **description is desktop-only** (`hidden md:block`) and the title
 truncates. A confirmation
