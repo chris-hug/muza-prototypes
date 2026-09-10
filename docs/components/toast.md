@@ -104,10 +104,12 @@ the keyboard — so anything anchored to the bottom adds
 ### Dismissal
 
 - **Auto-dismiss.** `ToastProvider` defaults `timeout` to `TOAST_DEFAULT_MS`
-  (4000ms). Every toast clears itself; nothing depends on the user closing it.
-- **A timer bar says how long is left** — a 2px rule along the bottom edge,
-  emptying left to right over the toast's own `timeout` (`toastTimer`, linear:
-  it is a clock, not a motion). Without it every dismissal is a surprise, and
+  (5000ms). Every toast clears itself; nothing depends on the user closing it.
+- **A timer bar says how long is left** — a 2px rule along the bottom edge in
+  `brand-500`, emptying left to right over the toast's own `timeout`
+  (`toastTimer`, linear: it is a clock, not a motion). Brand rather than a
+  neutral because it is the one moving thing on a surface that is otherwise
+  deliberately quiet, and it should read as the product's own clock. Without it every dismissal is a surprise, and
   a reader waits for something that was never going to stay. It pauses with
   the toast on hover (`group/toasts`), matching Base UI's own timer.
 - **Swipe.** `swipeDirection={['down', 'right']}` — down on a phone, where the
@@ -123,7 +125,7 @@ the keyboard — so anything anchored to the bottom adds
 ## Duration — `TOAST_CONFIRM_MS`
 
 ```tsx
-export const TOAST_CONFIRM_MS = 2000
+export const TOAST_CONFIRM_MS = 3000
 
 add({ title: "3 songs added", type: "success", timeout: TOAST_CONFIRM_MS })
 ```
@@ -132,8 +134,8 @@ Two durations, chosen by what the toast has to do:
 
 | Duration | For | Why |
 |---|---|---|
-| `TOAST_CONFIRM_MS` (2s) | plain confirmations — "added", "created", "saved" | the user already saw the result; the toast only has to register, and the timer bar makes the two seconds legible rather than abrupt. |
-| `TOAST_DEFAULT_MS` (4s) | messages carrying an **action** (Undo) or a consequence worth reading | 2s is too short to read a line *and* reach a button. |
+| `TOAST_CONFIRM_MS` (3s) | plain confirmations — "added", "created", "saved" | the user already saw the result; the toast only has to register, and the timer bar makes the three seconds legible rather than abrupt. |
+| `TOAST_DEFAULT_MS` (5s) | messages carrying an **action** (Undo) or a consequence worth reading | 3s is too short to read a line *and* reach a button. |
 
 The constant exists so a confirmation reads and clears at **one known
 duration** across the app, instead of each call site inventing its own
@@ -164,7 +166,7 @@ Undo, and `ShopMyProducts` for an "Open settings" shortcut.
 
 The button is `text-xsmall font-medium`, `border-border`, `hover:bg-accent` —
 a secondary control, deliberately quieter than the message it sits next to.
-Leave a toast with an action on the 4s default.
+Leave a toast with an action on the 5s default.
 
 ## Wording
 

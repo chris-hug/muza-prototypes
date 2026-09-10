@@ -32,7 +32,7 @@ export const toastShellClass = cn(
   // on a 375px screen a two-line card with 18px of padding is a fifth of the
   // screen for "added". The description is desktop-only for the same reason —
   // the title already says it. Desktop keeps the roomier card.
-  "rounded-lg md:rounded-xl border border-border bg-popover shadow-lg",
+  "rounded-2xl border border-border bg-popover shadow-lg",
   "px-3 py-2.5 md:px-4 md:pt-4 md:pb-[18px]",
   // `overflow-hidden` clips the timer bar to the rounded corners; the timer
   // is the only child that reaches the edges.
@@ -83,7 +83,7 @@ const ToastIcon: Record<string, React.ReactNode> = {
 
 /** Default life of a toast carrying something worth reading — a consequence,
  *  or an action like Undo. Plain confirmations use `TOAST_CONFIRM_MS`. */
-export const TOAST_DEFAULT_MS = 4000
+export const TOAST_DEFAULT_MS = 5000
 
 function ToastProvider({ children, timeout = TOAST_DEFAULT_MS }: { children: React.ReactNode; timeout?: number }) {
   return (
@@ -139,7 +139,7 @@ function ToastViewport({ className }: { className?: string }) {
                 stops the timer itself on hover. */}
             <span
               aria-hidden="true"
-              className="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-foreground/20 animate-[toastTimer_linear_forwards] group-hover/toasts:[animation-play-state:paused]"
+              className="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-brand-500 animate-[toastTimer_linear_forwards] group-hover/toasts:[animation-play-state:paused]"
               style={{ animationDuration: `${t.timeout ?? TOAST_DEFAULT_MS}ms` }}
             />
             {icon}
@@ -190,7 +190,7 @@ function useToast() {
  *  already saw the result, so the toast only has to register. Platform
  *  snackbars sit around 2–3s; our 5s default is for messages carrying an
  *  action or a consequence worth reading. Pass as `timeout` to `add()`. */
-export const TOAST_CONFIRM_MS = 2000
+export const TOAST_CONFIRM_MS = 3000
 
 // ── Static preview (kitchen-sink + design docs) ────────────────────────────────
 //
