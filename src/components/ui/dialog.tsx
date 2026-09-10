@@ -88,6 +88,11 @@ export const dialogPositionClass =
 export const dialogFormPositionClass =
   "fixed z-50 duration-100 transition-none data-open:animate-in data-open:fade-in-0 " +
   "inset-x-0 top-0 bottom-[var(--kb,0px)] translate-x-0 translate-y-0 max-w-full max-h-none rounded-none " +
+  // The POPUP carries no surface on a phone — the bands do (`DialogActionBar`
+  // and `DialogFormBody`). The action row is the reason: it floats, so the
+  // sheet's white must END above it, or the pill sits on a slab of popover
+  // with nothing in it.
+  "max-md:bg-transparent " +
   // `overflow-hidden`, NOT `auto`: the sheet is three bands — sticky bar,
   // scrolling body, action row — and only the BODY scrolls. If the popup
   // itself scrolled, a sticky action row would overlay whatever passed under
@@ -115,7 +120,11 @@ export const dialogFormBodyClass =
   // `flex-1 min-h-0 overflow-y-auto` — the body is the only scrolling band.
   // `gap-3` (not the desktop 20px): on a phone every gap competes with the
   // keyboard for the same ~200px.
-  "flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto p-3 md:contents md:overflow-visible"
+  // It also PAINTS the sheet (the popup itself is transparent on a phone), and
+  // rounds off at the bottom, where the surface now ends above the floating
+  // action instead of running to the edge of the screen.
+  "flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto bg-popover rounded-b-2xl p-3 " +
+  "md:contents md:overflow-visible md:bg-transparent md:rounded-none"
 
 // The form sheet's action row: the confirming button pinned below the body,
 // never overlapping it (the body scrolls, this doesn't), and clearing the

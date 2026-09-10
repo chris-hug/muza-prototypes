@@ -187,7 +187,11 @@ Only the middle one scrolls.
   `--kb`, so it sits directly on the keyboard. Never offered twice — bar
   **or** action row.
 - **That band FLOATS**: no surface and no edge of its own, a 16px inset rather
-  than the sheet's 12px gutter, and `shadow-lg` on the pill. It carries one
+  than the sheet's 12px gutter, and `shadow-lg` on the pill. Which is also why
+  the POPUP paints nothing on a phone (`max-md:bg-transparent`) and the BANDS
+  carry the surface instead — `DialogFormBody` is `bg-popover rounded-b-2xl`.
+  A popup that painted its own surface would put a slab of empty popover
+  behind the floating pill, all the way to the keyboard. It carries one
   control, and one control over a form reads as an object, not as a bar bolted
   to the bottom — the same rule the find screen's lone search field follows in
   `AddMusicDialog`, where the band only goes opaque once a second control joins
