@@ -278,6 +278,12 @@ Focusing the search input switches the sheet to a **find screen**
 at the head of the bar. Three bands, and only the middle one moves — the same
 shape as the form sheet, for the same reason.
 
+- With **nothing to recall** — the first search of a new playlist — the empty
+  state fills the space and is centred in it, rather than a line of grey text
+  under the bar with a field at the far bottom, which reads as a sheet that
+  failed to load. With a keyboard up it drops to the headline alone
+  (`[data-kb="open"] [data-slot="find-empty"] > p + p`): ~60px is one line, and
+  two would sit half behind the field.
 - With no query it shows **recent searches**
   ([`useRecentSearches`](src/lib/use-recent-searches.ts) — `localStorage`,
   committed queries only, newest first, capped at 8), or a heading naming the

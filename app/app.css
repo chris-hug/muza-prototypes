@@ -1649,6 +1649,14 @@ img[class*="object-cover"] {
     --sheet-band-h: 64px;
   }
 
+  /* With a keyboard up the find screen's empty state has ~60px to live in,
+     between the bar and the field. The headline alone fits and stays centred;
+     the second line would push the pair past the box and it would sit half
+     behind the field instead. */
+  [data-kb="open"] [data-slot="find-empty"] > p + p {
+    display: none;
+  }
+
   /* The bottom SHEET is squeezed by the same amount, and it spends what it
      gets on rows: at a keyboard height the find screen's list is down to
      about half a row, so every 8px is a quarter of one. Same principle —

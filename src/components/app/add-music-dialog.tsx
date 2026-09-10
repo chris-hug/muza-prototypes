@@ -438,19 +438,19 @@ export function AddMusicDialog({
                 ))}
               </section>
             ) : (
-              // Nothing to recall yet — say what the field reaches instead.
-              <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+              /* Nothing to recall yet. It says what the field reaches, and it
+                 says it in the MIDDLE of the empty space (`flex-1`, centred)
+                 rather than tucked under the bar: on the first search of a
+                 new playlist this is the whole screen, and a sheet that
+                 answers a tap with a line of grey text at the top and a field
+                 at the bottom reads as something that failed to load. Every
+                 player fills this space — it is the one screen where there is
+                 nothing to show and something to say. */
+              <div data-slot="find-empty" className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
                 <p className="text-large font-medium text-foreground">Search all of muza</p>
                 <p className="text-small text-muted-foreground">Songs, albums and artists.</p>
               </div>
             )}
-
-            {/* Clears the floating band. A SPACER, not `padding-bottom` on
-                the scroller: padding sets a floor on a flex item's height
-                (`min-h-0` can't shrink a box below its own padding), so with
-                a keyboard up the list would refuse to fit and the sheet
-                would scroll instead. */}
-            <div aria-hidden className={cn("shrink-0", picked.length > 0 ? "h-36" : "h-20")} />
           </div>
         ) : (
           <>
