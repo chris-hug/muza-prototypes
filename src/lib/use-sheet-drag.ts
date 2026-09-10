@@ -131,6 +131,7 @@ export function useSheetDrag(
       const dismiss = dy > DISTANCE || (dy > 24 && velocity > VELOCITY)
 
       const springBack = () => {
+        el.style.animation = ""
         el.style.transition = "transform 220ms cubic-bezier(0.2, 0, 0, 1)"
         el.style.transform = ""
       }
@@ -140,6 +141,14 @@ export function useSheetDrag(
       trail.length = 0
 
       if (dismiss) {
+        /* Take the popup's own exit animation off the table first. A CSS
+           animation beats an inline style in the cascade, so the dialog's
+           `slide-out` — whose keyframes start at translate 0 — yanked the
+           sheet back UP to where it was before playing, which is the jump
+           back that made a dismissal look like a mistake. With no animation
+           to run, Base UI's "closed" wait resolves immediately and the sheet
+           is gone the moment our own slide finishes. */
+        el.style.animation = "none"
         // Carry the sheet the rest of the way out, then ask to close.
         el.style.transition = "transform 140ms cubic-bezier(0.4, 0, 1, 1)"
         el.style.transform = `translate3d(0, ${el.offsetHeight}px, 0)`
@@ -209,6 +218,7 @@ export function useSheetDrag(
       el.style.willChange = ""
       el.style.transition = ""
       el.style.transform = ""
+      el.style.animation = ""
       delete el.dataset.dragging
       delete el.dataset.sheetDrag
     }

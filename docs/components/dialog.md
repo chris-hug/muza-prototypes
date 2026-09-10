@@ -309,6 +309,13 @@ intercepts `onOpenChange(false)` while anything is picked and raises an
 *Discard* — with the sheet still mounted behind it, so cancelling returns to
 the same screen, query and selection.
 
+On dismissal the popup's own exit animation is turned OFF (`animation: none`)
+before the sheet is carried out. A CSS animation beats an inline style in the
+cascade, so `slide-out` — whose keyframes begin at translate 0 — yanked the
+sheet back up to where it started before playing, which is why a dismissal
+looked like a mistake being corrected. With no animation to run, Base UI's
+"closed" wait resolves at once and the sheet is gone the moment the slide ends.
+
 What makes the drag feel like a drag, all of it learned by it not feeling like
 one: the sheet re-bases on the point where the gesture CROSSED the slop, so it
 does not jump 6px the moment it starts; it writes one transform per frame,
