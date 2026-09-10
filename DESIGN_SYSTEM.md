@@ -756,7 +756,11 @@ still exists and a call site can still ask for it; what changed is which step
 you get by not choosing. 40px was a desktop-first number for something you
 type into on a phone.
 
-**Hold a card, get its menu.** Every card answers a long press (450–500ms) by
+**Hold a card, get its menu.** (And `img { -webkit-touch-callout: none }`, or
+iOS answers the same gesture with its own menu — Share / Save to Photos / Copy
+Subject — on top of ours. It has to be in force before the finger lands, so it
+cannot come from the press handler; the handler declines the desktop
+`contextmenu` for the same reason.) Every card answers a long press (450–500ms) by
 opening the same bottom sheet its ⋯ would: `useLongPress` on `AlbumCard`,
 `PlaylistCard` and `ArtistCard` (which has no ⋯ at all, on hover or otherwise).
 The hold is visible from the first frame — the returned props carry

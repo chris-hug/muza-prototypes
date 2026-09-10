@@ -81,6 +81,12 @@ export function useLongPress({
       clear()
       startPoint.current = null
     },
+    // iOS answers a long press on an image with its OWN menu (Share / Save to
+    // Photos / Copy Subject), which arrives on top of ours and wins the
+    // gesture. The callout is suppressed in CSS (`img` in `app.css`, because
+    // it has to be in force before the finger lands); this covers the
+    // right-click that a desktop browser sends for the same gesture.
+    onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
     onClick: (e: React.MouseEvent) => {
       // The long press already acted (it opened the menu) — swallow the click
       // the browser sends afterwards so the press doesn't ALSO navigate.

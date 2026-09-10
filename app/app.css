@@ -1580,6 +1580,20 @@ img[class*="object-cover"] {
   background-color: color-mix(in srgb, var(--popover) 72%, transparent);
 }
 
+/* iOS raises its own menu when a finger rests on an image — Share, Save to
+   Photos, Copy Subject, Look Up — and it takes the gesture the cards use for
+   THEIR menu, arriving on top of it. `-webkit-touch-callout` is the only way
+   to decline, and it has to be in force before the finger lands, so it cannot
+   be applied from the press handler.
+
+   Every image in this app is artwork inside a control: a cover, a portrait, a
+   collage tile. None of them is a photo the reader came to save, and the ones
+   worth having are behind the product's own Share. Text selection is
+   untouched — this is the image callout only. */
+img {
+  -webkit-touch-callout: none;
+}
+
 /* A card being HELD. `useCardPressMenu` sets `data-pressing` from the moment
    the finger lands until the menu opens or the hold is abandoned; this is what
    makes the wait legible — the card is visibly taken, not merely un-tapped.
