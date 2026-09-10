@@ -132,7 +132,8 @@ on the way past.** Its exit code is always 0, and its judgements live in a
   (`COMPONENT_TICKETS.md`, `PAGE_TICKETS.md`, `CLICKUP_TICKETS*`,
   `FOUNDATION_TICKETS.md`, `BRIEF_*`). Nothing reads them, nothing checks
   them, and they look like documentation. The tickets live in ClickUp now.
-- **`AGENTS.md` is wrong.** It tells an agent this is a Next.js project and to
-  read `node_modules/next/dist/docs/`. This app is React Router 7 on Vite.
-  It is the first file an agent reads, via `CLAUDE.md`, so it is the most
-  expensive stale line in the repo.
+- ~~`AGENTS.md` describes the wrong framework~~ — **fixed**. It had told every
+  agent this was Next.js and to read `node_modules/next/dist/docs/`, a path
+  that does not exist. It now describes the real stack and the checks.
+- `.next/` is **823MB** of gitignored leftovers from the migration, alongside
+  `next-env.d.ts`. Untracked, so they cost nothing in the repo — only on disk.
