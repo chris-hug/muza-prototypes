@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useCallback } from "react"
+import { useRef, useCallback, useState } from "react"
 
 /** Movement past this (px) turns the gesture into a drag: the long press is
  *  cancelled. The CLICK is left to the browser, which applies its own, more
@@ -23,6 +23,12 @@ const SLOP = 8
  * and suppress the one case the browser can't know about: the click that
  * follows a completed long press.
  *
+ * It also reports the hold as it happens. The returned props carry
+ * `data-pressing` while the finger is down, which `app.css` turns into 98%
+ * and a slight darkening — so the wait reads as the card being TAKEN rather
+ * than as a tap that has not registered. Let go early and it springs back,
+ * having done nothing.
+ *
  * Touch + mouse via Pointer Events.
  */
 export function useLongPress({
@@ -37,18 +43,27 @@ export function useLongPress({
   const timer      = useRef<ReturnType<typeof setTimeout> | null>(null)
   const triggered  = useRef(false)
   const startPoint = useRef<{ x: number; y: number } | null>(null)
+  const [pressing, setPressing] = useState(false)
 
   const clear = useCallback(() => {
     if (timer.current) { clearTimeout(timer.current); timer.current = null }
+    setPressing(false)
   }, [])
 
   return {
+    // Spread onto the element: the attribute is part of the gesture, not
+    // something every call site has to remember to wire up.
+    "data-pressing": pressing || undefined,
     onPointerDown: (e: React.PointerEvent) => {
       triggered.current  = false
       startPoint.current = { x: e.clientX, y: e.clientY }
       clear()
+      // Only touch shows the hold: a mouse has hover, and the menu it would
+      // open is already a click away on the card's own controls.
+      if (e.pointerType !== "mouse") setPressing(true)
       timer.current = setTimeout(() => {
         triggered.current = true
+        setPressing(false)
         onLongPress()
       }, ms)
     },

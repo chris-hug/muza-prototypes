@@ -22,6 +22,9 @@
  */
 
 import { useState } from "react"
+import { useLongPress } from "@/lib/use-long-press"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { DetailMenuSheetBody } from "@/components/ui/detail-more-button"
 import { cn } from "@/lib/utils"
 import { LogoMark } from "@/components/ui/logo"
 
@@ -35,11 +38,21 @@ export interface ArtistCardProps {
 
 export function ArtistCard({ name, image, onClick, className }: ArtistCardProps) {
   const [failed, setFailed] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const showImg = !!image && !failed
+  /* Hold the card, get its menu — the same gesture the album and playlist
+     cards answer to. An artist card has no kebab at all (not even on hover),
+     so before this it was the one card on the page with no way to reach
+     Share / Save / Go to artist on a phone. */
+  const gestures = useLongPress({
+    onClick:     () => onClick?.(),
+    onLongPress: () => setMenuOpen(true),
+  })
   return (
+    <>
     <button
       type="button"
-      onClick={onClick}
+      {...gestures}
       className={cn(
         // Card stretches to its container — consumers control width
         // via grid cell / parent sizing. Figma natural size 192px.
@@ -83,5 +96,15 @@ export function ArtistCard({ name, image, onClick, className }: ArtistCardProps)
       </div>
       <p className="text-xsmall font-normal leading-5 text-foreground truncate link-underline mx-auto">{name}</p>
     </button>
+
+    {/* The same sheet the detail pages raise, so an artist's actions read the
+        same wherever they are reached from. Controlled, because the trigger
+        is the card itself rather than a button. */}
+    <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+      <SheetContent side="bottom" className="rounded-t-2xl">
+        <DetailMenuSheetBody kind="artist" title={name} cover={image} subtitle="Artist" />
+      </SheetContent>
+    </Sheet>
+    </>
   )
 }

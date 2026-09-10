@@ -1580,6 +1580,27 @@ img[class*="object-cover"] {
   background-color: color-mix(in srgb, var(--popover) 72%, transparent);
 }
 
+/* A card being HELD. `useCardPressMenu` sets `data-pressing` from the moment
+   the finger lands until the menu opens or the hold is abandoned; this is what
+   makes the wait legible — the card is visibly taken, not merely un-tapped.
+
+   98% and a small darkening, both on the card's own box: any less and the hold
+   reads as a rendering wobble, any more and a cancelled press feels like it
+   did something. `filter` rather than an overlay so a card does not need an
+   extra element to be pressed, and the whole tile — artwork, title, meta —
+   dims together the way a physical key does.
+
+   The way OUT is faster than the way in (`transition` here, but the pressed
+   state is a plain toggle), because a cancelled hold should snap back. */
+[data-pressing] {
+  scale: 0.98;
+  filter: brightness(0.94);
+}
+@media (prefers-color-scheme: dark) {
+  [data-pressing] { filter: brightness(1.12); }
+}
+:root[data-theme="dark"] [data-pressing] { filter: brightness(1.12); }
+
 /* ── Touch targets ───────────────────────────────────────────────────────
    A 44px hit area on a control that is visually smaller. WCAG 2.2 AA asks
    for 24×24 (2.5.8) and everything here clears that; 44 is the AAA figure

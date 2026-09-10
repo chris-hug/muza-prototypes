@@ -4,6 +4,8 @@ import * as React from "react"
 import { Toast as ToastPrimitive } from "@base-ui/react/toast"
 import { XIcon, CheckCircleIcon, AlertCircleIcon, InfoIcon } from "lucide-react"
 
+import { Button } from "@/components/ui/button"
+
 import { cn } from "@/lib/utils"
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
@@ -52,12 +54,14 @@ const toastShell = toastShellClass
 
 // Action-button + close-button class strings — extracted so ToastPreview
 // stays visually identical to the real Viewport-rendered toast.
-export const toastActionButtonClass = cn(
-  "shrink-0 self-start mt-[3px]",
-  "rounded-md px-2 py-1 text-xsmall font-medium text-foreground",
-  "border border-border hover:bg-accent transition-colors",
-  "focus-visible:outline-none focus-ring",
-)
+/* Undo and friends. It is the SECONDARY button from the catalogue rather than
+   a button-shaped div: the toast is the one place an action appears without a
+   surface around it, so it has to be recognisably the same control as
+   everywhere else. Centred on the row, not pinned to the top of it — on a
+   phone the toast is one 48px line, and a top-pinned action in it reads as
+   crooked (the same fault the status icon had). On desktop the card can have
+   two lines, and the action still centres against them. */
+export const toastActionButtonClass = "relative shrink-0 self-center"
 export const toastCloseButtonClass = cn(
   // Hidden on phones: the toast auto-dismisses and can be swiped away, and a
   // dismiss target competes for width with the message itself. Platform
@@ -189,13 +193,14 @@ function ToastViewport({ className }: { className?: string }) {
             </div>
 
             {data.actionLabel && data.onAction && (
-              <button
-                type="button"
-                onClick={() => { data.onAction!(); }}
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => { data.onAction!() }}
                 className={toastActionButtonClass}
               >
                 {data.actionLabel}
-              </button>
+              </Button>
             )}
 
             <ToastPrimitive.Close
@@ -256,9 +261,9 @@ function ToastPreview({
         )}
       </div>
       {actionLabel && (
-        <button type="button" className={toastActionButtonClass}>
+        <Button variant="secondary" size="sm" className={toastActionButtonClass}>
           {actionLabel}
-        </button>
+        </Button>
       )}
       <button type="button" aria-label="Dismiss" className={toastCloseButtonClass}>
         <XIcon className="size-3.5" />

@@ -56,6 +56,7 @@ export function useSheetDrag(
     let dy = 0
     let dragging = false
     let pointerId: number | null = null
+    let frame = 0
 
     /** Every scrollable box between `node` and the sheet is at its top. */
     const atTop = (node: EventTarget | null) => {
@@ -82,13 +83,27 @@ export function useSheetDrag(
         // the drag is still worth running without it.
         try { el.setPointerCapture(e.pointerId) } catch { /* not capturable */ }
         el.style.transition = "none"
+        // The browser must stop treating this gesture as a scroll. Without it
+        // the list underneath keeps panning while the sheet moves, and the two
+        // fight over the same finger — which is what made the drag feel like
+        // it was catching rather than tracking.
+        el.style.touchAction = "none"
         el.dataset.dragging = ""
       }
 
       // Upward past the top edge is resisted rather than refused, which is
       // what tells a finger the sheet is already as far up as it goes.
       dy = y < 0 ? y / 4 : y
-      el.style.transform = `translate3d(0, ${dy}px, 0)`
+      // One write per FRAME. Pointer moves arrive faster than the screen
+      // refreshes (120Hz reporting against a 60Hz paint is routine), and
+      // writing a transform per event makes the sheet stutter against its own
+      // updates instead of tracking the finger.
+      if (!frame) {
+        frame = requestAnimationFrame(() => {
+          frame = 0
+          el.style.transform = `translate3d(0, ${dy}px, 0)`
+        })
+      }
       const now = e.timeStamp
       if (now !== lastT) {
         lastY = e.clientY
@@ -110,6 +125,8 @@ export function useSheetDrag(
         el.style.transition = "transform 220ms cubic-bezier(0.2, 0, 0, 1)"
         el.style.transform = ""
       }
+      if (frame) { cancelAnimationFrame(frame); frame = 0 }
+      el.style.touchAction = ""
 
       if (dismiss) {
         // Carry the sheet the rest of the way out, then ask to close.
@@ -167,6 +184,8 @@ export function useSheetDrag(
       el.removeEventListener("pointermove", move, opts)
       el.removeEventListener("pointerup", end, opts)
       el.removeEventListener("pointercancel", end, opts)
+      if (frame) cancelAnimationFrame(frame)
+      el.style.touchAction = ""
       el.style.transition = ""
       el.style.transform = ""
       delete el.dataset.dragging

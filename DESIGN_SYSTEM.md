@@ -756,6 +756,16 @@ still exists and a call site can still ask for it; what changed is which step
 you get by not choosing. 40px was a desktop-first number for something you
 type into on a phone.
 
+**Hold a card, get its menu.** Every card answers a long press (450–500ms) by
+opening the same bottom sheet its ⋯ would: `useLongPress` on `AlbumCard`,
+`PlaylistCard` and `ArtistCard` (which has no ⋯ at all, on hover or otherwise).
+The hold is visible from the first frame — the returned props carry
+`data-pressing`, which `app.css` turns into `scale: 0.98` and a slight
+darkening, so the wait reads as the card being TAKEN rather than as a tap that
+did not register. A drag past 8px cancels it and hands the gesture back to the
+rail; the click that follows a completed press is swallowed, or the card would
+open underneath its own menu.
+
 **Touch targets: 32px of paint may carry 44px of target — `touch-target`.**
 WCAG 2.2 AA (2.5.8) asks for 24×24 and every control here clears that; 44×44 is
 the AAA figure (2.5.5) and Apple's HIG number, and it is the one a fingertip

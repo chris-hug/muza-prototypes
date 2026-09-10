@@ -81,6 +81,13 @@ The `type` picks the **icon only**. Every toast shares one neutral shell
 | `info` | `InfoIcon` | `text-blue-600 dark:text-blue-400` |
 | `loading` | inline spinner SVG (`animate-spin`) | `text-muted-foreground` |
 
+The **action** (Undo) is the catalogue's `secondary` `Button` at `sm`, not a
+button-shaped div: the toast is the one place an action appears without a
+surface around it, so it has to be recognisably the same control as everywhere
+else. It centres on the row (`self-center`) rather than pinning to the top of
+it — the phone toast is one 48px line, and a top-pinned action in it reads as
+crooked, which is the fault the status icon had.
+
 Icons are `size-4 shrink-0 self-center md:self-start md:mt-[3px]`: **centred on
 a phone**, where the toast is one 48px line and the icon has a single line to
 sit against — pinned there it read as crooked. On desktop it is pinned to the
