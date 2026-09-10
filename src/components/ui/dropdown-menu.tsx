@@ -88,7 +88,7 @@ function DropdownMenuContent({
         side="bottom"
         showCloseButton={false}
         className={cn(
-          "rounded-t-2xl px-2 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] max-h-[80vh]",
+          "rounded-t-[28px] px-2 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] max-h-[80vh]",
           className,
         )}
       >

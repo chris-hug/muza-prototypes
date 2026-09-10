@@ -74,7 +74,11 @@ export const dialogPositionClass =
   // a form whose primary action lives in the footer: on a phone with browser
   // chrome the keyboard leaves ~200px, which title + field + footer do not
   // fit in. Forms use `mobile="form"` (`dialogFormPositionClass`) instead.
-  "inset-x-0 bottom-[var(--kb,0px)] top-auto translate-x-0 translate-y-0 max-w-full rounded-b-none rounded-t-2xl " +
+  // `rounded-t-[28px]`, not `rounded-t-2xl` (18): the bar's controls are 40px
+  // pills, radius 20, and a 20px curve inside an 18px one cannot be nested at
+  // any inset — it always reads as fighting the corner. 28 leaves exactly the
+  // 8px the bar insets by. See `dialogActionBarBase`.
+  "inset-x-0 bottom-[var(--kb,0px)] top-auto translate-x-0 translate-y-0 max-w-full rounded-b-none rounded-t-[28px] " +
   // `svh`, NOT `dvh`: on iOS the DYNAMIC viewport unit reports the height
   // with the browser chrome COLLAPSED, so while the URL bar is expanded a
   // sheet sized to `100dvh` overflows the top of the screen and its header
@@ -125,10 +129,25 @@ export const dialogFormPositionClass =
 // the title reads as a header that isn't there.
 const dialogActionBarBase =
   "sticky top-0 z-10 shrink-0 " +
-  // 40px, not 48: the bar is its two 32px controls and a title between them,
-  // and the inset above it is a hair, not a gutter — every pixel here is one
-  // the list underneath does not get.
-  "flex items-center justify-between gap-2 min-h-10 px-1 pt-[max(2px,env(safe-area-inset-top))] pb-1 " +
+  // 54px: an 8px inset, a 40px control, 6px under it. `min-h-10` is only the
+  // floor for a bar with nothing in it.
+  //
+  // The controls used to be 32 (`icon-sm`/`sm`) and the bar 40, which is the
+  // right arithmetic for a ✕ and the wrong one for what the trailing slot
+  // mostly holds: Save, Done and "Add 12" are the only way FORWARD the screen
+  // has, and 32px of that under a thumb is the one thing in this bar that
+  // cannot be spent.
+  //
+  // The 8px is CONCENTRIC, not a guess. A `Button` is a pill — at 40px tall
+  // its corner radius is 20 — and the sheet's top corner is 28
+  // (`rounded-t-[28px]`). Outer radius = inner radius + padding, so the only
+  // inset at which the two curves are parallel is 28 − 20 = 8, on both axes
+  // at once, which is why the top inset is a real number now and not the
+  // 2px hair it was. Change the sheet's corner or the button's height and
+  // this number moves with them.
+  //
+  // `--sheet-bar-h` in app.css must match the total.
+  "flex items-center justify-between gap-2 min-h-10 px-2 pt-[max(8px,env(safe-area-inset-top))] pb-1.5 " +
   "md:hidden"
 
 /* `.sheet-glass`, not `.frosted-glass`: the page's glass mixes `--background`
@@ -625,7 +644,7 @@ function DialogDescription({
 // `!` so it beats the `md:` half that still matches on a desktop screen:
 // full width, top corners only, the 12px sheet gutter and 8px band gap.
 export const dialogPreviewPhoneClass =
-  "!w-full !max-w-full !rounded-t-2xl !rounded-b-none !p-3 !gap-2 " +
+  "!w-full !max-w-full !rounded-t-[28px] !rounded-b-none !p-3 !gap-2 " +
   "[&_[data-slot=dialog-preview-title]]:!text-small"
 
 /*
@@ -648,7 +667,7 @@ export const sheetPositionerClass =
 
 export const sheetPopupClass =
   "[width:100%]! [max-width:100%]! [max-height:75svh]! " +
-  "rounded-b-none rounded-t-2xl border-t border-border p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] " +
+  "rounded-b-none rounded-t-[28px] border-t border-border p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] " +
   "shadow-[0_-8px_32px_rgba(0,0,0,0.18)]"
 
 function DialogPreview({

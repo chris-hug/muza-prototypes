@@ -1708,11 +1708,11 @@ img {
    Phones only — the desktop modal never sees a keyboard inset. */
 @media (width < 48rem) {
   [data-kb="open"] [data-slot="dialog-action-bar"] {
-    /* 32px is the height of the controls in it, so the bar becomes exactly
-       its buttons — the title's line costs nothing extra. */
+    /* Half the inset, all of the control: 4 + 40 + 4 = 48. Must match
+       `--sheet-bar-h` under the same condition. */
     min-height: 2rem;
-    padding-top: max(2px, env(safe-area-inset-top));
-    padding-bottom: 0;
+    padding-top: max(4px, env(safe-area-inset-top));
+    padding-bottom: 0.25rem;
   }
   [data-kb="open"] [data-slot="dialog-form-body"] {
     /* Less at the bottom than the top: the band below already carries 8px,
@@ -1732,11 +1732,17 @@ img {
      here, next to the paddings they are made of, rather than guessed at the
      call site. */
   [data-slot="dialog-content"][data-mobile="sheet"] {
-    --sheet-bar-h: 44px;   /* min-h-10 + the bar's own 2px top inset + pb-1 */
+    --sheet-bar-h: 54px;   /* 8px inset + a 40px control + 6px under it */
     --sheet-band-h: 76px;  /* 12 + a 48px field + 12, plus the safe area */
   }
   [data-kb="open"] [data-slot="dialog-content"][data-mobile="sheet"] {
-    --sheet-bar-h: 34px;
+    /* The bar keeps its CONTROL and gives up half its inset: 4 + 40 + 4. It
+       used to give up the control too (34px total, a 32px button), and 32px
+       of confirming action under a thumb is the one thing in the bar that
+       cannot be spent — it is the only way forward the screen has. The 8px
+       inset is what makes the pill concentric with the sheet's 28px corner;
+       with a keyboard up that is a nicety, and the rows below are not. */
+    --sheet-bar-h: 48px;
     --sheet-band-h: 64px;
   }
 

@@ -258,7 +258,7 @@ export function PlaylistCard({
           rather than the dropdown's plain list. A phone gets one menu shape
           for a playlist, wherever it is reached from. */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl">
+        <SheetContent side="bottom" className="rounded-t-[28px]">
           <DetailMenuSheetBody
             kind="playlist"
             title={title}

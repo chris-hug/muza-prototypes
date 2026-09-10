@@ -157,7 +157,7 @@ function AddToPlaylistContent({ song, guard, onClose }: {
       <DialogContent mobile="form" showCloseButton={!isMobile} className="md:max-w-[max(32rem,50vw)]">
         {isMobile ? (
           <DialogActionBar
-            className="-mx-3 -mt-3 px-1"
+            className="-mx-3 -mt-3"
             leading={
               <Button
                 variant="ghost"
@@ -170,7 +170,7 @@ function AddToPlaylistContent({ song, guard, onClose }: {
               </Button>
             }
             trailing={
-              <DialogClose render={<Button variant="ghost" size="icon-sm" aria-label="Close" className="touch-target" />}>
+              <DialogClose render={<Button variant="ghost" size="icon" aria-label="Close" className="touch-target" />}>
                 <X />
               </DialogClose>
             }
@@ -238,16 +238,16 @@ function AddToPlaylistContent({ song, guard, onClose }: {
            the list does not get. `absolute` + glass so the rows run full
            height underneath and blur past the title. */
         <DialogActionBar
-          className="absolute inset-x-0 top-0 z-10 px-1"
-          leading={<span className="size-8 shrink-0" />}
+          className="absolute inset-x-0 top-0 z-10"
+          leading={<span className="size-10 shrink-0" />}
           /* Dismissal until there is something to commit, then the commit —
              the trade the Add-music bar makes. Nothing is lost: the sheet
              still closes by pulling it down or tapping the backdrop, and with
              picks in hand both ask first. */
           trailing={picked.length > 0 ? (
-            <Button size="sm" onClick={commit} className="touch-target shrink-0">Done</Button>
+            <Button onClick={commit} className="touch-target shrink-0">Done</Button>
           ) : (
-            <DialogClose render={<Button variant="ghost" size="icon-sm" aria-label="Close" className="touch-target" />}>
+            <DialogClose render={<Button variant="ghost" size="icon" aria-label="Close" className="touch-target" />}>
               <X />
             </DialogClose>
           )}

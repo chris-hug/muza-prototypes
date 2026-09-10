@@ -222,7 +222,7 @@ export function CreditsDialogPreview({ albumKey = "a07" }: { albumKey?: string }
       data-mobile={phone ? "sheet" : undefined}
       className={cn(
         "relative w-full border border-border bg-popover overflow-hidden",
-        phone ? "max-w-full rounded-t-2xl rounded-b-none" : "max-w-md rounded-xl md:rounded-2xl",
+        phone ? "max-w-full rounded-t-[28px] rounded-b-none" : "max-w-md rounded-xl md:rounded-2xl",
       )}
     >
       {/* The navigation handlers are passed even though this preview goes

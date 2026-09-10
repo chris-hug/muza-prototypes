@@ -201,13 +201,29 @@ Only the middle one scrolls.
 - The popup itself is `overflow-hidden`. If it scrolled, a sticky action row
   would float **over** the body instead of the body ending above it — it
   covered the privacy toggle.
-- `DialogActionBar` (`sticky top-0 shrink-0`) carries dismissal only, and no
-  rule underneath: the sheet is one surface, and a hairline right under the
-  title reads as a header that isn't there. Same **frosted glass** as
-  `MobileHeader` — it *is* a mobile header, for a modal — with the top
-  safe-area inset, and `md:hidden`. 40px tall, which is its two 32px controls
-  and a hair above them — every pixel here is one the content underneath does
-  not get.
+- `DialogActionBar` (`sticky top-0 shrink-0`) carries no rule underneath: the
+  sheet is one surface, and a hairline right under the title reads as a header
+  that isn't there. Same **frosted glass** as `MobileHeader` — it *is* a
+  mobile header, for a modal — with the top safe-area inset, and `md:hidden`.
+- **54px tall: an 8px inset, a 40px control, 6px below it.** Every pixel here
+  is one the content underneath does not get, so the bar was built at 40
+  around 32px controls (`icon-sm`, `sm`) — the right arithmetic for a ✕ and
+  the wrong one for what the trailing slot mostly holds now. Save, Done and
+  "Add 12" are the only way FORWARD the screen has; 32px of that under a thumb
+  is the one thing in this bar that cannot be spent, and it read as tiny
+  because it was. Both slots are 40 now, so every bar is the same height
+  whichever control it is showing. `min-h-10` remains as a floor for a bar
+  with nothing in it, and **`--sheet-bar-h` in app.css must match the
+  arithmetic** (54 at rest, 48 with the keyboard up — the bar gives up half
+  its inset and keeps its control).
+- **The 8px inset is concentric, and it is why the sheet's corner grew.** A
+  `Button` is a pill: at 40px tall its radius is 20, and a 20px curve inside
+  the sheet's old 18px one (`rounded-t-2xl`, `--radius` 12 + 6) cannot nest at
+  any inset — it always reads as fighting the corner. Every bottom sheet's top
+  corner is **28** now (`rounded-t-[28px]`), which leaves exactly the 8 the bar
+  insets by: outer radius = inner radius + padding, 28 = 20 + 8, on both axes
+  at once. That is also why the top inset stopped being a 2px hair. Move the
+  button's height or the sheet's corner and this number moves with them.
 - **Its glass is the SHEET's, not the page's** (`.sheet-glass`). The page's
   `.frosted-glass` mixes `--background` and carries a sheen and a grain, and
   over a `--popover` sheet that reads as a band across the top: a different
@@ -246,7 +262,8 @@ Only the middle one scrolls.
   leave the 48px field 49px, and the field was clipped. So while
   `data-kb="open"` is set on the root — by `useKeyboardInset`, since no media
   query can see this squeeze — the three bands drop their padding: the bar to
-  `min-height: 2.5rem`, the body to 8px (4px at the bottom, the band below
+  4px above and below its control (48 in total), the body to 8px (4px at the
+  bottom, the band below
   carries the rest), the action band to 8px top and bottom. Only padding gives
   way; every control keeps its size.
 - **No field label** where the placeholder carries it — every line costs space

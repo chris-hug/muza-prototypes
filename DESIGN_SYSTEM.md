@@ -521,6 +521,20 @@ which have no edge to describe.
 | `3xl` | 24px | `--radius-3xl` |
 | `full` | 9999px | `--radius-full` |
 
+**Mismatch, reported not overwritten:** the table above is the Figma alias
+list. `app.css` sets `--radius: 0.75rem` (12px), so the derived tokens are
+2px / 8px / 10px / 12px / 16px / **18px** / 22px — every value here except
+`sm` and `full` is off by 2. Which of the two is the intended ladder is not
+recorded.
+
+**A bottom sheet's top corner is 28px**, and it is not on that ladder on
+purpose. The sheet's action bar carries 40px pill buttons (radius 20) inset
+8px from the corner, and outer radius = inner radius + padding: 28 = 20 + 8.
+At the old 18 no inset could nest a 20px curve, and the bar's controls read as
+fighting the corner. Every bottom sheet uses it — dialog sheets, `Sheet`, the
+mobile dropdown sheet, the mobile alert — so the corner is one shape across
+the app.
+
 ### Typography — semantic size aliases
 
 **Each semantic alias points at a primitive** (e.g. `small → text-xs`). Callers use the semantic name; the primitive holds the actual px value. Aliases also carry their own line-height + letter-spacing reference.

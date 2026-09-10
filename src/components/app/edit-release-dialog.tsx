@@ -213,7 +213,7 @@ export function EditReleaseDialog({
              comes with the bar — desktop keeps its header and footer. */}
         <DialogActionBar
           trailing={
-            <Button size="sm" onClick={save} className="touch-target shrink-0">
+            <Button onClick={save} className="touch-target shrink-0">
               Save
             </Button>
           }

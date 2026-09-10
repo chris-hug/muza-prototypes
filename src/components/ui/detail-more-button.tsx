@@ -391,7 +391,7 @@ export function DetailMenuSurface(props: DetailMoreButtonProps & { className?: s
     // Same edges as the live sheet (`side="bottom"`: `border-t`, top corners
     // rounded, no side borders — it spans the window). Width comes from the
     // container: the frame's window at a phone chip, or whatever box it sits in.
-    <div className={cn("w-full rounded-t-2xl border-t border-border bg-popover shadow-xl overflow-hidden px-2 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]", props.className)}>
+    <div className={cn("w-full rounded-t-[28px] border-t border-border bg-popover shadow-xl overflow-hidden px-2 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]", props.className)}>
       {/* The sheet's drag handle, for the eye — there is nothing to drag. */}
       <div aria-hidden className="mx-auto mb-2 h-1 w-9 shrink-0 rounded-full bg-border" />
       <DetailMenuSheetBody {...props} standalone />
@@ -439,7 +439,7 @@ export function DetailMoreButton(props: DetailMoreButtonProps) {
       >
         {icon}
       </SheetTrigger>
-      <SheetContent side="bottom" className="rounded-t-2xl">
+      <SheetContent side="bottom" className="rounded-t-[28px]">
         <DetailMenuSheetBody {...props} />
       </SheetContent>
     </Sheet>

@@ -190,7 +190,7 @@ export function CreatePlaylistDialog({
             // action is the full-width button in the body. One leading slot
             // stays empty so the centred title matches the Add step's bar.
             trailing={
-              <DialogClose render={<Button variant="ghost" size="icon-sm" aria-label="Close" />}>
+              <DialogClose render={<Button variant="ghost" size="icon" aria-label="Close" className="touch-target" />}>
                 <X />
               </DialogClose>
             }

@@ -140,7 +140,7 @@ export function FooterNav({ activeNav, onNavChange, className }: FooterNavProps)
           >
             <Sliders className="size-6" strokeWidth={studioActive ? 2.25 : 2} />
           </SheetTrigger>
-          <SheetContent side="bottom" className="rounded-t-2xl">
+          <SheetContent side="bottom" className="rounded-t-[28px]">
             <SheetHeader>
               <SheetTitle>Studio</SheetTitle>
             </SheetHeader>

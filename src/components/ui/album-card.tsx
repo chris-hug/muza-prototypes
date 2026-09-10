@@ -354,7 +354,7 @@ export function AlbumCard({
           rows raise. The kebab keeps the anchored dropdown, which is the right
           shape for a mouse. */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl">
+        <SheetContent side="bottom" className="rounded-t-[28px]">
           <DetailMenuSheetBody
             kind="album"
             title={title}

@@ -196,7 +196,7 @@ export function ArtistCard({ name, image, onClick, className }: ArtistCardProps)
         same wherever they are reached from. Controlled, because the trigger
         is the card itself rather than a button. */}
     <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-      <SheetContent side="bottom" className="rounded-t-2xl">
+      <SheetContent side="bottom" className="rounded-t-[28px]">
         <DetailMenuSheetBody
           kind="artist"
           title={name}

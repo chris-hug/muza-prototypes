@@ -22,7 +22,7 @@ export default function DrawerBasicExample() {
       {SIDES.map(side => (
         <Sheet key={side} swipeDirection={SWIPE[side]}>
           <SheetTrigger render={<Button variant="outline">Open from {side}</Button>} />
-          <SheetContent side={side} className={side === "right" || side === "left" ? "max-w-[420px]" : "rounded-t-2xl"}>
+          <SheetContent side={side} className={side === "right" || side === "left" ? "max-w-[420px]" : "rounded-t-[28px]"}>
             <SheetHeader>
               <SheetTitle>Drawer from {side}</SheetTitle>
               <SheetDescription>

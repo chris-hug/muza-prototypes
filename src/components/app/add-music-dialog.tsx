@@ -350,18 +350,18 @@ export function AddMusicDialog({
                is `overflow-hidden`, so a sticky bar has nothing to stick to,
                while an absolute one is anchored to a box that never scrolls.
                The list pays for it in padding (`--sheet-bar-h`). */
-            className="absolute inset-x-0 top-0 z-10 px-1"
-            leading={back ?? <span className="size-8 shrink-0" />}
+            className="absolute inset-x-0 top-0 z-10"
+            leading={back ?? <span className="size-10 shrink-0" />}
             /* The bar's trailing slot is dismissal — EXCEPT on the Find
                screen with something picked, where it is the confirming
                action. Nothing is lost: ‹ is the way back from Find, and the
                sheet's own ✕ returns the moment the picks are in. */
             trailing={barAction ? (
-              <Button size="sm" onClick={done} className="touch-target shrink-0">
+              <Button onClick={done} className="touch-target shrink-0">
                 {`Add ${picked.length}`}
               </Button>
             ) : (
-              <DialogClose render={<Button variant="ghost" size="icon-sm" aria-label="Close" className="touch-target" />}>
+              <DialogClose render={<Button variant="ghost" size="icon" aria-label="Close" className="touch-target" />}>
                 <X />
               </DialogClose>
             )}
