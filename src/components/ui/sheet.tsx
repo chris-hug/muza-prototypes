@@ -177,6 +177,35 @@ function SheetContent({
   )
 }
 
+/*
+ * SheetGrabber — the 36×4 pill at the top of a bottom sheet.
+ *
+ * It is not decoration and it is not a control: it is the only thing on the
+ * screen that says this surface can be pulled DOWN. A sheet with a ✕ can get
+ * away without one, because the way out is drawn; a sheet whose only way out
+ * is the gesture cannot — the release editor put Save in the corner where the
+ * ✕ had been and left nothing at all saying how to leave without saving.
+ *
+ * `aria-hidden`: the gesture it advertises has a keyboard and screen-reader
+ * equivalent already (Escape, and the dialog's own close), so announcing a
+ * decorative bar would add a landmark that does nothing.
+ *
+ * Two placements. In the FLOW (`mx-auto mb-2`) for a sheet whose first band is
+ * a list, and OVERLAID (`absolute`) for one with a bar across the top, where
+ * a band of its own would cost a row. `bg-border` either way, which is what
+ * both menu sheets already drew by hand.
+ */
+function SheetGrabber({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      aria-hidden
+      data-slot="sheet-grabber"
+      className={cn("h-1 w-9 shrink-0 rounded-full bg-border", className)}
+      {...props}
+    />
+  )
+}
+
 function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -244,6 +273,7 @@ export {
   SheetContent,
   SheetDescription,
   SheetFooter,
+  SheetGrabber,
   SheetHeader,
   SheetOverlay,
   SheetPortal,

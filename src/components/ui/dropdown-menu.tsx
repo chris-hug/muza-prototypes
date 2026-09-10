@@ -6,7 +6,7 @@ import { Menu as MenuPrimitive } from "@base-ui/react/menu"
 import { cn } from "@/lib/utils"
 import { ChevronRightIcon, CheckIcon } from "lucide-react"
 import { useIsMobile } from "@/lib/use-media-query"
-import { Sheet, SheetTrigger, SheetContent, SheetClose, SheetTitle } from "@/components/ui/sheet"
+import { Sheet, SheetTrigger, SheetContent, SheetClose, SheetTitle, SheetGrabber } from "@/components/ui/sheet"
 
 // On mobile every dropdown menu is presented as a bottom sheet instead
 // of a popover (bigger touch targets, thumb-reachable, native-feeling).
@@ -93,7 +93,7 @@ function DropdownMenuContent({
         )}
       >
         {/* Drag handle — affordance for swipe-to-dismiss. */}
-        <div aria-hidden className="mx-auto mb-2 h-1 w-9 shrink-0 rounded-full bg-border" />
+        <SheetGrabber className="mx-auto mb-2" />
         <SheetTitle className="sr-only">Actions</SheetTitle>
         <div className="flex flex-col overflow-y-auto">{children}</div>
       </SheetContent>

@@ -521,44 +521,72 @@ which have no edge to describe.
 | `3xl` | 24px | `--radius-3xl` |
 | `full` | 9999px | `--radius-full` |
 
-**Mismatch, reported not overwritten.** The table above is the FIGMA ladder.
-The CSS ladder holds almost the same VALUES under different NAMES, because
-`--radius` is anchored to Figma's `xl` — `app.css` says so where it is
-declared: *"Base radius (= Figma border radius/xl = 12px)"*. Everything else
-is `calc()` off that anchor, so the two ladders are offset by roughly one
-rung, and reading a row across this table gives the wrong number for every
-step but `full`:
+**The two ladders disagree, and FIGMA is the side that moves.** The table
+above is the Figma alias list. The CSS ladder holds almost the same values
+under different names, because `--radius` is anchored to Figma's `xl` —
+`app.css` says so where it is declared: *"Base radius (= Figma border
+radius/xl = 12px)"*. Everything else is `calc()` off that anchor, so the two
+are offset by about one rung, and reading a row across the table above gives
+the wrong number for every step but `full`.
 
-| Figma alias | Figma value | Same value in CSS | What that CSS NAME actually is |
+**The code is the side that ships, so the code's ladder is the rule.** These
+are the measured values, and they do not change:
+
+| CSS name | Value | Uses today |
+|---|---|---|
+| `rounded-xs` | 2px | 46 |
+| `rounded-sm` | 8px | 33 |
+| `rounded-md` | 10px | 31 |
+| `rounded-lg` | 12px | 71 |
+| `rounded-xl` | 16px | 64 |
+| `rounded-2xl` | 18px | 29 |
+| `rounded-3xl` | 24px | 0 — Tailwind's default, not declared in `@theme` |
+| `rounded-4xl` | 32px | 0 — same |
+| `rounded-full` | 9999px | 169 |
+
+### The Figma rename
+
+Apply these in the Figma library and the two ladders become one. Nothing in
+the code changes; no pixel moves.
+
+| Figma today | Value | Becomes | Why |
 |---|---|---|---|
-| `sm` | 2px | `rounded-xs` | `rounded-sm` = **8px** |
-| `default` / `md` | 6px | — (no token has 6px) | `rounded-md` = **10px** |
-| `lg` | 8px | `rounded-sm` | `rounded-lg` = **12px** |
-| `xl` | 12px | `rounded-lg` (`--radius`) | `rounded-xl` = **16px** |
-| `2xl` | 16px | `rounded-xl` | `rounded-2xl` = **18px** |
-| `3xl` | 24px | `rounded-3xl` | 24px — Tailwind's own default, not declared here |
-| `full` | 9999px | `rounded-full` | 9999px ✓ |
+| `sm` | 2px | **`xs`** | frees `sm`, and `xs` is what Tailwind calls 2px |
+| `default` / `md` | 6px | **retire** | no CSS token carries 6px and nothing uses it |
+| `lg` | 8px | **`sm`** | |
+| — | 10px | **`md`** (new) | 31 uses in code with no Figma name |
+| `xl` | 12px | **`lg`** | this is `--radius`, the anchor |
+| `2xl` | 16px | **`xl`** | |
+| — | 18px | **`2xl`** (new) | 29 uses in code with no Figma name |
+| `3xl` | 24px | `3xl` | already agrees |
+| — | 32px | **`4xl`** (new) | Tailwind ships it; unused so far |
+| `full` | 9999px | `full` | already agrees |
 
-Two CSS steps have no Figma counterpart at all (`md` 10px, `2xl` 18px), and
-Figma's 6px has no CSS token. `--radius-3xl` (24) and `--radius-4xl` (32) come
-from Tailwind's defaults rather than from `@theme`, so they are outside the
-`--radius` ladder and do not move if the anchor does.
+The renames are simultaneous — `lg` becomes `sm` while `xl` becomes `lg` — so
+do them as one pass rather than one at a time, or two steps collide on the
+same name.
 
-The measured values, which are what ships: **xs 2 · sm 8 · md 10 · lg 12 ·
-xl 16 · 2xl 18 · 3xl 24 · 4xl 32 · full 9999**. Usage today: `rounded-full`
-169, `rounded-lg` 71, `rounded-xl` 58, `rounded-xs` 46, `rounded-sm` 33,
-`rounded-2xl` 23, `rounded-md` 17, `rounded-3xl` 0.
+**Why this direction.** A code-side rename cannot finish: 10px and 18px have
+no Figma name at all, so 60 of the ~214 call sites would have to invent one or
+move their pixels. Whichever side is renamed, Figma has to gain those two
+steps — which makes renaming Figma both the smaller edit and the only one
+that closes.
 
-Which ladder is intended is not recorded. The risk is one-directional: a
-reader who trusts this table and writes `rounded-sm` for a 2px corner gets 8.
+**Worth knowing, and worth deciding later:** Figma's ladder is TAILWIND's
+default scale (`md 6 · lg 8 · xl 12 · 2xl 16 · 3xl 24`, with Figma calling 2px
+`sm` where Tailwind calls it `xs`). The divergence comes entirely from the
+`@theme` override deriving everything from `--radius: 12px`, and that is what
+produces the two off-scale steps, 10 and 18. If those two ever go, the
+override can go with them and the ladder is Tailwind's again for free.
 
-**A bottom sheet's top corner is 28px**, and it is not on that ladder on
-purpose. The sheet's action bar carries 40px pill buttons (radius 20) inset
-8px from the corner, and outer radius = inner radius + padding: 28 = 20 + 8.
-At the old 18 no inset could nest a 20px curve, and the bar's controls read as
-fighting the corner. Every bottom sheet uses it — dialog sheets, `Sheet`, the
-mobile dropdown sheet, the mobile alert — so the corner is one shape across
-the app.
+**A bottom sheet's top corner is 28px**, and it is off the ladder on purpose.
+The sheet's action bar carries 40px pill buttons (radius 20) inset 8px from
+the corner, and outer radius = inner radius + padding: 28 = 20 + 8. At the old
+18 no inset could nest a 20px curve, and the bar's controls read as fighting
+the corner. Every bottom sheet uses it — dialog sheets, `Sheet`, the mobile
+dropdown sheet, the mobile alert — so the corner is one shape across the app.
+It is written 16 times as `rounded-t-[28px]`; whether it should become a named
+`--radius-sheet` is **open**.
 
 ### Typography — semantic size aliases
 

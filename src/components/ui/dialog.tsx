@@ -4,6 +4,7 @@ import * as React from "react"
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 
 import { cn } from "@/lib/utils"
+import { SheetGrabber } from "@/components/ui/sheet"
 import { useIsMobile } from "@/lib/use-media-query"
 import { useSheetDrag } from "@/lib/use-sheet-drag"
 import { Button } from "@/components/ui/button"
@@ -457,6 +458,20 @@ function DialogContent({
         {...props}
       >
         {children}
+        {/* The pull-down, drawn. Bottom sheets only — a `mobile="form"` sheet
+            fills the screen and is not dismissed by dragging — and phones
+            only, since the desktop presentation is a centred modal.
+
+            OVERLAID rather than in the flow: these sheets open with either a
+            bar or a header across the top, and a band of its own would cost a
+            row for a 4px pill. It is centred, so it clears the bar's leading
+            and trailing controls, and it sits above the bar's own top inset,
+            so it clears a centred title too.
+
+            This is the piece that was missing once Save took the ✕'s corner
+            in the release editor: the sheet had no ✕ and nothing at all
+            saying it could be left by pulling it down. */}
+        {!form && <SheetGrabber className="absolute left-1/2 top-1.5 z-20 -translate-x-1/2 md:hidden" />}
         {/* The gesture's own exit door: always mounted, even when the visible
             ✕ is not, so a pull-down works on a sheet that hides its ✕. */}
         <DialogPrimitive.Close ref={closeRef} className="hidden" aria-hidden="true" tabIndex={-1} />
