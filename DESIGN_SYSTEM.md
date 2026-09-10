@@ -1077,91 +1077,73 @@ Tokens are **roles**, not colours. Never mix roles.
 > [`COMPONENT_DOC_PASS.md`](COMPONENT_DOC_PASS.md), whose touch sweep and
 > eight touch questions came out of this work.
 >
-> One account per fact. If something here starts explaining *how* rather than
-> *what to obey*, it belongs in one of those pages instead.
+> **One account per fact.** If something here starts explaining *how* rather
+> than *what to obey*, it belongs in one of those pages instead. A DERIVED
+> value (28 = a 20px pill plus an 8px inset; 54 = 8 + 40 + 6) is stated where
+> it is derived and nowhere else — restating it is how the two copies stop
+> agreeing. A value that IS the rule (44px of target, `lg` for a form action)
+> belongs here, and the pages may cite it.
 
 **The gate is the POINTER, not the window.** `useCoarsePointer()` asks what is
-doing the pointing; the three width measures below ask how much room there is.
-They are different questions, and answering one with the other is how a phone
-ends up with a mouse's affordances at 375px — or a touch laptop loses its
-hover states. Deliberately not overridden by `WindowWidthContext`: the design
-system's "window 375" frame is still being read with a cursor.
+doing the pointing; the three width measures ask how much room there is. They
+are different questions, and answering one with the other is how a phone ends
+up with a mouse's affordances at 375px. → [responsive.md](docs/components/responsive.md#the-fourth-question-what-is-doing-the-pointing)
 
-**Two shared sheet recipes, both easy to break from a call site.**
-`.sheet-glass` is the bar's own glass — 72% of `--popover` over a 12px blur.
-The page's `.frosted-glass` mixes `--background` and carries a sheen, which
-over a `--popover` sheet reads as a band across the top: a different colour,
-faintly textured, exactly as wide as the bar. The sheet's own glass disappears
-at rest and shows itself only by blurring what scrolls under — which is why the
-bar is positioned OVER the content (one rule in `app.css`, keyed on
-`[data-mobile="sheet"]`) rather than sitting above it in the flow, where
-nothing would ever pass beneath it. `--sheet-bar-h` is the other half: the
-bar's real height (54 at rest, 48 with the keyboard up), which the scrolling
-band pays as `padding-top`. Change the bar's controls and that variable moves
-with them, or the list loses its first rows under an absolute bar.
+**One module owns both gestures' numbers.** Slop, the dismiss thresholds, the
+"is every scroller at its top" test and the velocity trail live in
+`src/lib/gesture.ts`. Do not re-declare any of them at a call site — the
+sheet once carried its own slop against the cards', which is how two gestures
+on one screen start feeling like two apps. Changing a number there changes
+both gestures, on purpose. → [gesture.md](docs/components/gesture.md#the-numbers)
 
-**Both hand-rolled gestures read their numbers from one module**
-([`src/lib/gesture.ts`](src/lib/gesture.ts)): the slop (8px), the sheet's
-dismiss thresholds (88px, 0.45px/ms), the "is every scroller under this finger
-at its top" test, and the velocity trail. `useLongPress` (tap vs drag vs hold,
-on cards) and `useSheetDrag` (pull a dialog-sheet down) answer different
-questions and stay separate, but they used to carry their own copies of these —
-the sheet's slop was 6px against the cards' 8, which is how two gestures on one
-screen start feeling like two apps. Base UI's Drawer has its own, better-tuned
-dismiss; `useSheetDrag` exists only because a Dialog is not a Drawer, and both
-it and half that module go away when the sheet-shaped dialogs move onto Drawer.
+**A drag is never a tap, and a press must be visible.** Any component that
+adds a hold gets both for free from `useLongPress`: the click is swallowed if
+the finger travelled, and `data-pressing` paints the hold from the first
+frame. A hold with no feedback reads as a tap that did not register.
+→ [gesture.md](docs/components/gesture.md#a-drag-is-never-a-tap)
 
-**A drag is never a tap.** `useLongPress` swallows the click if the pointer
-moved more than 8px between down and up — the same threshold that cancels the
-hold, so one gesture cannot be both. The browser's own rule (no click after a
-scroll) is not enough: a SHORT drag, the beginning of a rail swipe or a flick
-the scroller declines to follow, is not a scroll as far as the browser is
-concerned, so the click landed and the card opened the album the finger was
-trying to swipe past.
+**One menu shape per entity.** A long press raises the same sheet the entity's
+detail page raises — never the component's own dropdown rendered as a sheet.
+The kebab keeps the anchored dropdown, which is the right shape for a mouse.
+→ [detail-more-button.md](docs/components/detail-more-button.md)
 
-**Hold a card, get its menu.** (And `img { -webkit-touch-callout: none }`, or
-iOS answers the same gesture with its own menu — Share / Save to Photos / Copy
-Subject — on top of ours. It has to be in force before the finger lands, so it
-cannot come from the press handler; the handler declines the desktop
-`contextmenu` for the same reason.) Every card answers a long press (450–500ms)
-with the **`DetailMenuSheetBody` sheet** — quick actions as tiles across the
-top, then the rows — which is the sheet the detail pages and the list rows
-already raise. Not the card's own ⋯ dropdown rendered as a sheet: a phone
-should get one menu shape per entity, wherever it was reached from, and the
-kebab keeps the anchored dropdown, which is the right shape for a mouse.
-Wired through `useLongPress` on `AlbumCard`, `PlaylistCard` and `ArtistCard`
-(which has no ⋯ at all, on hover or otherwise; the playlist card's press used
-to call an `onMore` prop that has no call site, so holding one did nothing).
-The hold is visible from the first frame — the returned props carry
-`data-pressing`, which `app.css` turns into `scale: 0.98` and a slight
-darkening, so the wait reads as the card being TAKEN rather than as a tap that
-did not register. A drag past 8px cancels it and hands the gesture back to the
-rail; the click that follows a completed press is swallowed, or the card would
-open underneath its own menu.
+**Nothing inside a primary tap area may navigate away.** A link in the half of
+a row a thumb aims at is a coin toss, and missing costs a page load rather
+than a miss. Withhold the handler on a coarse pointer; the destination belongs
+in the ⋯ sheet. → [song-list-item.md](docs/components/song-list-item.md)
 
-**A thumb has no cursor, so touch takes links out of the meta line.**
-`useCoarsePointer()` (an INPUT gate, not a width gate — see
-`use-media-query.ts`) withholds `onArtistClick`/`onAlbumClick` from
-`SongListItem`, and the row's existing rule does the rest: no handler, no
-button, so the names render as spans and a press anywhere on the row plays the
-song. The two names sit in a 20px band across the half of the row a finger
-reaches for, and hitting one did not merely miss play — it left the page. The
-destinations stay one press away in the ⋯ sheet and the long-press sheet,
-which is where a phone keeps them. A mouse keeps all three links; the gate is
-not overridden by `WindowWidthContext`, because the design system's "window
-375" frame is still being read with a cursor.
+**iOS wants your long press too.** `img { -webkit-touch-callout: none }` is
+global and has to be, because it must be in force before the finger lands — it
+cannot come from a press handler.
 
-**Touch targets: 32px of paint may carry 44px of target — `touch-target`.**
-WCAG 2.2 AA (2.5.8) asks for 24×24 and every control here clears that; 44×44 is
-the AAA figure (2.5.5) and Apple's HIG number, and it is the one a fingertip
-actually wants. Where the design needs a small glyph — a sheet's back chevron,
-a ✕, a filter pill — the utility grows an inert pseudo-element around it to 44
-without moving a pixel of the paint. Coarse pointers only: on a mouse the extra
-area is invisible slop that steals clicks from the neighbour. Never put it on
-two controls closer than 12px apart; overlapping hit areas are worse than small
-ones. Measured, at 375px: row select buttons 48, bar controls 32 painted / 44
-targeted, filter pills 32 painted / 44 targeted.
+**32px of paint may carry 44px of target.** WCAG 2.2 AA asks 24×24 and
+everything clears it; **44×44** is the AAA figure and Apple's, and it is the
+one a fingertip wants. `touch-target` grows an inert pseudo-element to 44
+without moving a pixel of paint, on coarse pointers only. **Never on two
+controls closer than 12px apart** — overlapping hit areas are worse than small
+ones.
 
+**A form's own actions are `lg` (48px)**, and a filled button's disabled state
+is a colour rather than an opacity (`.disabled-solid`) — see [Form
+controls](#form-controls--the-shared-recipe) and
+[button.md](docs/components/button.md).
+
+**Sheet chrome is shared, and breaks quietly from a call site.**
+`.sheet-glass` is the bar's own glass and only works because the bar OVERLAYS
+the content (one rule in `app.css`, keyed on `[data-mobile="sheet"]`) — glass
+over nothing is a colour. `--sheet-bar-h` must equal the bar's real height, or
+the list under an absolute bar loses its first rows. The values, and what to
+do when the bar's controls change, are in
+[dialog.md](docs/components/dialog.md). Every bottom sheet's top corner is owned by
+`SIDE_CLASSES.bottom` — no call site writes it, and the value is derived from
+the control the bar has to hold, so it is stated once, in
+[drawer.md](docs/components/drawer.md).
+
+**The keyboard is measured, not guessed.** `--kb` and `data-kb="open"` are
+published by `useKeyboardInset`; a media query cannot see the squeeze because
+the layout viewport does not shrink. Cap sheet heights with `svh`, never `vh`
+or `dvh`, and scope any `max-h` of your own to `md:`.
+→ [keyboard.md](docs/components/keyboard.md)
 
 ### The strict rules
 
