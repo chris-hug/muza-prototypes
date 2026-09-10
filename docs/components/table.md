@@ -67,6 +67,15 @@ Numbers are `tabular-nums` and right-aligned. A cover in a cell is `size-8 round
 
 ## Sizing
 
+**Dropping a column with `table-fixed` means not RENDERING it.** A CSS-hidden
+cell still has its `<col>`, and a fixed table gives that col its width whether
+or not anything is in it — so `sm:hidden` on the cells narrows nothing. The
+artist Discography chooses its columns in JS (`useMediaQuery`) and omits the
+`<col>` with them; what the dropped columns carried folds into the title cell
+as a meta line, so a narrow table is a smaller list rather than a worse one.
+Its ladder: Title always · Recorded from 480 · Type from 640 · Tracks from 900
+· Band from 1024.
+
 Column-filling; no steps of its own. The table is `w-full` of its column with content-sized columns; when they outgrow the column the wrapper scrolls sideways rather than wrapping cells — at a 320 window chip the frame's table keeps its widths and scrolls. Hiding a column is in-page reflow and may use `sm:`: Wallet renders its table `hidden sm:table` beside a card list, Report hides secondary columns with `sm:hidden`. That is the one thing `sm:` is for (`responsive.md`: `sm` / `lg` reflow in-page content, never chrome).
 
 ## Behaviour

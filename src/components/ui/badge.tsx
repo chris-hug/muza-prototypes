@@ -137,7 +137,9 @@ function Badge({ className, variant, shape, ...props }: BadgeProps) {
 
 type ContentType = "song" | "album" | "single" | "ep" | "artist" | "playlist" | "label"
 
-const contentTypeConfig: Record<ContentType, { label: string; icon: React.ElementType }> = {
+/** Exported so a narrow layout can fold a badge's LABEL into a text line —
+ *  the discography table does this when its Type column is dropped. */
+export const contentTypeConfig: Record<ContentType, { label: string; icon: React.ElementType }> = {
   song:     { label: "Song",     icon: Music2 },
   album:    { label: "Album",    icon: Disc3 },
   single:   { label: "Single",   icon: Disc3 },

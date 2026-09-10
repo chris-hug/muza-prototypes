@@ -29,7 +29,8 @@ import { useMemo, useState } from "react"
 import { ArrowUp, ArrowUpDown, LayoutGrid, List, MoreHorizontal } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { ContentTypeBadge } from "@/components/ui/badge"
+import { useMediaQuery } from "@/lib/use-media-query"
+import { ContentTypeBadge, contentTypeConfig } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { MultiSelect } from "@/components/ui/multi-select"
@@ -487,6 +488,15 @@ function DiscographyView({
   const [filter, setFilter] = useState<Set<ReleaseKind>>(new Set())
   const [sort, setSort]     = useState<SortKey>("year-desc")
   const [view, setView]     = useState<"grid" | "list">("grid")
+  /* Which columns the list view can afford. The table needs ~440px for all
+     six; a phone gives it 351. Measured against the COLUMN the table sits in
+     via `sm`/`lg` — in-page reflow, which is what those steps are for
+     (`docs/components/responsive.md`); chrome breakpoints are a different
+     ladder and must not be borrowed here. */
+  const showRecorded = useMediaQuery("(min-width: 480px)")
+  const showType     = useMediaQuery("(min-width: 640px)")
+  const showTracks   = useMediaQuery("(min-width: 900px)")
+  const showBand     = useMediaQuery("(min-width: 1024px)")
   // Mock playback — single release at a time. Matches SongListItem's
   // local-toggle behaviour. Real wiring would lift this to a global
   // player store.
@@ -625,13 +635,25 @@ function DiscographyView({
         // right-aligned.
         <div className="pt-2">
           <table className="w-full table-fixed">
+            {/* PROGRESSIVE DISCLOSURE, in the colgroup as well as the cells.
+                A six-column table needs ~440px; the column it sits in is 351px
+                on a phone, so the page scrolled sideways instead — the one
+                thing a table must not do here, since the scroller is the
+                PAGE's and taking it sideways loses the reader's place.
+
+                Hidden with a media query in JS rather than `sm:hidden` on the
+                cells: `table-fixed` gives every `<col>` its width whether or
+                not its cells render, so a CSS-hidden column still reserves its
+                112px. The columns have to not EXIST. Which ones survive is the
+                usual order of value — the record, then when it was made, then
+                what it is; band and track count are the first to go. */}
             <colgroup>
               <col style={{ width: 64 }} />
               <col />
-              <col />
-              <col style={{ width: 112 }} />
-              <col style={{ width: 80 }} />
-              <col style={{ width: 128 }} />
+              {showBand && <col />}
+              {showRecorded && <col style={{ width: 112 }} />}
+              {showTracks && <col style={{ width: 80 }} />}
+              {showType && <col style={{ width: 128 }} />}
               <col style={{ width: 56 }} />
             </colgroup>
             {/* sticky on each <th> (rather than the <thead>) because
@@ -650,7 +672,8 @@ function DiscographyView({
                     }
                   />
                 </TableHead>
-                <TableHead>Band</TableHead>
+                {showBand && <TableHead>Band</TableHead>}
+                {showRecorded && (
                 <TableHead resizable={false}>
                   <SortableHeader
                     label="Recorded"
@@ -661,6 +684,8 @@ function DiscographyView({
                     }
                   />
                 </TableHead>
+                )}
+                {showTracks && (
                 <TableHead resizable={false}>
                   <SortableHeader
                     label="Tracks"
@@ -671,7 +696,8 @@ function DiscographyView({
                     }
                   />
                 </TableHead>
-                <TableHead resizable={false} className="text-right">Type</TableHead>
+                )}
+                {showType && <TableHead resizable={false} className="text-right">Type</TableHead>}
                 <TableHead resizable={false} className="px-2" />
               </TableRow>
             </thead>
@@ -709,31 +735,49 @@ function DiscographyView({
                       hoverGroup="row"
                     />
                   </TableCell>
-                  <TableCell className="text-foreground whitespace-nowrap truncate">
+                  <TableCell className="text-foreground truncate">
                     <button
                       type="button"
-                      className="text-left link-underline outline-none cursor-pointer"
+                      className="block w-full min-w-0 text-left outline-none cursor-pointer"
                     >
-                      {r.title}
+                      <span className="block truncate link-underline">{r.title}</span>
+                      {/* What the dropped columns were carrying, folded into
+                          the row that survives. Disclosure, not deletion: the
+                          year and the kind are why you scan a discography, and
+                          losing them with the column would make the narrow
+                          table a worse list rather than a smaller one. */}
+                      {!showRecorded && (
+                        <span className="block truncate text-xsmall text-muted-foreground tabular-nums">
+                          {[r.year, contentTypeConfig[r.type].label].filter(Boolean).join(" · ")}
+                        </span>
+                      )}
                     </button>
                   </TableCell>
-                  <TableCell className="text-muted-foreground whitespace-nowrap truncate">
-                    <button
-                      type="button"
-                      className="text-left link-underline outline-none cursor-pointer"
-                    >
-                      {r.band ?? artistName}
-                    </button>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground tabular-nums whitespace-nowrap">
-                    {r.year}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground tabular-nums whitespace-nowrap">
-                    {r.tracks}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <ContentTypeBadge type={r.type} />
-                  </TableCell>
+                  {showBand && (
+                    <TableCell className="text-muted-foreground whitespace-nowrap truncate">
+                      <button
+                        type="button"
+                        className="text-left link-underline outline-none cursor-pointer"
+                      >
+                        {r.band ?? artistName}
+                      </button>
+                    </TableCell>
+                  )}
+                  {showRecorded && (
+                    <TableCell className="text-muted-foreground tabular-nums whitespace-nowrap">
+                      {r.year}
+                    </TableCell>
+                  )}
+                  {showTracks && (
+                    <TableCell className="text-muted-foreground tabular-nums whitespace-nowrap">
+                      {r.tracks}
+                    </TableCell>
+                  )}
+                  {showType && (
+                    <TableCell className="text-right">
+                      <ContentTypeBadge type={r.type} />
+                    </TableCell>
+                  )}
                   <TableCell className="px-2">
                     {/* Falafel/kebab menu — same items as the cover
                          card's "More options" menu, behind a plain
