@@ -2,6 +2,7 @@ import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 import type { LinksFunction } from "react-router";
 import { ThemeProvider } from "@/components/app/theme-provider";
 import { ToastProvider, ToastViewport } from "@/components/ui/toast";
+import { usePressRipple } from "@/lib/use-press-ripple";
 import stylesheet from "./app.css?url";
 
 export const links: LinksFunction = () => [
@@ -39,6 +40,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  /* One document-level listener drives the press ripple on everything wearing
+     `.press-ripple` — components and exported class strings alike. See the
+     module for why it is not a per-component handler. */
+  usePressRipple();
+
   return (
     <ThemeProvider>
       <ToastProvider>
