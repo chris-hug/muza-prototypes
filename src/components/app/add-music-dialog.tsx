@@ -25,7 +25,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react"
-import { Search, ChevronLeft, ChevronRight, Plus, Check, Clock, X } from "lucide-react"
+import { Search, ChevronLeft, ChevronRight, Plus, Check, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import {
@@ -43,7 +43,6 @@ import { getAlbumDetail, getAllAlbums, getRichAlbums, hasAlbumDetail } from "@/l
 import { searchCatalog, type SearchResult } from "@/lib/search-catalog"
 import { slugify } from "@/lib/media-nav"
 import { useUserLibrary, type SavedSong } from "@/lib/user-library"
-import { useRecentSearches } from "@/lib/use-recent-searches"
 import { useIsMobile } from "@/lib/use-media-query"
 
 /* A song is the same song wherever it was picked from — a search hit, a
@@ -84,7 +83,6 @@ export function AddMusicDialog({
    * keyboard up none of it is reachable anyway. Back returns to browsing.
    * Same move TIDAL and Apple Music make on the equivalent step. */
   const [finding, setFinding] = useState(false)
-  const { recent, remember, clear: clearRecent } = useRecentSearches()
   // Picks are kept as full songs, not ids: a track chosen under "blue" must
   // still be listed (and removable) after the query changes to "red", when
   // it's no longer among the results to resolve an id against.
@@ -391,13 +389,19 @@ export function AddMusicDialog({
               {albumSongs.map(s => trackRow(s, s.id))}
             </div>
           </>
-        ) : finding && !searching && recent.length === 0 ? (
-          /* Nothing to search and nothing to recall — the first search of a
-             new playlist. It is NOT rendered inside the list: a `flex-1` box
-             inside a scroll container is exactly the case WebKit collapses to
-             zero height, which showed as a blank sheet with a field at the
-             bottom. As its own band between the two overlaying ones it needs
-             no scroll box and no flex bargaining. */
+        ) : finding && !searching ? (
+          /* No query yet. The screen says what the field reaches and nothing
+             else — no recent searches: with a keyboard up this band is ~60px,
+             one row, and a history list there is a heading, a Clear and a
+             single stale query where the results are about to be. The app's
+             own search keeps its history (`SearchPanel`); a sheet you opened
+             to add a track does not need one.
+
+             It is NOT rendered inside the list: a `flex-1` box inside a
+             scroll container is exactly the case WebKit collapses to zero
+             height, which showed as a blank sheet with a field at the bottom.
+             As its own band between the two overlaying ones it needs no
+             scroll box and no flex bargaining. */
           <div
             data-slot="find-empty"
             className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center -mt-[var(--sheet-bar-h)] pt-[var(--sheet-bar-h)] -mb-3 pb-[var(--sheet-band-h)]"
@@ -432,26 +436,7 @@ export function AddMusicDialog({
               "-mt-[var(--sheet-bar-h)] -mb-3 pt-[var(--sheet-bar-h)] pb-[var(--sheet-band-h)]",
             )}
           >
-            {searching ? searchResults : recent.length > 0 ? (
-              // What they searched before beats anything we could guess at.
-              <section className="flex flex-col gap-1">
-                <div className="flex items-center justify-between gap-2 px-2">
-                  <SectionLabel>Recent searches</SectionLabel>
-                  <Button variant="ghost" size="sm" onClick={clearRecent} className="-mr-2">Clear</Button>
-                </div>
-                {recent.map(q => (
-                  <button
-                    key={q}
-                    type="button"
-                    onClick={() => setQuery(q)}
-                    className="flex w-full items-center gap-3 rounded-md px-2 py-2.5 text-left text-xsmall text-foreground transition-colors hover:bg-muted cursor-pointer"
-                  >
-                    <Clock className="size-4 shrink-0 text-muted-foreground" />
-                    <span className="truncate">{q}</span>
-                  </button>
-                ))}
-              </section>
-            ) : null}
+            {searchResults}
           </div>
         ) : (
           <>
@@ -569,9 +554,6 @@ export function AddMusicDialog({
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 onFocus={() => setFinding(true)}
-                // Enter commits the query to the recent list — the same moment
-                // the on-screen keyboard's "search" key fires.
-                onKeyDown={e => { if (e.key === "Enter") remember(query) }}
                 // Browsing, the rows above are the user's OWN library, so the
                 // placeholder carries the scope. On the Find screen the header
                 // already says it, so one word is enough.

@@ -284,10 +284,12 @@ shape as the form sheet, for the same reason.
   failed to load. With a keyboard up it drops to the headline alone
   (`[data-kb="open"] [data-slot="find-empty"] > p + p`): ~60px is one line, and
   two would sit half behind the field.
-- With no query it shows **recent searches**
-  ([`useRecentSearches`](src/lib/use-recent-searches.ts) — `localStorage`,
-  committed queries only, newest first, capped at 8), or a heading naming the
-  scope when there are none.
+- With no query it shows **the invitation and nothing else** — no recent
+  searches. With a keyboard up this band is ~60px, one row: a history list
+  there is a heading, a Clear and one stale query sitting exactly where the
+  results are about to appear. The app's own search keeps its history
+  (`SearchPanel`); a sheet you opened to add a track does not need one, and
+  the store that backed this one is gone with it.
 - The **title does not change**. What you're filling is the same job either
   way, and swapping in "Find" would drop the only context on screen.
 - Move the **footer**, never the field: re-parenting the input remounts it and
