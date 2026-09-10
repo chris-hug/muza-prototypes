@@ -102,13 +102,16 @@ share one baseline.
 // ToastViewport
 "fixed z-[100] flex flex-col gap-2 outline-none"
 // phone → a bar along the TOP
-"inset-x-3 top-[calc(env(safe-area-inset-top)+8px)] bottom-auto w-auto"
+"inset-x-2 top-[calc(env(safe-area-inset-top)+4px)] bottom-auto w-auto"
 // sm and up → the top-right card
 "md:inset-x-auto md:right-4 md:top-4 md:bottom-auto md:w-[380px] md:max-w-[calc(100vw-2rem)]"
 ```
 
-**Phone — the TOP of the screen.** `inset-x-3`, 8px under the safe-area inset,
-full width, over everything the app draws.
+**Phone — the TOP of the screen.** `inset-x-2`, 4px under the safe-area inset,
+over everything the app draws. Tighter than the page's own 12px gutter on
+purpose: a toast is chrome laid OVER the page rather than content in it, and
+running it wider and nearer the edge is what makes it read as something the
+frame put there rather than a card in the layout.
 
 It lived at the bottom for most of its life, thumb-side, where platform
 snackbars sit. On a phone the bottom is also where every control a toast is

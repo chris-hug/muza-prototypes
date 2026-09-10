@@ -129,7 +129,12 @@ function ToastViewport({ className }: { className?: string }) {
            The keyboard never reaches it either, which is the other half of
            what this cost: no `--kb` term, no anchor published by a sheet, no
            measurement at all. */
-        "inset-x-3 top-[calc(env(safe-area-inset-top)+8px)] bottom-auto w-auto",
+        // 8px of gutter, not the page's 12: a toast is chrome laid OVER the
+        // page rather than content in it, and the wider it runs the more it
+        // reads as a bar the system put there. Same reason it sits 4px under
+        // the safe area rather than 8 — near enough to the edge to belong to
+        // the frame.
+        "inset-x-2 top-[calc(env(safe-area-inset-top)+4px)] bottom-auto w-auto",
         // Desktop → the familiar top-right card.
         "md:inset-x-auto md:right-4 md:top-4 md:bottom-auto md:w-[380px] md:max-w-[calc(100vw-2rem)]",
         className
