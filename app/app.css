@@ -1566,18 +1566,26 @@ img[class*="object-cover"] {
   background-color: color-mix(in srgb, var(--popover) 72%, transparent);
 }
 
-/* A sheet's own glass. `.frosted-glass` is tuned for chrome that sits over the
-   PAGE — it mixes `--background`, and it carries a sheen and a grain — so on a
-   sheet, whose surface is `--popover`, it reads as a band across the top: a
-   different colour, faintly textured, exactly as wide as the bar.
+/* …and the bar OVERLAYS the sheet, which is what gives the glass something to
+   do. A bar in the flow sits ABOVE the scrolling band: nothing ever passes
+   under it, so the translucency is decoration and the bar reads as a solid
+   strip with a seam under it. Taken out of the flow it is the top of one
+   continuous surface, with the content running full height beneath and
+   blurring past the title — which is also how the sheet keeps its rounded
+   corner: the corner belongs to the sheet, not to a band pinned inside it.
 
-   This is the same idea in the sheet's own colour and nothing else: 72% of
-   `--popover` over `--popover` is `--popover`, so the bar is invisible at
-   rest. What it still does is blur and mute whatever scrolls UNDER it, which
-   is the only reason the bar is translucent in the first place. */
-.sheet-glass {
-  backdrop-filter: blur(12px);
-  background-color: color-mix(in srgb, var(--popover) 72%, transparent);
+   Every bottom-sheet dialog gets this, not just the two that hand-rolled it.
+   The scrolling band pays for it in `padding-top: var(--sheet-bar-h)`, which
+   is why that variable has to track the bar's real height.
+
+   `mobile="form"` sheets are excluded on purpose: their popup is
+   `overflow-hidden` and the body is its own scrolling band between a bar and
+   an action row, so there the bar is a band and belongs in the flow. */
+[data-slot="dialog-content"][data-mobile="sheet"] > [data-slot="dialog-action-bar"] {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  z-index: 10;
 }
 
 /* iOS raises its own menu when a finger rests on an image — Share, Save to

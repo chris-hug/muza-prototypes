@@ -344,13 +344,11 @@ export function AddMusicDialog({
             `useIsMobile` so only ONE `DialogTitle` is ever mounted. */}
         {isMobile ? (
           <DialogActionBar
-            /* OUT of the flow, so the list runs full height underneath it and
-               you can see what is scrolling behind the title — which is also
-               why it keeps its glass. `absolute` and not `sticky`: the popup
-               is `overflow-hidden`, so a sticky bar has nothing to stick to,
-               while an absolute one is anchored to a box that never scrolls.
-               The list pays for it in padding (`--sheet-bar-h`). */
-            className="absolute inset-x-0 top-0 z-10"
+            /* Out of the flow — the list runs full height underneath and
+               blurs past the title. That positioning is no longer written
+               here: every sheet's bar overlays its content now (app.css, keyed
+               on `[data-mobile="sheet"]`). The list still pays for it in
+               padding (`--sheet-bar-h`). */
             leading={back ?? <span className="size-10 shrink-0" />}
             /* The bar's trailing slot is dismissal — EXCEPT on the Find
                screen with something picked, where it is the confirming

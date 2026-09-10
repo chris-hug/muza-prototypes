@@ -230,10 +230,27 @@ Only the middle one scrolls.
   colour, faintly textured, exactly as wide as the bar. `.sheet-glass` is 72%
   of `--popover` and a 12px blur — over the sheet's own surface that resolves
   to the surface, so the bar is invisible at rest and shows itself only by
-  blurring what scrolls under it. `AddMusicDialog` makes the bar `absolute` so
-  the list runs full height beneath it, which is what there is to blur. Pass
-  **`plain`** for a bar with nothing behind it at all (unlayered CSS, so a
-  utility class cannot override either one).
+  blurring what scrolls under it. Pass **`plain`** for a bar with nothing
+  behind it at all (unlayered CSS, so a utility class cannot override either
+  one).
+- **In a bottom sheet the bar OVERLAYS the content, and that is the default.**
+  `app.css` positions it — `[data-slot="dialog-content"][data-mobile="sheet"] >
+  [data-slot="dialog-action-bar"]` — rather than each sheet writing
+  `absolute inset-x-0 top-0 z-10` for itself, which two did and the release
+  sheet did not. A bar in the FLOW sits above the scrolling band: nothing ever
+  passes under it, so the translucency has nothing to do and the bar reads as
+  a solid strip with a seam under it. Out of the flow it is the top of one
+  continuous surface, with the content running full height beneath and
+  blurring past the title — and the sheet keeps its rounded corner, because
+  the corner belongs to the sheet rather than to a band pinned inside it.
+  `absolute` and not `sticky`: the popup does not scroll (its bands do), so a
+  sticky bar has nothing to stick to.
+  The scrolling band pays for the overlay in `pt-[var(--sheet-bar-h)]` — which
+  is why that variable has to track the bar's real height, and why a sheet
+  that adds a bar must add the padding in the same edit.
+- **`mobile="form"` sheets are excluded on purpose.** There the popup is
+  `overflow-hidden` and the body is its own band between a bar and an action
+  row, so the bar IS a band and belongs in the flow.
 - The confirming action is a full-width `size="lg"` (48px) button in
   `DialogFormActions`, the band below the body. The sheet pads itself off the
   keyboard, so the action sits directly on it. Never offered twice — bar

@@ -209,8 +209,11 @@ export function EditReleaseDialog({
 
              No title in the bar: the identity below carries the one
              `DialogTitle`, and a second would be both a duplicate landmark
-             and a repetition of what is 40px underneath it. `md:hidden`
-             comes with the bar — desktop keeps its header and footer. */}
+             and a repetition of what is just underneath it. `md:hidden` comes
+             with the bar — desktop keeps its header and footer — and so does
+             the overlay: a sheet's bar is positioned over its content by
+             app.css, and the band below pays for it with
+             `pt-[var(--sheet-bar-h)]`. */}
         <DialogActionBar
           trailing={
             <Button onClick={save} className="touch-target shrink-0">
@@ -227,7 +230,7 @@ export function EditReleaseDialog({
              nothing at all between them while a price field was focused.
              It scrolls away with everything else; the ✕ is positioned on the
              popup, so the way out stays where it was. */}
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto max-md:pt-[var(--sheet-bar-h)]">
         <DialogHeader className="shrink-0 px-3 pt-3 pb-4 md:px-8 md:pt-8 md:pb-6 border-b border-border">
           {/* DialogHeader STACKS its children (`dialogHeaderStackClass` is a
               column) — a cover passed as a sibling of the title lands under it.

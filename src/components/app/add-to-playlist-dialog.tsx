@@ -235,10 +235,9 @@ function AddToPlaylistContent({ song, guard, onClose }: {
       {isMobile ? (
         /* A bar, not a stacked header: back·title·✕ on one line is the shape
            the whole flow uses, and on a phone the title's own line is a row
-           the list does not get. `absolute` + glass so the rows run full
-           height underneath and blur past the title. */
+           the list does not get. It overlays the rows (app.css) so they run
+           full height underneath and blur past the title. */
         <DialogActionBar
-          className="absolute inset-x-0 top-0 z-10"
           leading={<span className="size-10 shrink-0" />}
           /* Dismissal until there is something to commit, then the commit —
              the trade the Add-music bar makes. Nothing is lost: the sheet
