@@ -258,6 +258,15 @@ Only the middle one scrolls.
   is behind the keyboard. (It used to park focus on the bar to keep the
   keyboard down; the full-screen presentation is what made that caution
   unnecessary.)
+- **The confirming action refuses focus** (`onPointerDown` → `preventDefault`).
+  A tap on a button moves focus to it, which closes the keyboard, which lets
+  the sheet grow back to full height — and the button travels down out from
+  under the finger before the click resolves, so the first tap does nothing
+  and only the second lands. Keeping focus in the field keeps the keyboard,
+  the height and the button where they were; the click still fires. Only the
+  action needs this: the rows in a sheet are not focusable, so tapping one
+  never moves focus, and a control anchored to the TOP of a sheet does not
+  travel when the height changes.
 - **iOS needs the keyboard opened inside the tap.** Focus alone is not enough:
   Safari raises the virtual keyboard only for a focus that happens during a
   user gesture, and the sheet's focus lands a frame or two later. So the

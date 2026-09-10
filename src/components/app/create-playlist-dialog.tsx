@@ -250,7 +250,20 @@ export function CreatePlaylistDialog({
                  target for the screen's primary action. No lift and no
                  disabled colour of its own: it sits ON the sheet, so the
                  ordinary `disabled:opacity-50` has a surface to fade against. */}
-            <Button size="lg" onClick={create} disabled={!name.trim()} className="w-full">
+            <Button
+              size="lg"
+              onClick={create}
+              disabled={!name.trim()}
+              className="w-full"
+              /* Keep the focus in the field. A tap on a button moves focus to
+                 it, which closes the keyboard, which lets the sheet grow back
+                 to full height — and the button travels down out from under
+                 the finger BEFORE the click resolves, so the first tap does
+                 nothing and only the second one lands. Refusing the default
+                 pointer-down behaviour keeps focus (and the keyboard, and the
+                 layout) exactly where it was; the click still fires. */
+              onPointerDown={e => e.preventDefault()}
+            >
               {mobileAction}
             </Button>
           </DialogFormActions>
