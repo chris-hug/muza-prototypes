@@ -22,7 +22,9 @@
 
 import { Pencil } from "lucide-react"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { DetailMenuSheetBody } from "@/components/ui/detail-more-button"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { PlayFilledAlt, PauseFilledAlt } from "@/components/ui/transport-icons"
@@ -126,9 +128,14 @@ export function PlaylistCard({
     fn?.(e)
   }
 
+  /* Hold the cover, get the sheet. It used to call `onMore` — which has no
+     call site anywhere in the app — so a long press on a playlist did nothing
+     at all, while the ⋯ that opens the same actions lives in the hover-only
+     cluster. A host that wants its own surface can still pass `onMore`. */
+  const [sheetOpen, setSheetOpen] = useState(false)
   const coverGestures = useLongPress({
     onClick:     goPlaylist,
-    onLongPress: () => onMore?.(),
+    onLongPress: () => (onMore ? onMore() : setSheetOpen(true)),
   })
 
   return (
@@ -245,6 +252,31 @@ export function PlaylistCard({
           ) : null}
         </div>
       </div>
+
+      {/* The long press raises the SAME sheet the detail page and the list
+          rows raise — quick actions as tiles across the top, then the rows —
+          rather than the dropdown's plain list. A phone gets one menu shape
+          for a playlist, wherever it is reached from. */}
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent side="bottom" className="rounded-t-2xl">
+          <DetailMenuSheetBody
+            kind="playlist"
+            title={title}
+            covers={covers}
+            meta={`${songCount} songs`}
+            subtitle={owned ? "Playlist" : owner ? `By ${owner}` : "Playlist"}
+            owned={owned}
+            inLibrary={inLibrary}
+            onAdd={onAdd}
+            onEdit={onEdit}
+            onGoToOwner={onGoToOwner}
+            onGoToSelf={onGoToPlaylist ?? goPlaylist}
+            onRemove={onRemove}
+            onReport={onReport}
+            onShowInfo={onShowInfo}
+          />
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }

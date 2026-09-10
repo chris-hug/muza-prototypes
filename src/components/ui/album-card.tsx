@@ -36,6 +36,8 @@ import { AlbumCardMenu } from "@/components/ui/cover-card-menu"
 import { LibraryHeartButton } from "@/components/ui/library-heart-button"
 import { PurchasedBadge } from "@/components/ui/purchased-badge"
 import { useLongPress } from "@/lib/use-long-press"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { DetailMenuSheetBody } from "@/components/ui/detail-more-button"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 import { libraryIdForTitle } from "@/lib/album-meta"
 import { usePlayer } from "@/lib/player"
@@ -118,6 +120,7 @@ export function AlbumCard({
   const libId = libraryIdForTitle(title) ?? key
   // Opened by a long press on the cover — see `onLongPress` below.
   const [menuOpen, setMenuOpen] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(false)
   // Media-tile text: title + meta share one size (text-xsmall = 17px). The
   // meta rows (artist · year, price, "Owned") go a lighter 300 weight with a
   // hair of positive tracking to open the thin Light strokes; the title stays
@@ -178,7 +181,9 @@ export function AlbumCard({
     // surface. Before this, `onMore` had no call site anywhere in the app, so
     // a long press did nothing — while the ⋯ that opens the same menu sits in
     // the pointer-only cluster, out of reach on touch.
-    onLongPress: () => (onMore ? onMore() : setMenuOpen(true)),
+    // The sheet, not the dropdown: a phone gets one menu shape for an album —
+    // quick actions as tiles, then the rows — wherever it is reached from.
+    onLongPress: () => (onMore ? onMore() : setSheetOpen(true)),
   })
 
   return (
@@ -344,6 +349,33 @@ export function AlbumCard({
           </span>
         ) : null}
       </div>
+
+      {/* The long press raises the SAME sheet the detail page and the list
+          rows raise. The kebab keeps the anchored dropdown, which is the right
+          shape for a mouse. */}
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent side="bottom" className="rounded-t-2xl">
+          <DetailMenuSheetBody
+            kind="album"
+            title={title}
+            subtitle={artist}
+            cover={cover}
+            meta={year ? String(year) : undefined}
+            owned={owned}
+            libraryType="album"
+            libraryId={libId}
+            libraryName={title}
+            onAdd={onAdd}
+            onEdit={onEdit}
+            onAddToPlaylist={onAddToPlaylist}
+            onGoToArtist={onGoToArtist ?? (() => openArtist(slugify(artist)))}
+            onGoToSelf={onGoToAlbum ?? goAlbum}
+            onRemove={onRemove}
+            onReport={onReport}
+            onShowInfo={onShowInfo}
+          />
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }
