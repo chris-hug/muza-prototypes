@@ -1,7 +1,7 @@
 ---
 title: Album Card
 source: src/components/ui/album-card.tsx
-related: [card-rail, responsive, detail-more-button, button]
+related: [card-rail, responsive, detail-more-button, button, gesture]
 usage:
   - Library › Albums | /?page=Albums
   - Artist › Top Albums | /?page=Artist
@@ -51,7 +51,7 @@ fills whatever it is in.
 | `purchased` | bought — the third line reads "Owned" and wins over any price |
 | `owned` | uploaded by this user — Edit replaces the heart, the menu swaps Add → Edit and Report → Remove from library |
 | `inLibrary` | already saved — drops the heart and the menu's "Save to library", surfaces "Remove from library" |
-| `onMore` | called after a long press on the cover; the host renders the sheet |
+| `onMore` | **legacy** — the card raises its own sheet on a long press now; a host that passes this still gets called |
 | `onTitleClick` / `onArtistClick` | override the text destinations; the title falls back to opening the album |
 | `onAdd` `onEdit` `onAddToPlaylist` `onGoToArtist` `onGoToAlbum` `onRemove` `onReport` `onShowInfo` | the "…" menu's rows; a row only renders when its handler exists |
 | `hideGoToArtist` / `hideGoToAlbum` | drop a nav row on the page it would lead to |
@@ -65,7 +65,7 @@ grid, and the Home rails.
 | Target | Action |
 |---|---|
 | cover — tap / click | open the album detail (`openAlbum(slugify(title))`) |
-| cover — long press | `onMore` |
+| cover — long press (450–500ms, 8px tolerance) | the album's own `DetailMenuSheetBody` sheet |
 | title | open the album (or `onTitleClick`) |
 | artist | `onArtistClick` |
 | Play (hover) | play the album's **first track**, context = the album — never navigates |
@@ -140,12 +140,40 @@ touch screen and there is no sticky hover after a tap. `group-focus-within`
 is the keyboard path: tabbing onto any of the three buttons reveals the whole
 cluster.
 
-Touch gets the same actions another way: a long press on the cover calls
-`onMore`, and the host renders a bottom sheet. The ⋯ button's own menu is a
-`DropdownMenu`, which below a **768px** viewport (`useIsMobile`) presents as a
-bottom sheet rather than a popover — a window gate (768, presentation), not a hover gate,
-because the headless preview reports `hover: hover` at phone width and hybrid
-laptops do too.
+Touch gets the same actions another way: **a long press on the cover raises
+`DetailMenuSheetBody`** — the same sheet the album detail page and the list
+rows raise. Not the ⋯ menu rendered as a sheet: a phone should get one menu
+shape per entity, wherever it was reached from, and the kebab keeps the
+anchored dropdown, which is the right shape for a mouse.
+
+The card raises that sheet **itself**. It used to call an `onMore` prop, and
+no host in the app passed one — so until the touch pass, holding an album card
+did nothing at all. `onMore` is still called when a host passes it, but
+nothing needs to.
+
+Three things the press has to get right, each a bug first:
+
+- **The hold is visible from the first frame.** `data-pressing` becomes
+  `scale: 0.98` and a slight darkening (`app.css`, coarse pointers only), so
+  the wait reads as the card being taken rather than a tap that did not
+  register — otherwise people lift and try again, which is a tap, which opens
+  the album.
+- **A drag past 8px cancels the hold and swallows the click.** The browser
+  suppresses a click after a *scroll*, but a short drag — the start of a rail
+  swipe — is not a scroll as far as it is concerned, so the card opened the
+  album the finger was swiping past. Reported as *"the cards are too sensitive
+  to taps"*.
+- **iOS's own image menu is declined globally** (`-webkit-touch-callout:
+  none`), or Share / Save to Photos / Copy Subject arrives on top of ours. It
+  has to be in force before the finger lands, so it cannot come from the
+  handler.
+
+See [Gesture](gesture.md) for the shared numbers.
+
+The ⋯ button's own menu is a `DropdownMenu`, which below a **768px** viewport
+(`useIsMobile`) presents as a bottom sheet rather than a popover — a window
+gate (768, presentation), not a hover gate, because the headless preview
+reports `hover: hover` at phone width and hybrid laptops do too.
 
 Behind the cluster a gradient fades in on the same triggers:
 `from-black/45 via-black/10 to-transparent`, bottom to top,
@@ -249,7 +277,7 @@ intentional. The card passes it no classes, so the cover has **no radius**.
 - claims "Cover area: tap to play, long-press to call `onMore`" (`album-card.tsx:73`) · source: the tap opens the detail page (`album-card.tsx:150–152`, `goAlbum` at `:134`); playing is the Play button only.
 - claims the kebab stops `pointerup` "which is where useLongPress fires its tap → onPlay" (`cover-card-menu.tsx:122–125`) · source: `useLongPress` fires on the browser's `click`, not `pointerup` (`use-long-press.ts:69–79`), and the cover's tap opens rather than plays (`album-card.tsx:151`).
 - claims the hover cluster is "Hidden on touch" (`album-card.tsx:181–183`) · source hides it with `opacity-0` only (`album-card.tsx:193`) — no `pointer-events-none`, no `[@media(hover:none)]:hidden` — so the invisible Play / heart / ⋯ still receive taps on a touch screen, and the wrapper's `stopPropagation` (`:189–192`) then also swallows tap-to-open over that strip of the cover.
-- claims "long-press → bottom sheet", "parent renders Sheet" (`album-card.tsx:12`) · no host in `src/` or `app/` passes `onMore` to an `AlbumCard` (only `playlist-card.tsx` and `media-header.tsx` declare it), so a long press on an album card currently does nothing anywhere in the app. The bottom sheet that does exist is the ⋯ menu's viewport-gated `DropdownMenu` sheet (`dropdown-menu.tsx:18–33`), which is inside the cluster above.
+- ~~claims "long-press → bottom sheet", "parent renders Sheet" · no host passes `onMore`, so a long press does nothing anywhere~~ · **answered by the touch pass**: the card raises `DetailMenuSheetBody` itself, so it no longer depends on a host wiring a prop.
 - claims card titles are a `font-medium` exception to the sub-18px rule (`DESIGN_SYSTEM.md:414`, `:418`) · source title is `font-normal` (`album-card.tsx:258`), as `DESIGN_SYSTEM.md:399` itself says.
 - claims `purchased` "Surfaces the 'Owned' pill" (`album-card.tsx:60–61`) · source: `PurchasedBadge` is glyph + label with no pill chrome, the pill was tried and dropped (`purchased-badge.tsx:7–10`).
 - claims the 17px step is `text-xs` (`DESIGN_SYSTEM.md:397`) · source uses the semantic alias `text-xsmall` (`album-card.tsx:116–117`, `app.css:251`), which is the rule elsewhere in the system.

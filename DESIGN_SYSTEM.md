@@ -823,6 +823,19 @@ still exists and a call site can still ask for it; what changed is which step
 you get by not choosing. 40px was a desktop-first number for something you
 type into on a phone.
 
+**Two shared sheet recipes, both easy to break from a call site.**
+`.sheet-glass` is the bar's own glass — 72% of `--popover` over a 12px blur.
+The page's `.frosted-glass` mixes `--background` and carries a sheen, which
+over a `--popover` sheet reads as a band across the top: a different colour,
+faintly textured, exactly as wide as the bar. The sheet's own glass disappears
+at rest and shows itself only by blurring what scrolls under — which is why the
+bar is positioned OVER the content (one rule in `app.css`, keyed on
+`[data-mobile="sheet"]`) rather than sitting above it in the flow, where
+nothing would ever pass beneath it. `--sheet-bar-h` is the other half: the
+bar's real height (54 at rest, 48 with the keyboard up), which the scrolling
+band pays as `padding-top`. Change the bar's controls and that variable moves
+with them, or the list loses its first rows under an absolute bar.
+
 **Both hand-rolled gestures read their numbers from one module**
 ([`src/lib/gesture.ts`](src/lib/gesture.ts)): the slop (8px), the sheet's
 dismiss thresholds (88px, 0.45px/ms), the "is every scroller under this finger
@@ -911,6 +924,11 @@ variant, which sheds its height, spells the same 3px out as four sides so it
 lands on that baseline too — measured spread across all seven variants: 0px.
 Only this size: `sm`/`lg` are a different metric and the icon sizes have no
 baseline to answer to.
+
+Two of these have their own pages now: [Gesture](docs/components/gesture.md)
+for the pointer gestures and the shared thresholds, and
+[Keyboard](docs/components/keyboard.md) for `--kb`, `data-kb`, the `svh` rule
+and the four bugs that hide behind an unmeasured keyboard.
 
 The ladder lives in **`src/lib/control-size.ts`**, not in six copies. Six
 components take a `size` prop and write it back as `data-size`:

@@ -117,15 +117,23 @@ bottom, swipe **down** to dismiss (`swipeDirection="down"` set on the root, as
 
 ```tsx
 <SheetContent side="bottom" showCloseButton={false}
-  className="rounded-t-2xl px-2 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] max-h-[80vh]">
-  <div aria-hidden className="mx-auto mb-2 h-1 w-9 rounded-full bg-border" />   {/* drag handle */}
+  className="rounded-t-[28px] px-2 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] max-h-[80vh]">
+  <SheetGrabber className="mx-auto mb-2" />                                    {/* drag handle */}
   <SheetTitle className="sr-only">Actions</SheetTitle>
   <div className="flex flex-col overflow-y-auto">{children}</div>
 </SheetContent>
 ```
 
 - **No ✕.** The handle (4 × 36px, `bg-border`) says "drag me"; a row tap
-  closes the sheet anyway. `pb-[max(12px, env(safe-area-inset-bottom))]`
+  closes the sheet anyway. It is `SheetGrabber` now rather than the same six
+  classes written out here and in `detail-more-button.tsx` — see
+  [Drawer](drawer.md).
+- **A row must not repaint the controls inside it.** The mobile row painted
+  every descendant `svg` `text-muted-foreground` (`[&_svg]`), which reached
+  into a nested `Checkbox` and turned its tick dark **on the blue fill**.
+  Scoped to direct children (`[&>svg]`), so the row still styles its own leading
+  icon and leaves a control's own parts alone. Measured after: tick
+  `oklch(0.9816 0.0131 111.4)` on `rgb(30 52 216)`. `pb-[max(12px, env(safe-area-inset-bottom))]`
   keeps the last row above the home indicator, which is why
   `viewport-fit=cover` is mandatory in the viewport meta — without it the
   `env()` is 0 and the pad is the 12px floor alone.

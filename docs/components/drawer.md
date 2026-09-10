@@ -47,6 +47,50 @@ and modals read as one family.
 The body is whatever you put between header and footer — give it `flex-1
 overflow-y-auto` and its own padding.
 
+## `SheetGrabber` — the pull-down, drawn
+
+```tsx
+<SheetGrabber className="mx-auto mb-2" />   {/* in the flow  */}
+<SheetGrabber className="absolute left-1/2 top-1.5 z-20 -translate-x-1/2" />   {/* overlaid */}
+```
+
+36 × 4, `rounded-full bg-border`, `aria-hidden`. It is not decoration and it
+is not a control: it is the only thing on screen that says this surface can be
+pulled **down**.
+
+**A sheet with a ✕ can go without one**, because the way out is drawn. A sheet
+whose only way out is the gesture cannot — the release editor put Save in the
+corner the ✕ had been in and left nothing at all saying the sheet could be
+left without saving. Every `Dialog` bottom sheet now carries one, phones only,
+and never on a `mobile="form"` sheet, which fills the screen and is not
+dismissed by dragging.
+
+Two placements, and the choice is about what the sheet's first band is:
+
+- **In the flow** (`mx-auto mb-2`) when the sheet opens on a list — the two
+  menu sheets do this, and both used to write the six classes out by hand.
+- **Overlaid** (`absolute`) when the sheet opens with a bar or a header across
+  the top, where a band of its own would spend a whole row on a 4px pill. It
+  is centred, so it clears the bar's leading and trailing controls, and it
+  sits above the bar's top inset, so it clears a centred title. Measured at
+  375: grabber 7–11px from the top, title top at 20.
+
+`aria-hidden` because the gesture it advertises already has a keyboard and
+screen-reader equivalent — Escape, and the dialog's own close — so announcing
+a decorative bar would add a landmark that does nothing.
+
+## The corner is 28, and that is not on the radius ladder
+
+Every bottom sheet's top corner is `rounded-t-[28px]`: dialog sheets, `Sheet`,
+the mobile dropdown sheet, the mobile alert. It is derived from the control it
+has to hold, not from a step in the scale.
+
+A `Button` is a pill, so at 40px tall its corner radius is 20, and the sheet's
+action bar insets its controls by 8. Outer radius = inner radius + padding, so
+28 = 20 + 8, and the two curves are parallel. At the old 18
+(`rounded-t-2xl`) **no** inset could nest a 20px curve — it always read as
+fighting the corner.
+
 ## Usage
 
 Where it is used: the **cart** (`cart-drawer.tsx`, `side="right"`, `w-full

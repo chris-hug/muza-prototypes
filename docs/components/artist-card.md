@@ -1,7 +1,7 @@
 ---
 title: Artist Card
 source: src/components/ui/artist-card.tsx
-related: [album-card, playlist-card, card-rail, responsive]
+related: [album-card, playlist-card, card-rail, detail-more-button, gesture, responsive]
 usage:
   - Library › Artists | /?page=Artists
   - Artist › Similar Artists | /?page=Artist
@@ -10,8 +10,9 @@ usage:
 An `ArtistCard` is a round portrait over a centred name — the tile an artist
 gets wherever artists are listed as tiles: Library › Artists, the Similar
 Artists rail, a search shelf, the people on an album or playlist page. It is
-one plain `<button>`: the whole card opens the artist profile, and that is its
-only action — no hover cluster, no menu, no long press.
+one plain `<button>`: the whole card opens the artist profile. It has no hover
+cluster and no ⋯ — but on a touch screen a **long press** raises the artist's
+own sheet, which is the only way a tile offers actions without a kebab.
 
 ## Anatomy
 
@@ -77,9 +78,23 @@ the 220px cap.
 - **Hover is pointer-only.** `group-hover:` is wrapped in
   `@media (hover: hover)` by Tailwind v4, so the portrait never stays darkened
   after a tap on a touch screen.
-- **No long press, no `onMore`, no menu.** An artist has a menu on its detail
-  page ([Detail Menu](detail-more-button.md)); the tile offers only the way
-  there.
+- **Long press → the artist's sheet.** 450–500ms on a coarse pointer raises
+  `DetailMenuSheetBody` with `kind="artist"` — the same sheet the artist
+  detail page raises, not a card-specific menu. A phone gets one menu shape
+  per entity, wherever it was reached from. There is still no ⋯: an artist
+  tile is a portrait and a name, and a kebab on it would be the only chrome.
+  See [Gesture](gesture.md) for the press itself.
+- **What the sheet offers.** Save (store-bound, so the tile and the detail
+  page agree), **Play radio** — only when a `radioTrack` exists, because an
+  action that cannot start is worse than an absent one — and **Artist info**,
+  which opens a catalogue summary dialog. Both were added in the touch pass;
+  before it, holding an artist tile did nothing at all.
+- **The hold is visible.** The press sets `data-pressing` from the first
+  frame: `scale: 0.98` and a slight darkening, so the wait reads as the tile
+  being taken rather than as a tap that did not register.
+- **A drag is not a tap.** The click is swallowed if the finger moved more
+  than 8px, so a card the finger was swiping past does not open behind the
+  rail.
 
 ## Missing portrait
 

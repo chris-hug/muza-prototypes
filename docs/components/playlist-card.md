@@ -84,7 +84,7 @@ rails, and the Playlists shelf on search.
 | Target | Action |
 |---|---|
 | cover — tap / click | `openPlaylist(slugify(title))` |
-| cover — long press (500ms, 8px tolerance) | `onMore` |
+| cover — long press (450–500ms, 8px tolerance) | the playlist's own `DetailMenuSheetBody` sheet |
 | title | open the playlist (or `onTitleClick`) |
 | owner name | `onOwnerClick` |
 | Play (hover) | the playlist's **first track**, context = the playlist title — never navigates |
@@ -96,6 +96,29 @@ and hands it to the player. The legacy `onPlay` prop is deliberately not
 called, so a host cannot turn Play back into a link. On mount the card
 registers itself (`registerPlaylists`, idempotent, never overriding a richer
 record) so a card synthesised from bare props still opens a real detail page.
+
+## Hold it, and the playlist's own sheet comes up
+
+A long press on the cover raises **`DetailMenuSheetBody`** — the same sheet the
+playlist detail page and the list rows raise — not the card's ⋯ dropdown
+rendered as a sheet. One menu shape per entity, wherever it was reached from;
+the kebab keeps its anchored dropdown, which is the right shape for a mouse.
+
+The card raises it **itself**. It used to call an `onMore` prop that no host
+passed, so holding a playlist card did nothing anywhere in the app — the
+affordance existed only in this document.
+
+- **The hold is visible from the first frame.** `data-pressing` on the card
+  becomes `scale: 0.98` and a slight darkening, so the 450–500ms wait reads as
+  the card being taken rather than as a tap that missed.
+- **A drag past 8px cancels it** and hands the gesture back to the rail, and
+  the click that follows a completed press is swallowed — or the playlist
+  opens underneath its own menu.
+- **iOS's image menu has to be declined first**
+  (`img { -webkit-touch-callout: none }`, globally), or Safari's own
+  Share / Save to Photos sheet arrives on top of ours and takes the gesture.
+
+The numbers are shared with the sheet drag — see [Gesture](gesture.md).
 
 The tap is the browser's own `click`, forwarded by `useLongPress`, never one
 synthesised on `pointerup` — the reasoning is in
@@ -163,8 +186,7 @@ Item go through `CoverArt`; see the open questions.
 - `PlaylistCreateCard`'s label is `text-small` (19px,
   playlist-create-card.tsx:71) beside card titles at `text-xsmall` (17px) in
   the same grid.
-- playlist-card.tsx:9 says a long press calls `onMore` and "parent renders
-  Sheet" · no host in `src/` or `app/` passes `onMore` to a `PlaylistCard`, so
-  a long press currently does nothing anywhere. The bottom sheet that does
-  exist is the ⋯ menu's `DropdownMenu`, which presents as a sheet below 768.
+- ~~a long press calls `onMore`, which no host passes, so it does nothing~~ ·
+  **answered by the touch pass.** The card raises the sheet itself now, so it
+  no longer depends on a host wiring a prop — see "Hold it" below.
 - `onPlay` is declared (playlist-card.tsx:55) and never read (:104–108).
