@@ -36,15 +36,23 @@ const buttonVariants = cva(
   // listing it repaints the ring region frame by frame under every press.
   //
   // Every button presses, menu and dialog triggers included.
+  // `disabled:opacity-50` is the base answer and the right one for a button
+  // made of ink — link, ghost, outline. The three FILLED variants override it
+  // with `.disabled-solid` (app.css), which mixes the same result out of
+  // colour instead: opacity would make the pill translucent, and a
+  // translucent pill is only "faded" when something solid happens to be
+  // behind it. See the rule for why that kept coming back.
   "group/button press-ripple relative inline-flex shrink-0 items-center justify-center gap-2 rounded-full border bg-clip-padding whitespace-nowrap state-fade outline-none select-none focus-visible:border-ring focus-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 pb-px",
   {
     variants: {
       variant: {
         // Primary — deep blue
         default:
+          "disabled-solid [--solid-fill:var(--primary)] [--solid-ink:var(--primary-foreground)] " +
           "border-transparent bg-primary text-primary-foreground [--hover-fill:var(--primary-hover)] [--press-fill:var(--primary-active)] [--press-ink:color-mix(in_srgb,var(--primary-foreground)_60%,transparent)]",
         // Secondary — light surface, always solid foreground text
         secondary:
+          "disabled-solid [--solid-fill:var(--secondary)] [--solid-ink:var(--secondary-foreground)] " +
           "border-transparent bg-secondary text-secondary-foreground [--hover-fill:var(--secondary-hover)] [--press-fill:var(--press-on-secondary)] [--press-ink:color-mix(in_srgb,var(--secondary-foreground)_60%,transparent)]",
         // Outline — border + frosted-glass fill. On a solid background this
         // is indistinguishable from the old solid-fill outline; on varied
@@ -64,6 +72,7 @@ const buttonVariants = cva(
           "border-transparent text-primary-text link-underline [--press-ink:color-mix(in_srgb,var(--primary-text)_60%,transparent)]",
         // Destructive
         destructive:
+          "disabled-solid [--solid-fill:var(--destructive)] [--solid-ink:var(--destructive-foreground)] " +
           "border-transparent bg-destructive text-destructive-foreground [--hover-fill:var(--destructive-hover)] [--press-fill:var(--destructive-active)] [--press-ink:color-mix(in_srgb,var(--destructive-foreground)_60%,transparent)]",
       },
       size: {

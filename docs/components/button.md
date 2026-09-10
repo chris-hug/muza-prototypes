@@ -213,13 +213,29 @@ Every variant and size sits on this string; each part is doing something.
   geometry to `--destructive` via `invalid-ring`. Pointer clicks show nothing
   (`outline-none` + `focus-visible`).
 - **`disabled:pointer-events-none disabled:opacity-50`** — a disabled button
-  fades to 50% and stops receiving hover. 50 is the one disabled opacity in
-  the app: Input, Select, DatePicker, Tabs and the menu items all use it, and
-  Button's former `opacity-45` was unified to match so a disabled button next
-  to a disabled field fades by the same amount. The fade is an opacity *animation*,
-  which is why `PlayingWave` must not be mounted inside a Button: Chromium
-  resamples its compositing layer on every ancestor opacity change and the
-  wave smears.
+  stops receiving hover, and one made of INK (link, ghost, outline) fades to
+  50%. 50 is the one disabled opacity in the app: Input, Select, DatePicker,
+  Tabs and the menu items all use it, and Button's former `opacity-45` was
+  unified to match so a disabled button next to a disabled field fades by the
+  same amount. The fade is an opacity *animation*, which is why `PlayingWave`
+  must not be mounted inside a Button: Chromium resamples its compositing
+  layer on every ancestor opacity change and the wave smears.
+- **A FILLED variant does not fade — it changes colour** (`.disabled-solid`,
+  on `default`, `secondary` and `destructive`). Opacity is a property of the
+  stack, not of the button: it makes the pill translucent, and what that looks
+  like depends on whatever is behind it. On a sheet it reads as a faded
+  button; over the page or over artwork it reads as no button at all.
+  So the same result is mixed out of colour instead — the fill and its ink
+  each half-way to `--background` — which is what the opacity used to resolve
+  to over the app's ground. Unchanged to look at, opaque to render.
+
+  **This is why that bug kept returning.** It was fixed once at the floating
+  Create pill's call site; then the pill moved onto the sheet as part of
+  making the form sheet one surface, the override went with the move, and the
+  translucency came back the next time anything was behind it. A rule about
+  what "disabled" means belongs on the variant that has a fill, not on the
+  screen that happens to be showing it. The CSS is unlayered, so a utility
+  class cannot put the transparency back either.
 - **`whitespace-nowrap shrink-0 select-none`** — a label never wraps to two
   lines, a button never shrinks to fit a flex row, and the label text cannot
   be selected.
@@ -239,7 +255,7 @@ rest of the template's rectangular styling.
 | Hover | `:hover` per variant | fill shifts one step (table above) |
 | Pressed | `:active` | 1px downward nudge, unless it opens a menu |
 | Focus (keyboard) | `:focus-visible` | 3px `ring/50` ring |
-| Disabled | `disabled` | 50% opacity, no hover, no pointer events |
+| Disabled | `disabled` | filled variants: fill and ink each 50% toward `--background`, opaque. Ink variants: 50% opacity. No hover, no pointer events |
 | Loading | `disabled` + `<Spinner size="sm" />` as the leading child | 16px arc in the label's colour, then the label |
 
 Loading is not a prop. It is a disabled button with a `Spinner` in front of

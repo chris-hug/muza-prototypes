@@ -1588,6 +1588,37 @@ img[class*="object-cover"] {
   z-index: 10;
 }
 
+/* ── Disabled, for a button that IS its fill ─────────────────────────────
+   `opacity: 0.5` is the disabled state everywhere, and it is the right one
+   for text and for outlines: half-strength ink still reads as ink. It is the
+   wrong one for a SOLID button, because opacity is a property of the stack
+   rather than of the button — it makes the pill translucent, and what that
+   looks like depends entirely on what happens to be behind it. On a sheet it
+   reads as a faded button; over the page or artwork it reads as no button at
+   all.
+
+   That distinction is why this bug kept coming back. The floating Create pill
+   was fixed once at its call site, then the pill moved onto the sheet and the
+   override went with the move, then it read as a hole again. A rule about
+   what "disabled" MEANS belongs on the variant that has a fill, not on the
+   screen that happens to be showing it.
+
+   The colour is mixed to the same result the opacity used to resolve to over
+   the app's ground — `--background` and `--popover` are the same value, so a
+   solid button is unchanged to look at on a page and on a sheet, and opaque
+   on both. Unlayered, so a utility cannot put the transparency back. */
+.disabled-solid:disabled,
+.disabled-solid[data-disabled] {
+  opacity: 1;
+  border-color: transparent;
+  background-color: color-mix(in srgb, var(--solid-fill) 50%, var(--background));
+  color: color-mix(
+    in srgb,
+    var(--solid-ink) 50%,
+    color-mix(in srgb, var(--solid-fill) 50%, var(--background))
+  );
+}
+
 /* iOS raises its own menu when a finger rests on an image — Share, Save to
    Photos, Copy Subject, Look Up — and it takes the gesture the cards use for
    THEIR menu, arriving on top of it. `-webkit-touch-callout` is the only way

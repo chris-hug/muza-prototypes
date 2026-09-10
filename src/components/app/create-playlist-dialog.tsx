@@ -248,8 +248,10 @@ export function CreatePlaylistDialog({
           <DialogFormActions>
             {/* `lg` (48px) — the DS's largest text button, and the right touch
                  target for the screen's primary action. No lift and no
-                 disabled colour of its own: it sits ON the sheet, so the
-                 ordinary `disabled:opacity-50` has a surface to fade against. */}
+                 disabled colour of its own — a filled Button now carries an
+                 opaque disabled colour itself (`.disabled-solid`), which is
+                 what this call site used to have to spell out and then lost
+                 when the pill moved onto the sheet. */}
             <Button
               size="lg"
               onClick={create}
