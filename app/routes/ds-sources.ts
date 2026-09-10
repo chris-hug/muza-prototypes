@@ -98,6 +98,10 @@ export const SECTION_SOURCE: Record<string, string> = {
   skeleton:    "src/components/ui/skeleton.tsx",
   popover:     "src/components/ui/popover.tsx",
   table:       "src/components/ui/table.tsx",
+  // Both live in table.tsx: a sort header IS a table part, and a file field
+  // sits beside it in the catalogue rather than in its own file.
+  "sort-header": "src/components/ui/table.tsx",
+  "file-field":  "src/components/ui/file-field.tsx",
   "list-table":"src/components/ui/table.tsx",
   "bulk-action-bar":"src/components/ui/bulk-action-bar.tsx",
   pagination:  "src/components/ui/pagination.tsx",

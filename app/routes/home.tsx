@@ -1,3 +1,4 @@
+import * as React from "react"
 import { useState, useEffect, useRef } from "react"
 import { useSearchParams } from "react-router"
 import { cn } from "@/lib/utils"
@@ -36,11 +37,12 @@ import { albumMetaFor, libraryIdForTitle } from "@/lib/album-meta"
 import { AddMusicIcon } from "@/components/ui/media-icons"
 import { componentDoc } from "@/lib/component-docs"
 import { Markdown, MarkdownInline } from "@/components/ds/markdown"
-import { Example, WINDOW_WIDTHS, PHONE_WIDTHS } from "@/components/ds/example"
+import { Example, WINDOW_WIDTHS, PHONE_WIDTHS, DESKTOP_WIDTHS } from "@/components/ds/example"
 import { FOOTER_NAV_BELOW } from "@/lib/use-media-query"
 import { ResponsiveLab } from "@/components/ds/responsive-lab"
 import { DocsButton } from "@/components/ds/docs-dialog"
 import { TokenEditor } from "@/components/ds/token-editor"
+import { RampController } from "@/components/ds/ramp-controller"
 import DialogFormExample from "@/ds-examples/dialog-form"
 import dialogFormSrc from "@/ds-examples/dialog-form.tsx?raw"
 import CardRailRowExample from "@/ds-examples/card-rail-row"
@@ -123,6 +125,10 @@ import AccordionBasicExample from "@/ds-examples/accordion-basic"
 import accordionBasicExampleSrc from "@/ds-examples/accordion-basic.tsx?raw"
 import InputBasicExample from "@/ds-examples/input-basic"
 import inputBasicExampleSrc from "@/ds-examples/input-basic.tsx?raw"
+import FileFieldBasicExample from "@/ds-examples/file-field-basic"
+import fileFieldBasicExampleSrc from "@/ds-examples/file-field-basic.tsx?raw"
+import SortHeaderBasicExample from "@/ds-examples/sort-header-basic"
+import sortHeaderBasicExampleSrc from "@/ds-examples/sort-header-basic.tsx?raw"
 import ControlSizeLadderExample from "@/ds-examples/control-size-ladder"
 import controlSizeLadderExampleSrc from "@/ds-examples/control-size-ladder.tsx?raw"
 import StepperBasicExample from "@/ds-examples/stepper-basic"
@@ -226,6 +232,8 @@ import MediaHeaderBasicExample from "@/ds-examples/media-header-basic"
 import mediaHeaderBasicExampleSrc from "@/ds-examples/media-header-basic.tsx?raw"
 import MediaHeaderPurchasedExample from "@/ds-examples/media-header-purchased"
 import mediaHeaderPurchasedExampleSrc from "@/ds-examples/media-header-purchased.tsx?raw"
+import MediaHeaderMobileExample from "@/ds-examples/media-header-mobile"
+import mediaHeaderMobileExampleSrc from "@/ds-examples/media-header-mobile.tsx?raw"
 import MediaHeaderPlaylistExample from "@/ds-examples/media-header-playlist"
 import mediaHeaderPlaylistExampleSrc from "@/ds-examples/media-header-playlist.tsx?raw"
 import ArtistHeaderBasicExample from "@/ds-examples/artist-header-basic"
@@ -356,6 +364,18 @@ type SectionUsage  = ReadonlyArray<{ label: string; href: string }>
  * per component under `docs/components/`, rendered with the app's own tokens.
  * Absent until that file is written, so the button is never a dead end.
  */
+/* ── Which sections a given shell wants ───────────────────────────────────
+ *
+ * `ExploreView` is one long document of 78 sections, and that is the right
+ * shape for it: the design system reads top to bottom. The prototyper shows
+ * the same sections split across tabs, and it would be a mistake to fork the
+ * file for that — a copy is how the two drift.
+ *
+ * So a shell can put a filter in context and `Section` answers it. Nothing is
+ * duplicated, and a section that nobody assigns to a tab still exists in the
+ * full document rather than disappearing quietly. */
+export const SectionFilter = React.createContext<((id: string) => boolean) | null>(null)
+
 function Section({
   id, title, status, phase, usage, children,
 }: {
@@ -383,6 +403,7 @@ function Section({
   // Fall back to the cycle's central status map when no explicit
   // prop is passed. Lets the prop API stay flexible while keeping
   // 99% of usages driven by the single source of truth.
+  const filter = React.useContext(SectionFilter)
   const entry           = SECTION_STATUS_BY_ID[id]
   const resolvedStatus  = status ?? entry?.status
   const docEntry        = componentDoc(id)
@@ -393,6 +414,8 @@ function Section({
   const changedDate     = sectionLastChanged(id)
   // Deep link to this component's source on GitHub (auto-derived).
   const sourceUrl       = sectionSourceUrl(id)
+  // A shell that asked for a subset gets a subset. No filter, everything.
+  if (filter && !filter(id)) return null
   return (
     <section
       id={id}
@@ -441,6 +464,12 @@ function Section({
                   // demo's own file. Two links, two different things — and
                   // "GitHub" alone said neither.
                   title={sourceUrl.replace(/^.*\/blob\/main\//, "")}
+                  // `nativeButton={false}` because this one is NOT a button:
+                  // it renders an `<a>`, and base-ui's button behaviour
+                  // (Enter/Space synthesis, the disabled semantics) belongs to
+                  // a real `<button>`. Left true, base-ui warns once per
+                  // section on every render — 224 of them on a full page.
+                  nativeButton={false}
                   render={<a href={sourceUrl} target="_blank" rel="noreferrer" />}
                 >
                   Source
@@ -460,7 +489,7 @@ function Section({
                     uses yet still ANSWERS "used in", instead of leaving the
                     line out and looking like an oversight. */}
                 {u.href ? (
-                  <a href={u.href} className="hover:text-foreground hover:underline underline-offset-[3px] [text-decoration-thickness:1px] transition-colors">
+                  <a href={u.href} className="hover:text-foreground link-underline transition-colors">
                     {u.label}
                   </a>
                 ) : (
@@ -974,7 +1003,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         <ResponsiveLab />
 
         <p className="text-small text-muted-foreground max-w-2xl">
-          Per-component specifics live in each component's section (e.g. <a href="/?page=DesignSystem#card-rail" className="text-primary-text hover:underline underline-offset-2">Card Rail</a>, <a href="/?page=DesignSystem#song-list-item" className="text-primary-text hover:underline underline-offset-2">Song List Item</a>, <a href="/?page=DesignSystem#dialog" className="text-primary-text hover:underline underline-offset-2">Dialog</a>); the sheet rules that span components sit in <a href="/?page=DesignSystem#detail-more-button" className="text-primary-text hover:underline underline-offset-2">Detail Menu</a> and Dialog.
+          Per-component specifics live in each component's section (e.g. <a href="/?page=DesignSystem#card-rail" className="text-primary-text link-underline">Card Rail</a>, <a href="/?page=DesignSystem#song-list-item" className="text-primary-text link-underline">Song List Item</a>, <a href="/?page=DesignSystem#dialog" className="text-primary-text link-underline">Dialog</a>); the sheet rules that span components sit in <a href="/?page=DesignSystem#detail-more-button" className="text-primary-text link-underline">Detail Menu</a> and Dialog.
         </p>
       </Section>
 
@@ -985,8 +1014,14 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             copies of it: the primitive hexes as JSX arrays, and
             `SEMANTIC_TOKENS`, which mapped each token to its primitive by
             hand, once per mode. The chain is already written in the CSS
-            (`--primary: var(--muza-blue-500)`), so it is read, not restated. */}
+            (`--primary: var(--muza-brand-500)`), so it is read, not restated. */}
         <TokenEditor />
+
+        {/* The ladders the primitives come from. The editor above answers
+            "what is this token"; this answers "why is this step this
+            colour" — a hue, a tint and a lightness walking from a top to a
+            bottom in a shape, with every step derived rather than picked. */}
+        <RampController />
       </Section>
 
       {/* ══ TYPOGRAPHY ══ */}
@@ -1430,14 +1465,14 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           <code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">DetailMoreButton</code> — the
           overflow affordance on media detail pages. <span className="text-foreground">Window-aware</span>{" "}
           (<code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">useIsMobile</code>, the 768 presentation gate — inside the frame above, the window chip):
-          desktop opens an anchored <a href="/?page=DesignSystem#menu" className="text-primary-text hover:underline underline-offset-2">dropdown</a>;
+          desktop opens an anchored <a href="/?page=DesignSystem#menu" className="text-primary-text link-underline">dropdown</a>;
           phones open an <span className="text-foreground">advanced bottom sheet</span> — one action model, two surfaces.
         </p>
         <ul className="text-base text-muted-foreground flex flex-col gap-1.5 mb-6 max-w-2xl list-disc pl-5">
           <li><span className="text-foreground">Rich header</span> — <code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">MenuCover</code> (square cover · 2×2 playlist collage · round artist avatar, 72px ≈ the three text lines) + title + <code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">ContentTypeBadge</code> + meta.</li>
           <li><span className="text-foreground">Quick actions</span> — icon-over-label pills (<code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">flex-1 rounded-2xl bg-secondary</code>): Share · <span className="text-foreground">Save</span> · (Edit / Play radio …).</li>
           <li><span className="text-foreground">Grouped rows</span> — 44px tap targets split by <code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">h-px bg-border</code> dividers; the destructive row (Delete) is last.</li>
-          <li><span className="text-foreground">Store-bound Save.</span> The Save pill reads the live library and flips to <span className="text-foreground">Remove</span> (filled heart) — in sync with the header/card hearts. See <a href="/?page=DesignSystem#song-list-item" className="text-primary-text hover:underline underline-offset-2">Save to library</a>.</li>
+          <li><span className="text-foreground">Store-bound Save.</span> The Save pill reads the live library and flips to <span className="text-foreground">Remove</span> (filled heart) — in sync with the header/card hearts. See <a href="/?page=DesignSystem#song-list-item" className="text-primary-text link-underline">Save to library</a>.</li>
         </ul>
 
         <div className="flex flex-wrap items-start gap-8">
@@ -1840,12 +1875,74 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       </Section>
 
       <Section id="song-list-item" title="Song List Item">
-        {/* This section gets the ROW's own chips, not the page column's. The
-            row drops fields at 260/300/380 — widths the default ladder cannot
-            reach, since it starts at 304 — so the four documented steps were
-            unreachable in the very frame that was meant to show them. */}
+        {/* The row has TWO truths and this section shows both, in this order.
+
+            First frame — the ordinary list row, on the page's own window
+            ladder with the chrome drawn. This is what five of the row's eight
+            render sites are (album detail, playlist detail, library songs,
+            and both plain demo frames): the row fills the column, and the
+            WINDOW decides the column. The frame earns its place — a 320px
+            window leaves a 296px column, already under the 300 and 380
+            bounds, so the duration and the year drop here in situ rather than
+            in an abstract box.
+
+            The section used to open on the row chips alone, which read as a
+            claim the row never stops measuring itself. It does: in a plain
+            list at an undisturbed window, nothing the row measures is news. */}
         <Example
-          title="Cover rows"
+          title="In a page column — the ordinary list row"
+          doc="song-list-item"
+          defaultWidth="320"
+          align="stretch"
+          code={songListItemBasicExampleSrc}
+          codePath="src/ds-examples/song-list-item-basic.tsx"
+        >
+          <SongListItemBasicExample />
+        </Example>
+
+        {/* Second frame — the window ladder again, and deliberately NOT the
+            row chips this frame used to carry.
+
+            `trackNumber` mode passes no `artist`, `album`, `year` or `badge`,
+            and all three steps are gated on those (the duration's condition
+            included). So this variant sheds nothing at any width: on the row
+            chips its four frames were four identical pictures, and they
+            capped the row at 395px while the album page hands it 781 on a
+            1069px laptop and 1632 at 1920. A ladder that cannot reach the
+            width the thing actually has, to demonstrate a change that never
+            happens, was worse than no chips.
+
+            On the window ladder the same claim is legible instead: step
+            across it and the row does not move. That is the behaviour, and
+            these are the widths album detail really gets — 296 on a phone up
+            to 1632 wide. (The docked editor can still take the column to
+            288; nothing sheds there either, for the same reason.) */}
+        <Example
+          title="Track-number rows — album detail: no meta line, nothing to shed"
+          doc="song-list-item"
+          defaultWidth="1069"
+          align="stretch"
+          code={songListItemTrackNumberExampleSrc}
+          codePath="src/ds-examples/song-list-item-track-number.tsx"
+        >
+          <SongListItemTrackNumberExample />
+        </Example>
+        {/* Third frame — the exception, and last on purpose: the two frames
+            above are the ordinary case (a column, decided by the window) and
+            this one is the case that column cannot describe.
+
+            Same cover rows as the FIRST frame, measured the other way — which
+            is why neither of those two can be titled by its variant. Both are
+            cover rows; a title saying so would name the half they share
+            instead of the half that differs. The lead phrase carries the
+            measure, the dash says where in the app that measure happens.
+
+            The row's own chips are needed because a window frame cannot reach
+            these numbers at all: the default ladder starts at a 304px column,
+            and it cannot narrow the column BELOW what the window leaves —
+            which is exactly what a SongRail cell and the docked editor do. */}
+        <Example
+          title="In its own box — a rail cell, or beside the docked editor"
           doc="song-list-item"
           defaultWidth="380"
           align="stretch"
@@ -1872,26 +1969,6 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           <SongListItemBasicExample />
         </Example>
 
-        {/* `trackNumber` mode keeps the row's chips too: with no meta line
-            the row has nothing to shed, and the frame shows exactly that. */}
-        <Example
-          title="Track-number rows — album detail, no meta line"
-          doc="song-list-item"
-          defaultWidth="380"
-          align="stretch"
-          widthLabel="row"
-          widths={ROW_STEPS.map(s => ({
-            label: String(s.px),
-            px: s.framePx,
-            note: s.note,
-            readout: `${s.px}px`,
-          }))}
-          stageClassName="p-0"
-          code={songListItemTrackNumberExampleSrc}
-          codePath="src/ds-examples/song-list-item-track-number.tsx"
-        >
-          <SongListItemTrackNumberExample />
-        </Example>
       </Section>
 
       {/* ══ MEDIA LIST ITEM ══ */}
@@ -1910,15 +1987,43 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
 
       {/* ══ SEARCH ══ */}
       <Section id="search" title="Search">
+        {/* Chips start at the chrome gate (608), and the missing phone widths
+            are the point rather than an omission.
+
+            Below 608 the app's search is a DIFFERENT COMPOSITION, not this
+            one narrowed: `MobileAppHeader` takes over the query field and the
+            scope switcher, and `SearchResultsView` renders only the pill tabs
+            and the results — half a screen, by design (see its comment at the
+            heading row). So a phone chip here could not show the mobile
+            pattern even in principle; the other half is a different file.
+
+            A phone frame is not merely missing here, it is not BUILDABLE.
+            The three composition gates now read `useFooterNav()`, which a
+            chip can drive — but this view's phone APPEARANCE lives in `sm:`
+            media queries scattered through it (`sm:p-5`, `sm:text-xlarge`,
+            `sm:size-28`, and the Top result's play button, which is
+            `sm:opacity-0` + hover). Those read the real browser window, and
+            nothing a frame does can move them. A phone chip therefore renders
+            desktop padding, desktop type and a play button that only appears
+            on hover — a screen the app never produces at any width, which is
+            the failure mode `responsive.md` records for `PlayerOverlay`.
+
+            Tried and removed, rather than untried: a frame that composed the
+            header row by hand looked plausible and was wrong in exactly those
+            three ways. The mobile flow is verified on the running app at 375
+            (`/?page=Explore&q=…`), not in this page. */}
         <Example
-          title="Results — live, for “coltrane”"
+          title="Results — live, for “coltrane” (above the mobile gate)"
           doc="search"
+          defaultWidth="1069"
           align="stretch"
+          widths={DESKTOP_WIDTHS}
           code={searchBasicExampleSrc}
           codePath="src/ds-examples/search-basic.tsx"
         >
           <SearchBasicExample />
         </Example>
+
         <Example
           title="Panel — suggestions while typing"
           doc="search"
@@ -2035,6 +2140,28 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
             codePath="src/ds-examples/media-header-playlist.tsx"
           >
             <MediaHeaderPlaylistExample />
+          </Example>
+          {/* BOTH halves, on the full ladder. The back chevron and the "…"
+              beside the cover belong to `DetailHeader` inside
+              `MobileAppHeader`, not to this component — the page reaches them
+              through `usePublishDetailHeader`, not through a prop. Rendering
+              `MediaHeader` alone left two empty corners, which is a screen the
+              app never produces.
+
+              The frame gates the chrome on `useFooterNav()` exactly as the app
+              does, so the ladder can stay complete: below 608 you get the
+              pair, from 608 up the chrome is gone and the header carries its
+              own actions. Restricting this to phone chips would have hidden
+              the width where that hand-off happens. */}
+          <Example
+            title="With its chrome — the corners belong to a second component"
+            doc="media-header"
+            defaultWidth="375"
+            align="stretch"
+            code={mediaHeaderMobileExampleSrc}
+            codePath="src/ds-examples/media-header-mobile.tsx"
+          >
+            <MediaHeaderMobileExample />
           </Example>
         </div>
       </Section>
@@ -2448,6 +2575,30 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       </Section>
 
       {/* ══ TABLE ══ */}
+      <Section id="file-field" title="File Field">
+        <Example
+          title="Empty · holding a file · the smaller steps"
+          doc="file-field"
+          align="center"
+          code={fileFieldBasicExampleSrc}
+          codePath="src/ds-examples/file-field-basic.tsx"
+        >
+          <FileFieldBasicExample />
+        </Example>
+      </Section>
+
+      <Section id="sort-header" title="Sort Header">
+        <Example
+          title="Sorted · reversed · the hint on hover"
+          doc="sort-header"
+          align="stretch"
+          code={sortHeaderBasicExampleSrc}
+          codePath="src/ds-examples/sort-header-basic.tsx"
+        >
+          <SortHeaderBasicExample />
+        </Example>
+      </Section>
+
       <Section id="table" title="Table">
         <Example
           title="Releases with totals"
@@ -2840,11 +2991,12 @@ export default function Home() {
             />
           )}
           {/* `key={activeNav}` remounts the inner wrapper on every
-              navigation, which lets the pageFadeIn keyframe run once
-              per view swap. 250ms crossfade (opacity + 6px lift) —
-              perceivable enough to register as a transition without
-              ever feeling like "loading." */}
-          <div key={activeNav} className="[animation:pageFadeIn_250ms_ease-out]">
+              navigation, which lets the enter run once per view swap.
+              `page-enter` staggers the view's SECTIONS (see app.css) rather
+              than fading the whole screen as one block — the eye gets an
+              order to follow, and the first chunk lands sooner than the old
+              single 250ms fade finished. */}
+          <div key={activeNav} className="page-enter">
             {activeNav === "Home"      && <HomeView onNavigate={navigate} />}
             {activeNav === "Explore"   && (
               searchQuery ? <SearchResultsView query={searchQuery} /> : <ExplorePlaceholder />

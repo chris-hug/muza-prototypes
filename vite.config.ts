@@ -4,6 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import { execSync } from "node:child_process";
 import { SECTION_SOURCE } from "./app/routes/ds-sources";
+import { themeWriter } from "./vite-theme-plugin";
 
 // Last commit date on the building checkout, injected at build time so
 // the design-system "Last pushed" label auto-derives from git instead
@@ -71,6 +72,8 @@ export default defineConfig({
   plugins: [
     tailwindcss(),
     reactRouter(),
+    // Dev-only: the ramp controller's Save button writes through this.
+    themeWriter(),
   ],
 server: {
     port: parseInt(process.env.PORT || "5173"),

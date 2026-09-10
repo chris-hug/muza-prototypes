@@ -74,6 +74,16 @@ export const SECTION_STATUS: Record<string, SectionStatusEntry> = {
   // DialogFormActions) carry no Cancel. Titles are text-base on phones
   // (`sm:text-large`); sheet bodies are flex children, never `vh` caps.
   "Dialog": { status: "updated" },
+  // The selected ring is drawn, not swapped: a conic gradient grows out of the
+  // point that was pressed, in both directions at once, and settles into the
+  // border. Ring and border are both `--foreground` at 20%.
+  "Radio Card": { status: "updated" },
+  // The file picker, promoted out of Settings: it was a hand-built label with
+  // its own pill and heights, one step behind the ladder.
+  "File Field": { status: "new" },
+  // Six copies of the same sortable column pulled into one — and given the
+  // focus ring none of them had.
+  "Sort Header": { status: "new" },
   // Badges cleared. Add `new` / `updated` (or `concept` for "Not used
   // yet") entries here to flag a cycle's work; graduate with
   // `npm run release -- --clear`. (Phase 2 badges are a separate list —
