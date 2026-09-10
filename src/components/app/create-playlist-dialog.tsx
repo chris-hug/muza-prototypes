@@ -35,7 +35,6 @@ import { AddMusicDialog } from "@/components/app/add-music-dialog"
 import { CreatePlaylistContext } from "@/lib/create-playlist-context"
 import { registerPlaylists } from "@/lib/playlist-catalog"
 import { useMediaNav, slugify } from "@/lib/media-nav"
-import { cn } from "@/lib/utils"
 import type { SavedSong } from "@/lib/user-library"
 
 export { useCreatePlaylist } from "@/lib/create-playlist-context"
@@ -248,27 +247,10 @@ export function CreatePlaylistDialog({
         {isMobile && (
           <DialogFormActions>
             {/* `lg` (48px) — the DS's largest text button, and the right touch
-                 target for the screen's primary action. The lift is what makes
-                 it read as floating over the form rather than as a bar: its
-                 band carries no surface of its own.
-
-                 Which is also why DISABLED can't be the usual `opacity-50`
-                 here: with nothing but the page behind it, a half-transparent
-                 pill shows the artwork through itself. The colours are mixed
-                 to the SAME result instead — primary and its foreground each
-                 half-way to the popover, which is what `opacity-50` used to
-                 resolve to while the button still had the sheet behind it. It
-                 looks unchanged and it is opaque. */}
-            <Button
-              size="lg"
-              onClick={create}
-              disabled={!name.trim()}
-              className={cn(
-                "w-full shadow-lg disabled:opacity-100",
-                "disabled:bg-[color-mix(in_srgb,var(--primary)_50%,var(--popover))]",
-                "disabled:text-[color-mix(in_srgb,var(--primary-foreground)_50%,color-mix(in_srgb,var(--primary)_50%,var(--popover)))]",
-              )}
-            >
+                 target for the screen's primary action. No lift and no
+                 disabled colour of its own: it sits ON the sheet, so the
+                 ordinary `disabled:opacity-50` has a surface to fade against. */}
+            <Button size="lg" onClick={create} disabled={!name.trim()} className="w-full">
               {mobileAction}
             </Button>
           </DialogFormActions>

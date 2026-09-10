@@ -88,11 +88,6 @@ export const dialogPositionClass =
 export const dialogFormPositionClass =
   "fixed z-50 duration-100 transition-none data-open:animate-in data-open:fade-in-0 " +
   "inset-x-0 top-0 bottom-[var(--kb,0px)] translate-x-0 translate-y-0 max-w-full max-h-none rounded-none " +
-  // The POPUP carries no surface on a phone — the bands do (`DialogActionBar`
-  // and `DialogFormBody`). The action row is the reason: it floats, so the
-  // sheet's white must END above it, or the pill sits on a slab of popover
-  // with nothing in it.
-  "max-md:bg-transparent " +
   // `overflow-hidden`, NOT `auto`: the sheet is three bands — sticky bar,
   // scrolling body, action row — and only the BODY scrolls. If the popup
   // itself scrolled, a sticky action row would overlay whatever passed under
@@ -120,24 +115,16 @@ export const dialogFormBodyClass =
   // `flex-1 min-h-0 overflow-y-auto` — the body is the only scrolling band.
   // `gap-3` (not the desktop 20px): on a phone every gap competes with the
   // keyboard for the same ~200px.
-  // It also PAINTS the sheet (the popup itself is transparent on a phone), and
-  // rounds off at the bottom, where the surface now ends above the floating
-  // action instead of running to the edge of the screen.
-  "flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto bg-popover rounded-b-2xl p-3 " +
-  "md:contents md:overflow-visible md:bg-transparent md:rounded-none"
+  "flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto p-3 md:contents md:overflow-visible"
 
 // The form sheet's action row: the confirming button pinned below the body,
-// never overlapping it (the body scrolls, this doesn't), and clearing the
-// home indicator.
-//
-// It carries ONE control, so it FLOATS: no surface and no edge of its own,
-// and a 16px inset rather than the sheet's 12px gutter, so the pill reads as
-// a single object over the form instead of a bar bolted to the bottom. Same
-// rule as the find screen's lone search field in `AddMusicDialog` — a band
-// only goes opaque once it carries two controls that would otherwise compete.
+// never overlapping it (the body scrolls, this doesn't). The sheet is ONE
+// surface down to the keyboard, action included — it was tried as a floating
+// pill over the page, and with the keyboard up there is no page left to float
+// over, only a 60px strip that reads as a seam under the form.
 // Mobile only — desktop uses the ordinary `DialogFooter`.
 export const dialogFormActionsClass =
-  "shrink-0 bg-transparent px-4 pt-4 pb-[max(16px,env(safe-area-inset-bottom))] md:hidden"
+  "shrink-0 bg-popover px-3 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] md:hidden"
 
 /*
  * The scrolling list band of a sheet. `-mx-2` (and NO matching padding):
