@@ -768,9 +768,15 @@ trying to swipe past.
 iOS answers the same gesture with its own menu — Share / Save to Photos / Copy
 Subject — on top of ours. It has to be in force before the finger lands, so it
 cannot come from the press handler; the handler declines the desktop
-`contextmenu` for the same reason.) Every card answers a long press (450–500ms) by
-opening the same bottom sheet its ⋯ would: `useLongPress` on `AlbumCard`,
-`PlaylistCard` and `ArtistCard` (which has no ⋯ at all, on hover or otherwise).
+`contextmenu` for the same reason.) Every card answers a long press (450–500ms)
+with the **`DetailMenuSheetBody` sheet** — quick actions as tiles across the
+top, then the rows — which is the sheet the detail pages and the list rows
+already raise. Not the card's own ⋯ dropdown rendered as a sheet: a phone
+should get one menu shape per entity, wherever it was reached from, and the
+kebab keeps the anchored dropdown, which is the right shape for a mouse.
+Wired through `useLongPress` on `AlbumCard`, `PlaylistCard` and `ArtistCard`
+(which has no ⋯ at all, on hover or otherwise; the playlist card's press used
+to call an `onMore` prop that has no call site, so holding one did nothing).
 The hold is visible from the first frame — the returned props carry
 `data-pressing`, which `app.css` turns into `scale: 0.98` and a slight
 darkening, so the wait reads as the card being TAKEN rather than as a tap that
