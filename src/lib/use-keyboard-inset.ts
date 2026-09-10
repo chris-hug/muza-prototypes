@@ -49,9 +49,17 @@ export function useKeyboardInset() {
          not differ the way the theory needed. Read the live numbers with
          `?kbdebug` (`KeyboardProbe`) before touching this again. */
       const hidden = window.innerHeight - vv.height
-      // Small values are address-bar chrome, not a keyboard — ignore them so
-      // sheets don't drift on every scroll.
-      const open = hidden > 80
+      /* Small values are address-bar chrome, not a keyboard — ignore them so
+         sheets don't drift on every scroll. And a keyboard only exists while
+         something is being TYPED INTO: without that check any browser UI that
+         eats a chunk of the visual viewport (a collapsing toolbar, a find bar,
+         a translate prompt) reads as a keyboard, and every sheet in the app
+         reshapes itself around one that is not there. */
+      const el = document.activeElement as HTMLElement | null
+      const typing = !!el && (
+        el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable
+      )
+      const open = hidden > 80 && typing
       root.style.setProperty("--kb", `${open ? Math.round(hidden) : 0}px`)
       /* A flag as well as a number, because some of what has to give when the
          keyboard is up is not expressible as a length. A media query can't see

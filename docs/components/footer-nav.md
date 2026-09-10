@@ -85,7 +85,6 @@ still renders it inside the column, which is a state the app never shows.
 - DESIGN_SYSTEM.md › "Bottom gutter — player clearance" says the mobile stack — footer nav plus mini bar — is
   "~112px" · it is 66 (bar, no safe area) + 56 (mini pill) = **122**, and the
   mini bar's disc overhangs 7px more (player-bar-b.tsx:532)
-- sheet.tsx:32–34 says to override `swipeDirection` whenever `side` is not
-  the default · footer-nav.tsx:102 mounts `<Sheet>` with the default
-  (`"right"`) under `side="bottom"`, so swipe-to-dismiss on the Studio
-  sheet is rightward rather than down — the same gap the Detail Menu has
+- ~~`swipeDirection` defaults to `"right"` under a `side="bottom"` sheet, so
+  the Studio sheet's dismiss gesture is sideways~~ — **answered**: `Sheet`
+  defaults to `"down"` now.

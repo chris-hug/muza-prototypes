@@ -54,10 +54,14 @@ max-w-[640px] p-0 gap-0`), the **Studio switcher** in the footer tab bar
 (`footer-nav.tsx`, `side="bottom" rounded-t-2xl`), and the phone surface of
 [Detail Menu](detail-more-button.md) (`side="bottom"`).
 
-**Set `swipeDirection` on the root to match `side`.** `Sheet` defaults it to
-`"right"` — the cart's direction — and `SheetContent` cannot see it (the
-popup reads the direction from the root's context), so a bottom sheet needs
-`<Sheet swipeDirection="down">` or the dismiss gesture is sideways.
+**`swipeDirection` lives on the root and must match `side`.** `SheetContent`
+cannot set it — the popup reads the direction from the root's context — so the
+two are declared as a pair. The default is **`"down"`**, because nearly every
+sheet in the product is a bottom sheet on a phone; a side drawer overrides it
+(`<Sheet swipeDirection="right">`, as `CartDrawer` does). It defaulted to
+`"right"` until the bottom sheets were audited, and every one of them —
+row menu, detail menu, Studio switcher, every mobile dropdown — could only be
+closed by its ✕ or the backdrop.
 
 ## Sizing
 

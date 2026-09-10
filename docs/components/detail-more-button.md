@@ -337,10 +337,9 @@ the same change. See the open questions for two fields that are missing today.
   so the "drop unwired rows" filter (detail-more-button.tsx:283) never fires
   through it: an album page that wires no `onPlayNext` / `onAddToQueue` /
   `onGoToLabel` shows no such rows in-page but shows dead ones in the chrome
-- sheet.tsx:29–34 says to override `swipeDirection` whenever `side` is not the
-  default · detail-more-button.tsx:343 mounts `<Sheet>` with the default
-  (`"right"`) under `side="bottom"`, so swipe-to-dismiss on the phone sheet is
-  rightward rather than down
+- ~~`swipeDirection` defaults to `"right"` under a `side="bottom"` sheet, so
+  the dismiss gesture is sideways~~ — **answered**: `Sheet` defaults to
+  `"down"` now, and the side drawer is the one that overrides.
 - DESIGN_SYSTEM.md:614–615 says every sheet sits at `bottom: var(--kb, 0px)`
   with a sticky footer · this surface is `SheetContent` (base-ui Drawer),
   pinned `bottom-0` with no `--kb` and no footer (sheet.tsx:75) — moot for a

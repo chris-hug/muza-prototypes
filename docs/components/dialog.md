@@ -294,6 +294,14 @@ shape as the form sheet, for the same reason.
   way, and swapping in "Find" would drop the only context on screen.
 - Move the **footer**, never the field: re-parenting the input remounts it and
   throws away the focus that opened the screen.
+- **The popup cannot scroll, and is pinned to prove it.** `overflow-hidden`
+  stops a finger, not the engine: focusing a field near the bottom makes the
+  browser scroll the nearest scrollable ancestor to reveal the caret, and an
+  `overflow: hidden` box still qualifies. Since the bands are positioned
+  against the popup, all of them went up with it — a blank sheet with a field
+  at the bottom, which is what the keyboard did to Add-music. `DialogContent`
+  listens for `scroll` on the popup and puts it back to 0; there is no event
+  to decline, so scrolling it back is the answer.
 - **The popup does not scroll — the list does** (`overflow-hidden` on the
   content, `flex-1 min-h-0 overflow-y-auto` on the list). This is not a detail:
   the browser scrolls a focused field into view inside whatever box can

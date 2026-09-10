@@ -266,6 +266,25 @@ function DialogContent({
      drag would throw away what was typed. The hook closes by clicking the
      dialog's own close button, so focus goes back where it came from. */
   const [popupEl, setPopupEl] = React.useState<HTMLDivElement | null>(null)
+
+  /* A sheet's own box must never scroll. `overflow-hidden` stops a FINGER
+     from scrolling it, but not the browser: focusing a field near the bottom
+     makes the engine scroll the nearest scrollable ancestor to reveal the
+     caret, and an `overflow: hidden` box still qualifies. That is what took
+     the title bar off the top of the Add-music sheet the moment the keyboard
+     opened — the bands are positioned against the popup, so all of them went
+     up with it, leaving a blank sheet with a field at the bottom.
+     Scrolling it back is the only reliable answer: the engine does this
+     without an event we can decline. */
+  React.useEffect(() => {
+    if (!popupEl) return
+    const pin = () => {
+      if (popupEl.scrollTop !== 0) popupEl.scrollTop = 0
+      if (popupEl.scrollLeft !== 0) popupEl.scrollLeft = 0
+    }
+    popupEl.addEventListener("scroll", pin, { passive: true })
+    return () => popupEl.removeEventListener("scroll", pin)
+  }, [popupEl])
   const closeRef = React.useRef<HTMLButtonElement>(null)
   useSheetDrag(popupEl, {
     enabled: !form,
