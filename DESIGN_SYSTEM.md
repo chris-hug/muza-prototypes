@@ -905,6 +905,19 @@ beside a filter input, the ✕ beside an additional-link row (`icon` → `icon-l
 ladder exists to remove. Buttons outside form context (chrome, cards, rails)
 keep their own size.
 
+**A filled button's disabled state is a COLOUR, not an opacity**
+(`.disabled-solid`, on `default` / `secondary` / `destructive`). `opacity: 0.5`
+is right for a button made of ink — link, ghost, outline — and wrong for one
+made of fill, because opacity is a property of the stack rather than of the
+button: it makes the pill translucent, and whether that reads as "faded" or as
+"no button at all" depends on what happens to be behind it. The fill and its
+ink are each mixed half-way to `--background` instead, which is what the
+opacity resolved to over the app's ground (`--background` and `--popover` are
+the same value, so a page and a sheet agree). Unchanged to look at, opaque to
+render. The rule is unlayered CSS, so a utility class cannot put the
+transparency back — it came back twice when it lived at a call site and the
+button moved.
+
 **`lg` is the default a form's own actions get, not one they ask for.**
 `AlertDialogAction` and `AlertDialogCancel` set it inside the component — that
 dialog is read with a thumb and is the last chance to decline — and every

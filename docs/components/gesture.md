@@ -95,6 +95,9 @@ Its first use is the song row's meta line — see
 
 ## `useSheetDrag` is a workaround, and says so
 
+*(`src/lib/use-sheet-drag.ts` — the long-press half lives in
+`src/lib/use-long-press.ts`, and both read `src/lib/gesture.ts`.)*
+
 `Sheet` gets pull-to-dismiss from Base UI's Drawer, which has a better-tuned
 version of this gesture. `useSheetDrag` exists only because a **Dialog is not
 a Drawer**: below `md` a Dialog is presented as a bottom sheet by CSS alone,
