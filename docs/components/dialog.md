@@ -208,6 +208,15 @@ Only the middle one scrolls.
   label, where it stands next to Cancel.
 - `DialogFormBody` restores the gutter and a tighter `gap-3`: on a phone every
   gap competes with the keyboard for the same ~200px.
+- **With the keyboard up it is not ~200px, it is ~170px.** Measured on an
+  iPhone in Brave: 495px of layout viewport, 169px visible above the keyboard
+  and its accessory bar. The bar (48) and the floating action band (80) would
+  leave the 48px field 41px, and the field was clipped. So while
+  `data-kb="open"` is set on the root — by `useKeyboardInset`, since no media
+  query can see this squeeze — the three bands drop their padding: the bar to
+  `min-height: 2.5rem`, the body to 8px (4px at the bottom, the band below
+  carries the rest), the action band to 8px top and bottom. Only padding gives
+  way; every control keeps its size.
 - **No field label** where the placeholder carries it — every line costs space
   above the keyboard. Keep an `aria-label`.
 - **Desktop is untouched**: the bar is `md:hidden`, the body is `md:contents`

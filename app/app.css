@@ -1565,3 +1565,34 @@ img[class*="object-cover"] {
 .muza-anchor-wave-center    { animation-name: muzaWaveCenter; }
 .muza-anchor-wave-right     { animation-name: muzaWaveRight; }
 .muza-anchor-page-fade-in   { animation-name: pageFadeIn; }
+
+/* ── The form sheet, with the keyboard up ────────────────────────────────
+   `[data-kb="open"]` is set by `useKeyboardInset` alongside `--kb`. It is a
+   flag rather than a media query because on iOS the LAYOUT viewport does not
+   shrink for the keyboard — a `max-height` query cannot see the squeeze.
+
+   And the squeeze is severe. Measured on an iPhone in Brave: 495px of layout,
+   169px of it left above the keyboard and its accessory bar. Against that,
+   the sheet's own furniture — a 48px bar and an 80px action band — leaves 41px
+   for the body, and the name field alone is 48px, so the field it exists to
+   show was being clipped.
+
+   So the bands give up their breathing room while the keyboard is up, and the
+   field keeps its size: everything here is padding, nothing is a control.
+   Phones only — the desktop modal never sees a keyboard inset. */
+@media (width < 48rem) {
+  [data-kb="open"] [data-slot="dialog-action-bar"] {
+    min-height: 2.5rem;
+  }
+  [data-kb="open"] [data-slot="dialog-form-body"] {
+    /* Less at the bottom than the top: the band below already carries 8px,
+       and the field has to clear its own 48px inside what is left. */
+    padding: 0.5rem 0.5rem 0.25rem;
+    gap: 0.5rem;
+  }
+  [data-kb="open"] [data-slot="dialog-form-actions"] {
+    padding-inline: 0.75rem;
+    padding-top: 0.5rem;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+}

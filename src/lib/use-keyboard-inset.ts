@@ -44,6 +44,13 @@ export function useKeyboardInset() {
       // sheets don't drift on every scroll.
       const open = hidden > 80
       root.style.setProperty("--kb", `${open ? Math.round(hidden) : 0}px`)
+      /* A flag as well as a number, because some of what has to give when the
+         keyboard is up is not expressible as a length. A media query can't see
+         this: the LAYOUT viewport doesn't shrink on iOS, which is the whole
+         reason this hook exists. Measured on an iPhone in Brave: 495px of
+         layout, 169px of it still visible. See `app.css` for what tightens. */
+      if (open) root.dataset.kb = "open"
+      else delete root.dataset.kb
 
       /* The keyboard leaves the WINDOW scrolled, and the app cannot scroll it
          back on its own.

@@ -60,12 +60,10 @@ export function KeyboardProbe() {
     <div
       // Top-left and translucent: the keyboard, the sheet and the sheet's
       // bottom edge are all at the BOTTOM, which is the thing being measured.
-      className="fixed left-2 top-2 z-[999] rounded-md bg-black/80 px-2 py-1.5 font-mono text-[11px] leading-tight text-white"
+      className="pointer-events-none fixed left-1 top-1 z-[999] rounded bg-black/70 px-1.5 py-1 font-mono text-[9px] leading-tight text-white"
     >
-      <div>client {n.client} · inner {n.inner}</div>
-      <div>vv {n.vv} · top {n.top} · scrollY {n.scroll}</div>
-      <div>--kb {n.kb}</div>
-      <div>client−vv−top {derived} · inner−vv−top {viaInner}</div>
+      <div>client {n.client} · inner {n.inner} · vv {n.vv} · top {n.top}</div>
+      <div>--kb {n.kb} · c−vv−t {derived} · i−vv−t {viaInner} · sY {n.scroll}</div>
     </div>
   )
 }
