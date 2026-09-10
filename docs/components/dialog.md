@@ -308,7 +308,16 @@ it. It also sits as close to the keyboard as the padding allows (`max(4px, …)`
 under `data-kb="open"`): the accessory bar is the next thing below it, and a
 gap between the two reads as a stray band.
 
-**One band.** The search field and the confirming action share the footer
+**On the find screen the confirming action moves into the BAR** — `Add 4` in
+the trailing slot, where the ✕ sits the rest of the time (‹ is the way back
+from Find, and the ✕ returns as soon as the picks are in). The band there
+floats over the results, so a second control in it costs a row of a list that
+is two rows tall with the keyboard up, while the bar is already on screen and
+costs nothing. It also settles what a button under the field kept suggesting —
+"show me these results" — so no gating on a submitted query is needed any more.
+
+**One band on the browse screen.** The search field and the confirming action
+share the footer
 (`flex-col` so the field sits on top, `md:flex-row`) — one edge of chrome, not
 a pill hovering over a bar. Spotify and TIDAL avoid the question entirely: a
 bottom field means no bottom confirm, because each row commits on tap.
