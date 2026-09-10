@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router"
 import { cn } from "@/lib/utils"
 import { useSidebarAutoCollapsed, useFooterNav, WindowWidthContext } from "@/lib/use-media-query"
 import { useKeyboardInset } from "@/lib/use-keyboard-inset"
+import { KeyboardProbe } from "@/components/app/keyboard-probe"
 import { FooterNav } from "@/components/app/footer-nav"
 import { MobileAppHeader } from "@/components/app/mobile-app-header"
 import { MediaListItem } from "@/components/ui/media-list-item"
@@ -2938,6 +2939,9 @@ export default function Home() {
         outside the keyed AppShell wrapper so it isn't remounted
         on internal nav. */}
     <TopProgressBar loading={navLoading} />
+    {/* Viewport readout for chasing `--kb` on a real phone. Renders
+        nothing without `?kbdebug` in the URL. */}
+    <KeyboardProbe />
     {/* Outer keyed wrapper — stable key="app" while inside the
         prototype, so internal navigation doesn't remount the
         AppShell (which would kill sidebar state). The animation
