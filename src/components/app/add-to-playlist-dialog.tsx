@@ -85,8 +85,8 @@ function AddToPlaylistContent({ song, onClose }: { song: SavedSong; onClose: () 
 
   if (mode === "create") {
     return (
-      <DialogContent className="md:max-w-[max(32rem,50vw)]">
-        <DialogHeader>
+      <DialogContent className="md:max-w-[max(32rem,50vw)] flex flex-col overflow-hidden">
+        <DialogHeader className="shrink-0">
           <DialogTitle className="md:text-large">New playlist</DialogTitle>
           <DialogDescription>
             “{song.title}” will be added to it.
@@ -109,8 +109,13 @@ function AddToPlaylistContent({ song, onClose }: { song: SavedSong; onClose: () 
   }
 
   return (
-    <DialogContent className="md:max-w-[max(32rem,50vw)]">
-      <DialogHeader>
+    /* `flex flex-col overflow-hidden`: the chrome's own layout is a GRID, so
+       a `flex-1` list inside it is just a list at its natural height — the
+       popup grew past its cap and scrolled itself, which with a keyboard up
+       carries the title off the top the moment the field takes focus. As a
+       flex column the LIST is the only thing that gives. */
+    <DialogContent className="md:max-w-[max(32rem,50vw)] flex flex-col overflow-hidden">
+      <DialogHeader className="shrink-0">
         <DialogTitle className="md:text-large">Add to playlist</DialogTitle>
         <DialogDescription>
           {song.title}{song.artist ? ` · ${song.artist}` : ""}
@@ -118,6 +123,7 @@ function AddToPlaylistContent({ song, onClose }: { song: SavedSong; onClose: () 
       </DialogHeader>
 
       {owned.length > 6 && (
+        <div className="shrink-0">
         <Input
           value={query}
           onChange={e => setQuery(e.target.value)}
@@ -126,9 +132,13 @@ function AddToPlaylistContent({ song, onClose }: { song: SavedSong; onClose: () 
           startIcon={<Search />}
           onClear={() => setQuery("")}
         />
+        </div>
       )}
 
-      <div className={cn(dialogListClass, "gap-1 max-h-[52vh]")}>
+      {/* No `vh` cap: the sheet is a flex column that already ends at `--kb`,
+          so the list takes exactly what the other bands leave. A
+          viewport-relative cap cannot know what the keyboard took. */}
+      <div className={cn(dialogListClass, "gap-1")}>
         {/* New playlist — pinned on top (Tidal). */}
         <Row onClick={() => setMode("create")}>
           <span className="grid size-12 shrink-0 place-items-center rounded-xs bg-secondary text-foreground [&_svg]:size-5">

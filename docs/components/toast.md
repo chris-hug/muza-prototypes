@@ -41,16 +41,19 @@ The toast's Undo is for reversing something already done.
 
 ## One line on a phone, at the control step
 
-The phone toast is `h-12` with a pill radius — **the same box as an `lg` field
-or button**, in the same 12px gutter. That is what lets it land ON the control
+The phone toast is `h-12` with an 18px radius — **the same box as an `lg`
+field or button**, in the same 12px gutter. Not a pill, deliberately: the
+rounder shape is the SMALLER one, so a pill-shaped toast left the corners of
+the pill-shaped field it sits on peeking out. 18px over 24px covers. That is what lets it land ON the control
 it is answering (the search field at the foot of a sheet) and cover it
 outright: measured, the toast is `[12, 434, 363, 482]` against the field's
 `[13, 433, 362, 481]`, a pixel of bleed on every side. It carries `shadow-xl`,
 because it is now sitting on top of another control rather than beside it.
 
-Its timer is **inset** on a phone (`inset-x-4 bottom-1.5 h-[3px] rounded-full`)
-— a full-bleed rule clipped to a pill comes out as a curved sliver — and runs
-along the bottom edge on desktop, where the card has corners to run to.
+Its timer runs along the bottom edge at both sizes, clipped by the radius
+(`overflow-hidden`). At 18px that is a straight rule; it was inset while the
+shell was a pill, because a full-bleed rule clipped to a pill comes out as a
+curved sliver that reads as an underline under the title.
 
 The **description is desktop-only** (`hidden md:block`) and the title
 truncates. A confirmation
@@ -73,9 +76,11 @@ The `type` picks the **icon only**. Every toast shares one neutral shell
 | `info` | `InfoIcon` | `text-blue-600 dark:text-blue-400` |
 | `loading` | inline spinner SVG (`animate-spin`) | `text-muted-foreground` |
 
-Icons are `size-4 shrink-0 self-start mt-[3px]`: pinned to the top of the row
-and nudged down so the glyph sits on the title's x-height centre instead of
-floating between title and description when the description wraps. The action
+Icons are `size-4 shrink-0 self-center md:self-start md:mt-[3px]`: **centred on
+a phone**, where the toast is one 48px line and the icon has a single line to
+sit against — pinned there it read as crooked. On desktop it is pinned to the
+top of the row and nudged down so the glyph sits on the title's x-height centre
+instead of floating between title and description when the description wraps. The action
 and close buttons carry the same `self-start mt-[3px]` so all three columns
 share one baseline.
 

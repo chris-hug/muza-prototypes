@@ -35,8 +35,12 @@ export const toastShellClass = cn(
   // desktop-only for the same reason the box is one line: the title already
   // says it, and a two-line card with 18px of padding was a fifth of a 375px
   // screen for the word "added". Desktop keeps the roomier card.
-  "h-12 rounded-full px-4 shadow-xl md:h-auto md:rounded-xl md:px-4 md:pt-4 md:pb-[18px] md:shadow-lg",
+  "h-12 rounded-2xl px-4 shadow-xl md:h-auto md:rounded-xl md:px-4 md:pt-4 md:pb-[18px] md:shadow-lg",
   "border border-border bg-popover",
+  // `overflow-hidden` so the timer can run to the edges and be clipped by the
+  // radius. An 18px corner over the 24px pill of a field COVERS it — the
+  // rounder shape is the smaller one — which a pill-shaped toast did not.
+  "overflow-hidden",
   "text-popover-foreground transition-[transform,opacity] duration-200",
   // The swipe belongs to the toast, not to the page scrolling behind it.
   "touch-none",
@@ -65,7 +69,10 @@ export const toastCloseButtonClass = cn(
 // sits on the title's x-height centre, not floating between title and
 // description when the description wraps. (The comment said `mt-[5px]` for a
 // long time while the class was `mt-[3px]` — the class is the truth.)
-const ICON_CLS = "size-4 shrink-0 self-start mt-[3px]"
+// Centred on a phone, where the toast is ONE 48px line and the icon has a
+// single line of text to sit against; the top-pinned nudge is a desktop rule,
+// for a card whose description wraps under the title.
+const ICON_CLS = "size-4 shrink-0 self-center mt-0 md:self-start md:mt-[3px]"
 const ToastIcon: Record<string, React.ReactNode> = {
   default: <InfoIcon        className={cn(ICON_CLS, "text-muted-foreground")} />,
   success: <CheckCircleIcon className={cn(ICON_CLS, "text-green-600 dark:text-green-400")} />,
@@ -149,16 +156,12 @@ function ToastViewport({ className }: { className?: string }) {
               /* Inset on a phone, where the shell is a pill: a full-bleed rule
                  clipped to that radius comes out as a curved sliver. Along the
                  bottom edge on desktop, where the card has corners to run to. */
-              className={cn(
-                "absolute origin-left bg-brand-500 animate-[toastTimer_linear_forwards] group-hover/toasts:[animation-play-state:paused]",
-                "inset-x-4 bottom-1.5 h-[3px] rounded-full",
-                "md:inset-x-0 md:bottom-0 md:h-0.5 md:rounded-none",
-              )}
+              className="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-brand-500 animate-[toastTimer_linear_forwards] group-hover/toasts:[animation-play-state:paused]"
               style={{ animationDuration: `${t.timeout ?? TOAST_DEFAULT_MS}ms` }}
             />
             {icon}
 
-            <div className="flex flex-1 flex-col gap-1 min-w-0 max-md:pb-1">
+            <div className="flex flex-1 flex-col gap-1 min-w-0">
               {t.title && (
                 <ToastPrimitive.Title className="truncate md:whitespace-normal text-small font-medium leading-5">
                   {t.title}
