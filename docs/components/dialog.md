@@ -252,21 +252,27 @@ Only the middle one scrolls.
   `overflow-hidden` and the body is its own band between a bar and an action
   row, so the bar IS a band and belongs in the flow.
 - The confirming action is a full-width `size="lg"` (48px) button in
-  `DialogFormActions`, the band below the body. The sheet pads itself off the
-  keyboard, so the action sits directly on it. Never offered twice — bar
-  **or** action row.
-- **The sheet is ONE surface, action included**, down to the keyboard. The
-  band was tried the other way — popup transparent (`max-md:bg-transparent`),
-  bands painting, the pill floating over the page with a `shadow-lg` — on the
-  reasoning that a lone control reads as an object rather than as a bar, the
-  rule the find screen's lone search field follows in `AddMusicDialog`. It does
-  not carry over: that field floats over the sheet's own rows, while here, with
-  the keyboard up, there is no page left to float over — only a ~60px strip of
-  blurred backdrop between the form and its button, which reads as a seam.
-  Two things came back with the surface: the pill needs no lift, and
-  `disabled:opacity-50` works again, because it has something to fade against.
-  (Over the page it didn't: the artwork showed straight through the pill, and
-  the disabled colours had to be mixed by hand.)
+  `DialogFormActions`, below the body. Never offered twice — bar **or** action
+  row.
+- **It is a floating pill, and its row has no surface of its own.** A lone
+  control reads as an object rather than as a bar — the rule the find screen's
+  lone search field follows in `AddMusicDialog` — and a band with its own fill
+  draws a line under the form, turning one surface into two. `shadow-lg` on
+  the button is what makes it float; `DialogFormActions` paints nothing.
+- **This one went back and forth, and the reason is worth keeping.** The row
+  was given `bg-popover` when the sheet still ENDED at `var(--kb)`: a
+  transparent band then had the *page* showing through the strip between the
+  sheet and the keyboard, ~60px of blurred backdrop that read as a seam under
+  the form. The sheet reaches the bottom of the screen now and holds the
+  keyboard off with padding, so what is behind the row is the sheet itself and
+  the fill has nothing left to hide. The related repair travelled with it: the
+  disabled pill needs an opaque colour rather than `opacity-50`, and that now
+  lives on `Button`'s filled variants (`.disabled-solid`) instead of at this
+  call site, where it kept being lost every time the pill moved.
+- **With the keyboard up the pill sits ON it** — `padding-bottom: 0.25rem`
+  under `data-kb="open"`, and no safe-area term, because the home indicator is
+  behind the keyboard and reserving room for it only opens a gap. A gap under
+  a floating action reads as the band it does not have.
 - **The pill names the verb only** — "Create", not "Create playlist". The
   title two bands above already says what is being made, and there is no
   second action to distinguish it from. The desktop footer keeps the long

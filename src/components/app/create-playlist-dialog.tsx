@@ -247,16 +247,17 @@ export function CreatePlaylistDialog({
         {isMobile && (
           <DialogFormActions>
             {/* `lg` (48px) — the DS's largest text button, and the right touch
-                 target for the screen's primary action. No lift and no
-                 disabled colour of its own — a filled Button now carries an
-                 opaque disabled colour itself (`.disabled-solid`), which is
-                 what this call site used to have to spell out and then lost
-                 when the pill moved onto the sheet. */}
+                 target for the screen's primary action. `shadow-lg` is what
+                 makes it read as floating ON the form rather than as a bar
+                 across the bottom of it; its band carries no surface.
+                 No disabled colour of its own — a filled Button carries an
+                 opaque one itself (`.disabled-solid`), so the pill stays solid
+                 wherever it floats. */}
             <Button
               size="lg"
               onClick={create}
               disabled={!name.trim()}
-              className="w-full"
+              className="w-full shadow-lg"
               /* Keep the focus in the field. A tap on a button moves focus to
                  it, which closes the keyboard, which lets the sheet grow back
                  to full height — and the button travels down out from under

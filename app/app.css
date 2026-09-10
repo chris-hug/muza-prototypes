@@ -1760,9 +1760,13 @@ img {
     gap: 0.5rem;
   }
   [data-kb="open"] [data-slot="dialog-form-actions"] {
+    /* Sits ON the keyboard while one is up. No safe-area term here: the home
+       indicator is BEHIND the keyboard, so reserving room for it only opens a
+       gap between the pill and the accessory bar — and a gap under a floating
+       action reads as a band, which is the thing this row does not have. */
     padding-inline: 0.75rem;
     padding-top: 0.5rem;
-    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    padding-bottom: 0.25rem;
   }
 
   /* Heights of the two bands that OVERLAY the find screen's list, so the

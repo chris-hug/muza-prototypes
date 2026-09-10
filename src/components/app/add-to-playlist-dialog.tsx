@@ -210,7 +210,7 @@ function AddToPlaylistContent({ song, guard, onClose }: {
               size="lg"
               onClick={create}
               disabled={!name.trim()}
-              className="w-full"
+              className="w-full shadow-lg"
               onPointerDown={e => e.preventDefault()}
             >
               Create

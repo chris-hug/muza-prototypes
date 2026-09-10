@@ -170,13 +170,23 @@ export const dialogFormBodyClass =
   "flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 md:contents md:overflow-visible"
 
 // The form sheet's action row: the confirming button pinned below the body,
-// never overlapping it (the body scrolls, this doesn't). The sheet is ONE
-// surface down to the keyboard, action included — it was tried as a floating
-// pill over the page, and with the keyboard up there is no page left to float
-// over, only a 60px strip that reads as a seam under the form.
+// never overlapping it (the body scrolls, this doesn't).
+//
+// NO surface of its own. The action is a floating pill on the sheet, not a
+// bar bolted across the bottom of it — a band with its own fill draws a line
+// under the form and turns one surface into two.
+//
+// It carried `bg-popover` for a while, and the reason was real at the time:
+// the sheet then ENDED at `var(--kb)`, so a transparent action band had the
+// page showing through the strip between the sheet and the keyboard, which
+// read as a seam. The sheet reaches the bottom of the screen now and holds
+// the keyboard off with padding, so what is behind this band is the sheet
+// itself — and the fill it was given to hide the page has nothing left to
+// hide. The pill's shadow is what makes it float.
+//
 // Mobile only — desktop uses the ordinary `DialogFooter`.
 export const dialogFormActionsClass =
-  "shrink-0 bg-popover px-3 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] md:hidden"
+  "shrink-0 px-3 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] md:hidden"
 
 /*
  * The scrolling list band of a sheet. `-mx-2` (and NO matching padding):
