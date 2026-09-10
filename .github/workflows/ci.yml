@@ -1,3 +1,10 @@
+# Three gates, cheapest first.
+#
+# `doc-sweep` needs no dependencies and runs in about a second, so it reports
+# before the other two have finished installing. `typecheck` and `build` are
+# the ordinary ones — they exist because a prototype that ships from `main`
+# has no other moment where somebody notices the app stopped compiling.
+#
 # The coverage half of the Component Doc Pass, enforced.
 #
 # `doc-sweep` greps every component in src/components/ui for the design
@@ -13,7 +20,7 @@
 # What this cannot catch: a doc that is confidently wrong about a number. That
 # is the consistency half of the pass, and it needs a reader.
 
-name: Docs
+name: CI
 
 on:
   push:
@@ -23,7 +30,7 @@ on:
 # A second push supersedes the first — the sweep has nothing to say about a
 # commit that is already replaced.
 concurrency:
-  group: docs-${{ github.ref }}
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -46,3 +53,35 @@ jobs:
       # second-long check rather than a two-minute one.
       - name: npm run doc-sweep
         run: node scripts/doc-sweep.mjs
+
+  typecheck:
+    name: Types
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --fund=false
+      # `react-router typegen` writes the generated route types the app
+      # imports; without it a clean checkout fails on files that are correct.
+      - run: npx react-router typegen
+      - run: npx tsc --noEmit
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      # Full history: `prebuild` unshallows so the built page can stamp itself
+      # with HEAD's date (scripts/release.mjs). Fetching it here is cheaper and
+      # quieter than letting the build shell out for it.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --fund=false
+      - run: npm run build
