@@ -28,13 +28,32 @@ export function useKeyboardInset() {
     if (!vv) return
 
     const root = document.documentElement
+    let wasOpen = false
     const apply = () => {
       // How much of the layout viewport is hidden below the visual one. The
       // offsetTop term matters while the page is scrolled under the keyboard.
       const hidden = window.innerHeight - vv.height - vv.offsetTop
       // Small values are address-bar chrome, not a keyboard — ignore them so
       // sheets don't drift on every scroll.
-      root.style.setProperty("--kb", `${hidden > 80 ? Math.round(hidden) : 0}px`)
+      const open = hidden > 80
+      root.style.setProperty("--kb", `${open ? Math.round(hidden) : 0}px`)
+
+      /* The keyboard leaves the WINDOW scrolled, and the app cannot scroll it
+         back on its own.
+         
+         Focusing a field inside a sheet makes iOS scroll the window itself to
+         bring the caret into view — not the sheet's scroll box, the window,
+         which the app otherwise never scrolls because its shell is exactly one
+         viewport tall. When the keyboard closes, the layout viewport is whole
+         again but that scroll offset stays: the shell ends partway up the
+         screen and the rest is blank page below it. Reported from the "add to
+         playlist" flow, where the search field is the first thing you touch.
+         
+         So: when the keyboard has just closed, put the window back. Guarded on
+         the transition rather than run on every event, because scrolling the
+         window during a normal scroll would fight the user. */
+      if (wasOpen && !open && window.scrollY !== 0) window.scrollTo(0, 0)
+      wasOpen = open
     }
 
     apply()
