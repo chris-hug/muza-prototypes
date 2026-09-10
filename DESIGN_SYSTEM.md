@@ -823,80 +823,10 @@ still exists and a call site can still ask for it; what changed is which step
 you get by not choosing. 40px was a desktop-first number for something you
 type into on a phone.
 
-**Two shared sheet recipes, both easy to break from a call site.**
-`.sheet-glass` is the bar's own glass — 72% of `--popover` over a 12px blur.
-The page's `.frosted-glass` mixes `--background` and carries a sheen, which
-over a `--popover` sheet reads as a band across the top: a different colour,
-faintly textured, exactly as wide as the bar. The sheet's own glass disappears
-at rest and shows itself only by blurring what scrolls under — which is why the
-bar is positioned OVER the content (one rule in `app.css`, keyed on
-`[data-mobile="sheet"]`) rather than sitting above it in the flow, where
-nothing would ever pass beneath it. `--sheet-bar-h` is the other half: the
-bar's real height (54 at rest, 48 with the keyboard up), which the scrolling
-band pays as `padding-top`. Change the bar's controls and that variable moves
-with them, or the list loses its first rows under an absolute bar.
-
-**Both hand-rolled gestures read their numbers from one module**
-([`src/lib/gesture.ts`](src/lib/gesture.ts)): the slop (8px), the sheet's
-dismiss thresholds (88px, 0.45px/ms), the "is every scroller under this finger
-at its top" test, and the velocity trail. `useLongPress` (tap vs drag vs hold,
-on cards) and `useSheetDrag` (pull a dialog-sheet down) answer different
-questions and stay separate, but they used to carry their own copies of these —
-the sheet's slop was 6px against the cards' 8, which is how two gestures on one
-screen start feeling like two apps. Base UI's Drawer has its own, better-tuned
-dismiss; `useSheetDrag` exists only because a Dialog is not a Drawer, and both
-it and half that module go away when the sheet-shaped dialogs move onto Drawer.
-
-**A drag is never a tap.** `useLongPress` swallows the click if the pointer
-moved more than 8px between down and up — the same threshold that cancels the
-hold, so one gesture cannot be both. The browser's own rule (no click after a
-scroll) is not enough: a SHORT drag, the beginning of a rail swipe or a flick
-the scroller declines to follow, is not a scroll as far as the browser is
-concerned, so the click landed and the card opened the album the finger was
-trying to swipe past.
-
-**Hold a card, get its menu.** (And `img { -webkit-touch-callout: none }`, or
-iOS answers the same gesture with its own menu — Share / Save to Photos / Copy
-Subject — on top of ours. It has to be in force before the finger lands, so it
-cannot come from the press handler; the handler declines the desktop
-`contextmenu` for the same reason.) Every card answers a long press (450–500ms)
-with the **`DetailMenuSheetBody` sheet** — quick actions as tiles across the
-top, then the rows — which is the sheet the detail pages and the list rows
-already raise. Not the card's own ⋯ dropdown rendered as a sheet: a phone
-should get one menu shape per entity, wherever it was reached from, and the
-kebab keeps the anchored dropdown, which is the right shape for a mouse.
-Wired through `useLongPress` on `AlbumCard`, `PlaylistCard` and `ArtistCard`
-(which has no ⋯ at all, on hover or otherwise; the playlist card's press used
-to call an `onMore` prop that has no call site, so holding one did nothing).
-The hold is visible from the first frame — the returned props carry
-`data-pressing`, which `app.css` turns into `scale: 0.98` and a slight
-darkening, so the wait reads as the card being TAKEN rather than as a tap that
-did not register. A drag past 8px cancels it and hands the gesture back to the
-rail; the click that follows a completed press is swallowed, or the card would
-open underneath its own menu.
-
-**A thumb has no cursor, so touch takes links out of the meta line.**
-`useCoarsePointer()` (an INPUT gate, not a width gate — see
-`use-media-query.ts`) withholds `onArtistClick`/`onAlbumClick` from
-`SongListItem`, and the row's existing rule does the rest: no handler, no
-button, so the names render as spans and a press anywhere on the row plays the
-song. The two names sit in a 20px band across the half of the row a finger
-reaches for, and hitting one did not merely miss play — it left the page. The
-destinations stay one press away in the ⋯ sheet and the long-press sheet,
-which is where a phone keeps them. A mouse keeps all three links; the gate is
-not overridden by `WindowWidthContext`, because the design system's "window
-375" frame is still being read with a cursor.
-
-**Touch targets: 32px of paint may carry 44px of target — `touch-target`.**
-WCAG 2.2 AA (2.5.8) asks for 24×24 and every control here clears that; 44×44 is
-the AAA figure (2.5.5) and Apple's HIG number, and it is the one a fingertip
-actually wants. Where the design needs a small glyph — a sheet's back chevron,
-a ✕, a filter pill — the utility grows an inert pseudo-element around it to 44
-without moving a pixel of the paint. Coarse pointers only: on a mouse the extra
-area is invisible slop that steals clicks from the neighbour. Never put it on
-two controls closer than 12px apart; overlapping hit areas are worse than small
-ones. Measured, at 375px: row select buttons 48, bar controls 32 painted / 44
-targeted, filter pills 32 painted / 44 targeted.
+*(The touch model these controls live under — gestures, hit targets, the
+sheet recipes — moved out of this section to [Touch — the pointer
+model](#touch--the-pointer-model), where it belongs. What stays here is what
+is specifically about a form control's size and colour.)*
 
 **A control sharing a row with a field follows it.** Every button in a form
 block moved with the fields — the actions under a dialog's form, the "Sort"
@@ -1132,6 +1062,112 @@ Tokens are **roles**, not colours. Never mix roles.
 
 ---
 
+## Touch — the pointer model
+
+> The full write-ups are [`gesture.md`](docs/components/gesture.md) (the two
+> hand-rolled gestures and their shared numbers) and
+> [`keyboard.md`](docs/components/keyboard.md) (`--kb`, `data-kb`, and the
+> four bugs that hide behind an unmeasured keyboard). This section is the
+> part that spans components.
+
+**The gate is the POINTER, not the window.** `useCoarsePointer()` asks what is
+doing the pointing; the three width measures below ask how much room there is.
+They are different questions, and answering one with the other is how a phone
+ends up with a mouse's affordances at 375px — or a touch laptop loses its
+hover states. Deliberately not overridden by `WindowWidthContext`: the design
+system's "window 375" frame is still being read with a cursor.
+
+**Two shared sheet recipes, both easy to break from a call site.**
+`.sheet-glass` is the bar's own glass — 72% of `--popover` over a 12px blur.
+The page's `.frosted-glass` mixes `--background` and carries a sheen, which
+over a `--popover` sheet reads as a band across the top: a different colour,
+faintly textured, exactly as wide as the bar. The sheet's own glass disappears
+at rest and shows itself only by blurring what scrolls under — which is why the
+bar is positioned OVER the content (one rule in `app.css`, keyed on
+`[data-mobile="sheet"]`) rather than sitting above it in the flow, where
+nothing would ever pass beneath it. `--sheet-bar-h` is the other half: the
+bar's real height (54 at rest, 48 with the keyboard up), which the scrolling
+band pays as `padding-top`. Change the bar's controls and that variable moves
+with them, or the list loses its first rows under an absolute bar.
+
+**Both hand-rolled gestures read their numbers from one module**
+([`src/lib/gesture.ts`](src/lib/gesture.ts)): the slop (8px), the sheet's
+dismiss thresholds (88px, 0.45px/ms), the "is every scroller under this finger
+at its top" test, and the velocity trail. `useLongPress` (tap vs drag vs hold,
+on cards) and `useSheetDrag` (pull a dialog-sheet down) answer different
+questions and stay separate, but they used to carry their own copies of these —
+the sheet's slop was 6px against the cards' 8, which is how two gestures on one
+screen start feeling like two apps. Base UI's Drawer has its own, better-tuned
+dismiss; `useSheetDrag` exists only because a Dialog is not a Drawer, and both
+it and half that module go away when the sheet-shaped dialogs move onto Drawer.
+
+**A drag is never a tap.** `useLongPress` swallows the click if the pointer
+moved more than 8px between down and up — the same threshold that cancels the
+hold, so one gesture cannot be both. The browser's own rule (no click after a
+scroll) is not enough: a SHORT drag, the beginning of a rail swipe or a flick
+the scroller declines to follow, is not a scroll as far as the browser is
+concerned, so the click landed and the card opened the album the finger was
+trying to swipe past.
+
+**Hold a card, get its menu.** (And `img { -webkit-touch-callout: none }`, or
+iOS answers the same gesture with its own menu — Share / Save to Photos / Copy
+Subject — on top of ours. It has to be in force before the finger lands, so it
+cannot come from the press handler; the handler declines the desktop
+`contextmenu` for the same reason.) Every card answers a long press (450–500ms)
+with the **`DetailMenuSheetBody` sheet** — quick actions as tiles across the
+top, then the rows — which is the sheet the detail pages and the list rows
+already raise. Not the card's own ⋯ dropdown rendered as a sheet: a phone
+should get one menu shape per entity, wherever it was reached from, and the
+kebab keeps the anchored dropdown, which is the right shape for a mouse.
+Wired through `useLongPress` on `AlbumCard`, `PlaylistCard` and `ArtistCard`
+(which has no ⋯ at all, on hover or otherwise; the playlist card's press used
+to call an `onMore` prop that has no call site, so holding one did nothing).
+The hold is visible from the first frame — the returned props carry
+`data-pressing`, which `app.css` turns into `scale: 0.98` and a slight
+darkening, so the wait reads as the card being TAKEN rather than as a tap that
+did not register. A drag past 8px cancels it and hands the gesture back to the
+rail; the click that follows a completed press is swallowed, or the card would
+open underneath its own menu.
+
+**A thumb has no cursor, so touch takes links out of the meta line.**
+`useCoarsePointer()` (an INPUT gate, not a width gate — see
+`use-media-query.ts`) withholds `onArtistClick`/`onAlbumClick` from
+`SongListItem`, and the row's existing rule does the rest: no handler, no
+button, so the names render as spans and a press anywhere on the row plays the
+song. The two names sit in a 20px band across the half of the row a finger
+reaches for, and hitting one did not merely miss play — it left the page. The
+destinations stay one press away in the ⋯ sheet and the long-press sheet,
+which is where a phone keeps them. A mouse keeps all three links; the gate is
+not overridden by `WindowWidthContext`, because the design system's "window
+375" frame is still being read with a cursor.
+
+**Touch targets: 32px of paint may carry 44px of target — `touch-target`.**
+WCAG 2.2 AA (2.5.8) asks for 24×24 and every control here clears that; 44×44 is
+the AAA figure (2.5.5) and Apple's HIG number, and it is the one a fingertip
+actually wants. Where the design needs a small glyph — a sheet's back chevron,
+a ✕, a filter pill — the utility grows an inert pseudo-element around it to 44
+without moving a pixel of the paint. Coarse pointers only: on a mouse the extra
+area is invisible slop that steals clicks from the neighbour. Never put it on
+two controls closer than 12px apart; overlapping hit areas are worse than small
+ones. Measured, at 375px: row select buttons 48, bar controls 32 painted / 44
+targeted, filter pills 32 painted / 44 targeted.
+
+
+### The strict rules
+
+Phones are the default surface for the player, so gesture handling is a first-class rule, not polish.
+
+**Never put `touch-action: none` on content you also want to scroll past.** It tells the browser not to pan at all for gestures starting there. Card covers had it, and since the cover is most of a card's area, a swipe along a rail almost always started on one — the rail simply refused to scroll. Covers now leave `touch-action` alone; the rail owns it (see the axis rule below).
+
+**Never synthesise a tap from `pointerup`.** Use the browser's real `click`. It knows things a component cannot: whether the touch turned into a scroll, whether the page was still gliding, whether the finger drifted off the element — and it withholds the click in all of those cases. `useLongPress` therefore listens for `click` and only suppresses the single case the browser can't know about: the click that follows a *completed* long press. An earlier version fired on `pointerup` with an 8px movement guard, which is a crude re-implementation of one small part of that rule; the symptom was a light flick to scroll a page of large covers opening an album instead.
+
+**`touch-action: pan-x` does NOT mean "vertical falls through".** It forbids vertical panning for every touch starting on that element, so a finger on a card couldn't scroll the page at all. Rails list **both** axes (`pan-x pan-y`) and let the browser pick from the gesture.
+
+**Rails snap `mandatory`, not `proximity`.** A flick keeps its full momentum — the browser lets it coast to its natural resting point and then takes the nearest snap point — but it always comes to rest on an exact card boundary. `proximity` only snapped when the rail happened to stop near an edge, so a hard swipe left a card sliced down the middle. Requires a uniform stride (card + 16px gap) and no scroll-padding on the container.
+
+**Nothing may exceed the viewport width on a phone.** Even fully clipped, iOS pans the *visual* viewport when content is wider than the layout viewport — which reads as the whole page drifting sideways. `scrollWidth` will not reveal this when an ancestor clips, so check element rects against `clientWidth`, not container overflow. Fixed paddings are the usual culprit: size hero CTAs with `clamp()` and add `max-w-full`.
+---
+
 ## Responsive & pointer — gating rules
 
 **Three measures, and only three.** *Window* (the browser viewport — `useFooterNav()`, `useIsMobile()`, `@media`, Tailwind `md:`) decides the **chrome** and how a thing is **presented**. *Column* (the page content area, what the window leaves after chrome, cap and editor — `@container` on the page shell) decides **how many fit**. *Box* (a component's own width, a **named** `@container/<name>`) is allowed only where the same window can hand a component two different widths, and decides internal reflow only. The words "breakpoint" and "viewport" are reserved for Tailwind's tokens and the browser's own terms. Full write-up, arithmetic and duplication map: [`docs/components/responsive.md`](docs/components/responsive.md).
@@ -1298,22 +1334,6 @@ Owner-only **Edit** on a playlist docks a panel on the right that **persists acr
 
 ---
 
-## Touch & gestures — STRICT
-
-Phones are the default surface for the player, so gesture handling is a first-class rule, not polish.
-
-**Never put `touch-action: none` on content you also want to scroll past.** It tells the browser not to pan at all for gestures starting there. Card covers had it, and since the cover is most of a card's area, a swipe along a rail almost always started on one — the rail simply refused to scroll. Covers now leave `touch-action` alone; the rail owns it (see the axis rule below).
-
-**Never synthesise a tap from `pointerup`.** Use the browser's real `click`. It knows things a component cannot: whether the touch turned into a scroll, whether the page was still gliding, whether the finger drifted off the element — and it withholds the click in all of those cases. `useLongPress` therefore listens for `click` and only suppresses the single case the browser can't know about: the click that follows a *completed* long press. An earlier version fired on `pointerup` with an 8px movement guard, which is a crude re-implementation of one small part of that rule; the symptom was a light flick to scroll a page of large covers opening an album instead.
-
-**`touch-action: pan-x` does NOT mean "vertical falls through".** It forbids vertical panning for every touch starting on that element, so a finger on a card couldn't scroll the page at all. Rails list **both** axes (`pan-x pan-y`) and let the browser pick from the gesture.
-
-**Rails snap `mandatory`, not `proximity`.** A flick keeps its full momentum — the browser lets it coast to its natural resting point and then takes the nearest snap point — but it always comes to rest on an exact card boundary. `proximity` only snapped when the rail happened to stop near an edge, so a hard swipe left a card sliced down the middle. Requires a uniform stride (card + 16px gap) and no scroll-padding on the container.
-
-**Nothing may exceed the viewport width on a phone.** Even fully clipped, iOS pans the *visual* viewport when content is wider than the layout viewport — which reads as the whole page drifting sideways. `scrollWidth` will not reveal this when an ancestor clips, so check element rects against `clientWidth`, not container overflow. Fixed paddings are the usual culprit: size hero CTAs with `clamp()` and add `max-w-full`.
-
----
-
 ## Track selection — the pick affordance
 
 `SelectTrackButton` replaces a checkbox wherever tracks are picked (Add music): one plus that rearranges into a check, on a `bg-secondary` plate that fades once picked. See [docs/components/select-track.md](docs/components/select-track.md). The one rule: the **row** is the click target — the mark is `pointer-events-none`, `aria-hidden` and holds no state.
@@ -1322,4 +1342,4 @@ Phones are the default surface for the player, so gesture handling is a first-cl
 
 ## Toasts — mobile shape
 
-See [docs/components/toast.md](docs/components/toast.md) — a bottom bar on phones (lifted over the mini player, tab bar, home indicator and keyboard), the top-right card from 768. The rule not to miss: plain confirmations ("added", "created", "saved") pass `timeout: TOAST_CONFIRM_MS` (2.5s); a toast carrying an **action** (Undo) stays on the 5s default, because 2.5s is too short to read a line and reach a button.
+See [docs/components/toast.md](docs/components/toast.md) — **top-anchored on phones**, one line, nearly full width, with its own drain as a clock; the top-right card from 768. It used to be a bottom bar lifted over the mini player, tab bar, home indicator and keyboard, which is four things to clear and still put the message on whatever raised it. The top is the one place on a phone where a message does not sit on the thing you are using. The rule not to miss: plain confirmations ("added", "created", "saved") pass `timeout: TOAST_CONFIRM_MS` (2.5s); a toast carrying an **action** (Undo) stays on the 5s default, because 2.5s is too short to read a line and reach a button.

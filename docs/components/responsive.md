@@ -9,7 +9,7 @@ summary:
   - **Window** — the browser. Decides the **chrome** and how a thing is **presented**. Two gates: **608** chrome (tab bar ⇄ icon rail, mobile header, mini player) and **768** presentation (`useIsMobile` and `md:`, the same gate in TS and CSS — sheets ⇄ dialogs, toasts, the docked editor).
   - **Column** — what the window leaves after chrome, cap and editor. Decides **how many fit**: card steps, rail peek, MediaHeader tier. Written `@min-[N]` / `@max-[N]`.
   - **Box** — a component's own width. Only where the same window can hand it two widths (a song row in a list vs a rail cell), and then the container is **named**.
-  - **Pointer, not width**, for touch: hover is pointer-only, and a component swaps on the window — never on hover.
+  - **Pointer, not width**, for touch: hover is pointer-only, and a component swaps on the window — never on hover. The one gate that reads the pointer itself is `useCoarsePointer()`, and it is a fourth thing, not a fourth width.
 ---
 
 Muza measures width in **three ways, and only three**. Every number in the
@@ -32,6 +32,38 @@ calls its screen tokens breakpoints, and that is the one place the word
 belongs; "viewport" stays for the browser's own terms (`viewport-fit`, the
 visual viewport under a keyboard). Code identifiers keep their names —
 `VIEWPORTS`, `containerAt()`, `@container` — this page says what they mean.
+
+
+## The fourth question: what is doing the pointing
+
+The three measures above all answer *how much room is there*. They cannot
+answer *what is the person using*, and for touch that is the question that
+matters: a 24px-tall line of text is a fine link under a cursor and a coin
+toss under a thumb, at any window width.
+
+**`useCoarsePointer()`** (`src/lib/use-media-query.ts`) is that gate —
+`(pointer: coarse)`, nothing to do with width. Its first use is the song row's
+meta line, where the artist and album stop being links on touch so the row is
+one target ([song-list-item](song-list-item.md)).
+
+It is deliberately **not** overridden by `WindowWidthContext`. The three width
+gates are, because the design system's demo frame has to be able to stand in
+for a narrow window — but the frame is still being read with a mouse, and a
+demo that hid its links there would be lying about the machine it is running
+on.
+
+**This is not the hover rule.** `hover:` is for cosmetic show/hide; choosing
+between two *component renders* still gates on the window (`useIsMobile()`),
+because the headless preview and hybrid laptops both report `hover: hover`.
+Three different questions, three different gates:
+
+| Question | Gate |
+|---|---|
+| How much room? | window / column / box |
+| Can this thing be hovered? | `hover:` — cosmetic only |
+| What is doing the pointing? | `useCoarsePointer()` |
+
+See [gesture.md](gesture.md) for what the touch answer then changes.
 
 ## Window: two gates, each with a job
 
