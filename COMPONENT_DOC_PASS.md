@@ -1,5 +1,9 @@
 # The Component Doc Pass
 
+> The arrangement this procedure operates inside — what is generated, what is
+> checked, and why one of the three checks deliberately does not gate — is
+> [`DOCUMENTATION.md`](DOCUMENTATION.md).
+
 How a Muza component is documented, and why the design-system page never
 needs editing when the documentation changes.
 

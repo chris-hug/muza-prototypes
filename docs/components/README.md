@@ -6,6 +6,9 @@ anywhere else: the design-system page reads these files at build time and
 renders them, so prose lives in exactly one place and an agent can read the
 same file directly.
 
+How the whole arrangement fits together — generated blocks, the three checks,
+what only a reader can catch — is [`DOCUMENTATION.md`](../../DOCUMENTATION.md).
+
 The procedure for writing or revising one of these — where to gather from,
 what else has to move with it, and how the section is wired — is
 [`COMPONENT_DOC_PASS.md`](../../COMPONENT_DOC_PASS.md) at the repo root.
