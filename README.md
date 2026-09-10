@@ -23,7 +23,7 @@ Open [http://localhost:3001](http://localhost:3001).
   documenting a component.
 
 ```bash
-npm run doc-sweep    # every behaviour is named in its doc          (CI gate)
-npm run sync-docs    # regenerate DESIGN_SYSTEM.md's contract blocks (CI gate)
-npm run doc-rules    # rules that never got a contract line          (advisory)
+npm run check        # everything CI runs — docs, types, build
+npm run check:docs   # just the three doc gates (~1s, no install needed)
+npm run doc-rules    # advisory: rules that never got a contract line
 ```

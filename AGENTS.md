@@ -44,11 +44,13 @@ Documentation is part of the change, not a follow-up.
 generated, what is checked, what only a reader can catch. The short version:
 
 ```bash
-npm run doc-sweep    # every behaviour named in its doc          (CI gate)
-npm run sync-docs    # regenerate the contract blocks            (CI gate)
-npm run doc-rules    # rules that never got a contract line      (advisory)
-npx tsc --noEmit && npm run build
+npm run check        # everything CI runs: docs · types · build
 ```
+
+That is `check:docs` (behaviour named · contract blocks in step · code obeys
+them), then types, then the build — the same scripts CI calls, so there is one
+definition of "the gates". `npm run doc-rules` is the fourth check and is
+advisory, so it is not in `check`: run it during a doc pass.
 
 **Never edit between the `BEGIN GENERATED` markers in `DESIGN_SYSTEM.md`.** Edit
 the `contract:` line in the page that owns the rule and re-run `npm run

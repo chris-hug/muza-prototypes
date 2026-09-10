@@ -116,7 +116,20 @@ the script.
 
 ---
 
-## The three checks
+## Running them
+
+```bash
+npm run check        # everything CI runs — docs, types, build
+npm run check:docs   # just the doc gates (~1s, no dependencies needed)
+npm run doc-rules    # advisory, not in `check` — run it during a doc pass
+```
+
+CI calls the same scripts rather than repeating their contents, so "what the
+gates are" is defined once, in `package.json`. `check:docs` runs first and
+without `npm ci`, so it reports in about a second while the other jobs are
+still installing.
+
+## The four checks
 
 | Command | Answers | Gates | What it caught |
 |---|---|---|---|
@@ -125,7 +138,7 @@ the script.
 | `npm run doc-rules` | (3) did a rule get promoted? | **No — advisory** | 7 candidates, 3 real (footer margins, `swipeDirection` on the root, `user-scalable=no`) |
 | `npm run conformance` | **(5) does the CODE obey the contract?** | **CI** | 4 violations on its first run: a sheet corner written at a call site, `h-dvh` on the side drawers, and two files with hardcoded card colours |
 
-Failure (5) was the last one to get a check, and the most embarrassing to have
+Failure (5) was the last to get a check, and the most embarrassing to have
 missed: the first three all compare documents with documents. `conformance`
 reads the source and asks whether it does what the contract says. It found four
 violations the day it was written — including one in `sheet.tsx`, which the

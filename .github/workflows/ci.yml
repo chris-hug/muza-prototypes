@@ -51,20 +51,11 @@ jobs:
       # No install step: the sweep reads files and uses nothing but node's own
       # standard library. Keeping it dependency-free is what makes it a
       # second-long check rather than a two-minute one.
-      - name: npm run doc-sweep
-        run: node scripts/doc-sweep.mjs
-
-      # The system file's contract lines are generated from the pages that own
-      # each rule. This fails when a page's `contract:` moved and nobody re-ran
-      # the generator — the drift that used to be silent, because two prose
-      # copies of one fact pass every grep.
-      - name: npm run sync-docs -- --check
-        run: node scripts/sync-system-doc.mjs --check
-
-      # The one that points at the CODE: does the app obey the contract the
-      # docs state? The three above all check documents against documents.
-      - name: npm run conformance
-        run: node scripts/conformance.mjs
+      # One definition of "the doc gates", shared with `npm run check` — three
+      # checks in cheapest-first order: is every behaviour named, do the system
+      # file and the pages still agree, and does the CODE obey what they say.
+      - name: npm run check:docs
+        run: npm run check:docs
 
   typecheck:
     name: Types
@@ -78,8 +69,7 @@ jobs:
       - run: npm ci --no-audit --fund=false
       # `react-router typegen` writes the generated route types the app
       # imports; without it a clean checkout fails on files that are correct.
-      - run: npx react-router typegen
-      - run: npx tsc --noEmit
+      - run: npm run check:types
 
   build:
     name: Build
