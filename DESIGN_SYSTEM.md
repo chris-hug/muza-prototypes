@@ -521,11 +521,36 @@ which have no edge to describe.
 | `3xl` | 24px | `--radius-3xl` |
 | `full` | 9999px | `--radius-full` |
 
-**Mismatch, reported not overwritten:** the table above is the Figma alias
-list. `app.css` sets `--radius: 0.75rem` (12px), so the derived tokens are
-2px / 8px / 10px / 12px / 16px / **18px** / 22px — every value here except
-`sm` and `full` is off by 2. Which of the two is the intended ladder is not
-recorded.
+**Mismatch, reported not overwritten.** The table above is the FIGMA ladder.
+The CSS ladder holds almost the same VALUES under different NAMES, because
+`--radius` is anchored to Figma's `xl` — `app.css` says so where it is
+declared: *"Base radius (= Figma border radius/xl = 12px)"*. Everything else
+is `calc()` off that anchor, so the two ladders are offset by roughly one
+rung, and reading a row across this table gives the wrong number for every
+step but `full`:
+
+| Figma alias | Figma value | Same value in CSS | What that CSS NAME actually is |
+|---|---|---|---|
+| `sm` | 2px | `rounded-xs` | `rounded-sm` = **8px** |
+| `default` / `md` | 6px | — (no token has 6px) | `rounded-md` = **10px** |
+| `lg` | 8px | `rounded-sm` | `rounded-lg` = **12px** |
+| `xl` | 12px | `rounded-lg` (`--radius`) | `rounded-xl` = **16px** |
+| `2xl` | 16px | `rounded-xl` | `rounded-2xl` = **18px** |
+| `3xl` | 24px | `rounded-3xl` | 24px — Tailwind's own default, not declared here |
+| `full` | 9999px | `rounded-full` | 9999px ✓ |
+
+Two CSS steps have no Figma counterpart at all (`md` 10px, `2xl` 18px), and
+Figma's 6px has no CSS token. `--radius-3xl` (24) and `--radius-4xl` (32) come
+from Tailwind's defaults rather than from `@theme`, so they are outside the
+`--radius` ladder and do not move if the anchor does.
+
+The measured values, which are what ships: **xs 2 · sm 8 · md 10 · lg 12 ·
+xl 16 · 2xl 18 · 3xl 24 · 4xl 32 · full 9999**. Usage today: `rounded-full`
+169, `rounded-lg` 71, `rounded-xl` 58, `rounded-xs` 46, `rounded-sm` 33,
+`rounded-2xl` 23, `rounded-md` 17, `rounded-3xl` 0.
+
+Which ladder is intended is not recorded. The risk is one-directional: a
+reader who trusts this table and writes `rounded-sm` for a 2px corner gets 8.
 
 **A bottom sheet's top corner is 28px**, and it is not on that ladder on
 purpose. The sheet's action bar carries 40px pill buttons (radius 20) inset
