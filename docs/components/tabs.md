@@ -64,7 +64,7 @@ line tab.
 
 | Part | Classes | Why |
 |---|---|---|
-| List | `rounded-none bg-transparent gap-3 text-muted-foreground max-w-full overflow-x-auto`, scrollbar hidden | a full-width strip (Settings' five tabs, Search's categories) can overflow a phone, so it **scrolls sideways** with no scrollbar; `max-w-full` is what lets an `inline-flex` notice it is overflowing |
+| List | `rounded-none bg-transparent gap-3 text-muted-foreground max-w-full overflow-x-auto overflow-y-hidden`, scrollbar hidden | a full-width strip (Settings' five tabs, Search's categories) can overflow a phone, so it **scrolls sideways** with no scrollbar; `max-w-full` is what lets an `inline-flex` notice it is overflowing. `overflow-y-hidden` is load-bearing: a box that is `auto` on one axis is `auto` on both, and the strip overflows vertically by a pixel — the tabs are 36px in a 35px content box, because the hairline the strip owns is a border and `clientHeight` leaves borders out. One pixel is enough to make the whole tab bar draggable up and down under a thumb |
 | Trigger | `rounded-none px-[18px] pb-1.5 pt-0 text-small text-muted-foreground hover:text-foreground` | 18px sides: the gap between two labels reads as 36 + the list's `gap-3` |
 | Underline | `after:absolute after:inset-x-0 after:h-px after:bg-foreground after:opacity-0`, active `after:opacity-100` | a 1px ink line under the label, faded in rather than mounted. Pinned `after:bottom-0` here (the base is `-bottom-px`) because the scrolling list clips `overflow-y` and would cut a line 1px outside |
 | Active | `data-active:text-foreground` | ink text plus the line, nothing else |

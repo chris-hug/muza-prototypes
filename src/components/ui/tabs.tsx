@@ -50,17 +50,24 @@ const tabsListVariants = cva(
           // rule and edge it happens to sit over. The opaque twin is the same
           // colour, stated as the other job.
           "rounded-full bg-muted p-1 text-muted-foreground gap-0",
-        // Underline — transparent container, bottom-border active
-        // indicator. Full-width tab strips like this can overflow a phone
-        // (e.g. Settings' five tabs), so they scroll horizontally with the
-        // scrollbar hidden — every tab stays reachable by swipe. `max-w-full`
-        // lets the inline-flex know when it's overflowing.
+        /* Underline — transparent container, bottom-border active indicator.
+           Full-width tab strips like this can overflow a phone (e.g. Settings'
+           five tabs), so they scroll horizontally with the scrollbar hidden —
+           every tab stays reachable by swipe. `max-w-full` lets the inline-flex
+           know when it's overflowing.
+
+           `overflow-y-hidden` is not decoration: a box that is `auto` on one
+           axis is `auto` on BOTH, and the strip overflows its content box
+           vertically by a pixel (the tabs are 36px inside a 35px content box —
+           the hairline the strip owns is a border, which `clientHeight` leaves
+           out). One pixel is enough to make the whole tab bar draggable up and
+           down, which is what it was doing on the artist page. */
         line:
-          "rounded-none bg-transparent gap-3 text-muted-foreground max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+          "rounded-none bg-transparent gap-3 text-muted-foreground max-w-full overflow-x-auto overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
         // Pill — each tab is its own pill (no container background). Same
-        // horizontal-scroll treatment as `line`.
+        // horizontal-scroll treatment as `line`, and the same cross-axis pin.
         pill:
-          "rounded-none bg-transparent gap-1.5 text-muted-foreground max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+          "rounded-none bg-transparent gap-1.5 text-muted-foreground max-w-full overflow-x-auto overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
       },
       size: {
         sm:      "",
