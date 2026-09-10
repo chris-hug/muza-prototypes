@@ -99,6 +99,15 @@ export function useSheetDrag(
         frame = requestAnimationFrame(() => {
           frame = 0
           el.style.transform = `translate3d(0, ${dy}px, 0)`
+          /* The backdrop thins as the sheet leaves, published the same way
+             Base UI's Drawer publishes its own drag (`--drawer-swipe-progress`)
+             so both families of sheet behave alike: the page brightening under
+             the finger is what makes the sheet feel attached to it rather than
+             merely following it. */
+          document.documentElement.style.setProperty(
+            "--sheet-drag-progress",
+            String(Math.min(1, Math.max(0, dy / Math.max(1, el.offsetHeight)))),
+          )
         })
       }
       trail.push(e.clientY, e.timeStamp)
@@ -118,6 +127,7 @@ export function useSheetDrag(
         el.style.animation = ""
         el.style.transition = "transform 220ms cubic-bezier(0.2, 0, 0, 1)"
         el.style.transform = ""
+        document.documentElement.style.removeProperty("--sheet-drag-progress")
       }
       if (frame) { cancelAnimationFrame(frame); frame = 0 }
       el.style.touchAction = ""
@@ -135,6 +145,9 @@ export function useSheetDrag(
         // Carry the sheet the rest of the way out, then ask to close.
         el.style.transition = "transform 140ms cubic-bezier(0.4, 0, 1, 1)"
         el.style.transform = `translate3d(0, ${el.offsetHeight}px, 0)`
+        // Hand the backdrop back to its own exit — it fades from wherever the
+        // drag left it, rather than snapping to full and then fading.
+        document.documentElement.style.removeProperty("--sheet-drag-progress")
         window.setTimeout(() => {
           onClose()
           /* The close can be REFUSED — a sheet holding unsaved work answers a
@@ -195,6 +208,7 @@ export function useSheetDrag(
       if (frame) cancelAnimationFrame(frame)
       el.style.touchAction = ""
       el.style.willChange = ""
+      document.documentElement.style.removeProperty("--sheet-drag-progress")
       el.style.transition = ""
       el.style.transform = ""
       el.style.animation = ""

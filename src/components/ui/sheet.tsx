@@ -60,7 +60,17 @@ function SheetOverlay({
     <DrawerPrimitive.Backdrop
       data-slot="sheet-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-black/30 duration-200 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 isolate z-50 bg-black/30",
+        /* The backdrop follows the SWIPE, and it transitions rather than
+           animating — for the same reason the popup does. Base UI publishes
+           the drag as `--drawer-swipe-progress` (0 → 1) and the backdrop
+           thins with it, so the page brightens under the finger as the sheet
+           leaves. A keyframe `fade-out` instead re-darkened the page to full
+           opacity the moment the finger lifted and only then faded, which is
+           the flicker after a dismissal. */
+        "opacity-[calc(1-var(--drawer-swipe-progress,0))]",
+        "transition-opacity duration-300 ease-[cubic-bezier(0.2,0,0,1)] data-swiping:transition-none",
+        "data-starting-style:opacity-0 data-ending-style:opacity-0",
         className,
       )}
       {...props}

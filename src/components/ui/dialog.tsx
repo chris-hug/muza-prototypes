@@ -238,7 +238,12 @@ function DialogOverlay({
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-black/10 duration-100 transition-none supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0",
+        "fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0",
+        // Thins as a sheet is dragged away (`--sheet-drag-progress`, published
+        // by `useSheetDrag`), the same coupling Base UI's Drawer gives its own
+        // backdrop. The page brightening under the finger is what makes the
+        // sheet feel attached to it.
+        "opacity-[calc(1-var(--sheet-drag-progress,0))]",
         className
       )}
       {...props}

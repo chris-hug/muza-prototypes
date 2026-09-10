@@ -54,6 +54,15 @@ max-w-[640px] p-0 gap-0`), the **Studio switcher** in the footer tab bar
 (`footer-nav.tsx`, `side="bottom" rounded-t-2xl`), and the phone surface of
 [Detail Menu](detail-more-button.md) (`side="bottom"`).
 
+**So does the backdrop, and it follows the swipe.** Its opacity is
+`calc(1 - var(--drawer-swipe-progress, 0))`, so the page brightens under the
+finger as the sheet leaves — which is what makes the sheet feel attached to it
+rather than merely following it. With a keyframe `fade-out` instead, the
+backdrop snapped back to full the moment the finger lifted and only then faded:
+the page going bright, dark, then bright again, in about a fifth of a second.
+`useSheetDrag` publishes the same signal as `--sheet-drag-progress` for the
+dialog-family sheets, so both behave alike.
+
 **The popup TRANSITIONS; it does not run keyframes.** Base UI writes an inline
 transform while the finger is down, and a CSS animation overrides inline styles
 — so `slide-out-to-bottom`, whose frames begin at 0, yanked a swiped sheet back
