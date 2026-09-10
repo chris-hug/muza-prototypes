@@ -271,6 +271,21 @@ Only the middle one scrolls.
 Used by **Create playlist / Edit info** (`CreatePlaylistDialog`). Pickers and
 lists stay bottom sheets.
 
+## A sheet you can flick away is one you can flick away by accident
+
+A bottom sheet holding work confirms before it closes. `AddMusicDialog`
+intercepts `onOpenChange(false)` while anything is picked and raises an
+[alert dialog](alertdialog.md) — "Discard 4 tracks?" · *Keep picking* /
+*Discard* — with the sheet still mounted behind it, so cancelling returns to
+the same screen, query and selection.
+
+It guards **every** exit, not just the gesture: the ✕, the backdrop and Escape
+lose exactly as much as a pull-down does. That is the platform rule — iOS
+bounces the swipe on a modal with unsaved input and asks; Material asks too —
+and it is why the `mobile="form"` sheet takes the other half of the same rule
+and refuses the gesture outright (`useSheetDrag` is off there): a form sheet's
+content is a half-typed field, and there is nothing to confirm against yet.
+
 ## Search inside a sheet is a screen, not a field
 
 Focusing the search input switches the sheet to a **find screen**

@@ -39,6 +39,10 @@ import { AddMusicIcon } from "@/components/ui/media-icons"
 import { MobilePillTabs } from "@/components/ui/mobile-header"
 import { useToast, TOAST_CONFIRM_MS } from "@/components/ui/toast"
 import { MediaListItem } from "@/components/ui/media-list-item"
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from "@/components/ui/alert-dialog"
 import { getAlbumDetail, getAllAlbums, getRichAlbums, hasAlbumDetail } from "@/lib/album-catalog"
 import { searchCatalog, type SearchResult } from "@/lib/search-catalog"
 import { slugify } from "@/lib/media-nav"
@@ -90,6 +94,13 @@ export function AddMusicDialog({
   // Row that was just added — drives the one-shot confirmation animation.
   const [flashed, setFlashed] = useState<string | null>(null)
   const pickedKeys = useMemo(() => new Set(picked.map(songKey)), [picked])
+  /* A sheet you can flick away is a sheet you can flick away BY ACCIDENT, and
+   * this one holds work: a handful of tracks chosen one at a time. So a close
+   * with picks in hand asks first — the platform rule for a modal with unsaved
+   * input (iOS bounces the swipe and confirms; Material confirms too). It
+   * guards every exit, not just the gesture: the ✕, the backdrop and Escape
+   * lose exactly as much. */
+  const [confirmDiscard, setConfirmDiscard] = useState(false)
   /* The confirming action belongs to the BROWSE screen's footer. On the Find
    * screen it moves into the header bar instead (see `barAction`): the band
    * there floats over the results, and a second control in it costs a row of
@@ -286,7 +297,14 @@ export function AddMusicDialog({
   ) : undefined
 
   return (
-    <Dialog open={open} onOpenChange={o => { if (!o) reset(); onOpenChange(o) }}>
+    <Dialog
+      open={open}
+      onOpenChange={o => {
+        if (!o && picked.length > 0) { setConfirmDiscard(true); return }
+        if (!o) reset()
+        onOpenChange(o)
+      }}
+    >
       {/* Desktop: at least half the viewport (with a floor so it never gets
           cramped on small laptops). Mobile is unaffected — still a sheet. */}
       {/* On a phone this sheet always fills everything the keyboard leaves,
@@ -589,6 +607,31 @@ export function AddMusicDialog({
           )}
         </DialogFooter>
       </DialogContent>
+
+      {/* Asked, not assumed. The sheet stays open behind it, so answering
+          "Keep picking" returns to exactly the screen the gesture interrupted
+          — the picks, the query, the screen. */}
+      <AlertDialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Discard {picked.length} {picked.length === 1 ? "track" : "tracks"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {picked.length === 1 ? "It hasn't" : "They haven't"} been added to
+              {playlistName ? ` “${playlistName}”` : " the playlist"} yet.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep picking</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { setConfirmDiscard(false); reset(); onOpenChange(false) }}
+            >
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   )
 }
