@@ -1064,11 +1064,21 @@ Tokens are **roles**, not colours. Never mix roles.
 
 ## Touch — the pointer model
 
-> The full write-ups are [`gesture.md`](docs/components/gesture.md) (the two
-> hand-rolled gestures and their shared numbers) and
-> [`keyboard.md`](docs/components/keyboard.md) (`--kb`, `data-kb`, and the
-> four bugs that hide behind an unmeasured keyboard). This section is the
-> part that spans components.
+> **Where the touch knowledge lives.** This section is the cross-component
+> contract — the rules another component has to obey. The long-form accounts
+> are [`gesture.md`](docs/components/gesture.md) (the two hand-rolled
+> gestures, their shared numbers, and why each rule exists) and
+> [`keyboard.md`](docs/components/keyboard.md) (`--kb`, `data-kb`, the two
+> measurements that were wrong, `svh`, and the re-reveal on resize).
+> [`responsive.md`](docs/components/responsive.md) holds the gates — including
+> the pointer one — and [`dialog.md`](docs/components/dialog.md) /
+> [`drawer.md`](docs/components/drawer.md) hold the sheet shapes. The
+> procedure for keeping all of it true is
+> [`COMPONENT_DOC_PASS.md`](COMPONENT_DOC_PASS.md), whose touch sweep and
+> eight touch questions came out of this work.
+>
+> One account per fact. If something here starts explaining *how* rather than
+> *what to obey*, it belongs in one of those pages instead.
 
 **The gate is the POINTER, not the window.** `useCoarsePointer()` asks what is
 doing the pointing; the three width measures below ask how much room there is.
@@ -1200,15 +1210,15 @@ Three escalating surfaces, all bottom-anchored on phones:
 - sits at `bottom: var(--kb, 0px)` and is capped to `max-h-[calc(100svh-var(--kb,0px)-8px)]`, scrolling internally, with `scroll-padding-bottom: 8rem` so a field the browser scrolls into view lands clear of the sticky footer;
 - keeps its footer **`sticky bottom-[-0.75rem]` on mobile** so the actions can't scroll out of reach (`md:static` — desktop doesn't scroll).
 
-**`svh`, never `dvh`, for a sheet's height.** On iOS the *dynamic* viewport unit reports the height with the browser chrome **collapsed**, so while the URL bar is expanded a sheet sized to `100dvh` is taller than the screen: its top — title, tabs, the ✕ — sits above the visible area. `100svh` is the small (chrome-visible) viewport and always fits. Subtract `env(safe-area-inset-top)` as well on a sheet that fills the height.
+**`svh`, never `dvh`, for a sheet's height.** On iOS the *dynamic* viewport unit reports the height with the browser chrome **collapsed**, so while the URL bar is expanded a sheet sized to `100dvh` is taller than the screen: its top — title, tabs, the ✕ — sits above the visible area. `100svh` is the small (chrome-visible) viewport and always fits. Subtract `env(safe-area-inset-top)` as well on a sheet that fills the height. Two corollaries that cost a day each: **a call site's own `max-h` beats the class** (twMerge, last one), so scope it to `md:`; and **a measured pixel height must be handed back to the formula** when whatever animated it finishes, or the sheet stays that tall when the keyboard arrives.
 
-`--kb` is published by [`useKeyboardInset`](src/lib/use-keyboard-inset.ts), mounted once in the app shell. It is measured as `window.innerHeight − visualViewport.height` — no `offsetTop` term (that offset moves what you SEE; it does not change how tall the keyboard is, and including it left a REOPENED keyboard reading 0). Opening needs 80px, staying open only 40: iOS animates the keyboard in and the accessory bar lands on its own beat, so a single threshold can be crossed back mid-animation and drop the sheet to full height and back. Open any page with `?kbdebug` to see all of those live on the device (`KeyboardProbe`) — including what `documentElement.clientHeight` would give, which was tried and is wrong here.
+`--kb` and **`data-kb="open"`** are published by [`useKeyboardInset`](src/lib/use-keyboard-inset.ts), mounted once in the app shell: the height of the keyboard plus its accessory bar, and a flag for what a length cannot express. A `max-height` media query cannot stand in for either — the layout viewport does not shrink, which is the whole reason they exist. **The full account — the measurement, the two versions that were wrong, the hysteresis, the two scroll pins, the `svh` rule and the re-reveal on resize — lives in [docs/components/keyboard.md](docs/components/keyboard.md).** Do not restate it here; this section holds only what other components have to obey.
 
-The hook also sets **`data-kb="open"`** on the root while the keyboard is up. A `max-height` media query cannot stand in for it: the layout viewport does not shrink, which is the whole reason `--kb` exists. Use it for what a length can't express — below 768 the form sheet's three bands give up their padding through it, because the squeeze is bigger than it sounds: an iPhone in Brave reports 495px of layout with **169px** still visible, and a 48px bar plus a 72px action band would leave the 48px name field 49px to live in. Chrome/Android is handled declaratively by `interactive-widget=resizes-content` in the viewport meta, so `--kb` stays 0 there.
+The squeeze is bigger than it sounds, and it is the reason the bands give up their padding below 768: an iPhone in Brave reports **495px of layout with 169px still visible**, and a bar plus an action row spend most of that before the field is drawn. Chrome/Android needs none of it — `interactive-widget=resizes-content` in the viewport meta does the same job declaratively, so `--kb` stays 0 there.
 
 **Opening the keyboard has to happen inside the tap.** iOS raises the virtual keyboard only for a focus that happens during a user gesture, and a dialog focuses its field a frame or two after the tap that opened it. A flow that should start typing therefore focuses a zero-sized stand-in input already in the document from the trigger's own handler (`CreatePlaylistProvider`), and the keyboard follows focus into the real field when the sheet mounts. The same reason a popup's `initialFocus` is given as a FUNCTION there: opened by touch the default is to focus the popup itself and keep the keyboard down.
 
-**Forms go full-screen on phones — `<DialogContent mobile="form">`.** A bottom sheet cannot hold a form once the keyboard is up (~200px left on a 12 mini in Brave; a title + field + toggle + footer need ~240), so any dialog whose **primary action must survive typing** uses the form presentation: anchored top, three bands, only the body scrolls, the confirming action in `DialogFormActions` on the keyboard. The bands, the header rules and the find-screen pattern are in [docs/components/dialog.md](docs/components/dialog.md).
+**Forms go full-screen on phones — `<DialogContent mobile="form">`.** A bottom sheet cannot hold a form once the keyboard is up (169px measured, and a title + field + toggle + footer need well over 200), so any dialog whose **primary action must survive typing** uses the form presentation: anchored top, three bands, only the body scrolls, the confirming action in `DialogFormActions` on the keyboard. The bands, the header rules and the find-screen pattern are in [docs/components/dialog.md](docs/components/dialog.md).
 
 **`viewport-fit=cover` is mandatory** in the viewport meta. Without it `env(safe-area-inset-*)` resolves to **0** and every safe-area pad in the app — mobile header, footer nav, player shell, dropdown sheets, dialog footers, toasts — is silently a no-op.
 
