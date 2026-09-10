@@ -1595,4 +1595,16 @@ img[class*="object-cover"] {
     padding-top: 0.5rem;
     padding-bottom: max(8px, env(safe-area-inset-bottom));
   }
+
+  /* The bottom SHEET is squeezed by the same amount, and it spends what it
+     gets on rows: at a keyboard height the find screen's list is down to
+     about half a row, so every 8px is a quarter of one. Same principle —
+     only padding and gaps give way. */
+  [data-kb="open"] [data-slot="dialog-content"][data-mobile="sheet"] {
+    gap: 0.25rem;
+  }
+  [data-kb="open"] [data-slot="dialog-content"][data-mobile="sheet"] [data-slot="dialog-footer"] {
+    padding-top: 0.5rem;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
 }

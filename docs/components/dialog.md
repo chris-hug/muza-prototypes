@@ -56,9 +56,18 @@ left edge as the rows, the field and the footer below it.
 - A back control takes its **own line** rather than sitting beside the title.
   Inline it would indent the title by its own width and nothing underneath
   would line up.
-- Titles are left-aligned, **phones included**. A centred title reads as a
-  screen header but breaks the one vertical edge the sheet otherwise holds,
-  and it shifts as the title grows.
+- Titles are left-aligned in `DialogHeader`. A centred title reads as a screen
+  header but breaks the one vertical edge the sheet otherwise holds, and it
+  shifts as the title grows.
+- **On a phone a sheet with a back control uses the BAR instead**
+  (`DialogActionBar`: back · title · ✕ on one line, title centred on the bar
+  so it can't drift). `AddMusicDialog` renders the bar below 768 and the
+  header above it, gated by `useIsMobile` so only one `DialogTitle` is ever
+  mounted, and passes `showCloseButton={!isMobile}` so the corner ✕ doesn't
+  double up with the bar's. Two reasons it wins there: the controls already
+  occupied a line of their own above the title, which is pure cost at a
+  keyboard height, and a sheet that chains into a form sheet should not change
+  the shape of its head halfway through the flow.
 - The header carries the control's optical offset itself (`-ml-2`): an icon
   button is 32px around a 16px glyph, so its box hangs 8px left for the glyph
   to land on the line.
@@ -260,9 +269,9 @@ lists stay bottom sheets.
 ## Search inside a sheet is a screen, not a field
 
 Focusing the search input switches the sheet to a **find screen**
-(`AddMusicDialog`): the browse chrome steps aside, a back control appears in
-the header's `leading` slot, and the bottom band leaves the flow to sit over
-the results.
+(`AddMusicDialog`): the browse chrome steps aside and a back control appears
+at the head of the bar. Three bands, and only the middle one moves — the same
+shape as the form sheet, for the same reason.
 
 - With no query it shows **recent searches**
   ([`useRecentSearches`](src/lib/use-recent-searches.ts) — `localStorage`,
@@ -272,16 +281,20 @@ the results.
   way, and swapping in "Find" would drop the only context on screen.
 - Move the **footer**, never the field: re-parenting the input remounts it and
   throws away the focus that opened the screen.
+- **The popup does not scroll — the list does** (`overflow-hidden` on the
+  content, `flex-1 min-h-0 overflow-y-auto` on the list). This is not a detail:
+  the browser scrolls a focused field into view inside whatever box can
+  scroll, so a scrolling popup carried the TITLE off the top when the keyboard
+  opened, and scrolling the results then carried the FIELD off the bottom.
+- **The band stays in the flow.** It was absolute — floating over the results,
+  to buy back the ~50px the keyboard costs — and that is what let the field
+  scroll away with the content. 50px is not worth a search field that leaves
+  the screen while you read what it returned.
 
-**One band, and it only floats while it holds one control.** The search field
-and the confirming action share the footer (`flex-col` so the field sits on
-top, `md:flex-row`) — one edge of chrome, not a pill hovering over a bar. A
-lone field may float: transparent band, its own `bg-popover` and shadow, 16px
-inset rather than the sheet's 12px gutter. Add a second control and the band
-goes **opaque with a border** — two stacked floating controls read as two
-competing primary actions, and a field is an input, not an action. Spotify and
-TIDAL avoid the question entirely: a bottom field means no bottom confirm,
-because each row commits on tap.
+**One band.** The search field and the confirming action share the footer
+(`flex-col` so the field sits on top, `md:flex-row`) — one edge of chrome, not
+a pill hovering over a bar. Spotify and TIDAL avoid the question entirely: a
+bottom field means no bottom confirm, because each row commits on tap.
 
 Pinning a full-bleed footer with `absolute` needs `mx-0 mb-0` — negative
 margins **add** to the insets of an absolutely positioned box, so the band

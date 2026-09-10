@@ -25,12 +25,12 @@
  */
 
 import { useEffect, useMemo, useState } from "react"
-import { Search, ChevronLeft, ChevronRight, Plus, Check, Clock } from "lucide-react"
+import { Search, ChevronLeft, ChevronRight, Plus, Check, Clock, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
-  DialogFooter, dialogListClass,
+  DialogFooter, DialogClose, DialogActionBar, dialogListClass,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -44,6 +44,7 @@ import { searchCatalog, type SearchResult } from "@/lib/search-catalog"
 import { slugify } from "@/lib/media-nav"
 import { useUserLibrary, type SavedSong } from "@/lib/user-library"
 import { useRecentSearches } from "@/lib/use-recent-searches"
+import { useIsMobile } from "@/lib/use-media-query"
 
 /* A song is the same song wherever it was picked from — a search hit, a
  * suggestion, or a track inside an album. Identity is title+artist rather than
@@ -66,6 +67,9 @@ export function AddMusicDialog({
   onAdd?: (songs: SavedSong[]) => void
 }) {
   const { add: toast } = useToast()
+  // The header is a BAR on a phone (title between the two controls) and the
+  // ordinary left-aligned header on desktop — see the render.
+  const isMobile = useIsMobile()
   // "My library" = everything the user has liked, newest first.
   const library = useUserLibrary()
   const librarySongs = library.songs()
@@ -264,6 +268,29 @@ export function AddMusicDialog({
     </>
   )
 
+  /* ONE back control for the whole sheet, whatever it's showing: an opened
+     album returns to the list it came from, and the Find screen returns to
+     browsing. Nested screens each carrying their own chevron would put two
+     identical controls on screen. Undefined on the top-level browse screen —
+     on a phone the bar keeps the slot's width so the title doesn't shift. */
+  const back = (album || finding) ? (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      aria-label={album ? "Back to the list" : "Back to browsing"}
+      onClick={() => {
+        if (album) { setDrill(null); return }
+        setFinding(false); setQuery(""); setSubmitted(false)
+      }}
+      // Optical, not box, alignment on desktop: the button is 32px wide
+      // around a 16px icon, so its box has to hang 8px left for the CHEVRON
+      // to sit on the same line as the covers below.
+      className="shrink-0 md:-ml-2"
+    >
+      <ChevronLeft />
+    </Button>
+  ) : undefined
+
   return (
     <Dialog open={open} onOpenChange={o => { if (!o) reset(); onOpenChange(o) }}>
       {/* Desktop: at least half the viewport (with a floor so it never gets
@@ -274,41 +301,51 @@ export function AddMusicDialog({
           switch tabs or start typing reads as jumping. `h-…` (not just the
           base `max-h-…`) is what pins the top edge. Desktop keeps the
           content-sized modal, capped at 85vh. */}
-      <DialogContent className="md:max-w-[max(32rem,50vw)] flex flex-col h-[calc(100svh-var(--kb,0px)-8px-env(safe-area-inset-top))] md:h-auto md:max-h-[85vh]">
+      {/* `overflow-hidden`: the sheet's bands are fixed and the LIST scrolls,
+          never the sheet. Letting the popup scroll cost both of the things a
+          find screen needs to hold still — the browser scrolls a focused
+          field into view inside whatever box can scroll, so opening the
+          keyboard carried the title off the top, and scrolling the results
+          then carried the search field off the bottom. */}
+      <DialogContent
+        showCloseButton={!isMobile}
+        className="md:max-w-[max(32rem,50vw)] flex flex-col overflow-hidden h-[calc(100svh-var(--kb,0px)-8px-env(safe-area-inset-top))] md:h-auto md:max-h-[85vh]"
+      >
         {/* The playlist is named in the TITLE rather than a description line
             — it's the one piece of context that matters, and a separate line
             costs height the keyboard is already taking. It does NOT change on
             the Find screen: what you're filling is the same job whether
             you're browsing or searching, and swapping in "Find" would drop
-            the only piece of context on screen. */}
-        <DialogHeader
-          className="shrink-0"
-          /* ONE back control for the whole sheet, whatever it's showing:
-             an opened album returns to the list it came from, and the Find
-             screen returns to browsing. Nested screens each carrying their
-             own chevron put two identical controls on screen. */
-          leading={(album || finding) ? (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label={album ? "Back to the list" : "Back to browsing"}
-              onClick={() => {
-                if (album) { setDrill(null); return }
-                setFinding(false); setQuery(""); setSubmitted(false)
-              }}
-              // Optical, not box, alignment on desktop: the button is 32px
-              // wide around a 16px icon, so its box has to hang 8px left for
-              // the CHEVRON to sit on the same line as the covers below.
-              className="shrink-0 md:-ml-2"
-            >
-              <ChevronLeft />
-            </Button>
-          ) : undefined}
-        >
-          <DialogTitle className="md:text-large truncate">
-            {playlistName ? `Add to “${playlistName}”` : "Add music"}
-          </DialogTitle>
-        </DialogHeader>
+            the only piece of context on screen.
+
+            On a phone it is a BAR — back · title · ✕ on one line, the same
+            shape as the New Playlist sheet — rather than the header's
+            stacked layout. Two reasons: the controls were already on their
+            own line above the title, so the title's line was pure cost at a
+            keyboard height, and a sheet whose ✕ hangs in the corner reads as
+            a different kind of surface from the one it chains into. Gated by
+            `useIsMobile` so only ONE `DialogTitle` is ever mounted. */}
+        {isMobile ? (
+          <DialogActionBar
+            className="-mx-3 -mt-3 px-1"
+            leading={back ?? <span className="size-8 shrink-0" />}
+            trailing={
+              <DialogClose render={<Button variant="ghost" size="icon-sm" aria-label="Close" />}>
+                <X />
+              </DialogClose>
+            }
+          >
+            <DialogTitle className="truncate">
+              {playlistName ? `Add to “${playlistName}”` : "Add music"}
+            </DialogTitle>
+          </DialogActionBar>
+        ) : (
+          <DialogHeader className="shrink-0" leading={back}>
+            <DialogTitle className="md:text-large truncate">
+              {playlistName ? `Add to “${playlistName}”` : "Add music"}
+            </DialogTitle>
+          </DialogHeader>
+        )}
 
         {/* An opened album takes over the sheet body; the search field and tabs
             step aside so the screen is about that one record. */}
@@ -480,27 +517,12 @@ export function AddMusicDialog({
         <DialogFooter
           className={cn(
             "shrink-0 mt-0 flex-col md:flex-row md:items-center",
-            // On the Find screen the band leaves the flow and sits over the
-            // results (the list is cleared by a spacer at its end), which
-            // buys back the ~50px the keyboard took. The FOOTER carries this,
-            // never the field — re-parenting the field would remount it and
-            // throw away the focus that opened the Find screen.
-            //
-            // `mx-0`/`mb-0` cancel the footer's own full-bleed negative
-            // margins: on an absolutely positioned box those ADD to the
-            // insets, so the band would hang 12px outside the sheet on every
-            // side and its padding would land 12px short.
-            finding && "absolute inset-x-0 bottom-0 mx-0 mt-0 mb-0",
-            // …and its TREATMENT depends on how much it carries. One control
-            // can float: a lone pill over the rows reads as an overlay, and
-            // it needs a real inset (16px, not the sheet's 12px gutter) so it
-            // doesn't crowd them. TWO stacked controls cannot — a field and
-            // an action side by side would read as two competing primary
-            // actions over see-through content — so the band goes opaque and
-            // becomes an ordinary bar with an edge, exactly as in Browse.
-            finding && (showAdd
-              ? "px-3 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]"
-              : "border-t-0 bg-transparent px-4 pt-4 pb-[max(16px,env(safe-area-inset-bottom))]"),
+            // The band stays IN THE FLOW on the Find screen too. It used to
+            // go absolute there — floating over the results, to buy back the
+            // ~50px the keyboard takes — and that is precisely what made the
+            // field scroll away: an absolutely positioned box inside a scroll
+            // container scrolls with the content. 50px is not worth a search
+            // field that leaves the screen while you read what it returned.
           )}
         >
           {/* The album screen is about one record, so there's nothing to
@@ -526,11 +548,6 @@ export function AddMusicDialog({
                 className={cn(
                   // 48px, matching the `lg` action beside it.
                   "h-12",
-                  // Only the LONE floating field needs its own surface and a
-                  // lift — rows scroll directly beneath it. Once the action
-                  // joins it the band is opaque and carries the separation
-                  // itself, so a shadow would just be noise.
-                  finding && !showAdd && "bg-popover shadow-lg",
                 )}
               />
             </div>
