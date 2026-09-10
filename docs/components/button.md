@@ -140,6 +140,13 @@ Figma node 37:931 is the reference frame. The heights are exact:
 - **`lg` is the full-width confirming action.** In a `mobile="form"` dialog
   the action band holds a `size="lg" className="w-full"` button directly on
   the keyboard — see the Dialog section for why the action lives there.
+- **`lg` is also the default for a form's own actions, not something they ask
+  for.** `AlertDialogAction` and `AlertDialogCancel` set it inside the
+  component, and every `DialogFooter` pair carries it: a 40px Save under a
+  stack of 48px fields is the mismatch the shared ladder exists to remove, and
+  the ladder is only shared if the button end of it moves too. `default` and
+  `sm` stay for density that is chosen on purpose — table rows, chips, inline
+  row actions.
 - `px-[18px]` is the one arbitrary value in the file, and 40px/18px is also
   the pair Chip `md` and FilterButton use (`h-10`, `px-4`/`pl-4`). Why 18
   rather than `px-4` (16) is not recorded — see the open questions.

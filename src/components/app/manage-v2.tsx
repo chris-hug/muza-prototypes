@@ -159,10 +159,10 @@ function AccountCard({ account, expanded, onEdit, onClose }: {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" />}>
+            <DialogClose render={<Button variant="outline" size="lg" />}>
               Cancel
             </DialogClose>
-            <Button variant="destructive" onClick={() => setConfirmDelete(false)}>
+            <Button size="lg" variant="destructive" onClick={() => setConfirmDelete(false)}>
               Delete card
             </Button>
           </DialogFooter>

@@ -917,10 +917,11 @@ function TopUpWalletDialog({
         </div>
 
         <DialogFooter>
-          <DialogClose render={<Button variant="outline" />}>
+          <DialogClose render={<Button variant="outline" size="lg" />}>
             Cancel
           </DialogClose>
           <Button
+            size="lg"
             disabled={usdAmount <= 0}
             onClick={() => {
               cart.topUpWallet(usdAmount)

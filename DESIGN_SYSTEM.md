@@ -813,6 +813,14 @@ beside a filter input, the ✕ beside an additional-link row (`icon` → `icon-l
 ladder exists to remove. Buttons outside form context (chrome, cards, rails)
 keep their own size.
 
+**`lg` is the default a form's own actions get, not one they ask for.**
+`AlertDialogAction` and `AlertDialogCancel` set it inside the component — that
+dialog is read with a thumb and is the last chance to decline — and every
+`DialogFooter` pair carries it (`EditReleaseDialog`, `BulkActionDialog`,
+`ShopMyProducts`, `OrderDetailView`, `ManageV2`, the cart's top-up). Reach for
+`default`/`sm` only where density is the deliberate choice — table rows, chips,
+inline row actions — and say so where you do.
+
 **Button at `default` (40px) centres OPTICALLY, not geometrically.** Founders
 Grotesk at 19/28.5 lands the cap block 17.5px from the top of the pill and the
 baseline 10.5px from the bottom: correctly centred by the line box, and it

@@ -298,9 +298,23 @@ function DialogContent({
     if (!popupEl || form) return
     let grown = false
 
+    /* Where the grown sheet lives once the animation is over: the same cap the
+       class already carries, as a value rather than a pixel count. A grown
+       sheet that kept its measured `height` stayed that tall when the keyboard
+       came up — anchored to `bottom: var(--kb)`, a 804px sheet in the 486px
+       above a keyboard puts its own header 318px off the top of the screen,
+       which is the blank-sheet-with-a-field-at-the-bottom bug again, arriving
+       by a different door. */
+    const CAP = "calc(100svh - var(--kb, 0px) - 8px)"
+
     const grow = () => {
       const from = popupEl.getBoundingClientRect().height
-      const to = Math.round(window.innerHeight - 8)
+      // Measure against the space the KEYBOARD leaves, not the window: the
+      // detent can be taken while a field is focused.
+      const kb = parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue("--kb"),
+      ) || 0
+      const to = Math.round(window.innerHeight - kb - 8)
       if (to <= from + 8) return false
       popupEl.style.height = `${Math.round(from)}px`
       void popupEl.offsetHeight
@@ -309,6 +323,10 @@ function DialogContent({
       popupEl.style.maxHeight = `${to}px`
       const done = () => {
         popupEl.style.transition = ""
+        // Hand the height back to a formula, so the sheet keeps following the
+        // keyboard for the rest of its life.
+        popupEl.style.height = CAP
+        popupEl.style.maxHeight = CAP
         popupEl.removeEventListener("transitionend", done)
       }
       popupEl.addEventListener("transitionend", done)

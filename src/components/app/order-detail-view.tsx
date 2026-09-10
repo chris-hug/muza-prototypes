@@ -818,10 +818,11 @@ function ComposeEmailDialog({
         </div>
 
         <DialogFooter>
-          <DialogClose render={<Button variant="outline" />}>
+          <DialogClose render={<Button variant="outline" size="lg" />}>
             Cancel
           </DialogClose>
           <Button
+            size="lg"
             disabled={!message.trim()}
             onClick={() => {
               onSend(activeType, message.trim())

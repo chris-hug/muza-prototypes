@@ -150,7 +150,10 @@ function AlertDialogAction({
   return (
     <AlertDialogPrimitive.Close
       data-slot="alert-dialog-action"
-      render={<Button variant="destructive" className={className} />}
+      // `lg` (48px), like every other action that confirms something: this
+      // dialog is most often read with a thumb, and it is the last chance to
+      // decline. The size is fixed here rather than at each call site.
+      render={<Button variant="destructive" size="lg" className={className} />}
       {...props}
     >
       {children}
@@ -166,7 +169,7 @@ function AlertDialogCancel({
   return (
     <AlertDialogPrimitive.Close
       data-slot="alert-dialog-cancel"
-      render={<Button variant="outline" className={className} />}
+      render={<Button variant="outline" size="lg" className={className} />}
       {...props}
     >
       {children}

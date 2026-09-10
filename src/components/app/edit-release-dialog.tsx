@@ -166,14 +166,19 @@ export function EditReleaseDialog({
                                 content exceeds the viewport budget.
             · Footer slot     — fixed (shrink-0); Cancel + Save stay reachable
                                 without scrolling to the bottom.
-          Height is capped at `min(90vh, 900px)` so the dialog never
-          grows past the viewport. */}
+          Height is capped at `min(90vh, 900px)` on DESKTOP; on a phone the
+          sheet keeps DialogContent's own keyboard-aware cap. */}
       <DialogContent
         className={cn(
           // Mobile bottom sheet / desktop centered modal come from the base
           // DialogContent. Here: desktop width (600px) + grow-to-cap sizing.
           "md:max-w-[600px]",
-          "p-0 gap-0 shadow-none max-h-[90vh] md:max-h-[min(90vh,900px)] flex flex-col",
+          // No mobile `max-h`: the bottom sheet's own cap is
+          // `100svh - var(--kb) - 8px`, and a `max-h-[90vh]` here would win
+          // (twMerge, last class) — 90% of the LAYOUT viewport, which iOS does
+          // not shrink for the keyboard, so an open keyboard would push the
+          // header off the top of the screen. Desktop still caps.
+          "p-0 gap-0 shadow-none md:max-h-[min(90vh,900px)] flex flex-col",
         )}
       >
         {/* ── Fixed header ─────────────────────────────────────────────
@@ -186,18 +191,31 @@ export function EditReleaseDialog({
             overlaid on its bottom-right corner for "change cover". Right
             column: title + visibility switch on one line, badge + artist
             · year on the second line. Top-aligned. */}
-        <DialogHeader className="shrink-0 px-8 pt-8 pb-6 border-b border-border flex flex-row items-start gap-4 space-y-0">
+        {/* Phone paddings are the page's gutter, not the desktop dialog's
+            32px: at 375 this header was 251px — a third of the sheet — before
+            a single field. Measured after: 150. */}
+        <DialogHeader className="shrink-0 px-3 pt-3 pb-4 md:px-8 md:pt-8 md:pb-6 border-b border-border">
+          {/* DialogHeader STACKS its children (`dialogHeaderStackClass` is a
+              column) — a cover passed as a sibling of the title lands under it.
+              The identity is one row, so it is one child. */}
+          <div className="flex flex-row items-start gap-3 md:gap-4 min-w-0">
           <div className="relative shrink-0">
             <img
               src={cover}
               alt=""
-              className="rounded-xs object-cover shadow-sm size-24 art-edge"
+              // 64px on a phone, 96 from `md`: the cover is here to say WHICH
+              // release is being edited, and at 96 it was taking a quarter of
+              // the header to say it.
+              className="rounded-xs object-cover shadow-sm size-16 md:size-24 art-edge"
             />
             <button
               type="button"
               aria-label="Change cover"
               className={cn(
-                "absolute bottom-1.5 right-1.5 size-7 rounded-full",
+                // Sized to the cover it sits on: 24 on the phone's 64px thumb,
+                // 28 on the 96px one — a 28px badge on a 64px cover reads as a
+                // button with a picture behind it.
+                "absolute bottom-1 right-1 size-6 md:bottom-1.5 md:right-1.5 md:size-7 rounded-full",
                 "bg-background/90 backdrop-blur-sm text-foreground",
                 "border border-border shadow-sm",
                 "flex items-center justify-center",
@@ -205,7 +223,7 @@ export function EditReleaseDialog({
                 "focus-visible:outline-none focus-ring",
               )}
             >
-              <Pencil className="size-3.5" />
+              <Pencil className="size-3 md:size-3.5" />
             </button>
           </div>
 
@@ -231,11 +249,12 @@ export function EditReleaseDialog({
               />
             </label>
           </div>
+          </div>
         </DialogHeader>
 
         {/* ── Scrollable middle ──────────────────────────────────────────
              Order: Monetisation → General info. */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-8 pt-6 pb-6 flex flex-col gap-8">
+        <div className="flex-1 min-h-0 overflow-y-auto px-3 pt-4 pb-4 md:px-8 md:pt-6 md:pb-6 flex flex-col gap-6 md:gap-8">
 
           {/* ── Monetisation ─────────────────────────────────────────────
                Two radio cards — both cards are fully expanded so the user
@@ -267,9 +286,13 @@ export function EditReleaseDialog({
                 description="Fans pay to unlock · you set your price"
               >
                 <FormItem className="gap-3">
-                  <div className="flex items-center justify-between">
-                    <FormLabel>Price for listening</FormLabel>
-                    <label className="flex items-center gap-1.5 cursor-pointer">
+                  {/* Wraps rather than squeezes: at 375 the price label and the
+                      "name your price" caption both broke into two ragged lines
+                      trying to share one. Given the chance to wrap, the caption
+                      takes the second line whole and stays on the right. */}
+                  <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+                    <FormLabel className="shrink-0">Price for listening</FormLabel>
+                    <label className="flex shrink-0 items-center gap-1.5 ml-auto cursor-pointer">
                       <span className="text-xsmall text-muted-foreground font-normal">Let fans pay more if they want</span>
                       <Switch
                         size="sm"
@@ -289,11 +312,15 @@ export function EditReleaseDialog({
                 </FormItem>
 
                 <FormItem className="gap-3">
-                  <div className="flex items-center justify-between">
-                    <FormLabel>
+                  {/* Wraps rather than squeezes: at 375 the price label and the
+                      "name your price" caption both broke into two ragged lines
+                      trying to share one. Given the chance to wrap, the caption
+                      takes the second line whole and stays on the right. */}
+                  <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+                    <FormLabel className="shrink-0">
                       Price for download <span className="opacity-60">(optional)</span>
                     </FormLabel>
-                    <label className="flex items-center gap-1.5 cursor-pointer">
+                    <label className="flex shrink-0 items-center gap-1.5 ml-auto cursor-pointer">
                       <span className="text-xsmall text-muted-foreground font-normal">Let fans pay more if they want</span>
                       <Switch
                         size="sm"
@@ -373,11 +400,17 @@ export function EditReleaseDialog({
         </div>
 
         {/* Bigger dialog → footer padding scales up to match the section
-            padding. DialogContent here uses p-0 so no negative-margin
-            bleed is needed. */}
-        <DialogFooter className="shrink-0 mx-0 mb-0 p-8">
-          <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
-          <Button onClick={save}>Save changes</Button>
+            padding. DialogContent here uses p-0 so no negative-margin bleed is
+            needed. On a phone: the sheet's own gutter, and NO Cancel — the ✕
+            in the corner is how every other sheet in the app is dismissed, and
+            two stacked full-width buttons were 153px of the 731 the sheet
+            had. Measured after: 72. */}
+        <DialogFooter className="shrink-0 mx-0 mb-0 p-3 md:p-8">
+          {/* `lg` (48px) is the house default for a form's own actions — the
+              same rung `Input` and `InputSelect` already default to, so the
+              button that submits a stack of 48px fields is not 40. */}
+          <DialogClose className="hidden md:inline-flex" render={<Button variant="outline" size="lg" />}>Cancel</DialogClose>
+          <Button size="lg" onClick={save} className="w-full md:w-auto">Save changes</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

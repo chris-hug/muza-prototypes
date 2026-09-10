@@ -198,10 +198,11 @@ export function BulkActionDialog({
         </div>
 
         <DialogFooter>
-          <DialogClose render={<Button variant="outline" />}>
+          <DialogClose render={<Button variant="outline" size="lg" />}>
             Cancel
           </DialogClose>
           <Button
+            size="lg"
             variant={destructive ? "destructive" : "default"}
             disabled={noneEligible}
             onClick={() => {

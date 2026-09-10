@@ -320,6 +320,20 @@ so growing to the cap would be growing to where the sheet already is. Nothing
 happens when there is nothing to take: a short sheet keeps its scroll, and so
 does one already at the full height (`mobile="form"` never grows at all).
 
+The pixel height is temporary. The moment the animation ends, both `height` and
+`max-height` are handed back to a formula — `calc(100svh - var(--kb, 0px) -
+8px)`, the same cap the class carries — because a grown sheet has to keep
+following the keyboard. A sheet frozen at its measured 804px and anchored to
+`bottom: var(--kb)` puts its own header 318px above the top of the screen the
+moment a field is focused: the blank-sheet-with-a-field-at-the-bottom bug,
+arriving through a different door. The measurement is taken against the same
+formula too, so taking the detent while the keyboard is already up grows the
+sheet to the space above it rather than to the whole window.
+
+A dialog that sets its own `max-h` must scope it to `md:` for the same reason:
+`max-h-[90vh]` wins over the class (twMerge, last one), and 90% of the LAYOUT
+viewport is not a number iOS shrinks for the keyboard.
+
 ## A sheet you can flick away is one you can flick away by accident
 
 A bottom sheet holding work confirms before it closes. `AddMusicDialog`
