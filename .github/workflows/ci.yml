@@ -61,6 +61,11 @@ jobs:
       - name: npm run sync-docs -- --check
         run: node scripts/sync-system-doc.mjs --check
 
+      # The one that points at the CODE: does the app obey the contract the
+      # docs state? The three above all check documents against documents.
+      - name: npm run conformance
+        run: node scripts/conformance.mjs
+
   typecheck:
     name: Types
     runs-on: ubuntu-latest

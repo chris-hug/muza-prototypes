@@ -101,12 +101,16 @@ type SheetSide = "right" | "left" | "top" | "bottom"
  * offset (`--drawer-swipe-movement-*`), so the same declaration carries the
  * drag, the release and the exit.
  */
+/* `h-svh`, not `h-dvh`, for the same reason the sheets cap with `svh`: on iOS
+   the DYNAMIC unit reports the height with the browser chrome collapsed, so a
+   side drawer sized to it is taller than the screen while the URL bar is
+   expanded, and its header sits above the visible area. */
 const SIDE_CLASSES: Record<SheetSide, string> = {
   right:
-    "inset-y-0 right-0 h-dvh border-l [transform:translateX(var(--drawer-swipe-movement-x,0px))] " +
+    "inset-y-0 right-0 h-svh border-l [transform:translateX(var(--drawer-swipe-movement-x,0px))] " +
     "data-starting-style:[transform:translateX(100%)] data-ending-style:[transform:translateX(100%)]",
   left:
-    "inset-y-0 left-0 h-dvh border-r [transform:translateX(var(--drawer-swipe-movement-x,0px))] " +
+    "inset-y-0 left-0 h-svh border-r [transform:translateX(var(--drawer-swipe-movement-x,0px))] " +
     "data-starting-style:[transform:translateX(-100%)] data-ending-style:[transform:translateX(-100%)]",
   top:
     "inset-x-0 top-0 w-dvw border-b [transform:translateY(var(--drawer-swipe-movement-y,0px))] " +

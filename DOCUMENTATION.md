@@ -21,6 +21,7 @@ mechanism. Every one of these has happened in this repo.
 | 2 | **A duplicated fact drifts** | `--kb`'s derivation written in two files; one goes two revisions stale | Both copies pass every grep, and both read as authoritative |
 | 3 | **A rule is never promoted** | A "must" written into a page and never added to the system file | The generator only knows about rules that already carry a contract line |
 | 4 | **A doc is confidently wrong** | "the bar is 44px" after it became 54 | Well-formed prose about a real thing. Only a reader who knows can tell |
+| 5 | **The code ignores the rule** | The contract says "never a hardcoded hex" and three files have twenty | Every document is correct and agrees with every other. Nothing was looking at the app |
 
 ---
 
@@ -93,6 +94,13 @@ the script.
 | `npm run doc-sweep` | (1) is every behaviour named? | **CI, ~8s** | `--sheet-drag-progress` in the code and in no doc; `rounded-t-[28px]` at five call sites, which moved into the component instead |
 | `npm run sync-docs -- --check` | (2) has a duplicated fact drifted? | **CI** | Its own creation: `--kb` written twice, two revisions apart |
 | `npm run doc-rules` | (3) did a rule get promoted? | **No — advisory** | 7 candidates, 3 real (footer margins, `swipeDirection` on the root, `user-scalable=no`) |
+| `npm run conformance` | **(5) does the CODE obey the contract?** | **CI** | 4 violations on its first run: a sheet corner written at a call site, `h-dvh` on the side drawers, and two files with hardcoded card colours |
+
+Failure (5) was the last one to get a check, and the most embarrassing to have
+missed: the first three all compare documents with documents. `conformance`
+reads the source and asks whether it does what the contract says. It found four
+violations the day it was written — including one in `sheet.tsx`, which the
+same day's own rule had been written about.
 
 Failure (4) has no mechanism and cannot have one. It is the **reconcile** step
 of the doc pass, and it needs somebody who knows what the number should be.
