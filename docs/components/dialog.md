@@ -169,7 +169,7 @@ Only the middle one scrolls.
   </DialogActionBar>
   <DialogFormBody>…fields…</DialogFormBody>
   <DialogFormActions>
-    <Button size="lg" className="w-full shadow-lg">Create</Button>
+    <Button size="lg" className="w-full">Create</Button>
   </DialogFormActions>
 </DialogContent>
 ```
@@ -186,32 +186,28 @@ Only the middle one scrolls.
   `DialogFormActions`, the band below the body. The sheet already ends at
   `--kb`, so it sits directly on the keyboard. Never offered twice — bar
   **or** action row.
-- **That band FLOATS**: no surface and no edge of its own, a 16px inset rather
-  than the sheet's 12px gutter, and `shadow-lg` on the pill. Which is also why
-  the POPUP paints nothing on a phone (`max-md:bg-transparent`) and the BANDS
-  carry the surface instead — `DialogFormBody` is `bg-popover rounded-b-2xl`.
-  A popup that painted its own surface would put a slab of empty popover
-  behind the floating pill, all the way to the keyboard. It carries one
-  control, and one control over a form reads as an object, not as a bar bolted
-  to the bottom — the same rule the find screen's lone search field follows in
-  `AddMusicDialog`, where the band only goes opaque once a second control joins
-  it. Being in the flow (not `absolute`), nothing scrolls under it.
-- **A floating action can't be disabled with opacity.** `opacity-50` is the
-  DS's disabled state everywhere else, and it works because there is a surface
-  underneath. Over the page there isn't one, so the artwork shows through the
-  pill. The Create button mixes the same result out of colour instead —
-  `primary` and `primary-foreground` each half-way to `popover`, which is what
-  the opacity used to resolve to — and stays opaque.
-- **The floating pill names the verb only** — "Create", not "Create playlist".
-  The title two bands above already says what is being made, and there is no
+- **The sheet is ONE surface, action included**, down to the keyboard. The
+  band was tried the other way — popup transparent (`max-md:bg-transparent`),
+  bands painting, the pill floating over the page with a `shadow-lg` — on the
+  reasoning that a lone control reads as an object rather than as a bar, the
+  rule the find screen's lone search field follows in `AddMusicDialog`. It does
+  not carry over: that field floats over the sheet's own rows, while here, with
+  the keyboard up, there is no page left to float over — only a ~60px strip of
+  blurred backdrop between the form and its button, which reads as a seam.
+  Two things came back with the surface: the pill needs no lift, and
+  `disabled:opacity-50` works again, because it has something to fade against.
+  (Over the page it didn't: the artwork showed straight through the pill, and
+  the disabled colours had to be mixed by hand.)
+- **The pill names the verb only** — "Create", not "Create playlist". The
+  title two bands above already says what is being made, and there is no
   second action to distinguish it from. The desktop footer keeps the long
   label, where it stands next to Cancel.
 - `DialogFormBody` restores the gutter and a tighter `gap-3`: on a phone every
   gap competes with the keyboard for the same ~200px.
 - **With the keyboard up it is not ~200px, it is ~170px.** Measured on an
   iPhone in Brave: 495px of layout viewport, 169px visible above the keyboard
-  and its accessory bar. The bar (48) and the floating action band (80) would
-  leave the 48px field 41px, and the field was clipped. So while
+  and its accessory bar. The bar (48) and the action band (72) would
+  leave the 48px field 49px, and the field was clipped. So while
   `data-kb="open"` is set on the root — by `useKeyboardInset`, since no media
   query can see this squeeze — the three bands drop their padding: the bar to
   `min-height: 2.5rem`, the body to 8px (4px at the bottom, the band below
