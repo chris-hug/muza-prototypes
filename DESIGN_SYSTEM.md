@@ -1084,37 +1084,32 @@ Tokens are **roles**, not colours. Never mix roles.
 > agreeing. A value that IS the rule (44px of target, `lg` for a form action)
 > belongs here, and the pages may cite it.
 
-**The gate is the POINTER, not the window.** `useCoarsePointer()` asks what is
-doing the pointing; the three width measures ask how much room there is. They
-are different questions, and answering one with the other is how a phone ends
-up with a mouse's affordances at 375px. → [responsive.md](docs/components/responsive.md#the-fourth-question-what-is-doing-the-pointing)
+<!-- BEGIN GENERATED: touch-contract -->
+<!-- Written by scripts/sync-system-doc.mjs from the `contract:` frontmatter
+     of the pages listed below. Do not edit between these markers — edit the
+     page that owns the rule and re-run `npm run sync-docs`. -->
 
-**One module owns both gestures' numbers.** Slop, the dismiss thresholds, the
-"is every scroller at its top" test and the velocity trail live in
-`src/lib/gesture.ts`. Do not re-declare any of them at a call site — the
-sheet once carried its own slop against the cards', which is how two gestures
-on one screen start feeling like two apps. Changing a number there changes
-both gestures, on purpose. → [gesture.md](docs/components/gesture.md#the-numbers)
+**The gate is the POINTER, not the window.** `useCoarsePointer()` asks what is doing the pointing; the three width measures ask how much room there is. Answering one with the other is how a phone ends up with a mouse's affordances at 375px. → [responsive.md](docs/components/responsive.md)
 
-**A drag is never a tap, and a press must be visible.** Any component that
-adds a hold gets both for free from `useLongPress`: the click is swallowed if
-the finger travelled, and `data-pressing` paints the hold from the first
-frame. A hold with no feedback reads as a tap that did not register.
-→ [gesture.md](docs/components/gesture.md#a-drag-is-never-a-tap)
+**One module owns both gestures' numbers.** Slop, the dismiss thresholds, the "is every scroller at its top" test and the velocity trail live in `src/lib/gesture.ts`. Never re-declare one at a call site — the sheet once carried its own slop against the cards', which is how two gestures on one screen start feeling like two apps. → [gesture.md](docs/components/gesture.md)
 
-**One menu shape per entity.** A long press raises the same sheet the entity's
-detail page raises — never the component's own dropdown rendered as a sheet.
-The kebab keeps the anchored dropdown, which is the right shape for a mouse.
-→ [detail-more-button.md](docs/components/detail-more-button.md)
+**A drag is never a tap, and a press must be visible.** Any component that adds a hold gets both from `useLongPress`: the click is swallowed if the finger travelled, and `data-pressing` paints the hold from the first frame. A hold with no feedback reads as a tap that did not register. → [gesture.md](docs/components/gesture.md)
 
-**Nothing inside a primary tap area may navigate away.** A link in the half of
-a row a thumb aims at is a coin toss, and missing costs a page load rather
-than a miss. Withhold the handler on a coarse pointer; the destination belongs
-in the ⋯ sheet. → [song-list-item.md](docs/components/song-list-item.md)
+**iOS wants your long press too.** `img { -webkit-touch-callout: none }` is global and has to be: it must be in force before the finger lands, so it cannot come from a press handler. → [gesture.md](docs/components/gesture.md)
 
-**iOS wants your long press too.** `img { -webkit-touch-callout: none }` is
-global and has to be, because it must be in force before the finger lands — it
-cannot come from a press handler.
+**One menu shape per entity.** A long press raises the same sheet the entity's detail page raises — never the component's own dropdown rendered as a sheet. The kebab keeps the anchored dropdown, which is the right shape for a mouse. → [detail-more-button.md](docs/components/detail-more-button.md)
+
+**Nothing inside a primary tap area may navigate away.** A link in the half of a row a thumb aims at is a coin toss, and missing costs a page load rather than a miss. Withhold the handler on a coarse pointer; the destination belongs in the ⋯ sheet. → [song-list-item.md](docs/components/song-list-item.md)
+
+**A form's own actions are `lg` (48px)**, and a filled button's disabled state is a colour rather than an opacity (`.disabled-solid`) — opacity is a property of the stack, so a translucent pill reads differently depending on what is behind it. → [button.md](docs/components/button.md)
+
+**Sheet chrome is shared, and breaks quietly from a call site.** `.sheet-glass` only works because the bar OVERLAYS the content — glass over nothing is a colour — and `--sheet-bar-h` must equal the bar's real height, or the list under an absolute bar loses its first rows. → [dialog.md](docs/components/dialog.md)
+
+**A bottom sheet's top corner is owned by `SIDE_CLASSES.bottom`.** No call site writes it: the value is derived from the control the bar has to hold, so it is stated once, where that arithmetic lives. → [drawer.md](docs/components/drawer.md)
+
+**The keyboard is measured, not guessed.** `--kb` and `data-kb="open"` are published by `useKeyboardInset`; a media query cannot see the squeeze, because the layout viewport does not shrink. Cap sheet heights with `svh` — never `vh` or `dvh` — and scope any `max-h` of your own to `md:`. → [keyboard.md](docs/components/keyboard.md)
+
+<!-- END GENERATED: touch-contract -->
 
 **32px of paint may carry 44px of target.** WCAG 2.2 AA asks 24×24 and
 everything clears it; **44×44** is the AAA figure and Apple's, and it is the

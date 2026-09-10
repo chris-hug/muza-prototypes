@@ -6,6 +6,8 @@ usage:
   - Everywhere — 37 files in src/components/app | /?page=Home
   - Upload music — 18 in that dialog alone | /?page=Music
   - Settings — 17 | /?page=Settings
+contract:
+  - **A form's own actions are `lg` (48px)**, and a filled button's disabled state is a colour rather than an opacity (`.disabled-solid`) — opacity is a property of the stack, so a translucent pill reads differently depending on what is behind it.
 ---
 
 `Button` is the one clickable pill in Muza. Every text button and every

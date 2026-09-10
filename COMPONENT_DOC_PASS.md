@@ -130,6 +130,17 @@ started raising their own sheet; and `menu.md` never mentioned `state-fade`,
 which is on every row it documents. The missing prose and the bug usually have
 the same root: nobody had stated what the attribute meant.
 
+**The system file does not get its own copy.** `DESIGN_SYSTEM.md`'s touch
+contract is GENERATED from the `contract:` frontmatter of the page that owns
+each rule (`npm run sync-docs`, checked in CI). Write the obligation once, in
+the page; never paraphrase it into the system file. That is the mechanism
+behind "one account per fact" — the earlier version was a convention, and it
+lasted an hour.
+
+A value that IS the rule (44px of target) is stated in the system file and may
+be cited by pages. A DERIVED value (28 = a 20px pill plus an 8px inset) is
+stated where it is derived and nowhere else.
+
 **It gates.** `.github/workflows/docs.yml` runs the sweep on every pull
 request and every push to `main`, so a component that gains a behaviour and
 does not gain the prose fails before anyone reads the stale version. A red run

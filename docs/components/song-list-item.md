@@ -5,6 +5,8 @@ related: [media-list-item, song-rail, detail-more-button, responsive]
 usage:
   - Artist › Top Songs | /?page=Artist
   - Album detail (track list) | /?page=Album
+contract:
+  - **Nothing inside a primary tap area may navigate away.** A link in the half of a row a thumb aims at is a coin toss, and missing costs a page load rather than a miss. Withhold the handler on a coarse pointer; the destination belongs in the ⋯ sheet.
 ---
 
 `SongListItem` is one row in a list of **songs** — Top Songs on an artist

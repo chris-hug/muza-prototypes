@@ -12,6 +12,10 @@ summary:
   - **`scrollersAtTop`** — the question a downward drag must answer before it may mean anything.
   - **`createTrail(120)`** — release velocity from a window of samples, never from the last two.
   - **`useCoarsePointer()`** is the input gate, not a width gate: it asks what is doing the pointing.
+contract:
+  - **One module owns both gestures' numbers.** Slop, the dismiss thresholds, the "is every scroller at its top" test and the velocity trail live in `src/lib/gesture.ts`. Never re-declare one at a call site — the sheet once carried its own slop against the cards', which is how two gestures on one screen start feeling like two apps.
+  - **A drag is never a tap, and a press must be visible.** Any component that adds a hold gets both from `useLongPress`: the click is swallowed if the finger travelled, and `data-pressing` paints the hold from the first frame. A hold with no feedback reads as a tap that did not register.
+  - **iOS wants your long press too.** `img { -webkit-touch-callout: none }` is global and has to be: it must be in force before the finger lands, so it cannot come from a press handler.
 ---
 
 Two hand-rolled gestures, one set of numbers. `useLongPress` asks whether a

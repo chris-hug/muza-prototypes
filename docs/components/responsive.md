@@ -10,6 +10,8 @@ summary:
   - **Column** — what the window leaves after chrome, cap and editor. Decides **how many fit**: card steps, rail peek, MediaHeader tier. Written `@min-[N]` / `@max-[N]`.
   - **Box** — a component's own width. Only where the same window can hand it two widths (a song row in a list vs a rail cell), and then the container is **named**.
   - **Pointer, not width**, for touch: hover is pointer-only, and a component swaps on the window — never on hover. The one gate that reads the pointer itself is `useCoarsePointer()`, and it is a fourth thing, not a fourth width.
+contract:
+  - **The gate is the POINTER, not the window.** `useCoarsePointer()` asks what is doing the pointing; the three width measures ask how much room there is. Answering one with the other is how a phone ends up with a mouse's affordances at 375px.
 ---
 
 Muza measures width in **three ways, and only three**. Every number in the
