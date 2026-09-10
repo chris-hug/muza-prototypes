@@ -229,6 +229,11 @@ Every variant and size sits on this string; each part is doing something.
   each half-way to `--background` — which is what the opacity used to resolve
   to over the app's ground. Unchanged to look at, opaque to render.
 
+  The two colours come from `--solid-fill` and `--solid-ink`, set per variant
+  (`[--solid-fill:var(--primary)]` and so on) so the rule itself has no
+  knowledge of which button it is on — a new filled variant declares its pair
+  and gets the disabled state for free.
+
   **This is why that bug kept returning.** It was fixed once at the floating
   Create pill's call site; then the pill moved onto the sheet as part of
   making the form sheet one surface, the override went with the move, and the
