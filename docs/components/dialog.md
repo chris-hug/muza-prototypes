@@ -205,11 +205,12 @@ Only the middle one scrolls.
   rule underneath: the sheet is one surface, and a hairline right under the
   title reads as a header that isn't there. Same **frosted glass** as
   `MobileHeader` — it *is* a mobile header, for a modal — with the top
-  safe-area inset, and `md:hidden`. Pass **`plain`** to drop the glass: it
-  earns its keep only where the body scrolls under the bar, and on a sheet
-  whose list is its own scroll box the tint is just a faint band across the
-  top. (A utility class can't override it — `.frosted-glass` is unlayered CSS
-  — so the bar has to leave it off.)
+  safe-area inset, and `md:hidden`. 40px tall, which is its two 32px controls
+  and a hair above them — every pixel here is one the content underneath does
+  not get. Pass **`plain`** to drop the glass where nothing passes beneath it
+  (a utility class can't: `.frosted-glass` is unlayered CSS). `AddMusicDialog`
+  keeps the glass and makes the bar `absolute` instead, so the list scrolls
+  behind the title.
 - The confirming action is a full-width `size="lg"` (48px) button in
   `DialogFormActions`, the band below the body. The sheet pads itself off the
   keyboard, so the action sits directly on it. Never offered twice — bar
@@ -290,17 +291,22 @@ shape as the form sheet, for the same reason.
   the browser scrolls a focused field into view inside whatever box can
   scroll, so a scrolling popup carried the TITLE off the top when the keyboard
   opened, and scrolling the results then carried the FIELD off the bottom.
-- **The band stays in the flow.** It was absolute — floating over the results,
-  to buy back the ~50px the keyboard costs — and that is what let the field
-  scroll away with the content. 50px is not worth a search field that leaves
-  the screen while you read what it returned.
+  With the popup fixed, both bands can be **absolute** and neither moves.
+- **Both bands overlay the list, and the list runs full height under them**
+  (`-my-3` over the sheet's padding, then `pt-[var(--sheet-bar-h)]` and
+  `pb-[var(--sheet-band-h)]` — the two heights live in `app.css` next to the
+  paddings they are made of, and shrink under `data-kb="open"`). Rows scroll
+  *behind* the glass bar and *behind* the floating field, which is what makes
+  a short list read as a list rather than as three stacked boxes. Anything
+  that stops the rows short — a solid band, a band in the flow — cuts the
+  results off instead.
 
-**The find screen's band carries no surface** — `border-t-0 bg-transparent`.
-A field is an input, not a bar, and in the flow nothing scrolls under it
-anyway, so there is nothing between the sheet's own surface and the input. It
-also sits as close to the keyboard as the padding allows (`max(4px, …)` under
-`data-kb="open"`): the accessory bar is the next thing below it, and a gap
-between the two reads as a stray band.
+**The find screen's band carries no surface** — `border-t-0 bg-transparent`,
+with `bg-popover shadow-lg` on the FIELD instead. A field is an input, not a
+bar; the surface belongs to the thing you type in, so the rows can pass under
+it. It also sits as close to the keyboard as the padding allows (`max(4px, …)`
+under `data-kb="open"`): the accessory bar is the next thing below it, and a
+gap between the two reads as a stray band.
 
 **One band.** The search field and the confirming action share the footer
 (`flex-col` so the field sits on top, `md:flex-row`) — one edge of chrome, not

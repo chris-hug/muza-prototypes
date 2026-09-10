@@ -327,12 +327,13 @@ export function AddMusicDialog({
             `useIsMobile` so only ONE `DialogTitle` is ever mounted. */}
         {isMobile ? (
           <DialogActionBar
-            /* `plain`: no glass. It earns its keep on the form sheet, where
-               the body scrolls under the bar. Here the list is its own scroll
-               box and nothing ever passes beneath, so the tint was just a
-               faint band across the top of the sheet. */
-            plain
-            className="-mx-3 -mt-3 px-1"
+            /* OUT of the flow, so the list runs full height underneath it and
+               you can see what is scrolling behind the title — which is also
+               why it keeps its glass. `absolute` and not `sticky`: the popup
+               is `overflow-hidden`, so a sticky bar has nothing to stick to,
+               while an absolute one is anchored to a box that never scrolls.
+               The list pays for it in padding (`--sheet-bar-h`). */
+            className="absolute inset-x-0 top-0 z-10 px-1"
             leading={back ?? <span className="size-8 shrink-0" />}
             trailing={
               <DialogClose render={<Button variant="ghost" size="icon-sm" aria-label="Close" />}>
@@ -393,7 +394,20 @@ export function AddMusicDialog({
              runs the list under the footer. The floating band overlays this
              list rather than sitting below it — a spacer at the end of the
              content clears it. */
-          <div className={cn(dialogListClass, "gap-4")}>
+          <div
+            className={cn(
+              dialogListClass,
+              "gap-4",
+              // Full height, with the two overlaying bands paid for in
+              // padding rather than in layout: rows scroll behind the glass
+              // bar and behind the floating field instead of stopping at
+              // them.
+              // `-my-3` bleeds over the sheet's own padding so the list box
+              // IS the sheet: rows reach both edges, and the two paddings
+              // below line up with the bands rather than with the gutter.
+              "-my-3 pt-[var(--sheet-bar-h)] pb-[var(--sheet-band-h)]",
+            )}
+          >
             {searching ? searchResults : recent.length > 0 ? (
               // What they searched before beats anything we could guess at.
               <section className="flex flex-col gap-1">
@@ -522,17 +536,18 @@ export function AddMusicDialog({
         <DialogFooter
           className={cn(
             "shrink-0 mt-0 flex-col md:flex-row md:items-center",
-            // On the Find screen the band carries the field alone, and a
-            // field is not a bar: no surface, no edge. It still sits in the
-            // flow, so nothing scrolls under it — there is simply nothing
-            // between the sheet's own surface and the input.
-            finding && "border-t-0 bg-transparent",
-            // The band stays IN THE FLOW on the Find screen too. It used to
-            // go absolute there — floating over the results, to buy back the
-            // ~50px the keyboard takes — and that is precisely what made the
-            // field scroll away: an absolutely positioned box inside a scroll
-            // container scrolls with the content. 50px is not worth a search
-            // field that leaves the screen while you read what it returned.
+            /* On the Find screen the band carries the field ALONE, and a
+               field is not a bar: no surface, no edge, and out of the flow so
+               the results run underneath it. It scrolled away when this was
+               tried before — but that was while the POPUP was the scroll box,
+               and an absolute box inside a scroll container travels with the
+               content. The list is the scroll box now; the band is anchored
+               to a popup that never moves.
+
+               `mx-0`/`mb-0` cancel the footer's own full-bleed negative
+               margins: on an absolutely positioned box those ADD to the
+               insets, so the band would hang 12px outside the sheet. */
+            finding && "absolute inset-x-0 bottom-0 z-10 mx-0 mt-0 mb-0 border-t-0 bg-transparent",
           )}
         >
           {/* The album screen is about one record, so there's nothing to
@@ -558,6 +573,10 @@ export function AddMusicDialog({
                 className={cn(
                   // 48px, matching the `lg` action beside it.
                   "h-12",
+                  // Floating over the rows, so it carries its own surface and
+                  // a lift — without them the titles scrolling past show
+                  // through the input.
+                  finding && "bg-popover shadow-lg",
                 )}
               />
             </div>

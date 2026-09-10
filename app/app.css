@@ -1600,6 +1600,20 @@ img[class*="object-cover"] {
     padding-bottom: max(8px, env(safe-area-inset-bottom));
   }
 
+  /* Heights of the two bands that OVERLAY the find screen's list, so the
+     list can pad itself clear of them (it scrolls behind both — that is the
+     point of the glass on one and the floating field on the other). Kept
+     here, next to the paddings they are made of, rather than guessed at the
+     call site. */
+  [data-slot="dialog-content"][data-mobile="sheet"] {
+    --sheet-bar-h: 44px;   /* min-h-10 + the bar's own 2px top inset + pb-1 */
+    --sheet-band-h: 76px;  /* 12 + a 48px field + 12, plus the safe area */
+  }
+  [data-kb="open"] [data-slot="dialog-content"][data-mobile="sheet"] {
+    --sheet-bar-h: 34px;
+    --sheet-band-h: 64px;
+  }
+
   /* The bottom SHEET is squeezed by the same amount, and it spends what it
      gets on rows: at a keyboard height the find screen's list is down to
      about half a row, so every 8px is a quarter of one. Same principle —

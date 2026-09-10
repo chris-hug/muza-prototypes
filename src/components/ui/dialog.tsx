@@ -111,7 +111,10 @@ export const dialogFormPositionClass =
 // the title reads as a header that isn't there.
 const dialogActionBarBase =
   "sticky top-0 z-10 shrink-0 " +
-  "flex items-center justify-between gap-2 min-h-12 px-1 pt-[max(4px,env(safe-area-inset-top))] pb-1 " +
+  // 40px, not 48: the bar is its two 32px controls and a title between them,
+  // and the inset above it is a hair, not a gutter — every pixel here is one
+  // the list underneath does not get.
+  "flex items-center justify-between gap-2 min-h-10 px-1 pt-[max(2px,env(safe-area-inset-top))] pb-1 " +
   "md:hidden"
 
 export const dialogActionBarClass = "frosted-glass " + dialogActionBarBase
