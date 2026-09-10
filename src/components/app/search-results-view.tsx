@@ -49,6 +49,7 @@ import { ArtistCard } from "@/components/ui/artist-card"
 import { PlaylistCard } from "@/components/ui/playlist-card"
 
 import { useMediaNav, slugify } from "@/lib/media-nav"
+import { useFooterNav } from "@/lib/use-media-query"
 import { useSearchNav } from "@/lib/use-search-nav"
 import { usePlayer } from "@/lib/player"
 import { useUserLibrary } from "@/lib/user-library"
@@ -95,12 +96,43 @@ export function SearchResultsView({ query }: { query: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, query, scope])
 
+  // The chrome gate (608): below it `MobileAppHeader` is on screen and owns
+  // the query field and the scope switcher, so this view renders only the
+  // tabs and the results.
+  const footerNav = useFooterNav()
+
   return (
-    <div className="max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto px-page pt-3 sm:pt-6 pb-24 flex flex-col gap-3 sm:gap-5">
+    /* `@container/search` — the heading row below stacks on the COLUMN, not
+       the window. Named, so the step can only ever mean this element: an
+       unnamed query would bind to whatever container happens to be nearest,
+       which is how `PlayerOverlay` once measured the design-system page.
+       The shelves keep their own `@container` inside `AllResults`, which is
+       nearer to them, so the rails still step on the same box as before. */
+    <div className="@container/search max-w-[1480px] min-[1920px]:max-w-[1716px] mx-auto px-page pt-3 sm:pt-6 pb-24 flex flex-col gap-3 sm:gap-5">
       {/* Heading + scope toggle — DESKTOP only. On mobile the sticky search
           header owns both: the query shows in the field, and the scope
-          switcher is a full-width segmented control under it. */}
-      <div className="hidden sm:flex sm:flex-row sm:items-center sm:justify-between">
+          switcher is a full-width segmented control under it.
+
+          Gated on `useFooterNav()`, the SAME hook that decides whether that
+          header exists at all (see `use-media-query.ts`). It used to be
+          Tailwind's `sm:`, and the 32px between 608 and 640 was a hole: the
+          header had already gone (it needs < 608) while this half still
+          behaved as if the header were there and hid the scope switcher, so
+          at a 620px window there was no way to switch Catalog ⇄ Library.
+          Two halves of one composition cannot own two different numbers.
+
+          The purely visual `sm:` steps below (padding, gaps, type sizes) stay
+          where they are — those are in-page content reflow, which is what
+          `sm:` is for; only the composition follows the chrome gate. */}
+      {!footerNav && (
+      /* Stacked until the column can hold both on one line. The heading is
+         `min-w-0` and the toggle `shrink-0`, so side by side the heading is
+         what gives: it needs 268px unwrapped and the toggle takes 202, so
+         under roughly 480 of column "Search for:" and the query broke onto
+         two lines with the toggle parked beside them. 560 is the existing
+         stack step (`MEDIA_HEADER_STACK`), the nearest number the system
+         already owns, and it clears that with room. */
+      <div className="flex flex-col items-start gap-2 @min-[560px]/search:flex-row @min-[560px]/search:items-center @min-[560px]/search:justify-between @min-[560px]/search:gap-3">
         <h1 className="text-2xlarge font-medium tracking-tight text-foreground min-w-0">
           <span className="text-muted-foreground font-normal">Search for: </span>
           <span className="break-words">{query}</span>
@@ -116,23 +148,26 @@ export function SearchResultsView({ query }: { query: string }) {
           <Toggle value="library">My Library</Toggle>
         </ToggleGroup>
       </div>
+      )}
 
       {/* Category filter — underlined tabs on desktop; on mobile the same
-          scrollable pill buttons the Library uses (MobilePillTabs). */}
-      <Tabs value={tab} onValueChange={v => setTab(v as TabKey)} className="hidden sm:block min-w-0">
-        <TabsList variant="line" autoCenter={false} className="w-full justify-start border-b border-border">
-          {visibleTabs.map(t => (
-            <TabsTrigger key={t.key} value={t.key}>{t.label}</TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
-      <div className="sm:hidden">
+          scrollable pill buttons the Library uses (MobilePillTabs). One gate,
+          so exactly one of them exists at any width. */}
+      {!footerNav ? (
+        <Tabs value={tab} onValueChange={v => setTab(v as TabKey)} className="min-w-0">
+          <TabsList variant="line" autoCenter={false} className="w-full justify-start border-b border-border">
+            {visibleTabs.map(t => (
+              <TabsTrigger key={t.key} value={t.key}>{t.label}</TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      ) : (
         <MobilePillTabs
           value={tab}
           onChange={v => setTab(v as TabKey)}
           tabs={visibleTabs.map(t => ({ value: t.key, label: t.label }))}
         />
-      </div>
+      )}
 
       {/* Results. The "All" tab is a relevance-ordered set of shelves
           (Top result + per-type sections); a specific tab is a flat list. */}
@@ -224,7 +259,10 @@ function SearchTopResult({ r }: { r: SearchResult }) {
           size="icon-lg"
           onClick={e => { e.stopPropagation(); play() }}
           aria-label={playingThis ? `Pause ${r.title}` : `Play ${r.title}`}
-          className="shrink-0 sm:size-14 shadow-md transition-[transform,opacity] sm:opacity-0 sm:translate-y-1 sm:group-hover/top:opacity-100 sm:group-hover/top:translate-y-0 [&_svg]:size-5"
+          // `translate`, not `transform`: Tailwind v4 compiles `translate-y-*` to
+          // its own property, so this list animated neither the hover reveal
+          // (the button appeared without sliding) nor the press nudge.
+          className="shrink-0 sm:size-14 shadow-md transition-[color,background-color,translate,opacity] sm:opacity-0 sm:translate-y-1 sm:group-hover/top:opacity-100 sm:group-hover/top:translate-y-0 [&_svg]:size-5"
         >
           {playingThis ? <PauseFilledAlt /> : <PlayFilledAlt />}
         </Button>
@@ -238,18 +276,18 @@ function SearchTopResult({ r }: { r: SearchResult }) {
 function TopCover({ r }: { r: SearchResult }) {
   const size = "size-20 sm:size-28 shrink-0"
   if (r.kind === "artist" || r.kind === "label") {
-    return <img src={r.cover} alt="" draggable={false} className={`${size} rounded-full object-cover bg-secondary`} />
+    return <img src={r.cover} alt="" draggable={false} className={`${size} rounded-full object-cover bg-secondary art-edge`} />
   }
   if (r.kind === "playlist" && r.covers && r.covers.length >= 4) {
     return (
-      <div className={`${size} grid grid-cols-2 grid-rows-2 overflow-hidden rounded-xs`}>
+      <div className={`${size} grid grid-cols-2 grid-rows-2 overflow-hidden rounded-xs art-edge`}>
         {r.covers.slice(0, 4).map((src, i) => (
           <img key={i} src={src} alt="" draggable={false} className="size-full object-cover" />
         ))}
       </div>
     )
   }
-  return <img src={r.cover ?? r.covers?.[0]} alt="" draggable={false} className={`${size} rounded-xs object-cover bg-secondary`} />
+  return <img src={r.cover ?? r.covers?.[0]} alt="" draggable={false} className={`${size} rounded-xs object-cover bg-secondary art-edge`} />
 }
 
 // ─── One result row ──────────────────────────────────────────────────────────

@@ -30,6 +30,7 @@ import {
   DialogFooter, DialogClose,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { FileField } from "@/components/ui/file-field"
 import { Label } from "@/components/ui/label"
 import { FormItem, FormLabel, FormControl } from "@/components/ui/form"
 import { CheckboxField } from "@/components/ui/checkbox"
@@ -281,7 +282,7 @@ function ProfileIdentityRow() {
             type="button"
             onClick={() => setEditAvatarOpen(true)}
             aria-label="Edit profile picture"
-            className="absolute -bottom-1 -right-1 size-7 rounded-full bg-secondary text-secondary-foreground border border-border hover:bg-secondary-hover transition-colors flex items-center justify-center cursor-pointer"
+            className="absolute -bottom-1 -right-1 size-7 rounded-full bg-secondary text-secondary-foreground border border-border hover:bg-secondary-hover transition-colors flex items-center justify-center cursor-pointer after:absolute after:-inset-1.5 after:content-['']"
           >
             <Pencil className="size-3.5" />
           </button>
@@ -561,7 +562,7 @@ function PaymentMethodRow({
       <DropdownMenu>
         <DropdownMenuTrigger
           aria-label={`Manage ${method.brand} ${method.last4 ?? method.email}`}
-          className="size-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="size-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors outline-none focus-ring"
         >
           <MoreHorizontal className="size-4" />
         </DropdownMenuTrigger>
@@ -667,7 +668,7 @@ function PaymentMethodDialog({
                 <button
                   type="button"
                   onClick={() => setReplacing(true)}
-                  className="text-xsmall text-primary-text hover:underline underline-offset-2"
+                  className="text-xsmall text-primary-text link-underline"
                 >
                   Replace
                 </button>
@@ -706,8 +707,8 @@ function PaymentMethodDialog({
         </form>
 
         <DialogFooter>
-          <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
-          <Button onClick={onSubmit}>
+          <DialogClose render={<Button size="lg" variant="outline" />}>Cancel</DialogClose>
+          <Button size="lg" onClick={onSubmit}>
             {isEdit ? "Save changes" : "Add card"}
           </Button>
         </DialogFooter>
@@ -880,10 +881,12 @@ function VerificationSubmitForm({ onSubmit }: { onSubmit: () => void }) {
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
+                  /* `icon-lg` (48), not `icon` (40): it shares the row with a
+                     field, and the field is `lg` now. */
+                  size="icon-lg"
                   aria-label={`Remove additional link ${i + 1}`}
                   onClick={() => setExtraLinks((prev) => prev.filter((_, j) => j !== i))}
-                  className="shrink-0 text-muted-foreground hover:text-foreground"
+                  className="state-fade shrink-0 text-muted-foreground hover:text-foreground"
                 >
                   <X />
                 </Button>
@@ -908,21 +911,18 @@ function VerificationSubmitForm({ onSubmit }: { onSubmit: () => void }) {
           Your document is encrypted and used only for identity verification. We never share it with third parties.
         </p>
         <Field label="ID for verification">
-          <label className="flex items-center gap-3 rounded-full border border-border bg-background pl-1 pr-4 h-10 cursor-pointer hover:border-foreground/30 transition-colors">
-            <span className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-secondary text-secondary-foreground text-xsmall font-medium">
-              <Upload className="size-3.5" />
-              Upload ID
-            </span>
-            <span className="flex-1 min-w-0 text-xsmall text-muted-foreground truncate">
-              {fileName ?? "No file chosen"}
-            </span>
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png,.pdf"
-              className="sr-only"
-              onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
-            />
-          </label>
+          {/* `FileField` — the catalogued control. This was a hand-built label
+               with its own pill, its own filename slot and its own heights,
+               and it fell a step behind the ladder the moment the ladder
+               moved. The component keeps the one thing that has to stay
+               native: a `<label>` around an `sr-only` input, which is what
+               makes the whole row open the file dialog. */}
+          <FileField
+            label="Upload ID"
+            accept=".jpg,.jpeg,.png,.pdf"
+            fileName={fileName}
+            onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
+          />
         </Field>
         <p className="text-2xsmall text-muted-foreground mt-2">
           JPG, PDF or PNG · max size 10 MB

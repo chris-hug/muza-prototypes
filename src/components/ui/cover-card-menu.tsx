@@ -42,10 +42,16 @@ import { libraryIdForTitle } from "@/lib/album-meta"
 // (translucent muted fill, backdrop blur, foreground icon, 24px) so
 // the trigger looks identical to the sibling Add/Edit cover button.
 const TRIGGER_CLASS =
+  "press-ripple relative [--press-fill:var(--muza-neutrals-100)] " +
   "inline-flex size-6 shrink-0 items-center justify-center rounded-full " +
   "border-0 bg-neutral-100/50 text-neutral-900 backdrop-blur-xs " +
-  "transition-colors outline-none cursor-pointer " +
-  "hover:bg-neutral-100 focus-visible:ring-3 focus-visible:ring-ring/50 " +
+  // The house press, on this button's own 24px box: `scale` has to be named
+  // (Tailwind v4 gives it its own property, so a list saying `transform`
+  // animates nothing), and 0.94 puts the travel at 0.72px — the same order as
+  // every Button on the page, which is the point of picking per size.
+  "transition-[color,background-color,border-color] duration-[130ms] ease-[cubic-bezier(0.2,0,0,1)] " +
+  "outline-none cursor-pointer " +
+  "hover:bg-neutral-100 focus-ring " +
   "[&_svg]:size-3 [&_svg]:shrink-0 [&_svg]:pointer-events-none"
 
 interface CommonProps {

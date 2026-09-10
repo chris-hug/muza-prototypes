@@ -53,8 +53,8 @@ export default function DialogBasicExample() {
         </RadioCardGroup>
 
         <DialogFooter>
-          <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
-          <Button>Create Listing</Button>
+          <DialogClose render={<Button size="lg" variant="outline" />}>Cancel</DialogClose>
+          <Button size="lg">Create Listing</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

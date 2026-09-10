@@ -5,7 +5,7 @@
  *
  * **Design** is the palette: two layers, in the order the system resolves
  * them. A semantic token does not hold a colour, it holds a POINTER — the CSS
- * literally reads `--primary: var(--muza-blue-500)`. Showing the pointer is
+ * literally reads `--primary: var(--muza-brand-500)`. Showing the pointer is
  * the whole explanation of why `--primary` is a different blue in dark mode,
  * and it is why the two layers are one table and not two sections that happen
  * to sit near each other.
@@ -498,7 +498,7 @@ export function TokenEditor() {
             Both layers, in the order the system resolves them, under the same
             four headings. They were two panels — a table and a swatch grid —
             and that made them look like two subjects. They are one subject
-            read twice: `--primary` and `--muza-blue-500` are the same colour
+            read twice: `--primary` and `--muza-brand-500` are the same colour
             at two levels of naming, and one column set is what makes a
             pointer something you can look UP. */}
         {/* No `overflow-x-auto` here. Setting one axis to `auto` makes the

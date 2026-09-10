@@ -115,7 +115,14 @@ export interface PurchaseAlbumDialogProps {
 type Step = "summary" | "processing" | "success"
 type PurchaseTier = "stream" | "download"
 
-const MOCK_USER_EMAIL = "naomi@example.com"
+/* No pre-filled address. `userEmail` defaults to EMPTY so the field opens on
+   its placeholder, the way a person actually meets it. It used to default to
+   `naomi@example.com`, and since nothing in the app passes `userEmail`, that
+   mock was what every dialog and every design-system frame showed: a filled
+   field reads as the product suggesting an address it cannot know, and it hid
+   the empty state — the one state the form always starts in. A real account
+   passes the address in through this prop. */
+const MOCK_USER_EMAIL = ""
 
 export function PurchaseAlbumDialog({
   open, onOpenChange, album, streamPrice, downloadPrice,
@@ -175,7 +182,7 @@ export function PurchaseAlbumDialog({
            Pay button always reachable. `md:max-w-xl` overrides the
            base `md:max-w-sm` (same breakpoint required for the
            cascade). */}
-      <DialogContent className="md:max-w-xl max-h-[90vh] p-0 gap-0 flex flex-col">
+      <DialogContent className="md:max-w-xl max-h-[90vh] p-0 gap-0 md:gap-0 flex flex-col">
         {step === "summary" && (
           <>
             {/* ── Sticky header section ─────────────────────────────
@@ -188,7 +195,7 @@ export function PurchaseAlbumDialog({
                  buyer-side reads as the mirror of the seller-side
                  release step. No "Change" button — buyer can't
                  swap which album they're purchasing. */}
-            <div className="shrink-0 flex flex-col gap-4 px-6 pt-6 pb-4 border-b border-border">
+            <div className="shrink-0 flex flex-col gap-2.5 px-4 pt-3 pb-3 border-b border-border">
               <DialogHeader>
                 <DialogTitle>
                   {upgradeMode ? `Add download to ${album.title}` : "Review and pay"}
@@ -200,20 +207,21 @@ export function PurchaseAlbumDialog({
                 </DialogDescription>
               </DialogHeader>
 
-              {/* In cart — single-item summary row. Cart framing
-                   matches transactional checkout patterns (Subvert,
-                   Bandcamp). The "Remove" link is functionally
-                   identical to Cancel but reads as a cart-line
-                   action, which feels right next to the item. */}
-              <div className="flex flex-col gap-2">
-                <SectionLabel className="text-xsmall text-muted-foreground font-normal">In cart</SectionLabel>
+              {/* The single-item summary row. It used to carry an "In cart"
+                   label above it; the row already says so — cover, title,
+                   price and a "Remove" beside them read as a cart line
+                   without being announced, and on a phone the label cost a
+                   line the dialog does not have to spare. The "Remove" link
+                   is functionally Cancel, but as a cart-line action it sits
+                   where the eye expects it. */}
+              <div className="flex flex-col">
                 <div className="rounded-2xl border border-border overflow-hidden">
-                  <div className="flex items-center gap-3 px-4 py-3">
+                  <div className="flex items-center gap-3 px-3 py-2.5">
                     <img
                       src={album.cover}
                       alt=""
                       draggable={false}
-                      className="size-12 rounded-xs shrink-0 object-cover shadow-sm"
+                      className="size-12 rounded-xs shrink-0 object-cover shadow-sm art-edge"
                     />
                     <div className="flex flex-col gap-1 flex-1 min-w-0">
                       <p className="text-small font-medium leading-none truncate">
@@ -236,7 +244,7 @@ export function PurchaseAlbumDialog({
                       <button
                         type="button"
                         onClick={() => onOpenChange(false)}
-                        className="text-2xsmall text-muted-foreground hover:text-foreground hover:underline underline-offset-2 cursor-pointer"
+                        className="state-fade text-2xsmall text-muted-foreground hover:text-foreground link-underline cursor-pointer"
                       >
                         Remove
                       </button>
@@ -246,7 +254,7 @@ export function PurchaseAlbumDialog({
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-6">
+            <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-4">
 
               {/* ── Tier picker ──────────────────────────────────
                    Hidden in upgrade mode — user already owns the
@@ -335,11 +343,11 @@ export function PurchaseAlbumDialog({
                  `p-0` flex layout so we want zero outer margin and
                  plain `shrink-0` so the row stays pinned to the
                  dialog's bottom edge. */}
-            <DialogFooter className="m-0 shrink-0 border-t border-border bg-muted px-6 py-4 rounded-b-xl md:rounded-b-2xl">
-              <DialogClose render={<Button variant="ghost" />}>
+            <DialogFooter className="m-0 shrink-0 border-t border-border bg-muted px-4 py-3 rounded-b-xl md:rounded-b-2xl">
+              <DialogClose render={<Button size="lg" variant="ghost" />}>
                 Cancel
               </DialogClose>
-              <Button onClick={handlePay} disabled={!canPay}>
+              <Button size="lg" onClick={handlePay} disabled={!canPay}>
                 Confirm and pay {price}
               </Button>
             </DialogFooter>
@@ -355,7 +363,7 @@ export function PurchaseAlbumDialog({
         )}
 
         {step === "success" && (
-          <div className="flex flex-col gap-6 px-6 py-8">
+          <div className="flex flex-col gap-4 px-4 py-6">
             <DialogTitle className="sr-only">Purchase successful</DialogTitle>
 
             {/* Page-style headline — reads as a confirmation page even
@@ -376,7 +384,7 @@ export function PurchaseAlbumDialog({
                  / artist-first story at the moment of highest
                  emotional payoff (right after the buyer paid). */}
             {itemPrice > 0 && (
-              <div className="rounded-2xl border border-border bg-muted/40 px-5 py-4 flex flex-col gap-3">
+              <div className="rounded-2xl border border-border bg-muted/40 px-4 py-3 flex flex-col gap-2.5">
                 <p className="text-small text-foreground">
                   Thank you. Your purchase supports {album.artist}.
                 </p>
@@ -412,12 +420,12 @@ export function PurchaseAlbumDialog({
                  (download tier only) without having to navigate
                  back into the library to find them. */}
             <div className="rounded-2xl border border-border overflow-hidden">
-              <div className="flex items-center gap-3 px-4 py-3">
+              <div className="flex items-center gap-3 px-3 py-2.5">
                 <img
                   src={album.cover}
                   alt=""
                   draggable={false}
-                  className="size-12 rounded-xs shrink-0 object-cover shadow-sm"
+                  className="size-12 rounded-xs shrink-0 object-cover shadow-sm art-edge"
                 />
                 <div className="flex flex-col gap-1 flex-1 min-w-0">
                   <p className="text-small font-medium leading-none truncate">
@@ -525,7 +533,7 @@ function SquareContainer() {
   return (
     <div
       id="square-container"
-      className="flex flex-col items-center justify-center gap-2 py-10 px-6 rounded-lg border border-dashed border-border bg-muted/40"
+      className="flex flex-col items-center justify-center gap-2 py-6 px-4 rounded-lg border border-dashed border-border bg-muted/40"
     >
       <p className="text-small font-medium text-foreground">
         Payment fields render here
@@ -576,10 +584,10 @@ export function PurchaseAlbumDialogPreview({
   return (
     <DialogPreview
       showCloseButton={false}
-      className={cn("md:max-w-xl max-h-[600px] p-0 gap-0 flex flex-col", className)}
+      className={cn("md:max-w-xl max-h-[min(85vh,760px)] p-0 gap-0 md:gap-0 flex flex-col", className)}
     >
       {/* Sticky header */}
-      <div className="shrink-0 flex flex-col gap-4 px-6 pt-6 pb-4 border-b border-border">
+      <div className="shrink-0 flex flex-col gap-2.5 px-4 pt-3 pb-3 border-b border-border">
         <DialogPreviewHeader>
           <DialogPreviewTitle>Review and pay</DialogPreviewTitle>
           <DialogPreviewDescription>
@@ -587,15 +595,14 @@ export function PurchaseAlbumDialogPreview({
           </DialogPreviewDescription>
         </DialogPreviewHeader>
 
-        <div className="flex flex-col gap-2">
-          <SectionLabel className="text-xsmall text-muted-foreground font-normal">In cart</SectionLabel>
+        <div className="flex flex-col">
           <div className="rounded-2xl border border-border overflow-hidden">
-            <div className="flex items-center gap-3 px-4 py-3">
+            <div className="flex items-center gap-3 px-3 py-2.5">
               <img
                 src={album.cover}
                 alt=""
                 draggable={false}
-                className="size-12 rounded-xs shrink-0 object-cover shadow-sm"
+                className="size-12 rounded-xs shrink-0 object-cover shadow-sm art-edge"
               />
               <div className="flex flex-col gap-1 flex-1 min-w-0">
                 <p className="text-small font-medium leading-none truncate">
@@ -623,7 +630,7 @@ export function PurchaseAlbumDialogPreview({
       </div>
 
       {/* Scroll body */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-6">
+      <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <SectionLabel>Tier</SectionLabel>
           <RadioCardGroup
@@ -695,9 +702,9 @@ export function PurchaseAlbumDialogPreview({
       </div>
 
       {/* Sticky footer (preview chrome — no real submit) */}
-      <DialogPreviewFooter className="m-0 shrink-0 border-t border-border bg-muted px-6 py-4 rounded-b-xl md:rounded-b-2xl">
-        <Button variant="ghost">Cancel</Button>
-        <Button>Confirm and pay {price}</Button>
+      <DialogPreviewFooter className="m-0 shrink-0 border-t border-border bg-muted px-4 py-3 rounded-b-xl md:rounded-b-2xl">
+        <Button size="lg" variant="ghost">Cancel</Button>
+        <Button size="lg">Confirm and pay {price}</Button>
       </DialogPreviewFooter>
     </DialogPreview>
   )

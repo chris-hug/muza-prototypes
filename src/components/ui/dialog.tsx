@@ -49,7 +49,7 @@ const dialogDesktopPositionClass =
   "md:data-open:slide-in-from-bottom-0 md:data-open:zoom-in-95"
 
 export const dialogPositionClass =
-  "fixed z-50 duration-100 data-open:animate-in data-open:fade-in-0 " +
+  "fixed z-50 duration-100 transition-none data-open:animate-in data-open:fade-in-0 " +
   // mobile → bottom sheet, sitting ON TOP of the on-screen keyboard (`--kb`,
   // published by `useKeyboardInset`; 0 when there is none) and capped to the
   // space that leaves, scrolling internally. Anchoring to `bottom: 0` would
@@ -86,7 +86,7 @@ export const dialogPositionClass =
 // `DialogFormBody` re-applies the 12px gutter. Desktop is the same centered
 // modal as everything else — the bar hides, the ordinary header/footer show.
 export const dialogFormPositionClass =
-  "fixed z-50 duration-100 data-open:animate-in data-open:fade-in-0 " +
+  "fixed z-50 duration-100 transition-none data-open:animate-in data-open:fade-in-0 " +
   "inset-x-0 top-0 bottom-[var(--kb,0px)] translate-x-0 translate-y-0 max-w-full max-h-none rounded-none " +
   // `overflow-hidden`, NOT `auto`: the sheet is three bands — sticky bar,
   // scrolling body, action row — and only the BODY scrolls. If the popup
@@ -143,7 +143,7 @@ export const dialogTitleClass =
   "font-heading text-small leading-none font-medium"
 
 export const dialogDescriptionClass =
-  "text-small text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground"
+  "text-small text-muted-foreground *:[a]:state-fade *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground"
 
 /*
  * Header: [leading control] then the title stack, both starting on the
@@ -204,7 +204,7 @@ function DialogOverlay({
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0",
+        "fixed inset-0 isolate z-50 bg-black/10 duration-100 transition-none supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0",
         className
       )}
       {...props}

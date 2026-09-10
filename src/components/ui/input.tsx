@@ -76,17 +76,17 @@ const FIELD_CLS =
   // File input
   "file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-small file:font-medium file:text-foreground " +
   // Focus
-  "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 " +
+  "focus-visible:border-ring focus-ring " +
   // Disabled
   "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 " +
   // Invalid
-  "aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 " +
-  "dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
+  "aria-invalid:border-destructive invalid-ring " +
+  "dark:aria-invalid:border-destructive/50"
 
 const HINT_CLS = "text-2xsmall leading-snug"
 
 function Input({
-  className, type, size = "default", hint, hintTone = "default", startIcon, onClear, ...props
+  className, type, size = "lg", hint, hintTone = "default", startIcon, onClear, ...props
 }: InputProps) {
   const showClear = !!onClear && !!props.value
 

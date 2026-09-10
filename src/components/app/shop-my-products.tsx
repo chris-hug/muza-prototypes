@@ -4,8 +4,7 @@ import React, { useState } from "react"
 import {
   Globe, MoreHorizontal, Pencil, Copy, Trash2,
   Ghost, Disc3, Disc, CassetteTape, Shirt,
-  Plus, Search, X, ArrowDown, ArrowUp, ArrowUpDown, Package,
-} from "lucide-react"
+  Plus, Search, X, Package } from "lucide-react"
 import { AlertCircle } from "lucide-react"
 import { Alert, AlertTitle, AlertDescription, AlertAction } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -16,16 +15,15 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { ChipDismiss } from "@/components/ui/chip"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
-  DialogFooter, DialogClose,
-} from "@/components/ui/dialog"
+  DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { RadioCard, RadioCardGroup } from "@/components/ui/radio-card"
 import { cn } from "@/lib/utils"
+import { Input } from "@/components/ui/input"
 import { filterTriggerCls, FilterChevron, FilterCount } from "@/components/ui/filter-button"
-import { TableHead } from "@/components/ui/table"
+import { TableHead, SortHeader as TableSortHeader } from "@/components/ui/table"
 import { useShopSettings } from "@/lib/shop-settings"
 import { useToast } from "@/components/ui/toast"
 import { useSearchParams } from "react-router"
@@ -105,8 +103,7 @@ const PRODUCTS: Product[] = [
 
 export const SHOP_STATS = {
   listings: PRODUCTS.length,
-  orders:   PRODUCTS.reduce((sum, p) => sum + p.sold, 0),
-}
+  orders:   PRODUCTS.reduce((sum, p) => sum + p.sold, 0) }
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -115,16 +112,14 @@ const TYPE_ICON: Record<ProductType, React.ElementType> = {
   "Compact Disc": Disc,
   "Cassette":     CassetteTape,
   "Apparel":      Shirt,
-  "Other":        Ghost,
-}
+  "Other":        Ghost }
 
 const TYPE_LABEL: Record<ProductType, string> = {
   "Vinyl":        "Vinyl",
   "Compact Disc": "CD",
   "Cassette":     "Cassette",
   "Apparel":      "Apparel",
-  "Other":        "Other",
-}
+  "Other":        "Other" }
 
 const LOW_STOCK_THRESHOLD = 10
 
@@ -153,8 +148,7 @@ function formatPrice(p: Product) {
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", {
-    day: "numeric", month: "short", year: "numeric",
-  })
+    day: "numeric", month: "short", year: "numeric" })
 }
 
 function sortProducts(products: Product[], key: SortKey, dir: SortDir): Product[] {
@@ -292,32 +286,25 @@ const COL = {
   sold:     72,
   muzaLink: 140,
   edited:   104,
-  actions:  48,
-} as const
+  actions:  48 } as const
 
 // ─── SortHeader ───────────────────────────────────────────────────────────────
 
+/* The catalogued `SortHeader` from `ui/table`, wrapped to keep this view's
+   prop shape (it passes a sort KEY and compares, rather than a boolean). */
 function SortHeader({ label, sortKey: sk, activeSortKey, sortDir, onSort, style, className }: {
-  label: string; sortKey: SortKey; activeSortKey: SortKey; sortDir: SortDir
+  label: string; sortKey: SortKey; activeSortKey: SortKey; sortDir: "asc" | "desc"
   onSort: (k: SortKey) => void; style?: React.CSSProperties; className?: string
 }) {
-  const isActive = sk === activeSortKey
   return (
-    <button
-      className={cn("flex items-center gap-0.5 min-w-0 overflow-hidden cursor-pointer group/sort select-none shrink-0", className)}
-      style={style}
+    <TableSortHeader
+      label={label}
+      active={sk === activeSortKey}
+      dir={sortDir}
       onClick={() => onSort(sk)}
-    >
-      <span className={cn("text-xsmall font-normal truncate", isActive ? "text-foreground" : "text-muted-foreground")}>
-        {label}
-      </span>
-      {isActive
-        ? (sortDir === "asc"
-            ? <ArrowUp   className="size-3 shrink-0 text-foreground" />
-            : <ArrowDown className="size-3 shrink-0 text-foreground" />)
-        : <ArrowUpDown className="size-3 shrink-0 text-muted-foreground opacity-0 group-hover/sort:opacity-50 transition-opacity" />
-      }
-    </button>
+      style={style}
+      className={cn("shrink-0", className)}
+    />
   )
 }
 
@@ -351,7 +338,7 @@ function ProductRow({ product, isSelected, onSelect, status, onStatusChange, onE
 
       {/* Cover */}
       <td className="px-2 py-0" style={{ width: COL.cover }}>
-        <div className={cn("rounded-xs bg-neutral-200 overflow-hidden transition-opacity", isDimmed && "opacity-50")} style={{ width: 44, height: 44 }}>
+        <div className={cn("rounded-xs bg-neutral-200 overflow-hidden transition-opacity art-edge", isDimmed && "opacity-50")} style={{ width: 44, height: 44 }}>
           <img src={product.image} alt={product.title} className="size-full object-cover" draggable={false} />
         </div>
       </td>
@@ -526,8 +513,7 @@ export function ShopMyProductsView() {
         type: "warning",
         title: "Finish shop setup before publishing",
         description: `Missing: ${missing}. Open Settings to complete.`,
-        data: { actionLabel: "Open settings", onAction: goToSettings },
-      } as never)
+        data: { actionLabel: "Open settings", onAction: goToSettings } } as never)
       return
     }
     setStatuses(prev => ({ ...prev, [id]: s }))
@@ -644,30 +630,23 @@ export function ShopMyProductsView() {
           <TypeMultiSelect selected={typeFilters} onChange={setTypeFilters} />
 
           {/* Search */}
-          <div className="relative flex items-center">
-            <Search className="absolute left-3.5 size-4 text-muted-foreground pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search products"
-              className={cn(
-                "h-10 pl-10 pr-[18px] rounded-full border text-small font-normal bg-transparent transition-[colors,width,background-color]",
-                "text-foreground placeholder:text-muted-foreground focus:outline-none",
-                searchQuery
-                  ? "border-foreground/40 bg-muted text-foreground w-56"
-                  : "border-border text-foreground w-48 hover:border-foreground/30 focus:border-foreground/40 focus:bg-muted focus:w-56",
-              )}
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <X className="size-3" />
-              </button>
+          {/* The catalogue's `Input`, not a hand-built pill. It already owns the
+               leading glyph (`startIcon`), the ✕ (`onClear`), the border and
+               focus states and the size ladder — this call site keeps only what
+               is genuinely local: the width that grows when the filter is in
+               use. Three views carried three copies of the same field, which is
+               how one of them ends up a step behind the other two. */}
+          <Input
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            onClear={() => setSearchQuery("")}
+            placeholder="Search products"
+            startIcon={<Search />}
+            className={cn(
+              "transition-[width,background-color,border-color]",
+              searchQuery ? "w-56 bg-muted border-foreground/40" : "w-48 focus:w-56",
             )}
-          </div>
+          />
         </div>
       </div>
 

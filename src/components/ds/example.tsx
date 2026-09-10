@@ -101,6 +101,22 @@ export const PHONE_WIDTHS: ExampleWidth[] = WINDOW_WIDTHS.filter(
 )
 
 /*
+ * The other half, for compositions that only exist ABOVE the chrome gate.
+ * `SearchResultsView` is the case: below 608 the page's search is a
+ * different composition — `MobileAppHeader` owns the field and the scope
+ * switcher, and the view renders only the tabs and results. Offering it a
+ * 320 chip offers a width at which this component is half of what the app
+ * shows, and (because its own gate is a CSS media query on the WINDOW, which
+ * a frame's container width cannot move) the frame answers with the desktop
+ * layout crushed into a phone column — a rendering the app never produces.
+ *
+ * Derived from the same constant, so the two halves stay complementary.
+ */
+export const DESKTOP_WIDTHS: ExampleWidth[] = WINDOW_WIDTHS.filter(
+  w => Number(w.label) >= FOOTER_NAV_BELOW,
+)
+
+/*
  * What `</>` shows: the call-site file with its explanatory head removed.
  *
  * The FILE is the single source of truth — it is what renders, and it is what
@@ -323,7 +339,7 @@ export function Example({
                   href={`https://github.com/chris-hug/muza-prototypes/blob/main/${codePath}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-primary-text hover:underline underline-offset-2"
+                  className="text-primary-text link-underline"
                 >
                   {codePath}
                 </a>

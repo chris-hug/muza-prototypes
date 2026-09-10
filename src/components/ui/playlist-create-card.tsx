@@ -35,7 +35,7 @@ export function PlaylistCreateCard({
         // Card stretches to its container — consumers control width
         // via grid cell / parent sizing. Figma natural size 192px.
         "group/create flex flex-col gap-1 text-center outline-none w-full min-w-0",
-        "rounded-lg focus-visible:ring-3 focus-visible:ring-ring/50",
+        "rounded-lg focus-ring",
         className,
       )}
     >

@@ -2,6 +2,8 @@
 
 import * as React from "react"
 import { useRef } from "react"
+import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react"
+
 import { cn } from "@/lib/utils"
 
 // ─── ResizeHandle — shared visual, exported for use in custom tables ──────────
@@ -191,6 +193,55 @@ function TableCaption({ className, ...props }: React.ComponentProps<"caption">) 
       className={cn("mt-4 text-xsmall text-muted-foreground", className)}
       {...props}
     />
+  )
+}
+
+/*
+ * SortHeader — the label inside a sortable `TableHead`.
+ *
+ * Five views had written this out: Songs, Orders, Studio Music, Shop Products
+ * and the artist page's discography. Byte for byte the same row — label, an
+ * arrow that appears at 50% on hover and turns solid when the column is the
+ * one being sorted — and five chances for one of them to drift.
+ *
+ * The arrow is the whole design. A column that is not sorted still has to say
+ * that it COULD be, so the double arrow fades in under the pointer; the sorted
+ * column shows a single arrow at full contrast, and its direction is the
+ * answer to "which way". Nothing moves and nothing reserves space: the glyph
+ * is always in the layout, only its opacity changes, so a header does not
+ * reflow when you point at it.
+ */
+export function SortHeader({
+  label, active, dir, onClick, className, style,
+}: {
+  label:      string
+  active:     boolean
+  /** Which way the column is sorted. Ignored while `active` is false. */
+  dir:        "asc" | "desc" | null
+  onClick:    () => void
+  className?: string
+  style?:     React.CSSProperties
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={style}
+      className={cn(
+        "group/sort flex items-center gap-0.5 min-w-0 overflow-hidden select-none cursor-pointer",
+        "state-fade outline-none rounded-sm focus-ring",
+        className,
+      )}
+    >
+      <span className={cn("text-xsmall font-normal truncate", active ? "text-foreground" : "text-muted-foreground")}>
+        {label}
+      </span>
+      {active
+        ? (dir === "asc"
+            ? <ArrowUp   className="size-3 shrink-0 text-foreground" />
+            : <ArrowDown className="size-3 shrink-0 text-foreground" />)
+        : <ArrowUpDown className="size-3 shrink-0 text-muted-foreground opacity-0 group-hover/sort:opacity-50 transition-opacity" />}
+    </button>
   )
 }
 

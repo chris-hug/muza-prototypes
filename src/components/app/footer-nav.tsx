@@ -56,8 +56,12 @@ const STUDIO_ITEMS: { target: string; label: string; desc: string; icon: typeof 
 const tabButtonClass = (isActive: boolean) =>
   cn(
     "flex h-12 flex-1 items-center justify-center rounded-full outline-none",
-    "transition-[background,box-shadow,color,transform] duration-150",
-    "focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.96]",
+    // `scale`, not `transform` (Tailwind v4 compiles `scale-*` to its own
+    // property), and no `box-shadow`: the active pill's two-layer shadow was
+    // repainting frame by frame under every press, which is what made the
+    // glyphs judder. The shadow now switches with the tab, instantly.
+    "transition-[background-color,color] duration-[130ms] ease-[cubic-bezier(0.2,0,0,1)]",
+    "focus-ring active:bg-press-on-muted",
     isActive
       ? "bg-background text-foreground ring-1 ring-border/60 shadow-[0_1px_2px_rgba(13,13,4,0.10),0_6px_16px_rgba(13,13,4,0.10)]"
       : "text-muted-foreground hover:text-foreground active:text-foreground",

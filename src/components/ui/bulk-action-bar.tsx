@@ -33,7 +33,14 @@ export function BulkActionButton({
       size="sm"
       variant="secondary"
       onClick={onClick}
-      className={cn("bg-background/15 hover:bg-background/25 text-background border-transparent", className)}
+      className={cn(
+        // The hover step as a TOKEN, not a class: this button overrides the
+        // variant's fill, so it has to override the variant's ripple colour
+        // too or a page neutral grows across a dark bar.
+        "bg-background/15 [--hover-fill:color-mix(in_srgb,var(--background)_25%,transparent)]",
+        "text-background border-transparent",
+        className,
+      )}
     >
       {children}
     </Button>

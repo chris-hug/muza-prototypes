@@ -169,7 +169,7 @@ export function ReceiptPreview({ data }: { data: ReceiptData }) {
           <p>{formatMuzaAddress()}</p>
           <p className="mt-1">
             EIN {MUZA_LEGAL.ein} · Support:{" "}
-            <a href={`mailto:${MUZA_LEGAL.supportEmail}`} className="text-foreground hover:underline underline-offset-3">
+            <a href={`mailto:${MUZA_LEGAL.supportEmail}`} className="text-foreground link-underline">
               {MUZA_LEGAL.supportEmail}
             </a>
           </p>

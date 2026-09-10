@@ -46,7 +46,7 @@ function inline(text: string, keyBase: string): React.ReactNode[] {
           href={href}
           target={href.startsWith("#") ? undefined : "_blank"}
           rel="noreferrer"
-          className="text-primary-text hover:underline underline-offset-2"
+          className="text-primary-text link-underline"
         >
           {link[1]}
         </a>

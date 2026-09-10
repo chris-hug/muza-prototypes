@@ -93,7 +93,7 @@ interface WaveformProps {
   onTimeUpdate?:  (seconds: number, duration: number) => void
   /** Fires when the user clicks/drags the waveform to seek (seconds).            */
   onSeek?:        (seconds: number) => void
-  /** Played-portion colour (default: --muza-blue-200).                           */
+  /** Played-portion colour (default: --muza-brand-200).                           */
   progressColor?: string
   /** Unplayed-portion colour (default: --muted-foreground).                      */
   waveColor?:     string

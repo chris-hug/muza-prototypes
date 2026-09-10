@@ -38,7 +38,7 @@ interface ComboboxTriggerProps {
   size?: ControlSize
 }
 
-function ComboboxTrigger({ className, placeholder, showSearchIcon = true, size = "default" }: ComboboxTriggerProps) {
+function ComboboxTrigger({ className, placeholder, showSearchIcon = true, size = "lg" }: ComboboxTriggerProps) {
   return (
     <ComboboxPrimitive.InputGroup
       data-size={size}
@@ -52,7 +52,7 @@ function ComboboxTrigger({ className, placeholder, showSearchIcon = true, size =
         CONTROL_PAD_Y[size],
         { sm: "px-2.5", default: "px-3", lg: "px-4" }[size],
         "hover:border-foreground/30",
-        "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50",
+        "focus-within:border-ring focus-ring-within",
         "transition-colors",
         className
       )}
@@ -171,7 +171,7 @@ function ComboboxItem({
     <ComboboxPrimitive.Item
       data-slot="combobox-item"
       className={cn(
-        "relative flex w-full cursor-default items-center gap-2",
+        "state-fade relative flex w-full cursor-default items-center gap-2",
         "rounded-lg px-2.5 py-1.5",
         "text-small font-normal outline-none select-none",
         "focus:bg-accent focus:text-accent-foreground",

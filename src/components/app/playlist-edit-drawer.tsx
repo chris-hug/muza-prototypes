@@ -200,7 +200,7 @@ export function PlaylistEditDrawer() {
           "relative hidden md:flex h-screen shrink-0 flex-col overflow-hidden border-border bg-background",
           // Out of flow while expanding; `contain` keeps the per-frame work
           // inside this subtree so the growth stays at 60fps.
-          expanding && "fixed inset-y-0 right-0 z-50 will-change-[width] [contain:layout_paint]",
+          expanding && "fixed inset-y-0 right-0 z-50 [contain:layout_paint]",
           expandTransition({ phase, resizing: resize.resizing }),
           expandBox({ phase, open, hasCustomWidth: resize.width != null }),
         )}
@@ -261,7 +261,10 @@ function expandTransition({ phase, resizing }: { phase: ExpandPhase; resizing: b
   if (resizing) return "transition-none"
   // Dissolving: opacity only, so the width holds steady as it fades.
   if (phase === "dissolve") return "transition-opacity duration-200 ease-out"
-  return "transition-all duration-300 ease-in-out"
+  // The box animates: width (and its min/max, which drive the docked size)
+  // plus the opacity that carries it in and out. Named, so `all` cannot
+  // quietly animate a border or a colour on the same 300ms curve.
+  return "transition-[width,min-width,max-width,opacity] duration-300 ease-in-out"
 }
 
 function expandBox({ phase, open, hasCustomWidth }: {
@@ -380,7 +383,7 @@ function EditorBody({ panel, tracks, onAddTrack, onRemoveTrack }: {
 
       {/* Both are form controls → the shared h-10 (Button `default`; `lg` is 48). */}
       <div className="flex items-center gap-2">
-        <Button variant="outline" className="shrink-0">
+        <Button size="lg" variant="outline" className="shrink-0">
           <ArrowUpDown />
           Sort
         </Button>

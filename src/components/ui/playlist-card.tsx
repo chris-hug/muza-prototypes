@@ -25,7 +25,7 @@ import { Pencil } from "lucide-react"
 import { useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { PlayFilledAlt } from "@/components/ui/transport-icons"
+import { PlayFilledAlt, PauseFilledAlt } from "@/components/ui/transport-icons"
 import { PlaylistCardMenu } from "@/components/ui/cover-card-menu"
 import { LibraryHeartButton } from "@/components/ui/library-heart-button"
 import { useLongPress } from "@/lib/use-long-press"
@@ -34,7 +34,14 @@ import { usePlayer } from "@/lib/player"
 import { registerPlaylists, getPlaylistDetail } from "@/lib/playlist-catalog"
 
 const COVER_BTN =
-  "border-0 bg-neutral-100/50 text-neutral-900 backdrop-blur-xs hover:bg-neutral-100"
+  // `--hover-fill: transparent` OPTS OUT of the growing hover circle. These
+  // sit on artwork, not on a page surface: the Button variant underneath
+  // carries `--hover-fill: var(--muted)`, a neutral meant for rows and menus,
+  // and over a cover it grew as a grey wash that had nothing to do with the
+  // image. The chip's own answer is the flat step from `bg-neutral-100/50` to
+  // `bg-neutral-100` — a translucent plate getting more opaque, which is what
+  // reads over a photograph.
+  "border-0 bg-neutral-100/50 text-neutral-900 backdrop-blur-xs hover:bg-neutral-100 [--hover-fill:transparent]"
 const COVER_BTN_SM = `${COVER_BTN} size-6 [&_svg]:size-3`
 const COVER_BTN_LG = `${COVER_BTN} size-10 [&_svg]:size-4`
 
@@ -101,7 +108,14 @@ export function PlaylistCard({
   // Play the playlist's first track (context = playlist title). The card
   // always plays itself — the legacy `onPlay` prop (historically wired to
   // navigation by hosts) is intentionally NOT used here.
+  /* Toggle, not restart — see AlbumCard for the reasoning. `playingFrom` is
+   * the playlist's title, which is what `player.play` was handed below. */
+  const thisPlaylistTitle = getPlaylistDetail(key).title
+  const isThisPlaylist    = !!player.track && player.playingFrom === thisPlaylistTitle
+  const isPlaying         = isThisPlaylist && player.playing
+
   const playPlaylist = () => {
+    if (isThisPlaylist) { player.toggle(); return }
     const pl = getPlaylistDetail(key)
     const t = pl.tracks[0]
     if (t) player.play({ title: t.title, artist: t.artist, album: t.album, image: t.cover, totalTime: t.duration }, pl.title)
@@ -193,9 +207,9 @@ export function PlaylistCard({
             size="icon"
             className={COVER_BTN_LG}
             onClick={stop(playPlaylist)}
-            aria-label="Play"
+            aria-label={isPlaying ? "Pause" : "Play"}
           >
-            <PlayFilledAlt />
+            {isPlaying ? <PauseFilledAlt /> : <PlayFilledAlt />}
           </Button>
         </div>
       </div>
@@ -204,7 +218,7 @@ export function PlaylistCard({
         <button
           type="button"
           onClick={onTitleClick ?? goPlaylist}
-          className={cn(titleSize, leadingCls, "font-normal text-foreground text-left line-clamp-2 hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto] pb-[6px] -mb-[6px] outline-none cursor-pointer")}
+          className={cn(titleSize, leadingCls, "font-normal text-foreground text-left line-clamp-2 link-underline pb-[6px] -mb-[6px] outline-none cursor-pointer")}
         >
           {title}
         </button>
@@ -223,7 +237,7 @@ export function PlaylistCard({
               <button
                 type="button"
                 onClick={onOwnerClick}
-                className="truncate hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto] pb-[6px] -mb-[6px] outline-none cursor-pointer"
+                className="truncate link-underline pb-[6px] -mb-[6px] outline-none cursor-pointer"
               >
                 {owner}
               </button>
@@ -240,7 +254,7 @@ export function PlaylistCard({
 function CompositeCover({ covers, title }: { covers: string[]; title: string }) {
   if (covers.length >= 4) {
     return (
-      <div className="grid size-full grid-cols-2 grid-rows-2">
+      <div className="grid size-full grid-cols-2 grid-rows-2 art-edge">
         {covers.slice(0, 4).map((src, i) => (
           <img
             key={i}

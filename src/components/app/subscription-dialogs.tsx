@@ -41,7 +41,14 @@ import { useUserAccount, ANONYMOUS_PLAY_LIMIT } from "@/lib/user-account"
 
 const ABOUT_URL = "https://dev.muza-music.org/about"
 
-const MOCK_USER_EMAIL = "naomi@example.com"
+/* No pre-filled address. `userEmail` defaults to EMPTY so the field opens on
+   its placeholder, the way a person actually meets it. It used to default to
+   `naomi@example.com`, and since nothing in the app passes `userEmail`, that
+   mock was what every dialog and every design-system frame showed: a filled
+   field reads as the product suggesting an address it cannot know, and it hid
+   the empty state — the one state the form always starts in. A real account
+   passes the address in through this prop. */
+const MOCK_USER_EMAIL = ""
 
 // ─── SubscriptionPromptDialog ────────────────────────────────────
 
@@ -143,7 +150,7 @@ function PaywallContent({
               href={ABOUT_URL}
               target="_blank"
               rel="noreferrer"
-              className="text-small text-muted-foreground underline underline-offset-2 hover:text-foreground"
+              className="state-fade text-small text-muted-foreground underline underline-offset-2 hover:text-foreground"
             >
               See how it works <ArrowUpRight className="inline size-3 align-baseline" />
             </a>
@@ -340,8 +347,8 @@ export function SubscriptionCheckoutDialogPreview({
       </div>
 
       <div className="m-0 shrink-0 flex justify-end gap-2 border-t border-border bg-muted px-6 py-4 rounded-b-xl md:rounded-b-2xl">
-        <Button variant="ghost">Cancel</Button>
-        <Button disabled={!emailValid || (!freeTrial && monthlyAmount < MIN_AMOUNT)}>
+        <Button size="lg" variant="ghost">Cancel</Button>
+        <Button size="lg" disabled={!emailValid || (!freeTrial && monthlyAmount < MIN_AMOUNT)}>
           {freeTrial ? "Start free month" : `Subscribe — ${formattedMonthly}`}
         </Button>
       </div>
@@ -492,8 +499,8 @@ export function SubscriptionCheckoutDialog({
             </div>
 
             <DialogFooter className="m-0 shrink-0 border-t border-border bg-muted px-6 py-4 rounded-b-xl md:rounded-b-2xl">
-              <DialogClose render={<Button variant="ghost" />}>Cancel</DialogClose>
-              <Button onClick={handleSubscribe} disabled={!emailValid || (!freeTrial && !paidValid)}>
+              <DialogClose render={<Button size="lg" variant="ghost" />}>Cancel</DialogClose>
+              <Button size="lg" onClick={handleSubscribe} disabled={!emailValid || (!freeTrial && !paidValid)}>
                 {freeTrial ? "Start free month" : `Subscribe — ${formattedMonthly}`}
               </Button>
             </DialogFooter>
@@ -520,7 +527,7 @@ export function SubscriptionCheckoutDialog({
                 Unlimited streaming starts now. Receipt sent to <span className="text-foreground">{email}</span>.
               </p>
             </div>
-            <Button onClick={() => onOpenChange(false)} className="mt-2">
+            <Button size="lg" onClick={() => onOpenChange(false)} className="mt-2">
               Start listening
             </Button>
           </div>
@@ -569,7 +576,7 @@ function AmountPillRow({
               onClick={() => onChange(p)}
               aria-pressed={active}
               className={cn(
-                "h-11 w-full px-2 rounded-full text-base font-normal tabular-nums transition-colors bg-background",
+                "h-12 w-full px-2 rounded-full text-base font-normal tabular-nums transition-colors bg-background",
                 active
                   ? "border border-foreground"
                   : "border border-border hover:border-foreground/40",
@@ -584,7 +591,7 @@ function AmountPillRow({
           (no click-to-reveal). $ prefix + "choose your own" placeholder. */}
       <label
         className={cn(
-          "h-11 w-full pl-4 pr-3 flex items-center gap-1 rounded-full bg-background text-base font-normal tabular-nums transition-colors",
+          "h-12 w-full pl-5 pr-4 flex items-center gap-1 rounded-full bg-background text-base font-normal tabular-nums transition-colors",
           customActive
             ? "border border-foreground"
             : "border border-border hover:border-foreground/40 focus-within:border-foreground",

@@ -30,7 +30,7 @@ import { Pencil, Download } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { PlayFilledAlt } from "@/components/ui/transport-icons"
+import { PlayFilledAlt, PauseFilledAlt } from "@/components/ui/transport-icons"
 import { CoverArt } from "@/components/ui/cover-art"
 import { AlbumCardMenu } from "@/components/ui/cover-card-menu"
 import { LibraryHeartButton } from "@/components/ui/library-heart-button"
@@ -45,7 +45,14 @@ import { registerAlbums, getAlbumDetail } from "@/lib/album-catalog"
 // border-0 to avoid a ghost edge from `bg-clip-padding`. Size
 // overrides per usage: 24px secondary cluster, 40px lead Play.
 const COVER_BTN =
-  "border-0 bg-neutral-100/50 text-neutral-900 backdrop-blur-xs hover:bg-neutral-100"
+  // `--hover-fill: transparent` OPTS OUT of the growing hover circle. These
+  // sit on artwork, not on a page surface: the Button variant underneath
+  // carries `--hover-fill: var(--muted)`, a neutral meant for rows and menus,
+  // and over a cover it grew as a grey wash that had nothing to do with the
+  // image. The chip's own answer is the flat step from `bg-neutral-100/50` to
+  // `bg-neutral-100` — a translucent plate getting more opaque, which is what
+  // reads over a photograph.
+  "border-0 bg-neutral-100/50 text-neutral-900 backdrop-blur-xs hover:bg-neutral-100 [--hover-fill:transparent]"
 const COVER_BTN_SM = `${COVER_BTN} size-6 [&_svg]:size-3`
 const COVER_BTN_LG = `${COVER_BTN} size-10 [&_svg]:size-4`
 
@@ -137,7 +144,22 @@ export function AlbumCard({
   // Start playback from the album's first track (context = album title).
   // The card always plays itself — the legacy `onPlay` prop (which hosts
   // historically wired to navigation) is intentionally NOT used here.
+  /* The cover button is a TOGGLE, not a start button.
+   *
+   * `player.playingFrom` carries the context a track was started from — the
+   * album's own title here — so a card can tell whether the thing playing is
+   * ITS thing without the player knowing anything about cards. Same test the
+   * songs table and the library list already use.
+   *
+   * Without it every press restarted track 1: the icon said Play while the
+   * album was audibly playing, and pressing it did the one thing a Play glyph
+   * promises not to do on something already running. */
+  const thisAlbumTitle = getAlbumDetail(key).title
+  const isThisAlbum    = !!player.track && player.playingFrom === thisAlbumTitle
+  const isPlaying      = isThisAlbum && player.playing
+
   const playAlbum = () => {
+    if (isThisAlbum) { player.toggle(); return }
     const al = getAlbumDetail(key)
     const t = al.tracks[0]
     if (t) player.play({ title: t.title, artist: al.artist, album: al.title, image: al.cover, totalTime: t.duration }, al.title)
@@ -254,9 +276,9 @@ export function AlbumCard({
             size="icon"
             className={COVER_BTN_LG}
             onClick={stop(playAlbum)}
-            aria-label="Play"
+            aria-label={isPlaying ? "Pause" : "Play"}
           >
-            <PlayFilledAlt />
+            {isPlaying ? <PauseFilledAlt /> : <PlayFilledAlt />}
           </Button>
         </div>
       </div>
@@ -269,7 +291,7 @@ export function AlbumCard({
         <button
           type="button"
           onClick={onTitleClick ?? goAlbum}
-          className={cn(titleSize, leadingCls, "font-normal text-foreground text-left line-clamp-2 hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto] pb-[6px] -mb-[6px] outline-none cursor-pointer")}
+          className={cn(titleSize, leadingCls, "font-normal text-foreground text-left line-clamp-2 link-underline pb-[6px] -mb-[6px] outline-none cursor-pointer")}
         >
           {title}
         </button>
@@ -281,7 +303,7 @@ export function AlbumCard({
           <button
             type="button"
             onClick={onArtistClick}
-            className="truncate hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto] pb-[6px] -mb-[6px] outline-none cursor-pointer text-left"
+            className="truncate link-underline pb-[6px] -mb-[6px] outline-none cursor-pointer text-left"
           >
             {artist}
           </button>

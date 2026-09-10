@@ -39,12 +39,12 @@ function Checkbox({ className, onCheckedChange, ...props }: CheckboxPrimitive.Ro
         // Touch target expansion
         "after:absolute after:-inset-x-3 after:-inset-y-2",
         // Focus ring
-        "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+        "focus-visible:border-ring focus-ring",
         // Disabled
         "disabled:cursor-not-allowed disabled:opacity-50",
         "group-has-disabled/field:opacity-50",
         // Invalid
-        "aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20",
+        "aria-invalid:border-destructive invalid-ring",
         "aria-invalid:aria-checked:border-primary",
         // Dark mode default bg
         "dark:bg-input/30",

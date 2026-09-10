@@ -81,7 +81,7 @@ function AccountCard({ account, expanded, onEdit, onClose }: {
 
   return (
     <>
-      <div className={`bg-background border rounded-xl overflow-hidden transition-[colors,box-shadow] duration-200 ${
+      <div className={`bg-background border rounded-xl overflow-hidden transition-[color,background-color,border-color,outline-color,box-shadow] duration-200 ${
         expanded ? "border-foreground/20" : "border-border"
       }`}>
 
@@ -135,14 +135,14 @@ function AccountCard({ account, expanded, onEdit, onClose }: {
       </FormItem>
 
               <div className="flex items-center justify-between pt-1">
-                <Button
+                <Button size="lg"
                   variant="link"
                   className="text-destructive px-0 h-auto"
                   onClick={() => setConfirmDelete(true)}
                 >
                   Delete card
                 </Button>
-                <Button onClick={onClose}>Save</Button>
+                <Button size="lg" onClick={onClose}>Save</Button>
               </div>
             </div>
           </>
@@ -174,9 +174,13 @@ function AccountCard({ account, expanded, onEdit, onClose }: {
 
 // ─── Add row ──────────────────────────────────────────────────────────────────
 
+/* Not a `Button` and not a `NavRow`: a 68px tile with a leading mark is a
+   shape the catalogue does not have. What it does NOT get to invent is the
+   behaviour — the press ripple, the fade and the focus ring come from the
+   system, so it answers a pointer the way every other surface does. */
 function AddRow({ label }: { label: string }) {
   return (
-    <button className="w-full bg-muted rounded-xl px-4 flex items-center gap-3 h-[68px] cursor-pointer hover:bg-accent transition-colors">
+    <button className="w-full press-ripple relative [--press-fill:var(--press-on-muted)] state-fade outline-none focus-ring bg-muted rounded-xl px-4 flex items-center gap-3 h-[68px] cursor-pointer hover:bg-accent state-fade">
       <Plus className="size-4 shrink-0 text-foreground" />
       <span className="text-small text-foreground">{label}</span>
     </button>

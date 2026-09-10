@@ -11,9 +11,12 @@ export const filterTriggerCls = (active: boolean) =>
     // explicit pt/pb). The Select + Input variant (`pt-[6px] pb-[10px]`)
     // sits too high for chips because the lighter `font-normal` weight
     // exposes more empty space above the glyphs than below.
+    "press-ripple relative [--press-fill:var(--press-on-muted)]",
     "inline-flex items-center gap-1.5 h-10 pl-4 pr-3 rounded-full border pb-px",
-    "text-small font-normal whitespace-nowrap transition-colors select-none cursor-pointer",
-    "focus-visible:outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+    // House press: colour, 90ms, same curve as Button and Chip.
+    "text-small font-normal whitespace-nowrap select-none cursor-pointer",
+    "transition-[color,background-color,border-color] duration-[130ms] ease-[cubic-bezier(0.2,0,0,1)]",
+    "focus-visible:outline-none focus-visible:border-ring focus-ring",
     active
       ? "border-foreground/40 bg-muted text-foreground"
       : "border-border bg-background text-foreground hover:border-foreground/30",

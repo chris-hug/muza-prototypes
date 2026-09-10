@@ -97,7 +97,7 @@ export function CoverPlayButton({
       aria-label={playing ? `Pause ${title}` : `Play ${title}`}
       data-playing={playing || undefined}
       className={cn(
-        "group/cpb relative shrink-0 rounded-xs shadow-sm focus-visible:ring-3 focus-visible:ring-ring/50 outline-none cursor-pointer",
+        "group/cpb relative shrink-0 rounded-xs shadow-sm focus-ring outline-none cursor-pointer",
         sizeClassName,
         className,
       )}

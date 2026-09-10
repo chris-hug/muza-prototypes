@@ -59,7 +59,7 @@ function DatePicker({
   disabled = false,
   className,
   id,
-  size = "default",
+  size = "lg",
 }: DatePickerProps) {
   const mobile = useIsMobile()
   const today = new Date()
@@ -137,7 +137,7 @@ function DatePicker({
           CONTROL_PAD_Y[size],
           { sm: "px-2.5", default: "px-3", lg: "px-4" }[size],
           "transition-colors outline-none select-none",
-          "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+          "focus-visible:border-ring focus-ring",
           "disabled:cursor-not-allowed disabled:opacity-50",
           !value && "text-muted-foreground",
           className

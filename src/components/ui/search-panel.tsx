@@ -56,7 +56,7 @@ export function SearchPanel({
                 <button
                   type="button"
                   onClick={() => onPick(s)}
-                  className="group/srow flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-base text-foreground transition-colors hover:bg-muted outline-none focus-visible:bg-muted"
+                  className="group/srow flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-base text-foreground transition-colors hover:bg-muted outline-none focus-visible:bg-muted"
                 >
                   <Search className="size-4 shrink-0 text-muted-foreground" />
                   <span className="min-w-0 truncate">{s}</span>
@@ -68,7 +68,7 @@ export function SearchPanel({
                 <button
                   type="button"
                   onClick={() => onPick(s)}
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 pr-10 text-left text-base text-foreground transition-colors hover:bg-muted outline-none focus-visible:bg-muted"
+                  className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 pr-10 text-left text-base text-foreground transition-colors hover:bg-muted outline-none focus-visible:bg-muted"
                 >
                   <Clock className="size-4 shrink-0 text-muted-foreground" />
                   <span className="min-w-0 truncate">{s}</span>
@@ -77,7 +77,7 @@ export function SearchPanel({
                   type="button"
                   onClick={() => removeRecentSearch(s)}
                   aria-label={`Remove “${s}” from recent searches`}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 flex size-7 items-center justify-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:bg-secondary hover:text-foreground group-hover/srow:opacity-100 focus-visible:opacity-100 outline-none"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 flex size-7 items-center justify-center rounded-full text-muted-foreground opacity-0 transition-opacity hover:bg-secondary hover:text-foreground group-hover/srow:opacity-100 focus-visible:opacity-100 outline-none after:absolute after:-inset-1.5 after:content-['']"
                 >
                   <X className="size-4" />
                 </button>

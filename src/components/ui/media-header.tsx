@@ -169,13 +169,15 @@ export function MediaHeader({
 
   // ── Shared pieces (identical across mobile/desktop layouts) ──────
   const coverInner = hasComposite ? (
-    <div className="grid grid-cols-2 grid-rows-2 size-full rounded-xs overflow-hidden shadow-sm">
+    // The edge goes on the COLLAGE, not the four tiles — one sleeve, one
+    // hairline, rather than a grid of them.
+    <div className="grid grid-cols-2 grid-rows-2 size-full rounded-xs overflow-hidden shadow-sm art-edge">
       {composite!.map((src, i) => (
         <img key={i} src={src} alt="" draggable={false} className="size-full object-cover" />
       ))}
     </div>
   ) : (
-    <img src={cover} alt="" draggable={false} className="size-full object-cover rounded-xs shadow-sm" />
+    <img src={cover} alt="" draggable={false} className="size-full object-cover rounded-xs shadow-sm art-edge" />
   )
 
   const metaLine = (
@@ -206,7 +208,7 @@ export function MediaHeader({
             // `min-w-6` floors the width so the circle can never be
             // squeezed into an oval when the row is tight; the name
             // (`min-w-0` + truncate) is what yields instead.
-            <img src={ownerAvatar} alt="" draggable={false} className="size-6 min-w-6 rounded-full object-cover shrink-0" />
+            <img src={ownerAvatar} alt="" draggable={false} className="size-6 min-w-6 rounded-full object-cover shrink-0 art-edge" />
           )}
           <span className="font-medium truncate min-w-0">{owner}</span>
         </button>

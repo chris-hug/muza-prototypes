@@ -232,16 +232,23 @@ function LibraryHeader({ activeNav, onNavChange }: { activeNav: string; onNavCha
         {/* Search — a secondary icon button (identical to Add) that grows
              into a full-width secondary field. */}
         <div className={cn(
-          "flex items-center h-9 rounded-full bg-secondary overflow-hidden transition-all duration-300 ease-out",
+          // Named rather than `transition-all`: the field grows by flex + width and
+          // its padding and gap open with it, and `all` would also sweep the
+          // press below into the 300ms grow, so a tap felt sluggish.
+          "flex items-center h-9 rounded-full bg-secondary overflow-hidden transition-[flex-grow,flex-basis,width,padding,gap,background-color] duration-300 ease-out",
           open
             ? "flex-1 pl-4 pr-3 gap-2"
-            : "flex-none basis-9 w-9 justify-center hover:bg-secondary-hover active:scale-[0.96]",
+            : "flex-none basis-9 w-9 justify-center hover:bg-secondary-hover",
         )}>
           <button
             type="button"
             aria-label="Search"
             onClick={open ? undefined : openSearch}
-            className="shrink-0 flex items-center justify-center text-foreground outline-none [&_svg]:size-[18px]"
+            // The press lives here, not on the growing wrapper: that one
+            // transitions on a 300ms curve for the field opening, which is
+            // the wrong timing for a tap — and its property list cannot
+            // carry `scale` without dragging it to 300ms too.
+            className="shrink-0 flex items-center justify-center text-foreground outline-none [&_svg]:size-[18px] transition-[color] duration-[130ms] ease-[cubic-bezier(0.2,0,0,1)] active:text-muted-foreground"
           >
             <Search />
           </button>

@@ -28,7 +28,9 @@ const focusRing =
 /** Transport button (skip/play) — opacity-based hover, no fill. */
 const transportBtn = cn(
   "flex items-center justify-center text-foreground rounded-full cursor-pointer",
-  "hover:opacity-70 active:scale-90 transition-[colors,opacity,transform] duration-150",
+  // `scale`, not `transform` — see button.tsx. It sat in the list as
+  // `transform`, so this press never animated at all.
+  "hover:opacity-70 active:opacity-40 transition-[color,background-color,border-color,outline-color,opacity,scale] duration-[130ms] ease-[cubic-bezier(0.2,0,0,1)]",
   focusRing,
   "focus-visible:ring-offset-2 focus-visible:ring-offset-background",
 )
@@ -49,7 +51,7 @@ function Disc({
 }) {
   return (
     <div className={cn("group/disc shrink-0 z-10", className)} style={{ width: size, height: size }}>
-      <div className="size-full rounded-full overflow-hidden shadow-md ring-1 ring-black/10 relative transition-shadow duration-200 group-hover/disc:shadow-lg">
+      <div className="size-full rounded-full overflow-hidden shadow-md ring-1 ring-black/10 dark:ring-white/10 relative transition-shadow duration-200 group-hover/disc:shadow-lg">
         <img
           src={src}
           alt={alt}
@@ -64,7 +66,7 @@ function Disc({
           )}
         />
         <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-neutral-800 ring-1 ring-black/10 shadow-inner flex items-center justify-center"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-neutral-800 ring-1 ring-black/10 dark:ring-white/10 shadow-inner flex items-center justify-center"
           style={{ width: spindle, height: spindle }}
         >
           {/* Tiny bright centre dot */}
@@ -95,7 +97,7 @@ function TrackText({
   // Render a link-ish button when a handler is supplied (hover underline),
   // otherwise a plain caption span. `stopPropagation` keeps a tap from
   // bubbling to any surrounding expand handler.
-  const linkCls = "rounded-sm hover:text-foreground hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/30"
+  const linkCls = "state-fade rounded-sm hover:text-foreground link-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/30"
   const artistEl = onArtistClick ? (
     <button
       type="button"
@@ -181,7 +183,7 @@ function MobileProgressOutline({ progress }: { progress: number }) {
             d={d}
             pathLength={1}
             fill="none"
-            stroke="var(--muza-blue-200)"
+            stroke="var(--muza-brand-200)"
             strokeWidth={4}
             strokeLinecap="round"
             strokeDasharray={`${p} 1`}
@@ -427,7 +429,7 @@ export function PlayerBarB({
               aria-label={playing ? "Pause" : "Play"}
               aria-pressed={playing}
               // Primary CTA — slight scale-up on hover to differentiate from skip buttons.
-              className={cn(transportBtn, "size-12 hover:opacity-80 hover:scale-110 active:scale-95")}
+              className={cn(transportBtn, "size-12 hover:opacity-80 hover:scale-110 active:opacity-50")}
             >
               {playing
                 ? <Pause         className="size-[42px] fill-current stroke-none" />

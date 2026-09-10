@@ -102,7 +102,7 @@ function ItemRow({ item }: { item: ItemLine }) {
         src={item.image}
         alt=""
         draggable={false}
-        className="size-14 rounded-sm object-cover shrink-0"
+        className="size-14 rounded-sm object-cover shrink-0 art-edge"
       />
       <div className="flex-1 min-w-0 flex flex-col gap-0.5">
         <p className="text-small text-foreground truncate">{item.title}</p>

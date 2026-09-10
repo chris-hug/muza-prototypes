@@ -240,7 +240,7 @@ function ReleaseTitleCombobox({
                 <img
                   src={r.cover}
                   alt=""
-                  className="size-12 rounded-xs shrink-0 object-cover shadow-sm"
+                  className="size-12 rounded-xs shrink-0 object-cover shadow-sm art-edge"
                 />
                 <span className="flex flex-col gap-1 flex-1 min-w-0">
                   <span className="text-small font-normal leading-none truncate">{r.title}</span>
@@ -511,7 +511,9 @@ function ArtistsCreditsSection({
             />
             <Button
               variant="ghost"
-              size="icon"
+              /* `icon-lg`: it sits in the row with a credit's name field. */
+              size="icon-lg"
+              aria-label="Remove credit"
               onClick={() => setCredits(xs => xs.filter((_, j) => j !== i))}
             >
               <Trash2 className="size-4" />
@@ -1065,7 +1067,7 @@ export function VinylCreateListing({
           <Badge variant="secondary"><Disc3 />Vinyl</Badge>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => onSave(draft)}>Save Draft</Button>
+          <Button size="lg" variant="outline" onClick={() => onSave(draft)}>Save Draft</Button>
           <PublishButton mode={mode} onPublish={() => onPublish(draft)} />
         </div>
       </div>
@@ -1119,7 +1121,7 @@ function PublishButton({ mode, onPublish }: {
   const label     = isCreate ? "Publish Listing" : "Save Changes"
 
   const button = (
-    <Button onClick={onPublish} disabled={disabled}>
+    <Button size="lg" onClick={onPublish} disabled={disabled}>
       {label}
     </Button>
   )

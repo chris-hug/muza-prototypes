@@ -28,14 +28,14 @@ function Switch({
       data-slot="switch"
       data-size={size}
       className={cn(
-        "peer group/switch relative inline-flex shrink-0 items-center rounded-full border border-transparent transition-[colors,transform] outline-none",
+        "peer group/switch relative inline-flex shrink-0 items-center rounded-full border border-transparent transition-[color,background-color,border-color,outline-color,transform] outline-none",
         // Touch target
         "after:absolute after:-inset-x-3 after:-inset-y-2",
         // Focus ring
-        "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+        "focus-visible:border-ring focus-ring",
         // Invalid
-        "aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20",
-        "dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
+        "aria-invalid:border-destructive invalid-ring",
+        "dark:aria-invalid:border-destructive/50",
         // Sizes
         "data-[size=default]:h-[18px] data-[size=default]:w-[32px]",
         "data-[size=sm]:h-[14px] data-[size=sm]:w-[24px]",
@@ -53,8 +53,11 @@ function Switch({
         className={cn(
           "pointer-events-none block rounded-full bg-background ring-0",
           /* The thumb SLIDES, so it gets its spring in the travel rather than
-             in a scale: an `animate-[muzaTick]` would set `transform: scale()`
-             and overwrite the very translate that moves it. Same overshoot
+             in a scale: the tick animation the checkbox and radio use sets
+             `transform: scale()` and would overwrite the very translate that
+             moves it. (Its class is not written out here — Tailwind scans this
+             file as text, so a class quoted in prose is one it generates.)
+             Same overshoot
              curve the pick mark's strokes use — it runs a little past the end
              of the track and settles back, which is what a physical toggle
              does. */

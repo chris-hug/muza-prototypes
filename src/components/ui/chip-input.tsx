@@ -44,7 +44,7 @@ export interface ChipInputProps {
   size?: ControlSize
 }
 
-export function ChipInput({ id, placeholder, onCommit, className, size = "default" }: ChipInputProps) {
+export function ChipInput({ id, placeholder, onCommit, className, size = "lg" }: ChipInputProps) {
   const [pending, setPending] = useState<string[]>([])
   const [text,    setText]    = useState("")
   const ref = useRef<HTMLInputElement>(null)
@@ -90,7 +90,7 @@ export function ChipInput({ id, placeholder, onCommit, className, size = "defaul
         CONTROL_STACK[size].min,
         CONTROL_STACK[size].pad,
         "hover:border-foreground/30",
-        "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50",
+        "focus-within:border-ring focus-ring-within",
         className,
       )}
     >
@@ -111,7 +111,7 @@ export function ChipInput({ id, placeholder, onCommit, className, size = "defaul
               ref.current?.focus()
             }}
             aria-label={`Remove ${p}`}
-            className="flex size-3.5 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-foreground/10"
+            className="state-fade flex size-3.5 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-foreground/10"
           >
             <X className="size-2.5" />
           </button>

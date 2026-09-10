@@ -29,7 +29,7 @@ export function LibrarySearchField({ className }: { className?: string }) {
           type="button"
           onClick={() => setQ("")}
           aria-label="Clear"
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground outline-none"
+          className="state-fade absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground outline-none"
         >
           <X className="size-4" />
         </button>

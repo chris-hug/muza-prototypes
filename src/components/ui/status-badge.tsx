@@ -43,7 +43,7 @@ const STATUS_TRIGGER_CLS = cn(
   "pt-[4px] pb-[6px] px-[6px]",
   "text-2xsmall font-normal leading-none whitespace-nowrap",
   "transition-colors hover:border-foreground/40 hover:bg-muted hover:text-foreground",
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+  "focus-visible:outline-none focus-ring",
   "[&>svg]:pointer-events-none [&>svg]:shrink-0 [&>svg]:size-3",
   "cursor-pointer select-none",
 )

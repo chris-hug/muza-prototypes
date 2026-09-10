@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { MenuHeart } from "@/components/ui/library-heart-button"
 import { Button } from "@/components/ui/button"
 import { AddMusicIcon } from "@/components/ui/media-icons"
 import { ContentTypeBadge, type ContentType } from "@/components/ui/badge"
@@ -117,8 +118,9 @@ interface Action {
 // (the design system's open, inline surface), where SheetClose has no root.
 function SheetRow({ icon, label, destructive, onClick, keepOpen, dismiss = true }: Action & { dismiss?: boolean }) {
   const cls = cn(
+    "press-ripple relative [--press-fill:var(--press-on-muted)]",
     "flex w-full items-center gap-3 rounded-lg px-3 py-3 text-base text-left transition-colors",
-    "hover:bg-muted active:bg-muted outline-none focus-visible:bg-muted",
+    "hover:bg-muted outline-none focus-visible:bg-muted",
     "[&_svg]:size-5 [&_svg]:shrink-0",
     destructive
       ? "text-destructive [&_svg]:text-destructive"
@@ -139,9 +141,10 @@ function SheetRow({ icon, label, destructive, onClick, keepOpen, dismiss = true 
 // unless `keepOpen` (Save toggles in place).
 function QuickAction({ icon, label, shortLabel, onClick, keepOpen, dismiss = true }: Action & { dismiss?: boolean }) {
   const cls = cn(
+    "press-ripple relative [--press-fill:var(--press-on-secondary)]",
     "flex-1 min-w-0 flex flex-col items-center justify-center gap-2 rounded-2xl bg-secondary px-2 py-3.5",
-    "text-foreground transition-colors hover:bg-secondary-hover active:bg-secondary-hover",
-    "outline-none focus-visible:ring-2 focus-visible:ring-ring/50 [&_svg]:size-5",
+    "text-foreground transition-colors hover:bg-secondary-hover",
+    "outline-none focus-ring [&_svg]:size-5",
   )
   const inner = <>{icon}<span className="text-xsmall">{shortLabel ?? label}</span></>
   if (keepOpen || !dismiss) {
@@ -160,18 +163,18 @@ function MenuCover({ kind, cover, covers, title }: {
 }) {
   // 72px ≈ the height of the three header text lines (title + subtitle + badge).
   if (kind === "artist") {
-    return <img src={cover} alt="" draggable={false} className="size-18 shrink-0 rounded-full object-cover bg-secondary" />
+    return <img src={cover} alt="" draggable={false} className="size-18 shrink-0 rounded-full object-cover bg-secondary art-edge" />
   }
   if (kind === "playlist" && covers && covers.length >= 4) {
     return (
-      <div className="size-18 shrink-0 grid grid-cols-2 grid-rows-2 overflow-hidden rounded-xs">
+      <div className="size-18 shrink-0 grid grid-cols-2 grid-rows-2 overflow-hidden rounded-xs art-edge">
         {covers.slice(0, 4).map((src, i) => (
           <img key={i} src={src} alt="" draggable={false} className="size-full object-cover" />
         ))}
       </div>
     )
   }
-  return <img src={cover ?? covers?.[0]} alt={title} draggable={false} className="size-18 shrink-0 rounded-xs object-cover bg-secondary" />
+  return <img src={cover ?? covers?.[0]} alt={title} draggable={false} className="size-18 shrink-0 rounded-xs object-cover bg-secondary art-edge" />
 }
 
 // ─── DetailMoreButton ─────────────────────────────────────────────────────────
@@ -233,7 +236,7 @@ function useDetailActions({
     ? { icon: <Share />, label: "Share…",    onClick: nativeShare }
     : { icon: <Link2 />, label: "Copy link", onClick: copyLink }
   const save: Action = {
-    icon: <Heart className={saved ? "fill-current" : undefined} />,
+    icon: <MenuHeart filled={saved} />,
     label: saved ? "Remove from library" : "Save to library",
     shortLabel: saved ? "Remove" : "Save",
     onClick: onSave,
@@ -375,7 +378,7 @@ export function DetailMenuSurface(props: DetailMoreButtonProps & { className?: s
             role="menuitem"
             onClick={a.onClick}
             data-variant={a.destructive ? "destructive" : "default"}
-            className={cn(dropdownMenuItemClass, "w-full text-left cursor-pointer hover:bg-accent hover:text-accent-foreground")}
+            className={cn(dropdownMenuItemClass, "state-fade w-full text-left cursor-pointer hover:bg-accent hover:text-accent-foreground")}
           >
             {a.icon}
             {a.label}

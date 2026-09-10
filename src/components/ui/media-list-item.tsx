@@ -90,8 +90,8 @@ export function MediaListItem({
            handles the overflow it was meant to prevent. Unlike SongListItem,
            this row is never placed in a rail cell, so it has no narrow
            context that the page column does not already describe. */
-        "group/row relative flex items-center gap-3 rounded-md pl-2 pr-1.5 py-1.5 cursor-pointer transition-colors",
-        playing ? "bg-muted" : "bg-background hover:bg-muted",
+        "group/row press-ripple relative flex items-center gap-3 rounded-md pl-2 pr-1.5 py-1.5 cursor-pointer state-fade-quick",
+        playing ? "bg-muted" : "bg-background [--hover-fill:var(--muted)]",
         className,
       )}
     >
@@ -108,7 +108,7 @@ export function MediaListItem({
                 <button
                   type="button"
                   onClick={onSubtitleClick}
-                  className="truncate min-w-0 hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] outline-none cursor-pointer"
+                  className="truncate min-w-0 link-underline outline-none cursor-pointer"
                 >
                   {subtitle}
                 </button>
@@ -187,7 +187,7 @@ function Leading({
         src={cover}
         alt=""
         draggable={false}
-        className="size-12 shrink-0 rounded-full object-cover bg-secondary"
+        className="size-12 shrink-0 rounded-full object-cover bg-secondary art-edge"
       />
     )
   }
@@ -195,7 +195,8 @@ function Leading({
   // Playlist — 2×2 collage when there are ≥4 tiles, else single image.
   if (type === "playlist" && covers && covers.length >= 4) {
     return (
-      <div className="size-12 shrink-0 overflow-hidden rounded-xs grid grid-cols-2 grid-rows-2">
+      // Edge on the collage, not the four tiles — one sleeve, one hairline.
+      <div className="size-12 shrink-0 overflow-hidden rounded-xs grid grid-cols-2 grid-rows-2 art-edge">
         {covers.slice(0, 4).map((src, i) => (
           <img key={i} src={src} alt="" draggable={false} className="size-full object-cover" />
         ))}
@@ -209,7 +210,7 @@ function Leading({
       src={cover ?? covers?.[0]}
       alt=""
       draggable={false}
-      className="size-12 shrink-0 rounded-xs object-cover bg-secondary"
+      className="size-12 shrink-0 rounded-xs object-cover bg-secondary art-edge"
     />
   )
 }

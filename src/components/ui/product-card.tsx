@@ -70,7 +70,7 @@ export function ProductCard({
           src={cover}
           alt={title}
           draggable={false}
-          className="size-full object-cover"
+          className="size-full object-cover art-edge"
         />
       </div>
 
@@ -83,7 +83,7 @@ export function ProductCard({
         <button
           type="button"
           onClick={stop(onClick)}
-          className="text-small font-normal leading-5 text-foreground text-left line-clamp-2 min-h-10 hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto] pb-[6px] -mb-[6px] outline-none cursor-pointer"
+          className="text-small font-normal leading-5 text-foreground text-left line-clamp-2 min-h-10 link-underline pb-[6px] -mb-[6px] outline-none cursor-pointer"
         >
           {title}
         </button>

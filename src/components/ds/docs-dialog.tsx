@@ -22,9 +22,18 @@ import { BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Markdown } from "@/components/ds/markdown"
-import { componentDoc } from "@/lib/component-docs"
+import { componentDoc, DOCS_RENDERED_AT } from "@/lib/component-docs"
 
 const REPO = "https://github.com/chris-hug/muza-prototypes/blob/main"
+
+/* `10 Sep 26 · 01:42` — the short date the status badges use, plus the time,
+ * because during a working session the DATE alone answers nothing. Computed
+ * once, at module load, from the docs module's own execution time. */
+const RENDERED_AT_LABEL = `${DOCS_RENDERED_AT.toLocaleDateString("en-GB", {
+  day: "numeric", month: "short", year: "2-digit",
+})} · ${DOCS_RENDERED_AT.toLocaleTimeString("en-GB", {
+  hour: "2-digit", minute: "2-digit",
+})}`
 
 /**
  * The "Docs" button and its dialog. Renders nothing when the component has no
@@ -68,10 +77,20 @@ export function DocsButton({ id, className }: { id: string; className?: string }
               href={`${REPO}/${entry.path}`}
               target="_blank"
               rel="noreferrer"
-              className="mt-1 block w-fit font-mono text-3xsmall text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline"
+              className="mt-1 block w-fit font-mono text-3xsmall text-muted-foreground underline-offset-2 transition-colors hover:text-foreground link-underline"
             >
               {entry.path}
             </a>
+            {/* When THIS text was loaded — not when the component changed.
+                A doc modal is trusted on sight and a stale one looks exactly
+                like a fresh one, so the modal says which it is. In dev the
+                number moves on its own: editing the `.md` re-executes the
+                module that inlines it, and this becomes the time of that
+                edit. `tabular-nums` so the digits do not shuffle the line as
+                the minute rolls over. */}
+            <p className="font-mono text-3xsmall text-muted-foreground/70 tabular-nums">
+              rendered {RENDERED_AT_LABEL}
+            </p>
           </DialogHeader>
           <div className="min-h-0 flex-1 overflow-y-auto pr-1">
             <Markdown source={entry.body} />

@@ -56,7 +56,7 @@ function NavigationMenuTrigger({
     <NavigationMenuPrimitive.Trigger
       data-slot="navigation-menu-trigger"
       className={cn(
-        "inline-flex items-center gap-1 h-9 px-3 rounded-full text-small font-medium text-foreground hover:bg-muted transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+        "inline-flex items-center gap-1 h-9 px-3 rounded-full text-small font-medium text-foreground hover:bg-muted transition-colors outline-none focus-ring",
         className,
       )}
       {...props}
@@ -88,7 +88,7 @@ function NavigationMenuLink({
     <NavigationMenuPrimitive.Link
       data-slot="navigation-menu-link"
       className={cn(
-        "block rounded-lg px-3 py-2 text-small text-foreground hover:bg-muted transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+        "block rounded-lg px-3 py-2 text-small text-foreground hover:bg-muted transition-colors outline-none focus-ring",
         className,
       )}
       {...props}

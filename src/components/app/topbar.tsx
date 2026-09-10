@@ -148,11 +148,16 @@ function CartButton({ onOpen }: { onOpen: () => void }) {
   const cart = useCart()
 
   return (
-    <button
-      type="button"
+    /* `Button variant="ghost" size="icon"` — 40px, ghost's own hover, the
+       press and the focus ring — instead of a hand-drawn 40px circle that had
+       the geometry right and everything else missing. The count badge sits on
+       top of it, which is why the `relative` stays. */
+    <Button
+      variant="ghost"
+      size="icon"
       onClick={onOpen}
       aria-label={`Open cart${cart.count > 0 ? ` (${cart.count} items)` : ""}`}
-      className="relative size-10 flex items-center justify-center rounded-full text-foreground hover:bg-accent transition-colors"
+      className="relative text-foreground"
     >
       <ShoppingCart className="size-[18px]" />
       {cart.count > 0 && (
@@ -164,7 +169,7 @@ function CartButton({ onOpen }: { onOpen: () => void }) {
           <span className="relative top-[-0.5px]">{cart.count > 99 ? "99+" : cart.count}</span>
         </span>
       )}
-    </button>
+    </Button>
   )
 }
 
@@ -215,7 +220,7 @@ export function ProfileMenu({ avatarClassName, onOpenCart }: {
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label="Open profile menu"
-        className="rounded-full shrink-0 hover:opacity-90 transition-opacity outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="rounded-full shrink-0 hover:opacity-90 transition-opacity outline-none focus-ring"
       >
         <UserAvatar username={CURRENT_USERNAME} className={avatarClassName} />
       </DropdownMenuTrigger>

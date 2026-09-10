@@ -31,7 +31,7 @@ export default function InputComposedExample() {
         <Label htmlFor="input-invite">With action</Label>
         <div className="flex gap-2 min-w-0">
           <Input id="input-invite" placeholder="Invite by email" />
-          <Button>Invite</Button>
+          <Button size="lg">Invite</Button>
         </div>
       </div>
 

@@ -79,10 +79,13 @@ export function OrderStatusBadge({
           // chevron signals "this is interactive".
           "inline-flex w-fit shrink-0 items-center gap-1 rounded-sm border",
           "pt-[4px] pb-[6px] pl-[6px] pr-[4px] text-2xsmall font-normal leading-none whitespace-nowrap",
-          "transition-colors cursor-pointer outline-none",
-          "focus-visible:ring-2 focus-visible:ring-ring/50",
+          "transition-[color,background-color,border-color,opacity] duration-[130ms] ease-[cubic-bezier(0.2,0,0,1)] cursor-pointer outline-none",
+          "focus-ring",
           cfg.className,
-          "hover:opacity-90",
+          // The badge carries its status colour from `cfg`, so the press is
+          // an opacity step rather than a named fill — there is no one token
+          // to darken across seven statuses.
+          "hover:opacity-90 active:opacity-75",
           className,
         )}
       >

@@ -203,8 +203,8 @@ export function CreatePlaylistDialog({
 
           {!isMobile && (
             <DialogFooter>
-              <DialogClose render={<Button variant="ghost" />}>Cancel</DialogClose>
-              <Button onClick={create} disabled={!name.trim()}>{action}</Button>
+              <DialogClose render={<Button size="lg" variant="ghost" />}>Cancel</DialogClose>
+              <Button size="lg" onClick={create} disabled={!name.trim()}>{action}</Button>
             </DialogFooter>
           )}
         </DialogFormBody>

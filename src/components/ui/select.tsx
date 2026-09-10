@@ -141,7 +141,7 @@ function SelectValue({ className, children, placeholder, ...props }: SelectPrimi
 
 function SelectTrigger({
   className,
-  size = "default",
+  size = "lg",
   children,
   ...props
 }: SelectPrimitive.Trigger.Props & {
@@ -156,7 +156,7 @@ function SelectTrigger({
         // The shared form-control recipe — see the "Form controls" section of
         // DESIGN_SYSTEM.md. (This line claimed `rounded-xl, text-base` for years
         // while the class beside it said `rounded-full` and `text-small`.)
-        "flex w-fit items-center justify-between gap-1.5 rounded-full border border-border hover:border-foreground/30 bg-background pr-2 font-normal whitespace-nowrap transition-colors outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-placeholder:text-muted-foreground *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "flex w-fit items-center justify-between gap-1.5 rounded-full border border-border hover:border-foreground/30 bg-background pr-2 font-normal whitespace-nowrap transition-colors outline-none select-none focus-visible:border-ring focus-ring disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive invalid-ring data-placeholder:text-muted-foreground *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 dark:aria-invalid:border-destructive/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         /* Height + type + the optical lift come from the shared ladder, so a
            trigger is the same row as the Input and the Button beside it. Only
            the LEFT padding is taken from it — the right edge is `pr-2`, flush
@@ -236,7 +236,7 @@ function SelectContent({
         <SelectPrimitive.Popup
           data-slot="select-content"
           data-align-trigger={alignItemWithTrigger}
-          className={cn("relative isolate z-50 max-h-(--available-height) min-w-[max(9rem,var(--anchor-width))] max-w-[min(28rem,var(--available-width))] origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-xl bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
+          className={cn("relative isolate z-50 max-h-(--available-height) min-w-[max(9rem,var(--anchor-width))] max-w-[min(28rem,var(--available-width))] origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-xl bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 transition-none data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
             mobile && sheetPopupClass,
             className)}
           {...props}
@@ -274,7 +274,7 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-default items-center gap-1.5 rounded-lg py-1.5 pr-8 pl-3 text-small font-normal outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "state-fade relative flex w-full cursor-default items-center gap-1.5 rounded-lg py-1.5 pr-8 pl-3 text-small font-normal outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         /* A finger needs more than a 1.5-line row. Same 44px-ish target the
            bottom-sheet menu rows use, so the two surfaces feel like one. */
         mobile && "min-h-11 py-2.5 pl-4 pr-10",

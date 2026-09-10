@@ -401,12 +401,12 @@ export function ReportView({ embedded = false }: { embedded?: boolean }) {
           <div className="relative flex items-center justify-end px-4 pt-8 pb-2">
             <div className="absolute right-4 inline-flex items-center rounded-full bg-muted p-1 gap-0.5">
               <button onClick={() => setChartView("cumulative")} title="Cumulative"
-                className={cn("inline-flex items-center justify-center rounded-full size-7 transition-[colors,box-shadow]",
+                className={cn("inline-flex items-center justify-center rounded-full size-7 transition-[color,background-color,border-color,outline-color,box-shadow]",
                   chartView === "cumulative" ? "bg-background border border-border text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground")}>
                 <TrendingUpIcon className="size-3.5" />
               </button>
               <button onClick={() => setChartView("per-period")} title="Per period"
-                className={cn("inline-flex items-center justify-center rounded-full size-7 transition-[colors,box-shadow]",
+                className={cn("inline-flex items-center justify-center rounded-full size-7 transition-[color,background-color,border-color,outline-color,box-shadow]",
                   chartView === "per-period" ? "bg-background border border-border text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground")}>
                 <BarChart2 className="size-3.5" />
               </button>

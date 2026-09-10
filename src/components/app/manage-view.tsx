@@ -98,9 +98,13 @@ function PaymentRow({ logo, name, detail, active, onEdit }: PaymentRowProps) {
 
 // ─── Add new row ──────────────────────────────────────────────────────────────
 
+/* Not a `Button` and not a `NavRow`: a 68px tile with a leading mark is a
+   shape the catalogue does not have. What it does NOT get to invent is the
+   behaviour — the press ripple, the fade and the focus ring come from the
+   system, so it answers a pointer the way every other surface does. */
 function AddRow({ label }: { label: string }) {
   return (
-    <button className="w-full bg-muted/50 border border-border rounded-xl p-4 flex items-center gap-4 h-[68px] cursor-pointer hover:bg-muted transition-colors">
+    <button className="w-full press-ripple relative [--press-fill:var(--press-on-muted)] state-fade outline-none focus-ring bg-muted/50 border border-border rounded-xl p-4 flex items-center gap-4 h-[68px] cursor-pointer hover:bg-muted state-fade">
       <div className="shrink-0 size-[52px] rounded-full bg-foreground flex items-center justify-center">
         <Plus className="size-[18px] text-background" />
       </div>
@@ -170,7 +174,7 @@ function EditPanel({ name, detail, logo, onClose }: EditPanelProps) {
         <Button variant="link" className="text-destructive px-0 h-auto">
           Delete card
         </Button>
-        <Button>Save</Button>
+        <Button size="lg">Save</Button>
       </div>
 
     </div>

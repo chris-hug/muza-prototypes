@@ -345,7 +345,7 @@ function ShipmentSection({ fulfillment, eta }: {
                     href={trackingUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-foreground hover:underline underline-offset-3 tabular-nums"
+                    className="inline-flex items-center gap-1 text-foreground link-underline tabular-nums"
                   >
                     {trackingNumber}
                     <ExternalLink className="size-3.5" />

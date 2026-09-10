@@ -176,7 +176,7 @@ function UpNextQueue({
                   type="button"
                   aria-label={`Reorder ${q.title}`}
                   onPointerDown={startDrag(i)}
-                  className="relative shrink-0 flex size-8 items-center justify-center rounded-md text-muted-foreground touch-none cursor-grab active:cursor-grabbing hover:text-foreground hover:bg-foreground/5 outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                  className="relative shrink-0 flex size-8 items-center justify-center rounded-md text-muted-foreground touch-none cursor-grab active:cursor-grabbing hover:text-foreground hover:bg-foreground/5 outline-none focus-ring"
                 >
                   <GripVertical strokeWidth={1.5} className="size-4" />
                 </button>
@@ -584,11 +584,11 @@ export function PlayerOverlay({
             <button
               type="button"
               onClick={onPlayingFromClick}
-              className="group w-full text-left rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/30"
+              className="group link-underline-group w-full text-left rounded-sm focus-visible:outline-none focus-ring"
             >
               <MarqueeText
                 containerClassName="leading-none"
-                className="text-xsmall leading-none font-normal text-foreground group-hover:underline underline-offset-2"
+                className="text-xsmall leading-none font-normal text-foreground link-underline"
               >
                 {playingFrom}
               </MarqueeText>
@@ -612,7 +612,7 @@ export function PlayerOverlay({
           {/* Cover art — square, size computed from available height + width.
               `rounded-xs` (2px) matches the design system's image-corner spec. */}
           <div
-            className="rounded-xs overflow-hidden shadow-md"
+            className="rounded-xs overflow-hidden shadow-md art-edge"
             style={{ width: coverSize, height: coverSize }}
           >
             <img src={track.image} alt={track.title} className="size-full object-cover" draggable={false} />
@@ -645,14 +645,14 @@ export function PlayerOverlay({
               <button
                 type="button"
                 onClick={onArtistClick}
-                className="self-start flex items-center gap-1.5 min-w-0 max-w-full rounded-full hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/30"
+                className="state-fade self-start flex items-center gap-1.5 min-w-0 max-w-full rounded-full hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/30"
               >
                 <img
                   src={artistAvatar}
                   alt=""
                   className="size-6 min-w-6 shrink-0 rounded-full object-cover ring-1 ring-border"
                 />
-                <span className="text-xsmall font-medium text-muted-foreground truncate min-w-0 hover:text-foreground hover:underline underline-offset-2">
+                <span className="state-fade text-xsmall font-medium text-muted-foreground truncate min-w-0 hover:text-foreground link-underline">
                   {track.artist}
                 </span>
               </button>
@@ -736,7 +736,7 @@ export function PlayerOverlay({
               iconSize={toggleIcon}
             />
 
-            <Button variant="ghost" size="icon-sm" aria-label="Previous track" className="hover:bg-transparent">
+            <Button variant="ghost" size="icon-sm" aria-label="Previous track" className="hover:bg-transparent [--hover-fill:transparent]">
               <SkipBackFilled style={{ width: skipIcon, height: skipIcon }} />
             </Button>
 
@@ -745,7 +745,7 @@ export function PlayerOverlay({
               onClick={() => setPlaying(p => !p)}
               aria-label={playing ? "Pause" : "Play"}
               aria-pressed={playing}
-              className="p-0 hover:bg-transparent"
+              className="p-0 hover:bg-transparent [--hover-fill:transparent]"
               style={{ width: playSize, height: playSize }}
             >
               {playing
@@ -754,7 +754,7 @@ export function PlayerOverlay({
               }
             </Button>
 
-            <Button variant="ghost" size="icon-sm" aria-label="Next track" className="hover:bg-transparent">
+            <Button variant="ghost" size="icon-sm" aria-label="Next track" className="hover:bg-transparent [--hover-fill:transparent]">
               <SkipForwardFilled style={{ width: skipIcon, height: skipIcon }} />
             </Button>
 

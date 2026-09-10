@@ -51,8 +51,8 @@ export default function DialogFormExample() {
       </RadioCardGroup>
 
       <DialogPreviewFooter>
-        <Button variant="outline">Cancel</Button>
-        <Button>Create Listing</Button>
+        <Button size="lg" variant="outline">Cancel</Button>
+        <Button size="lg">Create Listing</Button>
       </DialogPreviewFooter>
     </DialogPreview>
   )

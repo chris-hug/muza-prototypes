@@ -34,13 +34,17 @@ export function CoverArt({
         alt={alt}
         draggable={false}
         onError={() => setFailed(true)}
-        className={cn("size-full object-cover", className)}
+        // `art-edge` — the 1px hairline every cover carries, so a white or
+        // black sleeve keeps its shape against a page of the same colour.
+        className={cn("size-full object-cover art-edge", className)}
       />
     )
   }
 
   return (
-    <div className={cn("size-full bg-muted flex items-center justify-center", className)} aria-label={alt || undefined}>
+    // Same edge on the fallback: it stands where a cover would, so it has
+    // to hold the same shape.
+    <div className={cn("size-full bg-muted flex items-center justify-center art-edge", className)} aria-label={alt || undefined}>
       {/* Solid secondary fill (no alpha) so the 3 overlapping circles read
           as one flat mark — matches the ArtistCard placeholder. */}
       <LogoMark className={cn("w-2/5 h-auto text-secondary", logoClassName)} />

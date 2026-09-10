@@ -32,10 +32,15 @@ function Toggle({ className, size = "sm", ...props }: ToggleProps) {
     <TogglePrimitive
       data-slot="toggle"
       className={cn(
-        // Base — shared by standalone + grouped uses
-        "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full transition-colors outline-none",
+        // Base — shared by standalone + grouped uses. `relative z-10` keeps
+        // the label above the group's travelling pill, which is `z-0`.
+        "relative z-10 inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full outline-none",
+        "transition-[color,background-color,border-color,outline-color] duration-[130ms] ease-[cubic-bezier(0.2,0,0,1)]",
+        // Press is colour, never geometry — a segmented control that moves
+        // fights the pill travelling underneath it.
+        "active:bg-press-on-muted",
         "text-muted-foreground hover:text-foreground",
-        "focus-visible:ring-3 focus-visible:ring-ring/50",
+        "focus-ring",
         "disabled:pointer-events-none disabled:opacity-50",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
 
@@ -53,6 +58,14 @@ function Toggle({ className, size = "sm", ...props }: ToggleProps) {
 
         // Pressed — soft "lifted pill" matching the topbar theme toggle.
         "data-pressed:bg-background data-pressed:text-foreground data-pressed:shadow-sm",
+        // …except inside a single-select ToggleGroup, where the group draws
+        // ONE pill and slides it between items. The fill moves to that
+        // element so the mark travels instead of switching on in one place
+        // and off in another — the same swap `TabsTrigger` made for its
+        // underline. `multiple` groups set no `data-travel`, so every pressed
+        // item keeps its own pill, which is what multi-select means.
+        "group-data-[travel=true]/toggle-group:data-pressed:bg-transparent",
+        "group-data-[travel=true]/toggle-group:data-pressed:shadow-none",
 
         className,
       )}

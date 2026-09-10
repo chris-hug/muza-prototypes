@@ -171,7 +171,7 @@ function CurrencyPicker() {
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label="Change currency"
-        className="inline-flex items-center gap-1 h-8 px-2 rounded-full text-xsmall text-muted-foreground hover:text-foreground hover:bg-muted transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="inline-flex items-center gap-1 h-8 px-2 rounded-full text-xsmall text-muted-foreground hover:text-foreground hover:bg-muted transition-colors outline-none focus-ring"
       >
         <Globe className="size-3.5" />
         <span className="font-medium">{cart.currency.code}</span>
@@ -259,7 +259,7 @@ function LineRow({ line }: { line: CartLine }) {
       <img
         src={line.image}
         alt=""
-        className="size-20 rounded-sm object-cover shrink-0"
+        className="size-20 rounded-sm object-cover shrink-0 art-edge"
         draggable={false}
       />
 
@@ -629,10 +629,10 @@ function ShippingAddressLink() {
           </div>
 
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" />}>
+            <DialogClose render={<Button size="lg" variant="outline" />}>
               Cancel
             </DialogClose>
-            <Button
+            <Button size="lg"
               disabled={!canSave}
               onClick={() => { cart.setShippingAddress(draft); setOpen(false) }}
             >
@@ -679,7 +679,7 @@ function PromoCard() {
           aria-label="Promo code"
           className="flex-1"
         />
-        <Button
+        <Button size="lg"
           variant="outline"
           onClick={() => {
             if (!draft.trim()) return
@@ -741,7 +741,7 @@ function WalletCoverage({ onTopUp }: { onTopUp: () => void }) {
         <button
           type="button"
           onClick={onTopUp}
-          className="text-destructive tabular-nums hover:underline underline-offset-3"
+          className="text-destructive tabular-nums link-underline"
         >
           short {cart.format(cart.walletShortfall)} · top up
         </button>

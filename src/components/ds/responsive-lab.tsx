@@ -209,7 +209,7 @@ export function ResponsiveLab() {
                   className={cn(
                     "border-b border-border last:border-0 cursor-pointer transition-colors",
                     "hover:bg-muted data-[state=selected]:bg-muted",
-                    "outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset",
+                    "outline-none focus-ring focus-visible:ring-inset",
                   )}
                 >
                   <th scope="row" className="whitespace-nowrap px-3 py-2 font-medium text-foreground">{v.name}</th>

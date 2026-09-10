@@ -55,7 +55,7 @@ export function MobileIconButton({ label, onClick, children }: { label: string; 
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground transition-[background,transform] hover:bg-secondary-hover active:scale-[0.96] outline-none focus-visible:ring-3 focus-visible:ring-ring/50 [&_svg]:size-[18px]"
+      className="relative flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground transition-[background-color] duration-[130ms] ease-[cubic-bezier(0.2,0,0,1)] hover:bg-secondary-hover active:bg-press-on-secondary outline-none focus-ring [&_svg]:size-[18px] after:absolute after:-inset-0.5 after:content-['']"
     >
       {children}
     </button>
@@ -64,7 +64,7 @@ export function MobileIconButton({ label, onClick, children }: { label: string; 
 
 // Trailing avatar.
 export function MobileAvatar({ src }: { src: string }) {
-  return <img src={src} alt="" draggable={false} className="size-9 rounded-full object-cover bg-secondary shrink-0" />
+  return <img src={src} alt="" draggable={false} className="size-9 rounded-full object-cover bg-secondary shrink-0 art-edge" />
 }
 
 // ── Search bar ───────────────────────────────────────────────────────
@@ -99,7 +99,7 @@ export function MobileSearchBar({
           className="flex-1 min-w-0 bg-transparent outline-none text-base font-normal text-foreground placeholder:text-muted-foreground"
         />
         {onClear && value
-          ? <button type="button" onClick={onClear} aria-label="Clear" className="shrink-0 text-muted-foreground hover:text-foreground"><X className="size-4" /></button>
+          ? <button type="button" onClick={onClear} aria-label="Clear" className="state-fade shrink-0 text-muted-foreground hover:text-foreground"><X className="size-4" /></button>
           : null}
       </div>
       {onCancel && (
@@ -172,7 +172,7 @@ export function MobileScopeToggle({ options, value, onChange }: {
             onClick={() => onChange?.(o.value)}
             aria-pressed={active}
             className={cn(
-              "flex-1 h-8 rounded-full text-small font-medium transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+              "flex-1 h-8 rounded-full text-small font-medium transition-colors outline-none focus-ring",
               active ? "bg-background text-foreground shadow-[0_1px_2px_rgba(13,13,4,0.10)]" : "text-muted-foreground",
             )}
           >

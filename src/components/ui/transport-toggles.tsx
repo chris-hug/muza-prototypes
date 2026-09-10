@@ -82,9 +82,20 @@ export function ShuffleToggle({
         aria-pressed={active}
         onClick={handleClick}
         className={cn(
-          "p-0 relative transition-colors",
+          // No `transition-colors` here: Button's fade comes from the
+          // `state-fade` utility, which tailwind-merge does not know about, so
+          // a second transition class does not replace it — it just races it
+          // in the cascade. Button already eases its colours.
+          "p-0 relative",
           !sized && "size-full",
-          active && "bg-primary hover:bg-primary-hover active:bg-primary-hover text-primary-foreground",
+          // An override of the FILL has to override the RIPPLE with it. The
+          // `secondary` variant underneath carries
+          // `--hover-fill: var(--secondary-hover)`, so an active (blue) shuffle
+          // grew a grey circle over its own blue — the variant's neutral, on a
+          // surface the variant no longer owns. Stated as tokens rather than
+          // `hover:bg-*` classes, or the colour arrives twice: once flat
+          // underneath, once growing.
+          active && "bg-primary text-primary-foreground [--hover-fill:var(--primary-hover)] [--press-fill:var(--primary-active)]",
         )}
         style={sized ? { width: w, height: h } : undefined}
       >
@@ -114,8 +125,10 @@ export function RepeatToggle({
       aria-pressed={active}
       onClick={onToggle}
       className={cn(
-        "p-0 transition-colors",
-        active && "bg-primary hover:bg-primary-hover active:bg-primary-hover",
+        "p-0",
+        // Same as ShuffleToggle: the blue pill needs a blue ripple, not the
+        // variant's neutral one.
+        active && "bg-primary [--hover-fill:var(--primary-hover)] [--press-fill:var(--primary-active)]",
         className,
       )}
       style={{ width: w, height: h }}

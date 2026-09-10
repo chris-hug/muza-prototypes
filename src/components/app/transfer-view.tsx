@@ -56,7 +56,7 @@ export function TransferView() {
                       You have ${BALANCE.toFixed(2)} in your balance
                     </p>
                   </div>
-                  <Button
+                  <Button size="lg"
                     variant="secondary"
                     className="w-full"
                     onClick={() => setAmount(BALANCE.toFixed(2))}

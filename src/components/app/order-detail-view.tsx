@@ -488,12 +488,12 @@ function FulfillmentSection({ d, status, onStatusChange }: {
       Awaiting capture — can't ship yet
     </span>
   ) : status === "new" ? (
-    <Button variant="secondary" onClick={() => transition("shipped", "Marked as shipped")}>
+    <Button size="lg" variant="secondary" onClick={() => transition("shipped", "Marked as shipped")}>
       <Truck className="size-4" />
       Mark as shipped
     </Button>
   ) : status === "shipped" ? (
-    <Button variant="secondary" onClick={() => transition("delivered", "Marked as delivered")}>
+    <Button size="lg" variant="secondary" onClick={() => transition("delivered", "Marked as delivered")}>
       <CheckCircle2 className="size-4" />
       Mark as delivered
     </Button>
@@ -538,7 +538,7 @@ function FulfillmentSection({ d, status, onStatusChange }: {
           href={trackingUrl}
           target="_blank"
           rel="noreferrer"
-          className="mt-3 inline-flex items-center gap-1.5 text-xsmall text-primary-text hover:underline underline-offset-3"
+          className="mt-3 inline-flex items-center gap-1.5 text-xsmall text-primary-text link-underline"
         >
           Track on {carrier}
           <ExternalLink className="size-3" />
@@ -853,7 +853,7 @@ function CopyButton({ value }: { value: string }) {
           setTimeout(() => setCopied(false), 1200)
         })
       }}
-      className="text-muted-foreground hover:text-foreground transition-[colors,opacity] opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+      className="text-muted-foreground hover:text-foreground transition-[color,background-color,border-color,outline-color,opacity] opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
       aria-label={`Copy ${value}`}
     >
       {copied ? <CheckCircle2 className="size-3.5 text-green-600 dark:text-green-400" /> : <Copy className="size-3.5" />}
@@ -901,7 +901,7 @@ function CustomerSection({ d, order, status }: {
       <div className="mt-2 flex flex-col gap-0.5 -mx-2.5">
         <div className="group flex items-center gap-2 min-w-0 px-2.5 py-2 rounded-lg hover:bg-muted transition-colors">
           <Mail className="size-3.5 text-muted-foreground shrink-0" />
-          <a href={`mailto:${d.email}`} className="text-xsmall text-foreground hover:underline truncate">
+          <a href={`mailto:${d.email}`} className="text-xsmall text-foreground link-underline truncate">
             {d.email}
           </a>
           <span className="ml-auto pl-2">
@@ -1118,9 +1118,14 @@ export function OrderDetailView({
                so its vertical center always tracks the row's center, no
                magic numbers needed. */}
           <div className="relative flex items-center gap-3 flex-wrap md:pl-0 pl-9">
-            {/* Wrapper absorbs the centering transform (translate-y-1/2)
-                 so the button's own `active:translate-y-px` press-state
-                 doesn't fight with it — clean click feedback, no jump. */}
+            {/* Wrapper carries the centering transform (translate-y-1/2) so the
+                 button itself keeps a clean transform. The wording here used to
+                 name a 1px press class; the press is a colour step now and moves
+                 nothing, but the split is still the right shape.
+
+                 Class names are not written out in comments on purpose —
+                 Tailwind scans this file as text, so a class quoted in prose is
+                 a class it generates. */}
             <div className="absolute left-0 top-1/2 -translate-y-1/2 md:left-[-52px]">
               <Button
                 variant="ghost"
@@ -1235,7 +1240,7 @@ export function OrderDetailView({
                         },
                       } as never)
                     }}
-                    className="text-xsmall text-destructive hover:underline underline-offset-3"
+                    className="text-xsmall text-destructive link-underline"
                   >
                     Cancel & refund this order
                   </button>

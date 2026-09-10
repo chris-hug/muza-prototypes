@@ -162,7 +162,7 @@ function ChecklistItem({ done, label, onClick }: { done: boolean; label: string;
       <button
         type="button"
         onClick={onClick}
-        className="group/check flex items-center gap-2 w-full text-left outline-none rounded-md focus-visible:underline underline-offset-3"
+        className="group/check link-underline-group flex items-center gap-2 w-full text-left outline-none rounded-md"
       >
         {done
           ? <CheckCircle2 className="size-4 text-green-600 dark:text-green-400 shrink-0" aria-hidden="true" />
@@ -170,7 +170,7 @@ function ChecklistItem({ done, label, onClick }: { done: boolean; label: string;
         }
         <span className={cn(
           "text-small",
-          done ? "text-muted-foreground line-through" : "text-foreground group-hover/check:underline underline-offset-3",
+          done ? "text-muted-foreground line-through" : "text-foreground link-underline",
         )}>
           {label}
         </span>

@@ -46,6 +46,11 @@ interface InputSelectProps extends Omit<React.ComponentProps<"input">, "size"> {
 
 function InputSelect({
   className,
+  /* Declared in the props and never forwarded — the fused control ignored
+     `size` entirely and always rendered whatever `Input` and `SelectTrigger`
+     defaulted to. Passing it through is what makes the two halves agree at
+     any step of the ladder, which is the whole point of fusing them. */
+  size = "lg",
   selectValue,
   onSelectChange,
   options,
@@ -55,6 +60,7 @@ function InputSelect({
   return (
     <div className="flex">
       <Input
+        size={size}
         className={cn(
           "rounded-r-none -mr-px focus-visible:z-10",
           className
@@ -63,6 +69,7 @@ function InputSelect({
       />
       <Select value={selectValue} onValueChange={onSelectChange}>
         <SelectTrigger
+          size={size}
           className={cn("rounded-l-none w-auto shrink-0", selectClassName)}
         >
           <SelectValue />

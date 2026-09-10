@@ -32,10 +32,10 @@ const chipVariants = cva(
     // inner adornment (count badge, leading icon). Size-specific
     // metrics live in the `size` variant below.
     "group/chip inline-flex items-center gap-2",
-    "rounded-full border pb-px",
+    "press-ripple relative [--press-fill:var(--press-on-muted)] rounded-full border pb-px",
     "font-normal whitespace-nowrap",
-    "transition-[colors,box-shadow] cursor-pointer select-none outline-none",
-    "focus-visible:ring-2 focus-visible:ring-ring/50",
+    "transition-[color,background-color,border-color,outline-color] duration-[130ms] ease-[cubic-bezier(0.2,0,0,1)] cursor-pointer select-none outline-none",
+    "focus-ring",
     "disabled:pointer-events-none disabled:opacity-50",
   ],
   {
@@ -49,7 +49,7 @@ const chipVariants = cva(
           "border-border bg-muted text-foreground hover:bg-muted",
         // Selected state — primary fill
         selected:
-          "border-primary bg-primary text-primary-foreground",
+          "border-primary bg-primary text-primary-foreground active:bg-primary-active",
         // Selected state — dark outline only (secondary toggle)
         "selected-outline":
           "border-foreground bg-muted text-foreground",
@@ -146,7 +146,7 @@ function ChipDismiss({
         aria-label={`Remove ${children}`}
         className={cn(
           "flex size-3.5 shrink-0 items-center justify-center rounded-full",
-          "transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/50",
+          "transition-colors focus-visible:outline-none focus-ring",
           selected
             ? "hover:bg-primary-foreground/20 text-primary-foreground/80"
             : "hover:bg-foreground/10 text-muted-foreground",

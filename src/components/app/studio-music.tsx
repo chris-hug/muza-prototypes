@@ -9,16 +9,15 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { ChipDismiss } from "@/components/ui/chip"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuLabel,
-  DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
-import { TableHead } from "@/components/ui/table"
+import { Input } from "@/components/ui/input"
+import { TableHead, SortHeader } from "@/components/ui/table"
 import { filterTriggerCls, FilterChevron } from "@/components/ui/filter-button"
 import { MultiSelect } from "@/components/ui/multi-select"
 import {
-  ArrowDown, ArrowUp, ArrowUpDown, Settings2, ChevronDown,
-  Download, Pencil, Play, Search, Upload, X, Laptop, ChevronLeft,
-} from "lucide-react"
+  Settings2, ChevronDown,
+  Download, Pencil, Play, Search, Upload, X, Laptop, ChevronLeft } from "lucide-react"
 import { UploadMusicDialog } from "@/components/app/upload-music-dialog"
 import { EditReleaseDialog } from "@/components/app/edit-release-dialog"
 import { useIsMobile } from "@/lib/use-media-query"
@@ -52,14 +51,12 @@ interface Release {
 const DEFAULT_WIDTHS: Record<ColKey, number> = {
   id: 64, cover: 44, title: 200, artist: 100, band: 100,
   year: 44, tracks: 68, uploaded: 88, type: 72, state: 88,
-  label: 96, monetisation: 148,
-}
+  label: 96, monetisation: 148 }
 
 const MIN_WIDTHS: Record<ColKey, number> = {
   id: 48, cover: 44, title: 140, artist: 72, band: 72,
   year: 32, tracks: 60, uploaded: 72, type: 56, state: 80,
-  label: 72, monetisation: 96,
-}
+  label: 72, monetisation: 96 }
 
 const COL_DEFS: { key: ColKey; label: string; required?: boolean }[] = [
   { key: "id",          label: "ID" },
@@ -89,8 +86,7 @@ const COL_HIDE_THRESHOLD: Partial<Record<ColKey, number>> = {
   uploaded:     800,
   type:         710,
   monetisation: 640,
-  state:        500,
-}
+  state:        500 }
 
 // ─── Sort & upload date helpers ───────────────────────────────────────────────
 
@@ -190,8 +186,7 @@ function sortReleases(releases: Release[], key: SortKey, dir: SortDir): Release[
 /** Which ColKey maps to which SortKey (only sortable columns) */
 const COL_SORT_KEY: Partial<Record<ColKey, SortKey>> = {
   id: "id", title: "title", artist: "artist",
-  band: "band", year: "year", tracks: "tracks", uploaded: "uploaded", label: "label",
-}
+  band: "band", year: "year", tracks: "tracks", uploaded: "uploaded", label: "label" }
 
 // ─── Jazz mock data (30 releases) ─────────────────────────────────────────────
 
@@ -247,11 +242,9 @@ const RELEASES: Release[] = [
 ]
 
 const CONTENT_TYPE_LABELS: Record<ContentType, string> = {
-  album: "Album", single: "Single", ep: "EP",
-}
+  album: "Album", single: "Single", ep: "EP" }
 const STATUS_LABELS: Record<ReleaseStatus, string> = {
-  public: "Public", private: "Private",
-}
+  public: "Public", private: "Private" }
 
 // ─── Shared filter UI primitives ──────────────────────────────────────────────
 
@@ -275,8 +268,7 @@ function FilterPopoverClearAll({ onClear, label = "Clear all" }: { onClear: () =
 
 function ContentTypeMultiSelect({
   selected,
-  onChange,
-}: {
+  onChange }: {
   selected: Set<ContentType>
   onChange: (next: Set<ContentType>) => void
 }) {
@@ -285,8 +277,7 @@ function ContentTypeMultiSelect({
       label="Type"
       options={(["album", "single", "ep"] as ContentType[]).map(t => ({
         value: t,
-        label: CONTENT_TYPE_LABELS[t],
-      }))}
+        label: CONTENT_TYPE_LABELS[t] }))}
       selected={selected as Set<string>}
       onChange={next => onChange(next as Set<ContentType>)}
     />
@@ -333,8 +324,7 @@ function FilterButton({ label, active, children }: {
 function ArtistMultiSelect({
   options,
   selected,
-  onChange,
-}: {
+  onChange }: {
   options: string[]
   selected: Set<string>
   onChange: (next: Set<string>) => void
@@ -357,8 +347,7 @@ function ArtistMultiSelect({
 function LabelMultiSelect({
   options,
   selected,
-  onChange,
-}: {
+  onChange }: {
   options: string[]
   selected: Set<string>
   onChange: (next: Set<string>) => void
@@ -380,13 +369,11 @@ type MonetisationKind = typeof MONETISATION_KINDS[number]
 const MONETISATION_KIND_LABELS: Record<MonetisationKind, string> = {
   "streaming":          "Streaming",
   "purchase":           "Purchase",
-  "purchase+download":  "Purchase + Download",
-}
+  "purchase+download":  "Purchase + Download" }
 
 function MonetisationMultiSelect({
   selected,
-  onChange,
-}: {
+  onChange }: {
   selected: Set<MonetisationKind>
   onChange: (next: Set<MonetisationKind>) => void
 }) {
@@ -395,8 +382,7 @@ function MonetisationMultiSelect({
       label="Monetisation"
       options={MONETISATION_KINDS.map(kind => ({
         value: kind,
-        label: MONETISATION_KIND_LABELS[kind],
-      }))}
+        label: MONETISATION_KIND_LABELS[kind] }))}
       selected={selected as Set<string>}
       onChange={next => onChange(next as Set<MonetisationKind>)}
     />
@@ -439,7 +425,7 @@ function MusicRow({ release, visibleCols, isSelected, onSelect, status, onStatus
 
       {/* Cover */}
       <td className={cn("px-2 py-0", !vis.cover && "hidden")}>
-        <div className="rounded-xs bg-neutral-200 overflow-hidden" style={{ width: 44, height: 44 }}>
+        <div className="rounded-xs bg-neutral-200 overflow-hidden art-edge" style={{ width: 44, height: 44 }}>
           <img src={release.cover} alt={release.title} className="size-full object-cover" draggable={false} />
         </div>
       </td>
@@ -521,8 +507,7 @@ function MusicRow({ release, visibleCols, isSelected, onSelect, status, onStatus
 // stacks it into a tappable card. The whole card opens the edit dialog —
 // no hover-only affordances, no per-cell controls.
 function MusicCard({
-  release, status, onEdit,
-}: {
+  release, status, onEdit }: {
   release: Release
   status:  ReleaseStatus
   onEdit:  (id: string) => void
@@ -652,8 +637,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
   const [visibleCols,    setVisibleCols]    = useState<Record<ColKey, boolean>>({
     id: false, cover: true, title: true, artist: true, band: false,
     year: false, tracks: false, uploaded: true, type: true, state: true,
-    label: true, monetisation: true,
-  })
+    label: true, monetisation: true })
   // Container width drives responsive column dropping (see COL_HIDE_THRESHOLD).
   // Starts at Infinity so nothing auto-hides until the first measurement.
   const [containerW, setContainerW] = useState(Infinity)
@@ -817,30 +801,23 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
           />
 
           {/* Keyword search */}
-          <div className="relative flex items-center">
-            <Search className="absolute left-3.5 size-4 text-muted-foreground pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search your music"
-              className={cn(
-                "h-10 pl-10 pr-[18px] rounded-full border text-small font-normal bg-transparent transition-[colors,width,background-color]",
-                "text-foreground placeholder:text-muted-foreground focus:outline-none",
-                searchQuery
-                  ? "border-foreground/40 bg-muted text-foreground w-56"
-                  : "border-border text-foreground w-48 hover:border-foreground/30 focus:border-foreground/40 focus:bg-muted focus:w-56",
-              )}
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <X className="size-3" />
-              </button>
+          {/* The catalogue's `Input`, not a hand-built pill: it already owns the
+               leading glyph (`startIcon`), the ✕ (`onClear`), the border and focus
+               states and the size ladder. What stays here is the only local part
+               — the width that grows while the filter is in use. Orders, Shop and
+               this view each carried their own copy of the same field, which is
+               how one of them ends up a step behind the other two. */}
+          <Input
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            onClear={() => setSearchQuery("")}
+            placeholder="Search your music"
+            startIcon={<Search />}
+            className={cn(
+              "transition-[width,background-color,border-color]",
+              searchQuery ? "w-56 bg-muted border-foreground/40" : "w-48 focus:w-56",
             )}
-          </div>
+          />
         </div>
 
 
@@ -888,8 +865,7 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
                   onClear={() => setVisibleCols({
                     id: false, cover: true, title: true, artist: true, band: false,
                     year: false, tracks: false, uploaded: true, type: true, state: true,
-                    label: true, monetisation: true,
-                  })}
+                    label: true, monetisation: true })}
                 />
               )}
             </DropdownMenuContent>
@@ -1015,10 +991,12 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
               <TableHead resizable={false} className={cn("px-2", !effectiveVis.cover && "hidden")} style={{ width: DEFAULT_WIDTHS.cover }} />
               <TableHead style={{ width: DEFAULT_WIDTHS.title }} minWidth={MIN_WIDTHS.title}>
                 {(() => { const sk = COL_SORT_KEY["title"]!; const isActive = sk === sortKey; return (
-                  <button className="flex items-center gap-0.5 min-w-0 overflow-hidden cursor-pointer group/sort select-none" onClick={() => handleSortChange(sk)}>
-                    <span className={cn("text-xsmall font-normal truncate", isActive ? "text-foreground" : "text-muted-foreground")}>Title</span>
-                    {isActive ? (sortDir === "asc" ? <ArrowUp className="size-3 shrink-0 text-foreground" /> : <ArrowDown className="size-3 shrink-0 text-foreground" />) : <ArrowUpDown className="size-3 shrink-0 text-muted-foreground opacity-0 group-hover/sort:opacity-50 transition-opacity" />}
-                  </button>
+                  <SortHeader
+                    label="Title"
+                    active={isActive}
+                    dir={sortDir}
+                    onClick={() => handleSortChange(sk)}
+                  />
                 ) })()}
               </TableHead>
               {(["artist", "band", "year", "tracks", "label", "uploaded", "type", "state", "monetisation"] as ColKey[]).map(key => {
@@ -1033,10 +1011,12 @@ export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void })
                     minWidth={MIN_WIDTHS[key]}
                   >
                     {sk ? (
-                      <button className="flex items-center gap-0.5 min-w-0 overflow-hidden cursor-pointer group/sort select-none" onClick={() => handleSortChange(sk)}>
-                        <span className={cn("text-xsmall font-normal truncate", isActive ? "text-foreground" : "text-muted-foreground")}>{labels[key]}</span>
-                        {isActive ? (sortDir === "asc" ? <ArrowUp className="size-3 shrink-0 text-foreground" /> : <ArrowDown className="size-3 shrink-0 text-foreground" />) : <ArrowUpDown className="size-3 shrink-0 text-muted-foreground opacity-0 group-hover/sort:opacity-50 transition-opacity" />}
-                      </button>
+                      <SortHeader
+                    label={labels[key]}
+                    active={isActive}
+                    dir={sortDir}
+                    onClick={() => handleSortChange(sk)}
+                  />
                     ) : (
                       <span className="text-xsmall font-normal text-muted-foreground">{labels[key]}</span>
                     )}

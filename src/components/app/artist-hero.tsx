@@ -146,7 +146,7 @@ export function ArtistHero({ name, cover, avatar, bio, artistId, isPlaying, onPl
             src={avatar ?? cover}
             alt={name}
             draggable={false}
-            className="size-20 shrink-0 rounded-full object-cover"
+            className="size-20 shrink-0 rounded-full object-cover art-edge"
           />
           <div className="min-w-0 flex flex-col gap-1">
             <DialogTitle className="truncate text-large font-medium leading-tight">{name}</DialogTitle>
@@ -168,7 +168,7 @@ export function ArtistHero({ name, cover, avatar, bio, artistId, isPlaying, onPl
               href={`https://en.wikipedia.org/wiki/${encodeURIComponent(name.replace(/ /g, "_"))}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="underline underline-offset-2 hover:text-foreground"
+              className="state-fade underline underline-offset-2 hover:text-foreground"
             >
               Wikipedia
             </a>

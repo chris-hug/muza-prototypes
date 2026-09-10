@@ -191,7 +191,7 @@ export function EditReleaseDialog({
             <img
               src={cover}
               alt=""
-              className="rounded-xs object-cover shadow-sm size-24"
+              className="rounded-xs object-cover shadow-sm size-24 art-edge"
             />
             <button
               type="button"
@@ -202,7 +202,7 @@ export function EditReleaseDialog({
                 "border border-border shadow-sm",
                 "flex items-center justify-center",
                 "transition-colors hover:bg-background",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+                "focus-visible:outline-none focus-ring",
               )}
             >
               <Pencil className="size-3.5" />

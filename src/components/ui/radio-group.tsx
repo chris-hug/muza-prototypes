@@ -41,11 +41,11 @@ function RadioGroupItem({ className, onClick, ...props }: RadioPrimitive.Root.Pr
         // Touch target
         "after:absolute after:-inset-x-3 after:-inset-y-2",
         // Focus ring
-        "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+        "focus-visible:border-ring focus-ring",
         // Disabled
         "disabled:cursor-not-allowed disabled:opacity-50",
         // Invalid
-        "aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20",
+        "aria-invalid:border-destructive invalid-ring",
         // Dark mode
         "dark:bg-input/30",
         // Checked state — filled primary

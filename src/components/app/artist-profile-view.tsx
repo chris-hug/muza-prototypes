@@ -26,7 +26,7 @@
 
 import * as React from "react"
 import { useMemo, useState } from "react"
-import { ArrowDown, ArrowUp, ArrowUpDown, LayoutGrid, List, MoreHorizontal } from "lucide-react"
+import { ArrowUp, ArrowUpDown, LayoutGrid, List, MoreHorizontal } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { ContentTypeBadge } from "@/components/ui/badge"
@@ -35,12 +35,11 @@ import { Badge } from "@/components/ui/badge"
 import { MultiSelect } from "@/components/ui/multi-select"
 import { Separator } from "@/components/ui/separator"
 import { SingleSelect } from "@/components/ui/single-select"
-import { TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table"
+import { TableBody, TableCell, TableHead, TableRow, SortHeader } from "@/components/ui/table"
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { AlbumCardMenuItems } from "@/components/ui/cover-card-menu"
 import { useUserLibrary } from "@/lib/user-library"
 import { ArtistHero } from "./artist-hero"
@@ -71,8 +70,7 @@ import { usePublishDetailHeader } from "@/lib/detail-actions"
 const ARTIST = {
   name:   "Sun Ra",
   cover:  "https://miro.medium.com/v2/resize:fit:4800/format:webp/1*lGV1JcK0hYHFLvyimbVK5Q.jpeg",
-  bio:    "Sun Ra (born Herman Poole Blount; May 22, 1914 – May 30, 1993) was an American jazz composer, bandleader, piano and synthesizer player, and poet known for his experimental music, cosmic philosophy, prolific output and theatrical performances.\n\nFor much of his career he led the Arkestra, an ensemble with an ever-changing lineup and name, distinguished by its costumes, choreography and freewheeling sound. Born in Birmingham, Alabama, he abandoned his birth name and claimed to be an alien from Saturn on a mission to preach peace — a persona he used to explore space, mythology and Black liberation.\n\nAcross more than three decades he recorded hundreds of releases, many on his own Saturn label, spanning bebop, big-band swing, free jazz and pioneering electronic music. Long a cult figure, he is now widely regarded as a visionary whose influence reaches across jazz, funk and experimental music.",
-}
+  bio:    "Sun Ra (born Herman Poole Blount; May 22, 1914 – May 30, 1993) was an American jazz composer, bandleader, piano and synthesizer player, and poet known for his experimental music, cosmic philosophy, prolific output and theatrical performances.\n\nFor much of his career he led the Arkestra, an ensemble with an ever-changing lineup and name, distinguished by its costumes, choreography and freewheeling sound. Born in Birmingham, Alabama, he abandoned his birth name and claimed to be an alien from Saturn on a mission to preach peace — a persona he used to explore space, mythology and Black liberation.\n\nAcross more than three decades he recorded hundreds of releases, many on his own Saturn label, spanning bebop, big-band swing, free jazz and pioneering electronic music. Long a cult figure, he is now widely regarded as a visionary whose influence reaches across jazz, funk and experimental music." }
 
 // Real Sun Ra tracks pulled from the corresponding album sleeves
 // below. Cover URLs are the iTunes 200×200 thumbnails (smaller
@@ -214,14 +212,12 @@ const SIMILAR_ARTISTS = [
 registerAlbums(
   DISCOGRAPHY.map(r => ({
     id: r.id, title: r.title, cover: r.cover,
-    artist: r.band ?? ARTIST.name, year: r.year,
-  })),
+    artist: r.band ?? ARTIST.name, year: r.year })),
 )
 registerPlaylists(
   CURATED_PLAYLISTS.map(p => ({
     id: p.id, title: p.title, covers: p.covers,
-    songCount: p.songCount, owner: p.owner, owned: p.owned,
-  })),
+    songCount: p.songCount, owner: p.owner, owned: p.owned })),
 )
 
 // ─── View ───────────────────────────────────────────────────────────────────
@@ -256,9 +252,7 @@ export function ArtistProfileView() {
       // hero heart) so the two stay in sync and Save flips to Remove.
       libraryType: "artist",
       libraryId: artistId,
-      libraryName: ARTIST.name,
-    },
-  })
+      libraryName: ARTIST.name } })
 
   // No `overflow-auto` here — the outer layout already owns the page
   // scroll. A second scroll container would break sticky positioning
@@ -297,10 +291,22 @@ export function ArtistProfileView() {
            section header below. Variant="line" gives the underline
            treatment per the design-system spec. */}
       {/* Figma spec (node 8971:98259): muted band, pt-4 only, three
-           equal-width triggers (flex-1), each with its own bottom
-           border — active = foreground colour, inactive = border
-           colour. Together those baselines paint one continuous line
-           across the strip with the active third reading darker. */}
+           equal-width triggers (flex-1), one continuous line across the
+           strip with the active third marked.
+           
+           That line used to be built per trigger — every tab carried its own
+           `border-b`, `border-border` when idle and `border-foreground` when
+           active — and the result was a mark that could not travel. Three
+           separate borders have nothing to interpolate between: the old third
+           crossfaded to grey while the new third crossfaded to white, which
+           the eye reads as the mark going out here and coming on over there.
+           Base UI's `Indicator` was rendering underneath the whole time and
+           doing exactly the right thing, invisibly, because a foreground
+           border was already sitting on top of it.
+           
+           So: the hairline belongs to the LIST (one `border-b`), and the
+           bright mark is the Indicator alone, sliding the 441px between
+           thirds. */}
       <div className="w-full bg-muted">
         <div className="@container w-full pt-4">
           <Tabs value={tab} onValueChange={setTab}>
@@ -308,22 +314,22 @@ export function ArtistProfileView() {
                  scrolls (overflow-x-auto), which forces overflow-y to clip;
                  a shorter list would cut off the triggers' bottom borders
                  (the active underline). */}
-            <TabsList variant="line" className="w-full gap-0 h-9">
+            <TabsList variant="line" className="w-full gap-0 h-9 border-b border-border">
               <TabsTrigger
                 value="overview"
-                className="flex-1 h-9 items-start px-0 pt-0 pb-0 after:hidden border-b border-border data-active:border-foreground"
+                className="flex-1 h-9 items-start px-0 pt-0 pb-0 after:hidden"
               >
                 Overview
               </TabsTrigger>
               <TabsTrigger
                 value="discography"
-                className="flex-1 h-9 items-start px-0 pt-0 pb-0 after:hidden border-b border-border data-active:border-foreground"
+                className="flex-1 h-9 items-start px-0 pt-0 pb-0 after:hidden"
               >
                 Discography
               </TabsTrigger>
               <TabsTrigger
                 value="products"
-                className="flex-1 h-9 items-start px-0 pt-0 pb-0 after:hidden border-b border-border data-active:border-foreground"
+                className="flex-1 h-9 items-start px-0 pt-0 pb-0 after:hidden"
               >
                 Shop
               </TabsTrigger>
@@ -457,38 +463,22 @@ const KIND_LABEL: Record<ReleaseKind, string> = {
   "single": "Singles",
   ep:          "EPs",
   remix:       "Remixes",
-  secondary:   "Secondary Role",
-}
+  secondary:   "Secondary Role" }
 
 
 // Mirrors the Studio/Music sortable-header pattern: muted label by
 // default, foreground when active, with an ArrowUp/Down icon for the
 // current direction (faint ArrowUpDown hint shown on hover when not
 // active).
+/* The catalogued `SortHeader` from `ui/table`, wrapped only to keep this
+   file's prop names. */
 function SortableHeader({
-  label, isActive, dir, onClick,
-}: { label: string; isActive: boolean; dir: "asc" | "desc" | null; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex items-center gap-0.5 min-w-0 overflow-hidden cursor-pointer group/sort select-none"
-    >
-      <span className={cn("text-xsmall font-normal truncate", isActive ? "text-foreground" : "text-muted-foreground")}>
-        {label}
-      </span>
-      {isActive
-        ? (dir === "asc"
-            ? <ArrowUp   className="size-3 shrink-0 text-foreground" />
-            : <ArrowDown className="size-3 shrink-0 text-foreground" />)
-        : <ArrowUpDown className="size-3 shrink-0 text-muted-foreground opacity-0 group-hover/sort:opacity-50 transition-opacity" />}
-    </button>
-  )
+  label, isActive, dir, onClick }: { label: string; isActive: boolean; dir: "asc" | "desc" | null; onClick: () => void }) {
+  return <SortHeader label={label} active={isActive} dir={dir} onClick={onClick} />
 }
 
 function DiscographyView({
-  releases, artistName,
-}: { releases: typeof DISCOGRAPHY; artistName: string }) {
+  releases, artistName }: { releases: typeof DISCOGRAPHY; artistName: string }) {
   const library = useUserLibrary()
   const { openAlbum } = useMediaNav()
   // Multi-select kind filter. Empty set means "no filter applied"
@@ -507,8 +497,7 @@ function DiscographyView({
   // Counts per kind for the chip badges. "All Releases" shows the total.
   const counts = useMemo(() => {
     const out: Record<ReleaseKind, number> = {
-      album: 0, "single": 0, ep: 0, remix: 0, secondary: 0,
-    }
+      album: 0, "single": 0, ep: 0, remix: 0, secondary: 0 }
     for (const r of releases) out[r.kind] += 1
     return out
   }, [releases])
@@ -565,8 +554,7 @@ function DiscographyView({
                     <span className="truncate">{KIND_LABEL[k]}</span>
                     <Badge shape="pill" variant="secondary">{counts[k]}</Badge>
                   </span>
-                ),
-              }))}
+                ) }))}
             />
             {view === "grid" && (
               <SingleSelect
@@ -724,7 +712,7 @@ function DiscographyView({
                   <TableCell className="text-foreground whitespace-nowrap truncate">
                     <button
                       type="button"
-                      className="text-left hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto] outline-none cursor-pointer"
+                      className="text-left link-underline outline-none cursor-pointer"
                     >
                       {r.title}
                     </button>
@@ -732,7 +720,7 @@ function DiscographyView({
                   <TableCell className="text-muted-foreground whitespace-nowrap truncate">
                     <button
                       type="button"
-                      className="text-left hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto] outline-none cursor-pointer"
+                      className="text-left link-underline outline-none cursor-pointer"
                     >
                       {r.band ?? artistName}
                     </button>

@@ -115,6 +115,15 @@ const MOCK_TRACKS: TrackRow[] = [
   { id: "t3", fileName: "SunRa_Atlantis_Side1_Master.wav",  trackName: "Atlantis",            composer: "Sun Ra", lyricist: "",       duration: "8:37",  matchScore: 20, assignedFile: "f3" },
 ]
 
+/* The preview header's secondary actions. A list of bare icons had no names
+   at all — every one of them announced as "button". */
+const PREVIEW_ACTIONS = [
+  { Icon: Plus,           label: "Add to library" },
+  { Icon: Share,          label: "Share" },
+  { Icon: Info,           label: "Show credits" },
+  { Icon: MoreHorizontal, label: "More options" },
+] as const
+
 const TYPE_LABELS: Record<ContentType, string> = { album: "Album", single: "Single", ep: "EP" }
 const STEP_LABELS = ["Release Info", "Monetisation", "Track matching", "Preview"]
 
@@ -160,7 +169,7 @@ function CoverPlaceholder({ size = "sm", src }: { size?: "xs" | "sm" | "lg"; src
       <img
         src={src}
         alt="Release cover"
-        className={cn("rounded-xs shrink-0 object-cover shadow-sm", sizeClass)}
+        className={cn("rounded-xs shrink-0 object-cover shadow-sm art-edge", sizeClass)}
       />
     )
   }
@@ -260,10 +269,10 @@ function WizardFooter({
 }) {
   return (
     <footer className="shrink-0 flex items-center gap-2 px-6 py-4 border-t border-border">
-      <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+      <Button size="lg" variant="ghost" onClick={onCancel}>Cancel</Button>
       <div className="ml-auto flex items-center gap-2">
-        {step > 1 && <Button variant="secondary" onClick={onBack}>Back</Button>}
-        <Button onClick={onContinue} disabled={!canContinue}>
+        {step > 1 && <Button size="lg" variant="secondary" onClick={onBack}>Back</Button>}
+        <Button size="lg" onClick={onContinue} disabled={!canContinue}>
           {isLastStep ? "Publish" : "Next"}
         </Button>
       </div>
@@ -350,9 +359,22 @@ function ReleaseSearchDropdown({
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Search input */}
+      {/* STILL BESPOKE, on purpose — and the reason is worth stating, because
+           this looks like a plain field and is not one.
+           
+           It is a Combobox in everything but name: type two characters and an
+           async lookup runs, a results popup opens, ↑/↓ walk it, Enter picks,
+           Escape closes, and the field carries a spinner while the request is
+           in flight and a ✕ once it is not. `Input` gives a leading glyph and
+           a clear button; it has no slot for the spinner and no popup, so
+           swapping it in would drop behaviour rather than share it.
+           
+           The honest fix is to make this an actual `Combobox` (or to give
+           `Input` a trailing slot) — a behavioural change with keyboard and
+           async state to re-verify, not a search-and-replace. Left as one
+           deliberate exception, not an oversight. */}
       <div ref={containerRef} className="relative">
-        <div className="flex items-center gap-2 h-10 px-3 rounded-full border border-border bg-background focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 transition-colors">
+        <div className="flex items-center gap-2 h-12 px-4 rounded-full border border-border bg-background focus-within:border-ring focus-ring-within transition-colors">
           <Search className="size-4 text-muted-foreground shrink-0" />
           <input
             value={searchQuery}
@@ -371,7 +393,7 @@ function ReleaseSearchDropdown({
           />
           {searchMode === "searching" && <Loader2 className="size-4 text-muted-foreground animate-spin shrink-0" />}
           {searchQuery && searchMode !== "searching" && (
-            <button onClick={() => { onSearchChange(""); setOpen(false); setSubmitted(false); setFocusedIndex(-1) }} className="text-muted-foreground hover:text-foreground">
+            <button onClick={() => { onSearchChange(""); setOpen(false); setSubmitted(false); setFocusedIndex(-1) }} className="state-fade text-muted-foreground hover:text-foreground">
               <X className="size-4" />
             </button>
           )}
@@ -981,7 +1003,7 @@ function StepRelease({
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="release-title-search">Release title</Label>
         <div className="relative">
-          <div className="flex items-center gap-2 h-10 px-3 rounded-full border border-border bg-background focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 transition-colors">
+          <div className="flex items-center gap-2 h-12 px-4 rounded-full border border-border bg-background focus-within:border-ring focus-ring-within transition-colors">
             <Search className="size-4 text-muted-foreground shrink-0" />
             <input
               id="release-title-search"
@@ -995,7 +1017,7 @@ function StepRelease({
               className="flex-1 bg-transparent text-small font-normal outline-none text-foreground placeholder:text-muted-foreground"
             />
             {searchMode === "searching" && <Loader2 className="size-4 text-muted-foreground animate-spin shrink-0" />}
-            {searchQuery && <button onClick={() => { onSearchChange(""); setShowSuggestions(false) }} className="text-muted-foreground hover:text-foreground"><X className="size-4" /></button>}
+            {searchQuery && <button onClick={() => { onSearchChange(""); setShowSuggestions(false) }} className="state-fade text-muted-foreground hover:text-foreground"><X className="size-4" /></button>}
           </div>
           {/* Suggestion dropdown */}
           {showSuggestions && suggestions.length > 0 && (
@@ -1043,7 +1065,7 @@ function StepRelease({
           {EntityCombobox}
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="release-title-search-2">Release title</Label>
-            <div className="flex items-center gap-2 h-10 px-3 rounded-full border border-border bg-background focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 transition-colors">
+            <div className="flex items-center gap-2 h-12 px-4 rounded-full border border-border bg-background focus-within:border-ring focus-ring-within transition-colors">
               <Search className="size-4 text-muted-foreground shrink-0" />
               <input
               id="release-title-search-2"
@@ -1053,7 +1075,7 @@ function StepRelease({
                 className="flex-1 bg-transparent text-small font-normal outline-none text-foreground placeholder:text-muted-foreground"
               />
               {searchMode === "searching" && <Loader2 className="size-4 text-muted-foreground animate-spin shrink-0" />}
-              {searchQuery && <button onClick={() => { onSearchChange(""); setStepMode("input") }} className="text-muted-foreground hover:text-foreground"><X className="size-4" /></button>}
+              {searchQuery && <button onClick={() => { onSearchChange(""); setStepMode("input") }} className="state-fade text-muted-foreground hover:text-foreground"><X className="size-4" /></button>}
             </div>
           </div>
           <div className="flex flex-col">
@@ -1194,8 +1216,13 @@ function StepMonetisation({
           title="For purchase"
           description="Fans pay to unlock · you set your price"
         >
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4">
+            {/* `items-end`: the label may be two lines here — "(optional)"
+                 sits above "Price for download" — and centring a two-line
+                 block against a one-line toggle lifts the toggle into the gap
+                 between them. Aligned at the bottom, the toggle sits on the
+                 same line as the words it qualifies. */}
+            <div className="flex items-end justify-between gap-4">
               <Label htmlFor="price-listen">Price for listening</Label>
               <label className="flex items-center gap-1.5 cursor-pointer">
                 <span className="text-xsmall text-muted-foreground font-normal">Let fans pay more if they want</span>
@@ -1217,10 +1244,17 @@ function StepMonetisation({
             />
           </div>
 
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="price-download">
-                Price for download <span className="opacity-60">(optional)</span>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-end justify-between gap-4">
+              {/* "(optional)" sits ABOVE the label, not beside it. Inline, it
+                   was a third column in a row that already holds a label and a
+                   toggle — at a dialog's width the label broke to two lines and
+                   the qualifier ended up wedged between the two halves of its
+                   own phrase. Above, it is a quiet line that the label reads
+                   out from under. */}
+              <Label htmlFor="price-download" className="flex-col items-start gap-0.5">
+                <span className="text-xsmall font-normal text-muted-foreground leading-none">(optional)</span>
+                Price for download
               </Label>
               <label className="flex items-center gap-1.5 cursor-pointer">
                 <span className="text-xsmall text-muted-foreground font-normal">Let fans pay more if they want</span>
@@ -1368,7 +1402,14 @@ function StepTrackMatching({
                 {/* File */}
                 <td className="pl-2 pr-2">
                   <div className="flex items-center gap-2">
-                    <button className="size-6 rounded-full bg-secondary flex items-center justify-center shrink-0 hover:bg-muted transition-colors">
+                    {/* 24px is below every step of the ladder, so this one stays a
+                         bespoke box — but it takes its press and focus from the
+                         system instead of inventing a hover. */}
+                    <button
+                      type="button"
+                      aria-label="Preview track"
+                      className="press-ripple relative size-6 rounded-full bg-secondary flex items-center justify-center shrink-0 state-fade hover:bg-secondary-hover [--press-fill:var(--press-on-secondary)] outline-none focus-ring after:absolute after:-inset-1.5 after:content-['']"
+                    >
                       <Play className="size-3 ml-0.5 text-foreground" />
                     </button>
                     <Select
@@ -1486,22 +1527,25 @@ function StepConfirmation({
           </div>
 
           <div className="flex items-center justify-between">
+            {/* `Button`, not three pills drawn from memory. They had
+                 `hover:bg-primary/85` where the variant uses `--primary-hover`
+                 and `hover:bg-secondary/80` where it uses `--secondary-hover`,
+                 and no press, no focus ring, no ripple. This block is a
+                 PREVIEW of the release page — drawn with anything but the real
+                 components it previews something the app does not build. */}
             <div className="flex items-center gap-3">
-              <button className="h-12 px-8 rounded-full bg-primary text-primary-foreground flex items-center gap-2 hover:bg-primary/85 transition-colors">
-                <Play className="size-4" />
-              </button>
-              <button className="h-12 px-4 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center hover:bg-secondary/80 transition-colors">
-                <Shuffle className="size-4" />
-              </button>
+              <Button size="lg" className="px-8" aria-label="Play">
+                <Play className="ml-0.5" />
+              </Button>
+              <Button size="lg" variant="secondary" className="px-4" aria-label="Shuffle">
+                <Shuffle />
+              </Button>
             </div>
             <div className="flex items-center gap-2">
-              {([Plus, Share, Info, MoreHorizontal] as const).map((Icon, idx) => (
-                <button
-                  key={idx}
-                  className="size-12 rounded-full border border-border flex items-center justify-center text-foreground hover:bg-muted transition-colors"
-                >
+              {PREVIEW_ACTIONS.map(({ Icon, label }) => (
+                <Button key={label} variant="outline" size="icon-lg" aria-label={label}>
                   <Icon className="size-[18px]" />
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -1522,7 +1566,7 @@ function StepConfirmation({
           >
             <div className="size-11 flex items-center justify-center shrink-0">
               {hoveredTrack === track.id
-                ? <Play className="size-4 text-foreground" />
+                ? <Play className="size-4 ml-0.5 text-foreground" />
                 : <span className="text-large text-muted-foreground font-normal">{i + 1}</span>
               }
             </div>
@@ -1537,15 +1581,20 @@ function StepConfirmation({
             <div className="flex items-center gap-1 pl-4">
               {hoveredTrack === track.id && (
                 <>
-                  <button className="size-9 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground">
-                    <MoreHorizontal className="size-4" />
-                  </button>
-                  <button className="size-9 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground">
-                    <Info className="size-4" />
-                  </button>
-                  <button className="size-9 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground">
-                    <Plus className="size-4" />
-                  </button>
+                  {/* `Button variant="ghost" size="icon"`, which is what these
+                       three were drawing by hand at 36px — one step off the
+                       ladder, with no press, no focus ring and no name to
+                       announce. The row's own hover reveals them, so they keep
+                       the muted ink until you point at one. */}
+                  <Button variant="ghost" size="icon" aria-label="More options" className="text-muted-foreground hover:text-foreground">
+                    <MoreHorizontal />
+                  </Button>
+                  <Button variant="ghost" size="icon" aria-label="Show credits" className="text-muted-foreground hover:text-foreground">
+                    <Info />
+                  </Button>
+                  <Button variant="ghost" size="icon" aria-label="Add to library" className="text-muted-foreground hover:text-foreground">
+                    <Plus />
+                  </Button>
                 </>
               )}
               <span className="text-xsmall text-muted-foreground font-normal w-9 text-right">{track.duration}</span>

@@ -44,6 +44,11 @@ const tabsListVariants = cva(
         // Pill/segment — tabs inside a muted background container. A
         // fixed segmented control, so it does NOT scroll.
         default:
+          // `bg-muted`, not `bg-muted`: this is a PLATE. `--muted` is
+          // translucent in dark — a hovered row is meant to lift, not to
+          // switch on — and a track that lets the page through shows every
+          // rule and edge it happens to sit over. The opaque twin is the same
+          // colour, stated as the other job.
           "rounded-full bg-muted p-1 text-muted-foreground gap-0",
         // Underline — transparent container, bottom-border active
         // indicator. Full-width tab strips like this can overflow a phone
@@ -143,19 +148,36 @@ function TabsList({
        * `--active-tab-left` / `--active-tab-width`, so the same mark travels
        * and the transition has something to interpolate.
        *
-       * 180ms — snappy. The bar is a pointer, not an event; anything slower
-       * and the content has already changed while it is still sliding. */}
+       * 260ms on the house curve, up from 180ms on Tailwind's default ease.
+       * The distance is the reason: on a narrow DS strip the mark moves 60px
+       * and 180ms is plenty, but on a full-width artist header each tab is a
+       * third of the page — measured 882px of travel between Shop and
+       * Overview — and at 180ms that is roughly 2450px per second, which the
+       * eye reads as the line reappearing somewhere else rather than going
+       * there. Same number as the tab labels' own fade, so the mark and the
+       * text arrive together. */}
       <TabsPrimitive.Indicator
         className={cn(
           // Shared: one element, positioned over the active tab and sliding
           // between them. `z-0` with the triggers' own `relative` puts it
           // BEHIND the labels, so a filled indicator does not cover its text.
           "pointer-events-none absolute left-0 z-0",
-          "w-[var(--active-tab-width)] translate-x-[var(--active-tab-left)]",
-          "transition-[translate,width,transform] duration-[180ms] ease-out",
-          // Nothing to point at before a tab is chosen, and nothing while the
-          // list is still being measured — otherwise it flashes at width 0.
-          "data-[activation-direction=none]:opacity-0",
+          // `0px` fallbacks, so an indicator with no measurement yet is zero
+          // wide — invisible on its own terms. This used to be an opacity
+          // guard on `data-[activation-direction=none]`, which reads like
+          // "not measured yet" and is not: Base UI sets that attribute to
+          // `none` until the first ACTIVATION, and it publishes the geometry
+          // inline from the very first paint. So a freshly rendered strip was
+          // fully measured and placed, and hidden anyway — the label took its
+          // active colour while the mark under it stayed invisible until you
+          // clicked something. Which is the whole point of the mark.
+          "w-[var(--active-tab-width,0px)] translate-x-[var(--active-tab-left,0px)]",
+          "transition-[translate,width,transform] duration-[260ms] ease-[cubic-bezier(0.2,0,0,1)]",
+          // The attribute is still worth reading — just for the other thing.
+          // With no activation yet there is no previous position to travel
+          // FROM, so the mark is placed, not animated; every later move has a
+          // direction and eases.
+          "data-[activation-direction=none]:transition-none",
           // The mark itself, per variant. `line` is a hairline under the
           // label; `default` and `pill` are the FILL that used to belong to
           // the active trigger — moved here so it travels instead of
@@ -177,9 +199,17 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
       className={cn(
         // Base — `pb-px` matches the optical-center nudge used on Button;
         // Founders Grotesk sits visually high in a flex-centered box without it.
-        "relative z-10 inline-flex items-center justify-center gap-1.5 whitespace-nowrap font-medium transition-[colors,box-shadow,transform,opacity] outline-none pb-px",
+        // `state-fade-quick`, the same fade a list row uses: a tab strip is
+        // swept across, not arrived at, so it runs at the row pace (200ms in,
+        // 100ms out) rather than a Button's 440ms. It also replaces a hand-
+        // written property list that had been wrong for a while — it named
+        // `transform`, which in Tailwind v4 covers neither `scale` nor
+        // `translate`, and `box-shadow`, which repaints the focus ring frame
+        // by frame — and it brings the house curve, where the old list still
+        // ran on Tailwind's default easing.
+        "relative z-10 inline-flex items-center justify-center gap-1.5 whitespace-nowrap font-medium state-fade-quick outline-none pb-px",
         "disabled:pointer-events-none disabled:opacity-50",
-        "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
+        "focus-visible:border-ring focus-ring",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
 
         // ── Default variant (segment/pill within muted bg) ──────────────
@@ -206,6 +236,9 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
         "group-data-[variant=line]/tabs-list:px-[18px] group-data-[variant=line]/tabs-list:pb-1.5 group-data-[variant=line]/tabs-list:pt-0",
         "group-data-[variant=line]/tabs-list:text-small",
         "group-data-[variant=line]/tabs-list:text-muted-foreground",
+        // Hover is the TEXT, nothing else. A fill was tried here and is wrong:
+        // a `line` tab is a word with a rule under it, and a plate appearing
+        // behind the word turns it into a button it is not.
         "group-data-[variant=line]/tabs-list:hover:text-foreground",
         // Active: just foreground text + bottom border
         "group-data-[variant=line]/tabs-list:data-active:text-foreground",

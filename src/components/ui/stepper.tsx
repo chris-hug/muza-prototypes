@@ -110,8 +110,8 @@ function Stepper({ steps, current, onStepSelect, maxWidth = 600, className, ...p
               aria-current={active ? "step" : undefined}
               className={cn(
                 "flex w-full min-w-0 flex-col items-center gap-1.5 rounded-lg px-1 outline-none",
-                "focus-visible:ring-3 focus-visible:ring-ring/50",
-                clickable && "group/step cursor-pointer",
+                "focus-ring",
+                clickable && "group/step link-underline-group cursor-pointer",
               )}
             >
               <span
@@ -133,7 +133,7 @@ function Stepper({ steps, current, onStepSelect, maxWidth = 600, className, ...p
                     // A step you have finished is not the same as one you have
                     // not reached: `done` keeps full contrast, `ahead` recedes.
                     active || done ? "text-foreground" : "text-muted-foreground",
-                    clickable && "group-hover/step:underline group-hover/step:underline-offset-[3px]",
+                    clickable && "link-underline mx-auto",
                   )}
                 >
                   {label}

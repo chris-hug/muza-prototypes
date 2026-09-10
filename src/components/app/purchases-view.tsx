@@ -31,6 +31,7 @@ import {
 import { ToggleGroup } from "@/components/ui/toggle-group"
 import { Toggle } from "@/components/ui/toggle"
 import { cn } from "@/lib/utils"
+import { Input } from "@/components/ui/input"
 import {
   formatDate, formatTotal,
   type ProductType, type OrderItem,
@@ -414,16 +415,17 @@ export function PurchasesView() {
 
         {/* Row 2: search + sort */}
         <div className="flex items-center gap-3">
-          <div className="relative flex items-center flex-1 min-w-0">
-            <Search className="absolute left-3.5 size-4 text-muted-foreground pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search orders, sellers, products"
-              className="h-10 w-full rounded-full border border-border bg-background pl-10 pr-4 text-small font-normal text-foreground placeholder:text-muted-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 transition-colors"
-            />
-          </div>
+          {/* The catalogue's `Input` — it draws the leading glyph, the border and
+             focus states and the size ladder. The hand-built copy here was a
+             step behind (40px, no clear button) for no reason anyone recorded. */}
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onClear={() => setSearchQuery("")}
+            placeholder="Search orders, sellers, products"
+            startIcon={<Search />}
+            className="flex-1 min-w-0"
+          />
 
           <SortControl sortDir={sortDir} onChange={setSortDir} />
         </div>
@@ -579,13 +581,29 @@ function FulfillmentRow({ fulfillment, onOpen, onProductClick }: {
   const visible   = fulfillment.items.slice(0, MAX_INLINE_ITEMS)
   const overflow  = fulfillment.items.length - MAX_INLINE_ITEMS
 
+  /* A `<div>` with `role="button"`, and not a `<button>`, because the row
+  CONTAINS a button: the product title opens the product. Nesting a
+  button inside a button is invalid HTML, and browsers resolve it by
+  dropping one of them.
+         
+  So the row carries the semantics by hand — `role`, `tabIndex`, and
+  Enter/Space, which a native button would have given for free — and the
+  inner control stops propagation so clicking a product title does not
+  also open the order. Same arrangement `SongListItem` uses for its own
+  row, and the reason it is worth stating: this looks like the kind of
+  div-as-button that is usually an oversight, and here it is the only
+  legal shape.
+         
+  `focus-ring` rather than a filled focus state: the row is a whole band,
+  and an outline traces it where a `bg-muted/60` reads as a hover that
+  will not go away. */
   return (
     <div
       role="button"
       tabIndex={0}
       onClick={onOpen}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen() } }}
-      className="flex items-start gap-5 px-4 py-4 hover:bg-muted/60 transition-colors cursor-pointer outline-none focus-visible:bg-muted/60"
+      className="flex items-start gap-5 px-4 py-4 state-fade hover:bg-muted/60 cursor-pointer outline-none focus-ring"
     >
       {/* ── 1. Shop column — visual stopper.
            Avatar with a real portrait photo (initials fallback while the
@@ -625,7 +643,7 @@ function FulfillmentRow({ fulfillment, onOpen, onProductClick }: {
               src={item.image}
               alt={item.productTitle}
               draggable={false}
-              className="size-14 rounded-sm object-cover"
+              className="size-14 rounded-sm object-cover art-edge"
             />
           ))}
         </div>
@@ -641,7 +659,7 @@ function FulfillmentRow({ fulfillment, onOpen, onProductClick }: {
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onProductClick(item.productTitle) }}
-                className="text-left bg-transparent border-none p-0 text-inherit hover:underline underline-offset-3 cursor-pointer outline-none focus-visible:underline"
+                className="text-left bg-transparent border-none p-0 text-inherit link-underline cursor-pointer outline-none focus-visible:underline"
               >
                 {item.productTitle}
               </button>
@@ -726,7 +744,9 @@ function SortControl({
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="outline" className="ml-auto font-normal" />
+          /* `lg`: it shares the toolbar row with the search field, and the
+             field is `lg`. */
+          <Button size="lg" variant="outline" className="ml-auto font-normal" />
         }
       >
         <ArrowDownUp className="size-4" />

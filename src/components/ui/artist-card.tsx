@@ -46,8 +46,8 @@ export function ArtistCard({ name, image, onClick, className }: ArtistCardProps)
         // `gap-0` matches AlbumCard / PlaylistCard so the name sits
         // at the same vertical position as their titles when these
         // cards share a row.
-        "group/artist flex flex-col gap-0 text-center outline-none",
-        "rounded-lg focus-visible:ring-3 focus-visible:ring-ring/50",
+        "group/artist link-underline-group flex flex-col gap-0 text-center outline-none",
+        "rounded-lg focus-ring",
         "w-full min-w-0",
         className,
       )}
@@ -69,7 +69,7 @@ export function ArtistCard({ name, image, onClick, className }: ArtistCardProps)
             alt={name}
             draggable={false}
             onError={() => setFailed(true)}
-            className="aspect-square w-full rounded-full object-cover transition-[filter] group-hover/artist:brightness-75"
+            className="aspect-square w-full rounded-full object-cover transition-[filter] group-hover/artist:brightness-75 art-edge"
           />
         ) : (
           // Branded placeholder — muted circle with a soft muza mark
@@ -81,7 +81,7 @@ export function ArtistCard({ name, image, onClick, className }: ArtistCardProps)
           </div>
         )}
       </div>
-      <p className="text-xsmall font-normal leading-5 text-foreground truncate group-hover/artist:underline group-focus-visible/artist:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto]">{name}</p>
+      <p className="text-xsmall font-normal leading-5 text-foreground truncate link-underline mx-auto">{name}</p>
     </button>
   )
 }

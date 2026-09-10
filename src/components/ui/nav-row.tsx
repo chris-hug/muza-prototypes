@@ -24,19 +24,26 @@ export interface NavRowProps {
   className?: string
 }
 
+/* The row's own recipe, exported so a call site that needs a DIFFERENT inside
+ * — a cover thumb and two lines of text, say — can still be the same row.
+ * `AddToPlaylistDialog` carried a byte-identical copy of this string until it
+ * was pulled out here; two copies of a hover is how two lists stop feeling
+ * alike. NavRow's own API stays narrow (label · icon · value · chevron)
+ * because that IS the component: a row that drills somewhere. */
+export const navRowClass = cn(
+  // Tight rows: these are browse entry points, not content — they should not
+  // eat the space the track list needs on a phone. 40px tall.
+  "flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left state-fade",
+  "hover:bg-muted active:bg-muted outline-none focus-visible:bg-muted",
+  "[&_svg]:size-4 [&_svg]:shrink-0",
+)
+
 export function NavRow({ label, icon, value, onClick, className }: NavRowProps) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={cn(
-        // Tight rows: these are browse entry points, not content — they should
-        // not eat the space the track list needs on a phone. 40px tall.
-        "flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors",
-        "hover:bg-muted active:bg-muted outline-none focus-visible:bg-muted",
-        "[&_svg]:size-4 [&_svg]:shrink-0",
-        className,
-      )}
+      className={cn(navRowClass, className)}
     >
       {icon && <span className="text-muted-foreground">{icon}</span>}
       <span className="flex-1 min-w-0 truncate text-small text-foreground">{label}</span>

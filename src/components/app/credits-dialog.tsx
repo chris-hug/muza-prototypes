@@ -54,7 +54,7 @@ function Value({ children, onClick }: { children: React.ReactNode; onClick?: () 
     <button
       type="button"
       onClick={onClick}
-      className="text-small text-foreground leading-[20px] text-left w-fit hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] outline-none cursor-pointer"
+      className="text-small text-foreground leading-[20px] text-left w-fit link-underline outline-none cursor-pointer"
     >
       {children}
     </button>
@@ -106,7 +106,7 @@ export function CreditsContent({
           src={credits.cover}
           alt={credits.album}
           draggable={false}
-          className="relative mx-auto h-full aspect-square object-cover rounded-xs shadow-lg"
+          className="relative mx-auto h-full aspect-square object-cover rounded-xs shadow-lg art-edge"
         />
       </div>
 
@@ -135,7 +135,7 @@ export function CreditsContent({
                         <button
                           type="button"
                           onClick={() => onArtist(name)}
-                          className="hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] outline-none cursor-pointer"
+                          className="link-underline outline-none cursor-pointer"
                         >
                           {name}
                         </button>
@@ -191,7 +191,7 @@ function CreditsDialogContent({ credits, onClose }: { credits: Credits; onClose:
 
 /*
  * CreditsDialogPreview — static, non-modal render for the design system
- * (no portal / backdrop / links). Shows the dialog body inside a card.
+ * (no portal / backdrop). Shows the dialog body inside a card.
  *
  * Reads `useIsMobile()` the way `DialogPreview` does: inside the design
  * system's frame that is the window CHIP, so a "375" frame shows the sheet
@@ -207,9 +207,18 @@ export function CreditsDialogPreview({ albumKey = "a07" }: { albumKey?: string }
         phone ? "max-w-full rounded-t-2xl rounded-b-none" : "max-w-md rounded-xl md:rounded-2xl",
       )}
     >
+      {/* The navigation handlers are passed even though this preview goes
+          nowhere. `Field` renders plain text without them and a link with
+          them, so leaving them off documented the wrong component: in the
+          product the artist, the album and every credited name ARE links, and
+          the frame has to show the underline that says so. The handlers are
+          no-ops here — a DS frame must not navigate the page out from under
+          the person reading it. */}
       <CreditsContent
         credits={getCredits(albumKey)}
         heading={<p className="text-large font-medium leading-none text-foreground">Album credits</p>}
+        onArtist={() => {}}
+        onAlbum={() => {}}
       />
       {/* The real dialog gets its ✕ from `DialogContent`; this preview builds
           its own card, so it has to carry one or the frame documents a dialog

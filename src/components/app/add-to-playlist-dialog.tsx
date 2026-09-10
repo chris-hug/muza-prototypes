@@ -26,6 +26,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import { navRowClass } from "@/components/ui/nav-row"
 import { useToast } from "@/components/ui/toast"
 import { MediaListItem } from "@/components/ui/media-list-item"
 import { getAllPlaylists } from "@/lib/playlist-catalog"
@@ -100,8 +101,8 @@ function AddToPlaylistContent({ song, onClose }: { song: SavedSong; onClose: () 
           autoFocus
         />
         <DialogFooter>
-          <Button variant="ghost" onClick={() => setMode("list")}>Back</Button>
-          <Button onClick={create} disabled={!name.trim()}>Create playlist</Button>
+          <Button size="lg" variant="ghost" onClick={() => setMode("list")}>Back</Button>
+          <Button size="lg" onClick={create} disabled={!name.trim()}>Create playlist</Button>
         </DialogFooter>
       </DialogContent>
     )
@@ -167,10 +168,9 @@ function Row({ onClick, children }: { onClick: () => void; children: React.React
     <button
       type="button"
       onClick={onClick}
-      className={cn(
-        "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors",
-        "hover:bg-muted active:bg-muted outline-none focus-visible:bg-muted",
-      )}
+      /* The shared row recipe from `NavRow`. This used to be a byte-identical
+         copy of it, differing only in `gap-3` for the cover thumb. */
+      className={cn(navRowClass, "gap-3")}
     >
       {children}
     </button>

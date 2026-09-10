@@ -12,7 +12,7 @@
  * relative wrapper around it.
  */
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Heart } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -54,19 +54,35 @@ export function LibraryHeartButton({
   const toggle  = useLibraryToggle()
   const active  = library.inLibrary(type, id)
 
-  // Ref counter (not state) so re-renders never restart the animation
-  // mid-gesture; we bump a separate state only to remount the animated
-  // nodes via `key`.
-  const pulse = useRef(0)
+  /* Driven by the library STATE, not by this button's own click.
+   *
+   * It used to bump a counter inside `handleClick`, which meant the heart only
+   * answered when you pressed the heart. Saving the same song from the row's
+   * ⋯ menu changed the state, filled this heart in — and did not move it, so
+   * the one element that shows the result stayed silent while the menu that
+   * caused it was already gone. Watching the value covers every route: this
+   * button, the menu, the touch sheet, another surface holding the same item.
+   *
+   * The guard compares the PREVIOUS value rather than holding a "first render"
+   * flag: StrictMode invokes effects twice in development, so a flag is spent
+   * on the second run and every already-saved heart popped on mount.
+   *
+   * `tick` only exists to remount the animated nodes via `key` — re-running a
+   * CSS animation needs a new element, not a re-render. */
   const [tick, setTick] = useState(0)
   const [burst, setBurst] = useState(false)
+  const prev = useRef(active)
+
+  useEffect(() => {
+    if (prev.current === active) return
+    prev.current = active
+    setTick(t => t + 1)
+    setBurst(active)   // celebratory rings only when ADDING
+  }, [active])
 
   const handleClick = (e: React.MouseEvent) => {
     if (stopPropagation) e.stopPropagation()
-    const nowIn = toggle(type, id, name, song)
-    pulse.current += 1
-    setTick(pulse.current)
-    setBurst(nowIn)   // celebratory rings only when ADDING
+    toggle(type, id, name, song)
   }
 
   return (
@@ -99,5 +115,39 @@ export function LibraryHeartButton({
         />
       </Button>
     </span>
+  )
+}
+
+/*
+ * MenuHeart — the library heart as it appears INSIDE a menu row or an action
+ * sheet, where the row owns the click and the icon is only handed down as a
+ * node. So it does not listen for a press: it watches the saved STATE and pops
+ * when that flips, which covers every way the value can change (the row, the
+ * keyboard, another surface toggling the same item).
+ *
+ * The first render never animates — a menu opening on an already-saved album
+ * should not celebrate something the user did last week. That guard compares
+ * the PREVIOUS value rather than holding a "have I run yet" flag: StrictMode
+ * invokes effects twice in development, so a flag is already spent on the
+ * second run and the heart popped the moment the menu opened.
+ *
+ * `animate-heart-pop-quick` rather than the full pop, because a menu row that
+ * does not `keepOpen` is unmounted 256ms after the click and the long version
+ * peaks at 231ms; see the class comment in app.css.
+ */
+export function MenuHeart({ filled, className }: { filled: boolean; className?: string }) {
+  const [tick, setTick] = useState(0)
+  const prev = useRef(filled)
+  useEffect(() => {
+    if (prev.current === filled) return
+    prev.current = filled
+    setTick(t => t + 1)
+  }, [filled])
+
+  return (
+    <Heart
+      key={`menu-heart-${tick}`}
+      className={cn(tick > 0 && "animate-heart-pop-quick", filled && "fill-current", className)}
+    />
   )
 }

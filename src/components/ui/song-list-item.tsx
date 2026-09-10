@@ -28,6 +28,7 @@
 import * as React from "react"
 import { useState } from "react"
 import { Heart, Info, MoreHorizontal, ListPlus, Mic, Disc3, Share, Link2, Flag } from "lucide-react"
+import { MenuHeart } from "@/components/ui/library-heart-button"
 import { AddMusicIcon } from "@/components/ui/media-icons"
 
 import { cn } from "@/lib/utils"
@@ -238,7 +239,7 @@ export function SongMenuItems({
         {canNativeShare ? <Share /> : <Link2 />}
         {canNativeShare ? "Share…" : "Copy link"}
       </DropdownMenuItem>
-      <DropdownMenuItem onClick={handleSongLibrary}><Heart className={cn(inLibrary && "fill-current")} />{libraryLabel}</DropdownMenuItem>
+      <DropdownMenuItem onClick={handleSongLibrary}><MenuHeart filled={inLibrary} />{libraryLabel}</DropdownMenuItem>
       {!hideAddToPlaylist && <DropdownMenuItem onClick={handleAddToPlaylist}><AddMusicIcon />Add to playlist</DropdownMenuItem>}
       <DropdownMenuSeparator />
       {onArtistClick && !hideGoToArtist && <DropdownMenuItem onClick={onArtistClick}><Mic />Go to artist</DropdownMenuItem>}
@@ -247,6 +248,35 @@ export function SongMenuItems({
       <DropdownMenuSeparator />
       <DropdownMenuItem variant="destructive" onClick={handleReport}><Flag />Report</DropdownMenuItem>
     </>
+  )
+}
+
+/* Text that becomes a link only when it has somewhere to go.
+ *
+ * The row's three navigable fields — title, artist, album — are all optional
+ * destinations, and the views deliberately withhold the one you are already
+ * looking at. Rendering a button regardless meant the affordance lied exactly
+ * where it mattered: an album page's tracks all offered an underline and then
+ * ate the click.
+ *
+ * No handler, no button. A span cannot be tabbed to, is not announced as a
+ * control, and shows no underline or pointer — the text is just text. */
+function Linkable({
+  onClick, className, children,
+}: { onClick?: () => void; className?: string; children: React.ReactNode }) {
+  if (!onClick) return <span className={className}>{children}</span>
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        className,
+        "link-underline",
+        "outline-none cursor-pointer",
+      )}
+    >
+      {children}
+    </button>
   )
 }
 
@@ -346,8 +376,8 @@ export function SongListItem({
            Priority order: keep artist, drop album, drop year first — see
            the meta line below.
 
-           This is the ONE component in the app that needs to measure its
-           own box, and it earns it twice over:
+           Four components measure their own box (see `responsive.md`);
+           this is the one that does it per ROW, and it earns it twice over:
              · in a SongRail the row sits in a cell of `100% − 48px` (or a
                column fraction), so on a 320px phone it is 248px wide where
                the same row in a plain list is 296 — and the cell width is
@@ -358,12 +388,16 @@ export function SongListItem({
                288px on a 1440px laptop with the drawer dragged out.
            No prop passed down from a parent can describe both, which is
            why this stays a container query. */
-        "@container/row group/song relative flex items-center gap-3 rounded-md pl-2 pr-2 py-1.5 overflow-clip cursor-pointer",
-        // Idle rows: bg-background with bg-muted on hover.
+        "@container/row group/song press-ripple relative flex items-center gap-3 rounded-md pl-2 pr-2 py-1.5 overflow-clip cursor-pointer",
+        // Idle rows: bg-background, and the hover fill GROWS from the point
+        // the pointer crossed the row's edge — the same circle a Button draws,
+        // which is why the colour is a token (`--hover-fill`) and not a
+        // `hover:bg-*` class: a class would swap the background flat
+        // underneath the growing circle and the colour would arrive twice.
         // Playing rows: always bg-muted — marks this row as the
         // current item even at rest.
-        "transition-colors",
-        playing ? "bg-muted" : "bg-background hover:bg-muted",
+        "state-fade-quick",
+        playing ? "bg-muted" : "bg-background [--hover-fill:var(--muted)]",
         className,
       )}
     >
@@ -394,13 +428,26 @@ export function SongListItem({
            per-track artist/album/year would just repeat the header) so
            the title sits vertically centred as a clean single line. */}
       <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-        <button
-          type="button"
+        {/* A LINK ONLY WHEN IT LEADS SOMEWHERE.
+             
+             All three of these fields were `<button>` with an underline and a
+             pointer cursor whether or not a handler had been passed. On an
+             album page the track rows get no `onTitleClick` — you are already
+             on the album, there is nowhere for the title to go — so every
+             track offered a link, underlined on hover, and swallowed the click
+             when you took it. Same for the artist name on an artist page and
+             the album name on an album page: the row hides the field's own
+             destination precisely where it would be a loop.
+             
+             `Linkable` renders the plain text when there is no handler, so the
+             affordance and the behaviour cannot come apart. It is a span, not
+             a disabled button: nothing to focus, nothing to announce. */}
+        <Linkable
           onClick={onTitleClick}
-          className="text-xsmall font-normal leading-5 text-foreground text-left truncate hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto] outline-none cursor-pointer"
+          className="text-xsmall font-normal leading-5 text-foreground text-left truncate"
         >
           {title}
-        </button>
+        </Linkable>
         {/* Meta line — priority-ordered: artist > album > year. As the row
              narrows, year drops first (below 380), then album (below 260);
              a badge or an artist always stays. Album also shrinks 2× faster
@@ -425,24 +472,16 @@ export function SongListItem({
             </Badge>
           )}
           {artist && (
-            <button
-              type="button"
-              onClick={onArtistClick}
-              className="truncate min-w-0 hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto] outline-none cursor-pointer"
-            >
+            <Linkable onClick={onArtistClick} className="truncate min-w-0">
               {artist}
-            </button>
+            </Linkable>
           )}
           {album && (
             <span className="inline-flex items-center gap-1.5 min-w-0 shrink-[2] @max-[260px]/row:hidden">
               {artist && <span aria-hidden="true" className="shrink-0">·</span>}
-              <button
-                type="button"
-                onClick={onAlbumClick}
-                className="truncate min-w-0 hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto] outline-none cursor-pointer"
-              >
+              <Linkable onClick={onAlbumClick} className="truncate min-w-0">
                 {album}
-              </button>
+              </Linkable>
             </span>
           )}
           {year && (
@@ -470,7 +509,7 @@ export function SongListItem({
                 `!` beats Tailwind's base display utility regardless of
                 rule order. */}
           <div className="flex [@media(hover:none)]:!hidden items-center gap-0.5 shrink-0 relative px-2 py-1.5">
-            <div className="absolute right-[calc(100%-6px)] top-1/2 -translate-y-1/2 flex items-center gap-0.5 py-1.5 pl-8 pr-0 bg-[linear-gradient(to_right,transparent_0px,var(--muted)_32px)] opacity-0 pointer-events-none transition-opacity group-hover/song:opacity-100 group-hover/song:pointer-events-auto">
+            <div className="absolute right-[calc(100%-6px)] top-1/2 -translate-y-1/2 flex items-center gap-0.5 py-1.5 pl-8 pr-0 bg-[linear-gradient(to_right,transparent_0px,var(--muted)_32px)] opacity-0 pointer-events-none transition-opacity duration-[260ms] ease-[cubic-bezier(0.2,0,0,1)] group-hover/song:opacity-100 group-hover/song:pointer-events-auto">
               <DropdownMenu>
                 <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="More options" />}>
                   <MoreHorizontal />
@@ -501,7 +540,7 @@ export function SongListItem({
               <SheetContent side="bottom" className="rounded-t-2xl">
                 <SheetHeader className="flex-row items-center gap-3">
                   {cover && (
-                    <img src={cover} alt="" draggable={false} className="size-11 rounded-xs object-cover shrink-0" />
+                    <img src={cover} alt="" draggable={false} className="size-11 rounded-xs object-cover shrink-0 art-edge" />
                   )}
                   <div className="min-w-0 text-left">
                     <SheetTitle className="truncate">{title}</SheetTitle>
@@ -513,7 +552,7 @@ export function SongListItem({
                   </div>
                 </SheetHeader>
                 <div className="flex flex-col px-2 pb-4">
-                  <SheetAction icon={<Heart className={cn(inLibrary && "fill-current")} />} label={libraryLabel} onClick={handleSongLibrary} />
+                  <SheetAction icon={<MenuHeart filled={inLibrary} />} label={libraryLabel} onClick={handleSongLibrary} />
                   {!hideAddToPlaylist && <SheetAction icon={<AddMusicIcon />} label="Add to playlist" onClick={handleAddToPlaylist} />}
                   {onArtistClick && !hideGoToArtist && <SheetAction icon={<Mic />}   label="Go to artist" onClick={onArtistClick} />}
                   {onAlbumClick  && !hideGoToAlbum  && <SheetAction icon={<Disc3 />} label="Go to album"  onClick={onAlbumClick} />}
@@ -674,7 +713,7 @@ function TrackNumberPlayButton({
       data-playing={playing || undefined}
       className={cn(
         "group/tnpb relative shrink-0 size-12 flex items-center justify-center rounded-md cursor-pointer outline-none",
-        "focus-visible:ring-3 focus-visible:ring-ring/50",
+        "focus-ring",
       )}
     >
       {/* Idle visual — track number. Fades out when playing OR on

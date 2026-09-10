@@ -13,7 +13,7 @@
  */
 
 import { useMemo, useState } from "react"
-import { ArrowDown, ArrowUp, ArrowUpDown, MoreHorizontal, Mic, Share, Link2, Check, LayoutGrid, List, Plus } from "lucide-react"
+import { ArrowUpDown, MoreHorizontal, Mic, Share, Link2, Check, LayoutGrid, List, Plus } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -21,10 +21,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Toggle } from "@/components/ui/toggle"
 import { ToggleGroup } from "@/components/ui/toggle-group"
 import { BulkActionBar, BulkActionButton } from "@/components/ui/bulk-action-bar"
-import { TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table"
+import { TableBody, TableCell, TableHead, TableRow, SortHeader } from "@/components/ui/table"
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { AlbumCardMenuItems, PlaylistCardMenuItems } from "@/components/ui/cover-card-menu"
 import { MediaListItem } from "@/components/ui/media-list-item"
 import { SongMenuItems } from "@/components/ui/song-list-item"
@@ -62,26 +61,8 @@ function addedInfo(seed: string): { ts: number; text: string } {
 
 // ─── Shared bits ─────────────────────────────────────────────────────
 
-function SortHeader({
-  label, active, dir, onClick, className,
-}: { label: string; active: boolean; dir: "asc" | "desc"; onClick: () => void; className?: string }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn("flex items-center gap-0.5 min-w-0 overflow-hidden cursor-pointer group/sort select-none", className)}
-    >
-      <span className={cn("text-xsmall font-normal truncate", active ? "text-foreground" : "text-muted-foreground")}>
-        {label}
-      </span>
-      {active
-        ? (dir === "asc"
-            ? <ArrowUp className="size-3 shrink-0 text-foreground" />
-            : <ArrowDown className="size-3 shrink-0 text-foreground" />)
-        : <ArrowUpDown className="size-3 shrink-0 text-muted-foreground opacity-0 group-hover/sort:opacity-50 transition-opacity" />}
-    </button>
-  )
-}
+/* `SortHeader` now comes from `ui/table` — this file used to carry its own
+   copy, as did four other views. */
 
 // Row chrome: no per-row border; a `bg-muted` block on hover (or when
 // selected) with the first/last cells rounding their outer corners (tr
@@ -129,12 +110,12 @@ function SelectAllHead({ allSelected, someSelected, onToggle }: {
 }
 
 const linkCell =
-  "text-left hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] [text-decoration-skip-ink:auto] outline-none cursor-pointer"
+  "text-left link-underline outline-none cursor-pointer"
 
 // 48px square cover thumb that opens the detail page.
 function CoverThumb({ src, alt, onClick }: { src: string; alt: string; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} aria-label={alt} className="block size-12 shrink-0 rounded-xs overflow-hidden outline-none focus-visible:ring-3 focus-visible:ring-ring/50 cursor-pointer">
+    <button type="button" onClick={onClick} aria-label={alt} className="block size-12 shrink-0 rounded-xs overflow-hidden outline-none focus-ring cursor-pointer art-edge">
       <img src={src} alt="" draggable={false} className="size-full object-cover" />
     </button>
   )
@@ -144,7 +125,7 @@ function CoverThumb({ src, alt, onClick }: { src: string; alt: string; onClick: 
 function CompositeThumb({ covers, alt, onClick }: { covers: string[]; alt: string; onClick: () => void }) {
   const four = [0, 1, 2, 3].map(i => covers[i % Math.max(1, covers.length)])
   return (
-    <button type="button" onClick={onClick} aria-label={alt} className="grid size-12 shrink-0 grid-cols-2 grid-rows-2 rounded-xs overflow-hidden outline-none focus-visible:ring-3 focus-visible:ring-ring/50 cursor-pointer">
+    <button type="button" onClick={onClick} aria-label={alt} className="grid size-12 shrink-0 grid-cols-2 grid-rows-2 rounded-xs overflow-hidden outline-none focus-ring cursor-pointer art-edge">
       {four.map((src, i) => (
         <img key={i} src={src} alt="" draggable={false} className="size-full object-cover" />
       ))}

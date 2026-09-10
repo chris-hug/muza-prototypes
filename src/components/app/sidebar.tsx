@@ -2,7 +2,16 @@
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import { Collapsible } from "@base-ui/react/collapsible"
+import { useSearchParams } from "react-router"
 import { cn } from "@/lib/utils"
+
+/* The sidebar's controls stay bespoke, and the reason is the palette: every
+   surface here is `--sidebar-*` (`--sidebar-accent`, `--sidebar-primary`,
+   `--sidebar-foreground`), a family `Button`'s variants do not speak — a ghost
+   Button would hover in `--accent` and quietly break the one part of the app
+   that has its own colours. What they do NOT get to invent is the behaviour:
+   the fade, the press ripple and the focus ring come from the system, with the
+   press pointed at the sidebar's own accent. */
 import { useCreatePlaylist } from "@/lib/create-playlist-context"
 import { Button } from "@/components/ui/button"
 import { LogoHorizontal, LogoMark } from "@/components/ui/logo"
@@ -112,7 +121,7 @@ function NavButton({
       onClick={onClick}
       title={collapsed ? item.label : undefined}
       className={cn(
-        "flex items-center gap-2.5 w-full font-medium text-sidebar-foreground transition-colors rounded-lg text-left",
+        "press-ripple relative [--press-fill:var(--sidebar-accent)] outline-none focus-ring flex items-center gap-2.5 w-full font-medium text-sidebar-foreground state-fade rounded-lg text-left",
         collapsed ? "size-11 justify-center rounded-full" : "h-9 px-3",
         active ? "bg-sidebar-primary" : "hover:bg-sidebar-accent",
       )}
@@ -131,7 +140,7 @@ function GroupTrigger({
   return (
     <Collapsible.Trigger
       className={cn(
-        "flex items-center gap-2.5 h-9 px-3 w-full font-medium text-sidebar-foreground transition-colors rounded-lg text-left",
+        "press-ripple relative [--press-fill:var(--sidebar-accent)] outline-none focus-ring flex items-center gap-2.5 h-9 px-3 w-full font-medium text-sidebar-foreground state-fade rounded-lg text-left",
         active ? "bg-sidebar-primary" : "hover:bg-sidebar-accent",
       )}
     >
@@ -182,7 +191,7 @@ function CollapsedGroupFlyout({
         onMouseLeave={scheduleHide}
         title={group.label}
         className={cn(
-          "size-11 flex items-center justify-center rounded-full text-sidebar-foreground transition-colors",
+          "press-ripple relative [--press-fill:var(--sidebar-accent)] outline-none focus-ring size-11 flex items-center justify-center rounded-full text-sidebar-foreground state-fade",
           hasActive ? "bg-sidebar-primary" : "hover:bg-sidebar-accent",
         )}
       >
@@ -220,6 +229,14 @@ function CollapsedGroupFlyout({
 const MIN_W = 208
 const MAX_W = Math.round(208 * 1.4) // 291px — 40% wider
 
+/* `?embed=1` — set by the prototyper's Product frame. Read here rather than
+   threaded as a prop: it is a fact about the WINDOW, not about this component,
+   and every consumer of the sidebar would otherwise have to pass it along. */
+function useEmbedded() {
+  const [params] = useSearchParams()
+  return params.get("embed") === "1"
+}
+
 export function Sidebar({
   collapsed: controlledCollapsed,
   onCollapsedChange,
@@ -228,6 +245,7 @@ export function Sidebar({
   playlists = DEFAULT_PLAYLISTS,
   className,
 }: SidebarProps) {
+  const embedded = useEmbedded()
   const [internalCollapsed, setInternalCollapsed] = useState(false)
   // Same flow the mobile Library header "+" and the grid tile start.
   const createPlaylist = useCreatePlaylist()
@@ -380,7 +398,7 @@ export function Sidebar({
                           key={child.label}
                           onClick={() => handleNavChange(child.label)}
                           className={cn(
-                            "h-9 px-3 w-full text-left rounded-lg font-normal text-xsmall text-sidebar-foreground transition-colors",
+                            "h-9 px-3 w-full text-left rounded-lg font-normal text-xsmall text-sidebar-foreground state-fade",
                             currentActive === child.label ? "bg-sidebar-primary" : "hover:bg-sidebar-accent",
                           )}
                         >
@@ -402,7 +420,7 @@ export function Sidebar({
           <button
             title="Create playlist"
             onClick={createPlaylist.open}
-            className="size-11 flex items-center justify-center rounded-full text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+            className="press-ripple relative [--press-fill:var(--sidebar-accent)] outline-none focus-ring size-11 flex items-center justify-center rounded-full text-sidebar-foreground hover:bg-sidebar-accent state-fade"
           >
             <Plus className="size-4" />
           </button>
@@ -429,11 +447,18 @@ export function Sidebar({
               <div className="h-full overflow-y-auto pr-1 -mr-1 pb-10">
                 <div className="flex flex-col gap-0.5">
                   {/* Design system — lives as the first "playlist" entry
-                       (moved out of the top bar). Routes to the DS view. */}
+                       (moved out of the top bar). Routes to the DS view.
+                       
+                       Hidden when the product is EMBEDDED: the prototyper's
+                       Product tab renders the app in an iframe, and this entry
+                       would open a prototyper inside it — then another inside
+                       that one. The way out of a loop is not to offer the
+                       door. */}
+                  {!embedded && (
                   <button
                     onClick={() => handleNavChange("DesignSystem")}
                     className={cn(
-                      "flex h-8 px-3 w-full text-left rounded-lg transition-colors items-center",
+                      "flex h-8 px-3 w-full text-left rounded-lg state-fade items-center",
                       currentActive === "DesignSystem"
                         ? "bg-sidebar-primary text-sidebar-foreground"
                         : "text-sidebar-foreground hover:bg-sidebar-accent",
@@ -441,12 +466,13 @@ export function Sidebar({
                   >
                     <span className="text-xsmall font-normal truncate">Design system</span>
                   </button>
+                  )}
                   {/* Experiments — scratch page for in-progress ideas
                        (motion studies etc.), sibling of the DS entry. */}
                   <button
                     onClick={() => handleNavChange("Experiments")}
                     className={cn(
-                      "flex h-8 px-3 w-full text-left rounded-lg transition-colors items-center",
+                      "flex h-8 px-3 w-full text-left rounded-lg state-fade items-center",
                       currentActive === "Experiments"
                         ? "bg-sidebar-primary text-sidebar-foreground"
                         : "text-sidebar-foreground hover:bg-sidebar-accent",
@@ -457,7 +483,7 @@ export function Sidebar({
                   {playlists.map(pl => (
                     <button
                       key={pl.id}
-                      className="flex h-8 px-3 w-full text-left rounded-lg text-sidebar-foreground hover:bg-sidebar-accent transition-colors items-center"
+                      className="flex h-8 px-3 w-full text-left rounded-lg text-sidebar-foreground hover:bg-sidebar-accent state-fade items-center"
                     >
                       <span className="text-xsmall font-normal truncate">{pl.title}</span>
                     </button>
@@ -497,7 +523,7 @@ export function Sidebar({
           className="absolute top-0 right-0 w-1 h-full cursor-col-resize group"
         >
           {/* Subtle visible indicator on hover */}
-          <div className="h-full w-full group-hover:bg-sidebar-border transition-colors" />
+          <div className="h-full w-full group-hover:bg-sidebar-border state-fade" />
         </div>
       )}
 

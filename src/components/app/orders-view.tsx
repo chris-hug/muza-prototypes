@@ -4,8 +4,7 @@ import React, { useState } from "react"
 import { useSearchParams } from "react-router"
 import {
   Truck, X, Ban, RotateCcw, AlertTriangle, Mail, Copy, CheckCircle2, ChevronDown,
-  ArrowDown, ArrowUp, ArrowUpDown, Search, ShoppingCart, Settings2,
-} from "lucide-react"
+  Search, ShoppingCart, Settings2 } from "lucide-react"
 import { OrderDetailView } from "@/components/app/order-detail-view"
 import { BulkActionDialog } from "@/components/app/bulk-action-dialog"
 import { type OrderEmailType } from "@/lib/order-emails"
@@ -13,8 +12,7 @@ import { useShopSettings } from "@/lib/shop-settings"
 import { Badge } from "@/components/ui/badge"
 import {
   OrderStatusBadge, STATUS_CONFIG, ALL_STATUSES,
-  type OrderStatus,
-} from "@/components/ui/order-status-badge"
+  type OrderStatus } from "@/components/ui/order-status-badge"
 import { Button } from "@/components/ui/button"
 import { BulkActionBar, BulkActionButton } from "@/components/ui/bulk-action-bar"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -22,11 +20,11 @@ import { ChipDismiss } from "@/components/ui/chip"
 import { useToast } from "@/components/ui/toast"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuGroup,
-  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
+import { Input } from "@/components/ui/input"
 import { filterTriggerCls, FilterChevron, FilterCount } from "@/components/ui/filter-button"
-import { TableHead } from "@/components/ui/table"
+import { TableHead, SortHeader as TableSortHeader } from "@/components/ui/table"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -56,8 +54,7 @@ const DEFAULT_VISIBLE: Record<ColKey, boolean> = {
   image:  false,
   date:   true,
   total:  true,
-  status: true,
-}
+  status: true }
 
 export type ProductType = "Vinyl" | "CD" | "Cassette" | "Apparel" | "Other"
 
@@ -136,8 +133,7 @@ export const ORDERS: Order[] = [
 export const ORDER_STATS = {
   count:   ORDERS.length,
   revenue: ORDERS.filter(o => o.status !== "cancelled" && o.status !== "refunded")
-                 .reduce((s, o) => s + o.total, 0),
-}
+                 .reduce((s, o) => s + o.total, 0) }
 
 // Status config (STATUS_CONFIG / ALL_STATUSES) lives in
 // `@/components/ui/order-status-badge` and is imported above.
@@ -152,8 +148,7 @@ const ALL_PRODUCTS: string[] = Array.from(
 
 export function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", {
-    day: "numeric", month: "short", year: "numeric",
-  })
+    day: "numeric", month: "short", year: "numeric" })
 }
 
 export function formatTotal(n: number) {
@@ -336,32 +331,25 @@ const COL = {
   //    so the column gets sized for it. Width stays in sync between
   //    tables so the Status header aligns visually when both render.
   status:   192,
-  actions:  32,
-} as const
+  actions:  32 } as const
 
 // ─── SortHeader ───────────────────────────────────────────────────────────────
 
+/* The catalogued `SortHeader` from `ui/table`, wrapped to keep this view's
+   prop shape (it passes a sort KEY and compares, rather than a boolean). */
 function SortHeader({ label, sortKey: sk, activeSortKey, sortDir, onSort, style, className }: {
-  label: string; sortKey: SortKey; activeSortKey: SortKey; sortDir: SortDir
+  label: string; sortKey: SortKey; activeSortKey: SortKey; sortDir: "asc" | "desc"
   onSort: (k: SortKey) => void; style?: React.CSSProperties; className?: string
 }) {
-  const isActive = sk === activeSortKey
   return (
-    <button
-      className={cn("flex items-center gap-0.5 min-w-0 overflow-hidden cursor-pointer group/sort select-none shrink-0", className)}
-      style={style}
+    <TableSortHeader
+      label={label}
+      active={sk === activeSortKey}
+      dir={sortDir}
       onClick={() => onSort(sk)}
-    >
-      <span className={cn("text-xsmall font-normal truncate", isActive ? "text-foreground" : "text-muted-foreground")}>
-        {label}
-      </span>
-      {isActive
-        ? (sortDir === "asc"
-            ? <ArrowUp   className="size-3 shrink-0 text-foreground" />
-            : <ArrowDown className="size-3 shrink-0 text-foreground" />)
-        : <ArrowUpDown className="size-3 shrink-0 text-muted-foreground opacity-0 group-hover/sort:opacity-50 transition-opacity" />
-      }
-    </button>
+      style={style}
+      className={cn("shrink-0", className)}
+    />
   )
 }
 
@@ -375,8 +363,7 @@ function SortHeader({ label, sortKey: sk, activeSortKey, sortDir, onSort, style,
 // `Retry capture (N)` when failed orders are checked.
 
 function FailedOrderRow({
-  order, isSelected, onSelect, visibleCols, onOpen, onCancel,
-}: {
+  order, isSelected, onSelect, visibleCols, onOpen, onCancel }: {
   order:       Order
   isSelected:  boolean
   onSelect:    () => void
@@ -434,7 +421,7 @@ function FailedOrderRow({
 
       {/* Image (optional, mirrors main table) */}
       <td className={cn("px-2 py-0", !visibleCols.image && "hidden")}>
-        <div className="rounded-xs bg-neutral-200 overflow-hidden" style={{ width: 44, height: 44 }}>
+        <div className="rounded-xs bg-neutral-200 overflow-hidden art-edge" style={{ width: 44, height: 44 }}>
           <img src={first.image} alt={first.productTitle} className="size-full object-cover" draggable={false} />
         </div>
       </td>
@@ -471,7 +458,7 @@ function FailedOrderRow({
            table below. */}
       <td className="px-4 py-0" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-end gap-2">
-          <Button variant="ghost" size="sm" onClick={onCancel} className="text-muted-foreground hover:text-destructive">
+          <Button variant="ghost" size="sm" onClick={onCancel} className="state-fade text-muted-foreground hover:text-destructive">
             <Ban className="size-3.5" />
             Cancel
           </Button>
@@ -482,8 +469,7 @@ function FailedOrderRow({
               add({
                 title: "Retrying capture via Square…",
                 description: `${order.number} · ${formatTotal(order.total)}`,
-                type: "loading",
-              })
+                type: "loading" })
             }}
           >
             <RotateCcw className="size-3.5" />
@@ -539,7 +525,7 @@ function OrderRow({ order, isSelected, onSelect, status, onStatusChange, visible
 
       {/* Image (optional) */}
       <td className={cn("px-2 py-0", !visibleCols.image && "hidden")}>
-        <div className="rounded-xs bg-neutral-200 overflow-hidden" style={{ width: 44, height: 44 }}>
+        <div className="rounded-xs bg-neutral-200 overflow-hidden art-edge" style={{ width: 44, height: 44 }}>
           <img src={first.image} alt={first.productTitle} className="size-full object-cover" draggable={false} />
         </div>
       </td>
@@ -638,8 +624,7 @@ const BULK_ACTIONS: BulkActionConfig[] = [
       : s === "refunded"     ? "refunded"
       : s === "cancelled"    ? "cancelled"
       : s === "payment_failed" ? "payment failed"
-      : "—",
-  },
+      : "—" },
   {
     key:   "delivered",
     label: "Mark delivered",
@@ -656,8 +641,7 @@ const BULK_ACTIONS: BulkActionConfig[] = [
       : s === "refunded"     ? "refunded"
       : s === "cancelled"    ? "cancelled"
       : s === "payment_failed" ? "payment failed"
-      : "—",
-  },
+      : "—" },
   // Refund deliberately omitted — refunds are financial and warrant
   // per-order judgment (partial vs full, reason, which items). Surface
   // refunds via the per-order detail view's RefundFlow instead, never
@@ -676,8 +660,7 @@ const BULK_ACTIONS: BulkActionConfig[] = [
     showNotifyToggle: false,
     buildConfirmLabel: n => `Retry capture for {n} ${n === 1 ? "order" : "orders"}`,
     pastTense:    "captured",
-    skipReason:   s => s !== "payment_failed" ? "payment didn't fail" : "—",
-  },
+    skipReason:   s => s !== "payment_failed" ? "payment didn't fail" : "—" },
   {
     key:   "cancelled",
     label: "Cancel",
@@ -698,8 +681,7 @@ const BULK_ACTIONS: BulkActionConfig[] = [
       : s === "delivered" ? "delivered"
       : s === "refunded"  ? "refunded"
       : s === "cancelled" ? "already cancelled"
-      : "—",
-  },
+      : "—" },
 ]
 
 // ─── OrdersView ───────────────────────────────────────────────────────────────
@@ -823,30 +805,23 @@ export function OrdersView() {
         <ProductTypeFilter selected={productTypeFilters} onChange={setProductTypeFilters} />
 
         {/* Search */}
-        <div className="relative flex items-center">
-          <Search className="absolute left-3.5 size-4 text-muted-foreground pointer-events-none" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Search orders"
-            className={cn(
-              "h-10 pl-10 pr-[18px] rounded-full border text-small font-normal bg-transparent transition-[colors,width,background-color]",
-              "text-foreground placeholder:text-muted-foreground focus:outline-none",
-              searchQuery
-                ? "border-foreground/40 bg-muted text-foreground w-56"
-                : "border-border text-foreground w-48 hover:border-foreground/30 focus:border-foreground/40 focus:bg-muted focus:w-56",
-            )}
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <X className="size-3" />
-            </button>
+        {/* The catalogue's `Input`, not a hand-built pill. It already owns the
+             leading glyph (`startIcon`), the ✕ (`onClear`), the border and
+             focus states and the size ladder — this call site keeps only what
+             is genuinely local: the width that grows when the filter is in
+             use. Three views carried three copies of the same field, which is
+             how one of them ends up a step behind the other two. */}
+        <Input
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          onClear={() => setSearchQuery("")}
+          placeholder="Search orders"
+          startIcon={<Search />}
+          className={cn(
+            "transition-[width,background-color,border-color]",
+            searchQuery ? "w-56 bg-muted border-foreground/40" : "w-48 focus:w-56",
           )}
-        </div>
+        />
 
         {/* Columns button */}
         <div className="ml-auto">
@@ -1193,8 +1168,7 @@ export function OrdersView() {
                   ? (notify
                       ? `${n} ${n === 1 ? "buyer" : "buyers"} notified by email.`
                       : "No emails sent — buyers were not notified.")
-                  : undefined,
-              } as never)
+                  : undefined } as never)
             }}
           />
         )

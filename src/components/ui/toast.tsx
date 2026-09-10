@@ -43,7 +43,7 @@ export const toastActionButtonClass = cn(
   "shrink-0 self-start mt-[3px]",
   "rounded-md px-2 py-1 text-xsmall font-medium text-foreground",
   "border border-border hover:bg-accent transition-colors",
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+  "focus-visible:outline-none focus-ring",
 )
 export const toastCloseButtonClass = cn(
   // Hidden on phones: the toast auto-dismisses and can be swiped away, and a
@@ -52,7 +52,7 @@ export const toastCloseButtonClass = cn(
   "hidden md:flex",
   "shrink-0 self-start mt-[3px] rounded-lg p-0.5 text-muted-foreground",
   "hover:bg-accent hover:text-accent-foreground transition-colors",
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+  "focus-visible:outline-none focus-ring",
 )
 
 // Icons take the same optical-centre nudge as the Alert component so the icon

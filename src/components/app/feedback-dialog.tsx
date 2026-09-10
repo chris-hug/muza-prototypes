@@ -58,8 +58,8 @@ export function FeedbackDialog({
           autoFocus
         />
         <DialogFooter>
-          <DialogClose render={<Button variant="ghost" />}>Cancel</DialogClose>
-          <Button onClick={send} disabled={!text.trim()}>Send feedback</Button>
+          <DialogClose render={<Button size="lg" variant="ghost" />}>Cancel</DialogClose>
+          <Button size="lg" onClick={send} disabled={!text.trim()}>Send feedback</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

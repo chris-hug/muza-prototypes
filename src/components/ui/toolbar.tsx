@@ -41,7 +41,7 @@ function ToolbarButton({
     <ToolbarPrimitive.Button
       data-slot="toolbar-button"
       className={cn(
-        "inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-full text-small font-normal text-foreground hover:bg-muted transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-full text-small font-normal text-foreground hover:bg-muted transition-colors outline-none focus-ring disabled:pointer-events-none disabled:opacity-50",
         className,
       )}
       {...props}

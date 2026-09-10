@@ -136,7 +136,7 @@ export function RefundFlow({ mode, items, shippingFee = 0, onSubmit }: RefundFlo
                   src={item.image}
                   alt=""
                   draggable={false}
-                  className="size-10 rounded-sm object-cover shrink-0"
+                  className="size-10 rounded-sm object-cover shrink-0 art-edge"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-small text-foreground truncate">{item.title}</p>

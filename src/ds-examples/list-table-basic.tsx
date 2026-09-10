@@ -14,7 +14,7 @@
  */
 
 import { useMemo, useState } from "react"
-import { ArrowDown, ArrowUp, ArrowUpDown, MoreHorizontal } from "lucide-react"
+import { MoreHorizontal } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -22,7 +22,7 @@ import { ContentTypeBadge } from "@/components/ui/badge"
 import { CoverPlayButton } from "@/components/ui/cover-play-button"
 import { AlbumCardMenuItems } from "@/components/ui/cover-card-menu"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table"
+import { TableBody, TableCell, TableHead, TableRow, SortHeader } from "@/components/ui/table"
 import { MediaListItem } from "@/components/ui/media-list-item"
 import { useFooterNav } from "@/lib/use-media-query"
 import { getRichAlbums } from "@/lib/album-catalog"
@@ -31,24 +31,8 @@ const ROWS = getRichAlbums().slice(0, 5)
 
 type Sort = "year-desc" | "year-asc" | "title-az" | "title-za" | "tracks-desc" | "tracks-asc"
 
-/* Muted label at rest, foreground when active, arrow for the direction; a
-   faint ArrowUpDown hint appears on hover when the column is not sorted. */
-function SortHeader({ label, active, dir, onClick }: {
-  label: string; active: boolean; dir: "asc" | "desc" | null; onClick: () => void
-}) {
-  return (
-    <button type="button" onClick={onClick} className="flex items-center gap-0.5 min-w-0 overflow-hidden cursor-pointer group/sort select-none">
-      <span className={cn("text-xsmall font-normal truncate", active ? "text-foreground" : "text-muted-foreground")}>{label}</span>
-      {active
-        ? (dir === "asc"
-            ? <ArrowUp className="size-3 shrink-0 text-foreground" />
-            : <ArrowDown className="size-3 shrink-0 text-foreground" />)
-        : <ArrowUpDown className="size-3 shrink-0 text-muted-foreground opacity-0 group-hover/sort:opacity-50 transition-opacity" />}
-    </button>
-  )
-}
 
-const LINK = "text-left hover:underline focus-visible:underline underline-offset-[3px] [text-decoration-thickness:1px] outline-none cursor-pointer"
+const LINK = "text-left link-underline outline-none cursor-pointer"
 
 export default function ListTableBasicExample() {
   const footerNav = useFooterNav()

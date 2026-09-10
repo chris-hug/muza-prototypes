@@ -86,8 +86,8 @@ export default function FormBasicExample() {
           )}
         />
         <div className="flex gap-2">
-          <Button type="submit">Submit</Button>
-          <Button type="button" variant="outline" onClick={() => form.reset()}>Reset</Button>
+          <Button size="lg" type="submit">Submit</Button>
+          <Button size="lg" type="button" variant="outline" onClick={() => form.reset()}>Reset</Button>
         </div>
       </form>
     </Form>
