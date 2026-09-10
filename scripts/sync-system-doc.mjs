@@ -39,6 +39,9 @@ const SYSTEM = "DESIGN_SYSTEM.md"
    gate, and tags each line accordingly. */
 const BLOCKS = {
   color: ["colors"],
+  token: ["colors"],
+  menu: ["detail-more-button"],
+  sheet: ["dialog", "keyboard", "menu", "drawer"],
   type: ["typography"],
   width: ["responsive"],
   touch: [

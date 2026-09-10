@@ -13,6 +13,8 @@ summary:
   - **Android needs none of this**: `interactive-widget=resizes-content` in the viewport meta does it declaratively, so `--kb` stays 0 there.
 contract:
   - "[touch] **The keyboard is measured, not guessed.** `--kb` and `data-kb=\"open\"` are published by `useKeyboardInset`; a media query cannot see the squeeze, because the layout viewport does not shrink. Cap sheet heights with `svh` — never `vh` or `dvh` — and scope any `max-h` of your own to `md:`."
+  - "[sheet] **Opening the keyboard has to happen inside the tap.** iOS raises it only for a focus during a user gesture, and a dialog focuses its field a frame or two later. A flow that should start typing focuses a zero-sized stand-in input from the trigger's own handler; the keyboard then follows focus into the real field."
+  - "[sheet] **`viewport-fit=cover` is mandatory.** Without it `env(safe-area-inset-*)` resolves to 0 and every safe-area pad in the app — header, footer nav, player, sheets, toasts — is silently a no-op."
 ---
 
 The on-screen keyboard is invisible to CSS. iOS shrinks the **visual**

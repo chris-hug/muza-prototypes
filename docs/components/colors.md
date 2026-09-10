@@ -12,6 +12,8 @@ contract:
   - "[color] **A component names a semantic token, never a primitive and never a hex.** `bg-primary`, not `bg-[#000DA2]` and not the primitive behind it: a literal opts out of dark mode silently, and nothing catches it."
   - "[color] **Dark mode reassigns the pointer, not the colour.** `--primary` moves from one primitive to another; neither primitive changes. That is the entire mechanism, and it is why a hard-coded colour cannot follow."
   - "[color] **Always `oklch`, and never a clipped value.** A colour that falls outside the display gamut is silently clamped, so two tokens that read as different in the file render identically on screen."
+  - "[token] **Never `gray-*`, `slate-*`, `zinc-*` or `stone-*`.** Muza's neutral is warm and olive-tinted; Tailwind's are cool and grey, so one borrowed class reads as a different product on the same screen. Use `neutral-*` or, better, a semantic token."
+  - "[token] **Never a hardcoded hex.** Every colour is a CSS variable, because a literal cannot follow the pointer when dark mode reassigns it — and nothing in the build catches one."
 ---
 
 Colour in Muza is **two layers and one rule**: a component names a *semantic

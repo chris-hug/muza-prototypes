@@ -7,6 +7,10 @@ usage:
   - Album / Playlist / Artist detail — header “…” | /?page=Album
 contract:
   - "[touch] **One menu shape per entity.** A long press raises the same sheet the entity's detail page raises — never the component's own dropdown rendered as a sheet. The kebab keeps the anchored dropdown, which is the right shape for a mouse."
+  - "[menu] **One menu per media kind, built in one place.** `useDetailActions()` builds it; three surfaces consume it. A song's items are the same on an album, a playlist, search and an artist page — a surface hides what is redundant there and adds nothing of its own."
+  - "[menu] **Handlers are baked in, not wired per call site.** Library save, share, credits, report and add-to-playlist resolve inside the component. A `live()` filter drops any action with no handler, so a missing row means a missing binding rather than a design choice."
+  - "[menu] **Library keys must match across surfaces.** Albums are keyed by catalog id, playlists and artists by slug. A card writing to a different key than its detail page is why hearts silently desync."
+  - "[menu] **Your own playlist never binds the library** — it is in it by definition, so the save heart becomes Edit and the menu drops Save. And a playlist navigates to its OWNER, not an artist: pass the wrong handler and the row vanishes with no error."
 ---
 
 `DetailMoreButton` is the "…" overflow on a media detail page — Album,

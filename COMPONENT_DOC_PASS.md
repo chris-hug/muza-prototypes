@@ -141,6 +141,13 @@ A value that IS the rule (44px of target) is stated in the system file and may
 be cited by pages. A DERIVED value (28 = a 20px pill plus an 8px inset) is
 stated where it is derived and nowhere else.
 
+Seven blocks are generated today — colour, tokens, type, width, touch, menus,
+sheets. Two sections stay hand-written on purpose, and the reason is the same
+for both: **Icons** is one decision about one mark, and the **strict touch
+rules** (touch-action, never synthesise a tap from pointerup, snap mandatory,
+viewport width) have no component that owns them. Do not create a page to
+satisfy the script — a subject earns a page by being a subject.
+
 **It gates.** `.github/workflows/docs.yml` runs the sweep on every pull
 request and every push to `main`, so a component that gains a behaviour and
 does not gain the prose fails before anyone reads the stale version. A red run

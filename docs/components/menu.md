@@ -6,6 +6,8 @@ usage:
   - Library list rows — ⋯ | /?page=Albums
   - Orders — row actions | /?page=Orders
   - Topbar — account | /?page=Home
+contract:
+  - "[sheet] **The app `DropdownMenu` is already a bottom sheet below 768** — use it for simple ⋯ lists rather than building one. Put the trigger on a real `Button` via `render`, and never use `CheckboxItem` / `RadioItem` / `Sub*` in a menu that can render below 768: they have no sheet counterpart."
 ---
 
 `DropdownMenu` is the app's action menu — the list behind a card's "…", a

@@ -764,6 +764,10 @@ size.
 
 ## Icons — the ones that are fixed
 
+*Not generated, and deliberately so: this is one decision about one mark, not
+a subject with a page behind it. A `contract:` block would be a page created
+to satisfy a script.*
+
 Most icons are Lucide, picked per context. Two are **not** free choices:
 
 - **"Add to playlist" / "Add to a playlist" / "Add music"** is always
@@ -1034,6 +1038,17 @@ and `muza-default` is always one click away.
 
 ## Token semantic rules — STRICT
 
+<!-- BEGIN GENERATED: token-contract -->
+<!-- Written by scripts/sync-system-doc.mjs from the `contract:` frontmatter
+     of the pages that own these rules. Do not edit between these markers —
+     edit the owning page and re-run `npm run sync-docs`. -->
+
+**Never `gray-*`, `slate-*`, `zinc-*` or `stone-*`.** Muza's neutral is warm and olive-tinted; Tailwind's are cool and grey, so one borrowed class reads as a different product on the same screen. Use `neutral-*` or, better, a semantic token. → [colors.md](docs/components/colors.md)
+
+**Never a hardcoded hex.** Every colour is a CSS variable, because a literal cannot follow the pointer when dark mode reassigns it — and nothing in the build catches one. → [colors.md](docs/components/colors.md)
+
+<!-- END GENERATED: token-contract -->
+
 Tokens are **roles**, not colours. Never mix roles.
 
 | Token | Role | Use for |
@@ -1053,8 +1068,6 @@ Tokens are **roles**, not colours. Never mix roles.
 - Never use `secondary` for hover or active states
 - `muted-foreground` is the de-emphasis text token — not `muted` itself (which is a background fill)
 - Every token is a surface + its `-foreground` pair — always use them together
-- **NEVER** use `gray-*`, `slate-*`, `zinc-*`, `stone-*` — use `neutral-*` or semantic tokens
-- **NEVER** hardcode hex values — use CSS variable tokens
 - Dark mode managed via `.dark` class on `<html>`, ThemeProvider in `app/root.tsx`
 - Toast: `ToastProvider` wraps layout, `useToast()` works anywhere inside
 
@@ -1191,6 +1204,25 @@ ladder, the derivations, the duplication map — is in
 
 ## Mobile surfaces — sheets
 
+<!-- BEGIN GENERATED: sheet-contract -->
+<!-- Written by scripts/sync-system-doc.mjs from the `contract:` frontmatter
+     of the pages that own these rules. Do not edit between these markers —
+     edit the owning page and re-run `npm run sync-docs`. -->
+
+**Every Dialog and AlertDialog is a bottom sheet on mobile and a centred modal from 768.** It is baked into the base content component — an individual dialog sets its desktop width and height only, and must not re-declare the positioning. → [dialog.md](docs/components/dialog.md)
+
+**Forms go full-screen on phones** (`mobile="form"`). A bottom sheet cannot hold a form once the keyboard is up, so any dialog whose primary action must survive typing anchors to the top, gives only its body a scroll, and puts the confirming action where the keyboard cannot reach it. → [dialog.md](docs/components/dialog.md)
+
+**Opening the keyboard has to happen inside the tap.** iOS raises it only for a focus during a user gesture, and a dialog focuses its field a frame or two later. A flow that should start typing focuses a zero-sized stand-in input from the trigger's own handler; the keyboard then follows focus into the real field. → [keyboard.md](docs/components/keyboard.md)
+
+**`viewport-fit=cover` is mandatory.** Without it `env(safe-area-inset-*)` resolves to 0 and every safe-area pad in the app — header, footer nav, player, sheets, toasts — is silently a no-op. → [keyboard.md](docs/components/keyboard.md)
+
+**The app `DropdownMenu` is already a bottom sheet below 768** — use it for simple ⋯ lists rather than building one. Put the trigger on a real `Button` via `render`, and never use `CheckboxItem` / `RadioItem` / `Sub*` in a menu that can render below 768: they have no sheet counterpart. → [menu.md](docs/components/menu.md)
+
+**An overlay panel does not push content.** A panel opening under a sticky header is out of flow (`absolute inset-x-* top-full z-40`) so it floats over the page instead of displacing it. → [drawer.md](docs/components/drawer.md)
+
+<!-- END GENERATED: sheet-contract -->
+
 > Component-specific detail lives in [`docs/components/<id>.md`](docs/components/README.md) — one Markdown file per component, rendered behind the ⓘ on its design-system section and read directly by agents. This file keeps the rules that span components. See [`dialog.md`](docs/components/dialog.md), [`alertdialog.md`](docs/components/alertdialog.md), [`responsive.md`](docs/components/responsive.md).
 
 Three escalating surfaces, all bottom-anchored on phones:
@@ -1207,11 +1239,7 @@ Three escalating surfaces, all bottom-anchored on phones:
 
 The squeeze is bigger than it sounds, and it is the reason the bands give up their padding below 768: an iPhone in Brave reports **495px of layout with 169px still visible**, and a bar plus an action row spend most of that before the field is drawn. Chrome/Android needs none of it — `interactive-widget=resizes-content` in the viewport meta does the same job declaratively, so `--kb` stays 0 there.
 
-**Opening the keyboard has to happen inside the tap.** iOS raises the virtual keyboard only for a focus that happens during a user gesture, and a dialog focuses its field a frame or two after the tap that opened it. A flow that should start typing therefore focuses a zero-sized stand-in input already in the document from the trigger's own handler (`CreatePlaylistProvider`), and the keyboard follows focus into the real field when the sheet mounts. The same reason a popup's `initialFocus` is given as a FUNCTION there: opened by touch the default is to focus the popup itself and keep the keyboard down.
-
 **Forms go full-screen on phones — `<DialogContent mobile="form">`.** A bottom sheet cannot hold a form once the keyboard is up (169px measured, and a title + field + toggle + footer need well over 200), so any dialog whose **primary action must survive typing** uses the form presentation: anchored top, three bands, only the body scrolls, the confirming action in `DialogFormActions` on the keyboard. The bands, the header rules and the find-screen pattern are in [docs/components/dialog.md](docs/components/dialog.md).
-
-**`viewport-fit=cover` is mandatory** in the viewport meta. Without it `env(safe-area-inset-*)` resolves to **0** and every safe-area pad in the app — mobile header, footer nav, player shell, dropdown sheets, dialog footers, toasts — is silently a no-op.
 
 **2. DropdownMenu auto-sheet.** The app `DropdownMenu` already presents as a bottom sheet below 768 — use it for simple "…" lists. See [docs/components/menu.md](docs/components/menu.md); the one rule: put the trigger on a real `Button` via `render`, and never use `…CheckboxItem` / `…RadioItem` / `…Sub*` in a menu that can render below 768 — they have no sheet counterpart.
 
@@ -1220,8 +1248,6 @@ The squeeze is bigger than it sounds, and it is the reason the bands give up the
 - **Quick actions** — a row of icon-over-label pills: `flex-1 rounded-2xl bg-secondary px-2 py-3.5`, icon `size-5` + `text-xsmall`. Per kind: Share · Save · (Edit / Play radio …).
 - **Grouped rows** — `SheetRow`s (44px tap target) separated by `h-px bg-border` dividers: Add to a playlist · Play next · Add to queue · Credits / Go to artist / Go to label · Report / Delete (destructive).
 - The published-header config (`usePublishDetailHeader`) must forward **every** field via live getters — a stale whitelist silently drops `covers`/`meta`/library binding.
-
-**Overlay panels don't push content.** A panel that opens under a sticky header (e.g. the search recent/suggestions panel) is `absolute inset-x-* top-full z-40` (out of flow) so it floats over the page instead of displacing it.
 
 ---
 
@@ -1241,6 +1267,21 @@ The Explore page **is** the search surface; results are URL-backed (`?page=Explo
 
 ## Media menus — ONE menu per media kind
 
+<!-- BEGIN GENERATED: menu-contract -->
+<!-- Written by scripts/sync-system-doc.mjs from the `contract:` frontmatter
+     of the pages that own these rules. Do not edit between these markers —
+     edit the owning page and re-run `npm run sync-docs`. -->
+
+**One menu per media kind, built in one place.** `useDetailActions()` builds it; three surfaces consume it. A song's items are the same on an album, a playlist, search and an artist page — a surface hides what is redundant there and adds nothing of its own. → [detail-more-button.md](docs/components/detail-more-button.md)
+
+**Handlers are baked in, not wired per call site.** Library save, share, credits, report and add-to-playlist resolve inside the component. A `live()` filter drops any action with no handler, so a missing row means a missing binding rather than a design choice. → [detail-more-button.md](docs/components/detail-more-button.md)
+
+**Library keys must match across surfaces.** Albums are keyed by catalog id, playlists and artists by slug. A card writing to a different key than its detail page is why hearts silently desync. → [detail-more-button.md](docs/components/detail-more-button.md)
+
+**Your own playlist never binds the library** — it is in it by definition, so the save heart becomes Edit and the menu drops Save. And a playlist navigates to its OWNER, not an artist: pass the wrong handler and the row vanishes with no error. → [detail-more-button.md](docs/components/detail-more-button.md)
+
+<!-- END GENERATED: menu-contract -->
+
 There is exactly **one** "…" menu per media kind, and every surface triggers that same menu. A card's "…", a list row's "…" and the detail page's "…" are the *same component with the same items* — only context-dependent rows are gated out. If two surfaces show different items for the same object, that's a bug.
 
 **Built by** `useDetailActions()` in [`detail-more-button.tsx`](src/components/ui/detail-more-button.tsx), consumed three ways:
@@ -1255,14 +1296,6 @@ Context gating, nothing else:
 - `hideAddToPlaylist` — inside your own playlist (it's already there)
 - `hideGoToArtist` — on that artist's page
 - `hideGoToAlbum` — on that album's page
-
-**Handlers are baked in, not wired per call site.** Library save, share, credits, report and add-to-playlist resolve inside the component from `libraryType` + `libraryId`. Call sites that "forget" to pass a handler used to silently lose rows — a `live()` filter now drops any action with no handler, so a missing row means a missing binding, not a design choice.
-
-**Library keys must match across surfaces.** Albums are keyed by **catalog id** (`a02`), not by title slug — use `libraryIdForTitle(title) ?? slugify(title)`. Playlists and artists are keyed by slug. A card writing to a different key than its detail page is why hearts silently desync.
-
-**Owned playlists never bind the library.** Your own playlist is in your library by definition: `variant="my-playlist"` swaps the save heart for **Edit**, and the menu drops Save entirely.
-
-**Playlists navigate to their OWNER, not an artist.** `useDetailActions` reads `onGoToOwner` for the playlist kind and `onGoToArtist` for everything else — passing the wrong one drops the row with no error.
 
 ---
 

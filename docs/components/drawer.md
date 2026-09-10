@@ -7,6 +7,7 @@ usage:
   - Footer tab bar › Studio switcher (bottom sheet) | /
 contract:
   - "[touch] **A bottom sheet's top corner is owned by `SIDE_CLASSES.bottom`.** No call site writes it: the value is derived from the control the bar has to hold, so it is stated once, where that arithmetic lives."
+  - "[sheet] **An overlay panel does not push content.** A panel opening under a sticky header is out of flow (`absolute inset-x-* top-full z-40`) so it floats over the page instead of displacing it."
 ---
 
 `Sheet` is the edge-anchored drawer — the cart from the right, the Studio
