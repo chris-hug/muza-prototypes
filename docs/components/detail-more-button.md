@@ -199,6 +199,22 @@ The three groups, in order — an empty group is skipped and so is its divider:
 | Navigation | Go to album / Go to playlist (`onGoToSelf` — a card or row, never the item's own page) · Credits (owned album, since its pill is Edit) · Go to artist · Go to label · Go to owner (playlist — it has an owner, not an artist) · Artist info |
 | Destructive | **Delete playlist** (owned) in `text-destructive`, otherwise **Report** — a plain row, never styled destructive |
 
+### What a CARD's sheet can offer, and what is missing on purpose
+
+The long press on a card raises this same sheet, so the card has to pass the
+handlers — a card that passes none shows Share and Report. As wired today:
+
+| Kind | Present | Absent, and why |
+|---|---|---|
+| Album | Copy link/Share · Save (store-bound) · Credits · Go to album · Go to artist · Report | **Add to a playlist** — the flow adds a SONG to playlists; adding an album's tracks has no implementation. **Go to label** — no label data on a card. **Play next / Add to queue** — the player has no queue. |
+| Playlist | Copy link/Share · Save (store-bound) · Go to playlist · Go to owner · Report | **Add music / Edit info / Make private / Delete** on an owned playlist — the card is not the owner surface; those live on the playlist page. |
+| Artist | Copy link/Share · Save (store-bound) · Report | **Play radio** and **Artist info** — neither exists anywhere in the app; the menu drops a row whose handler is missing rather than showing a dead one. |
+
+Save is bound through `libraryType` + `libraryId` on all three, not through
+`onAdd`/`onRemove` props: those are optional at most call sites, so the tile
+was being dropped for lack of a handler and a card's sheet offered Share alone.
+Bound to the store it also reads live, so it matches the card's own heart.
+
 **A row only exists where its handler is wired.** `useDetailActions` filters
 every group with `a => a.onClick`, so a card that passes no `onPlayNext` shows
 no "Play next", and no call site needs a conditional. Report is the one

@@ -267,9 +267,22 @@ export function PlaylistCard({
             subtitle={owned ? "Playlist" : owner ? `By ${owner}` : "Playlist"}
             owned={owned}
             inLibrary={inLibrary}
+            /* Bind Save to the LIBRARY STORE rather than to `onAdd`/`onRemove`
+               props a call site may not pass: without this the Save tile is
+               dropped (its handler is undefined) and a playlist sheet opened
+               from a card offered Share and nothing else. Store-bound, it also
+               reads its state live, so it matches the card's own heart. Owned
+               playlists are excluded by the menu itself — yours is in your
+               library by definition. */
+            libraryType="playlist"
+            libraryId={key}
+            libraryName={title}
             onAdd={onAdd}
             onEdit={onEdit}
-            onGoToOwner={onGoToOwner}
+            /* Same fallback the kebab uses: a playlist that is not yours has
+               an owner to visit, baked from the owner's name, so every card
+               offers it without a call site wiring one. */
+            onGoToOwner={onGoToOwner ?? (!owned && owner ? () => openArtist(slugify(owner)) : undefined)}
             onGoToSelf={onGoToPlaylist ?? goPlaylist}
             onRemove={onRemove}
             onReport={onReport}

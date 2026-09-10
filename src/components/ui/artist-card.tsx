@@ -23,6 +23,7 @@
 
 import { useState } from "react"
 import { useLongPress } from "@/lib/use-long-press"
+import { slugify } from "@/lib/media-nav"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { DetailMenuSheetBody } from "@/components/ui/detail-more-button"
 import { cn } from "@/lib/utils"
@@ -102,7 +103,22 @@ export function ArtistCard({ name, image, onClick, className }: ArtistCardProps)
         is the card itself rather than a button. */}
     <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
       <SheetContent side="bottom" className="rounded-t-2xl">
-        <DetailMenuSheetBody kind="artist" title={name} cover={image} subtitle="Artist" />
+        <DetailMenuSheetBody
+          kind="artist"
+          title={name}
+          cover={image}
+          subtitle="Artist"
+          /* Save, bound to the library store — the same binding the artist
+             page's own heart uses, so the sheet reads the real state and
+             flips in place. Without it the tile has no handler and the sheet
+             offers Share and Report only.
+             Play radio and Artist info stay unwired ON PURPOSE: neither has
+             an implementation anywhere in the app, and the menu drops a row
+             whose handler is missing rather than showing a dead one. */
+          libraryType="artist"
+          libraryId={slugify(name)}
+          libraryName={name}
+        />
       </SheetContent>
     </Sheet>
     </>
