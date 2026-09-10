@@ -51,7 +51,11 @@ const TRIGGER_CLASS =
   // every Button on the page, which is the point of picking per size.
   "transition-[color,background-color,border-color] duration-[130ms] ease-[cubic-bezier(0.2,0,0,1)] " +
   "outline-none cursor-pointer " +
-  "hover:bg-neutral-100 focus-ring " +
+  // 24px of paint, 44px of target. It is the most numerous control in the app
+  // — 60 of them on one Library screen — and it was the one place the 44px
+  // rule had never been applied. Safe here: the nearest other control (Play)
+  // is 92px away, far past the 12px minimum for neighbouring hit areas.
+  "hover:bg-neutral-100 focus-ring touch-target " +
   "[&_svg]:size-3 [&_svg]:shrink-0 [&_svg]:pointer-events-none"
 
 interface CommonProps {

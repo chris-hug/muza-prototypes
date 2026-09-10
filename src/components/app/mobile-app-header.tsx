@@ -248,7 +248,12 @@ function LibraryHeader({ activeNav, onNavChange }: { activeNav: string; onNavCha
             // transitions on a 300ms curve for the field opening, which is
             // the wrong timing for a tap — and its property list cannot
             // carry `scale` without dragging it to 300ms too.
-            className="shrink-0 flex items-center justify-center text-foreground outline-none [&_svg]:size-[18px] transition-[color] duration-[130ms] ease-[cubic-bezier(0.2,0,0,1)] active:text-muted-foreground"
+            // `focus-ring` and `touch-target`, both missing until an audit
+            // went looking: the glyph is 18px, so the button was 18×18 — under
+            // WCAG 2.2 AA's 24×24 floor, not merely under the 44 we ask for —
+            // and `outline-none` with nothing to replace it left a keyboard
+            // user with no focus indicator at all (2.4.7).
+            className="shrink-0 relative flex items-center justify-center text-foreground outline-none focus-ring touch-target [&_svg]:size-[18px] transition-[color] duration-[130ms] ease-[cubic-bezier(0.2,0,0,1)] active:text-muted-foreground"
           >
             <Search />
           </button>

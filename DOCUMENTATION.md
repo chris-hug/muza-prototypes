@@ -136,7 +136,7 @@ still installing.
 | `npm run doc-sweep` | (1) is every behaviour named? | **CI, ~8s** | `--sheet-drag-progress` in the code and in no doc; `rounded-t-[28px]` at five call sites, which moved into the component instead |
 | `npm run sync-docs -- --check` | (2) has a duplicated fact drifted? | **CI** | Its own creation: `--kb` written twice, two revisions apart |
 | `npm run doc-rules` | (3) did a rule get promoted? | **No — advisory** | 7 candidates, 3 real (footer margins, `swipeDirection` on the root, `user-scalable=no`) |
-| `npm run conformance` | **(5) does the CODE obey the contract?** | **CI** | 4 violations on its first run: a sheet corner written at a call site, `h-dvh` on the side drawers, and two files with hardcoded card colours |
+| `npm run conformance` | **(5) does the CODE obey the contract?** | **CI** | The header Search button with `outline-none` and no ring; 4 violations on its first run: a sheet corner written at a call site, `h-dvh` on the side drawers, and two files with hardcoded card colours |
 
 Failure (5) was the last to get a check, and the most embarrassing to have
 missed: the first three all compare documents with documents. `conformance`

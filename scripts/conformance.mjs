@@ -48,6 +48,27 @@ const RULES = [
                p.includes("components/ds/"),
   },
   {
+    /* Static shape of a WCAG 2.4.7 failure. It exists because the mobile
+       header's Search button had `outline-none` and nothing to replace it —
+       18px of paint, no ring, and nobody noticed until a keyboard walked the
+       page. `focus-ring` is the utility; `link-underline` counts too, because
+       for a text button the underline IS the indicator. */
+    id: "a11y/focus-indicator",
+    contract: "A control that removes the outline must replace it — WCAG 2.4.7",
+    why: "`outline-none` with no focus treatment leaves a keyboard user with no way to see where they are.",
+    scan(code) {
+      const hits = []
+      for (const m of code.matchAll(/<(button|input|a)\b[^>]*?>/gs)) {
+        const cm = m[0].match(/className=(?:"([^"]*)"|\{cn\(([^)]*?)\)\})/s)
+        const cls = (cm?.[1] ?? cm?.[2] ?? "")
+        if (cls.includes("outline-none") && !/focus-ring|focus-visible:|link-underline|focus:/.test(cls)) {
+          hits.push(`<${m[1]} outline-none>`)
+        }
+      }
+      return hits
+    },
+  },
+  {
     id: "sheet/svh-not-dvh",
     contract: "[sheet] Cap sheet heights with svh, never vh or dvh — keyboard.md",
     why: "On iOS dvh reports the height with the browser chrome collapsed, so the top of the surface sits above the visible area while the URL bar is expanded.",
@@ -84,6 +105,12 @@ const RULES = [
    settle it. A baseline is a to-do list; an entry without a plan is an
    exemption pretending to be one. */
 const BASELINE = {
+  "src/components/app/artist-profile-view.tsx": {
+    rule: "a11y/focus-indicator",
+    note: "False positive, kept visible rather than silenced by a cleverer regex: the button carries " +
+          "`outline-none` and its child <span> carries `link-underline`, which IS the focus indicator " +
+          "for a text button. Static analysis cannot see a ring that lives on a child.",
+  },
   "src/components/app/manage-v2.tsx": {
     rule: "token/no-hex",
     note: "Visa's own navy (#1a1f71) and card blue (#005eb8). A third party's brand colour is " +
@@ -126,7 +153,7 @@ for (const root of ROOTS) {
 
     for (const rule of RULES) {
       if (rule.skip?.(rel)) continue
-      const hits = [...code.matchAll(rule.test)].map(m => m[0])
+      const hits = rule.scan ? rule.scan(code) : [...code.matchAll(rule.test)].map(m => m[0])
       if (!hits.length) continue
       const based = BASELINE[rel]?.rule === rule.id
       ;(based ? baselined : findings).push({ rel, rule, hits: [...new Set(hits)] })
