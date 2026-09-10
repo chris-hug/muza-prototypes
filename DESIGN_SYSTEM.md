@@ -76,8 +76,8 @@ Instead: **inject the capture script + a floating dev-only "📸 Capture to Figm
 | `--card-foreground` | `#0D0D04` | `#FAFCF4` | card text |
 | `--popover` | `#FEFFFB` | `#0D0D04` | popover / dropdown surface |
 | `--popover-foreground` | `#0D0D04` | `#FAFCF4` | popover text |
-| `--primary` | `#1E34D8` | `#1E34D8` | brand blue (muza-blue-200) — solid **fill**: buttons, shuffle-active, progress |
-| `--primary-foreground` | `#FAFCF4` | `#FAFCF4` | ink on a primary **fill** (white-ish text on a blue button) |
+| `--primary` | `#1E34D8` | `#1E34D8` | the brand fill (muza-brand-200) — solid **fill**: buttons, shuffle-active, progress |
+| `--primary-foreground` | `#FAFCF4` | `#FAFCF4` | ink on a primary **fill** (white-ish text on a brand-coloured button) |
 | `--primary-text` | `#1E34D8` | `#3F66FF` | primary **ink** on neutral surfaces — links, ghost/outline-primary labels, accent icons. Dark lifts to blue-100 for legibility |
 | `--secondary` | `#ECEEDF` | `#2E2C24` | secondary surface; ghost hover bg |
 | `--secondary-foreground` | `#1D1C18` | `#FAFCF4` | text on secondary bg |
@@ -282,9 +282,9 @@ All map 1:1 to CSS custom properties in `app/app.css`. Light + dark modes are di
 | `muted-foreground` | `#545445 @75%` (neutrals-a75-700) | `#F9FAF0 @50%` (neutrals-a50-50) | `--muted-foreground` |
 | `popover` | `#FEFFFB` | `#0D0D04` | `--popover` |
 | `popover-foreground` | `#0D0D04` | `#F9FAF0` | `--popover-foreground` |
-| `primary` | `#1E34D8` (blue-200) | `#1E34D8` (blue-200) | `--primary` |
+| `primary` | `#1E34D8` (brand-200) | `#1E34D8` (brand-200) | `--primary` |
 | `primary-foreground` | `#F9FAF0` | `#F9FAF0` | `--primary-foreground` |
-| `primary-text` | `#1E34D8` (blue-200) | `#3F66FF` (blue-100) | `--primary-text` |
+| `primary-text` | `#1E34D8` (brand-200) | `#3F66FF` (brand-100) | `--primary-text` |
 | `ring` | `#1D1C18` (neutrals-900) | `#DADDCD` (neutrals-300) | `--ring` |
 | `secondary` | `#F1F3E6` (neutrals-100) | `#2E2C24` (neutrals-800) | `--secondary` |
 | `secondary-hover` | `#ECEEDF` (neutrals-200) | `#3C3D33` (neutrals-700) | `--secondary-hover` |
@@ -293,9 +293,221 @@ All map 1:1 to CSS custom properties in `app/app.css`. Light + dark modes are di
 | `chart-1..5` | varied | varied | `--chart-1..5` |
 | `sidebar-*` | varied | varied | `--sidebar-*` (same shape as above) |
 
+**The palette is two ramps, and both are named for their ROLE.**
+`--muza-neutrals-*` carries every surface; `--muza-brand-*` carries the one
+accent. `brand`, not `blue`: it is blue today, and a theme is free to make it
+anything — every utility, token and doc would otherwise be lying the moment it
+changed. The ramps are the only colours in the system that are literal; every
+other token is a pointer at one of their steps.
+
+**The prototyper's themer edits those two ramps and nothing else.** Light and
+dark are decided by which step a semantic token points at, and those pointers
+live in `app.css` — a themer that could re-point them would put that decision
+in two places. Change a ramp and both modes follow, because both modes already
+point at it. See "Themes" below.
+
 **Rule: never write hex colours in component code. Always use semantic token classes (`bg-primary`, `text-muted-foreground`, `border-border`) or the CSS variable references.**
 
-**Rule: primary *fill* vs primary *ink*.** Use `bg-primary` (+ `text-primary-foreground`) for a solid blue **fill** — buttons, progress, shuffle-active. Use **`text-primary-text`** whenever the blue is **ink on a neutral surface** — links, ghost/`outline-primary` button labels, accent icons (checkmarks), the filled library heart. Never use bare `text-primary` for text: `--primary` (blue-200) is only ~2.2:1 on the dark background, whereas `--primary-text` lifts to blue-100 (`#3F66FF`) in dark mode while staying identical in light. The `link` and `outline-primary` Button variants already bake this in.
+**Rule: primary *fill* vs primary *ink*.** Use `bg-primary` (+ `text-primary-foreground`) for a solid blue **fill** — buttons, progress, shuffle-active. Use **`text-primary-text`** whenever the blue is **ink on a neutral surface** — links, ghost/`outline-primary` button labels, accent icons (checkmarks), the filled library heart. Never use bare `text-primary` for text: `--primary` (brand-200) is only ~2.2:1 on the dark background, whereas `--primary-text` lifts to blue-100 (`#3F66FF`) in dark mode while staying identical in light. The `link` and `outline-primary` Button variants already bake this in.
+
+**Rule: a press is a COLOUR step. Never geometry.** Each Button variant
+darkens one stop past its own hover. 130ms on `cubic-bezier(0.2,0,0,1)`, the
+same timing as every other colour change. `Button`, `Toggle`, `Chip`,
+`FilterButton`, the footer nav, the mobile header, the card menus and the
+status badge all follow it. Every button presses, menu and dialog triggers
+included.
+
+**Rule: a selection that has a shape is DRAWN from the pointer, not swapped
+on.** `RadioCard`'s ring is a conic gradient that grows out of the point you
+pressed, in both directions at once, over 340ms on an ease-**in** curve — it
+holds at the press point, races round and snaps shut, because on a ring that
+closes the interesting part is the closing. It settles into exactly the border
+it replaces: drawn ring and settled border are both `--foreground` at 20%, and
+those two alphas can only be changed together. See `radio-card.md` for the
+four failure modes the build is shaped around (the seam, the 1px inset, the
+curve, the shared alpha).
+
+**Rule: a text link's underline WIPES IN from the left — `link-underline`.**
+`text-decoration` cannot be animated: its colour can fade, which reads as the
+line materialising everywhere at once, but it cannot be drawn. So the line is
+a background gradient whose width runs 0 → 100% over 140ms on the house curve,
+growing in the direction the word is read and retracting the same way. One
+utility, 321 links on the design-system page alone, including `Button`'s
+`link` variant, every title/artist/album in a row, and the cards.
+
+Two things come with it. The utility sets `width: fit-content` (plus
+`max-width: 100%`, so `truncate` still works): a background spans the BOX, and
+several of these links are stretched flex children whose line would otherwise
+run past the last letter — this has no effect on an inline `<a>`, which is
+text-sized already. And `text-decoration-skip-ink` is gone, so a descender is
+crossed rather than skipped; at 1px under 17px type that is the cheaper half
+of the trade.
+
+Where the CONTAINER owns the hover — an artist card underlining its name, a
+stepper step its label — the parent takes `link-underline-group` and the text
+takes `link-underline`. A Tailwind `group-hover:` variant cannot drive this,
+because it compiles into the child's own `:hover`, which is the one thing that
+does not happen there.
+
+**Rule: on a Button, the hover colour GROWS FROM THE POINTER.** The same
+circle as the press, one step earlier in the gesture: `pointerover` records
+where the pointer crossed the edge (`--hover-x` / `--hover-y`, written by the
+one document listener in `use-press-ripple.ts`), and `:hover` transitions the
+registered `--hover-r` from 0% to 150%, so the fill arrives from the direction
+you came from. Its edge is feathered over 30% of the gradient line — a hard
+rim reads as a shape crossing the button rather than a colour arriving.
+
+Two consequences worth knowing. The hover colour has to be a **token**
+(`--hover-fill`), not a `hover:bg-*` class, or it arrives twice: once flat
+underneath, once growing. Button's variants carry the token, and so do
+`SongListItem` and `MediaListItem` — down a list the direction reads even
+better than on a button, because a row is passed through rather than switched
+on. Everything else keeps the plain fade.
+
+The rows run it at a list's pace, through `state-fade-quick`: **260ms in**,
+not 440. A button is a destination and the colour is what you came for; a row
+is a corridor, and at 440ms the fill is still climbing two rows after the
+pointer has left, so the list smears. Out is 100ms everywhere. And the circle is painted as the host's own
+`background-image` — `::before` is the press and `::after` is `icon-sm`'s hit
+area, so there was no third pseudo-element to spend. Mouse only: on touch
+`:hover` sticks after the finger lifts, and the press already answers the tap.
+
+**Rule: every colour state change fades, and through one utility —
+`state-fade`.** It emits `color, background-color, border-color,
+outline-color, opacity` on `cubic-bezier(0.2,0,0,1)`, **440ms in and 100ms
+out**. The split needs no second mechanism: the transition that runs on the
+way in is the one declared on `:hover`, the one that runs on the way out is
+the one declared on the element, so the base carries the fast number. Arriving
+is what you are meant to watch; leaving is the pointer already somewhere else,
+and a slow exit leaves the row you left glowing two rows later. A press is an answer and lands at 130ms; a hover is
+the pointer passing through and reads as flicker at that speed. The press is
+keyframe-driven, so it does not ride on this number. `Button` uses it,
+and so does everything bespoke that lights up on hover — dropdown and command
+items, select and combobox options, the detail-menu rows, the small icon
+buttons in dialogs and headers, prose links inside `Alert` and `Dialog`. Those
+carried nothing before and snapped while the Button beside them eased; the
+snap is only visible when both are on screen, which is most of the time.
+`box-shadow` stays out of the list — the focus ring is one, and animating it
+repaints the ring region every frame, which makes the icon inside judder.
+
+| Fill | rest → hover → press | hover step | press step |
+|---|---|---|---|
+| `primary` | `#1E34D8` → `#182AAD` → `#121F82` | 20 | 20 |
+| `secondary` (light) | `#ECEEDF` → `#DADDCD` → `#CDD0C1` | 18 | 13 |
+| `secondary` (dark) | `#2E2C24` → `#3C3D33` → `#48493F` | 15 | 12 |
+| `destructive` (light) | `#DC2626` → `#C22122` → `#A71D1D` | 12 | 12 |
+| `destructive` (dark) | `#7F1D1D` → `#8E3838` → `#9E5353` | 23 | 23 |
+
+The `-active` tokens are computed mixes, like the `-hover` ones — never the
+next step on the palette. The neutral ramp is not linear: `neutrals-200 → 300`
+drops 5.3 points of lightness and `300 → 400` drops 11.8, so "the next step"
+hit more than twice as hard on the press as on the hover. Each theme mixes in
+its own direction (black in light, white in dark, since dark's `secondary` and
+`destructive` start near the floor).
+
+The ratios differ between fills on purpose: primary's press moves as far as
+its hover, secondary's a little less. An equal delta reads weaker on a
+saturated fill than on a near-neutral one, so matching the ratios leaves one
+of them dead and the other shouting.
+
+Alpha is not a press. `destructive` used `/85` and `/70`, which mix with
+whatever is *behind* the button, so the same press read differently on a card,
+a dialog and a photo. The exception is `OrderStatusBadge`, whose colour comes
+from its status config — there is no single token to darken across seven
+statuses, so it steps opacity.
+
+Verified across the design-system page: **685** pressable surfaces, **0**
+without a press, **0** using geometry; **2107** elements with a hover colour
+utility, **0** missing a colour transition.
+
+**Why not geometry.** Two variants were built and measured out.
+
+- **Scale.** A factor is a ratio, and this ladder runs 24px to 398px wide: at
+  a flat `0.97` the narrowest button's edge travelled 0.36px and the widest
+  5.97px. Staggering the factor per size equalised the height and left the
+  real fault untouched — inside ONE button the contents spread, because every
+  point moves in proportion to its distance from the centre. Measured on
+  Pagination's "Previous" (118 × 40): the chevron at the left edge travelled
+  2.01px while the label beside it travelled 0.30px, so it read as the icon
+  sliding out, not the button shrinking.
+- **A 1px nudge.** Size-independent, and that is all it has going for it.
+
+Colour has no size: a 24px icon button and a 398px call to action answer with
+exactly the same step. Both references measured agree — TIDAL transitions
+`color, background-color` with no geometric press anywhere; Apple Music has 30
+`:active` rules of which 19 are background and exactly one is a transform,
+`scale(0.9)` on a 24px square transport button, the one shape where a scale
+cannot spread.
+
+**Every hover colour change eases.** Verified across the design-system page:
+2107 elements carry a hover colour utility and **0** of them lack a colour
+transition. Two traps to keep it that way — `transition-[colors,…]` inside
+brackets emits the invalid ident `colors` and matches nothing (write the
+properties out), and a bare `duration-*` with no `transition-*` beside it arms
+the initial value `all`.
+
+**Do not write class names in comments.** Tailwind scans source files as text,
+so a class quoted in prose is a class it generates. A rewritten comment in
+`order-detail-view` kept a dead press rule alive in the stylesheet.
+
+**Do not promote a layer for the press.** It was tried
+(`active:will-change-transform`) to stop the button's contents being
+re-rastered at each fractional step, and it cost more than it bought:
+creating and tearing down a layer shifts content by a fraction of a pixel at
+both ends. On a 32px icon button that reads as the glyph dropping and coming
+back — and 3% of 32px is only 0.96px, so the artefact was larger than the
+effect it was smoothing. Scoped to `:active` it also fired on menu triggers,
+which do not press at all, so the only thing a `Delete track` button did on
+click was twitch its icon.
+
+`transform-gpu` is not a way back in: it does not apply in Tailwind v4 without
+a sibling transform utility, because its value references undefined
+`--tw-rotate-*` custom properties and the whole declaration falls back to
+`none`. A literal `translateZ(0)` did not land either. If icon-plus-label
+buttons still read as crooked under the press, the fix is the scale value or
+the geometry — not a layer.
+
+**Rule: a page arrives in sections, not as one block.** The view wrapper wears
+`page-enter` (`app.css`), which staggers the view's own sections — 200ms each,
+45ms apart, capped at the sixth so a twenty-section library page is not still
+arriving after a second. It replaced a single 250ms fade over the whole screen,
+which read as a screen being swapped rather than a page arriving; the first
+chunk now lands sooner than that fade used to finish. Honours
+`prefers-reduced-motion`.
+
+**Rule: name real CSS properties in a transition, and never `all`.** Two ways
+this went wrong, both silent:
+
+- `transition-[colors,…]` reads like Tailwind's `transition-colors`, but inside
+  `[]` Tailwind emits the list verbatim — and `colors` is not a CSS property,
+  so that entry never matches. Thirteen components carried it and their colour
+  changes were snapping while `box-shadow` and `transform` eased. Write the
+  properties out: `transition-[color,background-color,border-color,outline-color,…]`.
+- A bare `duration-*` with no `transition-*` beside it arms a transition on
+  *everything*: `transition-property` keeps its initial value `all` and the
+  duration switches it on. The popups (dropdown, select, dialog) hit this —
+  their `duration-100` is meant for the `animate-in` keyframe. They now carry
+  `transition-none` alongside, which disarms the transition and leaves the
+  animation alone.
+
+`will-change` follows the same discipline: only `transform`, `opacity` and
+`filter` are compositable, so promising `width` or `top` buys no layer and only
+widens the hint.
+
+**Rule: artwork carries a hairline.** Every piece of cover art — album sleeves,
+playlist collages, artist and owner avatars, product shots — wears the
+`art-edge` utility: a 1px `outline` at `rgba(0,0,0,.1)` in light and
+`rgba(255,255,255,.1)` in dark, drawn *inside* the box (`outline-offset: -1px`).
+Album art is user content, so a white sleeve on the light background and a black
+one on the dark background both dissolve into the page and lose their shape; the
+hairline gives every cover the same edge regardless of what is printed on it.
+`outline` rather than `border` or `ring` because it takes no layout space (a
+48px thumb stays 48px), and the inward offset keeps it from being clipped away
+inside an `overflow-hidden` collage tile. Never a tinted neutral — a tinted
+hairline picks up the surface colour behind it and reads as dirt on the sleeve
+edge. Put it on a COLLAGE container, not on its four tiles, and leave it off
+full-bleed backdrops (the artist hero image, the blurred credits backdrop),
+which have no edge to describe.
 
 ### Border-radius aliases
 
@@ -386,7 +598,7 @@ Every semantic token across the system follows `alias → primitive`. Examples:
 | Kind | Semantic alias | → Points at primitive | Resolved value |
 |---|---|---|---|
 | Color | `accent` (light) | `muza-neutrals/100` | `#F1F3E6` |
-| Color | `primary` (light + dark) | `muza-blue/200` | `#1E34D8` |
+| Color | `primary` (light + dark) | `muza-brand/200` | `#1E34D8` |
 | Color | `destructive` (light) | `tailwind-red/600` | `#DC2626` |
 | Color | `muted-foreground` (light) | `muza-neutrals/a75/700` | `#545445 @75%` |
 | Radius | `md` | `radius/rounded-md` | `6px` |
@@ -500,8 +712,8 @@ Most icons are Lucide, picked per context. Two are **not** free choices:
 
 ## Form controls — the shared recipe
 
-`Input`, `Select`, `Combobox`, `DatePicker` and the filter trigger are **one
-control in five costumes**. The recipe lived only in the five source files
+`Input`, `Select`, `Combobox`, `DatePicker`, `FileField` and the filter
+trigger are **one control in six costumes**. The recipe lived only in the five source files
 until it was written down here, which is how `Input`'s own header comment came
 to claim `rounded-xl` for a pill.
 
@@ -511,9 +723,19 @@ to claim `rounded-xl` for a pill.
 | Shape | `rounded-full` |
 | Border | `border border-border`, `hover:border-foreground/30` |
 | Surface | `bg-background` |
-| Focus | `focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50` |
+| Focus | `focus-visible:border-ring focus-ring` — the utility draws a 2px `outline` at 20% of `--ring`, no offset |
+| Invalid | `aria-invalid:border-destructive invalid-ring` — the same 2px outline in `--destructive` (40% in dark) |
 | Text | `text-small font-normal` (19px) |
 | Vertical padding | `pt-[6px] pb-[10px]` — **asymmetric, on purpose** |
+
+**A file picker is one of them.** `FileField` wears the same shell — height,
+radius, border, hover, `focus-ring-within` — around a `<label>` that wraps an
+`sr-only` `<input type="file">`. That arrangement is the component: a label
+wrapping an input forwards a click from ANY part of the row, so the filename
+and the empty space open the dialog too, which a `Button` beside an `Input`
+could never do. Its trigger pill takes `--secondary`, the quiet fill on a
+control, and sits 3px inside the shell on every step — 4px from the outer edge
+once the border is counted, which is what makes the shoulder even.
 
 ### One size ladder, shared with Button
 
@@ -524,7 +746,34 @@ because they use the same steps:
 |---|---|---|---|
 | `sm` | `h-8` 32px | `text-2xsmall` 16px | `px-3` |
 | `default` | `h-10` 40px | `text-small` 19px | `px-4` |
-| `lg` | `h-12` 48px | `text-small` 19px | `px-5` |
+| `lg` | `h-12` 48px | `text-small` 19px | `px-5` | ← **the form default**
+
+**`lg` is what a field renders at unless it is told otherwise.** `Input`,
+`SelectTrigger`, `Combobox`, `ChipInput` and `DatePicker` all default to it,
+and so does `InputSelect` (which declared a `size` prop and never forwarded it
+— the fused control ignored the ladder entirely until this pass). `default`
+still exists and a call site can still ask for it; what changed is which step
+you get by not choosing. 40px was a desktop-first number for something you
+type into on a phone.
+
+**A control sharing a row with a field follows it.** Every button in a form
+block moved with the fields — the actions under a dialog's form, the "Sort"
+beside a filter input, the ✕ beside an additional-link row (`icon` → `icon-lg`)
+— because a 40px button against a 48px field is exactly the mismatch this
+ladder exists to remove. Buttons outside form context (chrome, cards, rails)
+keep their own size.
+
+**Button at `default` (40px) centres OPTICALLY, not geometrically.** Founders
+Grotesk at 19/28.5 lands the cap block 17.5px from the top of the pill and the
+baseline 10.5px from the bottom: correctly centred by the line box, and it
+still reads low, because the eye centres on the caps rather than on the
+ascender and descender space around them. `pb-[3px]` lifts the label 1px
+(bottom padding shifts a centred flex child by half its value, and the base
+already spends 1px of it). 2px was tried and read too high. The `link`
+variant, which sheds its height, spells the same 3px out as four sides so it
+lands on that baseline too — measured spread across all seven variants: 0px.
+Only this size: `sm`/`lg` are a different metric and the icon sizes have no
+baseline to answer to.
 
 The ladder lives in **`src/lib/control-size.ts`**, not in six copies. Six
 components take a `size` prop and write it back as `data-size`:
@@ -637,6 +886,55 @@ The persistent transport — the 80px glass bar from 640px of its own width, the
 - **Keyframes in `app.css`**: `player-overlay-marquee`, `shuffle-pop`, `shuffle-halo`, plus `.animate-shuffle-pop` / `.animate-shuffle-halo` utility classes
 
 ---
+
+## Themes — the prototyper, and what a saved theme is
+
+The design system is its own application now: `?page=DesignSystem` opens **the
+muza prototyper** — a narrow header (back · name · tabs · light switch), a
+**themer** docked left, and five tabs: Typography · Layout and Spacings ·
+Tokens · Components · Product.
+
+The themer is a sidebar rather than a section for one reason: colour is not a
+topic you visit, it is a setting you hold while looking at something else. Sat
+on the left it stays put across all five tabs, so a hue can be dragged while
+the components — or the product — are on screen. Its width is draggable and
+remembered.
+
+**Product is the real app in an iframe.** The product has its own shell and
+nesting it would put two shells on the same edges; a frame gives it its own
+window. Same-origin, so the themer copies its custom properties into that
+document — the theme is live in the app, not in a picture of it. The frame is
+loaded with `?embed=1`, which hides the product's own "Design system" entry:
+without it, the Product tab offers a prototyper inside the prototyper.
+
+### What a theme holds
+
+Two ramps of primitives, and nothing else:
+
+| File | What it is |
+|---|---|
+| `app/themes/muza-default.json` | the palette exactly as `app.css` declares it, generated from the stylesheet. The way back from any experiment. Do not hand-edit — edit `app.css` and regenerate |
+| `app/themes/<name>.json` | a saved theme: per ramp the five curve numbers, the steps pinned to exact values, and every resulting step |
+| `app/themes/<name>.css` | the same values as plain declarations, for pasting into `app.css` when a theme wins |
+
+Saving writes real files through a dev-only Vite route (`/__theme`,
+`vite-theme-plugin.ts`). The browser cannot write into the repo; the dev server
+can. The name is sanitised and the path is pinned to `app/themes/` — a name is
+user input, and user input that becomes a path is how a save button turns into
+an arbitrary file write.
+
+### Curve, and the steps that refuse it
+
+A ramp can be described by five numbers — hue · chroma · top · bottom ·
+contrast (`src/lib/ramp.ts`). **muza's ramps are not**: fitting a curve to the
+neutrals misses by 17 L, because the ladder was picked by hand and skips 500
+and 600 entirely. So both models run at once. Every step either FOLLOWS the
+curve or is PINNED to an exact value, and the row says which. On load every
+step is pinned to what `app.css` declares, so the page starts as itself;
+unpinning a step is what asks "what would the curve have done".
+
+Nothing is lost on the way: every change lands on an undo stack (⌘Z / ⇧⌘Z),
+and `muza-default` is always one click away.
 
 ## Token semantic rules — STRICT
 

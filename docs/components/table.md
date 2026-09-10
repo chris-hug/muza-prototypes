@@ -78,3 +78,10 @@ Column-filling; no steps of its own. The table is `w-full` of its column with co
 ## Open questions
 
 - `media-list-table.tsx:7` and `artist-profile-view.tsx:635` describe the list tables as "text-xsmall muted headers, text-small body"; `TableCell` is `text-xsmall` and neither file overrides it, so the body is `text-xsmall` too.
+
+## Sortable columns
+
+The label inside a sortable `TableHead` is its own component,
+[`SortHeader`](sort-header.md) — exported from this same file, because a sort
+header is a table part rather than something that merely appears in one. Six
+views had written it out by hand before it was pulled together.

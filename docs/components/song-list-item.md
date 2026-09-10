@@ -86,8 +86,9 @@ for every one the artist gives up, so the artist truncates last. Both are
 
 ### Why this row measures itself, when almost nothing else does
 
-This is the only component in the app with steps of its own, and it earns
-them twice:
+Four components carry steps of their own — see the Box table in
+[`responsive.md`](responsive.md). This is the one whose box is a single ROW
+rather than a panel, and it earns that twice:
 
 - In a [`SongRail`](../../src/components/app/song-rail.tsx) the row sits in a
   cell of `100% − 48px` (or a column fraction), so on a 320px phone it is
@@ -119,13 +120,36 @@ name), so below 260 both fields hide — and the line used to stand as an empty
 
 ### Measuring this in the design system
 
-The width chips on this section are the **row's own** steps, not the page
-column's ladder — the default chips start at 304, so three of the four steps
-here were unreachable in the very frame meant to show them. The numbers come
-from `ROW_STEPS` in the component. Note that the chip sets the row's OUTER
-width while a container query reads the CONTENT box, and the row has 8px of
-padding a side: the frame adds that back (and goes one pixel under the bound,
-since `@max-` is exclusive) so each chip shows the state it is named for.
+Three frames. Two of them are on the page's ordinary **window** ladder and one
+is on the row's own **box** chips, and which ladder a frame gets follows one
+question: can a window still decide this row's width?
+
+**In a page column** — window ladder, chrome drawn. Five of the row's eight
+render sites are a plain list where the row fills the column and the window
+decides the column. Not a decorative frame: a 320px window leaves a 296px
+column, under both the 300 and the 380 bound, so the duration and the year
+drop inside it.
+
+**Track-number rows** — window ladder again. This variant passes no `artist` /
+`album` / `year` / `badge`, and every step is gated on those, so it sheds
+nothing at any width. On the row chips it drew four identical pictures and
+capped the row at 395px, while album detail hands it 781px on a 1069 laptop
+and 1632 at 1920. The window ladder makes the real claim legible — step
+across it and the row does not move — at widths the page actually gets.
+
+**In its own box** — the chips from `ROW_STEPS`, and last on purpose: the two
+frames above are the ordinary case, this is the one they cannot describe. It
+exists because a window frame cannot produce these numbers at all — the
+default ladder starts at a 304px column, and no window chip can narrow the
+column *below* what the window leaves, which is exactly what a `SongRail` cell
+and the docked editor do. Same cover rows as the first frame, measured the
+other way; that is why neither of those two can be titled by its variant.
+
+The box chips carry one correction the window chips do not need: the chip sets
+the row's OUTER width while a container query reads the CONTENT box, and the
+row has 8px of padding a side, so the frame adds that back (and goes one pixel
+under the bound, since `@max-` is exclusive) — each chip shows the state it is
+named for.
 
 ## The primary action is play — and how nested controls stay out of it
 
@@ -166,16 +190,27 @@ No control needs its own `stopPropagation` for the guard to work — being a
 `<button>` is enough. The heart still stops propagation because
 `LibraryHeartButton` is also dropped into non-row surfaces.
 
-The title, artist and album are `<button>`s **whether or not** a handler was
-passed: a title without `onTitleClick` swallows the tap and does nothing
-rather than playing. Every text link underlines on hover and on
-`focus-visible` (`underline-offset-[3px]`, 1px thickness) and is `truncate`,
-so a long title ellipses rather than wrapping.
+The title, artist and album are links **only when they have somewhere to
+go**. `Linkable` renders a `<button>` when the matching handler was passed and
+plain text otherwise, so a field cannot underline on hover and then swallow
+the click. This matters most where a view deliberately withholds a
+destination: an album page's tracks get no `onTitleClick` — you are already on
+the album — and its rows used to offer every track as a link into nowhere.
+Where the handler is there, the link underlines on hover and on
+`focus-visible` through the shared `link-underline`, whose line wipes in from the left over 140ms; either way the
+field is `truncate`, so a long title ellipses rather than wrapping.
+
+A plain `<span>` also drops out of the tab order and stops being announced as
+a control, which is the honest state for text that does nothing. It changes
+what a click on it does, too: the row's guard ignores clicks that land inside
+a `button` or `a` (song-list-item.tsx:355), so a non-link title now falls
+through and PLAYS the track, exactly like the duration in the table above.
+Before, it was a button, so the click was caught and then dropped.
 
 ## Now-playing
 
 ```tsx
-playing ? "bg-muted" : "bg-background hover:bg-muted"
+playing ? "bg-muted" : "bg-background [--hover-fill:var(--muted)]"
 ```
 
 A playing row is `bg-muted` **at rest** — the same surface an idle row only
@@ -187,7 +222,14 @@ slot's wave (white on the cover's dark wash; `text-foreground` on a track
 number). A filled heart is `fill-primary-text text-primary-text`, but that
 is library state, not playback state.
 
-`transition-colors` on the row crossfades background → muted.
+`state-fade-quick` on the row carries the crossfade, and the hover fill **grows
+from the point the pointer crossed the row's edge** — the same circle a Button
+draws, painted from the `press-ripple` class the row now also wears. That is
+why the hover colour is a token (`--hover-fill`) and not a `hover:bg-*` class:
+a class would swap the background flat underneath the growing circle and the
+colour would arrive twice. 260ms in, 100ms out — a list is crossed, not
+arrived at, so it runs at roughly a third of a Button's 440ms; anything slower
+and the fill is still climbing two rows after the pointer has gone.
 
 ### Two gradients have to know about it
 
@@ -326,7 +368,8 @@ inside a 60px row read as busy.
 | Hover group | `group/song` | `group/row` |
 | Right padding | `pr-2` | `pr-1.5` |
 | Trailing | ♥ + duration; ⋯ + ⓘ on hover; "…" sheet on touch (`compact`) | ⋯ menu or a bespoke `trailing` |
-| Meta disclosure | four steps: 380 / 300 / 260 | one step at 240 |
+| Meta disclosure | three steps — 380 year · 300 duration · 260 album | **none** — its 240px step was removed once an audit showed 296 is the narrowest width it ever gets |
+| Measures its own box | yes, `@container/row` — a `SongRail` cell gives it a width the page column does not | no — it is never in a rail, so the column already describes it |
 | Overflow | `overflow-clip` + fading veil | plain truncation |
 | Draggable | yes (`application/x-muza-song`) | no |
 
@@ -343,11 +386,16 @@ inside a 60px row read as busy.
 - Search › Songs (`search-results-view.tsx`) — `compact` inside `SongRail`
   for 6+ hits, the full row in the ≤ 5 list.
 
+## Artwork and focus
+
+**Artwork carries `art-edge`** — a 1px outline inset by 1px, pure black at 10% in light and pure white at 10% in dark. Pure, never a tinted neutral: a tinted edge picks up the surface beneath it and reads as dirt along the image. It is an `outline`, so it costs no layout and follows the corner radius. On this row it sits on the 44px cover thumb (`size-11 rounded-xs`).
+
+**Keyboard focus is `focus-ring`** — a 2px `outline` at 20% of `--ring`, no offset, the same one every control in the app draws; pointer clicks show nothing. On the track-number play button it is the only focus mark — the button has no border of its own to colour.
+
 ## Open questions
 
 - song-list-item.tsx:19–20 (header comment) claims the duration is `text-small text-muted-foreground` · source renders it `text-xsmall` (song-list-item.tsx:514). Documented above as `text-xsmall`.
 - song-list-item.tsx:341–342 says "year drops first (≤380), then album (≤260)" and :511 says the duration is "Dropped on very tight rows (≤300)" · the variants are `@max-[380px]` / `@max-[260px]` / `@max-[300px]`, which Tailwind v4 compiles to `@container (width < N)` — exclusive, so a row exactly 380px wide still shows the year. The table above matches the compiled CSS; the source comments are off by one.
 - song-list-item.tsx:99–101 documents `onAddToLibrary` as the "Always-visible quick action — saves the song to the library (Heart)" · the visible heart is `LibraryHeartButton` (song-list-item.tsx:410, 508), which never calls `onAddToLibrary`; the only caller is `handleSongLibrary` (song-list-item.tsx:238), reached from the compact touch sheet's first action (song-list-item.tsx:440). Documented above without that claim.
-- The title is a `<button>` whether or not `onTitleClick` is passed (song-list-item.tsx:333–339) · no `SongListItem` host passes `onTitleClick` (the `onTitleClick` hits in `src/components/app` are all on cards), so in the app the title swallows the tap and does nothing. Documented above as observed.
 - The ⓘ button calls `onInfo` directly (song-list-item.tsx:498) while the menu's "Show credits" uses `showCredits` — `credits.open(slugify(album))` when `album` is set, else `onInfo` (song-list-item.tsx:228). A cover-mode row with an `album` but no `onInfo` (playlist, library, search) has a working "Show credits" and an inert ⓘ. Recorded as observed; unclear whether ⓘ should also fall back to the album credits.
 - song-list-item.tsx:527 claims a "44px+ hit target" for `SheetAction` · the classes are `px-3 py-3 text-base` with no explicit min-height; the 44 depends on `text-base`'s line height, which is not stated in the file.

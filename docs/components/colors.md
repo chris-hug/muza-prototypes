@@ -5,8 +5,8 @@ related: [typography, responsive, button, badge]
 usage:
   - every surface in the app — a component names a token, never a colour
 summary:
-  - "**Two layers.** A **primitive** is a colour (`--muza-blue-500`). A **semantic token** is a *pointer* to one (`--primary: var(--muza-blue-500)`). Components name the second kind, only ever the second kind."
-  - "**Dark mode reassigns the pointer, not the colour.** `--primary` moves from `blue-500` to `blue-200`; neither blue changes. That is the entire mechanism."
+  - "**Two layers.** A **primitive** is a colour (`--muza-brand-500`). A **semantic token** is a *pointer* to one (`--primary: var(--muza-brand-500)`). Components name the second kind, only ever the second kind."
+  - "**Dark mode reassigns the pointer, not the colour.** `--primary` moves from `brand-500` to `brand-200`; neither blue changes. That is the entire mechanism."
   - "**Never a hex in a component.** `bg-primary`, not `bg-[#000DA2]` — a literal opts out of dark mode silently, and nothing catches it."
 ---
 
@@ -19,11 +19,11 @@ light and dark. Every value on this page is read out of
 
 ```css
 /* primitive — a colour, named for what it IS */
---muza-blue-500: oklch(33.02% 0.2175 264.2);   /* #000DA2 */
+--muza-brand-500: oklch(33.02% 0.2175 264.2);   /* #000DA2 */
 
 /* semantic — a pointer, named for what it DOES */
-:root  { --primary: var(--muza-blue-500); }
-.dark  { --primary: var(--muza-blue-200); }
+:root  { --primary: var(--muza-brand-500); }
+.dark  { --primary: var(--muza-brand-200); }
 ```
 
 `--primary` never holds a colour. Dark mode does not darken anything: it
@@ -33,7 +33,7 @@ question "what is `--border` in dark mode?" is answered by
 columns side by side are the mechanism, visible.
 
 A component may name `--primary`, `bg-background`, `text-muted-foreground`. It
-may never name `--muza-blue-500`, and it may never write a hex. A literal opts
+may never name `--muza-brand-500`, and it may never write a hex. A literal opts
 that element out of dark mode **silently** — nothing errors, nothing warns, and
 the bug shows up as one wrong rectangle on a dark screen months later.
 
@@ -105,7 +105,7 @@ The section is a live editor, and everything in it comes from the stylesheet.
 
   They were two panels — a table and a swatch grid — and that made them look
   like two subjects. They are one subject read twice: `--primary` and
-  `--muza-blue-500` are the same colour at two levels of naming, and only a
+  `--muza-brand-500` are the same colour at two levels of naming, and only a
   shared column set makes a pointer something you can look **up**. Change a
   primitive and the semantic row's swatch moves a screen away, in the same
   table, which is the mechanism happening in front of you.

@@ -284,6 +284,10 @@ trigger opens the real, portaled sheet at the bottom of the browser.
 - **Backdrop** is `bg-black/10` with a light blur — the page stays legible
   behind a picker; the [alert dialog](alertdialog.md) darkens it to `/40`.
 
+## Motion
+
+**Colour changes fade through `state-fade`** — `color, background-color, border-color, outline-color, opacity` on `cubic-bezier(0.2,0,0,1)`, 440ms in and 100ms out. The split needs no second mechanism: the transition that runs on the way in is the one declared on `:hover`, the one on the way out is the one on the element. Prose links inside a `DialogDescription` carry it too, through `*:[a]:state-fade`.
+
 ## Open questions
 
 - DESIGN_SYSTEM.md "Forms go full-screen" · says "don't autofocus the field on phones — park `initialFocus` on the bar" · `create-playlist-dialog.tsx:150` passes `initialFocus={inputRef}` and this doc says focus goes straight to the field. The DESIGN_SYSTEM bullet predates the top-anchored form sheet.

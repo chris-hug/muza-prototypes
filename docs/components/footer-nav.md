@@ -19,7 +19,7 @@ material while the page scrolls under both.
 | Bar | `nav[aria-label="Primary"]`, `absolute inset-x-0 bottom-0 z-30 select-none` — it pins to the positioned content area it sits in | `frosted-glass border-t border-border/50` |
 | Insets | `px-3 pt-2 pb-[max(10px, env(safe-area-inset-bottom))]` — 12px matches the phone gutter; the bottom pad is the home indicator's inset on a notched phone and 10px elsewhere, `max()` so a phone without an inset does not lose the pad | — |
 | Cluster | `mx-auto flex w-full max-w-md gap-2` — four `flex-1` tabs sharing at most 448px, centred | — |
-| Tab | `h-12 rounded-full`, the glyph `size-6`; `aria-current="page"` when active; `active:scale-[0.96]`, focus `ring-3 ring-ring/50` | active: `bg-background text-foreground ring-1 ring-border/60` + a two-layer soft shadow, stroke 2.25 · inactive: `text-muted-foreground hover:text-foreground`, stroke 2 |
+| Tab | `h-12 rounded-full`, the glyph `size-6`; `aria-current="page"` when active; press is colour only (`active:bg-press-on-muted` — no scale: the shadow repainting under a scaling pill is what made the glyphs judder), focus `focus-ring` | active: `bg-background text-foreground ring-1 ring-border/60` + a two-layer soft shadow, stroke 2.25 · inactive: `text-muted-foreground hover:text-foreground`, stroke 2 |
 | Studio sheet | `SheetContent side="bottom" rounded-t-2xl`, a `SheetHeader` "Studio", then four rows — glyph `size-5`, label `text-base` (`font-medium` when that surface is active), description `text-xsmall text-muted-foreground` — each a `SheetClose` | rows `px-3 py-3 rounded-lg`, `hover:` / `active:` / `focus-visible:bg-muted` |
 
 The bar is **66px tall** before the safe area (`8 + 48 + 10`), and that

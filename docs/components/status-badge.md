@@ -69,9 +69,10 @@ Fixed, no steps. `w-fit shrink-0 whitespace-nowrap`; the popup is anchored
   StatusBadge is padding-derived — 1 + 4 + 15 + 6 + 1 = 27px — so beside a
   `ContentTypeBadge` in the Studio mobile row (studio-music.tsx:560–561) it
   is 1px taller.
-- status-badge.tsx:44 draws a `ring-2` focus ring; Button and the form
-  controls draw `ring-3`. Not recorded whether the thinner ring is deliberate
-  for a 27px control.
+- status-badge.tsx:46 draws `focus-ring`, the same 2px outline at 20% of
+  `--ring` as Button and the form controls. The old question — whether its
+  thinner `ring-2` against everyone else's `ring-3` was deliberate for a 27px
+  control — is closed: there is one ring now.
 - The menu opens even with no `onStatusChange` (studio-music.tsx:561 renders
   it read-only) · `OrderStatusBadge` renders a plain `Badge` in that case.
   Whether a handlerless StatusBadge should be inert is not recorded.

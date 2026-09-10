@@ -145,6 +145,20 @@ before the next — 94px of line between 32px circles.
 | Connector | `absolute -left-1/2 right-1/2 top-4 mx-7 h-px`, `bg-foreground/25` once passed, else `bg-border/70` |
 | Track | `mx-auto w-full`, capped at `maxWidth` |
 
+A clickable step — only a **visited** one, and only when `onStepSelect` is
+passed — says so on hover with the app's shared underline: the step carries
+`group/step link-underline-group`, its label carries `link-underline mx-auto`,
+and the line wipes in from the left over 140ms. `mx-auto` because the utility
+sets `width: fit-content` and the label is a centred flex child, so without it
+the shrunk box would sit left of the circle it belongs to. The circle answers
+the same hover by dropping to `bg-foreground/80`; keyboard focus draws
+`focus-ring`, the 2px outline at 20% of `--ring`.
+
+The pairing is required, not a style choice: a Tailwind `group-hover:` variant
+compiles into the LABEL's own `:hover`, which is not the event here — the
+pointer is on the step, not on the four words. `link-underline-group` on the
+parent is the app's answer to exactly that.
+
 A step you have **finished** is not the same as one you have not reached, so
 `done` keeps full label contrast and only `ahead` recedes. The connector is
 `aria-hidden`: it is punctuation, and the order is already carried by the

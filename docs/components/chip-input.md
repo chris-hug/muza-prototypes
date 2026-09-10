@@ -20,7 +20,7 @@ Three parts, one file, no primitive underneath — a plain `<input>` in a
 
 | Part | Classes | Why |
 |---|---|---|
-| Wrapper | `min-h-10 w-full rounded-full border border-border bg-background flex items-center flex-wrap gap-1.5 px-2 pt-[3px] pb-[7px] cursor-text`, `hover:border-foreground/30`, `focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50` | the pill is the wrapper, not the input, so chips and text share one border; `focus-within` because focus lives on the inner input; `min-h` not `h` because chips wrap to a second line; the asymmetric 3/7 is the family's 2px optical lift, the same job `pt-[6px] pb-[10px]` does on `Input` |
+| Wrapper | `min-h-10 w-full rounded-full border border-border bg-background flex items-center flex-wrap gap-1.5 px-2 pt-[3px] pb-[7px] cursor-text`, `hover:border-foreground/30`, `focus-within:border-ring focus-ring-within` (the wrapper owns the ring because focus lives on the inner input — same 2px outline as `focus-ring`, matched on `:focus-within`) | the pill is the wrapper, not the input, so chips and text share one border; `focus-within` because focus lives on the inner input; `min-h` not `h` because chips wrap to a second line; the asymmetric 3/7 is the family's 2px optical lift, the same job `pt-[6px] pb-[10px]` does on `Input` |
 | Pending chip | `inline-flex items-center gap-1.5 rounded-full bg-muted text-foreground h-7 pl-3 pr-1.5 text-2xsmall font-normal`; label `truncate max-w-[180px]`; ✕ `size-3.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-foreground/10` with a `size-2.5` glyph, `aria-label="Remove <name>"` | 28px inside a 40px pill — 28 + 3 + 7 + 2px border is exactly 40, so the chip *is* the row height; `bg-muted` with no border reads as *less final* than the bordered `ChipDismiss` above the field |
 | Input | `flex-1 min-w-[80px] h-7 bg-transparent outline-none text-small font-normal text-foreground placeholder:text-muted-foreground px-2 py-0` | `flex-1` takes whatever the chips leave; `min-w-[80px]` is the floor before it wraps under them; `h-7` and **no** `py-*` — see Sizing |
 
@@ -100,6 +100,12 @@ padding the inner input at all and give it the same `h-7` the chips have.
   `chip-input.tsx:111`), so tabbing away does not drop the chips.
 - **Click** anywhere on the wrapper focuses the input; the chip ✕ stops
   propagation so removing a chip does not also refocus-and-select.
+
+## Focus and motion
+
+The **wrapper** owns the ring, not the input: `focus-ring-within` matches `:focus-within`, so the pill lights up while the caret is in the `<input>` inside it. Same 2px outline at 20% of `--ring` as `focus-ring`, split into its own utility because an element matching `:focus-within` for its child would otherwise light up for any button nested in it.
+
+The chip's ✕ carries `state-fade`, so its colour eases instead of snapping.
 
 ## Open questions
 

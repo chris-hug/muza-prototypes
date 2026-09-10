@@ -19,7 +19,7 @@ scrolling, from a 568px-tall SE to a 956px Pro Max.
 | Backdrop | the cover, full-bleed, `blur(32px) scale-110`, under the same `.frosted-glass` the tab bar and the mobile header use, so the overlay reads as one continuous glass with the rest of the chrome | `bg-background` under it all |
 | Drag handle | a `ghost` `Button`, `w-full py-4 h-auto rounded-none`, holding a `h-1 w-8 rounded-full` pill; tap → `onClose` | `bg-foreground/80` |
 | Playing from | "Playing from:" and the source as a `MarqueeText` — a link when `onPlayingFromClick` is passed | `text-xsmall leading-none font-normal`, `text-muted-foreground` / `text-foreground` |
-| Cover | a square, `rounded-xs shadow-md`, sized 140–440px by the budget below | — |
+| Cover | a square, `rounded-xs shadow-md art-edge`, sized 140–440px by the budget below | `art-edge` is the 1px inset outline every piece of artwork carries — black at 10% in light, white at 10% in dark — so a pale cover still has an edge against the blurred version of itself behind it |
 | Title row | `h2` with a `MarqueeText`, a `LibraryHeartButton` for the song and a "…" button, both `outline` `icon` | `text-large font-medium leading-tight text-foreground` |
 | Artist row | avatar `size-6 min-w-6 rounded-full ring-1 ring-border` + name; a link when `onArtistClick` is passed | `text-xsmall font-medium text-muted-foreground` |
 | Waveform row | `mt-3`, timestamps either side, the `Waveform` 40–160px tall; marked `data-swipe-ignore` because it owns its own horizontal drag (seek) | `text-2xsmall leading-none text-muted-foreground tabular-nums` |
@@ -117,6 +117,30 @@ step is exact.
   by playing it in the same source context so the queue simply advances.
 - The drag handle's tap calls `onClose`. The overlay never scrolls as a
   whole; only the queue and the lyrics do.
+
+## It is its own container, and the container is NAMED
+
+The overlay declares `@container/overlay` on its root, and the lyric lines
+step up a size at 380px through `@min-[380px]/overlay:`.
+
+The name is the fix, not a tidiness preference. An **unnamed** container query
+resolves against the nearest container ancestor — and there was none in the
+app, so the step silently never fired on a real phone. On the design-system
+page the nearest ancestor was the page's own ~1400px wrapper, so it fired
+**always**: the 375px frames showed 30px lyrics no phone would ever render.
+One query, wrong in both directions, for opposite reasons. Naming the
+container pins it to this element wherever the overlay is mounted.
+
+## Motion and state
+
+| What | How |
+|---|---|
+| Tab change | the content is keyed by `tab`, so it remounts and `animate-tab-next` / `animate-tab-prev` replays — a 190ms `cubic-bezier(.2,.7,.3,1)` slide of 14px plus a fade, direction from the tabs' visual order |
+| "Playing from" | the wrapping button carries `link-underline-group`, the `MarqueeText` inside it `link-underline`, so hovering the button wipes the underline in from the left. A `group-hover:` variant cannot do this — it compiles into the text's own `:hover` |
+| Artist and title links | `state-fade` plus `hover:text-foreground` / `hover:opacity-80` — the shared 440ms-in / 100ms-out colour fade |
+| Keyboard focus | `focus-ring`, the 2px outline at 20% of `--ring` |
+| Transport | press is opacity, never geometry: `hover:opacity-70 active:opacity-40` on a shared `transportBtn`, whose transition names `scale` explicitly because Tailwind v4 compiles `scale-*` to its own property and a list saying `transform` animates nothing |
+| The three `hover:bg-transparent` transport buttons | also `[--hover-fill:transparent]` — they are `Button variant="ghost"`, and the variant's own `--hover-fill` would otherwise grow the accent surface they deliberately do not want |
 
 ## Open questions
 

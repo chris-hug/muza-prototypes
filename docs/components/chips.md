@@ -117,6 +117,12 @@ pills scroll under the gutter rather than stopping short of it.
 - Hover states are pointer-only (Tailwind wraps `hover:` in
   `@media (hover: hover)`), so a tap leaves no sticky hover.
 
+## The press
+
+A Chip is a bespoke button, so it opts into the app's press by hand: `press-ripple relative [--press-fill:var(--press-on-muted)]`. The ripple grows from the point that was pressed and settles one step past the chip's hover.
+
+**`relative` is load-bearing.** The ripple paints on the element's `::before` at `absolute; inset: 0`; on a statically positioned host that anchors to the nearest positioned ancestor instead and floods it — the sheet, the toolbar, the card. Every bespoke consumer of `press-ripple` has to say `relative`.
+
 ## Open questions
 
 - DESIGN_SYSTEM.md's former Chips section (now this file) said "no secondary
@@ -127,7 +133,8 @@ pills scroll under the gutter rather than stopping short of it.
 - The same section said the dismiss "X icon (14px)" · 14px is the button
   (`size-3.5`); the glyph is 10px (`size-2.5`, chip.tsx:148, 155).
 - chip.tsx:38 draws a `ring-2` focus ring and the ✕ a `ring-1`; Button
-  draws `ring-3`. Not recorded whether chips are meant to be lighter.
+  drew `ring-3`. Both are `focus-ring` now — one 2px outline at 20% of
+  `--ring` for every control — so the question is closed.
 - chip.tsx:47–49 `secondary` has `hover:bg-muted` on a `bg-muted` fill — a
   hover that changes nothing. The header comment says `hover:bg-accent`.
 - `ChipGroup` is `gap-1.5` (6px); `MobilePillTabs` lays the same chips out

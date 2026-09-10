@@ -95,6 +95,40 @@ two. The desktop Search page keeps it `shrink-0` beside the heading.
 - Arrow keys move focus between segments (Base UI's composite roving
   tabindex); Space / Enter press the focused one.
 - `multiple` switches to any-combination; the app has no such call site yet.
+  It also turns the travelling pill off — see below.
+
+## Motion — the pill travels
+
+Single-select groups draw **one** pill and slide it between segments, the
+same move [Tabs](tabs.md) made for its underline and for the same reason:
+each Toggle used to draw its own `bg-background` and cross-fade it, so the
+mark never moved — it switched off under one segment and on under the next,
+and the eye lost the thread between them.
+
+| | |
+|---|---|
+| Element | one `span[data-slot=toggle-group-indicator]`, `absolute top-1 bottom-1`, `z-0` behind the labels (which carry `relative z-10`) |
+| Position | `translate-x-[var(--pressed-left)]` · `w-[var(--pressed-width)]` |
+| Transition | `translate, width, opacity` · **180ms** · `ease-out` — the same three numbers Tabs uses |
+| Fill | `bg-background shadow-sm`, moved off the Toggle; the item keeps only `text-foreground` |
+
+Two things differ from Tabs, both forced:
+
+- **It measures itself.** `@base-ui/react/tabs` ships an `Indicator` part that
+  publishes the two variables; `@base-ui/react/toggle-group` ships only the
+  root. So the pressed child is measured here (`offsetLeft` / `offsetWidth`
+  against the `relative` root), with a `MutationObserver` on `data-pressed`
+  and a `ResizeObserver` on the group and its items — text reflow, a font
+  landing, or the group being squeezed by its column all move the target.
+- **`multiple` opts out.** Several segments are pressed at once there and one
+  travelling pill cannot describe that, so each keeps its own fill. The group
+  sets `data-travel="true"` only in single-select, and `toggle.tsx` reads it
+  to decide whether to suppress its own `bg-background` / `shadow-sm`.
+
+The pill does not slide in on mount: the transition is enabled one commit
+after the first measurement, so it appears where it belongs. With nothing
+pressed (`value` can be `[]`) it fades out rather than collapsing to zero
+width.
 
 ## Open questions
 

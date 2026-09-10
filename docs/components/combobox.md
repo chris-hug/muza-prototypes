@@ -21,7 +21,7 @@ as is), `ComboboxValue`, `ComboboxTrigger`, `ComboboxContent`, `ComboboxGroup`,
 **Trigger** — `ComboboxPrimitive.InputGroup` wearing the pill: `relative flex
 w-full items-center rounded-full border border-border bg-background h-10 px-3
 pt-[6px] pb-[10px] gap-2 hover:border-foreground/30 focus-within:border-ring
-focus-within:ring-3 focus-within:ring-ring/50`. Inside: a `size-4
+focus-ring-within`. Inside: a `size-4
 text-muted-foreground translate-y-[2px]` search glyph (`showSearchIcon`,
 default on), the input (`flex-1 bg-transparent text-small font-normal
 placeholder:text-muted-foreground`), and the chevron button (`tabIndex={-1}`,
@@ -127,6 +127,12 @@ whatever is left. Same two class strings the other two import from
   when the list reopens.
 - The "No results found." row is base-ui's `Empty`, rendered only when the
   filtered list is empty.
+
+## Focus and motion
+
+The **shell** owns the ring: `focus-ring-within`, because the caret lives in an `<input>` inside it. Same 2px outline at 20% of `--ring` that `focus-ring` draws elsewhere.
+
+**Colour changes fade through `state-fade`** — `color, background-color, border-color, outline-color, opacity` on `cubic-bezier(0.2,0,0,1)`, 440ms in and 100ms out. The split needs no second mechanism: the transition that runs on the way in is the one declared on `:hover`, the one on the way out is the one on the element. The options carry it, so the highlight eases as you arrow through the list.
 
 ## Open questions
 

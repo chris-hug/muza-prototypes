@@ -28,7 +28,7 @@ Four parts over `@base-ui/react/accordion`:
 |---|---|---|
 | `Accordion` | `flex flex-col divide-y divide-border` | the hairlines come from the list, one declaration for all — never a `Separator` per item |
 | `AccordionItem` | `py-1` | 4px above and below each section so the rule sits clear of the heading |
-| `AccordionTrigger` | `group flex w-full items-center justify-between gap-3 py-3 text-left text-small font-medium text-foreground hover:text-foreground/80 focus-visible:ring-3 focus-visible:ring-ring/50 rounded-sm`, wrapped in base-ui's `Header` (an `h3`) | the full row is the target — the whole heading, not the chevron, opens it. Focus is a control's ring here, unlike `CollapsibleTrigger`'s underline: a row is a control |
+| `AccordionTrigger` | `group flex w-full items-center justify-between gap-3 py-3 text-left text-small font-medium text-foreground hover:text-foreground/80 focus-ring rounded-sm`, wrapped in base-ui's `Header` (an `h3`) | the full row is the target — the whole heading, not the chevron, opens it. Focus is a control's ring here, unlike `CollapsibleTrigger`'s underline: a row is a control |
 | the chevron | `ChevronDown size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[panel-open]:rotate-180` | rendered by the trigger, after `children` — a call site never adds one |
 | `AccordionPanel` | `overflow-hidden text-small text-muted-foreground transition-[height] duration-200 data-[ending-style]:h-0 data-[starting-style]:h-0`, children inside a `pb-3 pt-0` div | the body is muted — the heading is the ink; `pb-3` matches the trigger's `py-3` so open sections keep one rhythm |
 

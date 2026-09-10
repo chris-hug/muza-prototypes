@@ -38,8 +38,16 @@ pill that sends a one-time passcode. A plain dialog in the Muza language
 
 `LoginBody` and `LoginHeading` are shared by the live dialog and the static
 preview; `LoginHeading preview` swaps `DialogTitle` / `DialogDescription`
-for their `DialogPreview*` twins. The preview seeds `naomi@example.com` so
-the CTA shows enabled rather than at its 50% disabled opacity.
+for their `DialogPreview*` twins. The preview shows the field EMPTY, on its
+placeholder, with the CTA at its 50% disabled opacity — the state a person
+actually opens. It used to seed `naomi@example.com` to get the enabled blue
+button into the frame, which documented a nicer picture of a state nobody
+meets first and read as the dialog suggesting an address it cannot know.
+
+The field has no visible label: the dialog is one field long and the line
+above it already says what to type. The name lives in `aria-label="Email
+address"` — a placeholder is not a label, it disappears on the first
+keystroke and a screen reader need not announce it.
 
 ## Usage
 

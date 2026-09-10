@@ -72,6 +72,12 @@ same height regardless.
 - Keyboard: the title button and the pill are focusable; the card `<div>`
   itself is not.
 
+## Artwork and links
+
+**Artwork carries `art-edge`** — a 1px outline inset by 1px, pure black at 10% in light and pure white at 10% in dark. Pure, never a tinted neutral: a tinted edge picks up the surface beneath it and reads as dirt along the image. It is an `outline`, so it costs no layout and follows the corner radius.
+
+**Text that navigates carries `link-underline`** — the line is a background gradient whose width runs 0 → 100% over 140ms, so it wipes in from the left and retracts the same way. `text-decoration` cannot be drawn, only faded.
+
 ## Open questions
 
 - product-card.tsx:78–79 says the title matches AlbumCard at `text-small` ·

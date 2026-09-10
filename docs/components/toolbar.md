@@ -30,7 +30,7 @@ Four thin wrappers over `@base-ui/react/toolbar`:
 | Part | Base UI | Classes |
 |---|---|---|
 | `Toolbar` | `Toolbar.Root` | `inline-flex items-center gap-1 rounded-full border border-border bg-background p-1` — a bordered pill track |
-| `ToolbarButton` | `Toolbar.Button` | `h-8 px-3 rounded-full text-small font-normal text-foreground hover:bg-muted`, the Button focus ring (`ring-3 ring-ring/50`), `disabled:opacity-50` |
+| `ToolbarButton` | `Toolbar.Button` | `h-8 px-3 rounded-full text-small font-normal text-foreground hover:bg-muted`, the Button focus ring (`focus-ring`), `disabled:opacity-50` |
 | `ToolbarGroup` | `Toolbar.Group` | `inline-flex items-center gap-0.5` — tighter than the track's `gap-1`, so a group reads as one cluster |
 | `ToolbarSeparator` | `Toolbar.Separator` | `mx-1 h-5 w-px bg-border` — a 20px hairline in a 32px row |
 

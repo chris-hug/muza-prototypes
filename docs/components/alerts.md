@@ -72,6 +72,10 @@ Static. `role="alert"` announces the content when it mounts, so an alert
 that appears in response to an action is read out; mount it only when the
 condition is true rather than toggling visibility with a class.
 
+## Motion
+
+**Colour changes fade through `state-fade`** — `color, background-color, border-color, outline-color, opacity` on `cubic-bezier(0.2,0,0,1)`, 440ms in and 100ms out. The split needs no second mechanism: the transition that runs on the way in is the one declared on `:hover`, the one on the way out is the one on the element. An Alert's own links ride on it, so a hover inside the copy eases like everything else.
+
 ## Open questions
 
 - alert.tsx:8 (comment) says `py-3` — the class is `pt-3 pb-[14px]`; the comment predates the 2px bottom adjustment.

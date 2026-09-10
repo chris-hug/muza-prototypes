@@ -23,7 +23,7 @@ state is Base UI's `data-pressed` attribute; there is no `variant`.
 | Unpressed | `text-muted-foreground`, no fill | grey label on nothing |
 | Hover | `hover:text-foreground` | the label darkens; no fill appears |
 | Pressed | `data-pressed:bg-background data-pressed:text-foreground data-pressed:shadow-sm` | a lifted white / dark pill — the look of the theme picker in Settings |
-| Focus (keyboard) | `focus-visible:ring-3 focus-visible:ring-ring/50` | the 3px ring Button draws |
+| Focus (keyboard) | `focus-ring` | the same 2px outline at 20% of `--ring` Button draws |
 | Disabled | `disabled:pointer-events-none disabled:opacity-50` | 50%, no hover — the one disabled opacity in the app |
 
 The pressed pill is `bg-background`, not `bg-primary`: a toggle is meant to

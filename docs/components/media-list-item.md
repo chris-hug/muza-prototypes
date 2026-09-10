@@ -100,7 +100,7 @@ the tap that the row is meant to own. The `trailing` JSDoc names
 ## Subtitle as a link
 
 `onSubtitleClick` turns the subtitle into a button that underlines on hover
-and on keyboard focus (`underline-offset-[3px]`, 1px thickness). Search uses it
+and on keyboard focus, through the shared `link-underline` (the line wipes in from the left over 140ms). Search uses it
 to jump to the artist from an album row, or to the owner from a playlist row
 that isn't yours (`owned ? undefined : …`). Without the handler the subtitle is
 a plain span.
@@ -166,7 +166,7 @@ somewhere" and "selects" are told apart at a glance without a badge.
 | Square thumb radius | `rounded-xs` (2px) | cover art keeps its corners |
 | Title | `text-xsmall font-normal leading-5 text-foreground truncate` | 17px, one line |
 | Meta | `text-xsmall font-light tracking-[0.02em] text-muted-foreground leading-5` | same size, lighter weight and colour carry the hierarchy |
-| Surfaces | `bg-background hover:bg-muted`; `bg-muted` while `playing` | `transition-colors` between them |
+| Surfaces | `bg-background [--hover-fill:var(--muted)]`; `bg-muted` while `playing` | `state-fade-quick` between them, and the hover fill grows from where the pointer entered (`press-ripple`) — 260ms in, 100ms out, a list's pace rather than a Button's 440ms |
 
 Both lines are the **same** 17px `text-xsmall` — the meta line is
 distinguished by weight (`font-light`), colour and a hair of tracking, not by
@@ -224,6 +224,10 @@ Content-type badges: `DESIGN_SYSTEM.md` lists "Library list rows /
 already names the type — and the component renders none. The design-system
 page's Media List Item section used to say a `ContentTypeBadge` labels each
 row; it now describes the adaptive thumb only.
+
+## Artwork
+
+**Artwork carries `art-edge`** — a 1px outline inset by 1px, pure black at 10% in light and pure white at 10% in dark. Pure, never a tinted neutral: a tinted edge picks up the surface beneath it and reads as dirt along the image. It is an `outline`, so it costs no layout and follows the corner radius. All three leading shapes carry it at `size-12`: the round artist portrait, the 2×2 playlist collage and the square cover.
 
 ## Open questions
 

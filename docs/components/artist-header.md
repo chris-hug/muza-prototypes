@@ -21,7 +21,7 @@ photograph, a release as a cover.
 | Scrim | a black gradient, 35% at the top through 40% to 80% at the bottom. Deliberately **not** a theme token: the photo is not themed, so the thing that keeps text readable on it cannot be either | — |
 | Content | `absolute inset-x-0 bottom-0`, in the **same capped wrapper as the page below** (`max-w-[1480px]`, `1716px` from 1920) with `px-page pb-8`, so the name sits on the page's own left edge | — |
 | Name | `h1`, fluid `clamp(2.5rem, 5vw, 4rem)` — 40px up to an 800px window, 64px from 1280 | `font-medium leading-[1.05] tracking-tight` |
-| Bio | the opening ~100 characters, cut at a word boundary with trailing punctuation dropped, then "… " and a **read more** link | `text-small leading-6 text-foreground/90`; the link `underline underline-offset-[3px]`, 1px thick |
+| Bio | the opening ~100 characters, cut at a word boundary with trailing punctuation dropped, then "… " and a **read more** link | `text-small leading-6 text-foreground/90`; the link is underlined at rest (`underline underline-offset-[3px]`, 1px thick) — a permanent underline has nothing to wipe in, so it does not use `link-underline` |
 | Actions | **Play** (`default`, `lg`, `h-12 px-6 rounded-full`, icon + label, flips to Pause with `aria-pressed`) · **Artist radio** (`outline`, same shape, `Radio` glyph) · right: `ShareButton` and a `LibraryHeartButton` for `type="artist"`, both `outline` `icon` | — |
 
 The bio dialog is the base `DialogContent` — a bottom sheet below 768, a
@@ -94,6 +94,12 @@ and the 640 cap follow the window you are sitting at, not the chip.
   elsewhere.
 - **Share** copies a link or opens the native sheet where there is one;
   **Save** toggles the artist in the library with the usual toast.
+
+## Artwork and motion
+
+**Artwork carries `art-edge`** — a 1px outline inset by 1px, pure black at 10% in light and pure white at 10% in dark. Pure, never a tinted neutral: a tinted edge picks up the surface beneath it and reads as dirt along the image. It is an `outline`, so it costs no layout and follows the corner radius. On the `size-20` portrait.
+
+**Colour changes fade through `state-fade`** — 440ms in, 100ms out, on `cubic-bezier(0.2,0,0,1)`. The bio's inline links ride on it.
 
 ## Open questions
 

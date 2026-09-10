@@ -18,7 +18,7 @@ usage:
 | `FormField` | `Controller` plus a context carrying the field `name` | — |
 | `FormItem` | `useId()` into context; the stack | `flex flex-col gap-1.5` |
 | `FormLabel` | `Label` with `htmlFor="<id>-form-item"` | `data-[error=true]:text-destructive` |
-| `FormControl` | clones its one child with `id`, `aria-describedby` (the description, plus the message when in error) and `aria-invalid` | the child's own — `Input` turns `aria-invalid` into `border-destructive ring-3 ring-destructive/20` (`input.tsx:55`) |
+| `FormControl` | clones its one child with `id`, `aria-describedby` (the description, plus the message when in error) and `aria-invalid` | the child's own — `Input` turns `aria-invalid` into `border-destructive` plus `invalid-ring`, a 2px outline at 20% of `--destructive` (40% in dark), the same geometry `focus-ring` draws (`input.tsx:83`) |
 | `FormDescription` | `<p id="…-description">` | `text-xsmall text-muted-foreground` |
 | `FormMessage` | `<p id="…-message">` — the error's message, else its children; renders nothing when both are empty | `text-2xsmall font-normal leading-snug text-destructive` |
 

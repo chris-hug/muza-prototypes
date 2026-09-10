@@ -44,7 +44,7 @@ abrupt.
 |---|---|
 | `album` | `{ cover, title, artist, year?, format? }` — what the cart line shows |
 | `streamPrice` / `downloadPrice` | the two tiers, as strings (`"$2.99"`); the picker shows only when both are set |
-| `userEmail` | pre-fills the receipt field (`naomi@example.com` in the prototype) |
+| `userEmail` | pre-fills the receipt field. Defaults to **empty**, so the field opens on its placeholder — nothing in the app passes it today, and a mock address defaulted in was what every dialog and every design-system frame showed |
 | `onPurchased(tier)` | fires on the success step; the album page uses it to mark the album owned in the library store |
 | `upgradeMode` + `upgradePrice` + `onUpgraded` | pay-the-difference "add download" flow: tier picker hidden, cart shows the delta, the title becomes "Add download to {title}", success says "100% of your upgrade" and calls `onUpgraded` |
 | `onGoToLibrary` | the success step's "See in library" |
@@ -92,6 +92,14 @@ height runs out. The preview follows the window chip through `DialogPreview`.
   row for returning customers all render inside that iframe. The dialog owns
   only the shell around it, which is why there is no "has saved card" prop.
   The header comment in the source carries the integration sketch.
+
+## Artwork, links and motion
+
+**Artwork carries `art-edge`** — a 1px outline inset by 1px, pure black at 10% in light and pure white at 10% in dark. Pure, never a tinted neutral: a tinted edge picks up the surface beneath it and reads as dirt along the image. It is an `outline`, so it costs no layout and follows the corner radius. On the `size-12` cover in the cart line.
+
+**Text that navigates carries `link-underline`** — the line is a background gradient whose width runs 0 → 100% over 140ms, so it wipes in from the left and retracts the same way. `text-decoration` cannot be drawn, only faded.
+
+**Colour changes fade through `state-fade`** — 440ms in, 100ms out, on `cubic-bezier(0.2,0,0,1)`.
 
 ## Open questions
 

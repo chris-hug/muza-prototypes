@@ -175,6 +175,14 @@ Two of them carry rules worth knowing:
   (the row is wrapped in `.dark`) — but only while transparent, since once it
   is glass they always sit on the light surface.
 
+## Artwork, focus and motion
+
+**Artwork carries `art-edge`** — a 1px outline inset by 1px, pure black at 10% in light and pure white at 10% in dark. Pure, never a tinted neutral: a tinted edge picks up the surface beneath it and reads as dirt along the image. It is an `outline`, so it costs no layout and follows the corner radius. On the `size-9` avatar in the header's leading slot.
+
+**Keyboard focus is `focus-ring`** — a 2px `outline` at 20% of `--ring`, no offset, the same one every control in the app draws; pointer clicks show nothing.
+
+**Colour changes fade through `state-fade`** — 440ms in, 100ms out, on `cubic-bezier(0.2,0,0,1)`. The clear button in the search field carries it.
+
 ## Open questions
 
 - mobile-header.tsx:9–13 lists five primitives · the file exports six —

@@ -118,6 +118,10 @@ design-system frame the preview is `!w-full !max-w-[980px]`, so the 1069 chip
   `setTier("premium")`, `resetPlayCounts()` — before calling `onSubscribed`.
 - The preview components carry no store binding; they are local state only.
 
+## Motion
+
+**Colour changes fade through `state-fade`** — `color, background-color, border-color, outline-color, opacity` on `cubic-bezier(0.2,0,0,1)`, 440ms in and 100ms out. The split needs no second mechanism: the transition that runs on the way in is the one declared on `:hover`, the one on the way out is the one on the element.
+
 ## Open questions
 
 - home.tsx (section prose) says the Subscribe button is "150% of `size=lg`" · `lg` is `h-12` (48px) and the button is forced to `!h-16` (64px) — 133%.

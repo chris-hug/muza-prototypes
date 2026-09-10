@@ -268,6 +268,19 @@ and there is no separate `data-highlighted` rule (Combobox carries both
 because its focus stays in the input). Disabled items are
 `data-disabled:pointer-events-none data-disabled:opacity-50`.
 
+The item also carries **`state-fade`**, so that highlight eases in over 440ms
+and out over 100ms on the house curve instead of snapping. Every option in
+this popup used to switch instantly while the `Button` next to the trigger
+eased — the snap is only visible when both are on screen, which is most of the
+time.
+
+The trigger's focus and invalid states come from the shared utilities rather
+than a local ring: **`focus-ring`** (a 2px `outline` at 20% of `--ring`, no
+offset) and **`invalid-ring`** (the same 2px geometry in `--destructive`, 40%
+in dark). Same two utilities Input, Textarea, Checkbox, Radio and Switch draw,
+so a focused-and-invalid field can only ever differ in colour, never in
+thickness.
+
 A group is `p-1` with `scroll-my-1`, so scrolling an item into view via the
 arrows leaves the group's own padding visible instead of cutting the label
 off. The label is `text-xsmall` (17px) muted — two steps under the item text,

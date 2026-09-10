@@ -116,7 +116,7 @@ from the edge).
 </SheetHeader>
 ```
 
-- **`MenuCover` is 72px** (`size-18`) in all three shapes: a **square** for an
+- **`MenuCover` is 72px** (`size-18`) in all three shapes, each with `art-edge` — the 1px inset outline every piece of artwork in the app carries, black at 10% in light and white at 10% in dark, so a pale cover keeps an edge against the sheet: a **square** for an
   album (`rounded-xs`, 2px), a **2×2 collage** for a playlist, a **circle** for
   an artist. 72px is chosen to match the height of the three text lines beside
   it — title, subtitle, badge row — so the cover and the text stack read as one
@@ -144,7 +144,8 @@ from the edge).
 ```
 
 Each pill is `flex-1 min-w-0 flex flex-col items-center gap-2 rounded-2xl
-bg-secondary px-2 py-3.5`, a `size-5` glyph over a `text-xsmall` label.
+bg-secondary px-2 py-3.5`, a `size-5` glyph over a `text-xsmall` label, with
+`focus-ring` for the keyboard.
 `flex-1` is what lets two or three of them share the width evenly, so a
 playlist's two pills are simply wider than an album's three.
 
@@ -180,8 +181,8 @@ own glyph: one action, one mark.
 
 A `SheetRow` is `flex w-full items-center gap-3 rounded-lg px-3 py-3
 text-base`, a `size-5` glyph in `text-muted-foreground` and the label in
-`text-foreground`; `hover:` / `active:` / `focus-visible:` all fill with
-`bg-muted`. The source promises a **44px+ tap target**, and the arithmetic
+`text-foreground`; `hover:` and `focus-visible:` fill with `bg-muted`. There
+is no `active:` fill — the press is the app's ripple (see below). The source promises a **44px+ tap target**, and the arithmetic
 clears it comfortably:
 
 ```text
@@ -207,6 +208,33 @@ album and playlist offers it without the caller wiring anything.
 Two things are `keepOpen`: the **Save** pill (it flips to Remove in place, and
 the user should see that happen) and nothing else — every other pill and row
 is wrapped in `SheetClose` and dismisses the sheet on tap.
+
+## The press is the app's ripple — and both rows carry it
+
+`SheetRow` and `QuickAction` are bespoke buttons, not `Button`, so they opt
+into the press language by hand: the `press-ripple` class, `relative`, and a
+`--press-fill` naming the colour the ripple grows to.
+
+| Surface | Token | Why that one |
+|---|---|---|
+| `SheetRow` | `[--press-fill:var(--press-on-muted)]` | it presses on the sheet's own surface, one step past its `bg-muted` hover |
+| `QuickAction` | `[--press-fill:var(--press-on-secondary)]` | the pill is `bg-secondary`, so its press steps from there |
+
+**`relative` is not decoration.** The ripple is painted on the element's
+`::before` at `absolute; inset: 0`; on a statically positioned host that
+anchors to the nearest positioned ancestor instead — which, for these two, is
+the sheet. The colour then floods the whole panel. Every bespoke consumer of
+`press-ripple` has to say `relative`, and this file is one of the places where
+forgetting it was a visible bug.
+
+The desktop dropdown item is a third surface: `dropdownMenuItemClass` plus
+`state-fade`, so its highlight eases at the same 440ms-in / 100ms-out as every
+other colour change instead of snapping.
+
+Keyboard focus is not uniform, on purpose. A `QuickAction` draws `focus-ring`
+— the 2px outline at 20% of `--ring` — because it is a pill with its own edge.
+A `SheetRow` has no edge to trace, so it fills with `bg-muted` instead, the
+same surface its hover uses.
 
 ## Save is bound to the library store
 

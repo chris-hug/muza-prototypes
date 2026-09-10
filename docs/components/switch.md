@@ -31,9 +31,8 @@ as `data-size` so the thumb can read it through `group/switch`.
 | hit area | 56 × 34px | 48 × 30px |
 
 The track is `rounded-full border border-transparent` — the border is there
-so the focus ring has an edge to colour (`focus-visible:border-ring
-focus-visible:ring-3 focus-visible:ring-ring/50`) without the track growing
-on focus. The hit area is the same `after:-inset-x-3 after:-inset-y-2`
+so the focus ring has an edge to colour (`focus-visible:border-ring` under
+`focus-ring`) without the track growing on focus. The hit area is the same `after:-inset-x-3 after:-inset-y-2`
 pseudo-element the checkbox uses.
 
 | State | Track | Thumb (light) | Thumb (dark) |
@@ -99,6 +98,10 @@ where a switch sits inside a card), not a responsive step.
 - base-ui renders a hidden `<input>`; `name` submits with a form.
 - The thumb slides (`transition-transform`); the track colour does not
   animate — see below.
+
+## Invalid
+
+**`invalid-ring`** draws the error state: the same 2px outline `focus-ring` uses, in `--destructive` at 20% (40% in dark, where `--destructive` is `red-900` and 20% of it against a near-black track is a warning nobody sees). Because the two utilities share their geometry, a switch that is both focused and invalid can only differ in colour.
 
 ## Open questions
 

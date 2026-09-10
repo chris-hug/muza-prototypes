@@ -31,9 +31,9 @@ one `div` with up to two bands:
 
 | Part | Classes | Why |
 |---|---|---|
-| card | `flex flex-col rounded-lg border transition-colors cursor-pointer` | |
+| card | `relative flex flex-col rounded-lg border cursor-pointer`, `transition-[border-color] duration-[130ms] ease-[cubic-bezier(0.2,0,0,1)]` | `relative` because the sweep overlay is absolutely positioned against it; the transition names `border-color` alone — `transition-colors` would sweep the background too |
 | — unselected | `border-border hover:border-foreground/30` | the form-control hover, so it reads as a field |
-| — selected | `border-foreground` | structure darkens; it does not go `primary` |
+| — selected | `border-foreground/20` | structure darkens; it does not go `primary`. The alpha has to match the sweep's ink exactly — see below |
 | header band | `flex items-center gap-4 px-4 py-5` | |
 | radio | `RadioGroupItem value={value}` | the real 16px mark; it is the only focusable part |
 | icon circle | `size-10 rounded-full bg-secondary text-secondary-foreground [&_svg]:size-4` | **always** neutral — a selected card has one signal, the border + dot |
@@ -88,6 +88,65 @@ the width of a dialog body; nothing constrains it narrower.
   props.
 - The children band swallows clicks (`stopPropagation`) so typing a price
   does not fire `onSelect`; it is shown whether or not the card is selected.
+
+## The ring is DRAWN, from where you pressed
+
+Selecting a card does not swap its border on. A `.card-sweep` overlay
+(`app.css`) draws the ring as a conic gradient over **340ms**, growing in
+**both directions at once** from the point the pointer landed, and what it
+leaves behind is the settled border.
+
+| Part | Value | Why |
+|---|---|---|
+| Origin | `--card-sweep-from`, set per click from `atan2(dx, -dy)` around the card's centre | `atan2(dx, -dy)`, not the usual `atan2(dy, dx)`: a conic gradient counts from 12 o'clock clockwise while screen coordinates run x-right / y-**down** |
+| Keyboard | origin `null` → CSS falls back to `-90deg` (12 o'clock) | `e.detail === 0` means no pointer; `clientX/Y` would be `0,0`, the window's top-left, and the sweep would start off the card |
+| Extent | `--card-sweep`, a registered `@property` angle, `0deg → 180deg` | an unregistered custom property cannot be interpolated, and the ring would jump |
+| Ink | `color-mix(in srgb, var(--foreground) 20%, transparent)` | **the same 20% the settled border uses** |
+| Geometry | `inset: -1px`, `padding: 1px`, `border-radius: inherit`, `mask-composite: exclude` | |
+| Curve | `340ms cubic-bezier(0.75, 0, 0.95, 0)` | ease-**in**: the ring holds at the press point, then races round and snaps shut |
+| Replay | `key={`sweep-${value}-${from}`}` | remounts the overlay so the animation runs again on every selection |
+| Reduced motion | `animation: none; --card-sweep: 180deg` | the full ring, immediately |
+
+Four things in that table were each a visible bug first, and each is why the
+build looks the way it does:
+
+- **One arc, not two layers.** The obvious build is a clockwise gradient plus a
+  second one running back from the origin. They share their edge at the press
+  point, so the ink lands twice there and each edge is antialiased on its own —
+  a glitch exactly where the eye is looking. A single gradient does both
+  directions if it starts half a sweep *behind* the origin and runs twice the
+  sweep forward: the arc is centred on the press point and both ends travel
+  outward together.
+- **`inset: -1px`, not `0`.** An absolutely positioned child is laid out
+  against the padding box, and the border sits outside it, so `inset: 0` offsets
+  the overlay by one border width and `border-radius: inherit` then bends it on
+  a radius a pixel tighter. The drawn ring and the border ran parallel and never
+  met. Keep this in step with the card's border width.
+- **Ease-in, not ease-out.** On a ring that closes, the interesting part is the
+  closing. `ease-out` spends its speed immediately and crawls the last third.
+- **One alpha for both.** The drawn ring and the settled border are both
+  `--foreground` at 20%. Change one without the other and the sweep ends on a
+  step in brightness.
+
+## The spring belongs to the card, not the dot
+
+Picking a card runs the same `muzaTick` spring the [Checkbox](checkbox.md) and
+the bare radio use — from anywhere on the header band, not only from the 16px
+dot.
+
+`RadioGroupItem` drives that spring from its own `onClick`, which is right for
+a bare radio in a form but never fired when the press landed on the title, the
+icon or the padding: the dot filled in without moving, on a card whose entire
+point is that the whole thing is the target. So the card owns a `useTick` and
+hands the resulting `data-anim` down — `RadioGroupItem` spreads incoming props
+after its own `tickProps`, so the card's wins on every path.
+
+A press on the dot itself bubbles up to the card, so both routes run one and
+the same spring rather than two that can drift apart. The children band still
+swallows its clicks, so typing a price ticks nothing.
+
+Verified: clicking a card's title fires `muzaTick` and selects it, clicking
+the dot still does, and clicking the price field does neither.
 
 ## Open questions
 

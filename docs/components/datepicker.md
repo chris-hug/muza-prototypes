@@ -121,6 +121,10 @@ two copies of a shape is how two surfaces stop matching.
   moves across the grid, no `role="grid"`, no `aria-selected`.
 - No `min` / `max`, no disabled days, no range.
 
+## Focus
+
+**Keyboard focus is `focus-ring`** — a 2px `outline` at 20% of `--ring`, no offset. One utility for every control in the app, so tabbing through a form looks like one system; pointer clicks show nothing (`outline-none` + `:focus-visible`).
+
 ## Open questions
 
 - Horizontal padding is `px-3` (`date-picker.tsx:123`) · the recipe and

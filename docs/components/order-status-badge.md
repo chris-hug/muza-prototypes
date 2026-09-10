@@ -90,6 +90,10 @@ Fixed, no steps. `w-fit shrink-0 whitespace-nowrap`; the menu is the app
   too — the row is not disabled.
 - The handler owns persistence; the badge never changes on its own.
 
+## Focus
+
+**Keyboard focus is `focus-ring`** — a 2px `outline` at 20% of `--ring`, no offset. One utility for every control in the app, so tabbing through a form looks like one system; pointer clicks show nothing (`outline-none` + `:focus-visible`).
+
 ## Open questions
 
 - order-status-badge.tsx:35–39 colours `new` / `shipped` / `delivered` /

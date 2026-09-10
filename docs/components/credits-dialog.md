@@ -33,7 +33,7 @@ has no release credits.
 | Heading | `DialogTitle md:text-large font-medium leading-none` — "Album credits" | slotted, so the live dialog passes a real `DialogTitle` for a11y while the preview passes a `<p>` |
 | Fields | `Field`: label `text-2xsmall text-muted-foreground leading-[16px]`, value `text-small text-foreground leading-[20px]` — Main artist · Album · Label · Recording Date | label and recording date render only when the catalog has them |
 | Performers | "Performers" `text-small font-medium`, then role → names, comma-joined | role is the label, names the value |
-| Links | a value with a handler is a `<button>` with `hover:underline underline-offset-[3px]`, 1px thickness | main artist, album (when `hasAlbumDetail`) and every performer navigate |
+| Links | a value with a handler is a `<button>` carrying `link-underline`; without one it is plain text | main artist, album (when `hasAlbumDetail`) and every performer navigate. The affordance cannot come apart from the behaviour: no handler, no underline, no tab stop. `CreditsDialogPreview` passes no-op handlers so the design-system frame shows the links the product has without navigating the page away |
 
 ## Usage
 
@@ -72,6 +72,10 @@ chip, so a 375 frame shows the sheet shape.
   navigating must not land on the default fallback page.
 - The body scrolls when the performer list outgrows the height cap; the
   cover header stays.
+
+## Artwork
+
+**Artwork carries `art-edge`** — a 1px outline inset by 1px, pure black at 10% in light and pure white at 10% in dark. Pure, never a tinted neutral: a tinted edge picks up the surface beneath it and reads as dirt along the image. It is an `outline`, so it costs no layout and follows the corner radius. On the 3:2 cover header.
 
 ## Open questions
 

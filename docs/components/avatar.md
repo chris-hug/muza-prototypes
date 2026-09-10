@@ -80,6 +80,10 @@ while `loading` and on `error`, and is replaced when the image arrives.
 Nothing is interactive — to make an avatar a trigger, wrap it (the topbar
 wraps `UserAvatar` in `DropdownMenuTrigger`).
 
+## The edge
+
+**Artwork carries `art-edge`** — a 1px outline inset by 1px, pure black at 10% in light and pure white at 10% in dark. Pure, not a tinted neutral: a tinted edge picks up the surface under it and reads as dirt along the image. It is an `outline`, so it costs no layout and follows the corner radius.
+
 ## Open questions
 
 - No call site passes `size`. The app's three (`purchase-detail-view.tsx:427`

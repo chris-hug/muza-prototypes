@@ -50,15 +50,27 @@ before the click landed. Recents are localStorage-backed.
 
 ## The results — `SearchResultsView`
 
-| Band | Desktop (from `sm`, 640) | Phone (below 640) |
+| Band | Desktop (from 608) | Phone (below 608) |
 |---|---|---|
 | Heading | `Search for: <q>` — `text-2xlarge font-medium tracking-tight`, the prefix `text-muted-foreground font-normal` | none — the sticky search field shows the query |
-| Scope | `ToggleGroup size="sm"`: Muza Catalog · My Library, right-aligned | none in the body |
+| Scope | `ToggleGroup size="sm"`: Muza Catalog · My Library — right of the heading from a 560px column, stacked under it below that | none in the body |
 | Category | `Tabs variant="line"`, `autoCenter={false}`, `border-b border-border` | `MobilePillTabs` — the scrollable pills the Library uses |
 | Body | the All composition, or a flat `ul gap-1` of rows | the same |
 
 The page shell is the standard `max-w-[1480px] min-[1920px]:max-w-[1716px]
 mx-auto px-page`, `pt-3 sm:pt-6 pb-24`, `gap-3 sm:gap-5`.
+
+The heading row is the one thing here that measures the **column**, through a
+named `@container/search` on that shell. The heading is `min-w-0` and the
+toggle `shrink-0`, so side by side the heading is what gives: it wants 268px
+unwrapped and the toggle takes 202, and under roughly 480px of column
+"Search for:" and the query broke onto two lines with the toggle parked
+beside them. Below `@min-[560px]/search` the two stack instead, left-aligned
+— 560 being the stack step the system already owns (`MEDIA_HEADER_STACK`).
+
+The container is named for the usual reason: an unnamed one would bind to
+whatever ancestor happens to be nearest. The shelves are unaffected — they
+have their own `@container` inside `AllResults`, which is nearer to them.
 
 **Category tabs list only types that have results** (All is always present).
 An empty type — Labels with no match — is dropped so nobody clicks into
@@ -120,13 +132,50 @@ a single card, labels), so every shelf reads the same.
 
 ## Sizing
 
-**Window** for the presentation swap — but see the open questions: the
-heading, scope toggle and the line-tabs ⇄ pill-tabs swap are gated on
-Tailwind `sm:` (640), not on the 768 presentation gate. Below the 608 chrome
-gate the mobile header (`MobileAppHeader › ExploreHeader`) owns the field and
-renders the **same** scope `ToggleGroup` full-width under it once a query is
-active and the field is not focused (`mobile-app-header.tsx:306–318`), which
-is why the body drops its own.
+**Window, on the chrome gate.** The heading, the scope toggle and the
+line-tabs ⇄ pill-tabs swap all read `useFooterNav()` (608) — the same hook
+that decides whether `MobileAppHeader` exists at all. Below it the mobile
+header owns the field and renders the **same** scope `ToggleGroup` full-width
+under it once a query is active and the field is not focused
+(`mobile-app-header.tsx:306–318`), which is why the body drops its own.
+
+One gate, because the search screen is two components: the header owns half
+of it. They used to disagree — the body switched on Tailwind `sm:` (640)
+while the header switched at 608 — and the 32px between them was a hole:
+at a 620px window the header had already gone while the body still hid the
+scope toggle expecting it, so there was no way to reach Catalog ⇄ Library.
+Verified closed at 375 / 600 / 608 / 620 / 660: exactly one switch, at 608,
+with both halves moving together.
+
+The purely visual `sm:` steps (`pt-3 sm:pt-6`, `gap-3 sm:gap-5`, `sm:p-5`,
+`sm:text-xlarge`, `sm:size-28`) stay on 640. Those are in-page content
+reflow, which is what [`responsive.md`](responsive.md) reserves `sm:` for;
+only the composition follows the chrome.
+
+### In the design system
+
+One frame, and only from 608 up (`DESKTOP_WIDTHS`). It renders
+`SearchResultsView` alone, which is all this component is above the gate.
+
+**There is deliberately no phone frame, because a truthful one cannot be
+built.** Two separate reasons, and the second is the hard one:
+
+1. Below 608 the search screen is a PAIR — `MobileAppHeader › ExploreHeader`
+   owns the field, the suggestions panel and the scope switcher; this view
+   owns the tabs and the results. One component is half a screen.
+2. The three composition gates now read `useFooterNav()`, which a frame can
+   drive through `WindowWidthContext`. The view's phone APPEARANCE cannot be:
+   it lives in `sm:` media queries spread through the file (`sm:p-5`,
+   `sm:text-xlarge`, `sm:size-28`, and the Top result's play button at
+   `sm:opacity-0` + hover), and those read the real browser window. A phone
+   chip inside a desktop browser would draw desktop padding, desktop type and
+   a play button that only appears on hover.
+
+A frame that composed the header row by hand was tried and removed: it looked
+plausible and was wrong in exactly those ways. **The mobile flow is verified
+on the running app at 375 (`/?page=Explore&q=coltrane`), not on this page.**
+Note that `/?page=Explore` with no query is still a "Coming soon" placeholder
+— the mobile search flow only appears once `?q=` is set.
 
 **Column** for the shelves. `AllResults` wraps the shelves in an
 `@container`, so `CardRail`'s 560 swipe ⇄ grid step and `SongRail`'s 692 / 1164
@@ -144,13 +193,6 @@ the artist page. Without that wrapper a rail never steps — see
 
 ## Open questions
 
-- search-results-view.tsx:103, 122, 129 gate the heading, scope toggle and
-  tab style on `sm:` (640) · [`responsive.md`](responsive.md) reserves `sm:`
-  for in-page reflow and names 768 (`md:` / `useIsMobile()`) the one
-  presentation gate; the chrome swaps at 608. Between 608 and 639 a window
-  has the desktop `Topbar` (no scope switcher in the mobile header, which is
-  gone) and a results body that hides its own scope toggle — no way to
-  switch scope at all in that band.
 - search-results-view.tsx:19–20 (header) says every specific-tab row "carries
   its own ContentTypeBadge" · `MediaListItem` renders no badge for any type
   (media-list-item.md), and DESIGN_SYSTEM's badge table lists search rows
@@ -160,5 +202,5 @@ the artist page. Without that wrapper a rail never steps — see
 - mobile-app-header.tsx:280–284 (comment) says "the scope + category
   controls live in the body, not here — the header is purely the search entry
   point" · the same component renders the scope `ToggleGroup` in the header
-  (:306–318), and the body hides its own below 640. The comment is stale; the
+  (:306–318), and the body hides its own below 608. The comment is stale; the
   header is where a phone switches scope.

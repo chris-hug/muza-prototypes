@@ -19,7 +19,7 @@ change swaps children or flickers.
 
 | Part | Classes | Why |
 |---|---|---|
-| Button | `group/cpb relative shrink-0 rounded-xs shadow-sm focus-visible:ring-3 focus-visible:ring-ring/50 outline-none cursor-pointer` + `sizeClassName` (default `size-12`, 48px); `data-playing` while playing | `data-playing` on the button lets every layer read the playing state with `group-data-[playing]/cpb:` |
+| Button | `group/cpb relative shrink-0 rounded-xs shadow-sm focus-ring outline-none cursor-pointer` + `sizeClassName` (default `size-12`, 48px); `data-playing` while playing | `data-playing` on the button lets every layer read the playing state with `group-data-[playing]/cpb:` |
 | Clipped layer | `absolute inset-0 overflow-hidden rounded-xs` | rounds the cover; everything inside is flat 2D so clipping is harmless |
 | Cover | `CoverArt src={src}` | the branded fallback for a missing or failed image |
 | Wash | `absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-150` | always black, not a token — it must stay dark on artwork in both themes |

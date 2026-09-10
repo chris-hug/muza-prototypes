@@ -21,7 +21,7 @@ Ten parts, all thin wrappers over `@base-ui/react/navigation-menu`:
 | `NavigationMenu` | `relative` | the root |
 | `NavigationMenuList` | `flex items-center gap-1` | the row of triggers |
 | `NavigationMenuItem` | — | one trigger + its content |
-| `NavigationMenuTrigger` | `inline-flex items-center gap-1 h-9 px-3 rounded-full text-small font-medium text-foreground hover:bg-muted`, `focus-visible:ring-3 focus-visible:ring-ring/50` | appends a `ChevronDown` at `size-3.5 text-muted-foreground` |
+| `NavigationMenuTrigger` | `inline-flex items-center gap-1 h-9 px-3 rounded-full text-small font-medium text-foreground hover:bg-muted`, `focus-ring` | appends a `ChevronDown` at `size-3.5 text-muted-foreground` |
 | `NavigationMenuContent` | `p-4 outline-none` | the panel body; lay out links inside it yourself |
 | `NavigationMenuLink` | `block rounded-lg px-3 py-2 text-small text-foreground hover:bg-muted` | the same focus ring as the trigger |
 | `NavigationMenuPortal` / `NavigationMenuPositioner` | positioner `z-50 outline-none`, `sideOffset={6}` | |

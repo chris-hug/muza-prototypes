@@ -200,10 +200,11 @@ Both the card and its text stack use a single `gap-1` (4px), so cover → title
 - The title clamps at **two lines**, so a long release name wraps instead of
   truncating mid-word and the card's height stays predictable. The artist
   truncates on one line.
-- Title and artist underline on hover / focus (`underline-offset-[3px]`, 1px,
-  `skip-ink`). Both carry `pb-[6px] -mb-[6px]`: the clamp and the truncation
-  are `overflow: hidden`, which would cut an underline sitting 3px under the
-  baseline; the padding gives it room and the negative margin hands the
+- Title and artist carry `link-underline`: the line wipes in from the left
+  over 140ms and sits 3px under the baseline, derived from the element's own
+  `line-height` and font metrics rather than a fixed number. Both also keep
+  `pb-[6px] -mb-[6px]`: the clamp and the truncation are `overflow: hidden`,
+  which would cut the line; the padding gives it room and the negative margin hands the
   space back so the rhythm does not change.
 - The year is wrapped in `<span data-card-year>`. A dense layout hides it
   from CSS rather than by prop — Card Rail's `mobileGrid` uses

@@ -20,7 +20,7 @@ Built from `TableHead` / `TableRow` / `TableCell` on a **bare `<table className=
 | `TableRow` | `group/row border-b-0 hover:bg-transparent` + `[&>td]:group-hover/row:bg-muted [&>td:first-child]:…rounded-l-md [&>td:last-child]:…rounded-r-md`; `[&_td]:py-1.5` | no hairline; the hover fill is painted per cell because a `<tr>` does not clip `border-radius`, and only the end cells round |
 | Playing row | the same `bg-muted` and rounding, at rest | the current item stays marked without hover |
 | Cover cell | `px-2`; `CoverPlayButton` (`size-12`) with `hoverGroup="row"` | `py-1.5` around 48px = the `SongListItem` row height, so a release row and a Top Songs row share one rhythm; the cover shows the same play / wave / pause states |
-| Title · Band | two `button`s: `hover:underline underline-offset-[3px] [text-decoration-thickness:1px]`; title `text-foreground`, band `text-muted-foreground`; both `whitespace-nowrap truncate` | two targets, two destinations |
+| Title · Band | two `button`s carrying `link-underline` — the shared utility whose line wipes in from the left over 140ms; title `text-foreground`, band `text-muted-foreground`; both `whitespace-nowrap truncate` | two targets, two destinations |
 | Recorded · Tracks | `text-muted-foreground tabular-nums whitespace-nowrap` | — |
 | Type | `text-right`; `ContentTypeBadge` | the badge is the one place the row says *album / single / EP* |
 | Menu | `px-2`; `Button variant="ghost" size="icon-sm"` "More options" → `DropdownMenuContent align="end" sideOffset={6}` holding `AlbumCardMenuItems` | one menu per media kind: the row's "…" *is* the card's "…" (`DESIGN_SYSTEM.md` "Media menus") |
@@ -59,6 +59,14 @@ Column-filling; no steps. `table-fixed` gives the fixed columns their 64 / 112 /
 - Click the cover to play or pause; the playing row holds its fill.
 - Title and band are separate navigations; the "…" opens the album menu (Save in it reads the live library store).
 - The header sticks at `top-0` of the page's scroll container; the artist page keeps its tab strip and this table in one scroller for exactly that reason (`artist-profile-view.tsx:264`).
+
+## Artwork, links and focus
+
+**Artwork carries `art-edge`** — a 1px outline inset by 1px, pure black at 10% in light and pure white at 10% in dark. Pure, never a tinted neutral: a tinted edge picks up the surface beneath it and reads as dirt along the image. It is an `outline`, so it costs no layout and follows the corner radius. On the row's `size-12` cover and on the collage tiles.
+
+**Text that navigates carries `link-underline`** — the line is a background gradient whose width runs 0 → 100% over 140ms, so it wipes in from the left and retracts the same way. `text-decoration` cannot be drawn, only faded. The title and the band are the two links in a row.
+
+**Keyboard focus is `focus-ring`** — a 2px `outline` at 20% of `--ring`, no offset, the same one every control in the app draws; pointer clicks show nothing.
 
 ## Open questions
 

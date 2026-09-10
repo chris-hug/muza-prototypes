@@ -91,6 +91,10 @@ None. It is not a button and not an image; the topbar makes it a trigger by
 wrapping it. `select-none` keeps a long-press on the phone from selecting
 the initials.
 
+## The edge
+
+**Artwork carries `art-edge`** — a 1px outline inset by 1px, pure black at 10% in light and pure white at 10% in dark. Pure, not a tinted neutral: a tinted edge picks up the surface under it and reads as dirt along the image. It is an `outline`, so it costs no layout and follows the corner radius.
+
 ## Open questions
 
 - `avatar.ts:4` says "10 soft, earthy tones" · the array holds **15**

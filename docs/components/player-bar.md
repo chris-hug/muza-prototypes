@@ -24,10 +24,10 @@ disc can overhang it.
 |---|---|---|
 | Current track | the left section, `w-[max(15rem, calc(24cqw + 5rem))]` — floors at 240px, then 24% of the bar plus 80px, uncapped, so a wide screen gives the title more room. A **solid** pill (`bg-background`, inset 11px on the right) plus a fixed SVG lens on its right edge makes the protruding notch from Figma | — |
 | Disc | 96px, spindle 30, `absolute -left-[8px] -top-[8px]` — overhangs the pill by 8px; spins at one turn per 5s while playing, and **pauses in place** (the animation is always mounted, only its play-state toggles), so a pause never snaps it back to 0° | `ring-1 ring-black/10 shadow-md` |
-| Text | title as a `MarqueeText`; artist · album beneath, each a link when its handler is passed | `text-small text-foreground` · `text-xsmall text-muted-foreground`, links `hover:text-foreground hover:underline` |
+| Text | title as a `MarqueeText`; artist · album beneath, each a link when its handler is passed | `text-small text-foreground` · `text-xsmall text-muted-foreground`, links `hover:text-foreground` plus `link-underline`, the shared wipe-in underline |
 | Heart | a `LibraryHeartButton` for the song, `ghost` `icon`, glyph `size-5` | — |
 | Right section | `flex-1`, `rounded-r-full`, `px-3 gap-3` → `px-5 gap-6` from 688; `min-w` 392 → 448 (688) → 524 (800), content-driven | — |
-| Transport | `ShuffleToggle` (40×32, glyph 18) · Previous (30px) · **Play** (`size-12`, glyph 42, `hover:scale-110`) · Next · `RepeatToggle` — Shuffle and Repeat sit *inside* the transport row, outside the skip buttons, not in a far-right cluster | `text-foreground`, `hover:opacity-70 active:scale-90` |
+| Transport | `ShuffleToggle` (40×32, glyph 18) · Previous (30px) · **Play** (`size-12`, glyph 42, `hover:scale-110`) · Next · `RepeatToggle` — Shuffle and Repeat sit *inside* the transport row, outside the skip buttons, not in a far-right cluster | `text-foreground`, `hover:opacity-70 active:opacity-40` — opacity, not scale; the transport row's press is a colour step like every other press in the app |
 | Waveform | `flex-1 min-w-[120px]`, 40px tall with a 72px hover line; timestamps either side, `hidden` until 800 | `text-2xsmall text-foreground tabular-nums` |
 | Volume | a 32px `ghost` glyph that, on hover, grows **upward** into a pill holding a 75px vertical `Slider` | open: `ring-1 ring-inset ring-border bg-background shadow-sm` |
 
@@ -38,7 +38,7 @@ disc can overhang it.
 | Pill | `h-[56px] rounded-full`, **solid** — no glass (Figma 20673:8274); `role="button"` with `aria-label="Expand player"` when `onExpand` is passed, Enter / Space included | `bg-background` |
 | Disc | 68px, spindle 23, `-left-[4px] -top-[7px]`; the text starts at `pl-[72px]` to clear it | — |
 | Controls | Play / Pause and Next, glyphs 24px, `stopPropagation` so a tap on them never expands the bar | — |
-| Progress arc | an SVG stroke along the pill's **flat bottom** only — between the cap tangents, 2px in, 4px wide, round caps — never climbing the rounded ends, which read as a stray hook near the end of a track. Dash math is normalised with `pathLength={1}` so a resize mid-track cannot desync it | `stroke: var(--muza-blue-200)` |
+| Progress arc | an SVG stroke along the pill's **flat bottom** only — between the cap tangents, 2px in, 4px wide, round caps — never climbing the rounded ends, which read as a stray hook near the end of a track. Dash math is normalised with `pathLength={1}` so a resize mid-track cannot desync it | `stroke: var(--muza-brand-200)` |
 
 ## Props
 
@@ -122,6 +122,14 @@ the query 640, not 614.
   `onExpand`; the buttons stop propagation.
 - Hover states are pointer-only, as everywhere.
 
+## Links, focus and motion
+
+**Text that navigates carries `link-underline`** — the line is a background gradient whose width runs 0 → 100% over 140ms, so it wipes in from the left and retracts the same way. `text-decoration` cannot be drawn, only faded. The artist and album beneath the title are links whenever their handlers are passed.
+
+**Colour changes fade through `state-fade`** — 440ms in, 100ms out, on `cubic-bezier(0.2,0,0,1)`. Those links also carry it, so the colour and the underline arrive together.
+
+**Keyboard focus is `focus-ring`** — a 2px `outline` at 20% of `--ring`, no offset, the same one every control in the app draws; pointer clicks show nothing.
+
 ## Open questions
 
 - DESIGN_SYSTEM.md › "Player components" heads its bar section
@@ -139,7 +147,7 @@ the query 640, not 614.
   always this root — but it is the one of the four that breaks the rule
 - Previous and Next have no handlers (player-bar-b.tsx:422, :437, :517) —
   the store exposes none, so the buttons are inert on every surface
-- the progress arc is stroked with `var(--muza-blue-200)`, a palette
+- the progress arc is stroked with `var(--muza-brand-200)`, a palette
   primitive (player-bar-b.tsx:184), while the waveform's played colour is
-  the semantic `--waveform-progress` (app.css) that flips to blue-50 in
+  the semantic `--waveform-progress` (app.css) that flips to brand-50 in
   dark mode — the two "played" marks on the same pill can disagree in dark

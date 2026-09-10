@@ -93,6 +93,29 @@ A component's knowledge is scattered. Collect all of it before writing a line:
 
 Verify every class, number and prop against the source rather than trusting the prose around it. Where a comment, a doc or a ticket disagrees with the code, the code is what ships — but **report the mismatch instead of quietly overwriting it**. In this repo that step has repeatedly surfaced more wrong documentation than wrong code, and occasionally a real bug hiding behind a confident sentence.
 
+Two failure modes, and the second is the one that hides:
+
+- **Consistency** — does the doc contradict the code it already mentions?
+- **Coverage** — does the doc describe every behaviour the component actually
+  HAS? An undocumented behaviour is one nobody is checking. Motion is the
+  weakest area, because animation ships faster than prose.
+
+Coverage is mechanical enough to audit. Grep the component for the shared
+motion and state utilities and check each against its doc:
+
+```
+state-fade · state-fade-quick · press-ripple · card-sweep
+link-underline · link-underline-group · focus-ring · focus-ring-within
+invalid-ring · art-edge · page-enter · useTick · @container · animate-[…]
+```
+
+Anything present in the code and absent from the `.md` is a gap. Two real
+examples of what that catches: `togglegroup.md` had no motion section until
+the travelling pill was built there, and `tabs.md` said nothing about the
+travelling `Indicator` — writing that prose surfaced a live bug, because the
+indicator was hidden until the first click. The missing prose and the bug had
+the same root: nobody had stated what the attribute meant.
+
 **3 · Consolidate — into the Markdown.**
 
 Everything the reader needs goes into `docs/components/<id>.md`:
@@ -111,6 +134,17 @@ The Markdown is not the only thing you own:
 **5 · Present — wire the section so it demonstrates, not just describes.**
 
 Prose is only half of it. The section's *frame* is documentation too, and it is the half that proves the prose. Never type component prose into `home.tsx` — the intro, the ⓘ modal and the `</>` panel read the sources you just updated — but do wire the following deliberately.
+
+**Every rendered doc states when it was rendered.** The ⓘ modal carries a
+`rendered <date · time>` line under the file path, from `DOCS_RENDERED_AT` in
+`src/lib/component-docs.ts` — the execution time of the module that inlines the
+Markdown, so in dev it becomes the moment of the edit and in a build it is the
+moment the bundle loaded. A doc modal is trusted on sight and a stale one looks
+exactly like a fresh one; the timestamp is what separates them. It is not the
+same statement as the section's "Changed" date, which comes from git and
+describes the COMPONENT. If a new doc surface is added, it carries the
+timestamp too — and the timestamp keeps deriving from the doc content's own
+load, never from a hand-typed constant.
 
 **A · Section shell**
 

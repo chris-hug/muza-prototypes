@@ -141,6 +141,12 @@ With fewer than four covers the single tile is `covers[0]`; with an empty
 array that is `undefined`, and the square is blank. Album Card and Media List
 Item go through `CoverArt`; see the open questions.
 
+## Artwork and links
+
+**Artwork carries `art-edge`** — a 1px outline inset by 1px, pure black at 10% in light and pure white at 10% in dark. Pure, never a tinted neutral: a tinted edge picks up the surface beneath it and reads as dirt along the image. It is an `outline`, so it costs no layout and follows the corner radius.
+
+**Text that navigates carries `link-underline`** — the line is a background gradient whose width runs 0 → 100% over 140ms, so it wipes in from the left and retracts the same way. `text-decoration` cannot be drawn, only faded. Title and owner are the two links.
+
 ## Open questions
 
 - playlist-card.tsx:18–20 (header) says an own playlist's subtitle is

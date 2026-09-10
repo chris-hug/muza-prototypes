@@ -244,6 +244,10 @@ so a chrome change updates both — no drift between the gallery and the app.
 | `toastShellClass` | the shared surface, radius, padding |
 | `toastActionButtonClass` / `toastCloseButtonClass` | the two buttons, shared with the preview |
 
+## Focus
+
+**Keyboard focus is `focus-ring`** — a 2px `outline` at 20% of `--ring`, no offset. One utility for every control in the app, so tabbing through a form looks like one system; pointer clicks show nothing (`outline-none` + `:focus-visible`).
+
 ## Open questions
 
 - toast.tsx:33 (comment) says the old phone padding was "4px/18px" · the desktop classes that were kept are `px-4 pt-4 pb-[18px]` = 16/16/18px; "4px" is probably the Tailwind step, not pixels. Not migrated as a number.

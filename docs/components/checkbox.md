@@ -27,10 +27,11 @@ primitive of the same name.
 
 Shared by both marks:
 
-- **Focus** `focus-visible:border-ring focus-visible:ring-3
-  focus-visible:ring-ring/50`; **invalid** `aria-invalid:border-destructive
-  aria-invalid:ring-3 aria-invalid:ring-destructive/20`; **disabled**
-  `disabled:cursor-not-allowed disabled:opacity-50`.
+- **Focus** `focus-visible:border-ring focus-ring` — a 2px `outline` at 20%
+  of `--ring`, no offset; **invalid** `aria-invalid:border-destructive
+  invalid-ring` — the same 2px geometry in `--destructive` (40% in dark), so a
+  field that is both focused and invalid can only differ in colour;
+  **disabled** `disabled:cursor-not-allowed disabled:opacity-50`.
 - **Hit area** `after:absolute after:-inset-x-3 after:-inset-y-2` — a
   transparent pseudo-element that grows the 16px mark to a 40 × 32px target
   without moving anything beside it. Inside a table cell it is dropped with
@@ -103,7 +104,34 @@ column (`w-full`). Text beside them reflows; the marks never do.
 - `Checkbox` accepts `indeterminate` (used for the select-all header in
   `media-list-table.tsx:125`) — but see below for what it looks like.
 - `Checkbox` has `transition-colors`; the fill fades in. `RadioGroupItem`
-  has none; the dot appears at once.
+  has none; the dot appears at once. The check glyph itself is
+  `transition-none` — it must land with the spring, not chase it.
+
+## The tick — one spring, three geometries
+
+Both marks bounce when they are picked: `data-[anim]:animate-[muzaTick_360ms_cubic-bezier(.22,1,.36,1)]`,
+exported as `TICK_CLASS` from `use-tick.ts` so `Checkbox` and `RadioGroupItem`
+cannot drift apart. `muzaTick` is a four-stop scale — `1 → 1.16 → 0.95 → 1.03
+→ 1` — a spring that overshoots, undershoots and settles.
+
+It is bound to the **change**, not to the state, and that is the whole design
+of the hook:
+
+- `data-checked:animate-…` is one line and no hook, and it matches on **mount**
+  — so every pre-ticked box in a form bounced on page load.
+- Binding to the change gets the other half for free: **unticking** springs
+  too, which a state selector cannot express at all.
+
+`useTick()` returns `tickProps` (the `data-anim` attribute) and `tick()`, to
+be called when the value actually changes. The attribute is held for 400ms,
+slightly longer than the 360ms animation, so it outlives it. A tick with
+nothing running starts immediately rather than going through two frames of
+`requestAnimationFrame` — those ~33ms of nothing made every spring read as
+late no matter how short it was.
+
+[`RadioCard`](radio-card.md) borrows the same hook at the CARD level, because
+the card is the tap target and the dot's own click never fires when the press
+lands on the title or the padding.
 
 ## Open questions
 

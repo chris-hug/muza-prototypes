@@ -56,6 +56,10 @@ The palette is the same tree inside `<CommandDialog open={open} onOpenChange={se
 - ↑ / ↓ move the selection, Enter fires the item's `onSelect`, the pointer selects on hover. Escape closes the dialog (the Dialog's own).
 - Selecting an item does not close `CommandDialog` by itself — close it in `onSelect`.
 
+## Motion
+
+**Colour changes fade through `state-fade`** — `color, background-color, border-color, outline-color, opacity` on `cubic-bezier(0.2,0,0,1)`, 440ms in and 100ms out. The split needs no second mechanism: the transition that runs on the way in is the one declared on `:hover`, the one on the way out is the one on the element. The items carry it, so the highlight eases rather than snapping as you arrow down the list.
+
 ## Open questions
 
 - Not used in the prototype: search is the Search surface (`SearchPanel`, `SearchResultsView`), with its own field and `MediaListItem` result rows. Two "type to find" surfaces with different row metrics is a decision nobody has written down.

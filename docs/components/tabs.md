@@ -141,6 +141,71 @@ focus), Home / End jump to the ends, and `TabsContent` panels are tabbable
 regions. `data-active` on the trigger drives every active style; the
 `MutationObserver` above watches the same attribute.
 
+## Motion — one mark, and it travels
+
+All three variants draw their active mark with a single `Tabs.Indicator` on
+the list, positioned over the active trigger and slid between them.
+
+| | |
+|---|---|
+| Element | one `span[role=presentation]`, `absolute`, `z-0` behind the labels (which carry `relative z-10`) |
+| Position | `translate-x-[var(--active-tab-left,0px)]` · `w-[var(--active-tab-width,0px)]` — base-ui publishes both inline |
+| Transition | `translate, width, transform` · **260ms** · `cubic-bezier(0.2,0,0,1)` |
+| The mark | `line` a hairline at `bottom-0`; `default` the `bg-background` pill; `pill` the `bg-accent` fill |
+
+Each trigger used to draw its own `::after` or its own fill and cross-fade
+it, so the mark did not move — it vanished under the old tab and appeared
+under the new one, and the eye lost the thread. The triggers keep only their
+text colour; `line` explicitly suppresses its old underline
+(`group-data-[variant=line]/tabs-list:after:hidden`) so two marks cannot
+stack. [Toggle Group](togglegroup.md) does the same thing for the same
+reason, though it has to measure itself.
+
+260ms on the house curve, raised from 180ms on Tailwind's default ease. The
+distance is why: on a narrow strip the mark travels ~60px and 180ms is plenty,
+but a full-width artist header gives each tab a third of the page — measured
+882px between "Shop" and "Overview" — and at 180ms that is roughly 2450px per
+second, which reads as the line reappearing elsewhere rather than going there.
+It is also the number the labels' own fade uses, so mark and text arrive
+together.
+
+The hairline under a `line` strip belongs to the LIST, not to the triggers.
+The artist header used to give every trigger its own `border-b` —
+`border-border` idle, `border-foreground` active — and three separate borders
+have nothing to interpolate between: one crossfaded to grey while the next
+crossfaded to white, which reads as the mark going out here and coming on over
+there. The Indicator was underneath the whole time, doing the right thing
+invisibly, with a foreground border sitting on top of it. A `border-b` on the
+`TabsList` plus the Indicator alone is the arrangement that travels.
+
+The triggers fade on `state-fade-quick` (200ms in, 100ms out), not on a
+hand-written property list: the old one named `transform`, which in Tailwind
+v4 covers neither `scale` nor `translate`, and `box-shadow`, which repaints
+the focus ring frame by frame.
+
+### `data-activation-direction` means "since the last click", not "measured"
+
+Worth stating because reading it the other way is a live bug waiting to
+happen — it already was one. base-ui sets `data-activation-direction="none"`
+until the first **activation**, while publishing the geometry inline from the
+very first paint. So a freshly rendered strip is fully measured and placed
+while the attribute still says `none`.
+
+The indicator used to carry `data-[activation-direction=none]:opacity-0`,
+written as a guard against "flashing at width 0 before measurement". It was
+really a guard against *ever having been clicked*: every tab strip in the app
+rendered with the correct active label colour and no line or pill under it
+until you touched one. The `0px` var fallbacks handle the unmeasured case on
+their own — no geometry means no width means nothing to see — so the
+attribute is now used for the thing it actually describes: with no direction
+there is nothing to travel from, so the mark is *placed*
+(`data-[activation-direction=none]:transition-none`) and every later move
+eases.
+
+## Focus
+
+**Keyboard focus is `focus-ring`** — a 2px `outline` at 20% of `--ring`, no offset, the same one every control in the app draws; pointer clicks show nothing.
+
 ## Open questions
 
 - `tabs.tsx:98–125`: the recentre effect has `[]` as its dependency list

@@ -17,11 +17,11 @@ only action — no hover cluster, no menu, no long press.
 
 | Part | Classes | Why |
 |---|---|---|
-| Card | `<button>` · `group/artist flex flex-col gap-0 text-center w-full min-w-0 rounded-lg focus-visible:ring-3 focus-visible:ring-ring/50` | no width of its own; the grid cell or rail `<li>` decides |
+| Card | `<button>` · `group/artist link-underline-group flex flex-col gap-0 text-center w-full min-w-0 rounded-lg focus-ring` | no width of its own; the grid cell or rail `<li>` decides |
 | Track | `aspect-square w-full p-[5%]` | the same square an Album Card's cover occupies, so a row of mixed cards keeps its columns; the circle is inset by **5% a side** (a 90% diameter) with padding, not a percentage width, so the `<img>` always fills its box exactly and a portrait-aspect thumbnail never renders as an oval |
 | Portrait | `aspect-square w-full rounded-full object-cover transition-[filter] group-hover/artist:brightness-75` | darkens on hover — the same direction as the gradient on Album / Playlist Card (the image gets darker on interaction, never lighter) |
 | Placeholder | `rounded-full bg-muted flex items-center justify-center group-hover/artist:bg-accent` around a `LogoMark` at `w-2/5 text-secondary` | the branded fallback, in a circle; see "Missing portrait" |
-| Name | `text-xsmall font-normal leading-5 text-foreground truncate`, `group-hover/artist:underline group-focus-visible/artist:underline underline-offset-[3px]`, 1px, `skip-ink` | the media-tile title type (17px, normal weight); one line, ellipsis |
+| Name | `text-xsmall font-normal leading-5 text-foreground truncate`, `link-underline mx-auto` — the CARD carries `link-underline-group`, so hovering anywhere on it wipes the name's underline in from the left; a `group-hover:` variant cannot do this, because it compiles into the name's own `:hover` | the media-tile title type (17px, normal weight); one line, ellipsis |
 
 Figma: file `L9yw4Yaec9YtAXGxP8q4fu` › "Record Cover", Type=Artist —
 `20157:4701` default, `20157:4733` hover (visually identical to default: the
@@ -91,6 +91,14 @@ language as [`CoverArt`](../../src/components/ui/cover-art.tsx) for albums and
 songs, drawn in a circle; the card does not go through `CoverArt` because
 `CoverArt` is square. An artist with no portrait therefore reads as
 intentional, never as a broken image.
+
+## State and motion
+
+**Hover belongs to the CARD.** It carries `group/artist link-underline-group`; the name carries `link-underline`, so the underline wipes in from the left over 140ms when the pointer is anywhere on the card. A Tailwind `group-hover:` variant cannot do this — it compiles into the name's own `:hover`.
+
+**Keyboard focus is `focus-ring`** — a 2px `outline` at 20% of `--ring`, no offset. One utility for every control in the app, so tabbing through a form looks like one system; pointer clicks show nothing (`outline-none` + `:focus-visible`).
+
+**Artwork carries `art-edge`** — a 1px outline inset by 1px, pure black at 10% in light and pure white at 10% in dark. Pure, not a tinted neutral: a tinted edge picks up the surface under it and reads as dirt along the image. It is an `outline`, so it costs no layout and follows the corner radius. Here it sits on the circular portrait, where a pale press photo would otherwise bleed into the page.
 
 ## Open questions
 

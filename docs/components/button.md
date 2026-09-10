@@ -43,12 +43,12 @@ design-system page uses it on a raw `DropdownMenuTrigger`).
 
 | `variant` | Fill | Ink | Hover | Use it for |
 |---|---|---|---|---|
-| `default` | `bg-primary` (blue-200 `#1E34D8`) | `text-primary-foreground` | `bg-primary-hover` (blue-200 mixed with 20% black) | the one confirming action on a surface |
+| `default` | `bg-primary` (brand-200 `#1E34D8`) | `text-primary-foreground` | `bg-primary-hover` (blue-200 mixed with 20% black) | the one confirming action on a surface |
 | `secondary` | `bg-secondary` (neutrals-200 / -800) | `text-secondary-foreground` | `bg-secondary-hover` (neutrals-300 / -700) | a solid but quiet action |
 | `outline` | `bg-background/20` + `backdrop-blur-lg`, `border-border` | `text-foreground` | `bg-muted`, `border-foreground/30` | the default choice on a page |
 | `outline-primary` | same glass as `outline` | `text-primary-text` | same as `outline` | an outline whose label is the brand blue |
 | `ghost` | none | `text-foreground` | `bg-accent` (neutrals-100 / -800) | icon buttons in rows, headers, toolbars |
-| `link` | none — and no size box (see below) | `text-primary-text` | `underline` (`underline-offset-4`) | inline text that navigates |
+| `link` | none — and no size box (see below) | `text-primary-text` | `link-underline` — wipes in from the left, 140ms | inline text that navigates |
 | `destructive` | `bg-destructive` | `text-destructive-foreground` | `bg-destructive/85` | delete, remove, cancel-an-order |
 
 `outline` and `ghost` are what the app is mostly made of. A blue `default`
@@ -67,9 +67,9 @@ variant serves both backdrops, so nothing has to pick "glass" per usage.
 ### Primary ink is not primary fill
 
 `link` and `outline-primary` use `text-primary-text`, never `text-primary`.
-`--primary` is the *fill* blue (blue-200) and is only about 2.2:1 against the
-dark background, so as text it fails. `--primary-text` is the same blue-200 in
-light mode and lifts to blue-100 (`#3F66FF`) in dark mode. The two variants
+`--primary` is the *fill* colour (brand-200) and is only about 2.2:1 against the
+dark background, so as text it fails. `--primary-text` is the same brand-200 in
+light mode and lifts to brand-100 (`#3F66FF`) in dark mode. The two variants
 bake the rule in so a caller never has to remember it — the same rule the
 Colors section states for every blue-on-neutral use (links, checkmarks, the
 library heart).
@@ -171,25 +171,39 @@ Every variant and size sits on this string; each part is doing something.
 
 - **`rounded-full`** — the pill is the shape, on every variant and size.
   There is no square Button.
-- **`pb-px`** — Founders Grotesk sits visually high in a flex-centred box.
-  One pixel of bottom padding pulls the label onto the optical centre. Tabs,
-  Chip, Badge and FilterButton carry the same `pb-px` and name Button as the
-  recipe they copy, so a button and a tab in the same row are nudged
-  identically.
-- **`transition-[colors,box-shadow,transform,opacity]`**, not
-  `transition-all`. `all` fights the press-state translate and any transform
-  a parent applies; the list names the four things that actually change.
-- **`active:not-aria-[haspopup]:translate-y-px`** — a 1px push on press.
-  It is skipped for anything carrying `aria-haspopup`, which Base UI's
-  `MenuTrigger` and `SelectTrigger` set on whatever they render into (the
-  reason for the exception is not recorded — see the open questions). A
-  wrapper that centres a button with its own `translate-y` must absorb that
-  transform itself (as `OrderDetailView`'s back button does) or the two
-  translates fight and the press jumps.
-- **`focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50`**
-  — keyboard focus is a 3px ring at 50% of `--ring` (neutrals-900 in light,
-  neutrals-300 in dark), the same ring Input, Select and Tabs draw, so
-  tabbing through a form looks like one system. Pointer clicks show nothing
+- **`pb-px`** on the base, **`pb-[3px]` at the 40px size** — Founders Grotesk
+  sits visually low in a flex-centred box: at 19/28.5 the caps start 17.5px
+  below the top of a 40px pill and the baseline lands 10.5px above the bottom.
+  Bottom padding shifts a centred child up by half its value, so 3px buys 1px
+  of lift. 2px was tried and read too high — the descenders drag the eye back
+  down. The `link` variant sheds its height and spells the same 3px out as
+  four sides, so its label sits on the pills' baseline exactly. Tabs, Chip,
+  Badge and FilterButton carry the base `pb-px` and name Button as the recipe
+  they copy.
+- **`state-fade`**, not `transition-all`. The shared utility (app.css) eases
+  `color, background-color, border-color, outline-color, opacity` on
+  `cubic-bezier(0.2,0,0,1)`, 440ms in and 100ms out — the same fade every
+  bespoke control in the
+  app now uses, so a Button and the menu item beside it answer identically.
+  `box-shadow` is kept out: the focus ring is one, and repainting it every
+  frame makes the icon inside judder.
+- **`press-ripple`** — carries BOTH ripples. On hover the variant's
+  `--hover-fill` grows from the point the pointer crossed the edge, feathered,
+  over the fade duration; the class also marks the element for the press
+  below. The variants therefore set `[--hover-fill:var(--primary-hover)]`
+  and friends instead of `hover:bg-*`: a class would swap the background flat
+  underneath the growing circle and the colour would arrive twice.
+- **the press** is a COLOUR step, never geometry. A radial
+  fill in `--press-fill` grows from the point you clicked (130ms) and the ink
+  dips to `--press-ink` with it. Nothing moves, scales or nudges: a 1px push
+  was tried and travels differently on a 24px icon button than on a 398px
+  call to action (measured 0.36px against 5.97px of edge travel), while a
+  colour step is the same answer at every width.
+- **`focus-ring`** — keyboard focus is a 2px `outline` at 20% of `--ring`
+  (neutrals-900 in light, neutrals-300 in dark) with no offset, drawn by the
+  shared utility that Input, Select, Tabs and the rest also use, so tabbing
+  through a form looks like one system. `aria-invalid` swaps the same
+  geometry to `--destructive` via `invalid-ring`. Pointer clicks show nothing
   (`outline-none` + `focus-visible`).
 - **`disabled:pointer-events-none disabled:opacity-50`** — a disabled button
   fades to 50% and stops receiving hover. 50 is the one disabled opacity in

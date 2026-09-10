@@ -67,9 +67,15 @@ Where Input differs from its siblings:
 | Type size | `text-small` (19px) | the whole family sits here now — Select, Combobox, DatePicker, Textarea, ChipInput and `Button` `default` |
 | Focus | `focus-visible:` | Combobox uses `focus-within:` (the ring belongs to the wrapper) |
 | Disabled | `disabled:pointer-events-none` **plus** `cursor-not-allowed opacity-50` | Select, Combobox and DatePicker carry only the cursor and the 50% fade |
-| Invalid | `aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20`, dark `border-destructive/50 ring-destructive/40` | shared with Select and Textarea |
+| Invalid | `aria-invalid:border-destructive invalid-ring`, dark `border-destructive/50` | shared with Select, Textarea, Checkbox, Radio and Switch. `invalid-ring` is a 2px outline at 20% of `--destructive` (40% in dark, where `--destructive` is `red-900` and 20% of it against a near-black field is a warning nobody sees) — the same geometry `focus-ring` draws, so focused-and-invalid can only ever differ in colour |
 
-Why 40px: it is also Button `default` (`h-10`, `button.tsx:51`), so an input
+**The default is `lg` (48px).** A field renders at 48 unless a call site asks
+for another step, and every button in a form block asks for `lg` with it, so a
+field and its action stay one row. `default` (40px) is still on the ladder and
+still reachable by prop — it was the desktop-first number, and it is no longer
+what you get by not choosing.
+
+Why the two agree at all: the height is also Button `lg`, so an input
 and its action sit on the same baseline without per-row fixes — a row like
 `<Input /> <Button>Invite</Button>` needs no height overrides (commit
 `9f31908` aligned Button to the input height, not the other way round). The
