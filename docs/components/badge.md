@@ -54,7 +54,8 @@ loud, and there is no token to retheme them with.
 |---|---|---|
 | `square` (default) | `rounded-sm h-[26px] px-[6px] pb-px text-2xsmall` | every label badge |
 | `square-xs` | `rounded-[1px] border-0 h-[18px] px-1 pb-px gap-0.5 [&>svg]:size-2.5` | a badge inside a text line, so it does not push the line box; no call site today |
-| `pill` | `rounded-full justify-center h-5 min-w-5 px-1 pb-px text-xsmall border-transparent` | the `count` inside a Chip |
+| `pill` | `rounded-full justify-center h-5 min-w-5 px-1 pb-px text-xsmall border-transparent` | the `count` inside a `md` Chip |
+| `pill-sm` | the same, at `h-[18px] min-w-[18px] text-2xsmall` | the `count` inside a `sm` Chip — 20/17 there put the number a type size above its own label |
 
 `square` is a **fixed 26px**, not padding-derived, so a badge with a glyph
 (`ContentTypeBadge`) and one without are the same height. `pill` is `px-1`,

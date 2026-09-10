@@ -97,6 +97,13 @@ const badgeVariants = cva(
         // their own. At 1.5 even a "3" came out 22.8×20 — a slight oval that
         // reads as a mis-centred number rather than a round count.
         pill:   "rounded-full justify-center h-5 min-w-5 px-1 pb-px text-xsmall border-transparent",
+        // The same pill inside a `sm` Chip (32px, 15px label). At 20px with a
+        // 17px numeral the count read as the loudest thing in the pill — it
+        // was a size ABOVE the label it belongs to. 18px with a 15px numeral
+        // sits under the label instead, which is what a count is. 15px is the
+        // floor for anything a person reads as language, and a count is a
+        // word here, so it does not go lower.
+        "pill-sm": "rounded-full justify-center h-[18px] min-w-[18px] px-1 pb-px text-2xsmall border-transparent",
       },
     },
     defaultVariants: {
