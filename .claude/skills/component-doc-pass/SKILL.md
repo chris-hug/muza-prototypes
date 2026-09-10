@@ -6,7 +6,9 @@ description: The named procedure for documenting or re-documenting a muza compon
 # The Component Doc Pass
 
 **The procedure lives in the repo, at `COMPONENT_DOC_PASS.md` in the project
-root. Read that file and follow it.** This skill exists to make sure it is
+root. Read that file and follow it.** The arrangement it operates inside —
+what is generated, what is checked, and which of the four checks deliberately
+does not gate — is `DOCUMENTATION.md`, also at the root. This skill exists to make sure it is
 read at the right moment, not to restate it — two copies of a procedure is the
 same drift the procedure was written to prevent, and the repo copy is the one
 the `docs/components/README.md` already points at.
@@ -35,13 +37,11 @@ Two things are worth carrying in your head before you open the file:
   the component has" is its own sweep. The grep lists for that are in the repo
   file — there are **two**: motion/state, and touch/pointer.
 - **Touch is its own set of questions**, and they are invisible to a grep for
-  class names: what a long press does, whether the hold is visible, whether a
-  drag can be mistaken for a tap, what sits inside the primary tap area, the
-  painted size against the target size, whether iOS wants the same gesture,
-  what happens with the keyboard up, and whether the deciding gate is the
-  window or the pointer. The repo file lists them; answer each in the doc even
-  when the answer is "nothing", because a reader who cannot find that decision
-  will make a different one.
+  class names. There are eight, they are listed in the repo file, and the rule
+  that comes with them is to record the answer even when it is "nothing" — a
+  reader who cannot find that decision will make a different one. (Not
+  restated here: this file is a pointer, and a second copy of eight questions
+  is exactly the drift the procedure exists to prevent.)
 - **A doc gap can be a code smell.** When the sweep flags the same token
   across several components, ask whether it belongs to them at all before
   writing the same paragraph several times.
