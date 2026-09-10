@@ -569,13 +569,25 @@ export function SongListItem({
           </div>
         </>
       ) : (
-        /* Default cluster — at rest: ONLY [Heart] [Duration], so the
-             title/meta on the left get every pixel of leftover space
-             (no premature truncation). On hover: a hover-only overlay
-             docks against the cluster's left edge, carrying More + Info
-             inside its own `bg-muted` panel — the panel masks whatever
-             meta text it covers, so the icons stay legible without
-             pushing layout around. */
+        /* Default cluster — at rest on a MOUSE: ONLY [Heart] [Duration], so
+             the title/meta on the left get every pixel of leftover space (no
+             premature truncation). On hover: a hover-only overlay docks
+             against the cluster's left edge, carrying More + Info inside its
+             own `bg-muted` panel — the panel masks whatever meta text it
+             covers, so the icons stay legible without pushing layout around.
+
+             On TOUCH there is no hover, so that panel is unreachable and the
+             row's whole action set went with it: every album and playlist
+             track offered a heart and nothing else — no "Add to playlist", no
+             credits, no report. The "…" therefore sits in the row itself
+             there, permanently, next to the heart.
+
+             Not a long-press instead: a long-press is invisible (nothing on
+             the row says the menu exists), it is not a target a screen reader
+             or switch control can reach, and it competes with the scroll and
+             drag the rows already answer to. Spotify and YouTube Music both
+             show the "…" on every row for the same reasons. A long-press can
+             be added later as an accelerator; it cannot be the only door. */
         <div className="flex items-center gap-0.5 shrink-0 relative px-2 py-1.5">
           {/* Always-on left fade veil — sits just left of the cluster
                so the meta text dissolves into the row bg before the
@@ -616,6 +628,22 @@ export function SongListItem({
             >
               <Info />
             </Button>
+          </div>
+
+          {/* Touch: the same menu the hover panel carries, in the row.
+               `DropdownMenu` presents itself as a bottom sheet below `md`, so
+               this is the "Add to playlist" sheet's only door on a phone.
+               Force-hidden on hover-capable devices, where the panel owns it
+               and a third resting icon would eat the title's space. */}
+          <div className="[@media(hover:hover)]:!hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="More options" />}>
+                <MoreHorizontal />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" sideOffset={6}>
+                {menuContent}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Heart — always-visible "Save to library" save, sits right

@@ -26,12 +26,17 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
 function Sheet({
-  swipeDirection = "right",
+  swipeDirection = "down",
   ...props
 }: DrawerPrimitive.Root.Props) {
-  // Default swipe-to-dismiss direction matches our most common usage
-  // (right-anchored drawers). Override with `swipeDirection="left|up|down"`
-  // if the SheetContent's `side` is anything other than the default.
+  /* Swipe-to-dismiss, defaulting DOWN — because nearly every Sheet in the
+     product is a BOTTOM sheet on a phone (the row menus, the detail menu, the
+     Studio switcher, every mobile dropdown), and a bottom sheet that does not
+     answer a pull-down feels broken on touch. It used to default to `right`,
+     which meant those sheets could only be closed by the ✕ or the backdrop.
+     A side drawer overrides it — see `CartDrawer` (`side="right"`). The
+     direction lives on the ROOT, so it cannot be derived from the `side` a
+     `SheetContent` declares; they have to be set as a pair. */
   return <DrawerPrimitive.Root swipeDirection={swipeDirection} {...props} />
 }
 

@@ -73,7 +73,10 @@ export function CartDrawer({
   const empty = cart.groups.length === 0
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    /* `swipeDirection` pairs with the content's `side`: a right-anchored
+       drawer is dismissed by swiping right, not down (the Sheet default,
+       which serves the bottom sheets). */
+    <Sheet open={open} onOpenChange={onOpenChange} swipeDirection="right">
       <SheetContent side="right" className="w-full max-w-[640px] p-0 gap-0">
         {/* Explicit `pl-6 pr-14` (not `px-6 pr-14`) so tailwind-merge fully
              replaces the default `px-6` — otherwise it sees a conflict and
