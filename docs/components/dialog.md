@@ -334,6 +334,26 @@ A dialog that sets its own `max-h` must scope it to `md:` for the same reason:
 `max-h-[90vh]` wins over the class (twMerge, last one), and 90% of the LAYOUT
 viewport is not a number iOS shrinks for the keyboard.
 
+## A sheet with a field in it may hold ONE band open
+
+The arithmetic above the keyboard is unforgiving: ~169px on an iPhone in
+Brave. A bottom sheet that keeps a header AND a footer out of the scroll
+spends all of it on furniture — `EditReleaseDialog` held a 121px identity
+header over a 61px footer and showed the two of them with nothing at all
+between while a price field was focused.
+
+So a sheet may pin the band the user must be able to REACH, and only that
+one. Here that is the footer, because Save lives in it. The identity header —
+cover, title, visibility — is a label saying which release this is, not a
+control, so it goes inside the scrolling band and scrolls away with the form.
+The ✕ is positioned on the popup rather than in the header, so the way out
+stays where it was either way. Measured at 375 with `--kb: 635px`: sheet 169,
+footer 61, scrolling band 94, and the focused field sits inside it.
+
+If a sheet needs BOTH a pinned title and pinned actions while typing, it is
+the wrong shape and wants `mobile="form"`, where the actions move into the top
+bar and the keyboard can never reach them.
+
 ## A sheet you can flick away is one you can flick away by accident
 
 A bottom sheet holding work confirms before it closes. `AddMusicDialog`

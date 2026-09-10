@@ -194,6 +194,15 @@ export function EditReleaseDialog({
         {/* Phone paddings are the page's gutter, not the desktop dialog's
             32px: at 375 this header was 251px — a third of the sheet — before
             a single field. Measured after: 150. */}
+        {/* ── The one scrolling band: identity + form ───────────────────
+             The release identity does NOT hold the top. It is a label saying
+             which release this is, not a control, and holding it there costs
+             121px of a phone that has ~169 left once the keyboard is up —
+             which is how this sheet came to show a header, a footer, and
+             nothing at all between them while a price field was focused.
+             It scrolls away with everything else; the ✕ is positioned on the
+             popup, so the way out stays where it was. */}
+        <div className="flex-1 min-h-0 overflow-y-auto">
         <DialogHeader className="shrink-0 px-3 pt-3 pb-4 md:px-8 md:pt-8 md:pb-6 border-b border-border">
           {/* DialogHeader STACKS its children (`dialogHeaderStackClass` is a
               column) — a cover passed as a sibling of the title lands under it.
@@ -252,9 +261,9 @@ export function EditReleaseDialog({
           </div>
         </DialogHeader>
 
-        {/* ── Scrollable middle ──────────────────────────────────────────
-             Order: Monetisation → General info. */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-3 pt-4 pb-4 md:px-8 md:pt-6 md:pb-6 flex flex-col gap-6 md:gap-8">
+        {/* Order: Monetisation → General info. Scrolls inside the band
+             above, not on its own. */}
+        <div className="px-3 pt-4 pb-4 md:px-8 md:pt-6 md:pb-6 flex flex-col gap-6 md:gap-8">
 
           {/* ── Monetisation ─────────────────────────────────────────────
                Two radio cards — both cards are fully expanded so the user
@@ -397,6 +406,7 @@ export function EditReleaseDialog({
               </div>
             )}
           </div>
+        </div>
         </div>
 
         {/* Bigger dialog → footer padding scales up to match the section
