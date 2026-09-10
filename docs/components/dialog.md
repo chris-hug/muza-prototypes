@@ -169,7 +169,7 @@ Only the middle one scrolls.
   </DialogActionBar>
   <DialogFormBody>…fields…</DialogFormBody>
   <DialogFormActions>
-    <Button size="lg" className="w-full">Create playlist</Button>
+    <Button size="lg" className="w-full shadow-lg">Create</Button>
   </DialogFormActions>
 </DialogContent>
 ```
@@ -186,6 +186,16 @@ Only the middle one scrolls.
   `DialogFormActions`, the band below the body. The sheet already ends at
   `--kb`, so it sits directly on the keyboard. Never offered twice — bar
   **or** action row.
+- **That band FLOATS**: no surface and no edge of its own, a 16px inset rather
+  than the sheet's 12px gutter, and `shadow-lg` on the pill. It carries one
+  control, and one control over a form reads as an object, not as a bar bolted
+  to the bottom — the same rule the find screen's lone search field follows in
+  `AddMusicDialog`, where the band only goes opaque once a second control joins
+  it. Being in the flow (not `absolute`), nothing scrolls under it.
+- **The floating pill names the verb only** — "Create", not "Create playlist".
+  The title two bands above already says what is being made, and there is no
+  second action to distinguish it from. The desktop footer keeps the long
+  label, where it stands next to Cancel.
 - `DialogFormBody` restores the gutter and a tighter `gap-3`: on a phone every
   gap competes with the keyboard for the same ~200px.
 - **No field label** where the placeholder carries it — every line costs space

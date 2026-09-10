@@ -161,6 +161,11 @@ export function CreatePlaylistDialog({
 
   const title = editing ? "Edit info" : "New Playlist"
   const action = editing ? "Save" : "Create playlist"
+  /* The floating pill is one object on an otherwise empty sheet, with the
+     title two bands above it saying what is being made — so it only has to
+     name the VERB. "Create playlist" is the desktop footer's label, where it
+     sits beside Cancel and has to distinguish itself. */
+  const mobileAction = editing ? "Save" : "Create"
 
   return (
     <Dialog open={open} onOpenChange={o => { if (!o) reset(); onOpenChange(o) }}>
@@ -242,9 +247,11 @@ export function CreatePlaylistDialog({
         {isMobile && (
           <DialogFormActions>
             {/* `lg` (48px) — the DS's largest text button, and the right touch
-                 target for the screen's primary action. */}
-            <Button size="lg" onClick={create} disabled={!name.trim()} className="w-full">
-              {action}
+                 target for the screen's primary action. The lift is what makes
+                 it read as floating over the form rather than as a bar: its
+                 band carries no surface of its own. */}
+            <Button size="lg" onClick={create} disabled={!name.trim()} className="w-full shadow-lg">
+              {mobileAction}
             </Button>
           </DialogFormActions>
         )}

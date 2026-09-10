@@ -118,11 +118,17 @@ export const dialogFormBodyClass =
   "flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto p-3 md:contents md:overflow-visible"
 
 // The form sheet's action row: the confirming button pinned below the body,
-// never overlapping it (the body scrolls, this doesn't). Full-bleed surface
-// so scrolled content can't show through, and it clears the home indicator.
+// never overlapping it (the body scrolls, this doesn't), and clearing the
+// home indicator.
+//
+// It carries ONE control, so it FLOATS: no surface and no edge of its own,
+// and a 16px inset rather than the sheet's 12px gutter, so the pill reads as
+// a single object over the form instead of a bar bolted to the bottom. Same
+// rule as the find screen's lone search field in `AddMusicDialog` — a band
+// only goes opaque once it carries two controls that would otherwise compete.
 // Mobile only — desktop uses the ordinary `DialogFooter`.
 export const dialogFormActionsClass =
-  "shrink-0 bg-popover px-3 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] md:hidden"
+  "shrink-0 bg-transparent px-4 pt-4 pb-[max(16px,env(safe-area-inset-bottom))] md:hidden"
 
 /*
  * The scrolling list band of a sheet. `-mx-2` (and NO matching padding):
