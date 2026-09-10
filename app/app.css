@@ -1552,6 +1552,33 @@ img[class*="object-cover"] {
     muzaRowShake 260ms ease-out;
 }
 
+/* ── Touch targets ───────────────────────────────────────────────────────
+   A 44px hit area on a control that is visually smaller. WCAG 2.2 AA asks
+   for 24×24 (2.5.8) and everything here clears that; 44 is the AAA figure
+   (2.5.5), Apple's HIG number and roughly a fingertip. Where the design
+   wants a 32px glyph — a sheet's back chevron, the ✕, a filter pill — the
+   PAINT stays 32 and the target grows around it.
+
+   Coarse pointers only: on a mouse the extra area is invisible slop that
+   would swallow clicks meant for a neighbour. The host must be positioned
+   (every `Button` is `relative`), and the pseudo-element is inert, so it
+   never covers text or takes a hover.
+
+   Never put it on two controls that sit closer than 12px apart — overlapping
+   hit areas are worse than small ones. */
+@media (pointer: coarse) {
+  .touch-target::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    width: max(44px, 100%);
+    height: max(44px, 100%);
+    pointer-events: auto;
+  }
+}
+
 /* The toast's timer bar: a full-width rule that empties left-to-right over
    the toast's own lifetime. Linear, because it is a clock, not a motion. */
 @keyframes toastTimer {

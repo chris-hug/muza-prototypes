@@ -110,9 +110,12 @@ const TABS: PillTab[] = [
 <MobilePillTabs tabs={TABS} value={tab} onChange={setTab} />
 ```
 
-- Each tab is a `Chip` at `size="md"` — `h-10 px-4 text-small`, the height of
-  a default `Button`, so a strip can sit in a toolbar beside a sort button
-  and read as one row.
+- Each tab is a `Chip` at `size="sm"` — `h-8 px-3 text-2xsmall` — carrying
+  `touch-target`, so the finger area stays 44px while the paint is 32. It was
+  `md` (`h-10 px-4 text-small`): three of those measure 458px against a 375px
+  screen, so the third tab sat off-screen at rest and the strip read as a row
+  of buttons rather than as a filter. At `sm` the same three come to 377px —
+  all present, one pixel of scroll to show the strip moves.
 - **`count`** renders as a pill `Badge` in the `count` variant after the
   label; it restyles itself when the chip is selected, so no per-tab colour
   is needed. **`icon`** is a leading glyph for a tab that is not a plain

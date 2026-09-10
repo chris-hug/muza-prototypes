@@ -756,6 +756,17 @@ still exists and a call site can still ask for it; what changed is which step
 you get by not choosing. 40px was a desktop-first number for something you
 type into on a phone.
 
+**Touch targets: 32px of paint may carry 44px of target — `touch-target`.**
+WCAG 2.2 AA (2.5.8) asks for 24×24 and every control here clears that; 44×44 is
+the AAA figure (2.5.5) and Apple's HIG number, and it is the one a fingertip
+actually wants. Where the design needs a small glyph — a sheet's back chevron,
+a ✕, a filter pill — the utility grows an inert pseudo-element around it to 44
+without moving a pixel of the paint. Coarse pointers only: on a mouse the extra
+area is invisible slop that steals clicks from the neighbour. Never put it on
+two controls closer than 12px apart; overlapping hit areas are worse than small
+ones. Measured, at 375px: row select buttons 48, bar controls 32 painted / 44
+targeted, filter pills 32 painted / 44 targeted.
+
 **A control sharing a row with a field follows it.** Every button in a form
 block moved with the fields — the actions under a dialog's form, the "Sort"
 beside a filter input, the ✕ beside an additional-link row (`icon` → `icon-lg`)

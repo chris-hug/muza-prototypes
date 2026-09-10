@@ -141,11 +141,16 @@ export function MobilePillTabs({ tabs, value, onChange, className }: {
       {tabs.map(t => (
         <Chip
           key={t.value}
-          size="md"
+          /* `sm` (32px, 15px text), not the toolbar's `md` (40px, 19px): on a
+             phone three of these at `md` measure 458px against a 375px screen,
+             so the third tab is off-screen at rest and the strip reads as a
+             row of buttons rather than as a filter. `touch-target` keeps the
+             finger area at 44 while the paint comes down. */
+          size="sm"
           selected={t.value === value}
           count={t.count}
           onClick={() => onChange?.(t.value)}
-          className="shrink-0 [&_svg]:size-4 [&_svg]:shrink-0"
+          className="touch-target shrink-0 [&_svg]:size-4 [&_svg]:shrink-0"
         >
           {t.icon}
           {t.label}

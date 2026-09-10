@@ -281,7 +281,7 @@ export function AddMusicDialog({
       // Optical, not box, alignment on desktop: the button is 32px wide
       // around a 16px icon, so its box has to hang 8px left for the CHEVRON
       // to sit on the same line as the covers below.
-      className="shrink-0 md:-ml-2"
+      className="touch-target shrink-0 md:-ml-2"
     >
       <ChevronLeft />
     </Button>
@@ -340,11 +340,11 @@ export function AddMusicDialog({
                action. Nothing is lost: ‹ is the way back from Find, and the
                sheet's own ✕ returns the moment the picks are in. */
             trailing={barAction ? (
-              <Button size="sm" onClick={done} className="shrink-0">
+              <Button size="sm" onClick={done} className="touch-target shrink-0">
                 {`Add ${picked.length}`}
               </Button>
             ) : (
-              <DialogClose render={<Button variant="ghost" size="icon-sm" aria-label="Close" />}>
+              <DialogClose render={<Button variant="ghost" size="icon-sm" aria-label="Close" className="touch-target" />}>
                 <X />
               </DialogClose>
             )}
