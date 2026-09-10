@@ -391,6 +391,20 @@ export function AddMusicDialog({
               {albumSongs.map(s => trackRow(s, s.id))}
             </div>
           </>
+        ) : finding && !searching && recent.length === 0 ? (
+          /* Nothing to search and nothing to recall — the first search of a
+             new playlist. It is NOT rendered inside the list: a `flex-1` box
+             inside a scroll container is exactly the case WebKit collapses to
+             zero height, which showed as a blank sheet with a field at the
+             bottom. As its own band between the two overlaying ones it needs
+             no scroll box and no flex bargaining. */
+          <div
+            data-slot="find-empty"
+            className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center -mt-[var(--sheet-bar-h)] pt-[var(--sheet-bar-h)] -mb-3 pb-[var(--sheet-band-h)]"
+          >
+            <p className="text-large font-medium text-foreground">Search all of muza</p>
+            <p className="text-small text-muted-foreground">Songs, albums and artists.</p>
+          </div>
         ) : finding ? (
           /* Find screen. Nothing but the query and what it returns — with a
              keyboard up there is room for one list, so the tabs and the Add
@@ -437,20 +451,7 @@ export function AddMusicDialog({
                   </button>
                 ))}
               </section>
-            ) : (
-              /* Nothing to recall yet. It says what the field reaches, and it
-                 says it in the MIDDLE of the empty space (`flex-1`, centred)
-                 rather than tucked under the bar: on the first search of a
-                 new playlist this is the whole screen, and a sheet that
-                 answers a tap with a line of grey text at the top and a field
-                 at the bottom reads as something that failed to load. Every
-                 player fills this space — it is the one screen where there is
-                 nothing to show and something to say. */
-              <div data-slot="find-empty" className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
-                <p className="text-large font-medium text-foreground">Search all of muza</p>
-                <p className="text-small text-muted-foreground">Songs, albums and artists.</p>
-              </div>
-            )}
+            ) : null}
           </div>
         ) : (
           <>
