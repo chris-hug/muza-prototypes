@@ -795,6 +795,18 @@ did not register. A drag past 8px cancels it and hands the gesture back to the
 rail; the click that follows a completed press is swallowed, or the card would
 open underneath its own menu.
 
+**A thumb has no cursor, so touch takes links out of the meta line.**
+`useCoarsePointer()` (an INPUT gate, not a width gate — see
+`use-media-query.ts`) withholds `onArtistClick`/`onAlbumClick` from
+`SongListItem`, and the row's existing rule does the rest: no handler, no
+button, so the names render as spans and a press anywhere on the row plays the
+song. The two names sit in a 20px band across the half of the row a finger
+reaches for, and hitting one did not merely miss play — it left the page. The
+destinations stay one press away in the ⋯ sheet and the long-press sheet,
+which is where a phone keeps them. A mouse keeps all three links; the gate is
+not overridden by `WindowWidthContext`, because the design system's "window
+375" frame is still being read with a cursor.
+
 **Touch targets: 32px of paint may carry 44px of target — `touch-target`.**
 WCAG 2.2 AA (2.5.8) asks for 24×24 and every control here clears that; 44×44 is
 the AAA figure (2.5.5) and Apple's HIG number, and it is the one a fingertip

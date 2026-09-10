@@ -207,6 +207,23 @@ a `button` or `a` (song-list-item.tsx:355), so a non-link title now falls
 through and PLAYS the track, exactly like the duration in the table above.
 Before, it was a button, so the click was caught and then dropped.
 
+**On a touch pointer the meta line is text.** `useCoarsePointer()` withholds
+`onArtistClick` and `onAlbumClick`, and the rest follows from the rule above:
+`Linkable` renders spans, nothing is focusable or announced as a control, and
+a press anywhere across the row plays the song.
+
+The reason is aim, not width. Those two names are a 20px band running across
+the half of the row a thumb reaches for, and missing play does not merely miss
+— it leaves the page: *"every second time I want to play a song I hit the
+artist or the album."* Both destinations are still one press away, in the ⋯
+sheet and in the long-press sheet, which is where a phone keeps them; Spotify
+and Apple Music both make the row one target and file the names under the
+menu. The title keeps its link — a row given `onTitleClick` is a row whose
+title IS the destination — and a mouse keeps all three, because the gate asks
+what is doing the pointing, not how wide the window is. It is deliberately not
+overridden by the design system's `WindowWidthContext`: the "window 375" frame
+is still being read with a mouse.
+
 ## Now-playing
 
 ```tsx

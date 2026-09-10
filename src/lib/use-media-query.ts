@@ -40,6 +40,21 @@ export function useMediaQuery(query: string): boolean {
   return matches
 }
 
+/**
+ * True on a TOUCH pointer — the input gate, not a width gate.
+ *
+ * Width says how much room there is; this says what is doing the pointing,
+ * and they are different questions. A 24px-tall line of text is a fine link
+ * under a mouse cursor and a coin toss under a thumb, at any window width.
+ *
+ * Deliberately NOT overridden by `WindowWidthContext`: the design system's
+ * "window 375" frame is still being read with a mouse, and a demo that hid
+ * its links there would be lying about the machine it is running on.
+ */
+export function useCoarsePointer(): boolean {
+  return useMediaQuery("(pointer: coarse)")
+}
+
 /** The PRESENTATION gate: true below 768 — sheets instead of dialogs and
  *  dropdowns, no docked editor. The same gate as Tailwind's `md:`. */
 export function useIsMobile(): boolean {

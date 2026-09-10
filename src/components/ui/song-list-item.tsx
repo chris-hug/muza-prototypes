@@ -60,6 +60,7 @@ import { useLibraryToggle } from "@/lib/use-library-toggle"
 import { useAddToPlaylist } from "@/lib/add-to-playlist-context"
 import { SONG_DRAG_TYPE } from "@/lib/playlist-editor-context"
 import { useToast } from "@/components/ui/toast"
+import { useCoarsePointer } from "@/lib/use-media-query"
 import { LibraryHeartButton } from "@/components/ui/library-heart-button"
 
 /**
@@ -300,6 +301,22 @@ export function SongListItem({
   // Share is baked in (copy link / native sheet). Songs have no own
   // page, so the link is the current context (album / playlist page).
   const { canNativeShare, copyLink, nativeShare } = useShare({ title, text: artist ? `${title} — ${artist}` : title })
+  /* A thumb has no cursor to aim with, so on TOUCH the meta line is text.
+     The two names under the title are a 20px band across the half of the row
+     a finger reaches for, and hitting one does not merely miss play — it
+     leaves the page. "Every second time I want to play a song I hit the
+     artist or the album." Both destinations are still one press away, in the
+     ⋯ sheet and in the long-press sheet, which is where a phone keeps them:
+     Spotify and Apple Music both make the whole row one target and file the
+     names under the menu.
+
+     Withholding the HANDLER rather than styling the button away is what makes
+     this correct rather than merely quiet — `Linkable` renders a span with no
+     handler, so nothing is focusable, nothing is announced as a control, and
+     the row's own click (which declines any press landing on a button) plays
+     the song. The title keeps its link: a row given `onTitleClick` is a row
+     whose title IS the destination. */
+  const coarse = useCoarsePointer()
   // "Show credits" opens the release credits for the track's album.
   const credits = useCredits()
   const showCredits = album ? () => credits.open(slugify(album)) : onInfo
@@ -472,14 +489,14 @@ export function SongListItem({
             </Badge>
           )}
           {artist && (
-            <Linkable onClick={onArtistClick} className="truncate min-w-0">
+            <Linkable onClick={coarse ? undefined : onArtistClick} className="truncate min-w-0">
               {artist}
             </Linkable>
           )}
           {album && (
             <span className="inline-flex items-center gap-1.5 min-w-0 shrink-[2] @max-[260px]/row:hidden">
               {artist && <span aria-hidden="true" className="shrink-0">·</span>}
-              <Linkable onClick={onAlbumClick} className="truncate min-w-0">
+              <Linkable onClick={coarse ? undefined : onAlbumClick} className="truncate min-w-0">
                 {album}
               </Linkable>
             </span>
