@@ -135,5 +135,8 @@ on the way past.** Its exit code is always 0, and its judgements live in a
 - ~~`AGENTS.md` describes the wrong framework~~ — **fixed**. It had told every
   agent this was Next.js and to read `node_modules/next/dist/docs/`, a path
   that does not exist. It now describes the real stack and the checks.
-- `.next/` is **823MB** of gitignored leftovers from the migration, alongside
-  `next-env.d.ts`. Untracked, so they cost nothing in the repo — only on disk.
+- `.next/` is **823MB** of gitignored leftovers from the migration — 621MB of
+  it Turbopack's persistent dev cache (three `.sst` tables account for 398MB),
+  last written 9 April. `next` is not installed, so nothing can read it and
+  nothing will regenerate it. It costs nothing in the repo and 823MB on disk:
+  `rm -rf .next next-env.d.ts`.
