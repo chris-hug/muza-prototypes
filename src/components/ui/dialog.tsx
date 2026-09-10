@@ -5,8 +5,22 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 
 import { cn } from "@/lib/utils"
 import { useIsMobile } from "@/lib/use-media-query"
+import { useSheetDrag } from "@/lib/use-sheet-drag"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
+
+/** Two refs, one element — the popup is both ours (the drag) and the
+ *  caller's. React 19 passes `ref` as a plain prop, so it can be forwarded
+ *  by hand like any other. */
+function useMergedRefs<T>(...refs: (React.Ref<T> | undefined)[]) {
+  return React.useCallback((node: T | null) => {
+    for (const r of refs) {
+      if (typeof r === "function") r(node)
+      else if (r) (r as React.RefObject<T | null>).current = node
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, refs)
+}
 
 // ─── Shared chrome class strings ─────────────────────────────────────────────
 //
@@ -233,6 +247,7 @@ function DialogContent({
   children,
   showCloseButton = true,
   mobile = "sheet",
+  ref,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
@@ -243,6 +258,19 @@ function DialogContent({
   mobile?: "sheet" | "form"
 }) {
   const form = mobile === "form"
+
+  /* Pull-down-to-dismiss. A `Sheet` inherits this from Base UI's Drawer; a
+     Dialog presented as a bottom sheet by CSS has to be given it, or the only
+     way out on a phone is a 32px ✕ in the far corner. Bottom sheets only —
+     the form sheet fills the screen and is a form, where a stray downward
+     drag would throw away what was typed. The hook closes by clicking the
+     dialog's own close button, so focus goes back where it came from. */
+  const [popupEl, setPopupEl] = React.useState<HTMLDivElement | null>(null)
+  const closeRef = React.useRef<HTMLButtonElement>(null)
+  useSheetDrag(popupEl, {
+    enabled: !form,
+    onClose: React.useCallback(() => closeRef.current?.click(), []),
+  })
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -263,12 +291,16 @@ function DialogContent({
         />
       )}
       <DialogPrimitive.Popup
+        ref={useMergedRefs(setPopupEl, ref)}
         data-slot="dialog-content"
         data-mobile={mobile}
         className={cn(dialogChromeClass, form ? dialogFormPositionClass : dialogPositionClass, className)}
         {...props}
       >
         {children}
+        {/* The gesture's own exit door: always mounted, even when the visible
+            ✕ is not, so a pull-down works on a sheet that hides its ✕. */}
+        <DialogPrimitive.Close ref={closeRef} className="hidden" aria-hidden="true" tabIndex={-1} />
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"

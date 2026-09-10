@@ -53,7 +53,9 @@ export function KeyboardProbe() {
 
   if (!on) return null
 
-  const derived = n.client - n.vv - n.top
+  // What the hook publishes (`inner - vv`) next to the variant that carried an
+  // `offsetTop` term — the one that left a reopened keyboard reading 0.
+  const derived = n.inner - n.vv
   const viaInner = n.inner - n.vv - n.top
 
   return (
@@ -63,7 +65,7 @@ export function KeyboardProbe() {
       className="pointer-events-none fixed left-1 top-1 z-[999] rounded bg-black/70 px-1.5 py-1 font-mono text-[9px] leading-tight text-white"
     >
       <div>client {n.client} · inner {n.inner} · vv {n.vv} · top {n.top}</div>
-      <div>--kb {n.kb} · c−vv−t {derived} · i−vv−t {viaInner} · sY {n.scroll}</div>
+      <div>--kb {n.kb} · i−vv {derived} · i−vv−t {viaInner} · sY {n.scroll}</div>
     </div>
   )
 }

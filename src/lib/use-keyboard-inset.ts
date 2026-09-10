@@ -30,8 +30,17 @@ export function useKeyboardInset() {
     const root = document.documentElement
     let wasOpen = false
     const apply = () => {
-      /* How much of the layout viewport is hidden below the visual one. The
-         offsetTop term matters while the page is scrolled under the keyboard.
+      /* The keyboard's height: how much of the layout viewport the visual one
+         no longer covers.
+
+         NO `offsetTop` term. It was in here — the reasoning being that the
+         page may be scrolled under the keyboard — and it is what left a
+         REOPENED keyboard with `--kb: 0`: focusing a field near the bottom
+         makes iOS scroll the window first, so at the moment the resize fires
+         `offsetTop` is large, `hidden` lands under the threshold, and the
+         sheet never shrinks. The offset moves what you SEE; it does not
+         change how tall the keyboard is, and the keyboard's height is all
+         this publishes.
 
          `window.innerHeight`, deliberately: `documentElement.clientHeight` was
          tried here to explain a sheet whose bottom edge floated clear of the
@@ -39,7 +48,7 @@ export function useKeyboardInset() {
          iOS with `interactive-widget=resizes-content` in the meta, the two do
          not differ the way the theory needed. Read the live numbers with
          `?kbdebug` (`KeyboardProbe`) before touching this again. */
-      const hidden = window.innerHeight - vv.height - vv.offsetTop
+      const hidden = window.innerHeight - vv.height
       // Small values are address-bar chrome, not a keyboard — ignore them so
       // sheets don't drift on every scroll.
       const open = hidden > 80
@@ -70,13 +79,30 @@ export function useKeyboardInset() {
       wasOpen = open
     }
 
+    /* iOS settles the viewport in stages — the resize can land before the
+       keyboard has finished arriving, and focusing a field scrolls the window
+       in between. So a focus is also a reason to measure again, twice, once
+       the animation has had time to end. */
+    const settle = () => {
+      apply()
+      window.setTimeout(apply, 150)
+      window.setTimeout(apply, 450)
+    }
+
     apply()
     vv.addEventListener("resize", apply)
     vv.addEventListener("scroll", apply)
+    window.addEventListener("focusin", settle)
+    window.addEventListener("focusout", settle)
+    window.addEventListener("orientationchange", settle)
     return () => {
       vv.removeEventListener("resize", apply)
       vv.removeEventListener("scroll", apply)
+      window.removeEventListener("focusin", settle)
+      window.removeEventListener("focusout", settle)
+      window.removeEventListener("orientationchange", settle)
       root.style.removeProperty("--kb")
+      delete root.dataset.kb
     }
   }, [])
 }
