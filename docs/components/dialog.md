@@ -196,6 +196,12 @@ Only the middle one scrolls.
   to the bottom — the same rule the find screen's lone search field follows in
   `AddMusicDialog`, where the band only goes opaque once a second control joins
   it. Being in the flow (not `absolute`), nothing scrolls under it.
+- **A floating action can't be disabled with opacity.** `opacity-50` is the
+  DS's disabled state everywhere else, and it works because there is a surface
+  underneath. Over the page there isn't one, so the artwork shows through the
+  pill. The Create button mixes the same result out of colour instead —
+  `primary` and `primary-foreground` each half-way to `popover`, which is what
+  the opacity used to resolve to — and stays opaque.
 - **The floating pill names the verb only** — "Create", not "Create playlist".
   The title two bands above already says what is being made, and there is no
   second action to distinguish it from. The desktop footer keeps the long
