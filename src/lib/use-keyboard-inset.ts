@@ -50,16 +50,21 @@ export function useKeyboardInset() {
          `?kbdebug` (`KeyboardProbe`) before touching this again. */
       const hidden = window.innerHeight - vv.height
       /* Small values are address-bar chrome, not a keyboard — ignore them so
-         sheets don't drift on every scroll. And a keyboard only exists while
-         something is being TYPED INTO: without that check any browser UI that
-         eats a chunk of the visual viewport (a collapsing toolbar, a find bar,
-         a translate prompt) reads as a keyboard, and every sheet in the app
-         reshapes itself around one that is not there. */
-      const el = document.activeElement as HTMLElement | null
-      const typing = !!el && (
-        el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable
-      )
-      const open = hidden > 80 && typing
+         sheets don't drift on every scroll. Two thresholds, not one: opening
+         needs 80px, staying open only 40. Without the gap a keyboard that
+         reports its height in stages (iOS animates it in, and the accessory
+         bar arrives on its own beat) can cross back under a single threshold
+         mid-animation and drop `--kb` to 0, which is a sheet snapping to full
+         height and then back.
+
+         It does NOT ask whether a field is focused. That was tried, to keep
+         browser chrome from being mistaken for a keyboard, and it broke the
+         SECOND opening: `activeElement` is not reliably the field yet when
+         the viewport resize lands, so the measurement said "no keyboard",
+         `--kb` stayed 0, and the sheet left its search field behind the
+         keyboard. A height this large is a keyboard; nothing else on a phone
+         takes 300px of viewport. */
+      const open = hidden > (wasOpen ? 40 : 80)
       root.style.setProperty("--kb", `${open ? Math.round(hidden) : 0}px`)
       /* A flag as well as a number, because some of what has to give when the
          keyboard is up is not expressible as a length. A media query can't see
@@ -95,9 +100,10 @@ export function useKeyboardInset() {
        in between. So a focus is also a reason to measure again, twice, once
        the animation has had time to end. */
     const settle = () => {
-      apply()
-      window.setTimeout(apply, 150)
-      window.setTimeout(apply, 450)
+      // iOS brings the keyboard in over ~300ms and the accessory bar can land
+      // after it, so one measurement at focus time is worth little. Sample
+      // across the whole animation instead.
+      for (const t of [0, 100, 250, 450, 700]) window.setTimeout(apply, t)
     }
 
     apply()
