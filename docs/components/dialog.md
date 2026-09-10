@@ -194,12 +194,25 @@ Only the middle one scrolls.
   (it dissolves into the modal's ordinary grid), and the usual
   `DialogHeader` / `DialogFooter` render. Gate the two with `useIsMobile()` so
   there is never more than one `DialogTitle` in the DOM.
-- **Focus goes straight to the field**, phones included
-  (`initialFocus={inputRef}`). Naming is the only thing this sheet asks for,
-  so the keyboard coming up with it saves a tap — and because the sheet is
-  anchored top and ends at `--kb`, nothing it shows is behind the keyboard.
-  (It used to park focus on the bar to keep the keyboard down; the
-  full-screen presentation is what made that caution unnecessary.)
+- **Focus goes straight to the field**, phones included — and as a FUNCTION,
+  `initialFocus={() => inputRef.current}`, not as the ref. Opened by touch the
+  popup's default is to focus itself so the virtual keyboard stays down, which
+  is right for a picker and wrong for a form whose one job is to be typed into;
+  returning the field for every interaction type overrides that. Naming is the
+  only thing this sheet asks for, so the keyboard coming up with it saves a tap
+  — and because the sheet is anchored top and ends at `--kb`, nothing it shows
+  is behind the keyboard. (It used to park focus on the bar to keep the
+  keyboard down; the full-screen presentation is what made that caution
+  unnecessary.)
+- **iOS needs the keyboard opened inside the tap.** Focus alone is not enough:
+  Safari raises the virtual keyboard only for a focus that happens during a
+  user gesture, and the sheet's focus lands a frame or two later. So the
+  control that STARTS the flow focuses a zero-sized stand-in input that is
+  already in the document (`CreatePlaylistProvider`), and the keyboard then
+  follows focus into the real field when the sheet mounts. The stand-in is
+  transparent and `size-px` rather than `hidden`, because a `display: none`
+  field cannot take focus; it is `tabIndex={-1}` and `aria-hidden`. Only
+  primed on `(pointer: coarse)`.
 
 Used by **Create playlist / Edit info** (`CreatePlaylistDialog`). Pickers and
 lists stay bottom sheets.
@@ -279,8 +292,9 @@ trigger opens the real, portaled sheet at the bottom of the browser.
   state there.
 - **Keyboard.** On iOS the sheet rises with `--kb`; `scroll-padding-bottom:
   8rem` keeps a focused field clear of the sticky footer. A `mobile="form"`
-  sheet focuses its field on open (`initialFocus`), because it is anchored
-  top and nothing it shows is behind the keyboard.
+  sheet focuses its field on open (`initialFocus` as a function, overriding
+  the touch default), because it is anchored top and nothing it shows is
+  behind the keyboard; the flow's trigger primes the keyboard inside the tap.
 - **Backdrop** is `bg-black/10` with a light blur — the page stays legible
   behind a picker; the [alert dialog](alertdialog.md) darkens it to `/40`.
 

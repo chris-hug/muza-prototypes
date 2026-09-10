@@ -48,7 +48,23 @@ export function CreatePlaylistProvider({ children }: { children: React.ReactNode
   const [createOpen, setCreateOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
   const [name, setName] = useState<string | undefined>()
-  const open = useCallback(() => setCreateOpen(true), [])
+  /*
+   * iOS raises the on-screen keyboard ONLY for a focus that happens inside
+   * the user's own gesture. The name field is focused by the dialog
+   * (`initialFocus`), which is a frame or two after the tap — too late, so
+   * the field would come up with a caret and no keyboard.
+   *
+   * So the tap focuses a stand-in field that is ALREADY in the document: the
+   * keyboard opens on the gesture, and when the sheet then moves focus to
+   * the real input the keyboard simply follows it — iOS keeps it up as long
+   * as focus lands on another text field. The stand-in never renders
+   * anything visible and never takes a tab stop.
+   */
+  const primer = useRef<HTMLInputElement>(null)
+  const open = useCallback(() => {
+    if (matchMedia("(pointer: coarse)").matches) primer.current?.focus({ preventScroll: true })
+    setCreateOpen(true)
+  }, [])
   const { openPlaylist } = useMediaNav()
 
   /*
@@ -87,6 +103,16 @@ export function CreatePlaylistProvider({ children }: { children: React.ReactNode
         onOpenChange={setAddOpen}
         playlistName={name}
         onAdd={finish}
+      />
+      {/* The keyboard's stand-in — see `open`. Zero-sized and transparent
+          rather than `hidden`, because a display:none field cannot take
+          focus and so cannot open the keyboard. */}
+      <input
+        ref={primer}
+        type="text"
+        tabIndex={-1}
+        aria-hidden="true"
+        className="pointer-events-none fixed bottom-0 left-0 size-px opacity-0"
       />
     </CreatePlaylistContext.Provider>
   )
@@ -143,11 +169,11 @@ export function CreatePlaylistDialog({
       <DialogContent
         mobile="form"
         className="md:max-w-[max(32rem,50vw)]"
-        // Straight into the name field, phone included: naming is the only
-        // thing this sheet asks for, so the keyboard coming up with it saves
-        // a tap. The sheet is anchored TOP and ends at `--kb`, so nothing it
-        // shows is behind the keyboard.
-        initialFocus={inputRef}
+        /* A FUNCTION, not the ref: opened by touch, the popup's default is to
+           focus ITSELF so the keyboard stays down — right for a picker, wrong
+           for a form whose one job is to be typed into. Returning the field
+           for every interaction type overrides that. */
+        initialFocus={() => inputRef.current}
       >
         {isMobile ? (
           <DialogActionBar

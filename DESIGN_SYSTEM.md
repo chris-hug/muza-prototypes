@@ -1000,6 +1000,8 @@ Three escalating surfaces, all bottom-anchored on phones:
 
 `--kb` is published by [`useKeyboardInset`](src/lib/use-keyboard-inset.ts), mounted once in the app shell. Chrome/Android is handled declaratively by `interactive-widget=resizes-content` in the viewport meta, so `--kb` stays 0 there.
 
+**Opening the keyboard has to happen inside the tap.** iOS raises the virtual keyboard only for a focus that happens during a user gesture, and a dialog focuses its field a frame or two after the tap that opened it. A flow that should start typing therefore focuses a zero-sized stand-in input already in the document from the trigger's own handler (`CreatePlaylistProvider`), and the keyboard follows focus into the real field when the sheet mounts. The same reason a popup's `initialFocus` is given as a FUNCTION there: opened by touch the default is to focus the popup itself and keep the keyboard down.
+
 **Forms go full-screen on phones — `<DialogContent mobile="form">`.** A bottom sheet cannot hold a form once the keyboard is up (~200px left on a 12 mini in Brave; a title + field + toggle + footer need ~240), so any dialog whose **primary action must survive typing** uses the form presentation: anchored top, three bands, only the body scrolls, the confirming action in `DialogFormActions` on the keyboard. The bands, the header rules and the find-screen pattern are in [docs/components/dialog.md](docs/components/dialog.md).
 
 **`viewport-fit=cover` is mandatory** in the viewport meta. Without it `env(safe-area-inset-*)` resolves to **0** and every safe-area pad in the app — mobile header, footer nav, player shell, dropdown sheets, dialog footers, toasts — is silently a no-op.
