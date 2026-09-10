@@ -26,7 +26,7 @@ export default function TabsBasicExample() {
       </Tabs>
 
       <Tabs defaultValue="all">
-        <TabsList variant="line" autoCenter={false} className="w-full justify-start border-b border-border">
+        <TabsList variant="line" autoCenter={false} className="w-full justify-start">
           <TabsTrigger value="all">All albums</TabsTrigger>
           <TabsTrigger value="owned">Owned</TabsTrigger>
           <TabsTrigger value="downloaded">Downloaded</TabsTrigger>

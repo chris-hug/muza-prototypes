@@ -315,7 +315,7 @@ export function ArtistProfileView() {
                  scrolls (overflow-x-auto), which forces overflow-y to clip;
                  a shorter list would cut off the triggers' bottom borders
                  (the active underline). */}
-            <TabsList variant="line" className="w-full gap-0 h-9 border-b border-border">
+            <TabsList variant="line" className="w-full gap-0 h-9">
               <TabsTrigger
                 value="overview"
                 className="flex-1 h-9 items-start px-0 pt-0 pb-0 after:hidden"

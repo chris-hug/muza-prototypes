@@ -63,7 +63,17 @@ const tabsListVariants = cva(
            out). One pixel is enough to make the whole tab bar draggable up and
            down, which is what it was doing on the artist page. */
         line:
-          "rounded-none bg-transparent gap-3 text-muted-foreground max-w-full overflow-x-auto overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+          "rounded-none bg-transparent gap-3 text-muted-foreground max-w-full overflow-x-auto overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden " +
+          /* The strip's hairline, as a BACKGROUND rather than a border.
+             A border sits outside the content box, where the indicator —
+             clipped to the scroll box — cannot reach it: the travelling mark
+             floated a pixel above the line it is supposed to be part of. As
+             the last pixel of the background it occupies exactly the row the
+             indicator is pinned to, so the mark sits ON the line and covers
+             it as it passes. It is also painted against the padding box, so
+             it does not scroll away with the tabs like an absolute child
+             would. Call sites no longer add `border-b`. */
+          "bg-[linear-gradient(to_top,var(--color-border)_1px,transparent_1px)]",
         // Pill — each tab is its own pill (no container background). Same
         // horizontal-scroll treatment as `line`, and the same cross-axis pin.
         pill:
@@ -255,8 +265,9 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
         // The underline indicator. Default sits 1px BELOW the trigger
         // (`-bottom-px`) to overlap the container's hairline; but the
         // scrollable line/pill list clips overflow-y, which would cut that
-        // 1px. So for line/pill the indicator is pinned to `bottom-0`
-        // (inside the clip box) instead.
+        // 1px. So for line/pill the indicator is pinned to `bottom-0` — and
+        // the strip's hairline is drawn INSIDE that same pixel (see
+        // `tabsListVariants`), so the two coincide instead of stacking.
         "after:absolute after:inset-x-0 after:-bottom-px after:h-px after:rounded-full after:bg-foreground after:opacity-0 after:transition-opacity",
         "group-data-[variant=line]/tabs-list:after:bottom-0 group-data-[variant=pill]/tabs-list:after:bottom-0",
 

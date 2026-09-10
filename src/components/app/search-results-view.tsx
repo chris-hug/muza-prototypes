@@ -155,7 +155,7 @@ export function SearchResultsView({ query }: { query: string }) {
           so exactly one of them exists at any width. */}
       {!footerNav ? (
         <Tabs value={tab} onValueChange={v => setTab(v as TabKey)} className="min-w-0">
-          <TabsList variant="line" autoCenter={false} className="w-full justify-start border-b border-border">
+          <TabsList variant="line" autoCenter={false} className="w-full justify-start">
             {visibleTabs.map(t => (
               <TabsTrigger key={t.key} value={t.key}>{t.label}</TabsTrigger>
             ))}
