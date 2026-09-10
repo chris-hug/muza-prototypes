@@ -79,6 +79,13 @@ shrinks the *visual* viewport — so a `fixed; bottom: 0` sheet sits **behind**
 the keyboard. Every sheet therefore sits at `bottom: var(--kb, 0px)` and is
 capped against what that leaves.
 
+The **form sheet** holds the keyboard off with `padding-bottom` instead, and
+keeps `bottom: 0`. The content lands in the same place; the difference is that
+the surface carries on underneath. iOS draws its accessory bar as a floating
+pill with transparent margins around it, and a sheet that ended at the
+keyboard's edge let the page show through those margins — a strip of blurred
+backdrop between the sheet and the bar.
+
 `scroll-padding` keeps the browser's own "scroll the focused field into view"
 honest: `scroll-padding-bottom: 8rem` on a bottom sheet so a field never lands
 under the sticky footer, `scroll-padding-top: 4rem` on a form sheet so it never
@@ -183,8 +190,8 @@ Only the middle one scrolls.
   `MobileHeader` — it *is* a mobile header, for a modal — with the top
   safe-area inset, and `md:hidden`.
 - The confirming action is a full-width `size="lg"` (48px) button in
-  `DialogFormActions`, the band below the body. The sheet already ends at
-  `--kb`, so it sits directly on the keyboard. Never offered twice — bar
+  `DialogFormActions`, the band below the body. The sheet pads itself off the
+  keyboard, so the action sits directly on it. Never offered twice — bar
   **or** action row.
 - **The sheet is ONE surface, action included**, down to the keyboard. The
   band was tried the other way — popup transparent (`max-md:bg-transparent`),
@@ -225,7 +232,7 @@ Only the middle one scrolls.
   is right for a picker and wrong for a form whose one job is to be typed into;
   returning the field for every interaction type overrides that. Naming is the
   only thing this sheet asks for, so the keyboard coming up with it saves a tap
-  — and because the sheet is anchored top and ends at `--kb`, nothing it shows
+  — and because the sheet is anchored top and pads itself off `--kb`, nothing it shows
   is behind the keyboard. (It used to park focus on the bar to keep the
   keyboard down; the full-screen presentation is what made that caution
   unnecessary.)

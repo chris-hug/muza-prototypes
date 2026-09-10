@@ -87,7 +87,13 @@ export const dialogPositionClass =
 // modal as everything else — the bar hides, the ordinary header/footer show.
 export const dialogFormPositionClass =
   "fixed z-50 duration-100 transition-none data-open:animate-in data-open:fade-in-0 " +
-  "inset-x-0 top-0 bottom-[var(--kb,0px)] translate-x-0 translate-y-0 max-w-full max-h-none rounded-none " +
+  // The sheet reaches the bottom of the screen and holds the keyboard off with
+  // PADDING, rather than ending at `bottom: var(--kb)`. Same content position
+  // either way, but the surface keeps going: iOS draws its accessory bar as a
+  // floating pill with transparent margins around it, and a sheet that stopped
+  // at the keyboard's edge let the page show through those margins as a strip
+  // of blurred backdrop under the sheet.
+  "inset-x-0 top-0 bottom-0 max-md:pb-[var(--kb,0px)] translate-x-0 translate-y-0 max-w-full max-h-none rounded-none " +
   // `overflow-hidden`, NOT `auto`: the sheet is three bands — sticky bar,
   // scrolling body, action row — and only the BODY scrolls. If the popup
   // itself scrolled, a sticky action row would overlay whatever passed under
@@ -115,7 +121,10 @@ export const dialogFormBodyClass =
   // `flex-1 min-h-0 overflow-y-auto` — the body is the only scrolling band.
   // `gap-3` (not the desktop 20px): on a phone every gap competes with the
   // keyboard for the same ~200px.
-  "flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto p-3 md:contents md:overflow-visible"
+  // `overflow-x-hidden`: base-ui's Switch hides its real input as a 1px fixed
+  // box, which is enough to give the scroll box a horizontal scrollbar of its
+  // own — a grey rule across the sheet, right above the action.
+  "flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 md:contents md:overflow-visible"
 
 // The form sheet's action row: the confirming button pinned below the body,
 // never overlapping it (the body scrolls, this doesn't). The sheet is ONE
