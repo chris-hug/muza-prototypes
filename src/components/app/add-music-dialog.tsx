@@ -24,7 +24,7 @@
  * Prototype: Done only toasts; wire `onAdd` to a real playlist-tracks mutation.
  */
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Search, ChevronLeft, ChevronRight, Plus, Check, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -102,38 +102,6 @@ export function AddMusicDialog({
    * lose exactly as much. */
   const [confirmDiscard, setConfirmDiscard] = useState(false)
 
-  /* The toast sits directly ABOVE this sheet's search field and never over
-   * it, so the field publishes where its TOP edge is and the toast parks 8px
-   * clear of it (`--toast-anchor`, read in `toast.tsx`). Measured rather than
-   * derived: the field sits at a different height on the browse screen (an
-   * Add button below it) than on the find screen (nothing below it), and both
-   * move again with the keyboard. Anything computed from paddings would be
-   * right in one of those states and a few pixels out in the others — and a
-   * few pixels out here means a toast clipping the control it belongs to.
-   *
-   * A layout effect on every render, so a change of screen is picked up in
-   * the same frame, plus a ResizeObserver for the changes that happen without
-   * one — the keyboard arriving, the sheet resizing around it. */
-  const fieldRef = useRef<HTMLDivElement>(null)
-  useLayoutEffect(() => {
-    const el = fieldRef.current
-    const root = document.documentElement
-    if (!open || !el) { root.style.removeProperty("--toast-anchor"); return }
-    const publish = () => {
-      const gap = Math.round(window.innerHeight - el.getBoundingClientRect().top) + 8
-      root.style.setProperty("--toast-anchor", `${Math.max(0, gap)}px`)
-    }
-    publish()
-    const ro = new ResizeObserver(publish)
-    ro.observe(el)
-    ro.observe(document.documentElement)
-    window.visualViewport?.addEventListener("resize", publish)
-    return () => {
-      ro.disconnect()
-      window.visualViewport?.removeEventListener("resize", publish)
-      root.style.removeProperty("--toast-anchor")
-    }
-  })
   /* The confirming action belongs to the BROWSE screen's footer. On the Find
    * screen it moves into the header bar instead (see `barAction`): the band
    * there floats over the results, and a second control in it costs a row of
@@ -600,7 +568,7 @@ export function AddMusicDialog({
           {/* The album screen is about one record, so there's nothing to
               search from inside it. */}
           {!album && (
-            <div ref={fieldRef} className="w-full min-w-0 md:flex-1">
+            <div className="w-full min-w-0 md:flex-1">
               <Input
                 value={query}
                 onChange={e => setQuery(e.target.value)}

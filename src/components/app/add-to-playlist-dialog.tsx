@@ -17,17 +17,19 @@
  */
 
 import { useCallback, useMemo, useState } from "react"
-import { Plus, Search } from "lucide-react"
+import { ChevronLeft, Plus, Search, X } from "lucide-react"
 
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
-  DialogFooter, DialogClose, dialogListClass,
+  DialogFooter, DialogClose, DialogActionBar, DialogFormBody, DialogFormActions,
+  dialogListClass,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { navRowClass } from "@/components/ui/nav-row"
 import { useToast } from "@/components/ui/toast"
+import { useIsMobile } from "@/lib/use-media-query"
 import { MediaListItem } from "@/components/ui/media-list-item"
 import { getAllPlaylists } from "@/lib/playlist-catalog"
 import { AddToPlaylistContext } from "@/lib/add-to-playlist-context"
@@ -55,6 +57,9 @@ export function AddToPlaylistProvider({ children }: { children: React.ReactNode 
 
 function AddToPlaylistContent({ song, onClose }: { song: SavedSong; onClose: () => void }) {
   const { add: toast } = useToast()
+  // The header is a BAR on a phone and the ordinary header on desktop; the
+  // create step is a form sheet below `md` and a modal above it.
+  const isMobile = useIsMobile()
   const [mode, setMode] = useState<"list" | "create">("list")
   const [query, setQuery] = useState("")
   const [name, setName] = useState("")
@@ -76,6 +81,7 @@ function AddToPlaylistContent({ song, onClose }: { song: SavedSong; onClose: () 
     onClose()
   }
 
+
   const addTo = (playlistTitle: string) => done(playlistTitle)
   const create = () => {
     const trimmed = name.trim()
@@ -83,27 +89,79 @@ function AddToPlaylistContent({ song, onClose }: { song: SavedSong; onClose: () 
     done(trimmed)
   }
 
+  /* Every pattern below is the Add-music sheet's, arrived at the hard way on a
+   * phone with the keyboard up; this flow is its sibling and had none of them.
+   * See `docs/components/dialog.md` for why each one is what it is. */
+
   if (mode === "create") {
     return (
-      <DialogContent className="md:max-w-[max(32rem,50vw)] flex flex-col overflow-hidden">
-        <DialogHeader className="shrink-0">
-          <DialogTitle className="md:text-large">New playlist</DialogTitle>
-          <DialogDescription>
-            “{song.title}” will be added to it.
-          </DialogDescription>
-        </DialogHeader>
-        <Input
-          value={name}
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => { if (e.key === "Enter") create() }}
-          placeholder="Playlist name"
-          aria-label="Playlist name"
-          autoFocus
-        />
-        <DialogFooter>
-          <Button size="lg" variant="ghost" onClick={() => setMode("list")}>Back</Button>
-          <Button size="lg" onClick={create} disabled={!name.trim()}>Create playlist</Button>
-        </DialogFooter>
+      /* `mobile="form"`: a sheet whose primary action is a button under a
+         field cannot be a bottom sheet — the keyboard leaves ~170px, and the
+         action ends up behind it. The form presentation anchors top and puts
+         the action in its own band. */
+      <DialogContent mobile="form" showCloseButton={!isMobile} className="md:max-w-[max(32rem,50vw)]">
+        {isMobile ? (
+          <DialogActionBar
+            className="-mx-3 -mt-3 px-1"
+            leading={
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Back to playlists"
+                onClick={() => setMode("list")}
+                className="touch-target shrink-0"
+              >
+                <ChevronLeft />
+              </Button>
+            }
+            trailing={
+              <DialogClose render={<Button variant="ghost" size="icon-sm" aria-label="Close" className="touch-target" />}>
+                <X />
+              </DialogClose>
+            }
+          >
+            <DialogTitle className="truncate">New playlist</DialogTitle>
+          </DialogActionBar>
+        ) : (
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="md:text-large">New playlist</DialogTitle>
+            <DialogDescription>“{song.title}” will be added to it.</DialogDescription>
+          </DialogHeader>
+        )}
+
+        <DialogFormBody>
+          <Input
+            value={name}
+            onChange={e => setName(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") create() }}
+            placeholder="Playlist name"
+            aria-label="Playlist name"
+            autoFocus
+          />
+          {!isMobile && (
+            <DialogFooter>
+              <Button size="lg" variant="ghost" onClick={() => setMode("list")}>Back</Button>
+              <Button size="lg" onClick={create} disabled={!name.trim()}>Create playlist</Button>
+            </DialogFooter>
+          )}
+        </DialogFormBody>
+
+        {isMobile && (
+          <DialogFormActions>
+            {/* Refuses focus: a tap would otherwise move focus off the field,
+                close the keyboard, grow the sheet, and carry the button out
+                from under the finger before the click resolved. */}
+            <Button
+              size="lg"
+              onClick={create}
+              disabled={!name.trim()}
+              className="w-full"
+              onPointerDown={e => e.preventDefault()}
+            >
+              Create
+            </Button>
+          </DialogFormActions>
+        )}
       </DialogContent>
     )
   }
@@ -113,60 +171,104 @@ function AddToPlaylistContent({ song, onClose }: { song: SavedSong; onClose: () 
        a `flex-1` list inside it is just a list at its natural height — the
        popup grew past its cap and scrolled itself, which with a keyboard up
        carries the title off the top the moment the field takes focus. As a
-       flex column the LIST is the only thing that gives. */
-    <DialogContent className="md:max-w-[max(32rem,50vw)] flex flex-col overflow-hidden">
-      <DialogHeader className="shrink-0">
-        <DialogTitle className="md:text-large">Add to playlist</DialogTitle>
-        <DialogDescription>
-          {song.title}{song.artist ? ` · ${song.artist}` : ""}
-        </DialogDescription>
-      </DialogHeader>
+       flex column the LIST is the only thing that gives, and the bar's height
+       is reserved as padding because the bar itself is out of the flow. */
+    <DialogContent
+      showCloseButton={!isMobile}
+      className="md:max-w-[max(32rem,50vw)] flex flex-col overflow-hidden max-md:pt-[var(--sheet-bar-h)]"
+    >
+      {isMobile ? (
+        /* A bar, not a stacked header: back·title·✕ on one line is the shape
+           the whole flow uses, and on a phone the title's own line is a row
+           the list does not get. `absolute` + glass so the rows run full
+           height underneath and blur past the title. */
+        <DialogActionBar
+          className="absolute inset-x-0 top-0 z-10 px-1"
+          leading={<span className="size-8 shrink-0" />}
+          trailing={
+            <DialogClose render={<Button variant="ghost" size="icon-sm" aria-label="Close" className="touch-target" />}>
+              <X />
+            </DialogClose>
+          }
+        >
+          {/* The SONG is the context here, and the bar has one line for it —
+              so it goes in the title rather than a description underneath. */}
+          <DialogTitle className="truncate">Add “{song.title}”</DialogTitle>
+        </DialogActionBar>
+      ) : (
+        <DialogHeader className="shrink-0">
+          <DialogTitle className="md:text-large">Add to playlist</DialogTitle>
+          <DialogDescription>
+            {song.title}{song.artist ? ` · ${song.artist}` : ""}
+          </DialogDescription>
+        </DialogHeader>
+      )}
 
-      {owned.length > 6 && (
-        <div className="shrink-0">
-        <Input
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          placeholder="Find a playlist"
-          aria-label="Find a playlist"
-          startIcon={<Search />}
-          onClear={() => setQuery("")}
-        />
+      {filtered.length === 0 ? (
+        /* Its own band, never a `flex-1` child of the scroller: that is the
+           case WebKit collapses to zero height, which shows as a blank sheet. */
+        <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center max-md:-mt-[var(--sheet-bar-h)] max-md:pt-[var(--sheet-bar-h)] max-md:-mb-3 max-md:pb-[var(--sheet-band-h)]">
+          <p className="text-large font-medium text-foreground">No playlists match</p>
+          <p className="text-small text-muted-foreground">“{query}”</p>
+        </div>
+      ) : (
+        /* No `vh` cap: the sheet is a flex column that already ends at `--kb`,
+           so the list takes exactly what the other bands leave. The rows run
+           under both bands and pay for them in padding. */
+        <div className={cn(
+          dialogListClass,
+          "gap-1",
+          "max-md:-mt-[var(--sheet-bar-h)] max-md:-mb-3 max-md:pt-[var(--sheet-bar-h)] max-md:pb-[var(--sheet-band-h)]",
+        )}>
+          {/* New playlist — pinned on top (Tidal). */}
+          <Row onClick={() => setMode("create")}>
+            <span className="grid size-12 shrink-0 place-items-center rounded-xs bg-secondary text-foreground [&_svg]:size-5">
+              <Plus />
+            </span>
+            <span className="text-small font-medium text-foreground">New playlist</span>
+          </Row>
+
+          {/* The shared media row — same component the search / library lists
+              use, so the 2×2 collage + title/meta treatment is identical. */}
+          {filtered.map(p => (
+            <MediaListItem
+              key={p.id}
+              type="playlist"
+              covers={p.covers}
+              title={p.title}
+              meta={`${p.songCount} songs`}
+              onOpen={() => addTo(p.title)}
+            />
+          ))}
         </div>
       )}
 
-      {/* No `vh` cap: the sheet is a flex column that already ends at `--kb`,
-          so the list takes exactly what the other bands leave. A
-          viewport-relative cap cannot know what the keyboard took. */}
-      <div className={cn(dialogListClass, "gap-1")}>
-        {/* New playlist — pinned on top (Tidal). */}
-        <Row onClick={() => setMode("create")}>
-          <span className="grid size-12 shrink-0 place-items-center rounded-xs bg-secondary text-foreground [&_svg]:size-5">
-            <Plus />
-          </span>
-          <span className="text-small font-medium text-foreground">New playlist</span>
-        </Row>
-
-        {/* The shared media row — same component the search / library lists
-            use, so the 2×2 collage + title/meta treatment is identical. */}
-        {filtered.map(p => (
-          <MediaListItem
-            key={p.id}
-            type="playlist"
-            covers={p.covers}
-            title={p.title}
-            meta={`${p.songCount} songs`}
-            onOpen={() => addTo(p.title)}
-          />
-        ))}
-
-        {filtered.length === 0 && (
-          <p className="px-3 py-6 text-small text-muted-foreground">No playlists match “{query}”.</p>
+      {/* The filter sits at the BOTTOM on a phone — thumb-side, and where the
+          keyboard opens against it — in a band with no surface of its own, so
+          the rows pass underneath. Desktop keeps it in the flow with Cancel:
+          there is no thumb and no keyboard to plan around. */}
+      <DialogFooter
+        className={cn(
+          "shrink-0 mt-0 flex-col md:flex-row md:items-center",
+          "max-md:absolute max-md:inset-x-0 max-md:bottom-0 max-md:z-10 max-md:mx-0 max-md:mt-0 max-md:mb-0 max-md:border-t-0 max-md:bg-transparent",
         )}
-      </div>
-
-      <DialogFooter>
-        <DialogClose render={<Button variant="ghost" />}>Cancel</DialogClose>
+      >
+        {owned.length > 6 && (
+          <div className="w-full min-w-0 md:flex-1">
+            <Input
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Find a playlist"
+              aria-label="Find a playlist"
+              startIcon={<Search />}
+              onClear={() => setQuery("")}
+              // Floating over the rows, so it carries its own surface and a
+              // lift; 48px to match the control ladder.
+              className="h-12 max-md:bg-popover max-md:shadow-lg"
+            />
+          </div>
+        )}
+        {!isMobile && <DialogClose render={<Button variant="ghost" />}>Cancel</DialogClose>}
       </DialogFooter>
     </DialogContent>
   )

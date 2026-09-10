@@ -111,31 +111,21 @@ function ToastViewport({ className }: { className?: string }) {
     <ToastPrimitive.Viewport
       className={cn(
         "group/toasts fixed z-[100] flex flex-col gap-2 outline-none",
-        // The anchor can arrive a frame after the toast does — a sheet that
-        // publishes one is often opening in the same beat — so the move is
-        // eased rather than jumped.
-        "transition-[bottom] duration-200 ease-[cubic-bezier(0.2,0,0,1)]",
-        // Below `md` → a bar along the BOTTOM, thumb-side and out of the
-        // content's way, 8px above whatever chrome is there: the KEYBOARD
-        // when one is up, the tab bar otherwise (`--footer-nav-h`, published
-        // by `FooterNav` — measured, because the home-indicator inset is in
-        // it). `max()` rather than a sum: they are never both in play, and
-        // adding them lifts the toast a third of the way up the screen.
-        //
-        // 4px above the keyboard is exactly where a sheet puts its own bottom
-        // control (`max(4px, safe-area)` on the band, measured: the field's
-        // bottom edge lands 5px above the sheet's), so the toast lands ON that
-        // control — same height, same gutter, same radius — and covers it
-        // outright rather than hanging over half of it. Over the tab bar it
-        // covers the mini player for the couple of seconds it lives; the
-        // player is one tap from coming back.
-        // `--toast-anchor` is where a sheet wants the toast: the distance from
-        // the bottom of the screen to just above its own bottom control, so
-        // the toast sits ON TOP OF nothing (see `AddMusicDialog`, which
-        // publishes its search field's top edge plus a gap). It wins when it
-        // exists. Without one, clear whichever chrome is there: the keyboard,
-        // or the tab bar.
-        "inset-x-3 bottom-[var(--toast-anchor,max(calc(var(--kb,0px)+4px),calc(var(--footer-nav-h,0px)+8px)))] w-auto",
+        /* Below `md` → the TOP of the screen, under the browser chrome and
+           over everything the app draws.
+           
+           It lived at the bottom, thumb-side, which is where platform
+           snackbars sit — and on a phone the bottom is also where every
+           control the toast is answering sits: a sheet's search field, its
+           confirming action, the tab bar, the mini player. Whatever the toast
+           cleared, it covered something else, and the arithmetic for "just
+           above the control" changed with the keyboard, the screen and the
+           sheet. The top of a phone holds a title and nothing you press.
+           
+           The keyboard never reaches it either, which is the other half of
+           what this cost: no `--kb` term, no anchor published by a sheet, no
+           measurement at all. */
+        "inset-x-3 top-[calc(env(safe-area-inset-top)+8px)] bottom-auto w-auto",
         // Desktop → the familiar top-right card.
         "md:inset-x-auto md:right-4 md:top-4 md:bottom-auto md:w-[380px] md:max-w-[calc(100vw-2rem)]",
         className
@@ -152,11 +142,12 @@ function ToastViewport({ className }: { className?: string }) {
           <ToastPrimitive.Root
             key={t.id}
             toast={t}
-            /* Down on a phone (the toast is at the bottom, so the gesture
-               points at the nearest edge) and right everywhere, which is the
-               desktop card's own edge. Base UI's default is the same pair;
-               naming it keeps the two placements honest if one moves. */
-            swipeDirection={["down", "right"]}
+            /* The gesture points at the nearest edge, and both placements
+               are now top-anchored: UP on a phone (full width, under the
+               browser chrome), RIGHT on desktop (a card in the top-right
+               corner). It was `down` while the phone toast lived at the
+               bottom — the pair has to move with the placement. */
+            swipeDirection={["up", "right"]}
             className={toastShell}
           >
             {/* How long it has left. A toast that leaves on its own has to

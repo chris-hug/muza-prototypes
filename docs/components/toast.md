@@ -91,49 +91,29 @@ share one baseline.
 ```tsx
 // ToastViewport
 "fixed z-[100] flex flex-col gap-2 outline-none"
-// phone → a bar along the bottom, riding on the tab bar
-"inset-x-3 bottom-[calc(var(--footer-nav-h,0px)+8px+var(--kb,0px))] w-auto"
+// phone → a bar along the TOP
+"inset-x-3 top-[calc(env(safe-area-inset-top)+8px)] bottom-auto w-auto"
 // sm and up → the top-right card
 "md:inset-x-auto md:right-4 md:top-4 md:bottom-auto md:w-[380px] md:max-w-[calc(100vw-2rem)]"
 ```
 
-**Phone — a bottom bar, ON the player.** Every major player puts its
-confirmations at the bottom: thumb-side, out of the content's way. The bar
-spans the width with a 12px inset (`inset-x-3`) and sits wherever the surface
-under it says:
+**Phone — the TOP of the screen.** `inset-x-3`, 8px under the safe-area inset,
+full width, over everything the app draws.
 
-```text
-bottom: var(--toast-anchor, max(
-  calc(var(--kb, 0px) + 4px),           the keyboard, when one is up
-  calc(var(--footer-nav-h, 0px) + 8px)  the tab bar otherwise
-))
-```
+It lived at the bottom for most of its life, thumb-side, where platform
+snackbars sit. On a phone the bottom is also where every control a toast is
+answering sits: a sheet's search field, its confirming action, the tab bar,
+the mini player. Whatever the toast cleared it covered something else, and the
+arithmetic for "just above the control" changed with the keyboard, the screen
+and the sheet — it was tried as a `max()` of the keyboard and the tab bar, then
+as a `--toast-anchor` a sheet published from its own measured field, and each
+version was right in one state and wrong in the next. **The top of a phone
+holds a title and nothing you press.**
 
-**`--toast-anchor`** is a sheet asking for the toast to be somewhere exact —
-`AddMusicDialog` publishes its search field's top edge plus 8px, so the toast
-lands directly above the field and never over it. Measured from the element on
-every render (plus a `ResizeObserver`), not derived from paddings: the field
-sits at one height on the browse screen (an Add button below it), another on
-the find screen (nothing below it), and both move again with the keyboard —
-arithmetic would be right in one state and clipping the control in the others.
-The move is eased (`transition-[bottom] 200ms`) because a sheet often publishes
-its anchor a frame after the toast has already appeared.
+The keyboard never reaches it either, which is the rest of what that cost: no
+`--kb` term, no anchor, no measurement. The one thing it does cover is a
+sheet's own title bar, for the seconds it lives.
 
-`max()`, not a sum: the two are never both in play, and adding them lifts the
-toast a third of the way up the screen. `--footer-nav-h` is published by
-`FooterNav` with a ResizeObserver on its BORDER box — the bar is mostly
-padding, including the home-indicator inset, so the content box reads 48px
-against a real 67px. The 4px over the keyboard is not a guess either: it is
-what a sheet's own bottom band uses (`max(4px, safe-area)`), which is how the
-toast lands exactly on the field it covers.
-
-**It covers the mini player, deliberately.** The lift used to clear the player
-too (112px of stacked chrome), which parked a message about something the user
-just did a third of the way up a phone screen. The player is one tap from
-coming back and the toast is gone in two seconds — the toast wins that strip
-for as long as it lives. `--kb` matters because iOS does not shrink the layout
-viewport when the keyboard opens — a `fixed; bottom: 0` element sits *behind*
-the keyboard — so anything anchored to the bottom adds
 ## Behaviour
 
 ### Dismissal
@@ -147,9 +127,8 @@ the keyboard — so anything anchored to the bottom adds
   deliberately quiet, and it should read as the product's own clock. Without it every dismissal is a surprise, and
   a reader waits for something that was never going to stay. It pauses with
   the toast on hover (`group/toasts`), matching Base UI's own timer.
-- **Swipe.** `swipeDirection={['down', 'right']}` — down on a phone, where the
-  toast is at the bottom edge, right on desktop, where the card is at the
-  right. It is Base UI's default too; naming it keeps the gesture honest if a
+- **Swipe.** `swipeDirection={['up', 'right']}` — up on a phone, where the
+  toast is at the top edge, right on desktop, where the card is at the right. It is Base UI's default too; naming it keeps the gesture honest if a
   placement moves. The shell is `touch-none` so the page behind cannot take
   the gesture instead.
 - **Close button — desktop only** (`hidden md:flex`). On a phone the toast
