@@ -756,6 +756,17 @@ still exists and a call site can still ask for it; what changed is which step
 you get by not choosing. 40px was a desktop-first number for something you
 type into on a phone.
 
+**Both hand-rolled gestures read their numbers from one module**
+([`src/lib/gesture.ts`](src/lib/gesture.ts)): the slop (8px), the sheet's
+dismiss thresholds (88px, 0.45px/ms), the "is every scroller under this finger
+at its top" test, and the velocity trail. `useLongPress` (tap vs drag vs hold,
+on cards) and `useSheetDrag` (pull a dialog-sheet down) answer different
+questions and stay separate, but they used to carry their own copies of these —
+the sheet's slop was 6px against the cards' 8, which is how two gestures on one
+screen start feeling like two apps. Base UI's Drawer has its own, better-tuned
+dismiss; `useSheetDrag` exists only because a Dialog is not a Drawer, and both
+it and half that module go away when the sheet-shaped dialogs move onto Drawer.
+
 **A drag is never a tap.** `useLongPress` swallows the click if the pointer
 moved more than 8px between down and up — the same threshold that cancels the
 hold, so one gesture cannot be both. The browser's own rule (no click after a

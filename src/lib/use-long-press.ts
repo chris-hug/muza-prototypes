@@ -2,9 +2,8 @@
 
 import { useRef, useCallback, useState } from "react"
 
-/** Movement past this (px) turns the gesture into a drag: the long press is
- *  cancelled AND the click that follows is swallowed. */
-const SLOP = 8
+// One slop for every gesture in the app — see `gesture.ts`.
+import { SLOP, travelled } from "@/lib/gesture"
 
 /**
  * useLongPress — fires `onLongPress` after the user holds for `ms`, and
@@ -77,9 +76,7 @@ export function useLongPress({
     },
     onPointerMove: (e: React.PointerEvent) => {
       if (!startPoint.current) return
-      const dx = e.clientX - startPoint.current.x
-      const dy = e.clientY - startPoint.current.y
-      if (Math.hypot(dx, dy) > SLOP) {
+      if (travelled(startPoint.current, e.clientX, e.clientY) > SLOP) {
         moved.current = true
         clear()
       }

@@ -28,12 +28,13 @@
 
 import { useEffect } from "react"
 
-/** Past this many pixels the sheet closes on release. */
-const DISTANCE = 88
-/** …or below it, if the finger was still moving down this fast (px/ms). */
-const VELOCITY = 0.45
-/** Slop before a drag is a drag rather than a tap or a horizontal swipe. */
-const SLOP = 6
+// The thresholds and the two measurements this shares with the app's other
+// gesture — see `gesture.ts`. The sheet used to carry its own slop (6px
+// against the cards' 8), which is the sort of difference that makes two
+// gestures on the same screen feel like they came from two apps.
+import {
+  SLOP, DISMISS_DISTANCE, DISMISS_VELOCITY, createTrail, scrollersAtTop,
+} from "@/lib/gesture"
 
 /*
  * Takes the ELEMENT, not a ref to it. A dialog's popup is not in the tree
@@ -55,21 +56,8 @@ export function useSheetDrag(
     let dragging = false
     let pointerId: number | null = null
     let frame = 0
-    /* A short history rather than "the last two samples": velocity from two
-       consecutive moves is noise — they can share a timestamp, which reads as
-       zero, or land 2px apart, which reads as a flick. 120ms of samples is
-       what the finger was actually doing at the end. */
-    const trail: { y: number; t: number }[] = []
+    const trail = createTrail()
 
-    /** Every scrollable box between `node` and the sheet is at its top. */
-    const atTop = (node: EventTarget | null) => {
-      let n = node as HTMLElement | null
-      while (n && n !== el.parentElement) {
-        if (n.scrollHeight > n.clientHeight + 1 && n.scrollTop > 0) return false
-        n = n.parentElement
-      }
-      return true
-    }
 
     const move = (e: PointerEvent) => {
       if (pointerId !== e.pointerId) return
@@ -113,8 +101,7 @@ export function useSheetDrag(
           el.style.transform = `translate3d(0, ${dy}px, 0)`
         })
       }
-      trail.push({ y: e.clientY, t: e.timeStamp })
-      while (trail.length > 1 && e.timeStamp - trail[0].t > 120) trail.shift()
+      trail.push(e.clientY, e.timeStamp)
     }
 
     const end = (e: PointerEvent) => {
@@ -124,11 +111,8 @@ export function useSheetDrag(
       dragging = false
       delete el.dataset.dragging
 
-      const first = trail[0]
-      const velocity = first && e.timeStamp > first.t
-        ? (e.clientY - first.y) / (e.timeStamp - first.t)
-        : 0
-      const dismiss = dy > DISTANCE || (dy > 24 && velocity > VELOCITY)
+      const velocity = trail.velocity(e.clientY, e.timeStamp)
+      const dismiss = dy > DISMISS_DISTANCE || (dy > 24 && velocity > DISMISS_VELOCITY)
 
       const springBack = () => {
         el.style.animation = ""
@@ -138,7 +122,6 @@ export function useSheetDrag(
       if (frame) { cancelAnimationFrame(frame); frame = 0 }
       el.style.touchAction = ""
       el.style.willChange = ""
-      trail.length = 0
 
       if (dismiss) {
         /* Take the popup's own exit animation off the table first. A CSS
@@ -176,12 +159,11 @@ export function useSheetDrag(
       // (a cancelled touch, a device that drops the event) cannot wedge the
       // sheet shut for the rest of its life.
       if (e.pointerType === "mouse" || dragging) return
-      if (!atTop(e.target)) return
+      if (!scrollersAtTop(e.target, el.parentElement)) return
       pointerId = e.pointerId
       startY = e.clientY
       startX = e.clientX
-      trail.length = 0
-      trail.push({ y: e.clientY, t: e.timeStamp })
+      trail.reset(e.clientY, e.timeStamp)
       dy = 0
     }
 
@@ -198,9 +180,6 @@ export function useSheetDrag(
     }
 
     const opts = { capture: true } as const
-    // The sheet says whether the gesture is attached — otherwise invisible
-    // from outside devtools, and this took a while to find once.
-    el.dataset.sheetDrag = ""
 
     el.addEventListener("pointerdown", down, { ...opts, passive: true })
     el.addEventListener("pointermove", move, { ...opts, passive: true })
@@ -220,7 +199,6 @@ export function useSheetDrag(
       el.style.transform = ""
       el.style.animation = ""
       delete el.dataset.dragging
-      delete el.dataset.sheetDrag
     }
   }, [el, enabled, onClose])
 }
