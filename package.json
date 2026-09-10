@@ -11,7 +11,8 @@
     "lint": "eslint",
     "release": "node scripts/release.mjs",
     "doc-sweep": "node scripts/doc-sweep.mjs",
-    "sync-docs": "node scripts/sync-system-doc.mjs"
+    "sync-docs": "node scripts/sync-system-doc.mjs",
+    "doc-rules": "node scripts/doc-rules.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",

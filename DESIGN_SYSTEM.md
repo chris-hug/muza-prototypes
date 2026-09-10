@@ -1213,13 +1213,19 @@ ladder, the derivations, the duplication map — is in
 
 **Forms go full-screen on phones** (`mobile="form"`). A bottom sheet cannot hold a form once the keyboard is up, so any dialog whose primary action must survive typing anchors to the top, gives only its body a scroll, and puts the confirming action where the keyboard cannot reach it. → [dialog.md](docs/components/dialog.md)
 
+**A full-bleed footer's negative margins must match the gutter at BOTH sizes** (`-mx-3 md:-mx-6`), or the bar stops short of the edges at one of them — the kind of thing that looks like a rendering bug and is arithmetic. → [dialog.md](docs/components/dialog.md)
+
 **Opening the keyboard has to happen inside the tap.** iOS raises it only for a focus during a user gesture, and a dialog focuses its field a frame or two later. A flow that should start typing focuses a zero-sized stand-in input from the trigger's own handler; the keyboard then follows focus into the real field. → [keyboard.md](docs/components/keyboard.md)
 
 **`viewport-fit=cover` is mandatory.** Without it `env(safe-area-inset-*)` resolves to 0 and every safe-area pad in the app — header, footer nav, player, sheets, toasts — is silently a no-op. → [keyboard.md](docs/components/keyboard.md)
 
+**The viewport meta must not carry `user-scalable=no` or `maximum-scale=1`.** Blocking pinch-zoom is a WCAG 1.4.4 failure, and the double-tap delay it is usually there to prevent is answered by `touch-action: manipulation` instead. → [keyboard.md](docs/components/keyboard.md)
+
 **The app `DropdownMenu` is already a bottom sheet below 768** — use it for simple ⋯ lists rather than building one. Put the trigger on a real `Button` via `render`, and never use `CheckboxItem` / `RadioItem` / `Sub*` in a menu that can render below 768: they have no sheet counterpart. → [menu.md](docs/components/menu.md)
 
 **An overlay panel does not push content.** A panel opening under a sticky header is out of flow (`absolute inset-x-* top-full z-40`) so it floats over the page instead of displacing it. → [drawer.md](docs/components/drawer.md)
+
+**`swipeDirection` lives on the `Sheet` root and must match `side`.** The popup reads the direction from the root's context, so a bottom sheet whose root still says the default gets a gesture that fights its geometry — and `SheetContent` cannot fix it from below. → [drawer.md](docs/components/drawer.md)
 
 <!-- END GENERATED: sheet-contract -->
 

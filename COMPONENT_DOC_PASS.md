@@ -148,6 +148,20 @@ rules** (touch-action, never synthesise a tap from pointerup, snap mandatory,
 viewport width) have no component that owns them. Do not create a page to
 satisfy the script — a subject earns a page by being a subject.
 
+**And one thing that cannot gate: `npm run doc-rules`.** It finds sentences in
+the owner pages that read like obligations (NEVER, ALWAYS, must, mandatory)
+and reports the ones no `contract:` line covers — the gap the generator cannot
+see, because a rule that never got a contract line is invisible to a check
+that compares contract lines. Run it during a pass, read the list, promote
+what deserves promoting.
+
+It is advisory on purpose. "Is this sentence a rule" is not decidable, and
+about half of what it finds is a prop note, a sentence that happens to use the
+word, or a component detail that belongs to its page. A check that is wrong
+half the time must not block a push: it teaches everyone to bypass, and takes
+the honest gates with it. Judgements go in `NOT_A_RULE` in the script, each
+with the reason visible.
+
 **It gates.** `.github/workflows/docs.yml` runs the sweep on every pull
 request and every push to `main`, so a component that gains a behaviour and
 does not gain the prose fails before anyone reads the stale version. A red run

@@ -8,6 +8,7 @@ usage:
 contract:
   - "[touch] **A bottom sheet's top corner is owned by `SIDE_CLASSES.bottom`.** No call site writes it: the value is derived from the control the bar has to hold, so it is stated once, where that arithmetic lives."
   - "[sheet] **An overlay panel does not push content.** A panel opening under a sticky header is out of flow (`absolute inset-x-* top-full z-40`) so it floats over the page instead of displacing it."
+  - "[sheet] **`swipeDirection` lives on the `Sheet` root and must match `side`.** The popup reads the direction from the root's context, so a bottom sheet whose root still says the default gets a gesture that fights its geometry — and `SheetContent` cannot fix it from below."
 ---
 
 `Sheet` is the edge-anchored drawer — the cart from the right, the Studio

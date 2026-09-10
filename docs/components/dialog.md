@@ -10,6 +10,7 @@ contract:
   - "[touch] **Sheet chrome is shared, and breaks quietly from a call site.** `.sheet-glass` only works because the bar OVERLAYS the content — glass over nothing is a colour — and `--sheet-bar-h` must equal the bar's real height, or the list under an absolute bar loses its first rows."
   - "[sheet] **Every Dialog and AlertDialog is a bottom sheet on mobile and a centred modal from 768.** It is baked into the base content component — an individual dialog sets its desktop width and height only, and must not re-declare the positioning."
   - "[sheet] **Forms go full-screen on phones** (`mobile=\"form\"`). A bottom sheet cannot hold a form once the keyboard is up, so any dialog whose primary action must survive typing anchors to the top, gives only its body a scroll, and puts the confirming action where the keyboard cannot reach it."
+  - "[sheet] **A full-bleed footer's negative margins must match the gutter at BOTH sizes** (`-mx-3 md:-mx-6`), or the bar stops short of the edges at one of them — the kind of thing that looks like a rendering bug and is arithmetic."
 ---
 
 **Every** `Dialog` and `AlertDialog` is a bottom sheet on mobile and a centred
