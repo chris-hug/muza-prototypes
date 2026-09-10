@@ -7,7 +7,13 @@
  *
  *   sm       h-8   32px   text-2xsmall  16px
  *   default  h-10  40px   text-small    19px
- *   lg       h-12  48px   text-small    19px
+ *   lg       h-12  48px   text-small    19px   ← what a field renders at
+ *
+ * `lg` is the step a form control takes when nobody chooses: `Input`,
+ * `SelectTrigger`, `Combobox`, `ChipInput`, `DatePicker` and `InputSelect`
+ * all default to it, and every button inside a form block is set to match.
+ * `default` is still on the ladder and still reachable by prop — it was the
+ * desktop-first number for something you type into on a phone.
  *
  * Type stops climbing at `default`. 19px is the body size of the whole form
  * family; `lg` is a bigger TARGET, not bigger text, and a 21px control label

@@ -14,7 +14,7 @@
  * broken: it would simply have shown a palette the app no longer used.
  *
  * The chain is already IN the CSS — a semantic token's value is literally
- * `var(--muza-blue-500)` — so the mapping does not need to be restated. It
+ * `var(--muza-brand-500)` — so the mapping does not need to be restated. It
  * needs to be read.
  */
 

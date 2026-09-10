@@ -21,6 +21,20 @@ const FILES = import.meta.glob("/docs/components/*.md", {
   eager: true,
 }) as Record<string, string>
 
+/* WHEN the text you are reading was loaded into this page.
+ *
+ * The docs are inlined into this module, so the module's own execution time
+ * IS the age of every doc it hands out. In dev that number moves on its own:
+ * editing any `.md` invalidates this module, Vite re-executes it, and the
+ * timestamp becomes the moment of that edit. In a built page it is the load,
+ * which is the same statement — this is the text the bundle shipped with.
+ *
+ * It exists because a doc modal is trusted on sight, and a stale one looks
+ * exactly like a fresh one. The published date beside it answers "when was
+ * this written"; this answers "is what I am looking at current".
+ */
+export const DOCS_RENDERED_AT = new Date()
+
 export interface ComponentDoc {
   /** Section id — the file's basename, e.g. `dialog`. */
   id: string

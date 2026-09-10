@@ -50,6 +50,542 @@
   :root { --page-px: 0.75rem; }         /* 12px */
 }
 
+/* Page enter — the view's SECTIONS arrive, not the view as one block.
+   
+   It used to be `[animation:pageFadeIn_250ms_ease-out]` on the wrapper: one
+   opacity ramp over everything, which reads as a screen being swapped rather
+   than a page arriving. Staggering the chunks gives the eye an order to
+   follow, and because each chunk is shorter than the old single fade the page
+   is actually finished sooner — last chunk lands at 225 + 200 = 425ms, but the
+   first is already there at 200.
+   
+   `> * > *` and not `> *`: every view returns ONE column wrapper (the
+   `max-w-[1480px] … flex flex-col gap-10` root), so its CHILDREN are the
+   semantic chunks — header, track list, "More from", the rails. Staggering one
+   level up would just be the old single fade again.
+   
+   The step is capped at the 6th child: a library page can hold twenty
+   sections, and a ladder that keeps counting would still be arriving after a
+   second. Everything past the cap comes in together.
+   
+   `both` so a chunk is invisible during its own delay rather than flashing at
+   full opacity first. */
+@utility page-enter {
+  & > * > * {
+    animation: pageFadeIn 200ms cubic-bezier(0.2, 0, 0, 1) both;
+  }
+  & > * > *:nth-child(2)   { animation-delay: 45ms;  }
+  & > * > *:nth-child(3)   { animation-delay: 90ms;  }
+  & > * > *:nth-child(4)   { animation-delay: 135ms; }
+  & > * > *:nth-child(5)   { animation-delay: 180ms; }
+  & > * > *:nth-child(n+6) { animation-delay: 225ms; }
+}
+
+/* Motion is a courtesy, not a requirement. */
+@media (prefers-reduced-motion: reduce) {
+  .page-enter > * > * { animation: none; }
+}
+
+/* Focus ring — one definition, every focusable surface.
+   
+   It was written out at 40 call sites in four different sizes (`ring-3`
+   thirty times, `ring-2` eight, plus a `ring-[3px]` and a `ring-1`), which is
+   how a ring ends up three pixels thick on one control and one on its
+   neighbour without anyone deciding that.
+   
+   2px at 20%, flush against the element (`outline-offset: 0`). It was briefly
+   held 3px off; sitting on the edge it needs the extra pixel back, because a
+   ring that touches the border is read together with it rather than against
+   it.
+   
+   `outline` stays the mechanism even without a gap: it does not take part in
+   the box-shadow stack, so it never fights a component's own shadow, and it
+   follows `border-radius` for free. It is deliberately
+   quieter than it was: `:focus-visible` matches TEXT INPUTS on a plain mouse
+   click — that is required by spec, since a click into a field is followed by
+   typing — so this is not the rare keyboard-only decoration it looks like on
+   buttons. It is on screen every time someone clicks a field.
+   
+   Specificity note: plenty of components carry `outline-none`, which is a
+   single class. `.focus-ring:focus-visible` outranks it, so the ring wins when
+   it matters and the element stays outline-free the rest of the time. */
+/* The same ring for a WRAPPER that contains the real input — the combobox and
+   the chip input put the border and the ring on a shell while the caret lives
+   in an `<input>` inside it, so the state to watch is `:focus-within`. Split
+   into its own utility rather than matching both in one: an element that
+   matches `:focus-within` for its child would otherwise light up for a button
+   nested inside it too. */
+/* The invalid ring — same geometry as the focus ring, different colour.
+   
+   It was `ring-3` at 20% (40% in dark) while focus had moved to a 2px outline,
+   so a field that was both focused and invalid drew two rings of different
+   thickness on top of each other. Same mechanism and same 2px here means the
+   two can only ever differ in colour, which is the only thing that should
+   differ.
+   
+   Dark keeps its higher alpha: destructive is `red-900` there, and 20% of it
+   against a near-black field is not a warning anyone sees. */
+@utility invalid-ring {
+  &[aria-invalid="true"] {
+    outline: 2px solid color-mix(in srgb, var(--destructive) 20%, transparent);
+    outline-offset: 0;
+  }
+}
+
+.dark .invalid-ring[aria-invalid="true"] {
+  outline-color: color-mix(in srgb, var(--destructive) 40%, transparent);
+}
+
+/* Every state change that is only a COLOUR fades, and always the same way.
+   
+   Button carried this transition inline. Everything else that lights up on
+   hover — menu items, select and combobox options, the field borders, the
+   small icon buttons that live inside dialogs and headers — carried nothing,
+   so the app had two hover languages: buttons eased, and the 40-odd bespoke
+   controls next to them snapped. The snap is what you notice when both are
+   on screen at once.
+   
+   440ms — well over three times the 130ms press, on purpose. A press is an answer and
+   has to land immediately; a hover is the pointer passing through, and at the
+   press speed it flickered on every crossing. Same curve for both, so they
+   still read as one language. `outline-color` is in the list so the focus
+   ring arrives with the rest, `box-shadow` is deliberately NOT — it repaints
+   the ring region every frame and the icon inside judders.
+   
+   The press does not ride on this: it is keyframe-driven
+   (`press-ripple` / `press-ink`, both 130ms), so changing the number here
+   never slows the press down.
+   
+   Colour-only. No geometry: nothing here moves, scales or nudges. */
+@utility state-fade {
+  transition-property: color, background-color, border-color, outline-color, opacity, --hover-r;
+  /* IN and OUT are not the same length, and the split falls out of how
+     transitions work rather than needing a second mechanism: the transition
+     that runs on the way IN is the one declared on `:hover`, the one that runs
+     on the way OUT is the one declared here. So the base is the fast number.
+     
+     440ms in, 100ms out. Arriving is the thing you are meant to watch; leaving
+     is the pointer already somewhere else, and a slow exit means the row you
+     left is still glowing two rows later. */
+  transition-duration: 100ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+
+  &:hover {
+    transition-duration: 440ms;
+  }
+}
+
+/* The same fade, at a list's pace.
+   
+   A button is a destination: you arrive at it, and 440ms of colour is the
+   thing you came for. A row is a corridor — the pointer crosses six of them
+   on the way somewhere, and at 440ms the fill is still climbing when it is
+   already two rows further on, so the list smears. 260ms lands the colour
+   under the pointer while it is still there and still reads as arriving:
+   150ms and 200ms were both tried and the fill simply appeared.
+   
+   Out stays at the base 100ms: leaving is the same speed everywhere. */
+/* One underline for every text link, and it WIPES IN from the left.
+   
+   `text-decoration` cannot be animated — you can fade its colour, which reads
+   as the line materialising everywhere at once, but you cannot draw it. So the
+   line is a background gradient whose width goes 0 to 100%: it grows from the
+   left edge of the word to its right, which is the direction the word is read
+   in, and it un-grows the same way when the pointer leaves.
+   
+   140ms. The line is short and the gesture is a hint, not an event; slower and
+   the pointer has usually moved on before it finishes.
+   
+   `width: fit-content` is part of the deal. A background spans the BOX, not
+   the text, and several of these links are stretched flex children — a title
+   in a row's info column is as wide as the column, so its underline would run
+   out past the last letter. Shrinking the box to the text puts the line back
+   under the word; `max-width: 100%` keeps `truncate` working, and neither has
+   any effect on an inline `<a>`, which is text-sized already.
+   
+   `text-decoration-skip-ink` is the one thing lost: a drawn line does not know
+   where the descenders are, so a `g` or a `y` is crossed rather than skipped.
+   At 1px under 17px type that is the cheaper half of the trade. */
+@utility link-underline {
+  width: fit-content;
+  max-width: 100%;
+  /* Room UNDER the text for a line that a background cannot paint outside of.
+     
+     `text-decoration` is allowed to draw past the element's box; a background
+     is clipped to it. On a link whose box is exactly one line box — a credits
+     value at `text-small` on `leading-[20px]`, say — the baseline sits 17px
+     down and the line belongs at 20px, which is the first pixel row the
+     browser will not paint. The line was there, and invisible, everywhere the
+     leading was tight.
+     
+     4px of bottom padding gives it that row, and `-4px` of margin gives the
+     layout back what the padding took, so nothing moves. The padding does not
+     shift the line itself, because `background-origin: content-box` measures
+     from the top of the content box either way. */
+  padding-bottom: 4px;
+  margin-bottom: -4px;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  /* The offset is measured from the BASELINE, not from the box.
+     
+     A flat `100%` hangs the line under the box, and a flat `100% - 3px` is
+     only right for one line-height — the same 3px that looked correct under a
+     row's title cut into the descenders of the meta line beside it, because
+     that link inherits `leading-5` on 17px type and its box ends barely a
+     pixel under the baseline.
+     
+     So the distance is derived, and measured from the TOP, because the bottom
+     of the box is not the bottom of the text: a link that is a stretched flex
+     item is as tall as its row — 24px around an 18px line box on the meta
+     line — and anything anchored to `100%` inherits that slack.
+     
+     From the top of the first line box the baseline sits at
+     `0.5lh + (ascent - descent)/2`. Founders Grotesk reports 0.941em ascent
+     and 0.235em descent, so that is `0.5lh + 0.353em`; three pixels under it
+     is the offset the native `underline-offset-[3px]` used to give.
+     `background-origin: content-box` keeps padding out of the sum, and `lh`
+     is the element's own line-height, so every size and leading in the app
+     lands on the same optical offset with no per-call-site number.
+     
+     The cost of measuring from the top is multi-line text: a title that wraps
+     gets one line under its FIRST line, where `text-decoration` would have
+     underlined both. Nearly every link here is single-line (`truncate`), and
+     the ones that are not are titles in cards, where a line under the first
+     line is the lesser of the two errors. */
+  background-origin: content-box;
+  background-position: 0 calc(0.5lh + 0.353em + 3px);
+  background-size: 0% 1px;
+  transition: background-size 140ms cubic-bezier(0.2, 0, 0, 1);
+
+  &:hover,
+  &:focus-visible {
+    background-size: 100% 1px;
+  }
+}
+
+/* Some links are underlined by their CONTAINER, not by themselves — an artist
+   card underlines its name when you hover the card, a stepper step underlines
+   its label when you hover the step. Those parents already carry a named
+   Tailwind `group/…`, but a group variant only compiles into the child's own
+   `:hover`, which is the one thing that does not happen here.
+   
+   So the parent says it out loud. `link-underline-group` on the container that
+   owns the hover, `link-underline` on the text: one wipe, from whichever of
+   the two the pointer actually enters. */
+.link-underline-group:hover .link-underline,
+.link-underline-group:focus-visible .link-underline {
+  background-size: 100% 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link-underline { transition-duration: 0s; }
+}
+
+@utility state-fade-quick {
+  transition-property: color, background-color, border-color, outline-color, opacity, --hover-r;
+  transition-duration: 100ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+
+  &:hover {
+    transition-duration: 260ms;
+  }
+}
+
+@utility focus-ring-within {
+  &:focus-within {
+    outline: 2px solid color-mix(in srgb, var(--ring) 20%, transparent);
+    outline-offset: 0;
+  }
+}
+
+@utility focus-ring {
+  &:focus-visible {
+    /* `outline`, not `ring`, and that is the whole reason the gap works.
+       
+       Tailwind's `ring-offset` is a second BOX-SHADOW painted over the ring.
+       Given an opaque colour it hides the ring's inner edge and looks like a
+       gap — but that colour has to match whatever the control sits on, so it
+       is wrong on a card, a popover or artwork. Given a transparent colour it
+       paints nothing and erases nothing, so there is no gap at all. Both were
+       tried here; the second is what shipped for a few minutes.
+       
+       `outline-offset` moves the outline away from the border box without
+       painting the space between. Whatever is actually behind shows through —
+       page, card, artwork, anything — and the outline follows `border-radius`
+       on its own. */
+    outline: 2px solid color-mix(in srgb, var(--ring) 20%, transparent);
+    outline-offset: 0;
+  }
+}
+
+/* Press ripple — the press colour grows radially from the point that was
+   pressed, instead of the whole fill switching at once.
+   
+   Painted on the element's own `::before`, so nothing is added to the DOM and
+   no call site has to change. The host MUST be positioned — the pseudo is
+   `absolute; inset: 0`, so on a static host it anchors to the nearest
+   positioned ancestor and floods that instead: the sheet, the toolbar, the
+   card. `Button` carries `relative` already; every other consumer of
+   `.press-ripple` has to say so too. It fills the button's box exactly and inherits
+   its radius, so the ripple is clipped to the pill without `overflow: hidden`
+   — which matters, because `icon-sm` extends its 40px hit area with `::after`
+   and clipping would eat it.
+   
+   `--press-x` / `--press-y` are written straight onto the element on
+   pointerdown by one document-level listener (`use-press-ripple.ts`) — no
+   React state, because a press must not re-render — and default to the centre
+   so a keyboard activation still fills evenly.
+   
+   Release fades rather than un-grows: the circle does keep travelling, but the
+   opacity is gone before you can read it as the ripple retracting. */
+.press-ripple {
+  isolation: isolate;
+}
+
+/* Hover grows from the pointer too — the same circle as the press, one step
+   earlier in the gesture.
+   
+   Painted as the host's own `background-image`, NOT a second pseudo-element:
+   `::before` is the press and `::after` is `icon-sm`'s 40px hit area, so there
+   is no third one to spend. A background image sits above `background-color`
+   and below the content, which is exactly the layer a hover fill wants.
+   
+   The consequence is that the hover colour has to be a TOKEN
+   (`--hover-fill`), not a `hover:bg-*` class: a class would swap
+   `background-color` underneath the gradient and the fill would arrive twice,
+   once flat and once growing. Button's variants carry the token; anything
+   still using `hover:bg-*` keeps the plain fade, which is the same colour
+   arriving without the geometry.
+   
+   Only where a pointer can actually hover. On touch `:hover` sticks after the
+   finger lifts, and the press ripple already answers the tap. */
+@property --hover-r {
+  syntax:        "<percentage>";
+  initial-value: 0%;
+  inherits:      false;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  /* The edge is FEATHERED, not a hard circle. Two stops at the same position
+     draw a rim you can see travelling, and a visible rim reads as a shape
+     crossing the button rather than the colour arriving. 30% of the gradient
+     line is enough that you only register the direction it came from. */
+  .press-ripple {
+    background-image: radial-gradient(circle at var(--hover-x, 50%) var(--hover-y, 50%),
+      var(--hover-fill, transparent) calc(var(--hover-r) - 30%),
+      transparent                    var(--hover-r));
+  }
+
+  /* 150%, like the press: the entry point can be a corner and the radius is
+     measured from there to the far one. */
+  .press-ripple:hover {
+    --hover-r: 150%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .press-ripple:hover { --hover-r: 150%; transition-duration: 0s; }
+}
+
+/* The circle's CENTRE lives inside the gradient (`at var(--press-x) …`) and
+   only its radius animates.
+   
+   Growing it with `background-size` instead looked simpler and is wrong: a
+   percentage `background-position` positions the SCALED image, so as the size
+   goes 0% → 300% the circle's centre slides toward the middle of the element.
+   It stops being a ripple from under the finger and becomes a wash over the
+   whole control — which is exactly what it looked like.
+   
+   Anchoring the centre in the gradient costs a registered property, because an
+   untyped custom property cannot be interpolated and the radius would jump.
+   That is the trade: `@property` for a circle that stays where it was pressed. */
+@property --press-r {
+  syntax:        "<percentage>";
+  initial-value: 0%;
+  inherits:      false;
+}
+
+.press-ripple::before {
+  content:        "";
+  position:       absolute;
+  inset:          0;
+  z-index:        -1;
+  border-radius:  inherit;
+  pointer-events: none;
+  opacity:        0;
+  --press-r:      0%;
+  background: radial-gradient(circle at var(--press-x, 50%) var(--press-y, 50%),
+    var(--press-fill, transparent) var(--press-r),
+    transparent                    var(--press-r));
+}
+
+/* An ANIMATION, not a transition on `:active`: a transition belongs to a
+   state, so letting go turned the circle round and shrank it back from
+   wherever it had got to — a quick tap showed a stub. An animation is a
+   one-shot and runs to the end however brief the press was. `forwards` leaves
+   it faded, so there is nothing to clean up.
+   
+   150%: the press point can be in a corner, and the radius is measured from
+   there to the far one. */
+@keyframes press-ripple {
+  from { --press-r:   0%; opacity: 1; }
+  65%  {                  opacity: 1; }
+  to   { --press-r: 150%; opacity: 0; }
+}
+
+.press-ripple[data-press]::before {
+  animation: press-ripple 130ms cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+/* The label thins for the length of the press and comes straight back. It is
+   NOT allowed to disappear — a button whose text vanishes under the finger
+   reads as broken, not as pressed. The dip targets a token (`--press-ink`, set
+   per variant) rather than `currentColor`: inside the `color` property
+   `currentColor` resolves to the INHERITED colour, so it would fade toward the
+   parent's ink instead of the button's own. */
+@keyframes press-ink {
+  50%  { color: var(--press-ink, inherit); }
+}
+
+.press-ripple[data-press] {
+  animation: press-ink 130ms ease-out;
+}
+
+/* Reduced motion still answers the press, it just does not travel. */
+@media (prefers-reduced-motion: reduce) {
+  .press-ripple[data-press]::before {
+    animation: press-flash 160ms ease-out forwards;
+    --press-r: 150%;
+  }
+  @keyframes press-flash {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+  }
+}
+
+/* Radio-card selection sweep — the line travels clockwise from 12 o'clock
+   instead of the whole border changing colour at once.
+   
+   A border cannot be partially painted, so this is an overlay: a conic
+   gradient filling from `--card-sweep` degrees, masked down to a 1px ring by
+   the two-layer mask-composite trick (paint the whole box, punch out the
+   content box, keep the difference). `from -90deg` starts the fill at the top
+   edge and `forwards` leaves the finished ring in place.
+   
+   The angle has to be a REGISTERED property. A plain custom property is an
+   untyped string to the animation engine and would jump 0 → 360 with nothing
+   in between; `@property` gives it a type so it can be interpolated.
+   
+   The card underneath keeps its HOVER border while this runs, so the sweep
+   reads as the line being drawn over it rather than two rings crossfading. */
+@property --card-sweep {
+  syntax:        "<angle>";
+  initial-value: 0deg;
+  inherits:      false;
+}
+
+/* 180, not 360: the ring is drawn by TWO arms leaving the press point at once,
+   so each only has half the circle to cover and they meet opposite it. */
+@keyframes card-sweep {
+  from { --card-sweep: 0deg;   }
+  to   { --card-sweep: 180deg; }
+}
+
+.card-sweep {
+  position:      absolute;
+  /* `-1px`, not `0`, and this is what makes the drawn ring land exactly on the
+     card's own border instead of a hair inside it.
+     
+     An absolutely positioned child is laid out against the PADDING box, and
+     the border sits outside that — so `inset: 0` offsets the overlay by one
+     border width, and `border-radius: inherit` then bends it on a radius one
+     pixel tighter than the border it is supposed to cover. The two rings ran
+     parallel and never quite met.
+     
+     Pulling the overlay out by the border width makes its box the border box:
+     same rectangle, same radius, so the 1px ring the mask cuts sits precisely
+     on top of the border. Keep this in step with the card's border width. */
+  inset:         -1px;
+  border-radius: inherit;
+  padding:       1px;
+  pointer-events: none;
+  /* `--card-sweep-from` is the ORIGIN — where the line starts being drawn —
+     and the card sets it per click from the pointer's angle around its own
+     centre. `-90deg` (12 o'clock) is the fallback for a selection made with
+     the keyboard, which has no point to start from. `--card-sweep` is the
+     EXTENT, and that is the part the keyframe animates.
+     
+     ONE arc, not two layers. The obvious build is a clockwise gradient plus a
+     second one running back from the origin — and it seams: the two share
+     their edge at the press point, so the 20% ink lands twice there and
+     each edge is antialiased on its own. The result reads as a glitch exactly
+     where the eye is looking.
+     
+     A single gradient does both directions if it STARTS half a sweep behind
+     the origin and runs twice the sweep forward: the arc is then centred on
+     the press point and both of its ends travel outward together. One edge
+     pair, one alpha, no seam. */
+  background: conic-gradient(
+    from calc(var(--card-sweep-from, -90deg) - var(--card-sweep)),
+    color-mix(in srgb, var(--foreground) 20%, transparent) calc(var(--card-sweep) * 2),
+    transparent                                            calc(var(--card-sweep) * 2));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  /* 340ms on an ease-IN curve, and the curve is the point: the ring holds for
+     a beat at the press point, then races round and snaps shut.
+     
+     It ran on `cubic-bezier(0.2, 0, 0, 1)` — ease-OUT, which spends its speed
+     immediately and then crawls the last third. Read on a ring that is the
+     wrong way round: the interesting part is the closing, not the leaving.
+     
+     `cubic-bezier(0.75, 0, 0.95, 0)`, steeper again than the quartic ease-in
+     it replaced (0.5, 0, 0.75, 0). Both control points sit at y=0, so the arc
+     is still visibly opening at the two-thirds mark and then covers the whole
+     back half of the ring in the last handful of frames. Pushing x1 out is
+     what buys the hold; pushing x2 to 0.95 is what makes the finish a snap
+     rather than an arrival. */
+  animation: card-sweep 340ms cubic-bezier(0.75, 0, 0.95, 0) forwards;
+}
+
+/* Motion is a courtesy: without it the ring is simply there. */
+@media (prefers-reduced-motion: reduce) {
+  .card-sweep { animation: none; --card-sweep: 180deg; }
+}
+
+/* Artwork edge — a 1px hairline INSIDE every piece of cover art.
+   
+   Album art is user content: a white sleeve on the light background and a
+   black sleeve on the dark one both dissolve into the page, and the artwork
+   loses its shape. A hairline gives every cover the same edge regardless of
+   what is printed on it.
+   
+   Three deliberate choices:
+     · `outline`, not `border` or `ring` — it takes no layout space, so a
+       48px thumb stays 48px and nothing reflows;
+     · `outline-offset: -1px` draws it INSIDE the box, so a cover inside an
+       `overflow-hidden` collage tile keeps its hairline instead of having it
+       clipped away;
+     · pure black / pure white at 10%, never a tinted neutral. A tinted
+       hairline picks up the surface colour behind it and reads as dirt on
+       the edge of the sleeve.
+   
+   Outline follows `border-radius`, so this composes with `rounded-xs`,
+   `rounded-full` and everything between. */
+@utility art-edge {
+  outline: 1px solid rgba(0, 0, 0, 0.1);
+  outline-offset: -1px;
+}
+.dark .art-edge,
+.dark.art-edge {
+  outline-color: rgba(255, 255, 255, 0.1);
+}
+
 /* Card grid — the responsive album/artist/playlist tile grid. Column COUNT
    steps on the shared COLUMN LADDER above; gap-x 16px, gap-y 24px. Put
    `grid-cards` on the <ul>; it queries the nearest `@container` ancestor. */
@@ -181,16 +717,23 @@
   --color-popover-foreground:      var(--popover-foreground);
   --color-primary:                 var(--primary);
   --color-primary-hover:           var(--primary-hover);
+  --color-primary-active:          var(--primary-active);
   --color-primary-foreground:      var(--primary-foreground);
   --color-primary-text:            var(--primary-text);
   --color-secondary:               var(--secondary);
   --color-secondary-foreground:    var(--secondary-foreground);
   --color-secondary-hover:         var(--secondary-hover);
+  --color-secondary-active:        var(--secondary-active);
+  --color-press-on-secondary:      var(--press-on-secondary);
+  --color-press-on-muted:          var(--press-on-muted);
+  --color-press-on-accent:         var(--press-on-accent);
   --color-muted:                   var(--muted);
   --color-muted-foreground:        var(--muted-foreground);
   --color-accent:                  var(--accent);
   --color-accent-foreground:       var(--accent-foreground);
   --color-destructive:             var(--destructive);
+  --color-destructive-hover:       var(--destructive-hover);
+  --color-destructive-active:      var(--destructive-active);
   --color-destructive-foreground:  var(--destructive-foreground);
   --color-border:                  var(--border);
   --color-input:                   var(--input);
@@ -224,9 +767,11 @@
   --color-neutral-900:  var(--muza-neutrals-900);
   --color-neutral-950:  var(--muza-neutrals-950);
 
-  /* Muza blue palette */
-  --color-blue-500: var(--muza-blue-500);
-  --color-blue-300: var(--muza-blue-300);
+  /* Muza brand palette — exposed as `bg-brand-*` etc. Renamed off `blue`
+     with the primitive: the ramp is named for its role, so a theme can make
+     it pink without every utility in the app lying about it. */
+  --color-brand-500: var(--muza-brand-500);
+  --color-brand-300: var(--muza-brand-300);
 
   /* Muza white + alpha */
   --color-muza-white:    var(--muza-white);
@@ -341,11 +886,11 @@
    NB the colour-resolver strips alpha, so `--waveform-wave` must be a SOLID
    colour — the bars' 50% opacity comes from the canvas, not the colour. */
 :root {
-  --waveform-progress: var(--muza-blue-200);
+  --waveform-progress: var(--muza-brand-200);
   --waveform-wave:     var(--muted-foreground);
 }
 .dark {
-  --waveform-progress: var(--muza-blue-50);
+  --waveform-progress: var(--muza-brand-50);
   --waveform-wave:     var(--muza-neutrals-400);
 }
 
@@ -408,6 +953,11 @@
   100% { transform: scale(1.9); opacity: 0;   }
 }
 .animate-heart-pop   { animation: heart-pop   420ms cubic-bezier(.2,.9,.3,1.3) both; }
+/* The same pop, compressed for a heart that lives inside a MENU. Measured:
+   a DropdownMenuItem is gone 256ms after its click, while the full pop peaks
+   (scale 1.3) at ~231ms — so the long version would be cut mid-swell and read
+   as the icon inflating on its way out. 220ms completes first. */
+.animate-heart-pop-quick { animation: heart-pop 220ms cubic-bezier(.2,.9,.3,1.3) both; }
 .animate-heart-halo  { animation: heart-halo  520ms ease-out both; }
 .animate-heart-burst { animation: heart-burst 480ms cubic-bezier(.2,.7,.3,1) both; }
 
@@ -429,18 +979,22 @@
   --muza-white:          oklch(99.81% 0.0053 118.5);   /* #FEFFFB */
   --muza-black:          oklch(15.55% 0.0204 108.6);   /* #0D0D04 */
 
-  /* muza colors/blue (full scale — 300 + 500 active in semantic tokens; rest reserved) */
-  --muza-blue-50:        #3E79FF;
-  --muza-blue-100:       #3F66FF;
-  --muza-blue-200:       #1E34D8;                     /* primary brand blue (light + dark) */
-  --muza-blue-300:       oklch(39.43% 0.2371 266.1);   /* #1121C2 */
-  --muza-blue-400:       #030AB1;
-  --muza-blue-500:       oklch(33.02% 0.2175 264.2);   /* #000DA2 */
-  --muza-blue-600:       #001183;
-  --muza-blue-700:       #000E69;
-  --muza-blue-800:       #000A4E;
-  --muza-blue-900:       #000734;
-  --muza-blue-950:       #000318;
+  /* muza colors/brand — the ramp the product's one accent comes from. Named
+     for the ROLE, not the colour: it is blue today, and a theme is free to
+     make it anything (see the ramp controller in the design system's Colors
+     section). Full scale; 100 and 200 are the load-bearing steps, the rest
+     are reserved. */
+  --muza-brand-50:        #3E79FF;
+  --muza-brand-100:       #3F66FF;
+  --muza-brand-200:       #1E34D8;                     /* the brand fill (light + dark) */
+  --muza-brand-300:       oklch(39.43% 0.2371 266.1);   /* #1121C2 */
+  --muza-brand-400:       #030AB1;
+  --muza-brand-500:       oklch(33.02% 0.2175 264.2);   /* #000DA2 */
+  --muza-brand-600:       #001183;
+  --muza-brand-700:       #000E69;
+  --muza-brand-800:       #000A4E;
+  --muza-brand-900:       #000734;
+  --muza-brand-950:       #000318;
 
   /* muza colors/neutrals (warm olive-tinted) */
   --muza-neutrals-50:    oklch(98.16% 0.0131 111.4);   /* #F9FAF0 */
@@ -482,18 +1036,45 @@
   --popover:                 var(--muza-white);               /* anything floating: menus, select popups, tooltips, sheets */
   --popover-foreground:      var(--muza-neutrals-950);        /* text inside a floating surface */
 
-  --primary:                 var(--muza-blue-200);            /* the one filled action per view — Button default, the player scrubber */
-  --primary-hover:           color-mix(in srgb, black 20%, var(--muza-blue-200));/* that fill on hover; a computed mix, not a pointer */
+  --primary:                 var(--muza-brand-200);            /* the one filled action per view — Button default, the player scrubber */
+  --primary-hover:           color-mix(in srgb, black 20%, var(--muza-brand-200));/* that fill on hover; a computed mix, not a pointer */
+  /* …and on press. The step is the same SIZE as the hover's, where
+     secondary's press is a little smaller than its own hover — an equal
+     delta reads weaker on a saturated fill than on a near-neutral one, so
+     matching the two ratios would leave this one feeling dead. */
+  --primary-active:          color-mix(in srgb, black 40%, var(--muza-brand-200));
   --primary-foreground:      var(--muza-neutrals-50);         /* ink ON a primary fill */
   /* Primary as INK on neutral surfaces (links, ghost/outline-primary
      labels, accent icons). On white this matches --primary (AA at ~8.8:1);
      dark mode lifts it — see .dark. NOT the same as --primary-foreground,
      which is the near-white ink that sits ON a primary fill. */
-  --primary-text:            var(--muza-blue-200);            /* primary as INK on a neutral surface — links, ghost labels */
+  --primary-text:            var(--muza-brand-200);            /* primary as INK on a neutral surface — links, ghost labels */
 
   --secondary:               var(--muza-neutrals-200);        /* the quiet fill — Button secondary, Chips, badge surfaces */
   --secondary-foreground:    var(--muza-neutrals-900);        /* text on a secondary fill */
   --secondary-hover:         var(--muza-neutrals-300);        /* secondary one step more emphatic; hover only */
+  /* One step past hover, and the same SIZE of step. neutrals-400 was the
+     obvious pick and it was wrong: 200 → 300 drops 5.3 points of
+     lightness, 300 → 400 drops 11.8, so the press hit more than twice
+     as hard as the hover. A mix keeps both steps equal. */
+  --secondary-active:        color-mix(in srgb, black 6%, var(--muza-neutrals-300));
+  /* Ripple fills for the QUIET variants. A pointer is hovering while it
+     presses, so the circle lands on the hover colour and only has to be one
+     short step past it — the full press colour read as a jump on these.
+     
+     Direction is per theme and that is the whole reason these are tokens: an
+     arbitrary value in a class cannot know the theme, and mixing black into an
+     already-dark surface moves it by almost nothing (measured: a 15-step jump
+     became 1). Light darkens, dark lifts.
+     
+     1.5%, which measures ~3 channel steps. The scale so far: the full press
+     colour was 12-15, 6% reproduced that exactly (so it softened nothing), 3%
+     halved it to 6-7, and this halves it again. These variants are quiet by
+     definition — the press only has to be noticed, not announced. */
+  --press-on-secondary:      color-mix(in srgb, black 1.5%, var(--secondary-hover));
+  --press-on-muted:          color-mix(in srgb, black 1.5%, var(--muted));
+  --press-on-accent:         color-mix(in srgb, black 1.5%, var(--accent));
+
 
   --muted:                   var(--muza-neutrals-50);         /* the recessive surface — hovered rows, table heads, code blocks */
   --muted-foreground:        var(--muza-neutrals-a75-700);    /* captions, meta, placeholders. Opacity-based, never flattened */
@@ -502,6 +1083,12 @@
   --accent-foreground:       var(--muza-neutrals-900);        /* text on an accent surface */
 
   --destructive:             var(--tw-red-600);               /* delete and its confirmation, and nothing else */
+  /* Was a plain alpha (`/85`, `/70`) on the Button. Alpha mixes with whatever
+     is BEHIND the button, so the same press read differently on a card, a
+     dialog and a photo. A computed mix is the surface's own colour, like
+     every other fill here. */
+  --destructive-hover:       color-mix(in srgb, black 12%, var(--tw-red-600));
+  --destructive-active:      color-mix(in srgb, black 24%, var(--tw-red-600));
   --destructive-foreground:  var(--tw-red-50);                /* ink on a destructive fill */
 
   --border:                  var(--muza-neutrals-300);        /* every hairline: field borders, dividers, table rules */
@@ -535,18 +1122,26 @@
   --popover:                 var(--muza-neutrals-950);
   --popover-foreground:      var(--muza-neutrals-50);
 
-  --primary:                 var(--muza-blue-200);
-  --primary-hover:           color-mix(in srgb, black 20%, var(--muza-blue-200));
+  --primary:                 var(--muza-brand-200);
+  --primary-hover:           color-mix(in srgb, black 20%, var(--muza-brand-200));
+  --primary-active:          color-mix(in srgb, black 40%, var(--muza-brand-200));
   --primary-foreground:      var(--muza-neutrals-50);
   /* Lifted from blue-200 (~2.2:1, fails AA) to blue-100 (#3F66FF) so
      primary ink stays legible on the near-black surface. The solid
      --primary FILL stays blue-200 — white ink on it is already
      accessible. */
-  --primary-text:            var(--muza-blue-100);
+  --primary-text:            var(--muza-brand-100);
 
   --secondary:               var(--muza-neutrals-800);
   --secondary-foreground:    var(--muza-neutrals-50);
   --secondary-hover:         var(--muza-neutrals-700);
+  /* Dark's hover moves toward light, so its press does too — same
+     direction, same step size. */
+  --secondary-active:        color-mix(in srgb, white 6%, var(--muza-neutrals-700));
+  --press-on-secondary:      color-mix(in srgb, white 1.5%, var(--secondary-hover));
+  --press-on-muted:          color-mix(in srgb, white 1.5%, var(--muted));
+  --press-on-accent:         color-mix(in srgb, white 1.5%, var(--accent));
+
 
   --muted:                   var(--muza-neutrals-900);
   --muted-foreground:        var(--muza-neutrals-a50-50);
@@ -555,6 +1150,9 @@
   --accent-foreground:       var(--muza-neutrals-50);
 
   --destructive:             var(--tw-red-900);
+  /* Dark starts from red-900, so darkening would go to mud — it lifts. */
+  --destructive-hover:       color-mix(in srgb, white 12%, var(--tw-red-900));
+  --destructive-active:      color-mix(in srgb, white 24%, var(--tw-red-900));
   --destructive-foreground:  var(--tw-red-50);
 
   --border:                  var(--muza-neutrals-700);
@@ -596,14 +1194,28 @@
   --popover:                 var(--muza-white);
   --popover-foreground:      var(--muza-neutrals-950);
 
-  --primary:                 var(--muza-blue-200);
-  --primary-hover:           color-mix(in srgb, black 20%, var(--muza-blue-200));
+  --primary:                 var(--muza-brand-200);
+  --primary-hover:           color-mix(in srgb, black 20%, var(--muza-brand-200));
+  --primary-active:          color-mix(in srgb, black 40%, var(--muza-brand-200));
   --primary-foreground:      var(--muza-neutrals-50);
-  --primary-text:            var(--muza-blue-200);
+  --primary-text:            var(--muza-brand-200);
 
   --secondary:               var(--muza-neutrals-200);
   --secondary-foreground:    var(--muza-neutrals-900);
   --secondary-hover:         var(--muza-neutrals-300);
+  --secondary-active:        color-mix(in srgb, black 6%, var(--muza-neutrals-300));
+  /* Ripple fills for the QUIET variants. A pointer is hovering while it
+     presses, so the circle lands on the hover colour and only has to be one
+     short step past it — the full press colour read as a jump on these.
+     
+     Direction is per theme and that is the whole reason these are tokens: an
+     arbitrary value in a class cannot know the theme, and mixing black into an
+     already-dark surface moves it by almost nothing (measured: a 15-step jump
+     became 1). Light darkens, dark lifts. */
+  --press-on-secondary:      color-mix(in srgb, black 1.5%, var(--secondary-hover));
+  --press-on-muted:          color-mix(in srgb, black 1.5%, var(--muted));
+  --press-on-accent:         color-mix(in srgb, black 1.5%, var(--accent));
+
 
   --muted:                   var(--muza-neutrals-50);
   --muted-foreground:        var(--muza-neutrals-a75-700);
@@ -612,6 +1224,8 @@
   --accent-foreground:       var(--muza-neutrals-900);
 
   --destructive:             var(--tw-red-600);
+  --destructive-hover:       color-mix(in srgb, black 12%, var(--tw-red-600));
+  --destructive-active:      color-mix(in srgb, black 24%, var(--tw-red-600));
   --destructive-foreground:  var(--tw-red-50);
 
   --border:                  var(--muza-neutrals-300);
@@ -728,7 +1342,9 @@ img[class*="object-cover"] {
   top:             0;
   transform-style: preserve-3d;
   transform:       rotateY(0deg);
-  will-change:     transform, top;
+  /* `top` is not compositable — promising it buys no layer and only
+     widens the hint. The rotation is the transform. */
+  will-change:     transform;
 }
 .mal-carousel.mal-rotate-transition {
   transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
