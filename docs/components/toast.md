@@ -51,11 +51,14 @@ outright: measured, the toast is `[12, 434, 363, 482]` against the field's
 `[13, 433, 362, 481]`, a pixel of bleed on every side. It carries `shadow-xl`,
 because it is now sitting on top of another control rather than beside it.
 
-Its timer is a **solid `brand-500` rule** — inset from the pill's curve on a
-phone (`inset-x-5 bottom-[6px] h-[3px] rounded-full`) so its ends stay square,
-full-bleed along the bottom edge on desktop. Never a translucent wash across
-the surface: a tinted toast reads as a disabled one, or as a colour the
-palette does not have.
+Its timer is the toast's own **background running out**: a full-bleed `--muted`
+fill, `origin-left`, receding under the text and clipped by the pill. Not a
+rule — 3px of detail on a 48px control, and along a pill's curve it clips to a
+sliver. Not a translucent wash either, which reads as a disabled toast.
+`--muted` is the palette's recessive surface, so it says "time" without
+competing with the icon, the one colour a toast is allowed. The text and icon
+carry `relative`, since a positioned box paints over static ones and the fill
+would otherwise run across the words.
 
 The **description is desktop-only** (`hidden md:block`) and the title
 truncates. A confirmation

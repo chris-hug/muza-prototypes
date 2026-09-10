@@ -75,7 +75,7 @@ export const toastCloseButtonClass = cn(
 // Centred on a phone, where the toast is ONE 48px line and the icon has a
 // single line of text to sit against; the top-pinned nudge is a desktop rule,
 // for a card whose description wraps under the title.
-const ICON_CLS = "size-4 shrink-0 self-center mt-0 md:self-start md:mt-[3px]"
+const ICON_CLS = "relative size-4 shrink-0 self-center mt-0 md:self-start md:mt-[3px]"
 const ToastIcon: Record<string, React.ReactNode> = {
   default: <InfoIcon        className={cn(ICON_CLS, "text-muted-foreground")} />,
   success: <CheckCircleIcon className={cn(ICON_CLS, "text-green-600 dark:text-green-400")} />,
@@ -157,22 +157,25 @@ function ToastViewport({ className }: { className?: string }) {
                 stops the timer itself on hover. */}
             <span
               aria-hidden="true"
-              /* A solid brand rule, never a tint over the surface: a
-                 translucent wash across a toast reads as the toast itself
-                 being disabled, or as a second colour the palette does not
-                 have. On a phone it is inset from the pill's curve so its ends
-                 stay square; on desktop it runs the full bottom edge of the
-                 card. */
-              className={cn(
-                "absolute origin-left bg-brand-500 animate-[toastTimer_linear_forwards] group-hover/toasts:[animation-play-state:paused]",
-                "inset-x-5 bottom-[6px] h-[3px] rounded-full",
-                "md:inset-x-0 md:bottom-0 md:h-0.5 md:rounded-none",
-              )}
+              /* The clock is the toast's own BACKGROUND running out: a
+                 full-bleed `--muted` fill that recedes left to right under the
+                 text, clipped by the pill. Not a rule and not a tint — a rule
+                 is a 3px detail on a 48px control, and a translucent wash over
+                 the whole surface reads as a disabled toast. This reads as the
+                 surface itself being spent, which is what it measures.
+
+                 `--muted` because it is the recessive surface in the palette:
+                 it says "time" without competing with the icon, which is the
+                 only colour a toast is allowed. */
+              className="absolute inset-0 origin-left bg-muted animate-[toastTimer_linear_forwards] group-hover/toasts:[animation-play-state:paused]"
               style={{ animationDuration: `${t.timeout ?? TOAST_DEFAULT_MS}ms` }}
             />
             {icon}
 
-            <div className="flex flex-1 flex-col gap-1 min-w-0">
+            {/* `relative`: the timer is an absolutely positioned sibling, and
+                a positioned box paints over static ones — the text has to be
+                positioned too, or the fill runs across the words. */}
+            <div className="relative flex flex-1 flex-col gap-1 min-w-0">
               {t.title && (
                 <ToastPrimitive.Title className="truncate md:whitespace-normal text-small font-medium leading-5">
                   {t.title}

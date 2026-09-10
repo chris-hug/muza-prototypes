@@ -54,6 +54,14 @@ max-w-[640px] p-0 gap-0`), the **Studio switcher** in the footer tab bar
 (`footer-nav.tsx`, `side="bottom" rounded-t-2xl`), and the phone surface of
 [Detail Menu](detail-more-button.md) (`side="bottom"`).
 
+**A `Drawer.Viewport` is required for the swipe to exist at all.** Base UI puts
+`useSwipeDismiss` in the viewport; the popup only reads the resulting state
+through context. `SheetContent` renders one — a transparent `fixed inset-0`
+layer with `pointer-events-none`, the popup keeping its own positioning and
+`pointer-events-auto` — because without it `swipeDirection` on the root is
+inert and every sheet in the app could only be closed by its ✕ or the backdrop.
+It was missing from the day the component was written.
+
 **`swipeDirection` lives on the root and must match `side`.** `SheetContent`
 cannot set it — the popup reads the direction from the root's context — so the
 two are declared as a pair. The default is **`"down"`**, because nearly every

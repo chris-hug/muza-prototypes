@@ -95,12 +95,21 @@ function SheetContent({
   return (
     <SheetPortal>
       <SheetOverlay />
+      {/* The VIEWPORT is not decoration: Base UI puts the swipe-to-dismiss
+          gesture in it (`useSwipeDismiss` lives in `Drawer.Viewport`, and the
+          popup only reads the resulting state through context). Without one,
+          `swipeDirection` on the root is inert and every sheet in the app can
+          only be closed by its ✕ or the backdrop — which is exactly how they
+          all behaved. It is a transparent layer over the screen; the popup
+          keeps its own fixed positioning, and pointer events pass through
+          everywhere except the popup itself, so the backdrop still closes. */}
+      <DrawerPrimitive.Viewport className="fixed inset-0 z-50 pointer-events-none">
       <DrawerPrimitive.Popup
         data-slot="sheet-content"
         // `swipeDirection` is read off the Drawer.Root context — we set it
         // there, not here. Popup keeps only visual classes.
         className={cn(
-          "fixed z-50 flex flex-col bg-background text-popover-foreground border-border outline-none duration-200 data-open:animate-in data-closed:animate-out",
+          "pointer-events-auto fixed z-50 flex flex-col bg-background text-popover-foreground border-border outline-none duration-200 data-open:animate-in data-closed:animate-out",
           SIDE_CLASSES[side],
           className,
         )}
@@ -123,6 +132,7 @@ function SheetContent({
           </DrawerPrimitive.Close>
         )}
       </DrawerPrimitive.Popup>
+      </DrawerPrimitive.Viewport>
     </SheetPortal>
   )
 }
