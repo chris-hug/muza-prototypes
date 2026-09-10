@@ -241,6 +241,22 @@ function DialogContent({
   return (
     <DialogPortal>
       <DialogOverlay />
+      {/* The keyboard skirt: the sheet's surface, continued down behind the
+          keyboard. iOS draws the accessory bar as a floating pill with
+          transparent margins, and a sheet that simply ends at the keyboard's
+          edge lets the page show through them — a strip of blurred backdrop
+          wedged between the sheet and the bar. Its own element rather than
+          padding on the popup, because the popup is also the SCROLL box here
+          and its footer positions against the padding edge; the form sheet,
+          which scrolls in a band instead, pads itself and needs none of this.
+          Zero-height (so invisible) whenever there is no keyboard. */}
+      {!form && (
+        <div
+          aria-hidden="true"
+          data-slot="dialog-keyboard-skirt"
+          className="fixed inset-x-0 bottom-0 z-50 h-[var(--kb,0px)] bg-popover md:hidden"
+        />
+      )}
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         data-mobile={mobile}

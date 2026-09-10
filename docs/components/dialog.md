@@ -79,12 +79,20 @@ shrinks the *visual* viewport — so a `fixed; bottom: 0` sheet sits **behind**
 the keyboard. Every sheet therefore sits at `bottom: var(--kb, 0px)` and is
 capped against what that leaves.
 
-The **form sheet** holds the keyboard off with `padding-bottom` instead, and
-keeps `bottom: 0`. The content lands in the same place; the difference is that
-the surface carries on underneath. iOS draws its accessory bar as a floating
-pill with transparent margins around it, and a sheet that ended at the
-keyboard's edge let the page show through those margins — a strip of blurred
-backdrop between the sheet and the bar.
+Ending exactly at the keyboard is not enough, though: iOS draws its accessory
+bar as a floating pill with transparent margins around it, so the page shows
+through those margins as a strip of blurred backdrop between the sheet and the
+bar. Both presentations continue their surface down behind the keyboard, by
+different means:
+
+- the **form sheet** keeps `bottom: 0` and holds the keyboard off with
+  `padding-bottom: var(--kb)`. Content lands in the same place; the surface
+  carries on underneath.
+- the **bottom sheet** can't do that — the popup is also the scroll box, and
+  its footer positions against the padding edge — so it gets a **keyboard
+  skirt**: `[data-slot="dialog-keyboard-skirt"]`, a `fixed inset-x-0 bottom-0
+  h-[var(--kb,0px)] bg-popover` sibling rendered just under the popup. Zero
+  height, and so invisible, whenever there is no keyboard.
 
 `scroll-padding` keeps the browser's own "scroll the focused field into view"
 honest: `scroll-padding-bottom: 8rem` on a bottom sheet so a field never lands
