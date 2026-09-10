@@ -116,6 +116,11 @@ const TABS: PillTab[] = [
   screen, so the third tab sat off-screen at rest and the strip read as a row
   of buttons rather than as a filter. At `sm` the same three come to 377px —
   all present, one pixel of scroll to show the strip moves.
+- The strip carries `py-1.5 -my-1.5 overflow-y-hidden` for those targets: the
+  6px each one hangs past its pill has to live INSIDE the scroll box, or the
+  box overflows on the cross axis — and a scroller that overflows on one axis
+  scrolls on both, which made every pill bar in the product drift up and down
+  under a finger. The negative margin gives the space back to the layout.
 - **`count`** renders as a pill `Badge` in the `count` variant after the
   label; it restyles itself when the chip is selected, so no per-tab colour
   is needed. **`icon`** is a leading glyph for a tab that is not a plain

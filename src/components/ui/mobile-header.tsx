@@ -136,6 +136,13 @@ export function MobilePillTabs({ tabs, value, onChange, className }: {
     // Bleed to the edges so pills scroll under the host's gutter.
     <div className={cn(
       "-mx-3 px-3 flex gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+      // Room for the pills' 44px hit areas INSIDE the scroll box, taken back
+      // with a negative margin so the strip occupies the same space as
+      // before. Without it the 6px each target hangs past its 32px pill
+      // overflows the box on the cross axis — and a scroller that overflows
+      // on one axis scrolls on both, which is what made the strip drift up
+      // and down under a finger.
+      "py-1.5 -my-1.5 overflow-y-hidden",
       className,
     )}>
       {tabs.map(t => (
