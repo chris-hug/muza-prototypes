@@ -29,7 +29,8 @@ has no release credits.
 | Part | What it wears | Why |
 |---|---|---|
 | Cover header | `relative aspect-[3/2] w-full shrink-0 overflow-hidden bg-muted`: the cover once as a backdrop (`object-cover scale-125 blur-2xl opacity-80`), a `from-black/30` gradient, then the real cover `h-full aspect-square rounded-xs shadow-lg` centred on top | a square in a 3:2 frame would letterbox; the blurred copy fills the sides with the artwork's own colour instead of a flat bar |
-| Metadata body | `flex flex-col gap-5 p-6 overflow-y-auto` + `bodyClassName` — `min-h-0` in the live sheet (grows to the dialog's cap), `max-h-[50vh]` in the preview | the body is the scrolling band; the header never scrolls away |
+| Scroll box | `flex flex-col flex-1 min-h-0 overflow-y-auto` + `bodyClassName` — `min-h-0` in the live sheet (grows to the dialog's cap), `max-h-[50vh]` in the preview | **the cover is inside it**: one scroll box for the whole body, so the header scrolls away |
+| Metadata body | `flex flex-col gap-5 p-6` | no scroller of its own; it moves with the cover |
 | Heading | `DialogTitle md:text-large font-medium leading-none` — "Album credits" | slotted, so the live dialog passes a real `DialogTitle` for a11y while the preview passes a `<p>` |
 | Fields | `Field`: label `text-2xsmall text-muted-foreground leading-[16px]`, value `text-small text-foreground leading-[20px]` — Main artist · Album · Label · Recording Date | label and recording date render only when the catalog has them |
 | Performers | "Performers" `text-small font-medium`, then role → names, comma-joined | role is the label, names the value |
@@ -70,8 +71,13 @@ chip, so a 375 frame shows the sheet shape.
   closes the dialog so the destination is visible.
 - The album link is offered only when `hasAlbumDetail(slugify(album))` —
   navigating must not land on the default fallback page.
-- The body scrolls when the performer list outgrows the height cap; the
-  cover header stays.
+- **The cover scrolls away.** It was a fixed header above a scrolling body,
+  which on a phone spent 40% of the sheet on a picture the reader had just
+  come from — and the performers, which is what anyone opens credits for, read
+  through a ~200px slot. One scroll box hands that space to the list when the
+  reader asks for it, and scrolling back brings the cover home. The sheet
+  itself still cannot scroll (`DialogContent` pins that), so this box is the
+  only thing that moves.
 
 ## Artwork
 

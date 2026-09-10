@@ -84,13 +84,21 @@ export function CreditsContent({
   heading:   React.ReactNode
   onArtist?: (name: string) => void
   onAlbum?:  () => void
-  /** Sizing for the scrollable metadata region. Defaults to a fixed
-   *  `max-h-[50vh]` (static preview / desktop). The live sheet passes
-   *  `min-h-0` so it grows with the parent's height cap instead. */
+  /** Sizing for the scroll region — which is now the WHOLE sheet body, cover
+   *  included. Defaults to a fixed `max-h-[50vh]` (static preview / desktop);
+   *  the live sheet passes `min-h-0` so it grows with the parent's height cap
+   *  instead. */
   bodyClassName?: string
 }) {
   return (
-    <>
+    /* ONE scroll box, cover included. The cover used to be a fixed header
+       above a scrolling body, which on a phone spent 40% of the sheet on a
+       picture the reader had already seen — and the performers, which is what
+       anyone opens credits for, read through a 200px slot. Scrolling the
+       cover away hands that space to the list; scrolling back brings it
+       returns. The sheet still cannot scroll ITSELF (`DialogContent` pins
+       that), so this box is the only thing that moves. */
+    <div className={cn("flex flex-col flex-1 min-h-0 overflow-y-auto", bodyClassName)}>
       {/* 3:2 header — blurred, stretched cover fills the gaps; the real
            square cover floats centred on top. */}
       <div className="relative aspect-[3/2] w-full shrink-0 overflow-hidden bg-muted">
@@ -110,8 +118,9 @@ export function CreditsContent({
         />
       </div>
 
-      {/* Metadata — scrolls if the performer list is long. */}
-      <div className={cn("flex flex-col gap-5 p-6 overflow-y-auto", bodyClassName)}>
+      {/* Metadata — no scroller of its own any more; it scrolls with the
+          cover in the box above. */}
+      <div className="flex flex-col gap-5 p-6">
         {heading}
 
         <div className="flex flex-col gap-4">
@@ -148,7 +157,7 @@ export function CreditsContent({
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }
 
