@@ -97,9 +97,11 @@ const BASELINE = {
   },
   "src/components/ui/badge.tsx": {
     rule: "token/no-hex",
-    note: "18 hex values for the success / new / updated pills, borrowed from the avatar palette. " +
+    note: "14 hex values across three variants — success / new / updated — borrowed from the avatar palette. " +
           "They hand-write their own `dark:` variants, which is precisely the workaround the rule " +
-          "exists to prevent. Needs tokens defining before it can be fixed — a design decision, not a rename.",
+          "exists to prevent. Only the design-system page and its examples use them: `new` and `updated` " +
+          "flag DS sections, and `success` has no call site at all. Needs tokens defining, or an explicit " +
+          "decision that DS chrome is exempt — either way a design call, not a rename.",
   },
 }
 

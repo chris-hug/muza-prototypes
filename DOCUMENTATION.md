@@ -162,6 +162,12 @@ on the way past.** Its exit code is always 0, and its judgements live in a
 
 ## Known debt
 
+- **`badge.tsx` has 14 hex literals** in the `success` / `new` / `updated`
+  variants, hand-writing their own `dark:` pairs — the workaround the
+  never-a-hex rule exists to prevent. Only the design-system page uses them,
+  and `success` has no call site at all. Baselined in `conformance.mjs`
+  pending a decision: give status pills real tokens, or state that DS chrome
+  is exempt.
 - `doc-sweep` carries a **baseline of ten** components documented before the
   check existed. That list is a to-do, not an exemption: delete a line, watch
   it stay green, and it has shrunk.
