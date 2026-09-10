@@ -53,6 +53,22 @@ const RULES = [
     why: "On iOS dvh reports the height with the browser chrome collapsed, so the top of the surface sits above the visible area while the URL bar is expanded.",
     test: /\b(?:h|min-h|max-h)-(?:\[?\d*\.?\d*)?dvh\b/g,
   },
+  /* These two enforce rules the SYSTEM FILE owns outright — the strict touch
+     rules have no component page behind them, so nothing generates them and
+     nothing was watching them either. Hand-written contract deserves the same
+     enforcement as projected contract. */
+  {
+    id: "touch/snap-mandatory",
+    contract: "Rails snap `mandatory`, not `proximity` — DESIGN_SYSTEM.md § Touch",
+    why: "`proximity` only snaps when the rail happens to stop near an edge, so a hard swipe leaves a card sliced down the middle.",
+    test: /\bsnap-proximity\b/g,
+  },
+  {
+    id: "touch/pan-both-axes",
+    contract: "`touch-action: pan-x` does not mean vertical falls through — DESIGN_SYSTEM.md § Touch",
+    why: "pan-x forbids vertical panning for every touch starting on the element, so a finger on a rail cannot scroll the page at all. List both axes and let the browser pick.",
+    test: /\btouch-pan-x\b(?![^"'`]*\btouch-pan-y\b)/g,
+  },
   {
     id: "sheet/corner-not-at-call-site",
     contract: "[sheet] A bottom sheet's corner is owned by SIDE_CLASSES.bottom — drawer.md",

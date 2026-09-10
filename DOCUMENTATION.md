@@ -41,6 +41,30 @@ of a component's prose anywhere.
 
 ---
 
+## Is `DESIGN_SYSTEM.md` the contract?
+
+Partly. It holds **three different kinds of content**, and knowing which one
+you are editing is the difference between a change that sticks and a change
+that gets overwritten.
+
+| Kind | What it is | Source of truth | Enforced by |
+|---|---|---|---|
+| **Projected contract** — the 7 generated blocks | Rules the component pages own, copied in | the page's `contract:` frontmatter | `sync-docs` (agreement) + `conformance` (obedience) |
+| **Sourced contract** — the strict touch rules, Icons, the 44px target | Rules no component owns, so the system file IS where they live | this file | `conformance`, for the two that are testable as text |
+| **Reference** — token tables, colour aliases, the radius ladder and its Figma rename spec, layout tiers | Not obligations. Lookups | this file | nothing — there is nothing to obey |
+
+So: **editing inside a generated block does nothing** (the next `sync-docs`
+overwrites it, and CI fails first). Editing a strict rule is editing the
+source. Editing a table is editing data.
+
+The asymmetry worth knowing: for a long time the projected half had two checks
+behind it and the hand-written half had none — the part written directly into
+the system file was the part nothing watched. `conformance` now carries rules
+for the strict ones that can be tested as text (`snap-proximity`,
+`touch-pan-x` without `pan-y`).
+
+---
+
 ## What is generated, and why
 
 `DESIGN_SYSTEM.md` used to state a rule briefly and link to the page that
