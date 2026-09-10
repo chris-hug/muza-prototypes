@@ -1552,6 +1552,13 @@ img[class*="object-cover"] {
     muzaRowShake 260ms ease-out;
 }
 
+/* The toast's timer bar: a full-width rule that empties left-to-right over
+   the toast's own lifetime. Linear, because it is a clock, not a motion. */
+@keyframes toastTimer {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
 /* Keyframe anchors — Tailwind v4 tree-shakes `@keyframes` whose names
    it can't see referenced from a CSS rule. Our muza* keyframes are
    only referenced via JSX arbitrary-value classes
@@ -1565,6 +1572,7 @@ img[class*="object-cover"] {
 .muza-anchor-wave-center    { animation-name: muzaWaveCenter; }
 .muza-anchor-wave-right     { animation-name: muzaWaveRight; }
 .muza-anchor-page-fade-in   { animation-name: pageFadeIn; }
+.muza-anchor-toast-timer    { animation-name: toastTimer; }
 
 /* ── The form sheet, with the keyboard up ────────────────────────────────
    `[data-kb="open"]` is set by `useKeyboardInset` alongside `--kb`. It is a

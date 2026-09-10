@@ -39,6 +39,14 @@ Wrong: a toast that asks a question. "Delete this playlist? [Undo]" is a
 confirm dressed as a confirmation — that is an [alert dialog](alertdialog.md).
 The toast's Undo is for reversing something already done.
 
+## One line on a phone
+
+The phone toast is a single 42px line: icon, title, timer. The **description
+is desktop-only** (`hidden md:block`) and the title truncates. A confirmation
+is a glance, not a panel — on a 375px screen a two-line card with 18px of
+padding took a fifth of the screen to say "added", and the title already says
+it. Anything that does not fit in one line is not a toast.
+
 ## Types
 
 The `type` picks the **icon only**. Every toast shares one neutral shell
@@ -65,98 +73,48 @@ share one baseline.
 ```tsx
 // ToastViewport
 "fixed z-[100] flex flex-col gap-2 outline-none"
-// phone → a bar along the bottom
-"inset-x-3 bottom-[calc(112px+env(safe-area-inset-bottom)+var(--kb,0px))] w-auto"
+// phone → a bar along the bottom, riding on the tab bar
+"inset-x-3 bottom-[calc(var(--footer-nav-h,0px)+8px+var(--kb,0px))] w-auto"
 // sm and up → the top-right card
 "md:inset-x-auto md:right-4 md:top-4 md:bottom-auto md:w-[380px] md:max-w-[calc(100vw-2rem)]"
 ```
 
-**Phone — a bottom bar.** Every major player puts its confirmations at the
-bottom: thumb-side, and out of the content's way. The bar spans the width with
-a 12px inset (`inset-x-3`) and is lifted by three things at once:
+**Phone — a bottom bar, ON the player.** Every major player puts its
+confirmations at the bottom: thumb-side, out of the content's way. The bar
+spans the width with a 12px inset (`inset-x-3`) and sits 8px above the footer
+tab bar, whose height it reads from `--footer-nav-h`:
 
 ```text
-footer tab bar        pt-2 (8px) + h-12 (48px)   =  56px
-mini player bar       h-[56px]                    =  56px
-                                                    112px
-+ env(safe-area-inset-bottom)   the iOS home indicator
-+ var(--kb, 0px)                the on-screen keyboard, when open
+--footer-nav-h    published by FooterNav, measured (ResizeObserver, BORDER box
+                  — the bar is mostly padding, including the home-indicator
+                  inset: 48px content against 67px real on an iPhone)
++ 8px             the toast's own gap above it
++ var(--kb, 0px)  the on-screen keyboard, when open
 ```
 
-The 112px is the player shell (and, between 608 and 767 — bottom bar still, tab bar gone — it also clears the desktop player bar's `bottom-5` + 80px = 100px) — the footer nav and the mini player that rests
-flush on top of it (`app-player.tsx` pins the mini bar at
-`bottom-[calc(56px+max(10px,env(safe-area-inset-bottom)))]`). The safe-area
-term keeps the bar above the home indicator.
-
-**A known, accepted 10px overlap.** The footer pads its bottom with
-`max(10px, env(safe-area-inset-bottom))` and the mini bar sits on that, so the
-shell's top edge is really `112px + max(10px, inset)`, while the toast lifts
-by `112px + inset`. On a notched phone (inset ≥ 10px) the two are flush. On a
-phone with no home indicator (inset 0) the toast's bottom edge overlaps the
-mini bar by 10px. That is accepted and not treated as a defect: a toast
-clears itself in 2.5–5s, so the overlap is momentary and on a shrinking set
-of devices, and it is not worth a second `max()` in the lift. `--kb` matters because iOS does
-not shrink the layout viewport when the keyboard opens — a `fixed; bottom: 0`
-element sits *behind* the keyboard — so anything anchored to the bottom adds
-the keyboard height. `--kb` is published by
-[`useKeyboardInset`](src/lib/use-keyboard-inset.ts) and stays 0 on Chrome and
-Android, where `interactive-widget=resizes-content` in the viewport meta
-resizes the layout viewport natively.
-
-**Desktop — top-right.** From `md` (768) the horizontal inset is released
-(`md:inset-x-auto`), the bar becomes a `380px` card at `right-4 top-4`, and
-`md:bottom-auto` cancels the phone anchor. `md:max-w-[calc(100vw-2rem)]` keeps
-the card inside a narrow desktop window with the same 16px margin on each side.
-
-**`viewport-fit=cover` is mandatory** in the viewport meta (`app/root.tsx`).
-Without it `env(safe-area-inset-*)` resolves to **0** everywhere, so the toast's
-lift — and every other safe-area pad in the app: mobile header, footer nav,
-player shell, dialog footers — is silently a no-op on notched phones. Nothing
-errors; the bar just sits under the home indicator.
-
-## Sizing
-
-Reads the **window**, one step: **768** (`md:`), the presentation gate —
-the same gate `useIsMobile()` reads. Below it the viewport is a bar the
-width of the window minus `inset-x-3`; from 768 it is a fixed **380px** card.
-No column or box step: a toast is chrome, and where it sits is decided by the
-window alone. `ToastPreview` is `w-[380px] max-w-full`, so in a narrow frame
-it fills the column, in a wide one it is the desktop card.
-
-## Shape — compact on phones, a card on desktop
-
-```tsx
-// toastShellClass
-"relative flex w-full items-start gap-2.5"
-"rounded-xl border border-border bg-popover px-3 py-3 md:px-4 md:pt-4 md:pb-[18px] shadow-lg"
-"text-popover-foreground transition-[transform,opacity] duration-200"
-```
-
-| | Phone | `md` (768) and up |
-|---|---|---|
-| Padding | `px-3 py-3` (12px) | `px-4 pt-4 pb-[18px]` (16 / 16 / 18px) |
-| Width | full width minus `inset-x-3` | `380px` |
-| Close button | hidden | shown |
-
-A confirmation is a glance, not a panel. Two stacked lines with the desktop
-padding took a visible slice of a small screen, so phones get the slimmer bar;
-desktop keeps the roomier card because there it sits beside the content rather
-than over it.
-
-Title and description are both `text-small leading-5`; the title adds
-`font-medium`, the description `text-muted-foreground`. The text column is
-`flex-1 min-w-0` so a long title truncates or wraps inside the bar instead of
-pushing the action button out of it.
-
+**It covers the mini player, deliberately.** The lift used to clear the player
+too (112px of stacked chrome), which parked a message about something the user
+just did a third of the way up a phone screen. The player is one tap from
+coming back and the toast is gone in two seconds — the toast wins that strip
+for as long as it lives. `--kb` matters because iOS does not shrink the layout
+viewport when the keyboard opens — a `fixed; bottom: 0` element sits *behind*
+the keyboard — so anything anchored to the bottom adds
 ## Behaviour
 
 ### Dismissal
 
-- **Auto-dismiss.** `ToastProvider` defaults `timeout` to 5000ms. Every toast
-  clears itself; nothing depends on the user closing it.
-- **Swipe.** Base UI's `ToastRoot` defaults `swipeDirection` to
-  `['down', 'right']`, so a toast can be flicked away on touch without
-  `toast.tsx` configuring anything.
+- **Auto-dismiss.** `ToastProvider` defaults `timeout` to `TOAST_DEFAULT_MS`
+  (4000ms). Every toast clears itself; nothing depends on the user closing it.
+- **A timer bar says how long is left** — a 2px rule along the bottom edge,
+  emptying left to right over the toast's own `timeout` (`toastTimer`, linear:
+  it is a clock, not a motion). Without it every dismissal is a surprise, and
+  a reader waits for something that was never going to stay. It pauses with
+  the toast on hover (`group/toasts`), matching Base UI's own timer.
+- **Swipe.** `swipeDirection={['down', 'right']}` — down on a phone, where the
+  toast is at the bottom edge, right on desktop, where the card is at the
+  right. It is Base UI's default too; naming it keeps the gesture honest if a
+  placement moves. The shell is `touch-none` so the page behind cannot take
+  the gesture instead.
 - **Close button — desktop only** (`hidden md:flex`). On a phone the toast
   auto-dismisses and can be swiped, and a dismiss target would compete for
   width with the message itself on a bar that is already only
@@ -165,7 +123,7 @@ pushing the action button out of it.
 ## Duration — `TOAST_CONFIRM_MS`
 
 ```tsx
-export const TOAST_CONFIRM_MS = 2500
+export const TOAST_CONFIRM_MS = 2000
 
 add({ title: "3 songs added", type: "success", timeout: TOAST_CONFIRM_MS })
 ```
@@ -174,8 +132,8 @@ Two durations, chosen by what the toast has to do:
 
 | Duration | For | Why |
 |---|---|---|
-| `TOAST_CONFIRM_MS` (2.5s) | plain confirmations — "added", "created", "saved" | the user already saw the result; the toast only has to register. Platform snackbars sit around 2–3s. |
-| default (5s) | messages carrying an **action** (Undo) or a consequence worth reading | 2.5s is too short to read a line *and* reach a button. |
+| `TOAST_CONFIRM_MS` (2s) | plain confirmations — "added", "created", "saved" | the user already saw the result; the toast only has to register, and the timer bar makes the two seconds legible rather than abrupt. |
+| `TOAST_DEFAULT_MS` (4s) | messages carrying an **action** (Undo) or a consequence worth reading | 2s is too short to read a line *and* reach a button. |
 
 The constant exists so a confirmation reads and clears at **one known
 duration** across the app, instead of each call site inventing its own
@@ -206,7 +164,7 @@ Undo, and `ShopMyProducts` for an "Open settings" shortcut.
 
 The button is `text-xsmall font-medium`, `border-border`, `hover:bg-accent` —
 a secondary control, deliberately quieter than the message it sits next to.
-Leave a toast with an action on the 5s default.
+Leave a toast with an action on the 4s default.
 
 ## Wording
 

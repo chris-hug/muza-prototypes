@@ -27,13 +27,18 @@ type ToastType = "default" | "success" | "error" | "warning" | "info" | "loading
 // so toasts don't visually duplicate alert styling. Exported so static
 // previews can render the same shell without forking the styles.
 export const toastShellClass = cn(
-  "relative flex w-full items-start gap-2.5",
-  // Compact on phones: a confirmation is a glance, not a panel. Every major
-  // player uses a slim single-line bar at the bottom for "added to playlist";
-  // 4px/18px of padding around two stacked lines took a quarter of a small
-  // screen. Desktop keeps the roomier card.
-  "rounded-xl border border-border bg-popover px-3 py-3 md:px-4 md:pt-4 md:pb-[18px] shadow-lg",
-  "text-popover-foreground transition-[transform,opacity] duration-200",
+  "relative flex w-full items-center gap-2.5 md:items-start",
+  // A phone toast is ONE LINE: a confirmation is a glance, not a panel, and
+  // on a 375px screen a two-line card with 18px of padding is a fifth of the
+  // screen for "added". The description is desktop-only for the same reason —
+  // the title already says it. Desktop keeps the roomier card.
+  "rounded-lg md:rounded-xl border border-border bg-popover shadow-lg",
+  "px-3 py-2.5 md:px-4 md:pt-4 md:pb-[18px]",
+  // `overflow-hidden` clips the timer bar to the rounded corners; the timer
+  // is the only child that reaches the edges.
+  "overflow-hidden text-popover-foreground transition-[transform,opacity] duration-200",
+  // The swipe belongs to the toast, not to the page scrolling behind it.
+  "touch-none",
 )
 const toastShell = toastShellClass
 
@@ -76,7 +81,11 @@ const ToastIcon: Record<string, React.ReactNode> = {
 
 // ── Provider + Viewport (place in root layout) ─────────────────────────────────
 
-function ToastProvider({ children, timeout = 5000 }: { children: React.ReactNode; timeout?: number }) {
+/** Default life of a toast carrying something worth reading — a consequence,
+ *  or an action like Undo. Plain confirmations use `TOAST_CONFIRM_MS`. */
+export const TOAST_DEFAULT_MS = 4000
+
+function ToastProvider({ children, timeout = TOAST_DEFAULT_MS }: { children: React.ReactNode; timeout?: number }) {
   return (
     <ToastPrimitive.Provider timeout={timeout}>
       {children}
@@ -90,13 +99,16 @@ function ToastViewport({ className }: { className?: string }) {
   return (
     <ToastPrimitive.Viewport
       className={cn(
-        "fixed z-[100] flex flex-col gap-2 outline-none",
-        // Below `md` → a bar along the BOTTOM, which is where every player
-        // puts its confirmations (thumb-side, out of the content's way). The
-        // 112px clears the mini player + footer tab bar (below 608) and, in
-        // the 608–767 band where the tab bar is gone, the desktop player bar
-        // (bottom-5 + 80px = 100px) — so one lift serves both chromes.
-        "inset-x-3 bottom-[calc(112px+env(safe-area-inset-bottom)+var(--kb,0px))] w-auto",
+        "group/toasts fixed z-[100] flex flex-col gap-2 outline-none",
+        // Below `md` → a bar along the BOTTOM, thumb-side and out of the
+        // content's way. It sits ON the tab bar (`--footer-nav-h`, published
+        // by `FooterNav` — measured, because the home-indicator inset is in
+        // it), which means it covers the mini player for the couple of
+        // seconds it lives. That is the trade: the player is one tap from
+        // coming back and the toast is gone on its own, whereas lifting the
+        // toast clear of both bars parked it a third of the way up a phone
+        // screen for a message about something the user just did.
+        "inset-x-3 bottom-[calc(var(--footer-nav-h,0px)+8px+var(--kb,0px))] w-auto",
         // Desktop → the familiar top-right card.
         "md:inset-x-auto md:right-4 md:top-4 md:bottom-auto md:w-[380px] md:max-w-[calc(100vw-2rem)]",
         className
@@ -113,18 +125,33 @@ function ToastViewport({ className }: { className?: string }) {
           <ToastPrimitive.Root
             key={t.id}
             toast={t}
+            /* Down on a phone (the toast is at the bottom, so the gesture
+               points at the nearest edge) and right everywhere, which is the
+               desktop card's own edge. Base UI's default is the same pair;
+               naming it keeps the two placements honest if one moves. */
+            swipeDirection={["down", "right"]}
             className={toastShell}
           >
+            {/* How long it has left. A toast that leaves on its own has to
+                say so — otherwise every one of them is a surprise, and the
+                user waits for something that was never going to stay. Paused
+                while a pointer is over the viewport, matching Base UI, which
+                stops the timer itself on hover. */}
+            <span
+              aria-hidden="true"
+              className="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-foreground/20 animate-[toastTimer_linear_forwards] group-hover/toasts:[animation-play-state:paused]"
+              style={{ animationDuration: `${t.timeout ?? TOAST_DEFAULT_MS}ms` }}
+            />
             {icon}
 
             <div className="flex flex-1 flex-col gap-1 min-w-0">
               {t.title && (
-                <ToastPrimitive.Title className="text-small font-medium leading-5">
+                <ToastPrimitive.Title className="truncate md:whitespace-normal text-small font-medium leading-5">
                   {t.title}
                 </ToastPrimitive.Title>
               )}
               {t.description && (
-                <ToastPrimitive.Description className="text-small leading-5 text-muted-foreground">
+                <ToastPrimitive.Description className="hidden md:block text-small leading-5 text-muted-foreground">
                   {t.description}
                 </ToastPrimitive.Description>
               )}
@@ -163,7 +190,7 @@ function useToast() {
  *  already saw the result, so the toast only has to register. Platform
  *  snackbars sit around 2–3s; our 5s default is for messages carrying an
  *  action or a consequence worth reading. Pass as `timeout` to `add()`. */
-export const TOAST_CONFIRM_MS = 2500
+export const TOAST_CONFIRM_MS = 2000
 
 // ── Static preview (kitchen-sink + design docs) ────────────────────────────────
 //

@@ -305,7 +305,11 @@ export function AddMusicDialog({
           then carried the search field off the bottom. */}
       <DialogContent
         showCloseButton={!isMobile}
-        className="md:max-w-[max(32rem,50vw)] flex flex-col overflow-hidden h-[calc(100svh-var(--kb,0px)-8px-env(safe-area-inset-top))] md:h-auto md:max-h-[85vh]"
+        /* The bar is absolute, so the sheet reserves its height as padding.
+           Every screen clears it that way — the album step's own header sat
+           under the title before this — and the ONE screen that wants rows
+           passing behind the glass, Find, cancels the padding on its list. */
+        className="md:max-w-[max(32rem,50vw)] flex flex-col overflow-hidden max-md:pt-[var(--sheet-bar-h)] h-[calc(100svh-var(--kb,0px)-8px-env(safe-area-inset-top))] md:h-auto md:max-h-[85vh]"
       >
         {/* The playlist is named in the TITLE rather than a description line
             — it's the one piece of context that matters, and a separate line
@@ -406,10 +410,12 @@ export function AddMusicDialog({
               // padding rather than in layout: rows scroll behind the glass
               // bar and behind the floating field instead of stopping at
               // them.
-              // `-my-3` bleeds over the sheet's own padding so the list box
-              // IS the sheet: rows reach both edges, and the two paddings
-              // below line up with the bands rather than with the gutter.
-              "-my-3 pt-[var(--sheet-bar-h)] pb-[var(--sheet-band-h)]",
+              // The list box IS the sheet: it bleeds over the sheet's own
+              // padding (the reserved bar height at the top, the gutter at
+              // the bottom) and puts both back as padding of its own, so
+              // rows reach both edges and scroll behind the two bands
+              // instead of stopping at them.
+              "-mt-[var(--sheet-bar-h)] -mb-3 pt-[var(--sheet-bar-h)] pb-[var(--sheet-band-h)]",
             )}
           >
             {searching ? searchResults : recent.length > 0 ? (

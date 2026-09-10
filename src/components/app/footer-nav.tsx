@@ -18,6 +18,7 @@
  * Figma source: file dbSHgvquI2o4TFie2iAJxv › node 4973:204096.
  */
 
+import { useEffect, useRef } from "react"
 import { Home, Library, Search, Sliders, FileText, Music2, BarChart2, ShoppingCart } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -70,8 +71,31 @@ const tabButtonClass = (isActive: boolean) =>
 export function FooterNav({ activeNav, onNavChange, className }: FooterNavProps) {
   const studioActive = STUDIO_PAGES.includes(activeNav)
 
+  /* Publishes its own height as `--footer-nav-h` on the root, so anything
+     that has to sit ON the tab bar can do so without a magic number that
+     drifts every time the bar's padding changes — the toast rides on it.
+     Measured rather than computed: the bar's height is icons plus padding
+     plus the home-indicator inset, and only the browser knows the last one.
+     0 when there is no tab bar, which is what the `md` layouts assume. */
+  const navRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const el = navRef.current
+    if (!el) return
+    const root = document.documentElement
+    const ro = new ResizeObserver(([entry]) => {
+      // BORDER box, not `contentRect`: the bar's height is mostly padding —
+      // including the home-indicator inset — and the content box leaves all
+      // of it out (48px against a real 67px on an iPhone).
+      const h = entry.borderBoxSize?.[0]?.blockSize ?? el.getBoundingClientRect().height
+      root.style.setProperty("--footer-nav-h", `${Math.round(h)}px`)
+    })
+    ro.observe(el)
+    return () => { ro.disconnect(); root.style.removeProperty("--footer-nav-h") }
+  }, [])
+
   return (
     <nav
+      ref={navRef}
       aria-label="Primary"
       className={cn(
         // `.frosted-glass` (app.css): blurred + saturated translucent
