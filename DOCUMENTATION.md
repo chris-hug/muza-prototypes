@@ -53,6 +53,11 @@ that gets overwritten.
 | **Sourced contract** — the strict touch rules, Icons, the 44px target | Rules no component owns, so the system file IS where they live | this file | `conformance`, for the two that are testable as text |
 | **Reference** — token tables, colour aliases, the radius ladder and its Figma rename spec, layout tiers | Not obligations. Lookups | this file | nothing — there is nothing to obey |
 
+**Every `##` section says which kind it is**, in one line under its heading —
+Reference · Contract, sourced here · Contract + reference — with a legend at
+the top of the file. `sync-docs --check` fails on a section that has none, so
+a new one cannot quietly arrive unlabelled.
+
 So: **editing inside a generated block does nothing** (the next `sync-docs`
 overwrites it, and CI fails first). Editing a strict rule is editing the
 source. Editing a table is editing data.

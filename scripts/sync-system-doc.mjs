@@ -115,6 +115,25 @@ for (const [block, pages] of Object.entries(BLOCKS)) {
 
 const system = readFileSync(SYSTEM, "utf8")
 
+/* Every `##` section carries one of three labels, so a reader knows whether
+   they are looking at something to obey, something to look up, or something
+   generated. A new section without one is easy to add and invisible, so it is
+   checked rather than remembered. */
+const LABEL = /^> \*\*(?:Reference|Contract, sourced here|Contract \+ reference)\.\*\*/
+const sysLines = next.split("\n")
+const unlabelled = sysLines.flatMap((l, i) =>
+  l.startsWith("## ") && !LABEL.test(sysLines[i + 2] ?? "") ? [l.slice(3)] : [],
+)
+if (unlabelled.length) {
+  console.error(
+    `sync-system-doc: ${unlabelled.length} section(s) in ${SYSTEM} carry no kind label:\n` +
+    unlabelled.map(h => `  ## ${h}`).join("\n") +
+    "\n\nAdd one of: Reference · Contract, sourced here · Contract + reference.\n" +
+    "See the legend at the top of the file, and DOCUMENTATION.md for what each means.",
+  )
+  process.exit(1)
+}
+
 if (process.argv.includes("--check")) {
   if (next === system) {
     console.log("sync-system-doc: DESIGN_SYSTEM.md is in step with the component docs.")

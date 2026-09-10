@@ -10,7 +10,21 @@ type: project
 > [`COMPONENT_DOC_PASS.md`](COMPONENT_DOC_PASS.md). Component prose itself
 > lives in [`docs/components/`](docs/components/README.md), one file each.
 
+> **How to read this file.** Every section carries one of three labels.
+>
+> · **Reference** — values to look up. Nothing to obey, nothing to break.
+> · **Contract, sourced here** — a rule this file owns, because no component
+>   page does. Edit it here.
+> · **Contract + reference** — the section opens with a block generated from
+>   the component pages. **Never edit between the `BEGIN GENERATED` markers**:
+>   edit the `contract:` line in the page that owns the rule and run
+>   `npm run sync-docs`. CI fails if the two have parted.
+>
+> The arrangement behind all three is [`DOCUMENTATION.md`](DOCUMENTATION.md).
+
 ## Project
+
+> **Reference.** What this is and who it is for.
 Next.js App Router · TypeScript · Tailwind CSS v4 · @base-ui/react v1.3.0 · shadcn/ui patterns
 Figma file key: **L9yw4Yaec9YtAXGxP8q4fu**
 Kitchen sink at: `src/app/page.tsx` (Explore view)
@@ -18,6 +32,8 @@ Kitchen sink at: `src/app/page.tsx` (Explore view)
 ---
 
 ## "Send to Figma" — ALWAYS use this pattern
+
+> **Contract, sourced here.** Sourced here — no component page owns the Figma hand-off.
 
 When the user asks to send any page, modal, or component to Figma, **don't ask them to click a toolbar or run `window.figma.captureForDesign` in the console** — the hash-based auto-trigger (`#figmacapture`) is unreliable with this SPA (`ssr: false` in `react-router.config.ts`) because React clobbers the URL during hydration.
 
@@ -65,6 +81,8 @@ Instead: **inject the capture script + a floating dev-only "📸 Capture to Figm
 **Ports gotcha:** don't assume 5173. Sibling worktrees each run their own dev server; always `lsof -i :<port>` to confirm which project owns a port before opening a URL.
 
 ## Color Variables — ALWAYS use these, never hardcode hex or Tailwind defaults
+
+> **Contract + reference.** Reference (the token tables) around a projected block from `colors.md`.
 
 <!-- BEGIN GENERATED: color-contract -->
 <!-- Written by scripts/sync-system-doc.mjs from the `contract:` frontmatter
@@ -137,6 +155,8 @@ All available as `bg-neutral-{n}` / `text-neutral-{n}` / `border-neutral-{n}`:
 ---
 
 ## Figma primitive tokens — dimension scales
+
+> **Reference.** Values to look up. Nothing here is an obligation.
 
 Raw numeric values that the semantic aliases resolve to. These are the **source of truth** — semantic names (in the next section) always point here. Colors are covered separately in the semantic-alias section below; this section only lists dimensional tokens.
 
@@ -269,6 +289,8 @@ Figma primitives now match Muza CSS 1:1 after Figma was updated to adopt Muza's 
 ---
 
 ## Figma semantic tokens — canonical source of truth
+
+> **Reference.** Values to look up, plus the pending Figma rename. Nothing to obey.
 
 Figma is the source of truth for all tokens. **Components must always reference the semantic alias names, never the primitive values** — the semantic layer is what decouples Figma → code.
 
@@ -728,6 +750,8 @@ synthesised bold breaks the fixed advance width that is the point of the face.
 
 ## Typography — Founders Grotesk
 
+> **Contract + reference.** A projected block from `typography.md`, then reference.
+
 <!-- BEGIN GENERATED: type-contract -->
 <!-- Written by scripts/sync-system-doc.mjs from the `contract:` frontmatter
      of the pages that own these rules. Do not edit between these markers —
@@ -764,6 +788,8 @@ size.
 
 ## Icons — the ones that are fixed
 
+> **Contract, sourced here.** Sourced here — one decision about one mark, deliberately not projected.
+
 *Not generated, and deliberately so: this is one decision about one mark, not
 a subject with a page behind it. A `contract:` block would be a page created
 to satisfy a script.*
@@ -780,6 +806,8 @@ Most icons are Lucide, picked per context. Two are **not** free choices:
   the same mark means "music going into a playlist" everywhere it appears.
 
 ## Form controls — the shared recipe
+
+> **Contract, sourced here.** Sourced here, except the two lines projected from `button.md`.
 
 `Input`, `Select`, `Combobox`, `DatePicker`, `FileField` and the filter
 trigger are **one control in six costumes**. The recipe lived only in the five source files
@@ -941,11 +969,15 @@ instead. See [`input.md`](docs/components/input.md).
 
 ## Buttons
 
+> **Reference.** A pointer to `button.md`, which owns this.
+
 See [docs/components/button.md](docs/components/button.md). One rule: `default` is 40px (`h-10`) to sit level with Input / Select / DatePicker, and `sm` is the only size that is `font-normal`.
 
 ---
 
 ## Chips
+
+> **Reference.** A pointer to `chips.md`.
 
 See [docs/components/chips.md](docs/components/chips.md). One rule: a `Chip`'s selection is the caller's state (`selected` + `onClick`), and the count badge's colours are never patched at the call site — the `count` variant owns both of its states.
 
@@ -953,11 +985,15 @@ See [docs/components/chips.md](docs/components/chips.md). One rule: a `Chip`'s s
 
 ## Badges
 
+> **Reference.** A pointer to `badge.md`.
+
 See [docs/components/badge.md](docs/components/badge.md) (`Badge`, `ContentTypeBadge`, and where a content-type badge belongs), [docs/components/status-badge.md](docs/components/status-badge.md), [docs/components/order-status-badge.md](docs/components/order-status-badge.md) and [docs/components/purchased-badge.md](docs/components/purchased-badge.md). One rule: a badge that repeats what the surrounding UI already states is noise — `ContentTypeBadge` only where the type is not otherwise obvious, never beside a subtitle that says the same word.
 
 ---
 
 ## Context Menu
+
+> **Reference.** A pointer to `menu.md`.
 
 Title: `text-xs font-normal text-muted-foreground`
 Item: `text-base font-normal text-popover-foreground leading-normal`
@@ -966,6 +1002,8 @@ Container: `w-64 bg-popover border border-border rounded-xl py-1 shadow-lg`
 ---
 
 ## Player components
+
+> **Reference.** Pointers to the player pages.
 
 ### PlayerOverlay
 The full-screen "Now listening" sheet on phones. See [docs/components/player-overlay.md](docs/components/player-overlay.md). The one rule: when closed it must be `invisible`, not merely translated off-screen — its `.frosted-glass` backdrop-filter ignores the wrapper's `translate` and would keep painting over the tab bar and the mini bar.
@@ -988,6 +1026,8 @@ The persistent transport — the 80px glass bar from 640px of its own width, the
 ---
 
 ## Themes — the prototyper, and what a saved theme is
+
+> **Reference.** How the themer works. Nothing to obey.
 
 The design system is its own application now: `?page=DesignSystem` opens **the
 muza prototyper** — a narrow header (back · name · tabs · light switch), a
@@ -1038,6 +1078,8 @@ and `muza-default` is always one click away.
 
 ## Token semantic rules — STRICT
 
+> **Contract + reference.** A projected block from `colors.md`, then reference.
+
 <!-- BEGIN GENERATED: token-contract -->
 <!-- Written by scripts/sync-system-doc.mjs from the `contract:` frontmatter
      of the pages that own these rules. Do not edit between these markers —
@@ -1074,6 +1116,8 @@ Tokens are **roles**, not colours. Never mix roles.
 ---
 
 ## Touch — the pointer model
+
+> **Contract + reference.** A projected block from eight pages, then the strict rules, which are sourced here.
 
 > **Where the touch knowledge lives.** This section is the cross-component
 > contract — the rules another component has to obey. The long-form accounts
@@ -1168,6 +1212,8 @@ Phones are the default surface for the player, so gesture handling is a first-cl
 
 ## Responsive & pointer — gating rules
 
+> **Contract + reference.** A projected block from `responsive.md`, then the arithmetic, which is reference.
+
 <!-- BEGIN GENERATED: width-contract -->
 <!-- Written by scripts/sync-system-doc.mjs from the `contract:` frontmatter
      of the pages that own these rules. Do not edit between these markers —
@@ -1203,6 +1249,8 @@ ladder, the derivations, the duplication map — is in
 ---
 
 ## Mobile surfaces — sheets
+
+> **Contract + reference.** A projected block from four pages, then reference.
 
 <!-- BEGIN GENERATED: sheet-contract -->
 <!-- Written by scripts/sync-system-doc.mjs from the `contract:` frontmatter
@@ -1259,6 +1307,8 @@ The squeeze is bigger than it sounds, and it is the reason the bands give up the
 
 ## Save to library — wording & behaviour
 
+> **Contract, sourced here.** Sourced here — wording rules no component owns.
+
 - The affordance is **"Save"** / **"Save to library"** — never "Add". Toasts read **"Saved to Library"** / **"Removed from Library"**.
 - Bind to the global store with `libraryType` + `libraryId` (the same keys the header/card hearts use) so every surface stays in sync. The action **flips Save ⇄ Remove** by live store state; the heart fills (`fill-primary-text text-primary-text`) when saved.
 - `LibraryHeartButton` is the one heart everywhere (detail headers, player, rows, cards); `DetailMoreButton`'s Save quick action and the card/row menus all read the same store.
@@ -1267,11 +1317,15 @@ The squeeze is bigger than it sounds, and it is the reason the bands give up the
 
 ## Search surface
 
+> **Reference.** A pointer to `search.md`.
+
 The Explore page **is** the search surface; results are URL-backed (`?page=Explore&q=…&scope=…`) and identical on desktop and phone. The panel, the results view, the All-tab shelf composition (Top result · one shelf per type · overflow-gated "Show all") and its thresholds live in [docs/components/search.md](docs/components/search.md). The one rule not to miss: a search row or card carries **no** content-type badge — the tabs already name the type.
 
 ---
 
 ## Media menus — ONE menu per media kind
+
+> **Contract + reference.** A projected block from `detail-more-button.md`, then reference.
 
 <!-- BEGIN GENERATED: menu-contract -->
 <!-- Written by scripts/sync-system-doc.mjs from the `contract:` frontmatter
@@ -1307,6 +1361,8 @@ Context gating, nothing else:
 
 ## Share — one adaptive action
 
+> **Contract, sourced here.** Sourced here.
+
 **One row, everywhere.** Where the Web Share API exists the button/row opens the **native OS sheet** ("Share…", `Share` icon); everywhere else it **copies the link** ("Copy link", `Link2` icon) and toasts. Never both rows — the native sheet already offers copy alongside AirDrop / messaging.
 
 `ShareButton` (standalone trigger) and `ShareMenuItems` (inside a menu) both come from [`share-button.tsx`](src/components/ui/share-button.tsx) and share `useShare()`, so every share affordance in the app behaves identically.
@@ -1314,6 +1370,8 @@ Context gating, nothing else:
 ---
 
 ## Library views — tabs, filter, table
+
+> **Reference.** A pointer to the view pages.
 
 - **Status filters are tabs, not a dropdown** — Playlists (All / By you / Saved), Albums (All / Owned / Downloaded), Songs (All / Downloaded). **Desktop only**: on mobile the strip competes with the content-type nav and reads as clutter, so it's hidden.
 - **In-library search** is a single shared store, [`use-library-filter.ts`](src/lib/use-library-filter.ts) (`useSyncExternalStore`), so the desktop field and the mobile header field drive the same query. The header clears it on unmount — a collapsed mobile field must never leave a hidden filter applied.
@@ -1323,6 +1381,8 @@ Context gating, nothing else:
 ---
 
 ## Wizard — header · steps · body · footer
+
+> **Contract, sourced here.** Sourced here — the wizard has no component page.
 
 A multi-step flow has **four zones, and progress never shares a row with the actions.**
 
@@ -1352,6 +1412,8 @@ Carbon, Atlassian and PatternFly all land on this split; PatternFly is the close
 
 ## Create playlist / Add music
 
+> **Reference.** A pointer to `dialog.md` and the flow pages.
+
 One flow, started from every entry point via [`create-playlist-context.ts`](src/lib/create-playlist-context.ts) — `useCreatePlaylist().open()`. Entry points: sidebar "+" (expanded header row and collapsed rail), mobile Library header "+", the Playlists grid tile. Same pattern for `useAddToPlaylist()`.
 
 The provider mounts both steps: **New Playlist** (cover tile, name `Input`, "Keep private" setting row) → **Add music**.
@@ -1363,6 +1425,8 @@ The provider mounts both steps: **New Playlist** (cover tile, name `Input`, "Kee
 ---
 
 ## Playlist edit drawer (desktop)
+
+> **Reference.** A pointer to the editor pages.
 
 Owner-only **Edit** on a playlist docks a panel on the right that **persists across navigation** — you can browse to Home, search, open any album, and drag tracks into the playlist still held in the drawer. It is **docked, not an overlay**: it takes width from the content instead of covering it.
 
@@ -1376,10 +1440,14 @@ Owner-only **Edit** on a playlist docks a panel on the right that **persists acr
 
 ## Track selection — the pick affordance
 
+> **Reference.** A pointer to `select-track.md`.
+
 `SelectTrackButton` replaces a checkbox wherever tracks are picked (Add music): one plus that rearranges into a check, on a `bg-secondary` plate that fades once picked. See [docs/components/select-track.md](docs/components/select-track.md). The one rule: the **row** is the click target — the mark is `pointer-events-none`, `aria-hidden` and holds no state.
 
 ---
 
 ## Toasts — mobile shape
+
+> **Reference.** A pointer to `toast.md`.
 
 See [docs/components/toast.md](docs/components/toast.md) — **top-anchored on phones**, one line, nearly full width, with its own drain as a clock; the top-right card from 768. It used to be a bottom bar lifted over the mini player, tab bar, home indicator and keyboard, which is four things to clear and still put the message on whatever raised it. The top is the one place on a phone where a message does not sit on the thing you are using. The rule not to miss: plain confirmations ("added", "created", "saved") pass `timeout: TOAST_CONFIRM_MS` (2.5s); a toast carrying an **action** (Undo) stays on the 5s default, because 2.5s is too short to read a line and reach a button.
