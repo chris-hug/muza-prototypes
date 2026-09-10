@@ -309,6 +309,16 @@ intercepts `onOpenChange(false)` while anything is picked and raises an
 *Discard* — with the sheet still mounted behind it, so cancelling returns to
 the same screen, query and selection.
 
+What makes the drag feel like a drag, all of it learned by it not feeling like
+one: the sheet re-bases on the point where the gesture CROSSED the slop, so it
+does not jump 6px the moment it starts; it writes one transform per frame,
+because pointer moves outrun the paint and a write per event stutters against
+itself; it refuses the browser's scroll through a non-passive `touchmove` for
+the duration, since `touch-action` is read when a gesture starts and comes too
+late once a finger is already moving; and the release velocity comes from 120ms
+of samples rather than the last two, which routinely read as zero (same
+timestamp) or as a flick (2px apart).
+
 The gesture and the confirmation have to agree about this: `useSheetDrag`
 carries the sheet out of frame before it asks the dialog to close, so when the
 close is refused it puts the sheet back (`data-open` still set a frame later =

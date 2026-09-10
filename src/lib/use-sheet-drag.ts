@@ -51,12 +51,15 @@ export function useSheetDrag(
 
     let startY = 0
     let startX = 0
-    let lastY = 0
-    let lastT = 0
     let dy = 0
     let dragging = false
     let pointerId: number | null = null
     let frame = 0
+    /* A short history rather than "the last two samples": velocity from two
+       consecutive moves is noise — they can share a timestamp, which reads as
+       zero, or land 2px apart, which reads as a flick. 120ms of samples is
+       what the finger was actually doing at the end. */
+    const trail: { y: number; t: number }[] = []
 
     /** Every scrollable box between `node` and the sheet is at its top. */
     const atTop = (node: EventTarget | null) => {
@@ -78,22 +81,28 @@ export function useSheetDrag(
         // the page: a horizontal swipe is a row action, a tap is a tap.
         if (Math.abs(x) > Math.abs(y)) { pointerId = null; return }
         if (y < SLOP) return
+        // Re-base on the point where the drag BEGAN, not where the finger
+        // landed: without this the sheet jumps by the slop the moment it
+        // starts moving, which is the first thing that feels wrong.
+        startY += SLOP
         dragging = true
         // Capture can throw if the pointer is already gone (or synthetic);
         // the drag is still worth running without it.
         try { el.setPointerCapture(e.pointerId) } catch { /* not capturable */ }
         el.style.transition = "none"
-        // The browser must stop treating this gesture as a scroll. Without it
-        // the list underneath keeps panning while the sheet moves, and the two
-        // fight over the same finger — which is what made the drag feel like
-        // it was catching rather than tracking.
+        el.style.willChange = "transform"
+        // `touch-action` is read when a gesture STARTS, so setting it here
+        // does nothing for the gesture already in flight — the list underneath
+        // keeps panning against the same finger, and the two fight. What does
+        // work mid-gesture is refusing the browser's scroll outright, which
+        // needs a non-passive `touchmove` (see `block` below).
         el.style.touchAction = "none"
         el.dataset.dragging = ""
       }
 
       // Upward past the top edge is resisted rather than refused, which is
       // what tells a finger the sheet is already as far up as it goes.
-      dy = y < 0 ? y / 4 : y
+      dy = (e.clientY - startY) < 0 ? (e.clientY - startY) / 4 : e.clientY - startY
       // One write per FRAME. Pointer moves arrive faster than the screen
       // refreshes (120Hz reporting against a 60Hz paint is routine), and
       // writing a transform per event makes the sheet stutter against its own
@@ -104,11 +113,8 @@ export function useSheetDrag(
           el.style.transform = `translate3d(0, ${dy}px, 0)`
         })
       }
-      const now = e.timeStamp
-      if (now !== lastT) {
-        lastY = e.clientY
-        lastT = now
-      }
+      trail.push({ y: e.clientY, t: e.timeStamp })
+      while (trail.length > 1 && e.timeStamp - trail[0].t > 120) trail.shift()
     }
 
     const end = (e: PointerEvent) => {
@@ -118,7 +124,10 @@ export function useSheetDrag(
       dragging = false
       delete el.dataset.dragging
 
-      const velocity = lastT ? (e.clientY - lastY) / Math.max(1, e.timeStamp - lastT) : 0
+      const first = trail[0]
+      const velocity = first && e.timeStamp > first.t
+        ? (e.clientY - first.y) / (e.timeStamp - first.t)
+        : 0
       const dismiss = dy > DISTANCE || (dy > 24 && velocity > VELOCITY)
 
       const springBack = () => {
@@ -127,6 +136,8 @@ export function useSheetDrag(
       }
       if (frame) { cancelAnimationFrame(frame); frame = 0 }
       el.style.touchAction = ""
+      el.style.willChange = ""
+      trail.length = 0
 
       if (dismiss) {
         // Carry the sheet the rest of the way out, then ask to close.
@@ -160,8 +171,8 @@ export function useSheetDrag(
       pointerId = e.pointerId
       startY = e.clientY
       startX = e.clientX
-      lastY = e.clientY
-      lastT = e.timeStamp
+      trail.length = 0
+      trail.push({ y: e.clientY, t: e.timeStamp })
       dy = 0
     }
 
@@ -170,6 +181,13 @@ export function useSheetDrag(
        them stop the event before it reaches the popup. Capturing means the
        sheet sees the gesture first; it still does nothing until the finger has
        travelled, so a row that wants the tap keeps it. */
+    /* The one non-passive listener: while dragging, the page may not scroll.
+       Passive listeners cannot refuse, and `touch-action` comes too late once
+       a finger is already moving. */
+    const block = (e: TouchEvent) => {
+      if (dragging && e.cancelable) e.preventDefault()
+    }
+
     const opts = { capture: true } as const
     // The sheet says whether the gesture is attached — otherwise invisible
     // from outside devtools, and this took a while to find once.
@@ -179,13 +197,16 @@ export function useSheetDrag(
     el.addEventListener("pointermove", move, { ...opts, passive: true })
     el.addEventListener("pointerup", end, opts)
     el.addEventListener("pointercancel", end, opts)
+    el.addEventListener("touchmove", block, { capture: true, passive: false })
     return () => {
       el.removeEventListener("pointerdown", down, opts)
       el.removeEventListener("pointermove", move, opts)
       el.removeEventListener("pointerup", end, opts)
       el.removeEventListener("pointercancel", end, opts)
+      el.removeEventListener("touchmove", block, opts)
       if (frame) cancelAnimationFrame(frame)
       el.style.touchAction = ""
+      el.style.willChange = ""
       el.style.transition = ""
       el.style.transform = ""
       delete el.dataset.dragging
