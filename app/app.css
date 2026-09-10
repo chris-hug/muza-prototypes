@@ -1552,6 +1552,34 @@ img[class*="object-cover"] {
     muzaRowShake 260ms ease-out;
 }
 
+/* A sheet's own glass. `.frosted-glass` is tuned for chrome that sits over the
+   PAGE — it mixes `--background`, and it carries a sheen and a grain — so on a
+   sheet, whose surface is `--popover`, it reads as a band across the top: a
+   different colour, faintly textured, exactly as wide as the bar.
+
+   This is the same idea in the sheet's own colour and nothing else: 72% of
+   `--popover` over `--popover` is `--popover`, so the bar is invisible at
+   rest. What it still does is blur and mute whatever scrolls UNDER it, which
+   is the only reason the bar is translucent in the first place. */
+.sheet-glass {
+  backdrop-filter: blur(12px);
+  background-color: color-mix(in srgb, var(--popover) 72%, transparent);
+}
+
+/* A sheet's own glass. `.frosted-glass` is tuned for chrome that sits over the
+   PAGE — it mixes `--background`, and it carries a sheen and a grain — so on a
+   sheet, whose surface is `--popover`, it reads as a band across the top: a
+   different colour, faintly textured, exactly as wide as the bar.
+
+   This is the same idea in the sheet's own colour and nothing else: 72% of
+   `--popover` over `--popover` is `--popover`, so the bar is invisible at
+   rest. What it still does is blur and mute whatever scrolls UNDER it, which
+   is the only reason the bar is translucent in the first place. */
+.sheet-glass {
+  backdrop-filter: blur(12px);
+  background-color: color-mix(in srgb, var(--popover) 72%, transparent);
+}
+
 /* ── Touch targets ───────────────────────────────────────────────────────
    A 44px hit area on a control that is visually smaller. WCAG 2.2 AA asks
    for 24×24 (2.5.8) and everything here clears that; 44 is the AAA figure

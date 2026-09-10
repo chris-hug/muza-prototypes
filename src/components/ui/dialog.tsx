@@ -131,7 +131,11 @@ const dialogActionBarBase =
   "flex items-center justify-between gap-2 min-h-10 px-1 pt-[max(2px,env(safe-area-inset-top))] pb-1 " +
   "md:hidden"
 
-export const dialogActionBarClass = "frosted-glass " + dialogActionBarBase
+/* `.sheet-glass`, not `.frosted-glass`: the page's glass mixes `--background`
+   and carries a sheen, which over a `--popover` sheet shows as a band the
+   width of the bar. The sheet's own glass is its own colour, so it disappears
+   into the surface and only shows itself by blurring what scrolls under. */
+export const dialogActionBarClass = "sheet-glass " + dialogActionBarBase
 
 // Body of a form sheet on mobile: restores the chrome's gutter + gap that
 // `dialogFormPositionClass` zeroed, clears the home indicator at the bottom.
@@ -389,11 +393,12 @@ function DialogActionBar({
 }: React.ComponentProps<"div"> & {
   leading?: React.ReactNode
   trailing?: React.ReactNode
-  /** Drop the frosted surface. The glass earns its keep where the BODY
-   *  scrolls under the bar; on a sheet whose list is its own scroll box
-   *  nothing ever passes beneath it, and the tint reads as a faint band
-   *  across the top. `.frosted-glass` is unlayered CSS, so a utility class
-   *  can't override it — the bar has to leave it off. */
+  /** Drop the glass entirely — for a bar with nothing behind it at all.
+   *  Rarely what you want now that the glass is the sheet's own colour
+   *  (`.sheet-glass`) and therefore invisible at rest; it was the answer when
+   *  the bar wore the PAGE's glass and showed as a band. Unlayered CSS either
+   *  way, so a utility class cannot override it — the bar has to leave it
+   *  off. */
   plain?: boolean
 }) {
   return (

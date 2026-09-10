@@ -207,10 +207,17 @@ Only the middle one scrolls.
   `MobileHeader` — it *is* a mobile header, for a modal — with the top
   safe-area inset, and `md:hidden`. 40px tall, which is its two 32px controls
   and a hair above them — every pixel here is one the content underneath does
-  not get. Pass **`plain`** to drop the glass where nothing passes beneath it
-  (a utility class can't: `.frosted-glass` is unlayered CSS). `AddMusicDialog`
-  keeps the glass and makes the bar `absolute` instead, so the list scrolls
-  behind the title.
+  not get.
+- **Its glass is the SHEET's, not the page's** (`.sheet-glass`). The page's
+  `.frosted-glass` mixes `--background` and carries a sheen and a grain, and
+  over a `--popover` sheet that reads as a band across the top: a different
+  colour, faintly textured, exactly as wide as the bar. `.sheet-glass` is 72%
+  of `--popover` and a 12px blur — over the sheet's own surface that resolves
+  to the surface, so the bar is invisible at rest and shows itself only by
+  blurring what scrolls under it. `AddMusicDialog` makes the bar `absolute` so
+  the list runs full height beneath it, which is what there is to blur. Pass
+  **`plain`** for a bar with nothing behind it at all (unlayered CSS, so a
+  utility class cannot override either one).
 - The confirming action is a full-width `size="lg"` (48px) button in
   `DialogFormActions`, the band below the body. The sheet pads itself off the
   keyboard, so the action sits directly on it. Never offered twice — bar
