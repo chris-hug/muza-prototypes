@@ -63,10 +63,10 @@ const MOTION = [
 /* Touch and pointer — added after a touch pass shipped behaviour that no doc
    described. Same rule, different vocabulary. */
 const TOUCH = [
-  "touch-target", "data-pressing", "useLongPress", "useSheetDrag",
-  "useCoarsePointer", "sheet-glass", "SheetGrabber", "disabled-solid",
-  "touch-callout", "--kb", "data-kb", "--sheet-bar-h", "--sheet-band-h",
-  "--sheet-drag-progress",
+  "touch-target", "data-pressing", "useLongPress", "useCoarsePointer",
+  "sheet-glass", "SheetGrabber", "disabled-solid", "touch-callout",
+  "--kb", "data-kb", "--sheet-bar-h", "--sheet-band-h",
+  "--drawer-swipe-progress",
 ]
 
 const TOKENS = [...MOTION, ...TOUCH]

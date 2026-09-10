@@ -446,50 +446,39 @@ intercepts `onOpenChange(false)` while anything is picked and raises an
 *Discard* — with the sheet still mounted behind it, so cancelling returns to
 the same screen, query and selection.
 
-On dismissal the popup's own exit animation is turned OFF (`animation: none`)
-before the sheet is carried out. A CSS animation beats an inline style in the
-cascade, so `slide-out` — whose keyframes begin at translate 0 — yanked the
-sheet back up to where it started before playing, which is why a dismissal
-looked like a mistake being corrected. With no animation to run, Base UI's
-"closed" wait resolves at once and the sheet is gone the moment the slide ends.
+**The gesture is Base UI's.** Below `md` a `mobile="sheet"` dialog renders as
+a `Drawer`, so the pull-down, the release threshold and the spring-back come
+from the primitive. There used to be two hundred lines of ours here; what they
+had to get right is recorded in [gesture.md](gesture.md), because the
+reasoning outlived the code.
 
-What makes the drag feel like a drag, all of it learned by it not feeling like
-one: the sheet re-bases on the point where the gesture CROSSED the slop, so it
-does not jump 6px the moment it starts; it writes one transform per frame,
-because pointer moves outrun the paint and a write per event stutters against
-itself; it refuses the browser's scroll through a non-passive `touchmove` for
-the duration, since `touch-action` is read when a gesture starts and comes too
-late once a finger is already moving; and the release velocity comes from 120ms
-of samples rather than the last two, which routinely read as zero (same
-timestamp) or as a flick (2px apart).
-
-**The backdrop thins as the sheet leaves.** The drag publishes its own
-progress as `--sheet-drag-progress` on the root, and `[data-slot="dialog-
-overlay"]` takes `opacity: calc(1 - var(--sheet-drag-progress, 0))` — the same
-way Base UI's Drawer publishes `--drawer-swipe-progress`, so both families of
-sheet behave alike. The page brightening under the finger is what makes the
-sheet feel attached to it rather than merely following it.
+**The backdrop thins as the sheet leaves.** The Drawer publishes its drag as
+`--drawer-swipe-progress`, and both `[data-slot="dialog-overlay"]` and
+`[data-slot="sheet-overlay"]` take `opacity: calc(1 - var(--drawer-swipe-progress, 0))`
+— one rule now that both families are Drawers. The page brightening under the
+finger is what makes the sheet feel attached to it rather than merely
+following it.
 
 Two things went wrong here and the first hid the second. Tailwind mangles
 `opacity-[calc(1-var(--x,0))]` on the comma inside the var fallback, so the
 backdrop was simply always transparent — plain CSS, not a utility. And Base UI
 drops the swipe variable *before* the exit state, so `[data-closed]` and
 `[data-ending-style]` need their own `opacity: 0` rule or the backdrop flashes
-back to full on the way out. On dismissal the variable is removed rather than
-driven to 1, so the backdrop fades from wherever the drag left it.
+back to full on the way out.
 
-The gesture and the confirmation have to agree about this: `useSheetDrag`
-carries the sheet out of frame before it asks the dialog to close, so when the
-close is refused it puts the sheet back (`data-open` still set a frame later =
-refused). Without that, answering "Keep picking" left a backdrop over an empty
-screen with the sheet parked below the bottom edge.
+The gesture and the confirmation have to agree: the sheet is carried out of
+frame before the dialog is asked to close, so a refused close has to put it
+back. Without that, answering "Keep picking" left a backdrop over an empty
+screen with the sheet parked below the bottom edge. The Drawer handles it —
+the dialog simply declines the `onOpenChange`, and the sheet returns.
 
 It guards **every** exit, not just the gesture: the ✕, the backdrop and Escape
 lose exactly as much as a pull-down does. That is the platform rule — iOS
 bounces the swipe on a modal with unsaved input and asks; Material asks too —
 and it is why the `mobile="form"` sheet takes the other half of the same rule
-and refuses the gesture outright (`useSheetDrag` is off there): a form sheet's
-content is a half-typed field, and there is nothing to confirm against yet.
+and has no gesture at all — it stays a `Dialog` rather than becoming a
+`Drawer`, because a Drawer always carries a swipe and a downward flick over a
+half-typed field should not discard it.
 
 ## Search inside a sheet is a screen, not a field
 

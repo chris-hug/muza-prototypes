@@ -168,11 +168,10 @@ export function CreatePlaylistDialog({
   const mobileAction = editing ? "Save" : "Create"
 
   return (
-    <Dialog open={open} onOpenChange={o => { if (!o) reset(); onOpenChange(o) }}>
+    <Dialog open={open} onOpenChange={o => { if (!o) reset(); onOpenChange(o) }} mobile="form">
       {/* Desktop width matches the Add-music step it chains into — at least
           half the viewport. Phones get the full-screen form sheet. */}
       <DialogContent
-        mobile="form"
         className="md:max-w-[max(32rem,50vw)]"
         /* A FUNCTION, not the ref: opened by touch, the popup's default is to
            focus ITSELF so the keyboard stays down — right for a picker, wrong

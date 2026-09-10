@@ -119,9 +119,9 @@ invalid-ring · art-edge · page-enter · useTick · @container · animate-[…]
 behaviour that no doc described:
 
 ```
-touch-target · data-pressing · useLongPress · useSheetDrag · useCoarsePointer
+touch-target · data-pressing · useLongPress · useCoarsePointer
 sheet-glass · SheetGrabber · disabled-solid · touch-callout · touch-action
---kb · data-kb · --sheet-bar-h · --sheet-band-h · --sheet-drag-progress
+--kb · data-kb · --sheet-bar-h · --sheet-band-h · --drawer-swipe-progress
 ```
 
 Anything present in the code and absent from the `.md` is a gap. Four real

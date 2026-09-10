@@ -51,6 +51,19 @@ and modals read as one family.
 The body is whatever you put between header and footer — give it `flex-1
 overflow-y-auto` and its own padding.
 
+## Dialogs arrive here too
+
+Below `md`, a `Dialog` with the default `mobile="sheet"` renders as a
+`Drawer` — same markup and classes, different primitive family — so the
+pull-down, the release threshold and the spring-back on a refused close are
+the library's for every bottom sheet in the app, not just the ones written as
+`Sheet`s. The dialog's own `Portal`, `Backdrop`, `Close` and `Title` dispatch
+to the Drawer parts with it, because every part reads its own root's context.
+
+`mobile="form"` is the exception and stays a Dialog: a Drawer always carries a
+swipe, and a full-screen form should not be dismissable by a downward flick
+over a half-typed field. See [dialog.md](dialog.md).
+
 ## `SheetGrabber` — the pull-down, drawn
 
 ```tsx
@@ -112,8 +125,9 @@ invisible in every state. It brightens under the finger as the sheet leaves — 
 rather than merely following it. With a keyframe `fade-out` instead, the
 backdrop snapped back to full the moment the finger lifted and only then faded:
 the page going bright, dark, then bright again, in about a fifth of a second.
-`useSheetDrag` publishes the same signal as `--sheet-drag-progress` for the
-dialog-family sheets, so both behave alike.
+A dialog presented as a bottom sheet renders as a `Drawer` too, so it reads the
+same variable through the same rule — there is no second signal to keep in
+step any more.
 
 **`[data-closed]` sets the opacity to 0 as well**, and that is what stops the
 flicker: on release Base UI drops the swipe variable BEFORE the exit state
