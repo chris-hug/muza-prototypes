@@ -164,6 +164,13 @@ function SheetContent({
         )}
         {...props}
       >
+        {/* Every BOTTOM sheet draws the pull-down it answers. It used to be a
+            per-call-site decision, so the two menu sheets had one and the
+            card sheets, the Studio switcher and the detail menu did not —
+            surfaces that are all equally draggable, telling the finger three
+            different stories. A side drawer gets none: it is dismissed
+            sideways, and a horizontal bar would advertise the wrong axis. */}
+        {side === "bottom" && <SheetGrabber className="mx-auto mb-2" />}
         {children}
         {showCloseButton && (
           <DrawerPrimitive.Close

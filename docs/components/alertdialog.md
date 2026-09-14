@@ -12,6 +12,19 @@ card, discard an edit. Like every [Dialog](dialog.md) it is a bottom sheet
 below 768 and a centred modal from there up; it differs in what it demands of
 the user: no ✕, no outside-click dismissal, exactly two actions.
 
+## The footer stacks on a phone
+
+Two `lg` buttons carry `px-10` each, so a row of "Keep picking" and "Discard"
+is wider than a 375px sheet: the outline button ran off the left edge with its
+label clipped — on the one dialog whose entire job is to be read before it is
+answered.
+
+`flex-col-reverse` below `md`, a row from `md` up — the same shape
+`DialogFooter` takes. Reversed puts the **confirming action on top** and the
+way out underneath: the platform order, and the one that keeps a destructive
+button away from where the thumb rests. Both buttons go full width, because a
+stacked pair that does not is just a row with extra steps.
+
 ## When it is the right component
 
 Use `AlertDialog` when the user would lose something by getting it wrong.

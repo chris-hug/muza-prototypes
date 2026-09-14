@@ -32,7 +32,7 @@ import {
   dropdownMenuSurfaceClass, dropdownMenuItemClass,
 } from "@/components/ui/dropdown-menu"
 import {
-  Sheet, SheetClose, SheetContent, SheetGrabber, SheetTitle, SheetTrigger,
+  Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger,
 } from "@/components/ui/sheet"
 import { useShare } from "@/lib/use-share"
 import { useToast } from "@/components/ui/toast"
@@ -124,7 +124,7 @@ function SheetRow({ icon, label, destructive, onClick, keepOpen, dismiss = true 
     "[&_svg]:size-5 [&_svg]:shrink-0",
     destructive
       ? "text-destructive [&_svg]:text-destructive"
-      : "text-foreground [&_svg]:text-muted-foreground",
+      : "text-foreground [&_svg:not([data-saved])]:text-muted-foreground",
   )
   if (keepOpen || !dismiss) {
     return <button type="button" onClick={onClick} className={cls}>{icon}{label}</button>
@@ -393,8 +393,7 @@ export function DetailMenuSurface(props: DetailMoreButtonProps & { className?: s
     // container: the frame's window at a phone chip, or whatever box it sits in.
     <div className={cn("w-full rounded-t-[28px] border-t border-border bg-popover shadow-xl overflow-hidden px-2 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]", props.className)}>
       {/* The sheet's drag handle, for the eye — there is nothing to drag. */}
-      <SheetGrabber className="mx-auto mb-2" />
-      <DetailMenuSheetBody {...props} standalone />
+            <DetailMenuSheetBody {...props} standalone />
     </div>
   )
 }

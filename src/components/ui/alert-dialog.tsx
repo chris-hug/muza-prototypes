@@ -110,7 +110,18 @@ function AlertDialogFooter({
   return (
     <div
       data-slot="alert-dialog-footer"
-      className={cn("flex justify-end gap-2 mt-6", className)}
+      /* STACKED on a phone, a row from `md` — the same shape `DialogFooter`
+         takes, and for the same reason. Two `lg` buttons carry `px-10` each,
+         so a row of "Keep picking" and "Discard" is wider than a 375px sheet:
+         the outline button ran off the left edge with its label clipped, on
+         the one dialog whose whole job is to be read before answering.
+         `flex-col-reverse` puts the confirming action on TOP and the way out
+         underneath — the platform order, and the one that keeps the
+         destructive button away from the thumb's resting place. */
+      className={cn(
+        "flex flex-col-reverse gap-2 mt-6 md:flex-row md:justify-end",
+        className,
+      )}
       {...props}
     />
   )
@@ -153,7 +164,7 @@ function AlertDialogAction({
       // `lg` (48px), like every other action that confirms something: this
       // dialog is most often read with a thumb, and it is the last chance to
       // decline. The size is fixed here rather than at each call site.
-      render={<Button variant="destructive" size="lg" className={className} />}
+      render={<Button variant="destructive" size="lg" className={cn("w-full md:w-auto", className)} />}
       {...props}
     >
       {children}
@@ -169,7 +180,7 @@ function AlertDialogCancel({
   return (
     <AlertDialogPrimitive.Close
       data-slot="alert-dialog-cancel"
-      render={<Button variant="outline" size="lg" className={className} />}
+      render={<Button variant="outline" size="lg" className={cn("w-full md:w-auto", className)} />}
       {...props}
     >
       {children}
