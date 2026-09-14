@@ -88,11 +88,10 @@ function DropdownMenuContent({
         side="bottom"
         showCloseButton={false}
         className={cn(
-          "rounded-t-[28px] px-2 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] max-h-[80vh]",
+          "rounded-t-[28px] px-2 pb-[max(12px,env(safe-area-inset-bottom))] max-h-[80vh]",
           className,
         )}
       >
-        {/* Drag handle — affordance for swipe-to-dismiss. */}
                 <SheetTitle className="sr-only">Actions</SheetTitle>
         <div className="flex flex-col overflow-y-auto">{children}</div>
       </SheetContent>
