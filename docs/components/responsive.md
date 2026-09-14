@@ -40,6 +40,23 @@ visual viewport under a keyboard). Code identifiers keep their names —
 `VIEWPORTS`, `containerAt()`, `@container` — this page says what they mean.
 
 
+## A rail is cut by the SCREEN, not by the gutter
+
+A horizontal rail lives inside the page's padded column, so its scroll box
+ended at the gutter: a card leaving the screen was clipped 12px early, with a
+strip of empty page beside it. That reads as a broken card rather than as
+"there is more, keep going" — the peek is the whole grammar of a rail, and it
+only works if the cut happens where the screen ends.
+
+`rail-bleed` (app.css) cancels the gutter with a negative margin, gives it
+straight back as padding so the FIRST card still lines up with the headline
+above it, and sets `scroll-padding-inline` to the same value so a snap lands on
+that line rather than on the bleed edge — without the last part, mandatory
+snapping parks a card flush against the screen and the column disappears.
+
+Measured at 375: the rail spans 0→375, the first card starts at 12, and a
+snapped card lands at 12.
+
 ## The fourth question: what is doing the pointing
 
 The three measures above all answer *how much room is there*. They cannot

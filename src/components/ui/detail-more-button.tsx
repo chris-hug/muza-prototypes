@@ -32,7 +32,7 @@ import {
   dropdownMenuSurfaceClass, dropdownMenuItemClass,
 } from "@/components/ui/dropdown-menu"
 import {
-  Sheet, SheetClose, SheetContent, SheetGrabber, SheetTitle, SheetTrigger,
+  Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger,
 } from "@/components/ui/sheet"
 import { useShare } from "@/lib/use-share"
 import { useToast } from "@/components/ui/toast"
@@ -393,8 +393,7 @@ export function DetailMenuSurface(props: DetailMoreButtonProps & { className?: s
     // container: the frame's window at a phone chip, or whatever box it sits in.
     <div className={cn("w-full rounded-t-[28px] border-t border-border bg-popover shadow-xl overflow-hidden px-2 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]", props.className)}>
       {/* The sheet's drag handle, for the eye — there is nothing to drag. */}
-      <SheetGrabber className="mx-auto mb-2" />
-      <DetailMenuSheetBody {...props} standalone />
+            <DetailMenuSheetBody {...props} standalone />
     </div>
   )
 }

@@ -69,6 +69,12 @@ left without saving. Every `Dialog` bottom sheet now carries one, phones only,
 and never on a `mobile="form"` sheet, which fills the screen and is not
 dismissed by dragging.
 
+**`SheetContent side="bottom"` draws it itself.** It used to be a per-call-site
+decision, so the two menu sheets had one and the card sheets, the detail menu
+and the Studio switcher did not — surfaces that are all equally draggable,
+telling the finger three different stories. A side drawer gets none: it is
+dismissed sideways, and a horizontal bar would advertise the wrong axis.
+
 Two placements, and the choice is about what the sheet's first band is:
 
 - **In the flow** (`mx-auto mb-2`) when the sheet opens on a list — the two

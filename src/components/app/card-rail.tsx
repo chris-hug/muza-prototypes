@@ -253,7 +253,7 @@ export function CardRail({ title, showAllLabel = "Show all", onShowAll, showAllO
           //     `proximity` only snapped when the rail happened to stop near
           //     an edge, so a hard swipe left a card sliced down the middle.
           //   · Scrollbar hidden across browsers.
-          "min-w-0 items-start overflow-x-auto overflow-y-hidden " +
+          "min-w-0 items-start overflow-x-auto overflow-y-hidden rail-bleed " +
           "snap-x snap-mandatory scroll-smooth touch-pan-x touch-pan-y overscroll-x-contain " +
           "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden " +
           "[&>li]:snap-start [&>li]:max-w-[220px] " +

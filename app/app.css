@@ -39,6 +39,26 @@
 
 /* Page horizontal gutter — see PAGE GUTTER above. One knob: `--page-px`.
    Apply via the `px-page` utility on page wrappers (instead of `px-10`). */
+/* A rail that reaches the SCREEN, not the gutter.
+ *
+ * A horizontal rail lives inside the page's padded column, so its scroll box
+ * ended at the gutter and a card leaving the screen was clipped 12px early —
+ * with a strip of empty page beside it. It reads as a broken card rather than
+ * as "there is more, keep going". The cut has to happen at the viewport edge:
+ * that is the whole grammar of a peek.
+ *
+ * Cancel the gutter with a negative margin, give it straight back as padding
+ * so the FIRST card still lines up with the headline above it, and set
+ * `scroll-padding-inline` so a snap lands on that same line rather than on the
+ * bleed edge — without it, mandatory snapping parks a card flush against the
+ * screen and the column is gone.
+ */
+@utility rail-bleed {
+  margin-inline: calc(var(--page-px) * -1);
+  padding-inline: var(--page-px);
+  scroll-padding-inline: var(--page-px);
+}
+
 @utility px-page {
   padding-inline: var(--page-px);
 }

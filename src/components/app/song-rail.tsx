@@ -94,7 +94,7 @@ export function SongRail({ title, rows, onShowAll }: {
       <ul
         ref={scrollRef}
         className={
-          "min-w-0 flex gap-6 items-start overflow-x-auto overflow-y-hidden " +
+          "min-w-0 flex gap-6 items-start overflow-x-auto overflow-y-hidden rail-bleed " +
           // `snap-mandatory` (not proximity) — same rule as CardRail: a flick
           // keeps its momentum but always comes to rest on a column edge, so a
           // hard swipe can't leave a column sliced down the middle.
