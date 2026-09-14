@@ -155,11 +155,27 @@ export function CardRail({ title, showAllLabel = "Show all", onShowAll, showAllO
     // same column-count step, so cards are identically sized.
     //
     // `min-w-0` lets a flex parent shrink this section below its
-    // intrinsic content width; `overflow-x-clip` is the belt-and-
-    // braces so horizontal overflow can never leak up to the page
-    // scroll. `clip` (not `hidden`) so the vertical axis stays
-    // `visible` and child focus rings/hover overlays aren't cut.
-    <section className="flex flex-col gap-4 min-w-0 overflow-x-clip">
+    // intrinsic content width.
+    //
+    // NO `overflow-x-clip` here, and that is the whole point. It used
+    // to carry one as belt-and-braces against horizontal overflow
+    // leaking up to the page scroll — but this section sits INSIDE the
+    // page gutter (12 → 363 on a 375 screen) and `rail-bleed` works by
+    // moving the rail's box OUT of that gutter with a negative margin.
+    // Clipping at the section's own box put the paint straight back:
+    // the rail measured 0 → 375 and painted 0 → 363. Hit-testing the
+    // second cover at x=365 returned page background, not artwork,
+    // which is why the bleed looked unfixed on a phone after the rule
+    // shipped. `overflow-clip-margin: var(--page-px)` does not rescue
+    // it — a box whose other axis is `visible` is still clipped at its
+    // own edge.
+    //
+    // The guard is not needed either: the rail itself is
+    // `overflow-x: auto`, so it clips its own content at its padding
+    // box, and that box is exactly the viewport. Measured with the
+    // clip gone: `documentElement.scrollWidth` 375, the page's own
+    // scroller 375/375. Nothing to leak.
+    <section className="flex flex-col gap-4 min-w-0">
       <div className="flex flex-col gap-2 pt-6">
         <Separator />
         <div className="flex items-center justify-between gap-3">

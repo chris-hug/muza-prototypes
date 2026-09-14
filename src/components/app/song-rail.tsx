@@ -61,8 +61,12 @@ export function SongRail({ title, rows, onShowAll }: {
     el.scrollBy({ left: dir * (el.clientWidth + gap), behavior: "smooth" })
   }
 
+  // No `overflow-x-clip` on the section: it sits inside the page gutter, so
+  // clipping at its own box undoes `rail-bleed`. The rail is its own scroll
+  // container and clips at the viewport anyway. See card-rail.tsx, where the
+  // measurement is written down.
   return (
-    <section className="flex flex-col gap-4 min-w-0 overflow-x-clip">
+    <section className="flex flex-col gap-4 min-w-0">
       <div className="flex flex-col gap-2 pt-6">
         <Separator />
         <div className="flex items-center justify-between gap-3">

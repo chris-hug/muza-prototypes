@@ -57,6 +57,21 @@ snapping parks a card flush against the screen and the column disappears.
 Measured at 375: the rail spans 0→375, the first card starts at 12, and a
 snapped card lands at 12.
 
+**The rail's section must not clip.** `rail-bleed` shipped and the bleed still
+did not appear on a phone, because both rail sections carried
+`overflow-x-clip` as a guard against horizontal overflow reaching the page
+scroll. That section sits INSIDE the gutter, at 12→363, so clipping at its own
+box put back exactly what the negative margin had taken out: the rail measured
+0→375 and painted 0→363. Measuring the BOX is what hid it — a hit test on the
+second cover at x=365 returns page background, not artwork, and that is the
+measurement to take. `overflow-clip-margin: var(--page-px)` does not rescue it
+either: a box whose other axis is `visible` is still clipped at its own edge.
+
+The guard was also unnecessary. The rail is itself `overflow-x: auto`, so it
+clips its own content at its padding box, and that box IS the viewport. With
+the clip removed, `documentElement.scrollWidth` is 375 and the page's own
+scroller reports 375/375 — there was never anything to leak.
+
 ## The fourth question: what is doing the pointing
 
 The three measures above all answer *how much room is there*. They cannot
