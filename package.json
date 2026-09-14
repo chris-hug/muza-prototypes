@@ -16,7 +16,8 @@
     "conformance": "node scripts/conformance.mjs",
     "check:docs": "node scripts/doc-sweep.mjs && node scripts/sync-system-doc.mjs --check && node scripts/conformance.mjs",
     "check:types": "react-router typegen && tsc --noEmit",
-    "check": "npm run check:docs && npm run check:types && npm run build"
+    "check": "npm run check:docs && npm run check:types && npm run build",
+    "dev:lan": "react-router dev --host"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
