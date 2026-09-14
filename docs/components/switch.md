@@ -96,8 +96,41 @@ where a switch sits inside a card), not a responsive step.
   so Enter fires its click too). A wrapping `<label>` or an `htmlFor` label
   toggles on click.
 - base-ui renders a hidden `<input>`; `name` submits with a form.
-- The thumb slides (`transition-transform`); the track colour does not
-  animate — see below.
+- The thumb slides and the track fades. Both were once broken in the same
+  place and only the thumb was ever right; see **Motion**.
+
+## Motion
+
+Two transitions, on two elements, with two different jobs.
+
+**The track** (`switch.tsx:31`) names its properties literally:
+
+```
+transition-[color,background-color,border-color,outline-color,transform]
+```
+
+Written out rather than `transition-colors` because the outline colour has to
+travel with them — the focus ring and the invalid ring are both outlines, and a
+switch that gains one mid-transition should not snap.
+
+**The thumb** (`switch.tsx:64`) gets the character:
+
+```
+transition-transform duration-300
+[transition-timing-function:cubic-bezier(.68,-0.55,.27,1.55)]
+```
+
+An overshoot curve: it runs a little past the end of the track and settles
+back, which is what a physical toggle does. The thumb takes its spring in the
+TRAVEL rather than in a scale, and that is a constraint rather than a
+preference — the tick animation the checkbox and radio use sets
+`transform: scale()`, which would overwrite the very translate that moves it.
+Same curve as the pick mark's strokes in [select-track](select-track.md), so
+the two confirmations in the create-playlist flow are in the same hand.
+
+The thumb's class is not written out in the source comment for a reason worth
+knowing: Tailwind scans the file as text, so a class quoted in prose is a class
+it generates.
 
 ## Invalid
 
@@ -105,18 +138,23 @@ where a switch sits inside a card), not a responsive step.
 
 ## Open questions
 
-- `switch.tsx:14` says the unchecked thumb is `--foreground` · the source
-  paints the thumb `bg-background` in both states in light mode (`:39`) and
-  swaps to `bg-foreground` only under `dark:` when off (`:51`). The header's
+- `switch.tsx:16` says the unchecked thumb is `--foreground` · the source
+  paints the thumb `bg-background` in both states in light mode (`:54`) and
+  swaps to `bg-foreground` only under `dark:` when off (`:76`). The header's
   table describes dark mode as if it were both.
-- `transition-[colors,transform]` (`switch.tsx:26`) compiles to
-  `transition-property: colors, transform`; `colors` is not a CSS property,
-  so the declaration is invalid and the track snaps between `input` and
-  `primary`. `transition-colors` (Tailwind's list of colour properties) is
-  what was meant; the thumb already has its own `transition-transform`.
+- ~~`transition-[colors,transform]` compiles to
+  `transition-property: colors, transform`; `colors` is not a CSS property, so
+  the declaration is invalid and the track snaps between `input` and
+  `primary`.~~ **Answered.** The track now names the four colour properties and
+  `transform` outright (`switch.tsx:31`), so it fades. Recorded because the
+  failure is silent: an invalid `transition-property` does not warn, it just
+  does nothing, and "the designer wanted a snap" is the wrong conclusion to
+  reach from looking at it.
 - The thumb sits 2px in when off and 1px in when on (arithmetic above), both
-  sizes; the comment on `:44` derives 14 as "track − thumb − 2px padding" but
+  sizes; the comment on `:68` derives 14 as "track − thumb − 2px padding" but
   the border eats one of those pixels only on the far side.
-- The design-system section (`home.tsx:3211–3226`) drew a third setting row —
-  switch leading, `text-base` label, description under, `ms-2` — that no call
-  site uses. The frame now renders the create-playlist row.
+- ~~The design-system section drew a third setting row — switch leading,
+  `text-base` label, description under, `ms-2` — that no call site uses.~~
+  **Answered.** The section is now `src/ds-examples/switch-basic.tsx`, which
+  renders four labelled rows plus the real "Keep private" row from
+  `create-playlist-dialog.tsx`. Nothing invented for the frame.
