@@ -67,7 +67,7 @@ over a half-typed field. See [dialog.md](dialog.md).
 ## `SheetGrabber` — the pull-down, drawn
 
 ```tsx
-<SheetGrabber className="mx-auto mb-2" />   {/* in the flow  */}
+<SheetGrabber className="mx-auto mt-3 mb-2" />   {/* in the flow  */}
 <SheetGrabber className="absolute left-1/2 top-1.5 z-20 -translate-x-1/2" />   {/* overlaid */}
 ```
 
@@ -90,13 +90,22 @@ dismissed sideways, and a horizontal bar would advertise the wrong axis.
 
 Two placements, and the choice is about what the sheet's first band is:
 
-- **In the flow** (`mx-auto mb-2`) when the sheet opens on a list — the two
-  menu sheets do this, and both used to write the six classes out by hand.
+- **In the flow** (`mx-auto mt-3 mb-2`) when the sheet opens on a list — the
+  two menu sheets do this, and both used to write the six classes out by hand.
+  The `mt-3` is the mark's own, and it was not always: the pill used to carry
+  no top inset at all and take whatever padding the call site happened to have.
+  The menu sheet padded its popup `pt-3` and looked right; every card's sheet
+  pads its header instead, so there the pill sat flush against the 28px corner
+  — 0px, measured on an iPhone, against 12 two sheets away. The inset belongs
+  to the mark, not to the call sites, so `dropdown-menu` gave up its `pt-3`
+  when the grabber took it on.
 - **Overlaid** (`absolute`) when the sheet opens with a bar or a header across
   the top, where a band of its own would spend a whole row on a 4px pill. It
   is centred, so it clears the bar's leading and trailing controls, and it
   sits above the bar's top inset, so it clears a centred title. Measured at
-  375: grabber 7–11px from the top, title top at 20.
+  375: grabber 7–11px from the top, title top at 20. The two placements differ
+  by 6px on purpose — overlaid, 6 is a ceiling and not a taste, because the
+  bar's own inset starts at 8.
 
 `aria-hidden` because the gesture it advertises already has a keyboard and
 screen-reader equivalent — Escape, and the dialog's own close — so announcing

@@ -170,7 +170,7 @@ function SheetContent({
             surfaces that are all equally draggable, telling the finger three
             different stories. A side drawer gets none: it is dismissed
             sideways, and a horizontal bar would advertise the wrong axis. */}
-        {side === "bottom" && <SheetGrabber className="mx-auto mb-2" />}
+        {side === "bottom" && <SheetGrabber className="mx-auto mt-3 mb-2" />}
         {children}
         {showCloseButton && (
           <DrawerPrimitive.Close
@@ -206,10 +206,20 @@ function SheetContent({
  * equivalent already (Escape, and the dialog's own close), so announcing a
  * decorative bar would add a landmark that does nothing.
  *
- * Two placements. In the FLOW (`mx-auto mb-2`) for a sheet whose first band is
- * a list, and OVERLAID (`absolute`) for one with a bar across the top, where
- * a band of its own would cost a row. `bg-border` either way, which is what
- * both menu sheets already drew by hand.
+ * Two placements. In the FLOW (`mx-auto mt-3 mb-2`) for a sheet whose first
+ * band is a list, and OVERLAID (`absolute top-1.5`) for one with a bar across
+ * the top, where a band of its own would cost a row. `bg-border` either way,
+ * which is what both menu sheets already drew by hand.
+ *
+ * The flow placement carries its OWN `mt-3`. It used to carry none and inherit
+ * whatever padding the call site happened to have: the menu sheet padded its
+ * popup `pt-3` and looked right, while every card's sheet pads its header
+ * instead and left the pill flush against the 28px corner — 0px of inset,
+ * measured on an iPhone. The inset belongs to the mark, not to five call sites.
+ *
+ * The two numbers differ on purpose. Overlaid, 6px is a ceiling, not a taste:
+ * the action bar's own inset starts at 8, so anything lower would cross a
+ * centred title.
  */
 function SheetGrabber({ className, ...props }: React.ComponentProps<"div">) {
   return (
