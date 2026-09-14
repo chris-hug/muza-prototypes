@@ -147,7 +147,25 @@ export function MenuHeart({ filled, className }: { filled: boolean; className?: 
   return (
     <Heart
       key={`menu-heart-${tick}`}
-      className={cn(tick > 0 && "animate-heart-pop-quick", filled && "fill-current", className)}
+      /* The flag the menu rows read. A row paints its own icons muted — that
+         is what makes five leading glyphs read as one set — and it used to
+         reach the heart too, so the row's colour beat the heart's by
+         specificity and a saved song still looked grey. The rows skip
+         `[data-saved]` rather than dropping the rule. */
+      {...(filled ? { "data-saved": "" } : {})}
+      className={cn(
+        tick > 0 && "animate-heart-pop-quick",
+        /* SAVED is the brand ink, not the row's. `fill-current` inherited the
+           row's own colour, which in a menu is `--muted-foreground` — so the
+           one row carrying state looked as quiet as the five that do not, and
+           a saved item read as grey rather than as saved. `--primary-text` is
+           the same ink the card and header hearts fill with, so a song looks
+           saved the same way wherever you meet it.
+           UNSAVED still inherits: an outline heart in the row's colour is a
+           row icon like any other, which is correct — it is not state yet. */
+        filled && "fill-primary-text text-primary-text",
+        className,
+      )}
     />
   )
 }

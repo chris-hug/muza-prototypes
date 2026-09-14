@@ -124,7 +124,7 @@ function SheetRow({ icon, label, destructive, onClick, keepOpen, dismiss = true 
     "[&_svg]:size-5 [&_svg]:shrink-0",
     destructive
       ? "text-destructive [&_svg]:text-destructive"
-      : "text-foreground [&_svg]:text-muted-foreground",
+      : "text-foreground [&_svg:not([data-saved])]:text-muted-foreground",
   )
   if (keepOpen || !dismiss) {
     return <button type="button" onClick={onClick} className={cls}>{icon}{label}</button>

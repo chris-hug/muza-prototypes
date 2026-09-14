@@ -136,7 +136,18 @@ bottom, swipe **down** to dismiss (`swipeDirection="down"` set on the root, as
   into a nested `Checkbox` and turned its tick dark **on the blue fill**.
   Scoped to direct children (`[&>svg]`), so the row still styles its own leading
   icon and leaves a control's own parts alone. Measured after: tick
-  `oklch(0.9816 0.0131 111.4)` on `rgb(30 52 216)`. `pb-[max(12px, env(safe-area-inset-bottom))]`
+  `oklch(0.9816 0.0131 111.4)` on `rgb(30 52 216)`.
+- **…and it must not repaint STATE either.** The same rule reached the saved
+  heart, so a song already in the library showed a muted heart in a row of
+  muted icons — the one glyph carrying state looked exactly as quiet as the
+  five that carry none. `MenuHeart` marks itself `data-saved` when filled and
+  the row's rule skips it (`[&>svg:not([data-saved])]`, and the same in
+  `detail-more-button.tsx`), so a saved heart fills with `--primary-text`:
+  the same ink the card and header hearts use, so a song looks saved the same
+  way wherever you meet it. **Unsaved keeps inheriting** — an outline heart in
+  the row's colour is a row icon like any other, because it is not state yet.
+  Measured: `rgb(30 52 216)` filled, `--muted-foreground` with `fill: none`
+  unfilled, in the dropdown and the sheet alike. `pb-[max(12px, env(safe-area-inset-bottom))]`
   keeps the last row above the home indicator, which is why
   `viewport-fit=cover` is mandatory in the viewport meta — without it the
   `env()` is 0 and the pad is the 12px floor alone.

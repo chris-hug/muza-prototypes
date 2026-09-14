@@ -187,7 +187,7 @@ function DropdownMenuItem({
               // multi-select ended up with a muted-foreground tick on its
               // primary fill: dark on blue, unreadable, and nothing to do with
               // this row's own leading icon.
-              "flex w-full items-center gap-3 rounded-md px-3 py-3 text-base font-normal text-foreground text-left transition-colors active:bg-muted [@media(hover:hover)]:hover:bg-muted outline-none focus-visible:bg-muted disabled:opacity-50 disabled:pointer-events-none [&>svg]:size-5 [&>svg]:shrink-0 [&>svg]:text-muted-foreground",
+              "flex w-full items-center gap-3 rounded-md px-3 py-3 text-base font-normal text-foreground text-left transition-colors active:bg-muted [@media(hover:hover)]:hover:bg-muted outline-none focus-visible:bg-muted disabled:opacity-50 disabled:pointer-events-none [&>svg]:size-5 [&>svg]:shrink-0 [&>svg:not([data-saved])]:text-muted-foreground",
               variant === "destructive" && "text-destructive [&>svg]:text-destructive",
               className,
             )}
