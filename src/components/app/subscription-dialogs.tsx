@@ -137,13 +137,19 @@ function PaywallContent({
       <div className="flex flex-col @[760px]:flex-row @[760px]:min-h-[660px]">
         {/* LEFT — the why. The brand lockup + claim sit pinned to the
             bottom-left (two-column); pitch left-aligned when wide so the
-            copy is readable (centered long copy is the weak spot). */}
-        <div className="flex flex-col gap-8 px-10 md:px-12 pt-12 pb-10 @[760px]:pb-12 items-center @[760px]:items-start text-center @[760px]:text-left @[760px]:flex-1 @[760px]:justify-between">
-          <div className="flex flex-col items-center @[760px]:items-start gap-5">
-            <h2 className="text-2xlarge @[760px]:text-4xlarge leading-[1.05] font-medium text-foreground tracking-[-0.02em] max-w-[16ch]">
+            copy is readable (centered long copy is the weak spot).
+
+            Below 420px of dialog the pitch drops from `text-large` to
+            `text-small` and the headline one step, with tighter gaps. At
+            24px the pitch ran to six lines on a phone and pushed the
+            Subscribe button below the fold — the page made you scroll
+            past the argument to reach the thing it was arguing for. */}
+        <div className="flex flex-col gap-8 px-6 @[420px]:px-10 @[760px]:px-12 pt-10 @[420px]:pt-12 pb-6 @[420px]:pb-10 @[760px]:pb-12 items-center @[760px]:items-start text-center @[760px]:text-left @[760px]:flex-1 @[760px]:justify-between">
+          <div className="flex flex-col items-center @[760px]:items-start gap-3 @[420px]:gap-5">
+            <h2 className="text-xlarge @[420px]:text-2xlarge @[760px]:text-4xlarge leading-[1.05] font-medium text-foreground tracking-[-0.02em] max-w-[16ch]">
               Support your artists.
             </h2>
-            <p className="text-large font-normal text-foreground leading-8 max-w-[42ch]">
+            <p className="text-small @[420px]:text-large font-normal text-foreground @[420px]:leading-8 max-w-[42ch]">
               {PAYWALL_PITCH}
             </p>
             <a
@@ -171,7 +177,7 @@ function PaywallContent({
             behind it: over the dialog's own `bg-popover` (the same hex) it
             was invisible, and on the design-system stage it mixed with the
             card underneath into a colour that exists in no token. */}
-        <div className="flex flex-col items-center text-center gap-8 px-10 md:px-12 pt-8 pb-12 @[760px]:pt-12 @[760px]:border-l border-border @[760px]:bg-muted @[760px]:flex-1">
+        <div className="flex flex-col items-center text-center gap-8 px-6 @[420px]:px-10 @[760px]:px-12 pt-4 @[420px]:pt-8 pb-12 @[760px]:pt-12 @[760px]:border-l border-border @[760px]:bg-muted @[760px]:flex-1">
           <div className="flex w-full flex-col items-center gap-4 @[760px]:flex-1 @[760px]:justify-center">
             <p className="text-small font-medium text-foreground">
               Choose your monthly amount
@@ -179,9 +185,18 @@ function PaywallContent({
             <AmountPillRow value={amount} onChange={onAmountChange} />
             {/* Subtle separator between the picker and the actions. */}
             <div className="w-full h-px bg-border/60 my-1" />
+            {/* The label is the amount, so it is the longest it will ever
+                be at `$10.00/mo` and cannot be shortened. At `text-large`
+                inside a 300px dialog it overran the pill and was clipped at
+                BOTH ends ("ubscribe — $10.00/m"), because a button centres
+                and does not wrap. Below 420px of dialog the pair steps down
+                to `text-small` — and the column padding to `px-6` — keyed to
+                the CONTAINER, not the viewport: the design-system stage is
+                narrow on a wide screen, and `md:px-12` gave it 48px a side
+                there, which is what squeezed the label in the first place. */}
             <Button
               size="lg"
-              className="!h-16 w-full !text-large"
+              className="!h-16 w-full !text-small @[420px]:!text-large"
               disabled={subscribeDisabled}
               onClick={onSubscribe}
             >
@@ -192,7 +207,7 @@ function PaywallContent({
             <Button
               variant="secondary"
               size="lg"
-              className="!h-16 w-full !text-large font-normal"
+              className="!h-16 w-full !text-small @[420px]:!text-large font-normal"
               onClick={onFreeTrial}
             >
               Try a free month
@@ -206,8 +221,10 @@ function PaywallContent({
         </div>
       </div>
       {/* Stacked only: the brand lockup becomes the footer — the very last
-          thing users see (in two-column it's bottom-left, above). */}
-      <div className="@[760px]:hidden flex flex-col items-center gap-2 px-10 pt-4 pb-10">
+          thing users see (in two-column it's bottom-left, above).
+          `text-center` because the claim wraps to two lines at this width,
+          and `items-center` centres the BOX, not the lines inside it. */}
+      <div className="@[760px]:hidden flex flex-col items-center text-center gap-2 px-6 @[420px]:px-10 pt-4 pb-10">
         {brandLockup}
       </div>
     </div>
