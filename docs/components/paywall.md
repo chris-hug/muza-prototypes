@@ -52,6 +52,14 @@ a **dark outline** (`border-foreground`), never a primary fill — inside the
 muted column the picker is neutral chrome, and the CTA below is the only
 filled thing. Pre-selected at **$10**; the custom row is always typeable
 (no click-to-reveal) and shows blank while a preset is active.
+
+Which control owns the amount is **state**, not read off the value: typing
+puts the row in custom mode, and the match is made on **blur** — leave the
+field on exactly 5, 10 or 20 and that pill lights up (the behaviour staging
+shipped first). It used to be derived —
+a value that matched a preset counted as the preset — so typing "5" on the
+way to "50" selected the $5 pill, emptied the field, and made 50 impossible
+to type.
 `MIN_AMOUNT = 1`: Subscribe disables below it. A free month is a separate
 action with the sentinel `"free"`, not a $0 amount.
 

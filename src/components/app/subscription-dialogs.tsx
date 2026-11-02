@@ -573,13 +573,26 @@ function AmountPillRow({
   value: string
   onChange: (next: string) => void
 }) {
-  const isPreset = (AMOUNT_PRESETS as readonly string[]).includes(value)
-  // Mirror the value into the custom input only when the user has
-  // typed a non-preset amount. While a preset is selected, the custom
-  // field shows blank with its '$ |' placeholder so it visibly invites
-  // typing without claiming the current selection.
-  const customDisplayValue = isPreset ? "" : value
-  const customActive = !isPreset && value !== ""
+  /*
+   * Which control owns the amount is STATE, not something read off the
+   * value. It used to be derived: a value that matched a preset counted as
+   * the preset. So typing "5" on the way to "50" selected the $5 pill and
+   * emptied the field — the "5" vanished mid-word and the next keystroke
+   * started over, which made 50 impossible to type. Typing now puts the row
+   * in custom mode, whatever the digits happen to spell, and the match is
+   * made on BLUR: leave the field on exactly 5, 10 or 20 and that pill
+   * lights up, so a typed preset still reads as the preset. This is the
+   * behaviour staging already shipped; the prototype follows it.
+   *
+   * While a preset is selected the field shows blank with its placeholder,
+   * so it invites typing without claiming the current selection.
+   */
+  const [custom, setCustom] = useState(
+    () => !(AMOUNT_PRESETS as readonly string[]).includes(value),
+  )
+  const isPreset = !custom
+  const customDisplayValue = custom ? value : ""
+  const customActive = custom && value !== ""
 
   return (
     <div className="flex w-full flex-col items-stretch gap-2">
@@ -590,7 +603,7 @@ function AmountPillRow({
             <button
               key={p}
               type="button"
-              onClick={() => onChange(p)}
+              onClick={() => { setCustom(false); onChange(p) }}
               aria-pressed={active}
               className={cn(
                 "h-12 w-full px-2 rounded-full text-base font-normal tabular-nums transition-colors bg-background",
@@ -621,7 +634,11 @@ function AmountPillRow({
           value={customDisplayValue}
           onChange={e => {
             const raw = e.target.value.replace(/[^0-9.]/g, "")
+            setCustom(true)
             onChange(raw)
+          }}
+          onBlur={() => {
+            if ((AMOUNT_PRESETS as readonly string[]).includes(value)) setCustom(false)
           }}
           placeholder="choose your own"
           aria-label="Custom monthly amount"
