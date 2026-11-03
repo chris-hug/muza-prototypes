@@ -324,7 +324,7 @@ import { OrderStatusBadge } from "@/components/ui/order-status-badge"
 import { CheckoutCard, CHECKOUTS } from "@/components/app/purchases-view"
 import { ShopView } from "@/components/app/shop-view"
 import { LibraryAlbumsView } from "@/components/app/library-albums-view"
-import { ArtistProfileView } from "@/components/app/artist-profile-view"
+import { ArtistProfileView, ArtistTopSongsView } from "@/components/app/artist-profile-view"
 import { AlbumDetailView } from "@/components/app/album-detail-view"
 import { PlaylistDetailView } from "@/components/app/playlist-detail-view"
 import { LibraryArtistsView, SAVED_ARTISTS } from "@/components/app/library-artists-view"
@@ -2805,6 +2805,9 @@ const DETAIL_BACK: Record<string, string> = {
   Album:    "Albums",
   Playlist: "Playlists",
   Artist:   "Home",
+  // Artist › Top Songs › "Show all" — back returns to the artist, whose
+  // slug is still in the URL (`navigate` only swaps `page`).
+  ArtistSongs: "Artist",
 }
 
 // Pages where the persistent player makes sense — the music "listening"
@@ -2813,7 +2816,7 @@ const DETAIL_BACK: Record<string, string> = {
 const LISTENING_PAGES = new Set<string>([
   "Home", "Explore",
   "Library", "Albums", "Artists", "Playlists", "Songs",
-  "Album", "Playlist", "Artist",
+  "Album", "Playlist", "Artist", "ArtistSongs",
 ])
 
 export default function Home() {
@@ -3012,6 +3015,7 @@ export default function Home() {
             {activeNav === "Artists"   && <LibraryArtistsView />}
             {activeNav === "Playlists" && <LibraryPlaylistsView />}
             {activeNav === "Artist"    && <ArtistProfileView />}
+            {activeNav === "ArtistSongs" && <ArtistTopSongsView />}
             {activeNav === "Album"     && <AlbumDetailView />}
             {activeNav === "Playlist"  && <PlaylistDetailView />}
             {Object.keys(STUDIO_TABS).includes(activeNav) && (

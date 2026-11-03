@@ -59,6 +59,11 @@ const LIBRARY_TABS: PillTab[] = [
 
 const DETAIL_PAGES = ["Album", "Playlist", "Artist"]
 
+// Generic pages whose `?page=` key is not a readable title.
+const PAGE_TITLE: Record<string, string> = {
+  ArtistSongs: "Top Songs",
+}
+
 interface MobileAppHeaderProps {
   activeNav: string
   onNavChange: (nav: string) => void
@@ -87,7 +92,7 @@ export function MobileAppHeader({ activeNav, onNavChange, onBack }: MobileAppHea
   return (
     <MobileHeader>
       <MobileTitleRow
-        title={activeNav}
+        title={PAGE_TITLE[activeNav] ?? activeNav}
         trailing={onBack
           ? <MobileIconButton label="Back" onClick={onBack}><ChevronLeft /></MobileIconButton>
           : <Avatar />}

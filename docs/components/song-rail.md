@@ -33,20 +33,21 @@ every row gets neither.
 |---|---|
 | `title` | the heading |
 | `rows` | pre-rendered, **keyed** song rows; the rail slices them three per column |
-| `onShowAll` | optional; omitted → no "Show all" ever (Artist › Top Songs); present → shown on overflow, opens the fuller view |
+| `onShowAll` | optional; omitted → no "Show all" ever; present → shown on overflow, opens the fuller view (both current hosts pass it) |
 
 `ROWS_PER_COLUMN` is exported so a host can size its data to whole columns.
 
 ## Usage
 
 ```tsx
-// Artist › Top Songs — player-wired rows, no "Show all".
+// Artist › Top Songs — player-wired rows; "Show all" opens the full list page.
 <SongRail
   title="Top Songs"
   rows={tracks.map(t => (
     <SongListItem key={t.id} compact cover={t.cover} title={t.title} album={t.album} year={t.year}
       playing={isCurrent(t)} onPlay={() => play(t)} hideGoToArtist />
   ))}
+  onShowAll={() => go("ArtistSongs")}
 />
 
 // Search › Songs — `SearchSongRow`s, "Show all" opens the Songs tab.
@@ -111,7 +112,11 @@ affordance.
 ## Where it is used
 
 - Artist › Top Songs (`artist-profile-view.tsx`) — player-wired `compact`
-  rows, `hideGoToArtist`, no `onShowAll`.
+  rows, `hideGoToArtist`. `onShowAll` opens `?page=ArtistSongs`: the same
+  songs as full rows on their own page, titled "Top Songs", back to the
+  artist. It had none at first — an artist's top ten seemed to need no
+  second view — but on a phone the rail shows three at a time, and swiping
+  is a poor way to scan ten. Staging shipped the button first.
 - Search › Songs on the All tab (`search-results-view.tsx`) — at **≥ 6**
   hits; `onShowAll` opens the Songs tab. ≤ 5 hits render a plain list of full
   rows instead — six is the first count that fills two whole columns.

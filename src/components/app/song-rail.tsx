@@ -16,7 +16,7 @@
  * Column widths are computed from the ul's own 100% so they line up with the
  * CardRail card columns at the same page width.
  *
- * `onShowAll` is optional — omit it (Artist Top Songs) for a rail with no
+ * `onShowAll` is optional — omit it for a rail with no
  * "Show all". When present, "Show all" + the arrows appear only once the rail
  * actually overflows. Arrows are a pointer affordance: hidden on touch
  * (`hover:none`) and below 692px, where the peeking next column is the cue.
@@ -34,7 +34,7 @@ export function SongRail({ title, rows, onShowAll }: {
   title: string
   /** Pre-rendered, keyed song rows — the rail chunks them into columns. */
   rows: React.ReactNode[]
-  /** Omit for a rail with no "Show all" (e.g. Artist Top Songs). */
+  /** Omit for a rail with no "Show all". */
   onShowAll?: () => void
 }) {
   const scrollRef = useRef<HTMLUListElement>(null)

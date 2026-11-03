@@ -26,10 +26,11 @@
 
 import * as React from "react"
 import { useMemo, useState } from "react"
+import { useSearchParams } from "react-router"
 import { ArrowUp, ArrowUpDown, LayoutGrid, List, MoreHorizontal } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { useMediaQuery } from "@/lib/use-media-query"
+import { useMediaQuery, useFooterNav } from "@/lib/use-media-query"
 import { ContentTypeBadge, contentTypeConfig } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -803,20 +804,20 @@ function DiscographyView({
   )
 }
 
-// ─── TopSongsRow ────────────────────────────────────────────────────────────
+// ─── Top Songs ──────────────────────────────────────────────────────────────
 //
 // Artist › Top Songs = the shared `SongRail` shell fed artist-wired rows.
-// This wrapper only builds the rows (player / credits / album nav); the rail
-// itself (columns, chevrons, peek, responsive ladder) lives in `song-rail.tsx`.
+// The rows are built once (player / credits / album nav) and used twice: as
+// compact rows in the rail, and as full rows on the "Show all" page.
 
-function TopSongsRow({ songs }: { songs: typeof TOP_SONGS }) {
+function useTopSongRows(songs: typeof TOP_SONGS, compact: boolean) {
   const { openAlbum } = useMediaNav()
   const player = usePlayer()
 
-  const rows = songs.map(s => (
+  return songs.map(s => (
                   <SongListItem
                     key={s.id}
-                    compact
+                    compact={compact}
                     cover={s.cover}
                     title={s.title}
                     album={s.album}
@@ -837,6 +838,42 @@ function TopSongsRow({ songs }: { songs: typeof TOP_SONGS }) {
                     hideGoToArtist
                   />
   ))
+}
 
-  return <SongRail title="Top Songs" rows={rows} />
+// "Show all" opens the full list on its own page (`?page=ArtistSongs`), the
+// way staging does it: a title, a back chevron to the artist, every song as
+// a full row. It was omitted here at first, on the theory that an artist's
+// top ten needs no second view — but on a phone the rail shows three songs
+// at a time and swiping is the only way to the rest, which is a poor way to
+// scan ten. Staging shipped the button first; the prototype follows.
+function TopSongsRow({ songs }: { songs: typeof TOP_SONGS }) {
+  const [, setParams] = useSearchParams()
+  const rows = useTopSongRows(songs, true)
+  const showAll = () => setParams(prev => {
+    const next = new URLSearchParams(prev)
+    next.set("page", "ArtistSongs")
+    return next
+  }, { replace: true })
+  return <SongRail title="Top Songs" rows={rows} onShowAll={showAll} />
+}
+
+/** The "Show all" page for Artist › Top Songs. On phones the title and the
+ *  back chevron are the generic mobile header's; on desktop the Topbar
+ *  carries the back, so the page prints its own title. */
+export function ArtistTopSongsView() {
+  const footerNav = useFooterNav()
+  const rows = useTopSongRows(TOP_SONGS, false)
+  return (
+    <div className="@container mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] w-full px-page pt-8 pb-12">
+      {!footerNav && (
+        <div className="mb-6">
+          <h1 className="text-2xlarge font-medium text-foreground tracking-tight">Top Songs</h1>
+          <p className="text-small text-muted-foreground">{ARTIST.name}</p>
+        </div>
+      )}
+      <ul className="flex flex-col gap-2">
+        {rows.map(r => <li key={(r as React.ReactElement).key}>{r}</li>)}
+      </ul>
+    </div>
+  )
 }
