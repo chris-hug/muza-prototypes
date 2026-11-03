@@ -164,7 +164,7 @@ Focusing the Explore field opens the recent-searches / suggestions panel
 |---|---|
 | Home | title + account avatar (the trigger for the shared `ProfileMenu`, a bottom sheet on touch) |
 | Library (All / Albums / Artists / Playlists / Songs) | title + `New playlist` + search, then the filter strip |
-| Explore | title + avatar + search field; the title steps aside while the field is focused or a query is active; the scope `ToggleGroup` appears under the field once results exist |
+| Explore | title + avatar + search field; the title steps aside while the field is focused or a query is active; the scope `ToggleGroup` appears under the field once results exist. On the results, **Cancel** and `✕` drop `?q=` and return Explore to rest — they used to only empty the field, so a submitted search had no way back on screen. The desktop `Topbar` field has the same `✕` |
 | Album / Playlist / Artist | a slim back ⇄ `…` bar (the page carries its own `MediaHeader`) |
 | anything else | title + back-or-avatar |
 

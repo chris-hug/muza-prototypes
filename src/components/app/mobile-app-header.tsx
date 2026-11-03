@@ -300,7 +300,7 @@ function LibraryHeader({ activeNav, onNavChange }: { activeNav: string; onNavCha
 // desktop. The scope + category controls therefore live in the body, not
 // here — the header is purely the search entry point.
 function ExploreHeader() {
-  const { query, submit, scope, setScope } = useSearchNav()
+  const { query, submit, clear, scope, setScope } = useSearchNav()
   const [q, setQ] = useState(query)
   const [focused, setFocused] = useState(false)
   useEffect(() => { setQ(query) }, [query])
@@ -316,8 +316,14 @@ function ExploreHeader() {
         onChange={setQ}
         placeholder="Search Artists, Albums, Songs or Playlists"
         onFocus={() => setFocused(true)}
-        onClear={q ? () => setQ("") : undefined}
-        onCancel={focused ? () => setFocused(false) : undefined}
+        // On the results, X and Cancel are the way OUT of the search: they
+        // drop `?q=` and Explore returns to its resting state. They used to
+        // only empty the field (X) or close the suggestions (Cancel), so
+        // once a search was submitted nothing on screen led back.
+        onClear={q ? () => { setQ(""); if (!focused && query) clear() } : undefined}
+        onCancel={focused
+          ? () => setFocused(false)
+          : query ? () => { setQ(""); clear() } : undefined}
         onSubmit={() => run(q)}
       />
       {/* Scope switcher — the SAME ToggleGroup used on desktop, stretched

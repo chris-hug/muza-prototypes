@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useSearchParams } from "react-router"
-import { Search, ShoppingCart, User, Receipt, Wallet, Settings, LogOut, ChevronLeft } from "lucide-react"
+import { Search, ShoppingCart, User, Receipt, Wallet, Settings, LogOut, ChevronLeft, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { SearchPanel } from "@/components/ui/search-panel"
@@ -43,7 +43,7 @@ export function Topbar({
   className,
 }: TopbarProps) {
   const [focused, setFocused] = useState(false)
-  const { query, submit } = useSearchNav()
+  const { query, submit, clear } = useSearchNav()
   const [value, setValue] = useState(query)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -93,6 +93,24 @@ export function Topbar({
           "text-foreground placeholder:text-muted-foreground",
         )}
       />
+      {/* Clear — also the way OUT of a search. Submitting puts the query in
+          the URL and the results replace the Explore page; without this
+          there was no control that took you back, only the browser's.
+          Clearing empties the field and, when results are showing, drops
+          `?q=` so Explore returns to its resting state. `onMouseDown`
+          prevents the blur that would otherwise close the suggestions
+          panel before the click lands. */}
+      {value && (
+        <button
+          type="button"
+          aria-label="Clear search"
+          onMouseDown={e => e.preventDefault()}
+          onClick={e => { e.stopPropagation(); setValue(""); if (query) clear() }}
+          className="state-fade shrink-0 text-muted-foreground hover:text-foreground"
+        >
+          <X className="size-4" />
+        </button>
+      )}
     </div>
       {/* Recent searches / suggestions — anchored under the field. */}
       {focused && (
