@@ -1,8 +1,8 @@
 "use client"
 
 /*
- * PurchaseAlbumDialog — buyer-side checkout for the "Unlock All
- * Songs" CTA on an album detail page. Three states:
+ * PurchaseAlbumDialog — buyer-side checkout for the "Buy"
+ * CTA on an album detail page. Three states:
  *
  *   summary    → order summary + tier picker + email + Square
  *                payment container + sticky footer (total + Pay).
@@ -63,7 +63,7 @@
  */
 
 import { useEffect, useState } from "react"
-import { CircleCheck, CircleCheckBig, Disc3, Download, Mail, Radio as RadioIcon, ShieldCheck } from "lucide-react"
+import { Check, CircleCheck, CircleCheckBig, Disc3, Download, Mail, Radio as RadioIcon, ShieldCheck, ShoppingCart } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import {
@@ -110,6 +110,14 @@ export interface PurchaseAlbumDialogProps {
    *  navigates the user to the Albums page. The dialog closes on its
    *  own once the success state has played out. */
   onGoToLibrary?: () => void
+  /** Batch buy — when set, the footer offers "Add to cart" beside
+   *  "Confirm and pay": the same album, the picked tier, paid later with
+   *  everything else. The host adds the line and the dialog closes.
+   *  `inCart` turns it into "View cart" (→ `onOpenCart`), so a second
+   *  visit never doubles the line. Ignored in `upgradeMode`. */
+  onAddToCart?: (tier: PurchaseTier, price: string) => void
+  inCart?: boolean
+  onOpenCart?: () => void
 }
 
 type Step = "summary" | "processing" | "success"
@@ -128,6 +136,7 @@ export function PurchaseAlbumDialog({
   open, onOpenChange, album, streamPrice, downloadPrice,
   userEmail = MOCK_USER_EMAIL, onPurchased, onGoToLibrary,
   upgradeMode = false, upgradePrice, onUpgraded,
+  onAddToCart, inCart = false, onOpenCart,
 }: PurchaseAlbumDialogProps) {
   const [step, setStep]   = useState<Step>("summary")
   // In upgrade mode tier is forced to "download" — the user already
@@ -343,10 +352,31 @@ export function PurchaseAlbumDialog({
                  `p-0` flex layout so we want zero outer margin and
                  plain `shrink-0` so the row stays pinned to the
                  dialog's bottom edge. */}
+            {/* With batch buy the left slot is "Add to cart" instead of
+                 Cancel — the Bandcamp arrangement (Check out now · Add to
+                 cart), and the album page keeps ONE buy button. Cancel
+                 can go: Remove on the cart line, the ✕ and the backdrop
+                 already dismiss. Not gated on the email: putting it in
+                 the cart asks for nothing yet. */}
             <DialogFooter className="m-0 shrink-0 border-t border-border bg-muted px-4 py-3 rounded-b-xl md:rounded-b-2xl">
-              <DialogClose render={<Button size="lg" variant="ghost" />}>
-                Cancel
-              </DialogClose>
+              {onAddToCart && !upgradeMode ? (
+                <Button
+                  size="lg"
+                  variant="ghost"
+                  onClick={() => {
+                    if (inCart) onOpenCart?.()
+                    else onAddToCart(tier, itemPriceStr)
+                    onOpenChange(false)
+                  }}
+                >
+                  {inCart ? <Check /> : <ShoppingCart />}
+                  {inCart ? "View cart" : "Add to cart"}
+                </Button>
+              ) : (
+                <DialogClose render={<Button size="lg" variant="ghost" />}>
+                  Cancel
+                </DialogClose>
+              )}
               <Button size="lg" onClick={handlePay} disabled={!canPay}>
                 Confirm and pay {price}
               </Button>

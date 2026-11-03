@@ -28,6 +28,9 @@ import { ArtistCard } from "@/components/ui/artist-card"
 import { PlaylistCard } from "@/components/ui/playlist-card"
 import { CardRail } from "@/components/app/card-rail"
 import { PurchaseAlbumDialog } from "@/components/app/purchase-album-dialog"
+import { CartDrawer } from "@/components/app/cart-drawer"
+import { useCart } from "@/lib/cart"
+import { useToast } from "@/components/ui/toast"
 import { useUserLibrary } from "@/lib/user-library"
 import { useUserAccount } from "@/lib/user-account"
 import { albumMetaFor, libraryIdForTitle } from "@/lib/album-meta"
@@ -116,6 +119,32 @@ export function AlbumDetailView() {
   const [subscribeAmount,   setSubscribeAmount]   = useState<string>("10")
   const library  = useUserLibrary()
   const player   = usePlayer()
+  // Batch buy — the purchase dialog's "Add to cart" puts the album, at
+  // the tier picked there, in the shared cart instead of checking out.
+  // One line per album; once it is there the dialog offers "View cart"
+  // instead, so a second visit never doubles the quantity.
+  const cart     = useCart()
+  const { add: toast } = useToast()
+  const [cartOpen, setCartOpen] = useState(false)
+  const cartLineId = `album-${ALBUM.id}`
+  const inCart   = cart.lines.some(l => l.id === cartLineId)
+  const addToCart = (tier: "stream" | "download", priceStr: string) => {
+    const price = Number(priceStr.replace(/[^0-9.]/g, ""))
+    cart.add({
+      id:           cartLineId,
+      shopId:       slugify(ALBUM.artist),
+      shopName:     ALBUM.artist,
+      productTitle: `${ALBUM.title} — ${tier === "download" ? "Download" : "Listening"}`,
+      image:        ALBUM.cover,
+      kind:         "digital",
+      selected:     {},
+      minPrice:     price,
+      unitPrice:    price,
+      fixedPrice:   true,
+      qty:          1,
+    })
+    toast({ title: "Added to cart", description: ALBUM.title, type: "success" })
+  }
   // This album is the active player source AND playing → header Play
   // button shows Pause.
   const isThisAlbumPlaying = player.playing && player.playingFrom === ALBUM.title
@@ -248,8 +277,10 @@ export function AlbumDetailView() {
         onAddDownload={() => setUpgradeOpen(true)}
       />
 
+      <CartDrawer open={cartOpen} onOpenChange={setCartOpen} />
+
       {/* Mounted alongside the header so it can be opened by the
-           "Unlock All Songs" CTA. On purchase the library store is
+           "Buy" CTA. On purchase the library store is
            mutated (auto-add + mark purchased) so every surface that
            lists this album picks up the badge automatically. */}
       <PurchaseAlbumDialog
@@ -265,6 +296,9 @@ export function AlbumDetailView() {
         streamPrice={ALBUM.buyingPrice ?? ""}
         downloadPrice={ALBUM.downloadPrice}
         onPurchased={(tier) => library.purchase(ALBUM.id, tier)}
+        onAddToCart={addToCart}
+        inCart={inCart}
+        onOpenCart={() => setCartOpen(true)}
         onGoToLibrary={() => {
           setBuyOpen(false)
           // Navigate via the route shell's nav handler isn't wired

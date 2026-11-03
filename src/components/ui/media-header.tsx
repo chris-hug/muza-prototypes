@@ -78,8 +78,9 @@ export interface MediaHeaderProps {
   /** Fires when the user picks a different value from the
    *  visibility badge's dropdown. */
   onVisibilityChange?: (status: StatusBadgeStatus) => void
-  /** Toggles the "Unlock All Songs — $X" outline-primary CTA above
-   *  the Play / Shuffle row. */
+  /** Toggles the "Buy — $X" outline-primary CTA above the Play /
+   *  Shuffle row. One buy action on the page; "check out now" vs "add to
+   *  cart" is decided in the purchase dialog it opens. */
   hasBuyingOption?: boolean
   buyingPrice?: string
   /** Renders the inline "Purchased" badge in the meta line. The host
@@ -234,9 +235,19 @@ export function MediaHeader({
 
   // Buy / download / upgrade CTA — same element both layouts; full
   // width in each (mobile: full row; desktop: the 234px column).
+  //
+  // ONE buy action on the page, labelled "Buy – $x". Batch buy (staging's
+  // cart button beside the CTA) moved into the purchase dialog, where
+  // "Add to cart" sits beside "Confirm and pay". Every store checked does
+  // it this way — Bandcamp (one "Buy Digital Album", then Check out now /
+  // Add to cart in the dialog), Subvert (only Add to cart), Mirlo and the
+  // iTunes Store (only Buy) — and two buy buttons here read as two
+  // products, and had nowhere to sit beside each other in the 234 column.
+  // "Buy", not "Unlock All Songs": the button names the act; what
+  // unlocking means is the dialog's to explain.
   const ctaButton = hasBuyingOption ? (
     <Button variant="outline-primary" size="lg" onClick={onBuy} className="w-full">
-      Unlock All Songs – {buyingPrice}
+      Buy – {buyingPrice}
     </Button>
   ) : downloadable ? (
     <Button variant="outline" size="lg" onClick={onDownload} className="w-full">

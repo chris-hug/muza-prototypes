@@ -3,11 +3,11 @@ title: Purchase Album Dialog
 source: src/components/app/purchase-album-dialog.tsx
 related: [dialog, paywall, radio-card, album-card]
 usage:
-  - Album detail — Unlock All Songs CTA | /?page=Album
+  - Album detail — Buy CTA | /?page=Album
 ---
 
-`PurchaseAlbumDialog` is the one-time checkout behind an album's "Unlock All
-Songs" CTA: a cart with one line, a tier picker, a receipt email and a slot
+`PurchaseAlbumDialog` is the one-time checkout behind an album's "Buy"
+CTA: a cart with one line, a tier picker, a receipt email and a slot
 for Square's universal payment form, then a processing and a success step. It
 reads as a transactional cart, not a generic modal.
 
@@ -24,7 +24,7 @@ each band pads itself.
 | Header | `shrink-0 px-6 pt-6 pb-4 border-b border-border`: `DialogHeader` (title `text-small`, description) + the **In cart** card | `shrink-0` so the buyer always sees what they are buying — the card never scrolls away or compresses when the body is tall |
 | In cart | `rounded-2xl border border-border`, a row of `size-12 rounded-xs` cover · title `text-small font-medium` · `artist · year · format` in `text-muted-foreground` · price `tabular-nums` with a **Remove** link (`text-2xsmall`) under it | mirrors the seller-side `SelectedReleaseCard` in the upload flow, so buying reads as the mirror of listing. Remove does what Cancel does but reads as a cart-line action |
 | Body | `flex-1 overflow-y-auto px-6 py-4 gap-6`: **Tier** (`RadioCardGroup` — Listening · Download) · **Contact** (email `Input` with a leading `Mail` glyph, `pl-10`) · **Payment** (`SquareContainer`) · **Total** (`text-large font-medium tabular-nums`) · the `ShieldCheck` line | the only scrolling band |
-| Footer | `DialogFooter` with `m-0 shrink-0 border-t bg-muted px-6 py-4 rounded-b-xl md:rounded-b-2xl`: Cancel (`ghost`) · **Confirm and pay $x.xx** | `m-0` cancels `dialogFooterClass`'s full-bleed negative margins, which assume a `p-6` parent |
+| Footer | `DialogFooter` with `m-0 shrink-0 border-t bg-muted px-6 py-4 rounded-b-xl md:rounded-b-2xl`: **Add to cart** (`ghost`, cart glyph) when the host passes `onAddToCart`, otherwise Cancel (`ghost`) · **Confirm and pay $x.xx**. Add to cart takes the picked tier and its price, is not gated on the email, and closes the dialog; with `inCart` it reads **View cart** (✓) and calls `onOpenCart`. It replaces Cancel rather than joining it — Remove, the ✕ and the backdrop already dismiss, and three buttons do not fit a phone footer. This is where batch buy lives: the album page keeps one Buy button, as Bandcamp does (Check out now · Add to cart in its dialog) | `m-0` cancels `dialogFooterClass`'s full-bleed negative margins, which assume a `p-6` parent |
 
 Section labels (`SectionLabel`) are `text-small font-medium` — sentence case,
 never uppercase.

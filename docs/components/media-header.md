@@ -21,7 +21,7 @@ playlist variants render a 2×2 composite cover with no format.
 | Composite cover | when `covers` has **four** entries (playlists), a `grid-cols-2 grid-rows-2` of them; with fewer it falls back to the single `cover`, which is why playlists must always pass `cover` too | — |
 | Title | `MarqueeText` as the page `h1` — one line, never wraps; when it does not fit it scrolls back and forth so the whole name is readable | `text-large` stacked, `text-2xlarge` from 560; `font-semibold leading-[1.2] text-foreground` |
 | Meta line | owner (avatar `size-6 min-w-6 rounded-full` + name), the type (`Disc3` + format, or `ListMusic` + "Playlist"), the year — or the playlist's "42 tracks · 3h 12m" passed in `year` — then the visibility `StatusBadge` on owned variants and the `PurchasedBadge` when `purchased` | `text-small font-normal leading-none text-muted-foreground`; the name `font-medium truncate`; owner `hover:text-foreground` |
-| CTA | `hasBuyingOption` → **Unlock All Songs – $x** (`outline-primary`, `lg`); else `downloadable` → **Download MP3** (`outline`); else `addDownloadPrice` → **Add download – $x** (`outline-primary`); else nothing. Full width of its column in both tiers | — |
+| CTA | `hasBuyingOption` → **Buy – $x** (was "Unlock All Songs"; see [One buy button](#one-buy-button)) (`outline-primary`, `lg`); else `downloadable` → **Download MP3** (`outline`); else `addDownloadPrice` → **Add download – $x** (`outline-primary`); else nothing. Full width of its column in both tiers | — |
 | Play · Shuffle | Play is the `default` `lg` button with the icon only (`px-0 min-w-12`), flipping to Pause with `aria-pressed` when `playing`; Shuffle is the shared `ShuffleToggle` in `secondary`, `min-w-12 h-12`, lit `primary` when `shuffleActive` — the same pop / halo the player bars use | — |
 | Action cluster | 48px `outline` `icon-lg` buttons (`size-12`): the heart (a store-bound `LibraryHeartButton` when `libraryId` is set, otherwise a plain Heart → `onAdd`) **or** Edit when owned; `ShareButton`; Info (albums only); the "…" `DetailMoreButton` | `variant="outline"` carries the glass — `bg-background/20 backdrop-blur-lg border` |
 
@@ -48,6 +48,28 @@ From 560 up the row is CTA + Play / Shuffle in a **234px column** on the
 left and the cluster on the right. The "…" is pinned right and **stays in
 every horizontal tier**; the rest of the cluster — heart / Edit, Share,
 Info — appears only from 780.
+
+## One buy button
+
+The page has **one** buy action, **Buy – $x**, and it opens the
+[Purchase Album Dialog](purchase-album-dialog.md). Whether to pay now or
+collect it in the cart is decided there: its footer pairs **Add to cart**
+with **Confirm and pay**.
+
+Staging shipped batch buy as an icon-only cart beside the CTA. Two buy
+buttons read as two products, and every arrangement of them failed somewhere:
+an icon-only cart was a second copy of the same button, a labelled one did not
+fit beside the CTA in the 234 column (and at 560 of header the content column
+is only 276), and moving it into the Play row on mid widths gave one intent two
+homes. The stores we checked all keep the album page to one buy action —
+Bandcamp ("Buy Digital Album", then *Check out now* / *Add to cart* in its
+dialog, on mobile too), Subvert (only *Add to cart*), Mirlo and the iTunes
+Store (only *Buy*).
+
+**"Buy", not "Unlock All Songs".** The button names the act; the old label
+named an outcome, and beside a cart it read as a different product. What
+unlocking means — owning the songs past the free plays — is the dialog's to
+explain, where there is room.
 
 Info opens the credits dialog for albums (`useCredits().open(slugify(title))`
 — the provider has a no-op default, so no wiring is needed); a playlist's
@@ -157,7 +179,7 @@ In the frame the window chips read: 375 → 351 stacked · 584 → 536 stacked �
 - media-header.tsx:86–88 tells the host to set `hasBuyingOption={false}`
   whenever `purchased` is true · nothing enforces it: `ctaButton` checks
   `hasBuyingOption` first (media-header.tsx:235), so a purchased album that
-  still passes it shows "Unlock All Songs"
+  still passes it shows "Buy"
 - `onMore` is in `MediaHeaderProps` (media-header.tsx:118) and destructured
   · it is never used — the "…" is the `DetailMoreButton`, which takes its
   own props

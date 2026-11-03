@@ -2107,7 +2107,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         owned variants of both). Cover on the left + title / meta /
         action row on the right. Four variants: `album`, `my-album`,
         `playlist`, `my-playlist`. `hasBuyingOption` toggles the
-        "Unlock All Songs" CTA above the Play / Shuffle row. Back
+        "Buy" CTA above the Play / Shuffle row. Back
         navigation lives at the PAGE level, not in this component.
       */}
       <Section id="media-header" title="Media Header">
