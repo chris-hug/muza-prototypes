@@ -34,6 +34,7 @@ has no release credits.
 | Heading | `DialogTitle md:text-large font-medium leading-none` — "Album credits" | slotted, so the live dialog passes a real `DialogTitle` for a11y while the preview passes a `<p>` |
 | Fields | `Field`: label `text-2xsmall text-muted-foreground leading-[16px]`, value `text-small text-foreground leading-[20px]` — Main artist · Album · Label · Recording Date | label and recording date render only when the catalog has them |
 | Performers | "Performers" `text-small font-medium`, then role → names, comma-joined | role is the label, names the value |
+| `showCover` | `false` drops the 3:2 header and pads the body `pt-2 pb-12` instead of `p-6` | the player shows these credits in place of its artwork, beside a 48px thumb, so a second cover would repeat the screen |
 | Links | a value with a handler is a `<button>` carrying `link-underline`; without one it is plain text | main artist, album (when `hasAlbumDetail`) and every performer navigate. The affordance cannot come apart from the behaviour: no handler, no underline, no tab stop. `CreditsDialogPreview` passes no-op handlers so the design-system frame shows the links the product has without navigating the page away |
 
 ## Usage

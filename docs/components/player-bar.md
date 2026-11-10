@@ -50,6 +50,7 @@ disc can overhang it.
 | `bound` · `shuffle` | `{ playing, onToggle }` / `{ active, onToggle }` — bind play and shuffle to the store. Omitted, both are local state |
 | `onSeek` | scrub on the waveform, in seconds |
 | `onArtistClick` · `onAlbumClick` | make the subtitle's halves links |
+| `onPrevious` · `onNext` | the skips; without them the buttons are disabled. The app walks the playing source, as the overlay does |
 | `onExpand` | mobile only: a tap on the pill outside its buttons |
 
 ## Usage
@@ -165,8 +166,6 @@ image and the tap expands the bar.
   the bar's root is a bare `@container` (player-bar-b.tsx:339). It is safe
   — the queries are on its own descendants, so the nearest container is
   always this root — but it is the one of the four that breaks the rule
-- Previous and Next have no handlers (player-bar-b.tsx:422, :437, :517) —
-  the store exposes none, so the buttons are inert on every surface
 - the progress arc is stroked with `var(--muza-brand-200)`, a palette
   primitive (player-bar-b.tsx:184), while the waveform's played colour is
   the semantic `--waveform-progress` (app.css) that flips to brand-50 in

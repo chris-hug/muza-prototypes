@@ -1,11 +1,13 @@
 "use client"
 
+import * as React from "react"
 import { useState, useEffect, useRef } from "react"
-import { Pause, MoreVertical, Info, Share, Radio, GripVertical } from "lucide-react"
+import { Pause, MoreVertical, Info, Share, Radio, GripVertical, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Waveform } from "@/components/ui/waveform"
 import { SheetGrabber } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SkipBackFilled, PlayFilledAlt, SkipForwardFilled } from "@/components/ui/transport-icons"
 import { ShuffleToggle, RepeatToggle } from "@/components/ui/transport-toggles"
@@ -233,6 +235,19 @@ interface PlayerOverlayProps {
    *  backdrop, Escape), so the top band is the sheet's grabber rather than a
    *  close button. */
   inSheet?:     boolean
+  /** Transport. Each control renders only with its handler: a button that
+   *  does nothing is worse than no button (DESIGN_SYSTEM.md). */
+  onPrevious?:  () => void
+  onNext?:      () => void
+  /** Release credits for the track's album, as a handler (e.g. a dialog). */
+  onInfo?:      () => void
+  /** The credits themselves. When set, Info shows them IN the player, in
+   *  place of the artwork, and wins over `onInfo`. */
+  credits?:     React.ReactNode
+  /** Play songs like this one, from the artist. */
+  onRadio?:     () => void
+  /** The ⋯ menu's items, the same song menu every row uses. */
+  menuItems?:   React.ReactNode
   /** Fired when the user scrubs the waveform (seconds). */
   onSeek?:      (seconds: number) => void
   /** Navigate to the track's artist / album (the artist row + "playing
@@ -336,6 +351,12 @@ export function PlayerOverlay({
   totalTime    = "5:12",
   onClose,
   inSheet = false,
+  onPrevious,
+  onNext,
+  onInfo,
+  credits,
+  onRadio,
+  menuItems,
   onSeek,
   onArtistClick,
   onPlayingFromClick,
@@ -359,6 +380,10 @@ export function PlayerOverlay({
   const toggleShuffle = () => { if (shuffleBound) shuffleBound.onToggle(); else setLocalShuffle(s => !s) }
   const [repeat,  setRepeat]  = useState(false)
   const [tab,     setTab]     = useState<PlayerOverlayTab>("now-listening")
+  // Credits replace the artwork until closed, or until the track changes:
+  // they belong to the song that was playing when you asked.
+  const [showCredits, setShowCredits] = useState(false)
+  useEffect(() => { setShowCredits(false) }, [track.title])
 
   // ── Swipe between tabs ────────────────────────────────────────────────
   //  Horizontal swipe across the sheet flips Lyrics ↔ Now listening ↔ Up
@@ -624,6 +649,31 @@ export function PlayerOverlay({
           )}
         </div>
 
+        {/* Credits, in place of the artwork. Staging opens them here too,
+            under a header that set the title at 30px across a cut-off strip.
+            Here the track is a 48px row as in any list, and the credits are
+            the dialog's own body without its cover. Transport and tabs stay,
+            so the song keeps playing under the reading. */}
+        {showCredits && credits ? (
+          <div className="flex-1 min-h-0 w-full px-4 flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <img src={track.image} alt="" draggable={false} className="size-12 shrink-0 rounded-xs object-cover art-edge" />
+              <div className="flex-1 min-w-0">
+                <p className="text-small font-medium leading-5 text-foreground truncate">{track.title}</p>
+                <p className="text-xsmall leading-5 text-muted-foreground truncate">{track.artist}</p>
+              </div>
+              <Button variant="ghost" size="icon-sm" aria-label="Close credits" onClick={() => setShowCredits(false)}>
+                <X />
+              </Button>
+            </div>
+            {/* The list fades out at the bottom rather than ending on a cut
+                line: it scrolls, and the fade says so. */}
+            <div className="flex-1 min-h-0 flex flex-col [mask-image:linear-gradient(to_bottom,black_calc(100%-48px),transparent)]">
+              {credits}
+            </div>
+          </div>
+        ) : (
+        <>
         {/* Main content — cover + title + artist + waveform.
              Shrink-0 so it takes exactly its content height; the secondary
              icons row below gets the leftover vertical space to centre into. */}
@@ -653,9 +703,14 @@ export function PlayerOverlay({
                 variant="outline"
                 size="icon"
               />
-              <Button variant="outline" size="icon" aria-label="More options">
-                <MoreVertical strokeWidth={1.5} />
-              </Button>
+              {menuItems && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger render={<Button variant="outline" size="icon" aria-label="More options" />}>
+                    <MoreVertical strokeWidth={1.5} />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">{menuItems}</DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
 
             {/* Artist row — avatar + name. Becomes a link to the artist
@@ -713,6 +768,8 @@ export function PlayerOverlay({
             </div>
           </div>
         </div>
+        </>
+        )}
 
         {/* Secondary icons — Info / Share / Radio.
             Lives in a flex-1 region between the waveform area (above) and
@@ -722,11 +779,20 @@ export function PlayerOverlay({
             sections even when the region shrinks on small screens. */}
         {/* `min-h-12`, not `min-h-0`: this row never yields its own height. If
             anything is short it should be the cover, and it is a bug to see. */}
-        <div className="flex-1 min-h-12 w-full flex items-center justify-center py-2">
+        <div className={cn("min-h-12 w-full flex items-center justify-center py-2", showCredits && credits ? "flex-none" : "flex-1")}>
           <div className="flex items-center justify-center gap-8">
-            <Button variant="ghost" size="icon-sm" aria-label="Info / credits">
-              <Info className="size-5" strokeWidth={1.5} />
-            </Button>
+            {(credits || onInfo) && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Info / credits"
+                aria-pressed={credits ? showCredits : undefined}
+                onClick={credits ? () => setShowCredits(v => !v) : onInfo}
+                className={cn(showCredits && "text-primary-text")}
+              >
+                <Info className="size-5" strokeWidth={1.5} />
+              </Button>
+            )}
             <ShareButton
               variant="ghost"
               size="icon-sm"
@@ -734,9 +800,11 @@ export function PlayerOverlay({
               text={track ? `${track.title} — ${track.artist}` : undefined}
               icon={<Share className="size-5" strokeWidth={1.5} />}
             />
-            <Button variant="ghost" size="icon-sm" aria-label="Start radio">
-              <Radio className="size-5" strokeWidth={1.5} />
-            </Button>
+            {onRadio && (
+              <Button variant="ghost" size="icon-sm" aria-label="Start radio" onClick={onRadio}>
+                <Radio className="size-5" strokeWidth={1.5} />
+              </Button>
+            )}
           </div>
         </div>
         </>
@@ -758,7 +826,7 @@ export function PlayerOverlay({
               iconSize={toggleIcon}
             />
 
-            <Button variant="ghost" size="icon-sm" aria-label="Previous track" className="hover:bg-transparent [--hover-fill:transparent]">
+            <Button variant="ghost" size="icon-sm" aria-label="Previous track" onClick={onPrevious} disabled={!onPrevious} className="hover:bg-transparent [--hover-fill:transparent]">
               <SkipBackFilled style={{ width: skipIcon, height: skipIcon }} />
             </Button>
 
@@ -776,7 +844,7 @@ export function PlayerOverlay({
               }
             </Button>
 
-            <Button variant="ghost" size="icon-sm" aria-label="Next track" className="hover:bg-transparent [--hover-fill:transparent]">
+            <Button variant="ghost" size="icon-sm" aria-label="Next track" onClick={onNext} disabled={!onNext} className="hover:bg-transparent [--hover-fill:transparent]">
               <SkipForwardFilled style={{ width: skipIcon, height: skipIcon }} />
             </Button>
 

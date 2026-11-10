@@ -280,6 +280,9 @@ interface PlayerBarBProps {
    *  own transport buttons) — typically used to open a full-screen player
    *  overlay. Desktop variant ignores it. */
   onExpand?:    () => void
+  /** Transport skips; the buttons are disabled without them. */
+  onPrevious?:  () => void
+  onNext?:      () => void
   /** Drive play/pause from the global player store instead of local state.
    *  When set, the play buttons toggle the store and the disc / icons
    *  reflect `bound.playing`. The DS showcase omits this and stays
@@ -306,6 +309,8 @@ export function PlayerBarB({
   onArtistClick,
   onAlbumClick,
   onExpand,
+  onPrevious,
+  onNext,
   bound,
   shuffle: shuffleBound,
 }: PlayerBarBProps) {
@@ -425,7 +430,7 @@ export function PlayerBarB({
               iconSize={18}
             />
 
-            <button className={transportBtn} aria-label="Previous track">
+            <button className={transportBtn} aria-label="Previous track" onClick={onPrevious} disabled={!onPrevious}>
               <SkipBackFilled className="size-[30px]" />
             </button>
             <button
@@ -440,7 +445,7 @@ export function PlayerBarB({
                 : <PlayFilledAlt className="size-[42px]" />
               }
             </button>
-            <button className={transportBtn} aria-label="Next track">
+            <button className={transportBtn} aria-label="Next track" onClick={onNext} disabled={!onNext}>
               <SkipForwardFilled className="size-[30px]" />
             </button>
 
@@ -530,7 +535,7 @@ export function PlayerBarB({
             </button>
             <button
               aria-label="Next track"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); onNext?.() }}
               className={cn(transportBtn, "relative touch-target h-full pl-2 pr-3 py-2")}
             >
               <SkipForwardFilled className="size-[24px]" />

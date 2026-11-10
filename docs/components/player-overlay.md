@@ -115,6 +115,20 @@ step is exact.
   store when bound; **Repeat** is local.
 - **Up next**: tap a row → `onPlayQueueTrack(track)`, which the app answers
   by playing it in the same source context so the queue simply advances.
+- **Every action renders only with its handler** (`onPrevious`, `onNext`,
+  `onInfo`, `onRadio`, `menuItems`). They were drawn and did nothing; now
+  `app-player.tsx` wires them: the skips walk the source the queue shows and
+  wrap at either end, and Previous restarts a track that is more than 3s in;
+  Info shows the album's credits IN the player when `credits` is passed (the
+  app passes `CreditsContent` with `showCover={false}`): they replace cover,
+  title and waveform under a 48px track row with a ✕, fade out at the bottom,
+  and close again on ✕, on Info (now `aria-pressed`) or when the track
+  changes. Staging does the same in place, under a header with a 30px title
+  over a cut-off strip; that is what this answers. Without `credits`, Info
+  calls `onInfo`; ⋯ is the same song menu
+  every row uses, a sheet on touch that stacks over the player; Radio plays
+  the artist's songs from the catalog as "<Artist> Radio", and is absent for
+  an artist the catalog does not have.
 - In the app the overlay lives in a bottom `Sheet` (`app-player.tsx`), 8px
   short of the full height so the page shows above its corner: pulled down,
   the backdrop or Escape close it, and the sheet's own grabber is the top
@@ -170,5 +184,3 @@ container pins it to this element wherever the overlay is mounted.
 - player-overlay.tsx:490 says the glass is "backdrop blur + saturate" ·
   app.css deliberately has **no** `saturate()` — the minifier collapsed it
   into an invalid empty call that voided the whole property (app.css:289)
-- Info, Radio, "…", Previous and Next carry no handlers
-  (player-overlay.tsx:636, :705, :715, :739, :757)

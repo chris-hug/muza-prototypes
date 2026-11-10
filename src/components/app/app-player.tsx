@@ -20,8 +20,11 @@ import { PlayerOverlay, type QueueTrack } from "@/components/ui/player-overlay"
 import { usePlayer } from "@/lib/player"
 import { useUserLibrary } from "@/lib/user-library"
 import { useMediaNav, slugify } from "@/lib/media-nav"
-import { hasAlbumDetail, getAlbumDetail } from "@/lib/album-catalog"
+import { hasAlbumDetail, getAlbumDetail, getCredits } from "@/lib/album-catalog"
 import { hasPlaylistDetail, getPlaylistDetail } from "@/lib/playlist-catalog"
+import { getArtistProfile } from "@/lib/artist-catalog"
+import { CreditsContent } from "@/components/app/credits-dialog"
+import { SongMenuItems } from "@/components/ui/song-list-item"
 
 /** seconds → "m:ss" (mirrors the parseTime helpers in the player chrome). */
 function fmtTime(sec: number): string {
@@ -68,8 +71,17 @@ export function AppPlayer({ footerNav }: { footerNav: boolean }) {
   // playlist → the playlist's other tracks; an album → the album's other
   // tracks; otherwise (artist top-songs, the Library › Songs page, …) →
   // your saved songs. The list wraps past the current track so it cycles.
+  // A radio plays the artist's own songs from the catalog. Only artists the
+  // catalog knows get one; `getArtistProfile` falls back to Sun Ra for
+  // anyone else, which would be a radio of the wrong person.
+  const radioArtist = playingFrom.endsWith(" Radio") ? playingFrom.slice(0, -" Radio".length) : null
+  const radioSongs = (name: string): QueueTrack[] => {
+    const p = getArtistProfile(slugify(name))
+    return p.name === name ? p.topSongs.map(s => ({ title: s.title, artist: name, album: s.album, image: s.cover, duration: s.duration })) : []
+  }
   const sourceTracks: QueueTrack[] =
-    hasPlaylistDetail(fromKey)
+    radioArtist ? radioSongs(radioArtist)
+    : hasPlaylistDetail(fromKey)
       ? getPlaylistDetail(fromKey).tracks.map(t => ({ title: t.title, artist: t.artist, album: t.album, image: t.cover, duration: t.duration }))
     : hasAlbumDetail(fromKey)
       ? (() => { const a = getAlbumDetail(fromKey); return a.tracks.map(t => ({ title: t.title, artist: a.artist, album: a.title, image: a.cover, duration: t.duration })) })()
@@ -83,6 +95,40 @@ export function AppPlayer({ footerNav }: { footerNav: boolean }) {
   // advances (rather than collapsing to a generic "Up next").
   const onPlayQueueTrack = (q: QueueTrack) =>
     play({ title: q.title, artist: q.artist, album: q.album ?? "", image: q.image, totalTime: q.duration }, playingFrom)
+
+  // Skips walk the same source the queue shows, wrapping at either end.
+  // Previous restarts the track first when it is more than 3s in, as every
+  // player does, so a second tap is the one that goes back.
+  const step = (dir: 1 | -1) => {
+    if (sourceTracks.length < 2) return
+    const at = curIdx < 0 ? (dir === 1 ? -1 : 0) : curIdx
+    onPlayQueueTrack(sourceTracks[(at + dir + sourceTracks.length) % sourceTracks.length])
+  }
+  const canSkip = sourceTracks.length > 1
+  const onNext = canSkip ? () => step(1) : undefined
+  const onPrevious = canSkip ? () => (elapsed > 3 ? seek(0) : step(-1)) : undefined
+
+  const creditsBody = hasAlbumDetail(albumKey) ? (
+    <CreditsContent
+      credits={getCredits(albumKey)}
+      showCover={false}
+      heading={<p className="text-small font-medium leading-none text-foreground">Album credits</p>}
+      onArtist={name => { setOverlayOpen(false); openArtist(slugify(name)) }}
+      onAlbum={() => { setOverlayOpen(false); openAlbum(albumKey) }}
+      bodyClassName="min-h-0"
+    />
+  ) : undefined
+  const ownRadio = radioSongs(track.artist).filter(s => s.title !== track.title)
+  const onRadio = ownRadio.length
+    ? () => { const s = ownRadio[0]; play({ title: s.title, artist: s.artist, album: s.album ?? "", image: s.image, totalTime: s.duration }, `${track.artist} Radio`) }
+    : undefined
+  const menuItems = (
+    <SongMenuItems
+      title={track.title} artist={track.artist} album={track.album} cover={track.image} duration={track.totalTime}
+      onArtistClick={onArtistClick}
+      onAlbumClick={onAlbumClick}
+    />
+  )
 
   const barTrack = {
     title:  track.title,
@@ -112,6 +158,8 @@ export function AppPlayer({ footerNav }: { footerNav: boolean }) {
             onArtistClick={onArtistClick}
             onAlbumClick={onAlbumClick}
             onExpand={() => setOverlayOpen(true)}
+            onPrevious={onPrevious}
+            onNext={onNext}
           />
         </div>
 
@@ -140,6 +188,11 @@ export function AppPlayer({ footerNav }: { footerNav: boolean }) {
                 onPlayQueueTrack={onPlayQueueTrack}
                 onClose={() => setOverlayOpen(false)}
                 inSheet
+                onPrevious={onPrevious}
+                onNext={onNext}
+                credits={creditsBody}
+                onRadio={onRadio}
+                menuItems={menuItems}
               />
             </div>
           </SheetContent>
@@ -163,6 +216,8 @@ export function AppPlayer({ footerNav }: { footerNav: boolean }) {
         onArtistClick={onArtistClick}
         onAlbumClick={onAlbumClick}
         className="pointer-events-auto w-full"
+        onPrevious={onPrevious}
+        onNext={onNext}
       />
     </div>
   )

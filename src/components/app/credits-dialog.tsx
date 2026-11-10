@@ -79,8 +79,11 @@ function Field({ label, value, onClick }: { label: string; value: string; onClic
  */
 export function CreditsContent({
   credits, heading, onArtist, onAlbum, bodyClassName = "max-h-[50vh]",
-  scrollRef, onScroll,
+  scrollRef, onScroll, showCover = true,
 }: {
+  /** The 3:2 cover header. Off where the cover is already on screen: the
+   *  player shows the credits in place of its artwork, beside a thumb. */
+  showCover?: boolean
   credits:   Credits
   heading:   React.ReactNode
   onArtist?: (name: string) => void
@@ -110,6 +113,7 @@ export function CreditsContent({
     >
       {/* 3:2 header — blurred, stretched cover fills the gaps; the real
            square cover floats centred on top. */}
+      {showCover && (
       <div className="relative aspect-[3/2] w-full shrink-0 overflow-hidden bg-muted">
         <img
           src={credits.cover}
@@ -126,10 +130,11 @@ export function CreditsContent({
           className="relative mx-auto h-full aspect-square object-cover rounded-xs shadow-lg art-edge"
         />
       </div>
+      )}
 
       {/* Metadata — no scroller of its own any more; it scrolls with the
           cover in the box above. */}
-      <div className="flex flex-col gap-5 p-6">
+      <div className={cn("flex flex-col gap-5", showCover ? "p-6" : "pt-2 pb-12")}>
         {heading}
 
         <div className="flex flex-col gap-4">
