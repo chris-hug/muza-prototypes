@@ -24,7 +24,7 @@ import { Lock, X } from "lucide-react"
 
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
-  DialogFooter, DialogClose, DialogActionBar, DialogFormBody, DialogFormActions,
+  DialogFooter, DialogClose, DialogActionBar, DialogFormBody,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -161,10 +161,10 @@ export function CreatePlaylistDialog({
 
   const title = editing ? "Edit info" : "New Playlist"
   const action = editing ? "Save" : "Create playlist"
-  /* The floating pill is one object on an otherwise empty sheet, with the
-     title two bands above it saying what is being made — so it only has to
-     name the VERB. "Create playlist" is the desktop footer's label, where it
-     sits beside Cancel and has to distinguish itself. */
+  /* In the top bar, with the title right beside it saying what is being
+     made — so it only has to name the VERB. "Create playlist" is the desktop
+     footer's label, where it sits beside Cancel and has to distinguish
+     itself. */
   const mobileAction = editing ? "Save" : "Create"
 
   return (
@@ -184,14 +184,29 @@ export function CreatePlaylistDialog({
             ref={barRef}
             tabIndex={-1}
             className="outline-none"
-            // No Cancel: dismissal is the ✕ at the right, the same control
-            // every other sheet in the app closes with, and the confirming
-            // action is the full-width button in the body. One leading slot
-            // stays empty so the centred title matches the Add step's bar.
-            trailing={
+            /* The action lives up here, not in a pill under the field. With
+               the keyboard up an iPhone in Brave shows ~180px: bar 48 + field
+               48 + toggle + a 48px pill and its padding need ~200, so the
+               field was squeezed and the toggle clipped. The bar costs nothing
+               extra, and the keyboard can never reach it. ✕ moves to the
+               leading slot to make room. */
+            leading={
               <DialogClose render={<Button variant="ghost" size="icon" aria-label="Close" className="touch-target" />}>
                 <X />
               </DialogClose>
+            }
+            trailing={
+              <Button
+                onClick={create}
+                disabled={!name.trim()}
+                className="touch-target shrink-0"
+                /* Keep the focus in the field: a tap on a button would move
+                   it, closing the keyboard mid-press. Refusing the default
+                   pointer-down keeps both; the click still fires. */
+                onPointerDown={e => e.preventDefault()}
+              >
+                {mobileAction}
+              </Button>
             }
           >
             <DialogTitle className="truncate">{title}</DialogTitle>
@@ -238,38 +253,6 @@ export function CreatePlaylistDialog({
             </DialogFooter>
           )}
         </DialogFormBody>
-
-        {/* Full-width confirming action, as the reference has it — but in its
-            own band below the scrolling body rather than sticky inside it, so
-            it can never overlay a field. The sheet already ends at `--kb`, so
-            this row sits directly above the keyboard. */}
-        {isMobile && (
-          <DialogFormActions>
-            {/* `lg` (48px) — the DS's largest text button, and the right touch
-                 target for the screen's primary action. `shadow-lg` is what
-                 makes it read as floating ON the form rather than as a bar
-                 across the bottom of it; its band carries no surface.
-                 No disabled colour of its own — a filled Button carries an
-                 opaque one itself (`.disabled-solid`), so the pill stays solid
-                 wherever it floats. */}
-            <Button
-              size="lg"
-              onClick={create}
-              disabled={!name.trim()}
-              className="w-full shadow-lg"
-              /* Keep the focus in the field. A tap on a button moves focus to
-                 it, which closes the keyboard, which lets the sheet grow back
-                 to full height — and the button travels down out from under
-                 the finger BEFORE the click resolves, so the first tap does
-                 nothing and only the second one lands. Refusing the default
-                 pointer-down behaviour keeps focus (and the keyboard, and the
-                 layout) exactly where it was; the click still fires. */
-              onPointerDown={e => e.preventDefault()}
-            >
-              {mobileAction}
-            </Button>
-          </DialogFormActions>
-        )}
       </DialogContent>
     </Dialog>
   )

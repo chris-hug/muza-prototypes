@@ -139,9 +139,9 @@ Figma node 37:931 is the reference frame. The heights are exact:
   `lg` are `font-medium`: a 19px button label is one of the three named
   exceptions to the "regular under 18px" rule in the Typography section
   (button labels, tab labels, card titles).
-- **`lg` is the full-width confirming action.** In a `mobile="form"` dialog
-  the action band holds a `size="lg" className="w-full"` button directly on
-  the keyboard — see the Dialog section for why the action lives there.
+- **`lg` is the full-width confirming action** of a screen with room for one.
+  A `mobile="form"` dialog does not have that room above the keyboard, so its
+  action is a `default` button in the top bar — see the Dialog section.
 - **`lg` is also the default for a form's own actions, not something they ask
   for.** `AlertDialogAction` and `AlertDialogCancel` set it inside the
   component, and every `DialogFooter` pair carries it: a 40px Save under a

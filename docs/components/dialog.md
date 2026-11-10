@@ -187,19 +187,19 @@ push every cover 8px past the gutter and out of line with the title, the field
 and the footer. Letting the rows' hover surface bleed into the gutter is the
 point of the negative margin.
 
-## The form sheet's three bands
+## The form sheet's bands
 
-Only the middle one scrolls.
+A bar over a body; only the body scrolls.
 
 ```tsx
 <DialogContent mobile="form">
-  <DialogActionBar trailing={<DialogClose …><X /></DialogClose>}>
+  <DialogActionBar
+    leading={<DialogClose …><X /></DialogClose>}
+    trailing={<Button>Create</Button>}
+  >
     <DialogTitle>New Playlist</DialogTitle>
   </DialogActionBar>
   <DialogFormBody>…fields…</DialogFormBody>
-  <DialogFormActions>
-    <Button size="lg" className="w-full">Create</Button>
-  </DialogFormActions>
 </DialogContent>
 ```
 
@@ -256,9 +256,14 @@ Only the middle one scrolls.
 - **`mobile="form"` sheets are excluded on purpose.** There the popup is
   `overflow-hidden` and the body is its own band between a bar and an action
   row, so the bar IS a band and belongs in the flow.
-- The confirming action is a full-width `size="lg"` (48px) button in
-  `DialogFormActions`, below the body. Never offered twice — bar **or** action
-  row.
+- **The confirming action is in the bar's trailing slot** (`Button`, 40px),
+  with the ✕ in the leading one. It was a full-width 48px pill in
+  `DialogFormActions` under the body, and that did not fit: on an iPhone in
+  Brave ~180px show above the keyboard, and bar 48 + field 48 + toggle + the
+  pill and its padding need ~200, so the field was squeezed and the toggle
+  clipped. The bar costs no height and the keyboard cannot reach it. Never
+  offered twice. The notes below on the pill are the history of that band,
+  which has no call site now.
 - **It is a floating pill, and its row has no surface of its own.** A lone
   control reads as an object rather than as a bar — the rule the find screen's
   lone search field follows in `AddMusicDialog` — and a band with its own fill
@@ -287,8 +292,8 @@ Only the middle one scrolls.
   controls; above the bar's top inset, so it clears a centred title (measured
   at 375: grabber 7–11, title top 20). A sheet with a ✕ could go without one —
   a sheet whose only way out is the gesture cannot.
-- **The pill names the verb only** — "Create", not "Create playlist". The
-  title two bands above already says what is being made, and there is no
+- **The action names the verb only** — "Create", not "Create playlist". The
+  title beside it already says what is being made, and there is no
   second action to distinguish it from. The desktop footer keeps the long
   label, where it stands next to Cancel.
 - `DialogFormBody` restores the gutter and a tighter `gap-3`: on a phone every
@@ -608,6 +613,7 @@ trigger opens the real, portaled sheet at the bottom of the browser.
 
 ## Open questions
 
+- `DialogFormActions` and `dialogFormActionsClass` have no call site since the form sheets moved their action into the bar. Remove them, or keep the band for a form with room for a full-width action?
 - DESIGN_SYSTEM.md "Forms go full-screen" · says "don't autofocus the field on phones — park `initialFocus` on the bar" · `create-playlist-dialog.tsx:150` passes `initialFocus={inputRef}` and this doc says focus goes straight to the field. The DESIGN_SYSTEM bullet predates the top-anchored form sheet.
 - DESIGN_SYSTEM.md, same section · says the `DialogActionBar` carries "`leading` Cancel (ghost) · `DialogTitle` (`text-base font-medium`)" · `dialog.tsx`: the bar's title is `dialogTitleClass` (`text-small`) and dismissal is the ✕ in `trailing`; there is no Cancel (this doc, "Header").
 - dialog.tsx `dialogChromeClass` is `p-3 md:p-6 gap-2 md:gap-5`. A dialog that passes `p-0 gap-0` to own its bands (Purchase, Paywall, Checkout, Credits) cancels only the phone half: tailwind-merge keeps `md:p-6 md:gap-5` (a variant is a separate key), and at ≥768 the media-query rule outranks bare `p-0`. If a desktop screen shows 24px of chrome padding around those dialogs' own `px-6` sections, the fix is `md:p-0 md:gap-0` at each call site — not verified here (no browser).

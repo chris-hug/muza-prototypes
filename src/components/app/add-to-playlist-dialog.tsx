@@ -21,7 +21,7 @@ import { ChevronLeft, Plus, Search, X } from "lucide-react"
 
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
-  DialogFooter, DialogClose, DialogActionBar, DialogFormBody, DialogFormActions,
+  DialogFooter, DialogClose, DialogActionBar, DialogFormBody,
   dialogListClass,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -165,7 +165,7 @@ function AddToPlaylistContent({ song, guard, onClose, mode, setMode }: {
       /* `mobile="form"`: a sheet whose primary action is a button under a
          field cannot be a bottom sheet — the keyboard leaves ~170px, and the
          action ends up behind it. The form presentation anchors top and puts
-         the action in its own band. */
+         the action in the top bar, where the keyboard cannot reach it. */
       <DialogContent showCloseButton={!isMobile} className="md:max-w-[max(32rem,50vw)]">
         {isMobile ? (
           <DialogActionBar
@@ -182,9 +182,16 @@ function AddToPlaylistContent({ song, guard, onClose, mode, setMode }: {
               </Button>
             }
             trailing={
-              <DialogClose render={<Button variant="ghost" size="icon" aria-label="Close" className="touch-target" />}>
-                <X />
-              </DialogClose>
+              /* Refuses focus: a tap would otherwise move focus off the
+                 field and close the keyboard mid-press. */
+              <Button
+                onClick={create}
+                disabled={!name.trim()}
+                className="touch-target shrink-0"
+                onPointerDown={e => e.preventDefault()}
+              >
+                Create
+              </Button>
             }
           >
             <DialogTitle className="truncate">New playlist</DialogTitle>
@@ -212,23 +219,6 @@ function AddToPlaylistContent({ song, guard, onClose, mode, setMode }: {
             </DialogFooter>
           )}
         </DialogFormBody>
-
-        {isMobile && (
-          <DialogFormActions>
-            {/* Refuses focus: a tap would otherwise move focus off the field,
-                close the keyboard, grow the sheet, and carry the button out
-                from under the finger before the click resolved. */}
-            <Button
-              size="lg"
-              onClick={create}
-              disabled={!name.trim()}
-              className="w-full shadow-lg"
-              onPointerDown={e => e.preventDefault()}
-            >
-              Create
-            </Button>
-          </DialogFormActions>
-        )}
       </DialogContent>
     )
   }

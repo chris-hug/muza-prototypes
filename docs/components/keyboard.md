@@ -45,7 +45,8 @@ Measured on an iPhone in Brave, which is the machine this was built against:
 169px is the budget a sheet with a field in it actually has. Against it, a
 48px bar and an 80px action band leave a 48px field 41px to live in — which is
 why the bands give up padding under `data-kb="open"` and no control gives up
-size.
+size. Padding alone was not enough for a form with a toggle, so the form
+sheets moved their confirming action into the top bar (see [Dialog](dialog.md)).
 
 ## The measurement, and the two that were wrong
 
