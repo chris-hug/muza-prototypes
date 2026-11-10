@@ -30,7 +30,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { Mic, Heart } from "lucide-react"
 
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ChipChoice } from "@/components/ui/chip"
 import { MobilePillTabs } from "@/components/ui/mobile-header"
 import { ToggleGroup } from "@/components/ui/toggle-group"
 import { Toggle } from "@/components/ui/toggle"
@@ -150,17 +150,17 @@ export function SearchResultsView({ query }: { query: string }) {
       </div>
       )}
 
-      {/* Category filter — underlined tabs on desktop; on mobile the same
-          scrollable pill buttons the Library uses (MobilePillTabs). One gate,
-          so exactly one of them exists at any width. */}
+      {/* Category filter — pills at every width, because a category narrows
+          these results rather than opening another page. Both are the same
+          Chip: `ChipChoice` at 40px on desktop, `MobilePillTabs` at 32px in
+          the footer-nav layout. One gate, so exactly one exists at any width. */}
       {!footerNav ? (
-        <Tabs value={tab} onValueChange={v => setTab(v as TabKey)} className="min-w-0">
-          <TabsList variant="line" autoCenter={false} className="w-full justify-start">
-            {visibleTabs.map(t => (
-              <TabsTrigger key={t.key} value={t.key}>{t.label}</TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+        <ChipChoice
+          aria-label="Filter results"
+          value={tab}
+          onChange={setTab}
+          options={visibleTabs.map(t => ({ value: t.key, label: t.label }))}
+        />
       ) : (
         <MobilePillTabs
           value={tab}

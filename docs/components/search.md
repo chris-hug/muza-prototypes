@@ -54,7 +54,7 @@ before the click landed. Recents are localStorage-backed.
 |---|---|---|
 | Heading | `Search for: <q>` — `text-2xlarge font-medium tracking-tight`, the prefix `text-muted-foreground font-normal` | none — the sticky search field shows the query |
 | Scope | `ToggleGroup size="sm"`: Muza Catalog · My Library — right of the heading from a 560px column, stacked under it below that | none in the body |
-| Category | `Tabs variant="line"`, `autoCenter={false}`, `border-b border-border` | `MobilePillTabs` — the scrollable pills the Library uses |
+| Category | `ChipChoice` — 40px chips, one on | `MobilePillTabs` — the scrollable pills the Library uses |
 | Body | the All composition, or a flat `ul gap-1` of rows | the same |
 
 The page shell is the standard `max-w-[1480px] min-[1920px]:max-w-[1716px]

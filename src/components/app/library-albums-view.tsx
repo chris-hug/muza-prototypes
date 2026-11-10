@@ -23,7 +23,7 @@ import { LibrarySearchField } from "@/components/app/library-search-field"
 import { useFooterNav } from "@/lib/use-media-query"
 import { Toggle } from "@/components/ui/toggle"
 import { ToggleGroup } from "@/components/ui/toggle-group"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ChipChoice } from "@/components/ui/chip"
 import { LayoutGrid, List } from "lucide-react"
 
 export interface SavedAlbum {
@@ -179,24 +179,27 @@ export function LibraryAlbumsView() {
              different roles, so they live on opposite ends rather than
              reading as one 4-segment control. Mirrors the Discography /
              Studio toolbars. */}
-        <div className="flex items-center justify-between gap-4 mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 mb-6">
           {/* Left control: desktop = status filter; mobile = sort menu
                (the status filter is in the header's one row there). */}
           <div className="flex items-center gap-2 min-w-0">
             {footerNav ? (
               <LibrarySortMenu />
             ) : (
-              <Tabs value={status} onValueChange={v => setStatus(v as typeof status)}>
-                <TabsList variant="line" autoCenter={false}>
-                  <TabsTrigger value="all">All</TabsTrigger>
-                  <TabsTrigger value="owned">Owned</TabsTrigger>
-                  <TabsTrigger value="offline">Offline</TabsTrigger>
-                </TabsList>
-              </Tabs>
+              <ChipChoice
+                aria-label="Filter albums"
+                value={status}
+                onChange={setStatus}
+                options={[
+                  { value: "all", label: "All" },
+                  { value: "owned", label: "Owned" },
+                  { value: "offline", label: "Offline" },
+                ]}
+              />
             )}
           </div>
           {/* Right cluster — desktop in-library search + view switch. */}
-          <div className="flex items-center gap-3">
+          <div className="flex grow items-center justify-end gap-3">
           {!footerNav && <LibrarySearchField />}
           <ToggleGroup
             size="sm"

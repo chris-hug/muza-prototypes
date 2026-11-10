@@ -21,7 +21,7 @@ import { LibrarySearchField } from "@/components/app/library-search-field"
 import { useCreatePlaylist } from "@/components/app/create-playlist-dialog"
 import { Toggle } from "@/components/ui/toggle"
 import { ToggleGroup } from "@/components/ui/toggle-group"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ChipChoice } from "@/components/ui/chip"
 import { LayoutGrid, List } from "lucide-react"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 import { useUserLibrary } from "@/lib/user-library"
@@ -225,26 +225,28 @@ export function LibraryPlaylistsView() {
           </h1>
         )}
         {/* Toolbar — filters left, view switch right (see Albums). */}
-        <div className="flex items-center justify-between gap-4 mb-6">
-          {/* Desktop = status tabs; mobile = sort menu. Tabs (not a filter
-              dropdown) so the split is always visible at a glance — the
-              segments read like the sections they are. */}
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 mb-6">
+          {/* Desktop = status chips; mobile = sort menu. Chips (not a filter
+              dropdown) so the split is always visible at a glance. */}
           <div className="flex items-center gap-2 min-w-0">
             {footerNav ? (
               <LibrarySortMenu />
             ) : (
-              <Tabs value={status} onValueChange={v => setStatus(v as typeof status)}>
-                <TabsList variant="line" autoCenter={false}>
-                  <TabsTrigger value="all">All</TabsTrigger>
-                  <TabsTrigger value="yours">By me</TabsTrigger>
-                  <TabsTrigger value="saved">Saved</TabsTrigger>
-                  <TabsTrigger value="offline">Offline</TabsTrigger>
-                </TabsList>
-              </Tabs>
+              <ChipChoice
+                aria-label="Filter playlists"
+                value={status}
+                onChange={setStatus}
+                options={[
+                  { value: "all", label: "All" },
+                  { value: "yours", label: "By me" },
+                  { value: "saved", label: "Saved" },
+                  { value: "offline", label: "Offline" },
+                ]}
+              />
             )}
           </div>
           {/* Right cluster — desktop in-library search + view switch. */}
-          <div className="flex items-center gap-3">
+          <div className="flex grow items-center justify-end gap-3">
           {!footerNav && <LibrarySearchField />}
           <ToggleGroup
             size="sm"

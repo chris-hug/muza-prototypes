@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge"
 // Anatomy:
 //   <Chip>           — filter chip (toggle), defaults to "default" variant
 //   <ChipDismiss>    — dismissable chip with X button, defaults to "secondary" variant
+//   <ChipChoice>     — a toolbar row of 40px chips, exactly one of them on
 // ─────────────────────────────────────────────────────────────────────────────
 
 const chipVariants = cva(
@@ -177,4 +178,55 @@ function ChipGroup({
   )
 }
 
-export { Chip, ChipDismiss, ChipGroup, chipVariants }
+// ── ChipChoice — pick one of a fixed set, in a toolbar ────────────────────────
+//
+// The desktop form of the filter row phones get from `MobilePillTabs`. It is
+// the same Chip so the two cannot drift: this row used to be `Tabs`, first
+// underlined and then `variant="pill"`, and the pill variant shares nothing
+// with a Chip but the corner radius (pale `accent` against `primary`, no
+// border against a border, medium against normal).
+//
+// `md`, so it reads as one row with the search field and the view toggle.
+// It does not wrap: a Search with every category scrolls sideways instead.
+
+function ChipChoice<T extends string>({
+  options, value, onChange, className, ...props
+}: Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> & {
+  options: { value: T; label: React.ReactNode }[]
+  value: T
+  onChange: (value: T) => void
+}) {
+  return (
+    <div
+      role="group"
+      data-slot="chip-choice"
+      className={cn(
+        "flex min-w-0 gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+        // A scroller clips both axes, and each chip needs 2px outside its
+        // box: the focus ring, and the hit area that takes 40px up to 44.
+        // The padding keeps both inside; the margin gives the space back so
+        // the row still starts flush with the page heading. No `max-w-full`:
+        // a shrink-wrapped parent measures this row WITH the negative margin,
+        // 4px short, and 100% of that cut the last chip's right edge off.
+        "p-0.5 -m-0.5 overflow-y-hidden",
+        className,
+      )}
+      {...props}
+    >
+      {options.map(o => (
+        <Chip
+          key={o.value}
+          size="md"
+          selected={o.value === value}
+          aria-pressed={o.value === value}
+          onClick={() => onChange(o.value)}
+          className="touch-target shrink-0"
+        >
+          {o.label}
+        </Chip>
+      ))}
+    </div>
+  )
+}
+
+export { Chip, ChipChoice, ChipDismiss, ChipGroup, chipVariants }

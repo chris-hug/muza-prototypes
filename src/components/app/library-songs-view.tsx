@@ -14,7 +14,7 @@ import { useMemo } from "react"
 
 import { SongListItem } from "@/components/ui/song-list-item"
 import { SongListTable } from "@/components/app/media-list-table"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ChipChoice } from "@/components/ui/chip"
 import { SAVED_ALBUMS } from "@/components/app/library-albums-view"
 import { useUserLibrary, type SavedSong } from "@/lib/user-library"
 import { usePlayer } from "@/lib/player"
@@ -131,14 +131,17 @@ export function LibrarySongsView() {
         {!footerNav && (
           <>
             <h1 className="text-2xlarge font-medium text-foreground tracking-tight mb-4">Songs</h1>
-            {/* Status tabs (left) + in-library search (right). */}
-            <div className="flex items-center justify-between gap-4 mb-6">
-              <Tabs value={status} onValueChange={v => setStatus(v as typeof status)}>
-                <TabsList variant="line" autoCenter={false}>
-                  <TabsTrigger value="all">All</TabsTrigger>
-                  <TabsTrigger value="offline">Offline</TabsTrigger>
-                </TabsList>
-              </Tabs>
+            {/* Status chips (left) + in-library search (right). */}
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 mb-6">
+              <ChipChoice
+                aria-label="Filter songs"
+                value={status}
+                onChange={setStatus}
+                options={[
+                  { value: "all", label: "All" },
+                  { value: "offline", label: "Offline" },
+                ]}
+              />
               <LibrarySearchField />
             </div>
           </>

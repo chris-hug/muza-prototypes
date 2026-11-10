@@ -4,15 +4,20 @@ source: src/components/ui/tabs.tsx
 related: [togglegroup, button, search, player-overlay]
 usage:
   - Artist profile (Overview / Discography / Shop) | /?page=Artist
-  - Library (Albums / Artists / Songs / Playlists) | /?page=Albums
   - Studio sub-nav | /?page=Music
 ---
 
 `Tabs` switches one region between a few named views — a page's sections
-(Artist: Overview / Discography / Shop), a list's status filter (Library:
-All / Owned / Offline), a panel's modes (Player: Lyrics / Now listening /
+(Artist: Overview / Discography / Shop), a panel's modes (Player: Lyrics / Now listening /
 Up next). Three looks, one primitive: a **segmented** control, an
 **underline** strip, and standalone **pills**.
+
+**Tabs change the section; a filter on one list is a [`ChipChoice`](chips.md).**
+Artist's Overview / Discography / Shop are different pages of one thing, and
+the line says so. Library's All / Owned / Offline and Search's categories show
+the same list with less in it. They used to be underlined tabs, which promised
+a destination that did not exist. `variant="pill"` did not fix it either: it
+looks nothing like the Chips the same filters use on a phone.
 
 ## Anatomy
 
@@ -64,13 +69,12 @@ line tab.
 
 | Part | Classes | Why |
 |---|---|---|
-| List | `rounded-none bg-transparent gap-3 … overflow-x-auto overflow-y-hidden` + the hairline as a background gradient, scrollbar hidden | a full-width strip (Settings' five tabs, Search's categories) can overflow a phone, so it **scrolls sideways** with no scrollbar; `max-w-full` is what lets an `inline-flex` notice it is overflowing. `overflow-y-hidden` is load-bearing: a box that is `auto` on one axis is `auto` on both, and the strip overflows vertically by a pixel — the tabs are 36px in a 35px content box, because the hairline the strip owns is a border and `clientHeight` leaves borders out. One pixel is enough to make the whole tab bar draggable up and down under a thumb. The strip's hairline is a BACKGROUND (`linear-gradient(to top, var(--color-border) 1px, transparent 1px)`), not a `border-b`: a border sits outside the content box, where the indicator — clipped to the scroll box — cannot reach it, so the travelling mark floated a pixel above the line it belongs to. As the last pixel of the background it is exactly the row the indicator is pinned to, and it does not scroll away with the tabs the way an absolute child would. Call sites must not add `border-b` |
+| List | `rounded-none bg-transparent gap-3 … overflow-x-auto overflow-y-hidden` + the hairline as a background gradient, scrollbar hidden | a full-width strip (Settings' five tabs) can overflow a phone, so it **scrolls sideways** with no scrollbar; `max-w-full` is what lets an `inline-flex` notice it is overflowing. `overflow-y-hidden` is load-bearing: a box that is `auto` on one axis is `auto` on both, and the strip overflows vertically by a pixel — the tabs are 36px in a 35px content box, because the hairline the strip owns is a border and `clientHeight` leaves borders out. One pixel is enough to make the whole tab bar draggable up and down under a thumb. The strip's hairline is a BACKGROUND (`linear-gradient(to top, var(--color-border) 1px, transparent 1px)`), not a `border-b`: a border sits outside the content box, where the indicator — clipped to the scroll box — cannot reach it, so the travelling mark floated a pixel above the line it belongs to. As the last pixel of the background it is exactly the row the indicator is pinned to, and it does not scroll away with the tabs the way an absolute child would. Call sites must not add `border-b` |
 | Trigger | `rounded-none px-[18px] pb-1.5 pt-0 text-small text-muted-foreground hover:text-foreground` | 18px sides: the gap between two labels reads as 36 + the list's `gap-3` |
 | Underline | `after:absolute after:inset-x-0 after:h-px after:bg-foreground after:opacity-0`, active `after:opacity-100` | a 1px ink line under the label, faded in rather than mounted. Pinned `after:bottom-0` here (the base is `-bottom-px`) because the scrolling list clips `overflow-y` and would cut a line 1px outside |
 | Active | `data-active:text-foreground` | ink text plus the line, nothing else |
 
-The list draws **no** border of its own; a strip that should sit on a rule
-adds `border-b border-border` at the call site (`search-results-view.tsx:123`).
+The hairline is the list's own background, so call sites add no `border-b`.
 
 ### `pill` — standalone pills
 
@@ -81,8 +85,8 @@ adds `border-b border-border` at the call site (`search-results-view.tsx:123`).
 | Active | `data-active:bg-accent data-active:text-foreground` |
 
 The pill fills with `accent` when selected — the same fill a highlighted menu
-row uses — where a `Chip` would fill with `secondary`. A pill tab is a
-*view* switch; a chip is a *filter* toggle.
+row uses — where a selected `Chip` fills with `primary`. A pill tab is a
+*view* switch; a chip is a *filter*.
 
 ### `autoCenter`
 
@@ -91,48 +95,38 @@ change of `data-active` (a `MutationObserver`, `:98–125`) it scrolls so the
 active trigger sits mid-strip — except the first tab, which is pinned to
 the start so no empty space is revealed before it. The segment never
 scrolls, so it is a no-op there. Pass `autoCenter={false}` for a free
-filter row where the user should be able to rest on *any* tab
-(`library-albums-view.tsx:191`, `report-view.tsx:352`).
+row where the user should be able to rest on *any* tab
+(`report-view.tsx:352`).
 
 ## Usage
 
 ```tsx
-// Library › Albums — the status filter, desktop and tablet (the header's one row on phones)
-{footerNav ? <LibrarySortMenu /> : (
-  <Tabs value={status} onValueChange={v => setStatus(v as Status)}>
-    <TabsList variant="line" autoCenter={false}>
-      <TabsTrigger value="all">All</TabsTrigger>
-      <TabsTrigger value="owned">Owned</TabsTrigger>
-      <TabsTrigger value="offline">Offline</TabsTrigger>
-    </TabsList>
-  </Tabs>
-)}
+// Artist — the page's sections
+<Tabs value={section} onValueChange={v => setSection(v as Section)}>
+  <TabsList variant="line">
+    <TabsTrigger value="overview">Overview</TabsTrigger>
+    <TabsTrigger value="discography">Discography</TabsTrigger>
+    <TabsTrigger value="shop">Shop</TabsTrigger>
+  </TabsList>
+</Tabs>
 ```
 
 Every app call site is **controlled** (`value` + `onValueChange`): the tab
-is state the page owns — a URL param on Shop and Explore, a filter store in
-the Library. `onValueChange` hands back the string; cast it to the union.
+is state the page owns — a URL param on Shop and Explore. `onValueChange` hands back the string; cast it to the union.
 
 Where each look is used:
 
 | Look | Where |
 |---|---|
 | segment | Report's metric switch (`report-view.tsx:372`, with `border border-border` added); Wallet's Withdraw / Transfer (`transfer-view.tsx:27`, `size="lg"`, `w-full`, with icons) |
-| line | Artist profile, Library status filters, Settings and Shop page nav, Search categories |
+| line | Artist profile, Settings and Shop page nav |
 | pill | Player overlay (`player-overlay.tsx:775`, triggers `font-normal!`), Report's period row |
 
 ## Sizing
 
 Fixed, no steps of its own — no `@container`, no `md:`. What varies is by
-**overflow** and by the **window** at the call site:
-
-- `line` and `pill` lists scroll horizontally when wider than their column;
-  the segment never does.
-- The Library's status tabs exist from the **608** chrome gate up
-  (`useFooterNav()` swaps in `LibrarySortMenu` below it) — with the tab bar
-  present the strip competes with the content-type nav.
-- Search's category tabs are `hidden sm:block`, with `MobilePillTabs`
-  below `sm` — see Open questions.
+**overflow**: `line` and `pill` lists scroll horizontally when wider than
+their column; the segment never does.
 
 ## Behaviour
 
@@ -220,15 +214,4 @@ eases.
   differently again (`h-auto pb-0` on the list, `flex-none px-4 pb-3` on
   each trigger). Either `line` grows a `full` option or the doc should say
   the page-nav strip is always hand-tuned.
-- `search-results-view.tsx:122–131` swaps `Tabs` for `MobilePillTabs` at
-  `sm:` (640) · `responsive.md` says `sm:` may reflow in-page content and
-  only `md:` / `useIsMobile()` (768) may swap a component. The Library does
-  the same swap at 608 via `useFooterNav()`. Three different widths for
-  "tabs become something else".
-- `DESIGN_SYSTEM.md` › Library views says the status filters are
-  "desktop only" · the source gates them on `useFooterNav()` (608), so they
-  are present from the tablet band up.
-- The old page demo showed a `line` list with `w-full justify-start
-  border-b border-border` and a `TabsContent` beneath it; the frame keeps
-  that as the Library shape. No app call site uses `TabsContent` with
-  `line` except Settings and Shop.
+- No app call site uses `TabsContent` with `line` except Settings and Shop.

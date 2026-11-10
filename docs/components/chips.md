@@ -4,23 +4,25 @@ source: src/components/ui/chip.tsx
 related: [chip-input, badge, button, filter-menu, mobile-header, multi-select]
 usage:
   - Shop › Products → Create listing (Release Type + artist chips) | /?page=Shop&shop-tab=products
+  - Library status filters (ChipChoice) | /?page=Albums
 ---
 
 A `Chip` is a pill you press to pick or filter — a genre, a release type, a
 kind in a header bar — and a `ChipDismiss` is a pill that names something
 already picked and lets you remove it: the active-filter strip in Studio and
 Orders, the artist lists in the upload form. `ChipGroup` is the wrapping row
-they sit in.
+they sit in, and `ChipChoice` is a toolbar row of chips with exactly one on.
 
 ## Anatomy
 
-Three exports over one cva, `chipVariants`:
+Four exports over one cva, `chipVariants`:
 
 | Part | Element | Defaults |
 |---|---|---|
 | `Chip` | `<button type="button" data-slot="chip">` | `variant="default"`, `size="sm"`; `selected` flips the variant; `count` appends a pill `Badge` |
 | `ChipDismiss` | `<span data-slot="chip-dismiss">` holding the label and a ✕ `<button>` | `variant="secondary"`; `selected` flips to `selected`; always `sm` |
 | `ChipGroup` | `<div data-slot="chip-group">` | `flex flex-wrap gap-1.5` |
+| `ChipChoice` | `<div role="group" data-slot="chip-choice">` of `Chip size="md"` | `options`, `value`, `onChange`; `gap-2`, scrolls instead of wrapping; give it an `aria-label` |
 
 Base classes: `group/chip inline-flex items-center gap-2 rounded-full border
 pb-px font-normal whitespace-nowrap transition-[colors,box-shadow]
@@ -47,8 +49,8 @@ selected `Chip` for the count badge; a `ChipDismiss` does not set it.
 
 | `size` | Box | Use it for |
 |---|---|---|
-| `sm` (default) | `h-8 px-3 text-2xsmall` — Button `sm` | genre and tag filters, every `ChipDismiss` |
-| `md` | `h-10 px-4 text-small` — Button `default` | a header filter chip: `MobilePillTabs`, and the count-bearing bar |
+| `sm` (default) | `h-8 px-3 text-2xsmall` — Button `sm` | genre and tag filters, `MobilePillTabs`, every `ChipDismiss` |
+| `md` | `h-10 px-4 text-small` — Button `default` | a toolbar filter: `ChipChoice`, and the count-bearing bar |
 
 `md` is 40px for the same reason Button `default` is: a filter chip, a sort
 button and a `Select` in one toolbar read as one row. `ChipDismiss` has no
@@ -99,9 +101,23 @@ A `Chip` carries no selection state of its own; `selected` is a prop and
 `onClick` is the whole API. That keeps "All" trivial — it is the chip whose
 `selected` is `picked.length === 0`.
 
-`MobilePillTabs` (`mobile-header.tsx:142`) is a `Chip size="md"` row with
+`MobilePillTabs` (`mobile-header.tsx`) is a `Chip size="sm"` row with
 `count` and a leading icon, in a horizontally scrolling strip with `gap-2`
 and `shrink-0` on each chip so the row scrolls instead of wrapping.
+
+```tsx
+// Library › Albums and Search's categories — pick one, in a toolbar.
+<ChipChoice
+  aria-label="Filter albums"
+  value={status}
+  onChange={setStatus}
+  options={[{ value: "all", label: "All" }, { value: "owned", label: "Owned" }]}
+/>
+```
+
+`ChipChoice` is the desktop form of `MobilePillTabs`: the same Chip, one size
+up so it sits level with a search field. It replaced `Tabs` on these rows,
+because a filter narrows one list and a tab promises another section.
 
 ## Sizing
 
@@ -116,6 +132,11 @@ pills scroll under the gutter rather than stopping short of it.
 - `Chip`: a real `<button>` — click, Space and Enter fire `onClick`; the
   focus ring shows on keyboard focus; `disabled` fades it and drops pointer
   events.
+- `ChipChoice`: every chip is its own Tab stop and carries `aria-pressed`;
+  pressing the one already on changes nothing, so one is always on. Each chip
+  is `touch-target`: on a coarse pointer the 40px paint has a 44px target. It
+  only grows upward and downward, since every label is already wider than
+  44px, so the 8px gap between chips stays clear.
 - `ChipDismiss`: only the ✕ is focusable. The label is a `span` with
   `truncate`.
 - Hover states are pointer-only (Tailwind wraps `hover:` in

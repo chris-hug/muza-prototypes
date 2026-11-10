@@ -175,7 +175,7 @@ re-rolled the same `relative` box, the same `absolute left-4` icon and the same
 `pl-10 pr-9` overrides. The Input owns the padding the affordances cost, so a
 new search field cannot get the reservation wrong. `LibrarySearchField`
 (`src/components/app/library-search-field.tsx`) still hand-rolls the wrapper
-with `h-9 pl-10 pr-9` — a migration candidate, not a second pattern.
+with `pl-10 pr-9` — a migration candidate, not a second pattern.
 
 ## Hints — `hint` and `hintTone`
 
@@ -207,8 +207,7 @@ the call site gives it and reads none of the three measures — the only
 horizontal numbers it owns are the affordance reservations (`pl-10` /
 `pr-10`). What narrows a field is its container: a phone sheet's 12px gutter,
 a dialog's column, a grid cell. The one height step is a call-site override
-— `h-12` where the field sits beside a `lg` button (the Add-music find band),
-`h-9` in the one toolbar field that has not migrated (see Open questions).
+— `h-12` where the field sits beside a `lg` button (the Add-music find band).
 
 ## In a sheet
 
@@ -247,6 +246,6 @@ those. The name is inherited, the usage is deliberate, and neither changes.
 ## Open questions
 
 - ~~Type size disagreed across the family.~~ Settled: every form control is `text-small` (19px), and the `sm / default / lg` ladder is now one module (`src/lib/control-size.ts`) that `Button`, `Input`, `SelectTrigger`, `ComboboxTrigger`, `DatePicker` and `ChipInput` all read. See DESIGN_SYSTEM.md › Form controls › One size ladder.
-- `LibrarySearchField` (`library-search-field.tsx:18–36`) still hand-rolls the icon + clear wrapper with `h-9 pl-10 pr-9` instead of `startIcon` / `onClear`, and is the only 36px input in the app. Migrate, or document 36px as a sanctioned toolbar height?
+- `LibrarySearchField` (`library-search-field.tsx:18–36`) still hand-rolls the icon + clear wrapper with `pl-10 pr-9` at `size="default"`, 40px to sit level with the filter chips and view toggle beside it, instead of `startIcon` / `onClear`, and is the only 36px input in the app. Migrate, or document 36px as a sanctioned toolbar height?
 - The `absolute`-on-the-field bug is documented here from the source's class-merge order (input.tsx:69–75); no commit in history shows the offending call site, so the exact place it happened is unrecorded.
 - `disabled:pointer-events-none` (input.tsx:53) is on Input only — Select, Combobox and DatePicker use `disabled:cursor-not-allowed disabled:opacity-50` without it. Intentional (a disabled input should not show a not-allowed cursor at all?) or drift?
