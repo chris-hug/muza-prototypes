@@ -37,6 +37,7 @@ import {
   type PlaylistEditorTarget,
 } from "@/lib/playlist-editor-context"
 import type { SavedSong } from "@/lib/user-library"
+import { IconSwap } from "@/components/ui/icon-swap"
 
 export { usePlaylistEditor } from "@/lib/playlist-editor-context"
 
@@ -377,7 +378,7 @@ function EditorBody({ panel, tracks, onAddTrack, onRemoveTrack }: {
       />
 
       <span className="inline-flex w-fit items-center gap-1 rounded-sm border border-border bg-muted px-[6px] pb-px text-2xsmall text-foreground [&_svg]:size-3">
-        {panel.isPrivate ? <Lock /> : <Globe />}
+        <IconSwap on={!!panel.isPrivate} onIcon={<Lock />} offIcon={<Globe />} />
         {panel.isPrivate ? "Private" : "Public"}
       </span>
 

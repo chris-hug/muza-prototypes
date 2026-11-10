@@ -1719,6 +1719,25 @@ img {
    boxes themselves 44 wide first, so the pseudo-element only adds height: the
    mini player's Play and Next touch, and their targets meet without crossing
    (player-bar.md). */
+/* IconSwap (icon-swap.tsx): both icons stay in one grid cell and cross-fade,
+   so a toggle hit twice reverses mid-flight. 200ms on the curve every state
+   change here uses; the 130ms of a press was too short to read as a change of
+   mark. Reduced motion gets the plain swap. */
+[data-slot="icon-swap"] > * {
+  grid-area: 1 / 1;
+  display: inline-flex;
+  transition: opacity 200ms, scale 200ms, filter 200ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+[data-slot="icon-swap"] > [data-state="out"] {
+  opacity: 0;
+  scale: 0.25;
+  filter: blur(4px);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="icon-swap"] > * { transition: none; }
+}
+
 /* The primitives are named here rather than at each call site. A census at 375
    found 18 kinds of control still under 44, nearly all of them a Button or a
    Tab somebody had not thought to mark. `tabs-trigger` takes `::before`

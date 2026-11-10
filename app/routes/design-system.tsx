@@ -16,7 +16,7 @@
 import * as React from "react"
 import { useEffect, useRef, useState } from "react"
 import { useSearchParams } from "react-router"
-import { ArrowLeft, Search } from "lucide-react"
+import { ArrowLeft, PanelRightClose, PanelRightOpen, Search } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -340,8 +340,8 @@ const ALIASES: Record<string, string[]> = {
 /* ── The prototyper ───────────────────────────────────────────────────────
  *
  * Its own application, not a page of the product: a narrow header — leave ·
- * name · tabs · light switch — a themer down the left, and one tab's worth of
- * content in the rest.
+ * name · tabs · themer toggle · light switch — one tab's worth of content, and
+ * a themer down the right that folds away.
  *
  * The five tabs are the five things a design system is asked about, in the
  * order they get asked: what the type does, how space is measured, what the
@@ -349,11 +349,15 @@ const ALIASES: Record<string, string[]> = {
  * what all of it does to the product.
  *
  * **The themer is a sidebar, not a section.** Colour is not a topic you visit;
- * it is a setting you hold while looking at something else. Parked on the left
+ * it is a setting you hold while looking at something else. Parked at the side
  * it stays put across all five tabs, so a hue can be dragged while the
  * Components tab or the Product tab is on screen. That is the whole reason to
  * build this shell instead of leaving the controller inside the Colors
  * section, where it could only ever recolour itself.
+ *
+ * It sits on the RIGHT and folds away. On the left it pushed every tab's
+ * reading edge across the screen and could not be put down: a colour tool you
+ * reach for now and then was taking the place of the page you came to read.
  *
  * **Product is an iframe**, and deliberately. The product has its own shell —
  * sidebar, top bar, player — and nesting that inside this one would fight for
@@ -383,8 +387,8 @@ const FOUNDATION_IDS = new Set(
   ["typography", "responsive", "page-section", "colors"],
 )
 
-/* The themer's own drag handle — on its RIGHT edge, since the panel is docked
- * left. Same shape as the playlist editor's: a 6px strip that tints on hover,
+/* The themer's own drag handle — on its LEFT edge, since the panel is docked
+ * right. Same shape as the playlist editor's: a 6px strip that tints on hover,
  * holds its tint while dragging, and snaps back to the default on a
  * double-click. */
 function ResizeHandle({ onPointerDown, reset, resizing }: {
@@ -400,7 +404,7 @@ function ResizeHandle({ onPointerDown, reset, resizing }: {
       onPointerDown={onPointerDown}
       onDoubleClick={reset}
       className={cn(
-        "absolute inset-y-0 right-0 z-20 w-1.5 cursor-col-resize state-fade",
+        "absolute inset-y-0 left-0 z-20 w-1.5 cursor-col-resize state-fade",
         "hover:bg-secondary",
         resizing && "bg-secondary-hover",
       )}
@@ -415,7 +419,16 @@ export default function Prototyper() {
     min: 280,
     max: 640,
     maxViewportShare: 0.5,
-    edge: "right",
+    edge: "left",
+  })
+  // Folded or open, remembered like its width. Open by default: a first visit
+  // should show that the tool exists.
+  const [themerOpen, setThemerOpen] = useState(() => {
+    try { return window.localStorage.getItem("muza:prototyper-themer-open") !== "0" } catch { return true }
+  })
+  const toggleThemer = () => setThemerOpen(open => {
+    try { window.localStorage.setItem("muza:prototyper-themer-open", open ? "0" : "1") } catch { /* private mode */ }
+    return !open
   })
 
   /* The tab is REACT state that seeds itself from the URL, not state read back
@@ -474,11 +487,35 @@ export default function Prototyper() {
           </TabsList>
         </Tabs>
 
-        <ThemeSwitch className="ml-auto shrink-0" />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleThemer}
+          aria-pressed={themerOpen}
+          aria-label={themerOpen ? "Hide the themer" : "Show the themer"}
+          title={themerOpen ? "Hide the themer" : "Show the themer"}
+          className="ml-auto shrink-0"
+        >
+          {themerOpen ? <PanelRightClose /> : <PanelRightOpen />}
+        </Button>
+        <ThemeSwitch className="shrink-0" />
       </header>
 
       {/* ── Themer · content ── */}
       <div className="flex min-h-0 flex-1">
+        <main className="flex-1 min-w-0 min-h-0 overflow-hidden">
+          {tab === "components" ? (
+            <ComponentsTab />
+          ) : tab === "product" ? (
+            <ProductFrame />
+          ) : (
+            <div className="h-full overflow-y-auto px-page py-8">
+              <SectionFilter.Provider value={active.sections!}>
+                <ExploreView showHero={false} showQuickNav={false} />
+              </SectionFilter.Provider>
+            </div>
+          )}
+        </main>
         {/* The themer is draggable, through the same `useResizableWidth` the
             playlist editor uses — including its localStorage memory, so the
             width survives a reload. A colour tool is looked at beside the
@@ -491,11 +528,12 @@ export default function Prototyper() {
             the content and hides under the scrollbar — it was there and
             unusable. The wrapper holds the width and the handle; the panel
             inside it does the scrolling. */}
+        {themerOpen && (
         <div
           ref={themer.ref as React.RefObject<HTMLDivElement>}
           style={themer.width != null ? { width: themer.width } : undefined}
           className={cn(
-            "relative shrink-0 border-r border-border min-h-0",
+            "relative shrink-0 border-l border-border min-h-0",
             themer.width == null && "w-[340px]",
           )}
         >
@@ -517,20 +555,7 @@ export default function Prototyper() {
             resizing={themer.resizing}
           />
         </div>
-
-        <main className="flex-1 min-w-0 min-h-0 overflow-hidden">
-          {tab === "components" ? (
-            <ComponentsTab />
-          ) : tab === "product" ? (
-            <ProductFrame />
-          ) : (
-            <div className="h-full overflow-y-auto px-page py-8">
-              <SectionFilter.Provider value={active.sections!}>
-                <ExploreView showHero={false} showQuickNav={false} />
-              </SectionFilter.Provider>
-            </div>
-          )}
-        </main>
+        )}
       </div>
     </div>
   )

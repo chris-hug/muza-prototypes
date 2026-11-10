@@ -59,6 +59,7 @@ import { getPlaylistDetail } from "@/lib/playlist-catalog"
 import { useSearchParams } from "react-router"
 import { getRailList } from "@/lib/rail-list"
 import { searchCatalog, type SearchResult, type SearchKind } from "@/lib/search-catalog"
+import { IconSwap } from "@/components/ui/icon-swap"
 
 type Scope = "catalog" | "library"
 type TabKey = "all" | SearchKind
@@ -289,7 +290,7 @@ function SearchTopResult({ r }: { r: SearchResult }) {
           // (the button appeared without sliding) nor the press nudge.
           className="shrink-0 sm:size-14 shadow-md transition-[color,background-color,translate,opacity] sm:opacity-0 sm:translate-y-1 sm:group-hover/top:opacity-100 sm:group-hover/top:translate-y-0 [&_svg]:size-5"
         >
-          {playingThis ? <PauseFilledAlt /> : <PlayFilledAlt />}
+          <IconSwap on={playingThis} onIcon={<PauseFilledAlt />} offIcon={<PlayFilledAlt />} />
         </Button>
       )}
     </div>

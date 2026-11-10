@@ -1030,15 +1030,16 @@ The persistent transport — the 80px glass bar from 640px of its own width, the
 > **Reference.** How the themer works. Nothing to obey.
 
 The design system is its own application now: `?page=DesignSystem` opens **the
-muza prototyper** — a narrow header (back · name · tabs · light switch), a
-**themer** docked left, and five tabs: Typography · Layout and Spacings ·
+muza prototyper** — a narrow header (back · name · tabs · themer toggle · light
+switch), a **themer** docked right that folds away, and five tabs: Typography · Layout and Spacings ·
 Tokens · Components · Product.
 
 The themer is a sidebar rather than a section for one reason: colour is not a
-topic you visit, it is a setting you hold while looking at something else. Sat
-on the left it stays put across all five tabs, so a hue can be dragged while
-the components — or the product — are on screen. Its width is draggable and
-remembered.
+topic you visit, it is a setting you hold while looking at something else. It
+stays put across all five tabs, so a hue can be dragged while the components —
+or the product — are on screen. It sits on the right and folds away from the
+header, because on the left it moved every tab's reading edge and could not be
+put down. Its width and whether it is open are both remembered.
 
 **Product is the real app in an iframe.** The product has its own shell and
 nesting it would put two shells on the same edges; a frame gives it its own

@@ -34,6 +34,7 @@ import { VIEWPORTS, containerAt, sidebarAt, gutterAt } from "@/lib/breakpoints"
 import { FOOTER_NAV_BELOW } from "@/lib/use-media-query"
 import { WindowWidthContext } from "@/lib/use-media-query"
 import { ChromeSidebar, ChromeGutter, ChromeTabBar } from "@/components/ds/chrome-schematic"
+import { IconSwap } from "@/components/ui/icon-swap"
 
 export type ExampleWidth = {
   label: string
@@ -354,7 +355,7 @@ export function Example({
               onClick={copy}
               className="absolute top-2 right-2"
             >
-              {copied ? <Check /> : <Copy />}
+              <IconSwap on={copied} onIcon={<Check />} offIcon={<Copy />} />
               {copied ? "Copied" : "Copy"}
             </Button>
           </div>

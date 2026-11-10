@@ -35,6 +35,7 @@ import { useMediaNav, slugify } from "@/lib/media-nav"
 import { useCoarsePointer } from "@/lib/use-media-query"
 import { usePlayer } from "@/lib/player"
 import { registerPlaylists, getPlaylistDetail } from "@/lib/playlist-catalog"
+import { IconSwap } from "@/components/ui/icon-swap"
 
 const COVER_BTN =
   // `--hover-fill: transparent` OPTS OUT of the growing hover circle. These
@@ -221,7 +222,7 @@ export function PlaylistCard({
             onClick={stop(playPlaylist)}
             aria-label={isPlaying ? "Pause" : "Play"}
           >
-            {isPlaying ? <PauseFilledAlt /> : <PlayFilledAlt />}
+            <IconSwap on={isPlaying} onIcon={<PauseFilledAlt />} offIcon={<PlayFilledAlt />} />
           </Button>
         </div>
       </div>

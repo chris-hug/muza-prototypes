@@ -35,6 +35,7 @@ import {
   darkDecl, primitiveGroups, semanticGroups,
   PRIMITIVES, SEMANTIC_DARK, SEMANTIC_LIGHT, type TokenDecl,
 } from "@/lib/tokens"
+import { IconSwap } from "@/components/ui/icon-swap"
 
 type View = "design" | "css"
 
@@ -435,7 +436,7 @@ export function TokenEditor() {
                 setTimeout(() => setCopied(false), 1500)
               }}
             >
-              {copied ? <Check /> : <Copy />}
+              <IconSwap on={copied} onIcon={<Check />} offIcon={<Copy />} />
               {copied ? "Copied" : "Copy"}
             </Button>
           )}

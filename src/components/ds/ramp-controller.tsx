@@ -46,6 +46,7 @@ import {
   DEFAULT_THEME, THEMES, applyTheme, clearTheme, saveTheme, themeCss,
   type Theme, type ThemeRamp,
 } from "@/lib/themes"
+import { IconSwap } from "@/components/ui/icon-swap"
 
 /* ── The two ramps ─────────────────────────────────────────────────────── */
 const RAMPS = [
@@ -283,7 +284,7 @@ export function RampController() {
             setCopied(true); window.setTimeout(() => setCopied(false), 1200)
           }}
         >
-          {copied ? <Check /> : <Copy />}
+          <IconSwap on={copied} onIcon={<Check />} offIcon={<Copy />} />
           CSS
         </Button>
         {saved.length > 0 && (
@@ -373,7 +374,7 @@ export function RampController() {
                           set({ pins })
                         }}
                       >
-                        {pinned ? <Pin /> : <PinOff />}
+                        <IconSwap on={pinned} onIcon={<Pin />} offIcon={<PinOff />} />
                       </Button>
                       <div className="flex-1 min-w-0 flex flex-col gap-0.5">
                         {light.length === 0 && dark.length === 0 && (

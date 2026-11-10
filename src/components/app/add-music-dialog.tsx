@@ -48,6 +48,7 @@ import { searchCatalog, type SearchResult } from "@/lib/search-catalog"
 import { slugify } from "@/lib/media-nav"
 import { useUserLibrary, type SavedSong } from "@/lib/user-library"
 import { useIsMobile } from "@/lib/use-media-query"
+import { IconSwap } from "@/components/ui/icon-swap"
 
 /* A song is the same song wherever it was picked from — a search hit, a
  * suggestion, or a track inside an album. Identity is title+artist rather than
@@ -397,7 +398,7 @@ export function AddMusicDialog({
                 onClick={toggleAlbum}
                 className="shrink-0"
               >
-                {albumFullyPicked ? <Check /> : <Plus />}
+                <IconSwap on={albumFullyPicked} onIcon={<Check />} offIcon={<Plus />} />
                 {albumFullyPicked ? "Added" : "Add album"}
               </Button>
             </div>

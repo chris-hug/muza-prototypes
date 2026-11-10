@@ -43,6 +43,7 @@ import { useCoarsePointer } from "@/lib/use-media-query"
 import { libraryIdForTitle } from "@/lib/album-meta"
 import { usePlayer } from "@/lib/player"
 import { registerAlbums, getAlbumDetail } from "@/lib/album-catalog"
+import { IconSwap } from "@/components/ui/icon-swap"
 
 // Cover-button base — translucent muted fill + light backdrop blur,
 // border-0 to avoid a ghost edge from `bg-clip-padding`. Size
@@ -290,7 +291,7 @@ export function AlbumCard({
             onClick={stop(playAlbum)}
             aria-label={isPlaying ? "Pause" : "Play"}
           >
-            {isPlaying ? <PauseFilledAlt /> : <PlayFilledAlt />}
+            <IconSwap on={isPlaying} onIcon={<PauseFilledAlt />} offIcon={<PlayFilledAlt />} />
           </Button>
         </div>
       </div>
