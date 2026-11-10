@@ -25,7 +25,7 @@
  */
 
 import * as React from "react"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useSearchParams } from "react-router"
 import { ArrowUp, ArrowUpDown, LayoutGrid, List, MoreHorizontal } from "lucide-react"
 
@@ -47,9 +47,11 @@ import { useUserLibrary } from "@/lib/user-library"
 import { ArtistHero } from "./artist-hero"
 import { SongRail } from "./song-rail"
 import { artistImage } from "@/lib/artist-data"
+import { railArtist, railPlaylist } from "@/lib/rail-list"
+import { getArtistProfile, type ArtistProfile, type ArtistRelease, type ArtistSong, type ReleaseKind } from "@/lib/artist-catalog"
 import { albumMetaFor, libraryIdForTitle } from "@/lib/album-meta"
-import { hasAlbumDetail, registerAlbums } from "@/lib/album-catalog"
-import { hasPlaylistDetail, registerPlaylists } from "@/lib/playlist-catalog"
+import { hasAlbumDetail } from "@/lib/album-catalog"
+import { hasPlaylistDetail } from "@/lib/playlist-catalog"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 import { usePlayer } from "@/lib/player"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -64,169 +66,61 @@ import { CoverPlayButton } from "@/components/ui/cover-play-button"
 import { CardRail } from "@/components/app/card-rail"
 import { usePublishDetailHeader } from "@/lib/detail-actions"
 
-// ─── Mock data ──────────────────────────────────────────────────────────────
-//
-// Sun Ra is the example artist in the Figma. The data below is
-// hand-curated jazz content so the layout reads as a real profile.
-
-const ARTIST = {
-  name:   "Sun Ra",
-  cover:  "https://miro.medium.com/v2/resize:fit:4800/format:webp/1*lGV1JcK0hYHFLvyimbVK5Q.jpeg",
-  bio:    "Sun Ra (born Herman Poole Blount; May 22, 1914 – May 30, 1993) was an American jazz composer, bandleader, piano and synthesizer player, and poet known for his experimental music, cosmic philosophy, prolific output and theatrical performances.\n\nFor much of his career he led the Arkestra, an ensemble with an ever-changing lineup and name, distinguished by its costumes, choreography and freewheeling sound. Born in Birmingham, Alabama, he abandoned his birth name and claimed to be an alien from Saturn on a mission to preach peace — a persona he used to explore space, mythology and Black liberation.\n\nAcross more than three decades he recorded hundreds of releases, many on his own Saturn label, spanning bebop, big-band swing, free jazz and pioneering electronic music. Long a cult figure, he is now widely regarded as a visionary whose influence reaches across jazz, funk and experimental music." }
-
-// Real Sun Ra tracks pulled from the corresponding album sleeves
-// below. Cover URLs are the iTunes 200×200 thumbnails (smaller
-// payload than the 600px artwork the Discography grid uses).
-const COVER_SPACE      = "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/200x200bb.jpg"
-const COVER_LANQUIDITY = "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/b3/2a/5f/b32a5f91-5551-1ac0-17c6-e6dd4dcc0292/4062548021820_3000.jpg/200x200bb.jpg"
-const COVER_FUTURISTIC = "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/e0/21/2d/e0212d9d-45a5-e914-128e-63ceac48a6a1/21CRGIM30721.rgb.jpg/200x200bb.jpg"
-const COVER_SLEEPING   = "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/a7/f2/b9/a7f2b9d7-3cd0-c092-d667-59dd10e11b6c/4062548112283.png/200x200bb.jpg"
-const COVER_HELIO1     = "https://is1-ssl.mzstatic.com/image/thumb/Music1/v4/9b/38/66/9b386653-0486-11fa-81d9-c6395e8acf81/Heliocentric_V1_cover.jpg/200x200bb.jpg"
-const COVER_ASTRO      = "https://is1-ssl.mzstatic.com/image/thumb/Music62/v4/fd/56/b8/fd56b88e-1bb8-9be7-c945-61fbaf9da665/Astro_Black_2018_cover-300.jpg/200x200bb.jpg"
-const COVER_PURPLE     = "https://is1-ssl.mzstatic.com/image/thumb/Music3/v4/47/a2/78/47a278ec-8b25-ab01-33fa-f3283fc90f28/Purple_Night_1500-B.jpg/200x200bb.jpg"
-const COVER_MAYAN      = "https://is1-ssl.mzstatic.com/image/thumb/Music/cd/cb/07/mzi.qqxpchzn.jpg/200x200bb.jpg"
-
-const TOP_SONGS = [
-  { id: "s1",  cover: COVER_SPACE,      title: "Space Is the Place",       album: "Space Is the Place",                       year: 1973, duration: "21:14" },
-  { id: "s2",  cover: COVER_LANQUIDITY, title: "Lanquidity",               album: "Lanquidity",                               year: 1978, duration: "9:11" },
-  { id: "s3",  cover: COVER_SLEEPING,   title: "Door of the Cosmos",       album: "Sleeping Beauty",                          year: 1979, duration: "9:03" },
-  { id: "s4",  cover: COVER_FUTURISTIC, title: "Rocket Number Nine",       album: "The Futuristic Sounds of Sun Ra",          year: 1961, duration: "3:24" },
-  { id: "s5",  cover: COVER_HELIO1,     title: "Heliocentric",             album: "The Heliocentric Worlds of Sun Ra, Vol. 1", year: 1965, duration: "5:13" },
-  { id: "s6",  cover: COVER_LANQUIDITY, title: "Where Pathways Meet",      album: "Lanquidity",                               year: 1978, duration: "6:14" },
-  { id: "s7",  cover: COVER_ASTRO,      title: "Astro Black",              album: "Astro Black",                              year: 1973, duration: "8:54" },
-  { id: "s8",  cover: COVER_LANQUIDITY, title: "There Are Other Worlds",   album: "Lanquidity",                               year: 1978, duration: "7:51" },
-  { id: "s9",  cover: COVER_MAYAN,      title: "El Is a Sound of Joy",     album: "Mayan Temples",                            year: 1990, duration: "5:42" },
-  { id: "s10", cover: COVER_PURPLE,     title: "Stars Fell on Alabama",    album: "Purple Night",                             year: 1990, duration: "5:09" },
-]
-
-// Full discography — used by the Discography tab.
-//   · `kind`   — filter bucket the chip bar groups by. Says HOW the
-//                artist relates to the release ("their" albums vs
-//                remixes they did vs releases where they had a
-//                secondary role on someone else's work).
-//   · `type`   — what the release format actually is (album / single
-//                / ep). Independent of `kind`: a remix is still a
-//                single, a secondary-role contribution could be on
-//                an album, etc.
-type ReleaseKind = "album" | "single" | "ep" | "remix" | "secondary"
-type ReleaseType = "album" | "single" | "ep"
-// All cover URLs are real iTunes Search API artwork — every release
-// below points to its actual record sleeve.
-const DISCOGRAPHY: Array<{ id: string; title: string; year: number; kind: ReleaseKind; type: ReleaseType; tracks: number; band?: string; cover: string }> = [
-  // ── Studio / live albums ─────────────────────────────────────────
-  { id: "d1",  title: "Space Is the Place",                          year: 1973, kind: "album",     type: "album",  tracks: 4,  band: "Sun Ra and his Arkestra",                          cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
-  { id: "d2",  title: "Lanquidity",                                  year: 1978, kind: "album",     type: "album",  tracks: 4,  band: "Sun Ra and his Arkestra",                          cover: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/b3/2a/5f/b32a5f91-5551-1ac0-17c6-e6dd4dcc0292/4062548021820_3000.jpg/600x600bb.jpg" },
-  { id: "d3",  title: "The Futuristic Sounds of Sun Ra",             year: 1961, kind: "album",     type: "album",  tracks: 9,  band: "The Sun Ra Arkestra",                              cover: "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/e0/21/2d/e0212d9d-45a5-e914-128e-63ceac48a6a1/21CRGIM30721.rgb.jpg/600x600bb.jpg" },
-  { id: "d4",  title: "Jazz by Sun Ra",                              year: 1956, kind: "album",     type: "album",  tracks: 5,  band: "Sun Ra",                                           cover: "https://is1-ssl.mzstatic.com/image/thumb/Music7/v4/29/ee/10/29ee103c-3ea8-3351-0e6d-e1f0db368be7/dj.vrxtlpkw.jpg/600x600bb.jpg" },
-  { id: "d5",  title: "God Is More Than Love Can Ever Be",           year: 1979, kind: "album",     type: "album",  tracks: 5,  band: "Sun Ra",                                           cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/43/91/bc/4391bc79-3d1c-3534-adc7-37a31f81b463/God_is_More_cover_300.jpg/600x600bb.jpg" },
-  { id: "d6",  title: "Sleeping Beauty",                             year: 1979, kind: "album",     type: "album",  tracks: 3,  band: "Sun Ra and his Arkestra",                          cover: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/a7/f2/b9/a7f2b9d7-3cd0-c092-d667-59dd10e11b6c/4062548112283.png/600x600bb.jpg" },
-  { id: "d7",  title: "The Heliocentric Worlds of Sun Ra, Vol. 1",   year: 1965, kind: "album",     type: "album",  tracks: 6,  band: "Sun Ra and his Solar Arkestra",                    cover: "https://is1-ssl.mzstatic.com/image/thumb/Music1/v4/9b/38/66/9b386653-0486-11fa-81d9-c6395e8acf81/Heliocentric_V1_cover.jpg/600x600bb.jpg" },
-  { id: "d8",  title: "Cosmos",                                      year: 1976, kind: "album",     type: "album",  tracks: 5,  band: "Sun Ra and his Arkestra",                          cover: "https://is1-ssl.mzstatic.com/image/thumb/Music49/v4/20/db/51/20db5143-be96-6741-6d70-08d9fc0d5605/Cosmos_art_1500.jpg/600x600bb.jpg" },
-  { id: "d9",  title: "Strange Celestial Road",                      year: 1980, kind: "album",     type: "album",  tracks: 4,  band: "Sun Ra and his Arkestra",                          cover: "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/3e/08/94/3e089402-eb30-e3a0-8e66-c3e567e8ac39/18CRGIM05763.rgb.jpg/600x600bb.jpg" },
-  { id: "d10", title: "The Other Side of the Sun",                   year: 1979, kind: "album",     type: "album",  tracks: 6,  band: "Sun Ra and his Arkestra",                          cover: "https://is1-ssl.mzstatic.com/image/thumb/Music3/v4/34/ed/e2/34ede2b9-db9b-cd9c-f941-82eb0da97bae/OSOTS.1500.jpg/600x600bb.jpg" },
-  { id: "d11", title: "Astro Black",                                 year: 1973, kind: "album",     type: "album",  tracks: 4,  band: "Sun Ra and his Arkestra",                          cover: "https://is1-ssl.mzstatic.com/image/thumb/Music62/v4/fd/56/b8/fd56b88e-1bb8-9be7-c945-61fbaf9da665/Astro_Black_2018_cover-300.jpg/600x600bb.jpg" },
-  { id: "d12", title: "Celestial Love",                              year: 1982, kind: "album",     type: "album",  tracks: 6,  band: "Sun Ra and his Arkestra",                          cover: "https://is1-ssl.mzstatic.com/image/thumb/Music1/v4/3a/6e/84/3a6e848e-f47e-89c5-ddfd-895001b28966/Celestial_Love_cover_1500.jpg/600x600bb.jpg" },
-  { id: "d13", title: "Crystal Spears",                              year: 1973, kind: "album",     type: "album",  tracks: 6,  band: "Sun Ra and his Astro-Infinity Arkestra",            cover: "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/5c/8a/00/5c8a00ec-08fc-4f81-81fd-b9bb9775fa62/090771808226.jpg/600x600bb.jpg" },
-  { id: "d14", title: "Universe in Blue",                            year: 1972, kind: "album",     type: "album",  tracks: 4,  band: "Sun Ra and his Arkestra",                          cover: "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/84/95/00/84950031-84db-9640-88ad-4f8645581b20/Universe_in_Blue_CMR-006_cover.jpg/600x600bb.jpg" },
-  { id: "d15", title: "Sub Underground #1",                          year: 1974, kind: "album",     type: "album",  tracks: 5,  band: "Sun Ra",                                           cover: "https://is1-ssl.mzstatic.com/image/thumb/Music1/v4/6d/d4/af/6dd4afb6-ea24-9251-aa2f-e7759f315398/Sub_Underground_1500border.jpg/600x600bb.jpg" },
-  { id: "d16", title: "Toward the Stars",                            year: 1955, kind: "album",     type: "album",  tracks: 5,  band: "Sun Ra",                                           cover: "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/8e/66/80/8e66806d-b584-dd89-5a71-480a99885525/5013929311923.jpg/600x600bb.jpg" },
-  { id: "d17", title: "Mayan Temples",                               year: 1990, kind: "album",     type: "album",  tracks: 13, band: "Sun Ra Arkestra",                                  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music/cd/cb/07/mzi.qqxpchzn.jpg/600x600bb.jpg" },
-  { id: "d18", title: "Hours After",                                 year: 1986, kind: "album",     type: "album",  tracks: 5,  band: "Sun Ra Arkestra",                                  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music/d1/1d/4a/mzi.otumrxgy.jpg/600x600bb.jpg" },
-  { id: "d19", title: "Reflections in Blue",                         year: 1986, kind: "album",     type: "album",  tracks: 6,  band: "Sun Ra Arkestra",                                  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music/11/34/3a/mzi.rmaotwum.jpg/600x600bb.jpg" },
-  { id: "d20", title: "Purple Night",                                year: 1990, kind: "album",     type: "album",  tracks: 7,  band: "Sun Ra Arkestra · feat. Don Cherry",               cover: "https://is1-ssl.mzstatic.com/image/thumb/Music3/v4/47/a2/78/47a278ec-8b25-ab01-33fa-f3283fc90f28/Purple_Night_1500-B.jpg/600x600bb.jpg" },
-
-  // ── Singles ──────────────────────────────────────────────────────
-  { id: "d21", title: "Seductive Fantasy",                           year: 2020, kind: "single",    type: "single", tracks: 1,  band: "Sun Ra Arkestra",                                  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/35/32/42/3532426a-57ad-3fe8-fbed-0c8b28c8ed76/4062548013412_3000.jpg/600x600bb.jpg" },
-  { id: "d22", title: "Somebody Else's Idea",                        year: 2022, kind: "single",    type: "single", tracks: 1,  band: "Sun Ra Arkestra",                                  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/07/51/9a/07519a16-4fab-4ed6-5de5-a6429e73edd5/634457107823.png/600x600bb.jpg" },
-  { id: "d23", title: "Chopin",                                      year: 2022, kind: "single",    type: "single", tracks: 1,  band: "Sun Ra Arkestra",                                  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/c1/1a/39/c11a3942-a9e5-cdec-b46a-f1b8533a5efe/634457103269.png/600x600bb.jpg" },
-  { id: "d24", title: "Baby Won't You Please Be Mine",               year: 2024, kind: "single",    type: "single", tracks: 2,  band: "Sun Ra Arkestra",                                  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/e7/41/57/e7415716-189e-bdd5-9d2a-0e4ba934ecf8/cover.jpg/600x600bb.jpg" },
-  { id: "d25", title: "Lights on a Satellite",                       year: 2024, kind: "single",    type: "single", tracks: 1,  band: "Sun Ra Arkestra",                                  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/c8/6f/7b/c86f7b5a-87c8-7242-11e8-1153f403faf9/cover.jpg/600x600bb.jpg" },
-
-  // ── EPs ──────────────────────────────────────────────────────────
-  { id: "d26", title: "Sun Ra Arkestra Meets Salah Ragab in Egypt",  year: 1984, kind: "ep",        type: "ep",     tracks: 5,  band: "Sun Ra Arkestra · Salah Ragab",                    cover: "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/e5/31/3d/e5313d17-bde8-782b-6446-c7a2fd9ae758/4062548032420.png/600x600bb.jpg" },
-  { id: "d27", title: "Big John's Special",                          year: 2024, kind: "ep",        type: "ep",     tracks: 3,  band: "Sun Ra Arkestra",                                  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/02/8e/1f/028e1fa4-9637-6097-2d74-e901087946ba/cover.jpg/600x600bb.jpg" },
-
-  // ── Remixes ──────────────────────────────────────────────────────
-  { id: "d28", title: "Door of the Cosmos (Floating Points Edit)",   year: 2018, kind: "remix",     type: "single", tracks: 1,  band: "Sun Ra · Floating Points",                         cover: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/a7/f2/b9/a7f2b9d7-3cd0-c092-d667-59dd10e11b6c/4062548112283.png/600x600bb.jpg" },
-  { id: "d29", title: "Nuclear War (NON Reconstruction)",            year: 2001, kind: "remix",     type: "single", tracks: 1,  band: "Sun Ra · NON",                                     cover: "https://is1-ssl.mzstatic.com/image/thumb/Music62/v4/fd/56/b8/fd56b88e-1bb8-9be7-c945-61fbaf9da665/Astro_Black_2018_cover-300.jpg/600x600bb.jpg" },
-
-  // ── Secondary role (appearances on others' albums) ──────────────
-  { id: "d30", title: "We the People of the Myths (feat. Marshall Allen)", year: 2022, kind: "secondary", type: "single", tracks: 1, band: "Meditations on Crime · King Khan · Harper Simon", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/20/a0/ce/20a0ce67-41ad-efa2-058f-335fabbf572b/899360.jpg/600x600bb.jpg" },
-  { id: "d31", title: "Outros Espaço",                               year: 2021, kind: "secondary", type: "album",  tracks: 10, band: "Rodrigo Brandão & Sun Ra Arkestra",                cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/c5/87/99/c5879978-757c-5ee5-f8a8-4b64ce4a3501/0732535842090.jpg/600x600bb.jpg" },
-  { id: "d32", title: "Saturnian Queen of the Sun Ra Arkestra",      year: 2019, kind: "secondary", type: "album",  tracks: 17, band: "June Tyson & Sun Ra and his Arkestra",             cover: "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/4c/de/0f/4cde0fbe-aa02-eaff-08ce-f21eb6c2752d/MH-8014_June.jpg/600x600bb.jpg" },
-]
-
-// Top Albums rail — picked from the real discography below so the
-// rail covers map 1:1 onto the same release sleeves on Discography.
-const TOP_ALBUMS = (
-  ["d1", "d2", "d11", "d3", "d7", "d8", "d12", "d20"] as const
-).map(id => {
-  const r = DISCOGRAPHY.find(x => x.id === id)!
-  return { id: r.id, title: r.title, cover: r.cover, artist: "Sun Ra", year: r.year }
-})
-
-const PRODUCTS = [
-  { id: "p1", title: "Space Is the Place — Vinyl Reissue",       price: "32 $",  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
-  { id: "p2", title: "Lanquidity (Deluxe 4LP Box)",              price: "120 $", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
-  { id: "p3", title: "Arkestra Tour Tee — Black",                price: "35 $",  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
-  { id: "p4", title: "Saturn Records Cap",                       price: "28 $",  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
-  { id: "p5", title: "Cosmic Equation Poster",                   price: "18 $",  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
-  { id: "p6", title: "Space Is the Place Tote Bag",              price: "22 $",  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
-  { id: "p7", title: "Sun Ra Arkestra Enamel Pin",              price: "12 $",  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
-  { id: "p8", title: "Astro-Black Mythology Hoodie",            price: "65 $",  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
-]
-
-// 2×2 composite covers for the Curated Playlists row.
-const COMPOSITE_POOL = [
-  "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/200x200bb.jpg",
-  "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/01/36/a6/0136a666-36d2-caf1-efb1-da77a646d104/06UMGIM03764.rgb.jpg/200x200bb.jpg",
-  "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/af/5c/40/af5c40a1-54b1-855d-3da2-f875efbd8372/06UMGIM04169.rgb.jpg/200x200bb.jpg",
-  "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/e5/24/aa/e524aacd-467b-66f3-8931-0fcd6750a4b9/08UMGIM07914.rgb.jpg/200x200bb.jpg",
-  "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/6e/1a/13/6e1a134d-8f6f-d90f-b855-ea69436a2e8b/17UM1IM45370.rgb.jpg/200x200bb.jpg",
-]
-const composite = (offset: number) => [0, 1, 2, 3].map(i => COMPOSITE_POOL[(offset + i) % COMPOSITE_POOL.length])
-
-const CURATED_PLAYLISTS = [
-  { id: "cp1", title: "Sun Ra Spiritual",          songCount: 34, owner: "Sarah K",  covers: composite(0) },
-  { id: "cp2", title: "Cosmic Jazz Mornings",      songCount: 42, owned: true,       covers: composite(1) },
-  { id: "cp3", title: "Astro Black Sessions",      songCount: 18, owner: "Marcus W", covers: composite(2) },
-  { id: "cp4", title: "Arkestra Live",             songCount: 27, owner: "Léa M",    covers: composite(3) },
-  { id: "cp5", title: "Saturn-bound",              songCount: 51, owner: "Otto K",   covers: composite(4) },
-  { id: "cp6", title: "Spiritual Jazz Cornerstones", songCount: 38, owner: "Hana N", covers: composite(0) },
-  { id: "cp7", title: "Outer Space Ways",          songCount: 29, owner: "Théo R",          covers: composite(2) },
-  { id: "cp8", title: "Heliocentric Worlds",       songCount: 44, owner: "Muza Editorial",  covers: composite(1) },
-]
-
-const SIMILAR_ARTISTS = [
-  { id: "sa1", name: "John Coltrane",   image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/John_Coltrane_1963_cropped_ver2.jpg/500px-John_Coltrane_1963_cropped_ver2.jpg" },
-  { id: "sa2", name: "Alice Coltrane",  image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Alice_Coltrane_1972.jpg/500px-Alice_Coltrane_1972.jpg" },
-  { id: "sa3", name: "Pharoah Sanders", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Pharoah_Sanders_photo.jpg/500px-Pharoah_Sanders_photo.jpg" },
-  { id: "sa4", name: "Yusef Lateef",    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Yusef_Lateef.jpg/500px-Yusef_Lateef.jpg" },
-  { id: "sa5", name: "Don Cherry",      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Don_Cherry_in_2010.jpg/500px-Don_Cherry_in_2010.jpg" },
-  { id: "sa6", name: "Anthony Braxton", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Anthony_braxton_5268134w.jpg/500px-Anthony_braxton_5268134w.jpg" },
-  { id: "sa7", name: "Shabaka Hutchings", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Shabaka_Hutchings_Sons_of_Kemet_Oslo_Jazzfestival_2018_%28223102%29.jpg/500px-Shabaka_Hutchings_Sons_of_Kemet_Oslo_Jazzfestival_2018_%28223102%29.jpg" },
-  { id: "sa8", name: "Theon Cross",      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Theon_Cross_at_Ljubljana%2C_May_2015.jpg/500px-Theon_Cross_at_Ljubljana%2C_May_2015.jpg" },
-]
-
-// Register this artist's releases + curated playlists into the catalogs
-// so their cards resolve to real synthesized detail pages (rather than
-// the default fallback). Runs once at module load.
-registerAlbums(
-  DISCOGRAPHY.map(r => ({
-    id: r.id, title: r.title, cover: r.cover,
-    artist: r.band ?? ARTIST.name, year: r.year })),
-)
-registerPlaylists(
-  CURATED_PLAYLISTS.map(p => ({
-    id: p.id, title: p.title, covers: p.covers,
-    songCount: p.songCount, owner: p.owner, owned: p.owned })),
-)
-
 // ─── View ───────────────────────────────────────────────────────────────────
 
+/* Keyed by artist: hopping from one artist to another stays on the same
+   route, and the tab, the filter and the scroll position belong to the page
+   you left. */
 export function ArtistProfileView() {
+  const [params] = useSearchParams()
+  const profile = getArtistProfile(params.get("artist"))
+  return <ArtistProfilePage key={profile.name} profile={profile} />
+}
+
+function ArtistProfilePage({ profile }: { profile: ArtistProfile }) {
+  const ARTIST = profile
+  const TOP_SONGS = profile.topSongs
+  const TOP_ALBUMS = profile.topAlbums
+  const DISCOGRAPHY = profile.discography
+  const PRODUCTS = profile.products
+  const CURATED_PLAYLISTS = profile.playlists
+  const SIMILAR_ARTISTS = profile.similar
   const { openAlbum, openPlaylist, openArtist } = useMediaNav()
-  const [tab, setTab] = useState("overview")
+  // `artist-tab` / `artist-kind` / `artist-view`: the tab, filter and layout
+  // live in the URL as well as in state, so the back chevron returns to this
+  // page as you left it, and an album's "All albums" can open it filtered.
+  // Read on mount only.
+  const [params, setParams] = useSearchParams()
+  // The route shell only resets the scroll when `page` changes, and an
+  // artist-to-artist hop keeps it. Same reset the album page does.
+  const rootRef = useRef<HTMLDivElement>(null)
+  const scrollToTop = () => {
+    let el = rootRef.current?.parentElement
+    while (el) {
+      const oy = getComputedStyle(el).overflowY
+      if (oy === "auto" || oy === "scroll") { el.scrollTop = 0; break }
+      el = el.parentElement
+    }
+  }
+  useEffect(scrollToTop, [])
+  // What the Discography opens filtered to: set by "All albums" here or on an
+  // album page, cleared as soon as the tabs are used by hand.
+  const [discographyKind, setDiscographyKind] = useState(params.get("artist-kind"))
+  // A rail's "Show all" sits far down the Overview; the tab it opens starts
+  // at the top, so the page has to go there with it.
+  const syncTab = (next: string, kind: string | null) => setParams(prev => {
+    const url = new URLSearchParams(prev)
+    if (next === "overview") url.delete("artist-tab"); else url.set("artist-tab", next)
+    if (kind) url.set("artist-kind", kind); else url.delete("artist-kind")
+    return url
+  }, { replace: true })
+  const openTab = (next: string, kind: string | null = null) => {
+    setDiscographyKind(kind)
+    setTab(next)
+    syncTab(next, kind)
+    scrollToTop()
+  }
+  const [tab, setTab] = useState(params.get("artist-tab") ?? "overview")
   const library = useUserLibrary()
   const player = usePlayer()
   // This artist is the active player source AND playing → hero Play
@@ -260,7 +154,7 @@ export function ArtistProfileView() {
   // scroll. A second scroll container would break sticky positioning
   // for descendants like the Discography table head.
   return (
-    <div className="flex-1">
+    <div ref={rootRef} className="flex-1">
       {/* ── Hero ───────────────────────────────────────────────────────── */}
       {/* `dark` flips the design tokens locally for everything inside
            the hero — text-foreground = light, bg-background = dark,
@@ -311,7 +205,7 @@ export function ArtistProfileView() {
            thirds. */}
       <div className="w-full bg-muted">
         <div className="@container w-full pt-4">
-          <Tabs value={tab} onValueChange={setTab}>
+          <Tabs value={tab} onValueChange={v => { setDiscographyKind(null); setTab(v); syncTab(v, null) }}>
             {/* h-9 matches the triggers' own height — the `line` variant
                  scrolls (overflow-x-auto), which forces overflow-y to clip;
                  a shorter list would cut off the triggers' bottom borders
@@ -348,9 +242,9 @@ export function ArtistProfileView() {
         {tab === "overview" && (
           <div className="@container">
           <>
-            <TopSongsRow songs={TOP_SONGS} />
+            <TopSongsRow songs={TOP_SONGS} artistName={ARTIST.name} artistCover={ARTIST.cover} />
 
-            <CardRail title="Top Albums" showAllLabel="All albums">
+            <CardRail title="Top Albums" showAllLabel="All albums" onShowAll={() => openTab("discography", "album")}>
               {TOP_ALBUMS.map(a => {
                 const meta  = albumMetaFor(a.title)
                 const libId = libraryIdForTitle(a.title)
@@ -375,7 +269,7 @@ export function ArtistProfileView() {
               })}
             </CardRail>
 
-            <CardRail title="Products" showAllLabel="All products">
+            <CardRail title="Products" showAllLabel="All products" onShowAll={() => openTab("products")}>
               {PRODUCTS.map(p => (
                 <li key={p.id}>
                   <ProductCard cover={p.cover} title={p.title} price={p.price} />
@@ -383,7 +277,7 @@ export function ArtistProfileView() {
               ))}
             </CardRail>
 
-            <CardRail title="Curated Playlists">
+            <CardRail title="Curated Playlists" showAllLabel="All playlists" list={{ subtitle: ARTIST.name, items: CURATED_PLAYLISTS.map(railPlaylist) }}>
               {CURATED_PLAYLISTS.map(p => {
                 const key = slugify(p.title)
                 const linkable = hasPlaylistDetail(key)
@@ -403,7 +297,7 @@ export function ArtistProfileView() {
               })}
             </CardRail>
 
-            <CardRail title="Similar Artists">
+            <CardRail title="Similar Artists" showAllLabel="All artists" list={{ subtitle: ARTIST.name, items: SIMILAR_ARTISTS.map(railArtist) }}>
               {SIMILAR_ARTISTS.map(a => (
                 <li key={a.id}><ArtistCard name={a.name} image={a.image} onClick={() => openArtist(slugify(a.name))} /></li>
               ))}
@@ -413,7 +307,7 @@ export function ArtistProfileView() {
         )}
 
         {tab === "discography" && (
-          <DiscographyView releases={DISCOGRAPHY} artistName={ARTIST.name} />
+          <DiscographyView releases={DISCOGRAPHY} artistName={ARTIST.name} initialKind={discographyKind} />
         )}
 
         {tab === "products" && (
@@ -480,15 +374,24 @@ function SortableHeader({
 }
 
 function DiscographyView({
-  releases, artistName }: { releases: typeof DISCOGRAPHY; artistName: string }) {
+  releases, artistName, initialKind }: { releases: ArtistRelease[]; artistName: string; initialKind?: string | null }) {
   const library = useUserLibrary()
   const { openAlbum } = useMediaNav()
   // Multi-select kind filter. Empty set means "no filter applied"
   // (i.e. show all releases) — keeps the menu's `Clear all` row in
   // sync with the visible-everything default.
-  const [filter, setFilter] = useState<Set<ReleaseKind>>(new Set())
+  const [filter, setFilter] = useState<Set<ReleaseKind>>(() => {
+    const wanted = (initialKind ?? "").split(",")
+    return new Set((["album", "single", "ep", "remix", "secondary"] as const).filter(k => wanted.includes(k)))
+  })
+  const [params, setParams] = useSearchParams()
+  const syncParam = (key: string, value: string | null) => setParams(prev => {
+    const url = new URLSearchParams(prev)
+    if (value) url.set(key, value); else url.delete(key)
+    return url
+  }, { replace: true })
   const [sort, setSort]     = useState<SortKey>("year-desc")
-  const [view, setView]     = useState<"grid" | "list">("grid")
+  const [view, setView]     = useState<"grid" | "list">(params.get("artist-view") === "list" ? "list" : "grid")
   /* Which columns the list view can afford. The table needs ~440px for all
      six; a phone gives it 351. Measured against the COLUMN the table sits in
      via `sm`/`lg` — in-page reflow, which is what those steps are for
@@ -557,7 +460,10 @@ function DiscographyView({
             <MultiSelect
               label="All releases"
               selected={filter as Set<string>}
-              onChange={next => setFilter(next as Set<ReleaseKind>)}
+              onChange={next => {
+                setFilter(next as Set<ReleaseKind>)
+                syncParam("artist-kind", [...next].join(",") || null)
+              }}
               options={kindEntries.map(k => ({
                 value: k,
                 label: (
@@ -585,7 +491,7 @@ function DiscographyView({
           value={[view]}
           onValueChange={vals => {
             const next = vals[0] as "grid" | "list" | undefined
-            if (next) setView(next)
+            if (next) { setView(next); syncParam("artist-view", next === "list" ? "list" : null) }
           }}
         >
           <Toggle value="grid" aria-label="Grid view">
@@ -739,6 +645,7 @@ function DiscographyView({
                   <TableCell className="text-foreground truncate">
                     <button
                       type="button"
+                      onClick={() => openAlbum(slugify(r.title))}
                       className="block w-full min-w-0 text-left outline-none cursor-pointer"
                     >
                       <span className="block truncate link-underline">{r.title}</span>
@@ -756,12 +663,9 @@ function DiscographyView({
                   </TableCell>
                   {showBand && (
                     <TableCell className="text-muted-foreground whitespace-nowrap truncate">
-                      <button
-                        type="button"
-                        className="text-left link-underline outline-none cursor-pointer"
-                      >
-                        {r.band ?? artistName}
-                      </button>
+                      {/* Text, not a link: this table is already the
+                          artist's page, so there is nowhere to go. */}
+                      {r.band ?? artistName}
                     </TableCell>
                   )}
                   {showRecorded && (
@@ -810,7 +714,7 @@ function DiscographyView({
 // The rows are built once (player / credits / album nav) and used twice: as
 // compact rows in the rail, and as full rows on the "Show all" page.
 
-function useTopSongRows(songs: typeof TOP_SONGS, compact: boolean) {
+function useTopSongRows(songs: ArtistSong[], compact: boolean, artistName: string, artistCover: string) {
   const { openAlbum } = useMediaNav()
   const player = usePlayer()
 
@@ -823,12 +727,12 @@ function useTopSongRows(songs: typeof TOP_SONGS, compact: boolean) {
                     album={s.album}
                     year={s.year}
                     duration={s.duration}
-                    playing={player.playing && player.playingFrom === ARTIST.name && player.track?.title === s.title}
+                    playing={player.playing && player.playingFrom === artistName && player.track?.title === s.title}
                     onPlay={() => {
-                      if (player.playingFrom === ARTIST.name && player.track?.title === s.title) { player.toggle(); return }
+                      if (player.playingFrom === artistName && player.track?.title === s.title) { player.toggle(); return }
                       player.play(
-                        { title: s.title, artist: ARTIST.name, album: s.album, image: s.cover, totalTime: s.duration, artistAvatar: ARTIST.cover },
-                        ARTIST.name,
+                        { title: s.title, artist: artistName, album: s.album, image: s.cover, totalTime: s.duration, artistAvatar: artistCover },
+                        artistName,
                       )
                     }}
                     onAlbumClick={hasAlbumDetail(slugify(s.album)) ? () => openAlbum(slugify(s.album)) : undefined}
@@ -846,9 +750,9 @@ function useTopSongRows(songs: typeof TOP_SONGS, compact: boolean) {
 // top ten needs no second view — but on a phone the rail shows three songs
 // at a time and swiping is the only way to the rest, which is a poor way to
 // scan ten. Staging shipped the button first; the prototype follows.
-function TopSongsRow({ songs }: { songs: typeof TOP_SONGS }) {
+function TopSongsRow({ songs, artistName, artistCover }: { songs: ArtistSong[]; artistName: string; artistCover: string }) {
   const [, setParams] = useSearchParams()
-  const rows = useTopSongRows(songs, true)
+  const rows = useTopSongRows(songs, true, artistName, artistCover)
   const showAll = () => setParams(prev => {
     const next = new URLSearchParams(prev)
     next.set("page", "ArtistSongs")
@@ -862,13 +766,15 @@ function TopSongsRow({ songs }: { songs: typeof TOP_SONGS }) {
  *  carries the back, so the page prints its own title. */
 export function ArtistTopSongsView() {
   const footerNav = useFooterNav()
-  const rows = useTopSongRows(TOP_SONGS, false)
+  const [params] = useSearchParams()
+  const profile = getArtistProfile(params.get("artist"))
+  const rows = useTopSongRows(profile.topSongs, false, profile.name, profile.cover)
   return (
     <div className="@container mx-auto max-w-[1480px] min-[1920px]:max-w-[1716px] w-full px-page pt-8 pb-12">
       {!footerNav && (
         <div className="mb-6">
           <h1 className="text-2xlarge font-medium text-foreground tracking-tight">Top Songs</h1>
-          <p className="text-small text-muted-foreground">{ARTIST.name}</p>
+          <p className="text-small text-muted-foreground">{profile.name}</p>
         </div>
       )}
       <ul className="flex flex-col gap-2">

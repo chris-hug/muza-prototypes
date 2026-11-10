@@ -171,7 +171,7 @@ Focusing the Explore field opens the recent-searches / suggestions panel
 | Home | title + account avatar (the trigger for the shared `ProfileMenu`, a bottom sheet on touch) |
 | Library | title + `New playlist` + search, then **one filter row that changes with what is active**. At rest: Albums · Artists · Playlists · Songs · Offline. With a type picked: ✕ · that type · its filters (Albums: Owned, Offline; Playlists: By me, Saved, Offline; Songs: Offline). With nothing active the row is "all", so there is no All pill; ✕ or the lit type returns there. It was two rows, the types over the filters, and the second read as more navigation |
 | Explore | title + avatar + search field; the title steps aside while the field is focused or a query is active; the scope `ToggleGroup` appears under the field once results exist. On the results, **Cancel** and `✕` drop `?q=` and return Explore to rest — they used to only empty the field, so a submitted search had no way back on screen. The desktop `Topbar` field has the same `✕` |
-| Album / Playlist / Artist | a slim back ⇄ `…` bar (the page carries its own `MediaHeader`) |
+| Album / Playlist / Artist | a slim back ⇄ `…` bar (the page carries its own `MediaHeader`). Back retraces the path you took and restores the scroll position, in the Topbar too; the fixed `DETAIL_BACK` map only applies to a page opened directly |
 | anything else | title + back-or-avatar |
 
 Two of them carry rules worth knowing:

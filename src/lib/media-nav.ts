@@ -35,6 +35,11 @@ export function useMediaNav() {
           for (const k of ["album", "playlist", "artist"]) {
             if (k !== key) next.delete(k)
           }
+          // The artist page's landing state belongs to one visit.
+          next.delete("artist-tab")
+          next.delete("artist-kind")
+          next.delete("artist-view")
+          next.delete("list")
           next.set(key, value)
           return next
         },
@@ -46,10 +51,29 @@ export function useMediaNav() {
 
   const openAlbum    = useCallback((key: string) => go("Album", "album", key), [go])
   const openPlaylist = useCallback((key: string) => go("Playlist", "playlist", key), [go])
-  // The artist profile is currently a single hard-coded page; we still
-  // pass an `artist` slug so deep-linking can be wired later without
-  // touching every call site.
+  // Resolved by `getArtistProfile`; a slug without a profile shows Sun Ra.
   const openArtist   = useCallback((key: string) => go("Artist", "artist", key), [go])
 
-  return { openAlbum, openPlaylist, openArtist }
+  // An album's "All albums": the artist's Discography, already narrowed to
+  // that kind. Read once when the artist page mounts — after that the tab and
+  // the filter are the page's own state.
+  const openArtistDiscography = useCallback((key: string, kind: string) => {
+    setParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.set("page", "Artist")
+        next.delete("album")
+        next.delete("playlist")
+        next.set("artist", key)
+        next.set("artist-tab", "discography")
+        next.set("artist-kind", kind)
+        next.delete("artist-view")
+        next.delete("list")
+        return next
+      },
+      { replace: true },
+    )
+  }, [setParams])
+
+  return { openAlbum, openPlaylist, openArtist, openArtistDiscography }
 }

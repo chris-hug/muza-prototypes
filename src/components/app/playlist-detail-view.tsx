@@ -32,6 +32,7 @@ import { PlaylistCard } from "@/components/ui/playlist-card"
 import { AlbumCard } from "@/components/ui/album-card"
 import { ArtistCard } from "@/components/ui/artist-card"
 import { CardRail } from "@/components/app/card-rail"
+import { railAlbum, railArtist, railPlaylist } from "@/lib/rail-list"
 import { hasAlbumDetail } from "@/lib/album-catalog"
 import { getPlaylistDetail, hasPlaylistDetail } from "@/lib/playlist-catalog"
 import { useMediaNav, slugify } from "@/lib/media-nav"
@@ -203,7 +204,7 @@ export function PlaylistDetailView() {
       {/* Featured Albums — the distinct source albums the playlist's
            tracks are drawn from. (Better name than "Albums in this
            playlist": parallels "Featured Artists".) */}
-      <CardRail title="Featured Albums" showAllLabel={null}>
+      <CardRail title="Featured Albums" showAllLabel="All albums" list={{ subtitle: PLAYLIST.title, items: PLAYLIST.featuredAlbums.map(railAlbum) }}>
         {PLAYLIST.featuredAlbums.map(a => {
           const key = slugify(a.title)
           const linkable = hasAlbumDetail(key)
@@ -223,7 +224,7 @@ export function PlaylistDetailView() {
         })}
       </CardRail>
 
-      <CardRail title="Featured Artists" showAllLabel="All artists">
+      <CardRail title="Featured Artists" showAllLabel="All artists" list={{ subtitle: PLAYLIST.title, items: PLAYLIST.featuredArtists.map(railArtist) }}>
         {PLAYLIST.featuredArtists.map(a => (
           <li key={a.name}>
             <ArtistCard name={a.name} image={a.image} onClick={() => openArtist(slugify(a.name))} />
@@ -231,7 +232,7 @@ export function PlaylistDetailView() {
         ))}
       </CardRail>
 
-      <CardRail title="Similar Playlists" showAllLabel="All playlists">
+      <CardRail title="Similar Playlists" showAllLabel="All playlists" list={{ subtitle: PLAYLIST.title, items: PLAYLIST.similarPlaylists.map(railPlaylist) }}>
         {PLAYLIST.similarPlaylists.map(p => {
           const key = slugify(p.title)
           const linkable = hasPlaylistDetail(key)
@@ -250,7 +251,7 @@ export function PlaylistDetailView() {
         })}
       </CardRail>
 
-      <CardRail title={`More from ${PLAYLIST.owner}`} showAllLabel="All playlists">
+      <CardRail title={`More from ${PLAYLIST.owner}`} showAllLabel="All playlists" list={{ items: PLAYLIST.moreFrom.map(railPlaylist) }}>
         {PLAYLIST.moreFrom.map(p => {
           const key = slugify(p.title)
           const linkable = hasPlaylistDetail(key)

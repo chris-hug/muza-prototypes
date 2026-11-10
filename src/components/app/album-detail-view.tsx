@@ -29,6 +29,8 @@ import { PlaylistCard } from "@/components/ui/playlist-card"
 import { CardRail } from "@/components/app/card-rail"
 import { PurchaseAlbumDialog } from "@/components/app/purchase-album-dialog"
 import { CartDrawer } from "@/components/app/cart-drawer"
+import { railArtist, railPlaylist } from "@/lib/rail-list"
+import { useSearchNav } from "@/lib/use-search-nav"
 import { useCart } from "@/lib/cart"
 import { useToast } from "@/components/ui/toast"
 import { useUserLibrary } from "@/lib/user-library"
@@ -89,8 +91,9 @@ export function AlbumDetailView() {
   // `useMediaNav` to hop to another album / playlist without leaving the
   // route.
   const [params] = useSearchParams()
-  const { openAlbum, openPlaylist, openArtist } = useMediaNav()
+  const { openAlbum, openPlaylist, openArtist, openArtistDiscography } = useMediaNav()
   const credits = useCredits()
+  const { openSearch } = useSearchNav()
   const ALBUM = getAlbumDetail(params.get("album"))
 
   // Hopping between albums keeps the same route (page stays "Album"), so
@@ -381,7 +384,11 @@ export function AlbumDetailView() {
       {/* "More from this artist" rail. Entries that map to a catalog
            album (via title → library id) are clickable through to their
            own detail page; the rest are decorative discography. */}
-      <CardRail title={`More from ${ALBUM.artist}`} showAllLabel="All albums">
+      <CardRail
+        title={`More from ${ALBUM.artist}`}
+        showAllLabel="All albums"
+        onShowAll={() => openArtistDiscography(slugify(ALBUM.artist), "album")}
+      >
         {ALBUM.moreFrom.map(a => {
           const meta  = albumMetaFor(a.title)
           const libId = libraryIdForTitle(a.title)
@@ -406,7 +413,7 @@ export function AlbumDetailView() {
       </CardRail>
 
       {/* Playlists that feature this artist */}
-      <CardRail title={`Playlists with ${ALBUM.artist}`} showAllLabel="All playlists">
+      <CardRail title={`Playlists with ${ALBUM.artist}`} showAllLabel="All playlists" onShowAll={() => openSearch(ALBUM.artist, "playlist", PLAYLISTS_WITH_ARTIST.map(railPlaylist))}>
         {PLAYLISTS_WITH_ARTIST.map(p => {
           const key = slugify(p.title)
           const linkable = hasPlaylistDetail(key)
@@ -425,12 +432,8 @@ export function AlbumDetailView() {
         })}
       </CardRail>
 
-      {/* Artists who played on the recording — `showAllLabel={null}`
-           because the rail already lists every musician on the album
-           (no "more" to show). `CardRail` also hides ◀ ▶ when the
-           content fits, so when the row of 4 doesn't overflow there
-           are no nav affordances at all. */}
-      <CardRail title="Artists on this Album" showAllLabel={null}>
+      {/* Artists who played on the recording. */}
+      <CardRail title="Artists on this Album" showAllLabel="All artists" list={{ subtitle: ALBUM.title, items: ALBUM.artistsOnAlbum.map(railArtist) }}>
         {ALBUM.artistsOnAlbum.map(a => (
           <li key={a.name}>
             <ArtistCard name={a.name} image={a.image} onClick={() => openArtist(slugify(a.name))} />

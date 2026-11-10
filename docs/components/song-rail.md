@@ -134,7 +134,3 @@ affordance.
   reason for the pill there is "the chevrons are gone". Here, between 560 and
   691, the ghost "Show all" stands beside no chevrons — the state the pill was
   meant to avoid.
-- Card Rail renders "Show all" by default and gates it on overflow only with
-  `showAllOnlyWhenScrollable`; Song Rail gates it on overflow **always**
-  (song-rail.tsx:70). Intended asymmetry, or should Song Rail take the same
-  flag?

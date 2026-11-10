@@ -16,7 +16,7 @@ grids** at the same page width, while scrolling sideways instead of wrapping.
 ## Usage
 
 ```tsx
-// Home / detail rails — "Show all" links to a fuller page, so it always shows.
+// "Show all" appears only while the rail overflows.
 <CardRail title="New Albums" onShowAll={…}>
   <li><AlbumCard … /></li>
   …
@@ -25,8 +25,6 @@ grids** at the same page width, while scrolling sideways instead of wrapping.
 // A rail that already holds every item: no "Show all" at all.
 <CardRail title="Artists on this Album" showAllLabel={null}>…</CardRail>
 
-// Search shelves: "Show all" only when there is off-screen content to reveal.
-<CardRail title="Albums" onShowAll={…} showAllOnlyWhenScrollable>…</CardRail>
 
 // A 12+ item shelf an editor opted into the dense phone layout.
 <CardRail title="Albums of the week" mobileGrid>…</CardRail>
@@ -38,9 +36,9 @@ cap rule targets `[&>li]`. A card wrapped in anything else gets none of them.
 | Prop | Default | What it does |
 |---|---|---|
 | `title` | — | `text-base font-medium`, one line, truncates with an ellipsis |
+| `list` | — | what "Show all" opens when there is no `onShowAll`: `{ title?, subtitle?, items }` as a plain list |
 | `showAllLabel` | `"Show all"` | label of the trailing ghost button; `null` removes the button |
 | `onShowAll` | — | click handler for that button |
-| `showAllOnlyWhenScrollable` | `false` | render "Show all" only while the rail actually overflows |
 | `mobileGrid` | `false` | 2-row swipeable grid below a 560px column (see below) |
 
 Used by Home (New Albums, Playlists / Artists / Albums of the week), the artist
@@ -144,6 +142,11 @@ and `touch-pan-x touch-pan-y`.
 The header order is **[Show all] then ◀ ▶**, in a `shrink-0` cluster so a long
 title truncates instead of squeezing the controls.
 
+On the album page, **All albums** opens the artist's page on the Discography
+tab, already filtered to albums (`openArtistDiscography`, read once when the
+page mounts). On the artist page, **All albums** opens that tab the same way
+and **All products** opens the Shop tab.
+
 "Show all" is `touch-target`: 32px of paint, 44 of target on a coarse pointer,
 and with a mouse it stays 32. Only the height grows (its width is already
 past 44), into the space above and below the title row, 10px clear of the
@@ -169,11 +172,20 @@ cards and N−1 gaps; the next page starts after the N-th gap, so without the
 extra 16px the row drifted a half-gap left on every press. Snap then re-aligns
 whatever rounding is left.
 
-"Show all" renders when `showAllLabel` is truthy **and** either
-`showAllOnlyWhenScrollable` is off or the rail overflows. Home and detail rails
-leave the default (the link goes to a fuller page than the rail holds);
-search shelves pass `showAllOnlyWhenScrollable` because a section that already
-shows every hit would reveal nothing.
+"Show all" renders when the rail overflows and has somewhere to go, on every
+rail: a button offering all of something you are already looking at reveals
+nothing, so there is no opt-out, and [Song Rail](song-rail.md) follows the same
+rule.
+
+**Every rail that can overflow has somewhere to go.** A host with its own
+destination passes `onShowAll`, as the album page's "Playlists with …" does to
+open [search](search.md) on that category. Any other host passes `list={{ subtitle?, items }}`,
+and the button opens `RailListView` (`?page=RailList&list=<key>`): every item as
+one row, on the model of Artist › Top Songs › Show all, with the rail's title in
+the header. One route rather than a page per rail, and `railAlbum` /
+`railPlaylist` / `railArtist` in [`rail-list.ts`](../../src/lib/rail-list.ts)
+turn what a rail already holds into rows. The key is in the URL because lists
+nest and back has to find the right one.
 
 ## `mobileGrid` — the dense phone layout
 

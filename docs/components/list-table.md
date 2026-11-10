@@ -57,7 +57,7 @@ Column-filling; no steps. `table-fixed` gives the fixed columns their 64 / 112 /
 
 - Click a header to sort; click the active header again to flip its direction. Sorting is local (`useMemo` over the rows).
 - Click the cover to play or pause; the playing row holds its fill.
-- Title and band are separate navigations; the "…" opens the album menu (Save in it reads the live library store).
+- The title opens the album; the band is plain text, because this table is already that artist's page; the "…" opens the album menu (Save in it reads the live library store).
 - The header sticks at `top-0` of the page's scroll container; the artist page keeps its tab strip and this table in one scroller for exactly that reason (`artist-profile-view.tsx:264`).
 
 ## Artwork, links and focus

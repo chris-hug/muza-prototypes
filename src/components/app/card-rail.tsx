@@ -61,6 +61,7 @@
  * takes the boolean.
  */
 
+import { useOpenRailList, type RailList } from "@/lib/rail-list"
 import { useEffect, useRef, useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
@@ -75,13 +76,9 @@ interface CardRailProps {
    *  Album"). */
   showAllLabel?: string | null
   onShowAll?: () => void
-  /** When true, "Show all" renders ONLY if the rail actually overflows
-   *  (there's off-screen content to scroll to). Use where the rail
-   *  already contains every item — e.g. search-result sections — so the
-   *  link doesn't appear when nothing is hidden. Default false: "Show
-   *  all" always shows (Home / detail rails, where it links to a fuller
-   *  page that holds more than the rail). */
-  showAllOnlyWhenScrollable?: boolean
+  /** What "Show all" opens when the host has no page of its own: every item
+   *  as a plain list (`RailListView`). `title` defaults to the rail's. */
+  list?: Omit<RailList, "title"> & { title?: string }
   /** Opt-in "swipeable grid" mode for MOBILE only. When true, on
    *  containers below 560px the rail lays cards out as a 2-row,
    *  column-major horizontal grid (swipe across columns) instead of
@@ -96,7 +93,9 @@ interface CardRailProps {
   children:   React.ReactNode
 }
 
-export function CardRail({ title, showAllLabel = "Show all", onShowAll, showAllOnlyWhenScrollable = false, mobileGrid = false, children }: CardRailProps) {
+export function CardRail({ title, showAllLabel = "Show all", onShowAll, list, mobileGrid = false, children }: CardRailProps) {
+  const openRailList = useOpenRailList()
+  const showAll = onShowAll ?? (list ? () => openRailList({ ...list, title: list.title ?? title }) : undefined)
   const scrollRef = useRef<HTMLUListElement>(null)
   // Track whether the rail can scroll in either direction. When
   // both are false the content fits the viewport entirely → hide
@@ -194,12 +193,15 @@ export function CardRail({ title, showAllLabel = "Show all", onShowAll, showAllO
                  affordance. `!` beats ghost's own hover:bg-accent.
                  `touch-target`: it paints at 32 and a finger needs 44. Only
                  the height grows, into the empty band around the title row,
-                 and the ◀ ▶ beside it do not exist on touch. */}
-            {showAllLabel && (!showAllOnlyWhenScrollable || showArrows) && (
+                 and the ◀ ▶ beside it do not exist on touch.
+                 Only while the rail overflows, on every rail: a button
+                 offering all of what you can already see reveals nothing.
+                 And only with somewhere to go: no handler, no control. */}
+            {showAllLabel && showAll && showArrows && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={onShowAll}
+                onClick={showAll}
                 className="touch-target @max-[560px]:!bg-secondary @max-[560px]:!text-secondary-foreground @max-[560px]:hover:!bg-secondary-hover"
               >
                 {showAllLabel}

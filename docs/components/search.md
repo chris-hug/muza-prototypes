@@ -30,6 +30,21 @@ navigation: `submit(q)` writes `?page=Explore&q=…` and pushes the recent;
 drops the param). Because both live in the URL, every search field, the
 results body and the mobile header agree, and a result is shareable.
 
+## Opened from a rail
+
+A rail like "Playlists with John Coltrane" is a search, so its button is
+`openSearch(artist, "playlist", items)`:
+`?page=Explore&q=…&type=playlist&list=…&from=rail` opens the results with the
+query filled in and that category active. `from` gives Explore a back chevron
+for the visit (Cancel on a phone), which returns to the page the rail was on;
+clearing the query ends the visit.
+
+The rail hands over its own items, and they lead the results while its query
+stands. Indexing playlists by artist was tried first and could not work on
+mock data: every playlist draws on the same ten tracks, so "John Coltrane"
+matched all 60 and an artist outside the pool matched none, which also emptied
+the tab and dropped back to All.
+
 ## The panel — `SearchPanel`
 
 `search-panel.tsx`. A `rounded-2xl border border-border bg-popover p-2
@@ -114,15 +129,14 @@ enforced in `AllResults` / `GroupSection`:
   fills two full 3-row columns; fewer would leave a ragged column — and a
   plain vertical list of full rows at **≤ 5**.
 - **Artists / Albums / Playlists** — a [`CardRail`](card-rail.md) of the
-  matching cards at **≥ 2**, with `showAllOnlyWhenScrollable`; a **single
+  matching cards at **≥ 2**; a **single
   inline card** at exactly 1, in a `w-[clamp(143px,42vw,220px)]` box under
   the plain section header — no rail chrome for one card.
 - **Labels** — always a simple list.
 - **Empty types are omitted.**
 - **"Show all"** renders only when the shelf actually overflows → opens that
   type's tab. A shelf that already shows every hit gets none — it would reveal
-  nothing. Card rails use `CardRail`'s `showAllOnlyWhenScrollable`; `SongRail`
-  gates on its own overflow check.
+  nothing. `CardRail` and `SongRail` both gate it on overflow.
 - **Sparse query (≤ 2 results in total)** → no shelves: the hero and a short
   list.
 

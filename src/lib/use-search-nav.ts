@@ -8,7 +8,8 @@
 
 import { useCallback } from "react"
 import { useSearchParams } from "react-router"
-import { pushRecentSearch } from "@/lib/search-catalog"
+import { storeRailList } from "@/lib/rail-list"
+import { pushRecentSearch, type SearchResult } from "@/lib/search-catalog"
 
 export type SearchScope = "catalog" | "library"
 
@@ -41,13 +42,26 @@ export function useSearchNav() {
     })
   }, [setParams])
 
+  // A rail's way into search: the query filled in and one category open,
+  // e.g. "Playlists with Nubya Garcia". The rail hands over its items because
+  // the index cannot answer this: every mock playlist draws on the same ten
+  // tracks, so matching by artist found all 60 or, for an artist outside the
+  // pool, none. `from` gives Explore a back chevron for this one visit. Not
+  // added to recents, nobody typed it.
+  const openSearch = useCallback((q: string, type: string, items: SearchResult[]) => {
+    const list = storeRailList({ title: q, subtitle: type, items })
+    setParams(new URLSearchParams({ page: "Explore", q, type, list, from: "rail" }), { replace: true })
+  }, [setParams])
+
   const clear = useCallback(() => {
     setParams(prev => {
       const next = new URLSearchParams(prev)
-      next.delete("q")
+      // The rail's visit ends with its query, or the next search would open
+      // on its category with a chevron back to a page long since left.
+      for (const key of ["q", "type", "list", "from"]) next.delete(key)
       return next
     }, { replace: true })
   }, [setParams])
 
-  return { query, scope, setScope, submit, clear }
+  return { query, scope, setScope, submit, clear, openSearch }
 }

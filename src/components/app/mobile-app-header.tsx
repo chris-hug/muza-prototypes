@@ -40,6 +40,8 @@ import { useLibraryFilter } from "@/lib/use-library-filter"
 import { useLibraryStatus } from "@/lib/use-library-status"
 import { useCreatePlaylist } from "@/lib/create-playlist-context"
 import { ProfileMenu } from "@/components/app/topbar"
+import { useSearchParams } from "react-router"
+import { getRailList } from "@/lib/rail-list"
 
 // Same account avatar as the desktop Topbar — but here it's the trigger
 // for the shared ProfileMenu, which presents as a bottom sheet on touch
@@ -86,6 +88,8 @@ interface MobileAppHeaderProps {
 }
 
 export function MobileAppHeader({ activeNav, onNavChange, onBack }: MobileAppHeaderProps) {
+  const [params] = useSearchParams()
+  const railList = activeNav === "RailList" ? getRailList(params.get("list")) : undefined
   if (activeNav === "Home") {
     return (
       <MobileHeader>
@@ -94,7 +98,7 @@ export function MobileAppHeader({ activeNav, onNavChange, onBack }: MobileAppHea
     )
   }
 
-  if (activeNav === "Explore") return <ExploreHeader />
+  if (activeNav === "Explore") return <ExploreHeader onBack={onBack} />
 
   if (LIBRARY_PAGES.includes(activeNav)) {
     return <LibraryHeader activeNav={activeNav} onNavChange={onNavChange} />
@@ -106,7 +110,7 @@ export function MobileAppHeader({ activeNav, onNavChange, onBack }: MobileAppHea
   return (
     <MobileHeader>
       <MobileTitleRow
-        title={PAGE_TITLE[activeNav] ?? activeNav}
+        title={railList?.title ?? PAGE_TITLE[activeNav] ?? activeNav}
         trailing={onBack
           ? <MobileIconButton label="Back" onClick={onBack}><ChevronLeft /></MobileIconButton>
           : <Avatar />}
@@ -355,7 +359,7 @@ function LibraryHeader({ activeNav, onNavChange }: { activeNav: string; onNavCha
 // (heading · scope toggle · tabs · list) in the page body, identical to
 // desktop. The scope + category controls therefore live in the body, not
 // here — the header is purely the search entry point.
-function ExploreHeader() {
+function ExploreHeader({ onBack }: { onBack?: () => void }) {
   const { query, submit, clear, scope, setScope } = useSearchNav()
   const [q, setQ] = useState(query)
   const [focused, setFocused] = useState(false)
@@ -375,11 +379,12 @@ function ExploreHeader() {
         // On the results, X and Cancel are the way OUT of the search: they
         // drop `?q=` and Explore returns to its resting state. They used to
         // only empty the field (X) or close the suggestions (Cancel), so
-        // once a search was submitted nothing on screen led back.
+        // once a search was submitted nothing on screen led back. Opened from
+        // a rail, Cancel returns to that rail's page instead.
         onClear={q ? () => { setQ(""); if (!focused && query) clear() } : undefined}
         onCancel={focused
           ? () => setFocused(false)
-          : query ? () => { setQ(""); clear() } : undefined}
+          : query ? (onBack ?? (() => { setQ(""); clear() })) : undefined}
         onSubmit={() => run(q)}
       />
       {/* Scope switcher — the SAME ToggleGroup used on desktop, stretched

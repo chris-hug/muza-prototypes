@@ -327,6 +327,8 @@ import { CheckoutCard, CHECKOUTS } from "@/components/app/purchases-view"
 import { ShopView } from "@/components/app/shop-view"
 import { LibraryAlbumsView } from "@/components/app/library-albums-view"
 import { ArtistProfileView, ArtistTopSongsView } from "@/components/app/artist-profile-view"
+import { RailListView } from "@/components/app/rail-list-view"
+import { railAlbum, railArtist, railPlaylist } from "@/lib/rail-list"
 import { AlbumDetailView } from "@/components/app/album-detail-view"
 import { PlaylistDetailView } from "@/components/app/playlist-detail-view"
 import { LibraryArtistsView, SAVED_ARTISTS } from "@/components/app/library-artists-view"
@@ -773,13 +775,13 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
            The outer `@container` lets CardRail's grid step its column
            count off the row's own width, independent of viewport. */}
       <div className="@container mt-24 flex flex-col gap-8">
-        <CardRail title="New Albums">
+        <CardRail title="New Albums" list={{ items: HOME_NEW_ALBUMS.map(a => railAlbum({ ...a, year: albumMetaFor(a.title).year })) }}>
           {HOME_NEW_ALBUMS.map(a => (
             <li key={a.id}>{renderAlbum(a)}</li>
           ))}
         </CardRail>
 
-        <CardRail title="Playlists of the week">
+        <CardRail title="Playlists of the week" list={{ items: HOME_WEEKLY_PLAYLISTS.map(railPlaylist) }}>
           {HOME_WEEKLY_PLAYLISTS.map(p => (
             <li key={p.id}>
               <PlaylistCard
@@ -795,13 +797,13 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
           ))}
         </CardRail>
 
-        <CardRail title="Artists of the week">
+        <CardRail title="Artists of the week" list={{ items: HOME_WEEKLY_ARTISTS.map(railArtist) }}>
           {HOME_WEEKLY_ARTISTS.map(a => (
             <li key={a.id}><ArtistCard name={a.name} image={a.image} onClick={() => openArtist(slugify(a.name))} /></li>
           ))}
         </CardRail>
 
-        <CardRail title="Albums of the week">
+        <CardRail title="Albums of the week" list={{ items: HOME_WEEKLY_ALBUMS.map(a => railAlbum({ ...a, year: albumMetaFor(a.title).year })) }}>
           {HOME_WEEKLY_ALBUMS.map(a => (
             <li key={a.id}>{renderAlbum(a)}</li>
           ))}
@@ -2801,8 +2803,10 @@ function ExplorePlaceholder() {
   )
 }
 
-// Media-detail pages → the list they return "back" to. Drives the top
-// bar's back chevron (which replaces the old in-gutter back button).
+// Media-detail pages → where "back" goes when there is nothing to go back
+// to, i.e. the page was opened directly. Having a key here is also what makes
+// a page a detail page. Normally back retraces the actual path: see
+// `backStack`.
 const DETAIL_BACK: Record<string, string> = {
   Album:    "Albums",
   Playlist: "Playlists",
@@ -2810,6 +2814,8 @@ const DETAIL_BACK: Record<string, string> = {
   // Artist › Top Songs › "Show all" — back returns to the artist, whose
   // slug is still in the URL (`navigate` only swaps `page`).
   ArtistSongs: "Artist",
+  // A rail's full list; opened directly, there is no rail to go back to.
+  RailList: "Home",
 }
 
 // Pages where the persistent player makes sense — the music "listening"
@@ -2818,7 +2824,7 @@ const DETAIL_BACK: Record<string, string> = {
 const LISTENING_PAGES = new Set<string>([
   "Home", "Explore",
   "Library", "Albums", "Artists", "Playlists", "Songs",
-  "Album", "Playlist", "Artist", "ArtistSongs",
+  "Album", "Playlist", "Artist", "ArtistSongs", "RailList",
 ])
 
 export default function Home() {
@@ -2859,6 +2865,42 @@ export default function Home() {
     }, { replace: true })
   }
 
+  /* The back chevron retraces the path that got you here. It used to be a
+     fixed map, Album → Albums and Artist → Home, which was only true while a
+     detail page could only be reached from its list: album → "All albums" →
+     artist came back to Home, and a record opened from a discography came
+     back to the library.
+
+     An in-app stack, because every navigation here is `replace: true` and the
+     browser's history holds nothing to go back through. A push happens when
+     the page or the media key changes, so a tab or filter written to the URL
+     is not a step. A sidebar or tab-bar destination starts a new trail. */
+  const backStack = useRef<{ search: string; scrollTop: number }[]>([])
+  const lastSearch = useRef(params.toString())
+  const lastScrollTop = useRef(0)
+  const popping = useRef(false)
+  const pendingScrollTop = useRef<number | null>(null)
+  useEffect(() => {
+    const identity = (p: URLSearchParams) => ["page", "album", "playlist", "artist", "list"].map(k => p.get(k) ?? "").join("|")
+    const previous = lastSearch.current
+    lastSearch.current = params.toString()
+    if (identity(new URLSearchParams(previous)) === identity(params)) return
+    if (popping.current) { popping.current = false; return }
+    if (DETAIL_BACK[params.get("page") ?? "Home"] || params.has("from")) backStack.current.push({ search: previous, scrollTop: lastScrollTop.current })
+    else backStack.current = []
+  }, [params])
+  function goBack() {
+    const entry = backStack.current.pop()
+    if (!entry) {
+      if (DETAIL_BACK[activeNav]) navigate(DETAIL_BACK[activeNav])
+      else setParams(new URLSearchParams({ page: activeNav }), { replace: true })
+      return
+    }
+    popping.current = true
+    pendingScrollTop.current = entry.scrollTop
+    setParams(new URLSearchParams(entry.search), { replace: true })
+  }
+
   // Sidebar auto-collapses at a window gate (1069) synced to the MediaHeader's
   // full-cluster tier (see `useSidebarAutoCollapsed`): below ~1069px the
   // expanded 208px sidebar would push the detail-page header out of its
@@ -2880,11 +2922,24 @@ export default function Home() {
     // means the user explicitly requested a section anchor, and the browser
     // will handle that scroll itself.
     if (window.location.hash) return
+    // Going back returns to where you were; the effect below handles it.
+    if (pendingScrollTop.current !== null) return
     const id = setTimeout(() => {
       scrollRef.current?.scrollTo({ top: 0, behavior: "instant" })
     }, 0)
     return () => clearTimeout(id)
   }, [activeNav])
+
+  useEffect(() => {
+    const top = pendingScrollTop.current
+    if (top === null) return
+    pendingScrollTop.current = null
+    // A timeout, not now: the page that just mounted resets its own scroll.
+    const id = setTimeout(() => {
+      scrollRef.current?.scrollTo({ top, behavior: "instant" })
+    }, 0)
+    return () => clearTimeout(id)
+  }, [params])
 
   // Scroll anchors inside a scrollable container (scrollRef) don't fire
   // browser auto-scroll on load. Re-run the anchor scroll whenever the
@@ -2988,7 +3043,7 @@ export default function Home() {
             content below it, preserving the original layout. */}
         {!footerNav && (
           <Topbar
-            onBack={DETAIL_BACK[activeNav] ? () => navigate(DETAIL_BACK[activeNav]) : undefined}
+            onBack={DETAIL_BACK[activeNav] || params.has("from") ? goBack : undefined}
             actions={<TopbarDefaultActions />}
             className="absolute inset-x-0 top-0 z-30"
           />
@@ -2996,7 +3051,7 @@ export default function Home() {
         {/* Bottom gutter on every page so content can always scroll clear of
             the floating player bar (desktop) / footer-nav + mini bar (mobile)
             — nothing ever hides behind them. */}
-        <div ref={scrollRef} className={cn("flex-1 overflow-auto pb-32", !footerNav && "pt-[54px]")}>
+        <div ref={scrollRef} onScroll={e => { lastScrollTop.current = e.currentTarget.scrollTop }} className={cn("flex-1 overflow-auto pb-32", !footerNav && "pt-[54px]")}>
           {/* Phone header — sticky top of the scroll area so the frosted
               glass reads against scrolling content. Sits OUTSIDE the
               keyed fade wrapper so it doesn't re-fade on every nav. */}
@@ -3004,7 +3059,7 @@ export default function Home() {
             <MobileAppHeader
               activeNav={activeNav}
               onNavChange={navigate}
-              onBack={DETAIL_BACK[activeNav] ? () => navigate(DETAIL_BACK[activeNav]) : undefined}
+              onBack={DETAIL_BACK[activeNav] || params.has("from") ? goBack : undefined}
             />
           )}
           {/* `key={activeNav}` remounts the inner wrapper on every
@@ -3026,6 +3081,7 @@ export default function Home() {
             {activeNav === "Playlists" && <LibraryPlaylistsView />}
             {activeNav === "Artist"    && <ArtistProfileView />}
             {activeNav === "ArtistSongs" && <ArtistTopSongsView />}
+            {activeNav === "RailList" && <RailListView />}
             {activeNav === "MenuOptions" && <MenuOptionsView />}
             {activeNav === "Album"     && <AlbumDetailView />}
             {activeNav === "Playlist"  && <PlaylistDetailView />}

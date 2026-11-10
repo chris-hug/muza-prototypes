@@ -12,6 +12,21 @@ Artist radio with Share / Save pinned bottom-left. It is `ArtistHero`, not a
 variant of the [Media Header](media-header.md): a person is presented as a
 photograph, a release as a cover.
 
+## Where an artist's page comes from
+
+`getArtistProfile(slug)` in [`artist-catalog.ts`](../../src/lib/artist-catalog.ts)
+resolves `?artist=`. Six artists have a profile: Sun Ra, John Coltrane, Herbie
+Hancock, Charles Mingus, Wayne Shorter and Pharoah Sanders. Any other slug
+shows Sun Ra, because every card links somewhere and most artists on them have
+no profile yet.
+
+A new artist is one seed: sleeves and durations matched from the iTunes Search
+API, a portrait from Wikimedia Commons, a bio written here rather than copied,
+and **original** release years. iTunes reports the reissue, so years are
+curated by hand and were checked against MusicBrainz; its earliest date for a
+release group is sometimes a recording or an odd pressing, so it informs the
+year rather than setting it. Products and playlists are mock on every profile.
+
 ## Anatomy
 
 | Part | What it is | Tokens |

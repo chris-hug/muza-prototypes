@@ -56,6 +56,8 @@ import { useUserLibrary } from "@/lib/user-library"
 import { useLibraryToggle } from "@/lib/use-library-toggle"
 import { getAlbumDetail } from "@/lib/album-catalog"
 import { getPlaylistDetail } from "@/lib/playlist-catalog"
+import { useSearchParams } from "react-router"
+import { getRailList } from "@/lib/rail-list"
 import { searchCatalog, type SearchResult, type SearchKind } from "@/lib/search-catalog"
 
 type Scope = "catalog" | "library"
@@ -73,10 +75,33 @@ const TABS: { key: TabKey; label: string }[] = [
 export function SearchResultsView({ query }: { query: string }) {
   // Scope is URL-backed (shared with the mobile header's switcher).
   const { scope, setScope } = useSearchNav()
-  const [tab, setTab] = useState<TabKey>("all")
+  // Also in the URL: a rail can open search on one category, and back returns
+  // to the tab you were on. Read on mount only.
+  const [params, setParams] = useSearchParams()
+  const [tab, setTabState] = useState<TabKey>(() => {
+    const type = params.get("type")
+    return TABS.some(t => t.key === type) ? (type as TabKey) : "all"
+  })
+  const setTab = (next: TabKey) => {
+    setTabState(next)
+    setParams(prev => {
+      const url = new URLSearchParams(prev)
+      if (next === "all") url.delete("type"); else url.set("type", next)
+      return url
+    }, { replace: true })
+  }
   const library = useUserLibrary()
 
-  const all = useMemo(() => searchCatalog(query), [query])
+  // A rail's items lead while its query stands; type anything else and this
+  // is an ordinary search again.
+  const listKey = params.get("list")
+  const all = useMemo(() => {
+    const found = searchCatalog(query)
+    const rail = getRailList(listKey)
+    if (rail?.title !== query) return found
+    const titles = new Set(rail.items.map(r => `${r.kind}:${r.title.toLowerCase()}`))
+    return [...rail.items, ...found.filter(r => !titles.has(`${r.kind}:${r.title.toLowerCase()}`))]
+  }, [query, listKey])
 
   // Scope: "My Library" keeps only saved items (labels aren't saveable, so
   // they never appear under My Library).
@@ -291,7 +316,7 @@ function TopCover({ r }: { r: SearchResult }) {
 }
 
 // ─── One result row ──────────────────────────────────────────────────────────
-function SearchRow({ r }: { r: SearchResult }) {
+export function SearchRow({ r }: { r: SearchResult }) {
   const { openAlbum, openArtist, openPlaylist } = useMediaNav()
   const library = useUserLibrary()
   const toggleLibrary = useLibraryToggle()
@@ -474,7 +499,7 @@ function GroupSection({ kind, items, onShowAll }: { kind: SearchKind; items: Sea
   if (kind === "artist" || kind === "album" || kind === "playlist") {
     if (items.length >= 2) {
       return (
-        <CardRail title={title} onShowAll={onShowAll} showAllOnlyWhenScrollable>
+        <CardRail title={title} onShowAll={onShowAll}>
           {items.map(r => <li key={r.id}><ResultCard r={r} /></li>)}
         </CardRail>
       )
