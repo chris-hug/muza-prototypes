@@ -200,6 +200,7 @@ Menu picks a `Sheet` below 768 and a dropdown above it with `useIsMobile()`.
 - **Snap points** (`snapPoints`, `snapPoint`, `onSnapPointChange`) are
   available from the primitive and unused in the app today.
 - Every `SheetClose` closes; `onOpenChange` fires for all paths.
+- The full player is one of these too: a bottom sheet 8px short of the screen, with the overlay laid over the popup and the grabber drawn in its own band ([player-overlay.md](player-overlay.md)). The same pull closes it as every other sheet.
 
 ## Open questions
 

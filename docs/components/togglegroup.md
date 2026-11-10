@@ -74,8 +74,8 @@ theme picker); without it the `px-3` makes a 14px glyph sit in a 38×32 pill.
 **Guard `v[0]`.** Base UI hands `onValueChange` the whole array, and in
 single-select mode a click on the pressed segment deselects it, so the array
 can be empty. A settings-style control has no "nothing selected" state; the
-guard keeps the last value (`purchases-view.tsx:700` falls back to `"all"`
-instead). Every call site in the app does one or the other.
+guard keeps the last value (Purchases used to fall back to `"all"`
+instead, before its status filter became a menu). Every call site in the app does one or the other.
 
 Give the group an `aria-label` ("View mode", "Search scope", "Theme") and
 each icon-only segment its own.

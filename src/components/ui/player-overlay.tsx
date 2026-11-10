@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { Pause, MoreVertical, Info, Share, Radio, GripVertical } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Waveform } from "@/components/ui/waveform"
+import { SheetGrabber } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SkipBackFilled, PlayFilledAlt, SkipForwardFilled } from "@/components/ui/transport-icons"
@@ -228,6 +229,10 @@ interface PlayerOverlayProps {
   totalTime?:   string
   /** Optional close / swipe-down callback triggered by the drag handle. */
   onClose?:     () => void
+  /** Mounted in a bottom `Sheet`: the sheet owns dismissal (swipe down,
+   *  backdrop, Escape), so the top band is the sheet's grabber rather than a
+   *  close button. */
+  inSheet?:     boolean
   /** Fired when the user scrubs the waveform (seconds). */
   onSeek?:      (seconds: number) => void
   /** Navigate to the track's artist / album (the artist row + "playing
@@ -330,6 +335,7 @@ export function PlayerOverlay({
   currentTime  = "2:24",
   totalTime    = "5:12",
   onClose,
+  inSheet = false,
   onSeek,
   onArtistClick,
   onPlayingFromClick,
@@ -417,13 +423,13 @@ export function PlayerOverlay({
     const el = rootRef.current
     if (!el) return
 
-    // Sum of non-dynamic heights: drag (~36) + "Playing from" (~50) +
+    // Sum of non-dynamic heights: drag (~36) + "Playing from" (~37, one line) +
     // cover-to-meta gap (8) + title+artist+mt-3 (~76) + secondary icons
     // region floor (py-2 + 32 = 48) + transport region floor (py-2 + ~64 max
-    // play button = 80) + tabs (~80) = 378. Both flex-1 regions can grow
+    // play button = 80) + tabs (~80) = 365. Both flex-1 regions can grow
     // beyond their floor when there's spare height; the cover and waveform
     // grow into whatever's left.
-    const FIXED_SECTIONS = 378
+    const FIXED_SECTIONS = 365
     // Was 140. Below a 558 window that floor no longer fits, and the deficit
     // came out of the Info / Share / Radio row, which has `flex-1` and folded
     // onto the transport: seen on an iPhone in Brave, where the toolbars leave
@@ -511,15 +517,24 @@ export function PlayerOverlay({
         onTouchEnd={onTouchEnd}
       >
 
-        {/* Drag handle — tap or swipe down dismisses the sheet. */}
-        <Button
-          variant="ghost"
-          onClick={onClose}
-          aria-label="Close"
-          className="shrink-0 w-full py-4 h-auto rounded-none"
-        >
-          <div className="h-1 w-8 rounded-full bg-foreground/80" />
-        </Button>
+        {/* Top band. In a Sheet it is the sheet's own grabber, so the player
+            is pulled down like every other sheet; the band keeps its 36px so the
+            height budget below does not change. Standalone (the design-system
+            frame) it is still a button that closes. */}
+        {inSheet ? (
+          <div className="shrink-0 w-full h-9 flex items-center justify-center">
+            <SheetGrabber />
+          </div>
+        ) : (
+          <Button
+            variant="ghost"
+            onClick={onClose}
+            aria-label="Close"
+            className="shrink-0 w-full py-4 h-auto rounded-none"
+          >
+            <div className="h-1 w-8 rounded-full bg-foreground/80" />
+          </Button>
+        )}
 
         {/* Swappable tab content — keyed by `tab` so it remounts (and the
              directional slide replays) on every change, tap or swipe. */}
@@ -580,15 +595,16 @@ export function PlayerOverlay({
           </div>
         ) : (
         <>
-        {/* "Playing from" header — both lines left-aligned. The source line
-             links to the album when a detail page exists. */}
-        <div className="shrink-0 w-full px-4 pb-4 flex flex-col items-start gap-1 text-left">
-          <p className="text-xsmall leading-none font-normal text-muted-foreground">Playing from:</p>
+        {/* "Playing from" header — one line, label then source. Two lines
+             spent a row of the height the cover lives on. The source links
+             to the album when a detail page exists, and scrolls when long. */}
+        <div className="shrink-0 w-full px-4 pb-4 flex items-baseline gap-1.5 text-left">
+          <p className="shrink-0 whitespace-nowrap text-xsmall leading-none font-normal text-muted-foreground">Playing from:</p>
           {onPlayingFromClick ? (
             <button
               type="button"
               onClick={onPlayingFromClick}
-              className="relative touch-target group link-underline-group w-full text-left rounded-sm focus-visible:outline-none focus-ring"
+              className="relative touch-target group link-underline-group flex-1 min-w-0 text-left rounded-sm focus-visible:outline-none focus-ring"
             >
               <MarqueeText
                 containerClassName="leading-none"
@@ -600,7 +616,7 @@ export function PlayerOverlay({
           ) : (
             <MarqueeText
               as="p"
-              containerClassName="leading-none"
+              containerClassName="flex-1 min-w-0 leading-none"
               className="text-xsmall leading-none font-normal text-foreground"
             >
               {playingFrom}

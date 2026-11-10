@@ -92,6 +92,14 @@ Used by the Purchases hub (`PurchasesView`, the same file), which mounts
 `PurchaseDetailView` for the selected fulfillment; product and payment
 handlers toast placeholders there.
 
+**Below `sm` the row stacks**: the shop takes its own line and the items and
+status share the next. Side by side at 220 the shop column left product titles
+three letters and pushed the whole page sideways on a phone. The hub's status
+filter is a menu beside the sort, not a toggle row: seven toggles ran past a
+phone's edge, and the count in front of them read as a stray number. The count
+stays beside the title on desktop and is gone on a phone, where the header
+already names the page.
+
 ## Sizing
 
 Column-filling: the card is as wide as its parent. **Fixed, no steps** — and
@@ -116,11 +124,6 @@ a 320px phone (296px column) or a 375 (351) the row cannot fit and the
 
 ## Open questions
 
-- No narrow layout exists (purchases-view.tsx:588–673): the 220px shop column
-  and the thumb strip are fixed, so at any column under ~450px the titles are
-  crushed and at 296 the row overflows the card. Is the hub desktop-only, or
-  is a stacked row wanted below the 560 column step the other page
-  compositions use?
 - purchases-view.tsx:16–17 (file header) says clicking a sub-row "currently
   toasts a placeholder" · `PurchasesView` sets `selected` and mounts
   `PurchaseDetailView` (:315–316, :26); only the product title and Update

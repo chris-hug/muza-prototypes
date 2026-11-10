@@ -20,6 +20,7 @@
  * again that session.
  */
 
+import { Badge } from "@/components/ui/badge"
 import { useSearchParams } from "react-router"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -147,12 +148,13 @@ function TabsChrome() {
                    topbar cart-count pill: foreground fill, background
                    text — reads as "you have N things to handle". */}
               {t.value === "orders" && actionRequired > 0 && (
-                <span
+                <Badge
+                  variant="inverse"
+                  shape="pill-sm"
                   aria-label={`${actionRequired} ${actionRequired === 1 ? "new order" : "new orders"}`}
-                  className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-foreground text-background text-2xsmall font-medium tabular-nums leading-none"
                 >
                   {actionRequired > 99 ? "99+" : actionRequired}
-                </span>
+                </Badge>
               )}
             </TabsTrigger>
           ))}

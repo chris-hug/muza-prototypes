@@ -18,7 +18,7 @@
 
 import { useState } from "react"
 import { useSearchParams } from "react-router"
-import { Search, ArrowDownUp, Check, ShoppingBag, CreditCard } from "lucide-react"
+import { Search, ArrowDownUp, Check, ShoppingBag, CreditCard, ListFilter } from "lucide-react"
 
 import { useToast } from "@/components/ui/toast"
 import { Button } from "@/components/ui/button"
@@ -28,8 +28,6 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ToggleGroup } from "@/components/ui/toggle-group"
-import { Toggle } from "@/components/ui/toggle"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import {
@@ -394,7 +392,9 @@ export function PurchasesView() {
              cap-height midline (the part the eye reads as "centre").
              `mt-2` on the pill nudges it down to sit on that midline —
              the small offset is visual, not structural. */}
-        <div className="flex items-center justify-between gap-6">
+        {/* Desktop only: on a phone the mobile header already names the page,
+             and the count alone read as a stray number before the filters. */}
+        <div className="hidden sm:flex items-center justify-between gap-6">
           {/* Title + live filtered count, inline. The count reflects
                the *currently visible* set (status filter + search),
                not the raw total. Top-aligned with the H1's line-box so
@@ -408,13 +408,13 @@ export function PurchasesView() {
               {filtered.length} {filtered.length === 1 ? "order" : "orders"}
             </span>
           </div>
-          <div className="mt-2 shrink-0">
-            <StatusFilter value={statusFilter} onChange={setStatusFilter} />
-          </div>
         </div>
 
         {/* Row 2: search + sort */}
-        <div className="flex items-center gap-3">
+        {/* Search, then Status and Sort. On a phone the field takes its own
+             line and the two menus share the next; from `sm` all three sit in
+             one row. */}
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
           {/* The catalogue's `Input` — it draws the leading glyph, the border and
              focus states and the size ladder. The hand-built copy here was a
              step behind (40px, no clear button) for no reason anyone recorded. */}
@@ -427,7 +427,10 @@ export function PurchasesView() {
             className="flex-1 min-w-0"
           />
 
-          <SortControl sortDir={sortDir} onChange={setSortDir} />
+          <div className="flex gap-3 w-full sm:w-auto">
+            <StatusFilter value={statusFilter} onChange={setStatusFilter} />
+            <SortControl sortDir={sortDir} onChange={setSortDir} />
+          </div>
         </div>
       </div>
 
@@ -603,7 +606,7 @@ function FulfillmentRow({ fulfillment, onOpen, onProductClick }: {
       tabIndex={0}
       onClick={onOpen}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen() } }}
-      className="flex items-start gap-5 px-4 py-4 state-fade hover:bg-muted/60 cursor-pointer outline-none focus-ring"
+      className="flex flex-wrap sm:flex-nowrap items-start gap-x-5 gap-y-3 px-4 py-4 state-fade hover:bg-muted/60 cursor-pointer outline-none focus-ring"
     >
       {/* ── 1. Shop column — visual stopper.
            Avatar with a real portrait photo (initials fallback while the
@@ -611,7 +614,9 @@ function FulfillmentRow({ fulfillment, onOpen, onProductClick }: {
            just the per-shop order number — location dropped: the buyer
            already chose the seller and the status badge communicates
            shipping state, so location was decorative noise. */}
-      <div className="shrink-0 w-[220px] flex items-start gap-2.5">
+      {/* Its own line on a phone: at 220 beside the items it left the
+           product titles three letters and pushed the page sideways. */}
+      <div className="shrink-0 w-full sm:w-[220px] flex items-start gap-2.5">
         <Avatar className="size-8 shrink-0 mt-0.5">
           <AvatarImage
             src={shopAvatarUrl(fulfillment.seller.name)}
@@ -698,12 +703,12 @@ function StatusFilter({
   value:    OrderStatus | "all"
   onChange: (v: OrderStatus | "all") => void
 }) {
-  // Built on the platform ToggleGroup primitive — segmented track + lifted
-  // pressed pill chrome and aria-pressed wiring come from the shared
-  // component, not duplicated here. Single-select via the array shape that
-  // base-ui's ToggleGroup uses; we always emit exactly one value.
+  // A menu, not a row of seven toggles. On a phone the row ran past the
+  // screen and dragged the whole page sideways; on desktop it pushed the
+  // order count off to a lone number. One status at a time is a choice
+  // from a list, the same shape as the sort beside it.
   const options: Array<{ value: OrderStatus | "all"; label: string }> = [
-    { value: "all",            label: "All"            },
+    { value: "all",            label: "All orders"     },
     { value: "new",            label: "Paid"           },
     { value: "shipped",        label: "Shipped"        },
     { value: "delivered",      label: "Delivered"      },
@@ -711,23 +716,24 @@ function StatusFilter({
     { value: "cancelled",      label: "Cancelled"      },
     { value: "payment_failed", label: "Payment failed" },
   ]
+  const current = options.find(o => o.value === value) ?? options[0]
   return (
-    <ToggleGroup
-      value={[value]}
-      onValueChange={(values) => {
-        // Keep at least one selected — clicking the active pill again
-        // would otherwise deselect to []. Default back to "all".
-        const next = values[0]
-        onChange((next ?? "all") as OrderStatus | "all")
-      }}
-      aria-label="Filter by status"
-    >
-      {options.map(opt => (
-        <Toggle key={opt.value} value={opt.value} aria-label={opt.label}>
-          {opt.label}
-        </Toggle>
-      ))}
-    </ToggleGroup>
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={<Button size="lg" variant="outline" className="font-normal flex-1 min-w-0 sm:flex-none" aria-label={`Status: ${current.label}`} />}
+      >
+        <ListFilter className="size-4" />
+        {current.label}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-[180px]">
+        {options.map(o => (
+          <DropdownMenuItem key={o.value} onClick={() => onChange(o.value)} className="justify-between">
+            {o.label}
+            {value === o.value && <Check className="size-4" />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
@@ -746,7 +752,7 @@ function SortControl({
         render={
           /* `lg`: it shares the toolbar row with the search field, and the
              field is `lg`. */
-          <Button size="lg" variant="outline" className="ml-auto font-normal" />
+          <Button size="lg" variant="outline" className="font-normal flex-1 min-w-0 sm:flex-none" />
         }
       >
         <ArrowDownUp className="size-4" />

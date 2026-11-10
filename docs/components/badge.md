@@ -33,6 +33,7 @@ borderless badge are the same height and a row of mixed badges aligns.
 | `success` | a saturated mint fill with dark ink | "Beta" / "Recommended"; no call site today |
 | `new` / `updated` | pale tint + dark ink in light mode, flipped in dark (the `user-avatar` palette's Mint and Honey) | the design-system page's section flags — `Section` in `home.tsx` |
 | `count` | `bg-accent text-foreground`; `group-data-[selected]/chip:bg-background/20 …:text-primary-foreground` | the number inside a `Chip` — see [chips](chips.md) |
+| `inverse` | `bg-foreground text-background font-medium tabular-nums` | a count that asks for attention on its own: new orders on a tab, the cart, active filters. With `pill-sm` it is a true 18×18 circle (`pb-0 px-0.5`, measured: the numeral within 0.03px of centre). It replaced three hand-built pills that sat 0.78px low |
 | `destructive` | `bg-destructive text-white` | an error flag |
 
 **`count` owns both of its states.** It sits one step above a chip's

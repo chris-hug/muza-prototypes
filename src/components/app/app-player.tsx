@@ -14,6 +14,7 @@
 
 import { useState } from "react"
 import { cn } from "@/lib/utils"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { PlayerBarB as PlayerBar } from "@/components/ui/player-bar-b"
 import { PlayerOverlay, type QueueTrack } from "@/components/ui/player-overlay"
 import { usePlayer } from "@/lib/player"
@@ -114,39 +115,35 @@ export function AppPlayer({ footerNav }: { footerNav: boolean }) {
           />
         </div>
 
-        {/* Full-screen overlay — slides up from the bottom.
-             CRITICAL: when closed it must be `invisible`, not merely
-             translated off-screen. The overlay's `.frosted-glass`
-             backdrop-filter IGNORES this container's `translate` transform
-             (a browser limitation) and would otherwise keep painting a
-             full-screen glass over the footer + mini-bar — hiding the
-             footer and swallowing taps. `visibility:hidden` stops the
-             backdrop-filter from rendering; the `visibility` transition
-             keeps it visible through the slide-out so the animation still
-             plays. */}
-        <div
-          className={cn(
-            "absolute inset-0 z-50 transition-[transform,visibility] duration-300 ease-out",
-            overlayOpen ? "translate-y-0 visible" : "translate-y-full invisible pointer-events-none",
-          )}
-          aria-hidden={!overlayOpen}
-        >
-          <PlayerOverlay
-            track={barTrack}
-            playingFrom={playingFrom || track.album}
-            currentTime={currentTime}
-            totalTime={track.totalTime}
-            artistAvatar={track.artistAvatar}
-            bound={bound}
-            shuffle={shuffleBound}
-            onSeek={onSeek}
-            onArtistClick={onArtistClick}
-            onPlayingFromClick={onPlayingFromClick}
-            queue={queue}
-            onPlayQueueTrack={onPlayQueueTrack}
-            onClose={() => setOverlayOpen(false)}
-          />
-        </div>
+        {/* The player is a bottom Sheet like every other: pulled down to close,
+            with the same grabber, backdrop and Escape. It used to be its own
+            sliding layer whose handle was a button you had to tap. A closed Sheet
+            unmounts, which also retires the old trap: `.frosted-glass` ignores a
+            translate, so a layer parked off-screen kept painting glass over the
+            footer. 8px of the page shows above it, so it reads as a sheet. */}
+        <Sheet open={overlayOpen} onOpenChange={setOverlayOpen}>
+          <SheetContent side="bottom" showCloseButton={false} aria-label="Now playing" className="h-[calc(100svh-8px)] overflow-hidden border-0 p-0">
+            {/* `rounded-[inherit]`: the corner is the sheet side's, not written twice. */}
+            <div className="absolute inset-0 z-10 overflow-hidden rounded-[inherit]">
+              <PlayerOverlay
+                track={barTrack}
+                playingFrom={playingFrom || track.album}
+                currentTime={currentTime}
+                totalTime={track.totalTime}
+                artistAvatar={track.artistAvatar}
+                bound={bound}
+                shuffle={shuffleBound}
+                onSeek={onSeek}
+                onArtistClick={onArtistClick}
+                onPlayingFromClick={onPlayingFromClick}
+                queue={queue}
+                onPlayQueueTrack={onPlayQueueTrack}
+                onClose={() => setOverlayOpen(false)}
+                inSheet
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
       </>
     )
   }

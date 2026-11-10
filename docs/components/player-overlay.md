@@ -17,8 +17,8 @@ scrolling, from a 568px-tall SE to a 956px Pro Max.
 | Part | What it is | Tokens |
 |---|---|---|
 | Backdrop | the cover, full-bleed, `blur(32px) scale-110`, under the same `.frosted-glass` the tab bar and the mobile header use, so the overlay reads as one continuous glass with the rest of the chrome | `bg-background` under it all |
-| Drag handle | a `ghost` `Button`, `w-full py-4 h-auto rounded-none`, holding a `h-1 w-8 rounded-full` pill; tap → `onClose` | `bg-foreground/80` |
-| Playing from | "Playing from:" and the source as a `MarqueeText` — a link when `onPlayingFromClick` is passed | `text-xsmall leading-none font-normal`, `text-muted-foreground` / `text-foreground` |
+| Top band | in the app (`inSheet`), a 36px band holding the `SheetGrabber`: the overlay is a bottom [Sheet](drawer.md), pulled down to close like every other. Standalone, a `ghost` `Button` (`w-full py-4 h-auto rounded-none`) whose tap → `onClose` | `bg-border` grabber · `bg-foreground/80` pill |
+| Playing from | one line: "Playing from:" then the source as a `MarqueeText`, which scrolls when it does not fit — a link when `onPlayingFromClick` is passed. Two lines spent a row of the cover's height | `text-xsmall leading-none font-normal`, `text-muted-foreground` / `text-foreground` |
 | Cover | a square, `rounded-xs shadow-md art-edge`, sized 64–440px by the budget below | `art-edge` is the 1px inset outline every piece of artwork carries — black at 10% in light, white at 10% in dark — so a pale cover still has an edge against the blurred version of itself behind it |
 | Title row | `h2` with a `MarqueeText`, a `LibraryHeartButton` for the song and a "…" button, both `outline` `icon` | `text-large font-medium leading-tight text-foreground` |
 | Artist row | avatar `size-6 min-w-6 rounded-full ring-1 ring-border` + name; a link when `onArtistClick` is passed | `text-xsmall font-medium text-muted-foreground` |
@@ -74,9 +74,9 @@ Two measures, neither the window.
 and width `W` and solves:
 
 ```text
-FIXED     378   drag ~36 + playing-from ~50 + gap 8 + title block ~76
+FIXED     365   drag ~36 + playing-from ~37 + gap 8 + title block ~76
                 + icons floor 48 + transport floor 80 + tabs ~80
-available H − 378
+available H − 365
 cover     clamp(64, min(available − 40, W − 32), 440)
 waveform  clamp(40, available − cover, 160)
 t         (H − 568) / (956 − 568), clamped 0–1
@@ -115,8 +115,12 @@ step is exact.
   store when bound; **Repeat** is local.
 - **Up next**: tap a row → `onPlayQueueTrack(track)`, which the app answers
   by playing it in the same source context so the queue simply advances.
-- The drag handle's tap calls `onClose`. The overlay never scrolls as a
-  whole; only the queue and the lyrics do.
+- In the app the overlay lives in a bottom `Sheet` (`app-player.tsx`), 8px
+  short of the full height so the page shows above its corner: pulled down,
+  the backdrop or Escape close it, and the sheet's own grabber is the top
+  band. It used to be a hand-rolled sliding layer whose handle only closed on
+  a tap. Standalone, the handle's tap still calls `onClose`. The overlay
+  never scrolls as a whole; only the queue and the lyrics do.
 
 ## It is its own container, and the container is NAMED
 
@@ -142,7 +146,7 @@ container pins it to this element wherever the overlay is mounted.
 | Transport | press is opacity, never geometry: `hover:opacity-70 active:opacity-40` on a shared `transportBtn`, whose transition names `scale` explicitly because Tailwind v4 compiles `scale-*` to its own property and a list saying `transform` animates nothing |
 | The three `hover:bg-transparent` transport buttons | also `[--hover-fill:transparent]` — they are `Button variant="ghost"`, and the variant's own `--hover-fill` would otherwise grow the accent surface they deliberately do not want |
 
-**"Playing from" and the artist carry `touch-target`.** They paint at 17 and 26; both are alone on their line, so 44 crosses nothing.
+**"Playing from" and the artist carry `touch-target`.** They paint at 17 and 26, and nothing else on their lines is tappable, so 44 crosses nothing.
 
 ## Open questions
 
@@ -166,7 +170,5 @@ container pins it to this element wherever the overlay is mounted.
 - player-overlay.tsx:490 says the glass is "backdrop blur + saturate" ·
   app.css deliberately has **no** `saturate()` — the minifier collapsed it
   into an invalid empty call that voided the whole property (app.css:289)
-- player-overlay.tsx:510 says the handle dismisses on "tap or swipe down" ·
-  only `onClick` is wired; there is no vertical gesture on the sheet
 - Info, Radio, "…", Previous and Next carry no handlers
   (player-overlay.tsx:636, :705, :715, :739, :757)

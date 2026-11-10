@@ -67,6 +67,12 @@ const badgeVariants = cva(
         count:
           "bg-accent text-foreground " +
           "group-data-[selected]/chip:bg-background/20 group-data-[selected]/chip:text-primary-foreground",
+        // A count that asks for attention on its own: unread orders on a tab,
+        // the cart's items, active filters. Foreground on background, so it
+        // reads in both modes. Three call sites drew this by hand, each with
+        // its own size and its own guess at the optical nudge.
+        inverse:
+          "bg-foreground text-background font-medium tabular-nums",
         // Destructive (node 26:185)
         destructive:
           "bg-destructive text-white",
@@ -106,6 +112,14 @@ const badgeVariants = cva(
         "pill-sm": "rounded-full justify-center h-[18px] min-w-[18px] px-1 pb-px text-2xsmall border-transparent",
       },
     },
+    // Measured, not guessed. The inverse count is medium weight, and with the
+    // pill's `pb-px` its numeral sat 0.47px HIGH; without it, 0.03px. The
+    // hand-built copies it replaced sat 0.78px low. `px-0.5` because a medium
+    // digit plus `px-1` came out 19 wide on an 18 height: an oval, which reads
+    // as a numeral off centre, the very thing this was reported for.
+    compoundVariants: [
+      { variant: "inverse", shape: "pill-sm", class: "pb-0 px-0.5" },
+    ],
     defaultVariants: {
       variant: "secondary",
       shape:   "square",

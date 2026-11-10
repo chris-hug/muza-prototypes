@@ -1,5 +1,6 @@
 "use client"
 
+import { Badge } from "@/components/ui/badge"
 import { useState, useRef, useEffect } from "react"
 import { useSearchParams } from "react-router"
 import { Search, ShoppingCart, User, Receipt, Wallet, Settings, LogOut, ChevronLeft, X } from "lucide-react"
@@ -179,13 +180,14 @@ function CartButton({ onOpen }: { onOpen: () => void }) {
     >
       <ShoppingCart className="size-[18px]" />
       {cart.count > 0 && (
-        <span
+        <Badge
           aria-hidden="true"
-          className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-foreground text-background text-2xsmall font-medium tabular-nums flex items-center justify-center leading-none"
+          variant="inverse"
+          shape="pill-sm"
+          className="absolute top-0.5 right-0.5"
         >
-          {/* optical nudge — the figure ink sits a hair high in the line box */}
-          <span className="relative top-[-0.5px]">{cart.count > 99 ? "99+" : cart.count}</span>
-        </span>
+          {cart.count > 99 ? "99+" : cart.count}
+        </Badge>
       )}
     </Button>
   )

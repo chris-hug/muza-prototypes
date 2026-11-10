@@ -1,5 +1,6 @@
 "use client"
 
+import { Badge } from "@/components/ui/badge"
 import { ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -38,9 +39,6 @@ export function FilterChevron() {
 export function FilterCount({ count }: { count: number }) {
   if (count <= 0) return null
   return (
-    <span className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-foreground text-background text-2xsmall font-medium leading-none tabular-nums">
-      {/* optical nudge — lift the figure slightly to sit centered */}
-      <span className="relative top-[-0.5px]">{count}</span>
-    </span>
+    <Badge variant="inverse" shape="pill-sm">{count}</Badge>
   )
 }
