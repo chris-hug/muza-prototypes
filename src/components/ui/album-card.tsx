@@ -10,7 +10,7 @@
  *   · Click hover Play button          → PLAY (first track, self-contained)
  *   · Click hover Heart                → SAVE to library (store-bound)
  *   · Long-press cover                 → onMore (parent renders Sheet)
- *   · Click artist text                → onArtistClick (artist page)
+ *   · Click artist text (mouse only)   → onArtistClick (artist page)
  *
  * Play / Save never navigate — the action cluster stops the cover's
  * useLongPress pointer gesture so a button press can't also open the page.
@@ -39,6 +39,7 @@ import { useLongPress } from "@/lib/use-long-press"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { DetailMenuSheetBody } from "@/components/ui/detail-more-button"
 import { useMediaNav, slugify } from "@/lib/media-nav"
+import { useCoarsePointer } from "@/lib/use-media-query"
 import { libraryIdForTitle } from "@/lib/album-meta"
 import { usePlayer } from "@/lib/player"
 import { registerAlbums, getAlbumDetail } from "@/lib/album-catalog"
@@ -144,6 +145,7 @@ export function AlbumCard({
   // detail page. Playing and saving are their OWN affordances (the Play
   // button and the heart) — they never navigate.
   const goAlbum = () => openAlbum(key)
+  const coarse = useCoarsePointer()
   // Start playback from the album's first track (context = album title).
   // The card always plays itself — the legacy `onPlay` prop (which hosts
   // historically wired to navigation) is intentionally NOT used here.
@@ -303,15 +305,30 @@ export function AlbumCard({
         {/* Artist row — artist + optional year, on one line with the
              artist text taking the underline-on-hover affordance
              (independent click target) and the year as plain meta
-             after a `·` separator. */}
-        <div className={cn("flex items-center gap-1.5 min-w-0 text-muted-foreground", metaSize, metaWeight, leadingCls, metaTracking)}>
-          <button
-            type="button"
-            onClick={onArtistClick}
-            className="truncate link-underline pb-[6px] -mb-[6px] outline-none cursor-pointer text-left"
-          >
-            {artist}
-          </button>
+             after a `·` separator.
+
+             On a coarse pointer the name is text, not a link. At 24px tall,
+             right under the cover a thumb is aiming at, a miss costs a page
+             load — the same reason a song row withholds its artist. The row
+             opens the album instead, so the card stays one target, and the
+             artist is still in the sheet a long press raises ("Go to
+             artist"). Keyed to the pointer, not the width: a mouse in a
+             narrow window keeps the link. */}
+        <div
+          className={cn("flex items-center gap-1.5 min-w-0 text-muted-foreground", metaSize, metaWeight, leadingCls, metaTracking)}
+          onClick={coarse ? (onTitleClick ?? goAlbum) : undefined}
+        >
+          {coarse ? (
+            <span className="truncate pb-[6px] -mb-[6px]">{artist}</span>
+          ) : (
+            <button
+              type="button"
+              onClick={onArtistClick}
+              className="truncate link-underline pb-[6px] -mb-[6px] outline-none cursor-pointer text-left"
+            >
+              {artist}
+            </button>
+          )}
           {year !== undefined && (
             // `data-card-year` lets dense layouts (e.g. CardRail's
             // mobile swipeable-grid variant) hide the year via CSS

@@ -191,13 +191,16 @@ export function CardRail({ title, showAllLabel = "Show all", onShowAll, showAllO
             {/* "Show all" is a quiet ghost link on desktop, but in mobile
                  peek mode (< 560 — where the chevrons drop out) it firms
                  up into a secondary pill so it stays a clear, tappable
-                 affordance. `!` beats ghost's own hover:bg-accent. */}
+                 affordance. `!` beats ghost's own hover:bg-accent.
+                 `touch-target`: it paints at 32 and a finger needs 44. Only
+                 the height grows, into the empty band around the title row,
+                 and the ◀ ▶ beside it do not exist on touch. */}
             {showAllLabel && (!showAllOnlyWhenScrollable || showArrows) && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onShowAll}
-                className="@max-[560px]:!bg-secondary @max-[560px]:!text-secondary-foreground @max-[560px]:hover:!bg-secondary-hover"
+                className="touch-target @max-[560px]:!bg-secondary @max-[560px]:!text-secondary-foreground @max-[560px]:hover:!bg-secondary-hover"
               >
                 {showAllLabel}
               </Button>

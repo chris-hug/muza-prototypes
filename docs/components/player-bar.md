@@ -37,7 +37,7 @@ disc can overhang it.
 |---|---|---|
 | Pill | `h-[56px] rounded-full`, **solid** — no glass (Figma 20673:8274); `role="button"` with `aria-label="Expand player"` when `onExpand` is passed, Enter / Space included | `bg-background` |
 | Disc | 68px, spindle 23, `-left-[4px] -top-[7px]`; the text starts at `pl-[72px]` to clear it | — |
-| Controls | Play / Pause and Next, glyphs 24px, `stopPropagation` so a tap on them never expands the bar | — |
+| Controls | Play / Pause and Next, glyphs 24px, `stopPropagation` so a tap on them never expands the bar. Both `relative touch-target`: 44×44 on a coarse pointer, see [below](#the-mini-pills-targets) | — |
 | Progress arc | an SVG stroke along the pill's **flat bottom** only — between the cap tangents, 2px in, 4px wide, round caps — never climbing the rounded ends, which read as a stray hook near the end of a track. Dash math is normalised with `pathLength={1}` so a resize mid-track cannot desync it | `stroke: var(--muza-brand-200)` |
 
 ## Props
@@ -107,6 +107,24 @@ pill at a 375 window (`inset-x-3`), then 640 · 688 · 800. The frame adds
 the demo's 12px surround and the bar's own 1px border on each side, because
 a container query reads the **content** box — a chip marked 640 must hand
 the query 640, not 614.
+
+## The mini pill's targets
+
+Measured at 375 with touch: Play 40×40 and Next 44×40, sides touching. Both
+now carry `touch-target` (44×44), and the 12px rule exists so two
+pseudo-elements never overlap, so Play had to change first: a 44 on a 40-wide
+box reaches 2px into Next.
+
+On a coarse pointer Play's box is widened to 44, leftwards over the end of the
+text: `pointer-coarse:pl-3` adds the 4px and `pointer-coarse:-ml-1` hands them
+back, so the row, the text box and both glyphs stay exactly where they were.
+With both boxes 44 wide the pseudo-element only adds height, and the two
+targets meet at x=315 without crossing. A real 12px gap would have taken 12px
+from the title for the same result. With a mouse none of this applies: 40×40
+and 44×40, as before.
+
+No long press on the pill, and iOS has nothing to claim: the disc is the only
+image and the tap expands the bar.
 
 ## Behaviour
 

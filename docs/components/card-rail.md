@@ -144,6 +144,12 @@ and `touch-pan-x touch-pan-y`.
 The header order is **[Show all] then ◀ ▶**, in a `shrink-0` cluster so a long
 title truncates instead of squeezing the controls.
 
+"Show all" is `touch-target`: 32px of paint, 44 of target on a coarse pointer,
+and with a mouse it stays 32. Only the height grows (its width is already
+past 44), into the space above and below the title row, 10px clear of the
+first card at 375. Nothing sits within 12px on touch, because the ◀ ▶ beside it
+are not rendered there.
+
 The arrows are a **pointer affordance for grid mode only**, gated three ways:
 
 | Gate | Where | Why |

@@ -218,8 +218,12 @@ function useCompactHeader(ref: React.RefObject<HTMLElement | null>) {
 // Exported so the mobile header reuses the SAME menu (which auto-presents as
 // a bottom sheet on touch via the responsive DropdownMenu).
 
-export function ProfileMenu({ avatarClassName, onOpenCart }: {
+export function ProfileMenu({ avatarClassName, triggerClassName, onOpenCart }: {
   avatarClassName?: string
+  /** Extra classes on the trigger button itself — the mobile header's target
+   *  growth. Not on by default: in the Topbar the avatar sits 8px from the
+   *  cart, and a pseudo-element on one would reach into the other. */
+  triggerClassName?: string
   /** Set only when the cart button is hidden — the cart folds in here instead. */
   onOpenCart?: () => void
 }) {
@@ -238,7 +242,7 @@ export function ProfileMenu({ avatarClassName, onOpenCart }: {
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label="Open profile menu"
-        className="rounded-full shrink-0 hover:opacity-90 transition-opacity outline-none focus-ring"
+        className={cn("rounded-full shrink-0 hover:opacity-90 transition-opacity outline-none focus-ring", triggerClassName)}
       >
         <UserAvatar username={CURRENT_USERNAME} className={avatarClassName} />
       </DropdownMenuTrigger>

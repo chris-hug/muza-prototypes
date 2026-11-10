@@ -90,6 +90,12 @@ pad is a no-op that only shows up on a real notched phone.
 | `MobilePillTabs` | horizontal-scroll filter strip | see below |
 | `MobileScopeToggle` | two-segment switch | `bg-muted/70 p-1`, segments `h-8 text-small font-medium`, active `bg-background` + shadow, `aria-pressed` |
 
+The account avatar that `MobileAppHeader` mounts is the `ProfileMenu` trigger
+with `triggerClassName="relative touch-target"`: 36 of paint, 44 of target on
+a coarse pointer. It stands alone at the end of the title row, and the pseudo
+ends 18px above the Explore field. The Topbar does not pass it, because there
+the avatar sits 8px from the cart.
+
 The `size-9` on button and avatar is why the title row is `min-h-9`: a Home
 header with only an avatar and a Library header with two buttons are the
 same height, so switching tabs never moves the title.

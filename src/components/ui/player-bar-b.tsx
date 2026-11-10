@@ -504,11 +504,20 @@ export function PlayerBarB({
           <div className="flex items-center shrink-0 h-full">
             {/* stopPropagation on every button so transport controls don't
                 bubble up and trigger the bar's expand handler. */}
+            {/* Measured at 375: Play 40×40, Next 44×40, sides touching. Both
+                carry `touch-target`, and two pseudo-elements that close would
+                overlap — a 44 on a 40-wide Play reaches 2px into Next. So on a
+                coarse pointer Play's box is widened to 44 first, leftwards
+                over the end of the text: `-ml-1` hands back the 4px `pl-3`
+                takes, so the row does not move and the glyph stays put. Both
+                boxes are then 44 wide, the pseudo only adds height, and the
+                two targets meet without crossing. A 12px gap would have cost
+                the title 12px for the same result. */}
             <button
               onClick={(e) => { e.stopPropagation(); setPlaying(p => !p) }}
               aria-label={playing ? "Pause" : "Play"}
               aria-pressed={playing}
-              className={cn(transportBtn, "h-full px-2")}
+              className={cn(transportBtn, "relative touch-target h-full px-2 pointer-coarse:-ml-1 pointer-coarse:pl-3")}
             >
               {playing
                 ? <Pause         className="size-[24px] fill-current stroke-none" />
@@ -518,7 +527,7 @@ export function PlayerBarB({
             <button
               aria-label="Next track"
               onClick={(e) => e.stopPropagation()}
-              className={cn(transportBtn, "h-full pl-2 pr-3 py-2")}
+              className={cn(transportBtn, "relative touch-target h-full pl-2 pr-3 py-2")}
             >
               <SkipForwardFilled className="size-[24px]" />
             </button>

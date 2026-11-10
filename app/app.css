@@ -1715,7 +1715,10 @@ img {
    never covers text or takes a hover.
 
    Never put it on two controls that sit closer than 12px apart — overlapping
-   hit areas are worse than small ones. */
+   hit areas are worse than small ones. The one way past that is to make the
+   boxes themselves 44 wide first, so the pseudo-element only adds height: the
+   mini player's Play and Next touch, and their targets meet without crossing
+   (player-bar.md). */
 @media (pointer: coarse) {
   .touch-target::after {
     content: "";

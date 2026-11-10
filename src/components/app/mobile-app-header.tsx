@@ -44,7 +44,9 @@ import { ProfileMenu } from "@/components/app/topbar"
 // Same account avatar as the desktop Topbar — but here it's the trigger
 // for the shared ProfileMenu, which presents as a bottom sheet on touch
 // (Your profile / purchases / Wallet / Settings / Sign out).
-const Avatar = () => <ProfileMenu avatarClassName="size-9" />
+// `relative touch-target`: 36 of paint, 44 of target. It stands alone at the
+// end of the title row, so the pseudo-element has nothing to reach into.
+const Avatar = () => <ProfileMenu avatarClassName="size-9" triggerClassName="relative touch-target" />
 
 // Mobile library filters: ONE row that changes with what is active. At rest
 // it offers the types and Offline; pick a type and it becomes ✕ · that type ·

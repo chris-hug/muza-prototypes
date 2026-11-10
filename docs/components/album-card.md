@@ -67,10 +67,18 @@ grid, and the Home rails.
 | cover — tap / click | open the album detail (`openAlbum(slugify(title))`) |
 | cover — long press (450–500ms, 8px tolerance) | the album's own `DetailMenuSheetBody` sheet |
 | title | open the album (or `onTitleClick`) |
-| artist | `onArtistClick` |
+| artist | with a mouse, `onArtistClick`. On a coarse pointer it is plain text and the artist · year row opens the album |
 | Play (hover) | play the album's **first track**, context = the album — never navigates |
 | Heart (hover) | `LibraryHeartButton`: toggles the library store, fills when saved, its label flips between "Save to library" and "Remove from library" |
 | ⋯ (hover) | the shared album menu |
+
+**On touch the artist is not a link.** The name is 24px tall and sits right
+under the cover a thumb is aiming at, and a miss costs a page load rather than
+a miss — the rule a song row already follows
+([Song List Item](song-list-item.md)). So on a coarse pointer it renders as
+text, the row opens the album like the title does, and "Go to artist" stays in
+the sheet a long press raises. The gate is `useCoarsePointer()`, not the window
+width: a mouse in a narrow window keeps the link.
 
 Play is **self-contained**: the card resolves its own detail record
 (`getAlbumDetail(key).tracks[0]`) and hands that to the player. The legacy
@@ -228,7 +236,7 @@ Both the card and its text stack use a single `gap-1` (4px), so cover → title
 - The title clamps at **two lines**, so a long release name wraps instead of
   truncating mid-word and the card's height stays predictable. The artist
   truncates on one line.
-- Title and artist carry `link-underline`: the line wipes in from the left
+- Title and artist (the artist with a mouse only) carry `link-underline`: the line wipes in from the left
   over 140ms and sits 3px under the baseline, derived from the element's own
   `line-height` and font metrics rather than a fixed number. Both also keep
   `pb-[6px] -mb-[6px]`: the clamp and the truncation are `overflow: hidden`,
