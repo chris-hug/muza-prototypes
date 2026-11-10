@@ -15,6 +15,7 @@ import { CreditsProvider } from "@/components/app/credits-dialog"
 import { AddToPlaylistProvider } from "@/components/app/add-to-playlist-dialog"
 import { CreatePlaylistProvider } from "@/components/app/create-playlist-dialog"
 import { FilesPurchaseProvider } from "@/components/app/files-purchase-provider"
+import { MenuOptionsView } from "@/components/app/menu-options-view"
 import { PlaylistEditDrawer, PlaylistEditorProvider } from "@/components/app/playlist-edit-drawer"
 import { registerPlaylists } from "@/lib/playlist-catalog"
 import { AnimatedLogo } from "@/components/app/animated-logo"
@@ -3025,6 +3026,7 @@ export default function Home() {
             {activeNav === "Playlists" && <LibraryPlaylistsView />}
             {activeNav === "Artist"    && <ArtistProfileView />}
             {activeNav === "ArtistSongs" && <ArtistTopSongsView />}
+            {activeNav === "MenuOptions" && <MenuOptionsView />}
             {activeNav === "Album"     && <AlbumDetailView />}
             {activeNav === "Playlist"  && <PlaylistDetailView />}
             {Object.keys(STUDIO_TABS).includes(activeNav) && (

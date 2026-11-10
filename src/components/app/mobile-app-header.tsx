@@ -73,6 +73,7 @@ const DETAIL_PAGES = ["Album", "Playlist", "Artist"]
 // Generic pages whose `?page=` key is not a readable title.
 const PAGE_TITLE: Record<string, string> = {
   ArtistSongs: "Top Songs",
+  MenuOptions: "Menu options",
 }
 
 interface MobileAppHeaderProps {

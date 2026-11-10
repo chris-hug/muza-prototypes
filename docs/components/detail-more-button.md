@@ -222,6 +222,11 @@ paid for, with the remaining difference when you bought for listening. "Download
 used to mean both. Both rows use the plain `Download` glyph, the mark people
 look for, and the label says which one it is; a saved row shows `Check`.
 
+The overview for the team is `?page=MenuOptions`: the three purchase states as
+live `DetailMenuSurface`s and every menu as a table. It keeps its own in-memory
+library (`persist={false}`), so a visitor's saved state can't change what it
+shows.
+
 ### What a CARD's sheet can offer, and what is missing on purpose
 
 The long press on a card raises this same sheet, so the card has to pass the
@@ -356,8 +361,54 @@ nothing type-checks against the omission. When adding a prop to
 `DetailMoreButtonProps`, add its getter (or wrapper) in `detail-actions.tsx` in
 the same change. See the open questions for two fields that are missing today.
 
+## The matrix
+
+The contract for every "…" in the product: cards, list rows, detail headers and
+phone sheets. One menu per media kind. If two surfaces show different rows for
+the same object, that is a bug. A row with no handler is dropped, never shown
+disabled.
+
+| Row | Album | Playlist (yours) | Playlist (saved) | Artist | Song |
+|---|---|---|---|---|---|
+| Share (adaptive: native share, else Copy link) | tile | tile | tile | tile | ✓ |
+| Save to library / Remove from library | tile | — | tile | tile | ✓ |
+| Credits | tile (in the list if owned) | — | — | — | ✓ "Show credits" |
+| Edit / Edit info | owned | tile | — | — | — |
+| Add music | — | tile | — | — | — |
+| Play radio | — | — | — | tile | — |
+| Save offline / Remove from offline | ✓ | ✓ | ✓ | — | ✓ |
+| Download files | see below | — | — | — | — |
+| Make private / Make public | — | ✓ | — | — | — |
+| Add to a playlist | ✓ | — | — | — | ✓ |
+| Play next · Add to queue | if wired | if wired | if wired | if wired | — |
+| Go to album / Go to playlist | ✓ | ✓ | ✓ | — | ✓ |
+| Go to artist | ✓ | — | — | — | ✓ |
+| Go to owner | — | — | ✓ | — | — |
+| Go to label | ✓ | — | — | — | — |
+| Artist info | — | — | — | ✓ | — |
+| Delete playlist | — | ✓ destructive | — | — | — |
+| Report | if not owned | — | ✓ | ✓ | ✓ |
+
+**Download files, by purchase state (albums only):**
+
+| Album state | Row |
+|---|---|
+| Not purchased | none |
+| Purchased for listening | `Download files – $x`, where `$x` is the difference between the two tiers; opens checkout. No row if the album offers no files or there is no difference to pay |
+| Files paid for | `Download files` |
+
+**Context gating is the only per-surface difference:** no "Go to album" on the
+album page, no "Go to artist" on the artist page, no "Add to a playlist" inside
+your own playlist.
+
+**Fixed copy:** "Save to library" / "Remove from library", never "Add"; "Save"
+and "Remove" on the phone sheet's tiles only. "Save offline" / "Remove from
+offline". "Download files", never "Download" alone, "Add download" or "Download
+MP3". "Add to a playlist", "Show credits", "Go to artist", "Go to owner".
+
 ## Open questions
 
+- Song menu in the prototype says "Add to playlist" and paints Report in `text-destructive` (`song-list-item.tsx`) · the matrix fixes "Add to a playlist", and Report is a plain row everywhere else.
 - home.tsx:3099 · the static "phone bottom sheet" preview gives a *playlist* a
   third "Play radio" pill · source gives a playlist only Share + Save (Play
   radio is the artist's third pill) (detail-more-button.tsx:243–251)

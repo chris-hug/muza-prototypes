@@ -149,30 +149,34 @@ export function UserLibraryProvider({
   /** Optional seed for the non-album saved sets (playlist / artist /
    *  song), so those library grids also open populated. */
   savedSeed,
+  /** `false` keeps this provider in memory: it neither reads nor writes
+   *  the visitor's stored library. For a page that shows fixed states. */
+  persist = true,
   children,
 }: {
   seed?:      Record<string, LibraryEntry>
   savedSeed?: Partial<SavedSets>
+  persist?:   boolean
   children:   ReactNode
 }) {
   // Lazy init: prefer persisted state; fall back to the demo seed.
   const [albums, setAlbums] = useState<Record<string, LibraryEntry>>(
-    () => loadPersisted()?.albums ?? seed ?? {},
+    () => (persist ? loadPersisted()?.albums : undefined) ?? seed ?? {},
   )
   const [saved, setSaved] = useState<SavedSets>(
-    () => loadPersisted()?.saved ?? { ...EMPTY_SAVED, ...savedSeed },
+    () => (persist ? loadPersisted()?.saved : undefined) ?? { ...EMPTY_SAVED, ...savedSeed },
   )
   const [offline, setOffline] = useState<OfflineSets>(
-    () => loadPersisted()?.offline ?? EMPTY_OFFLINE,
+    () => (persist ? loadPersisted()?.offline : undefined) ?? EMPTY_OFFLINE,
   )
 
   // Persist on any change.
   useEffect(() => {
-    if (typeof window === "undefined") return
+    if (typeof window === "undefined" || !persist) return
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ albums, saved, offline }))
     } catch { /* quota / private mode — ignore */ }
-  }, [albums, saved, offline])
+  }, [albums, saved, offline, persist])
 
   // ── Album mutators ───────────────────────────────────────────────
   const add = useCallback((albumId: string) => {
