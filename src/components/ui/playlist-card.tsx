@@ -32,6 +32,7 @@ import { PlaylistCardMenu } from "@/components/ui/cover-card-menu"
 import { LibraryHeartButton } from "@/components/ui/library-heart-button"
 import { useLongPress } from "@/lib/use-long-press"
 import { useMediaNav, slugify } from "@/lib/media-nav"
+import { useCoarsePointer } from "@/lib/use-media-query"
 import { usePlayer } from "@/lib/player"
 import { registerPlaylists, getPlaylistDetail } from "@/lib/playlist-catalog"
 
@@ -85,6 +86,10 @@ export function PlaylistCard({
   const songsLabel = `${songCount.toLocaleString()} ${songCount === 1 ? "Song" : "Songs"}`
   const showOwner  = !owned && !!owner
   const { openPlaylist, openArtist } = useMediaNav()
+  const coarse = useCoarsePointer()
+  // The same default the "…" menu's "Go to owner" bakes in, so the name is
+  // never a button that does nothing.
+  const goOwner = onOwnerClick ?? (showOwner ? () => openArtist(slugify(owner!)) : undefined)
   // Media-tile text — matches AlbumCard (no price row here): title + meta at
   // text-xsmall (17px); meta a lighter 300 weight with a hair of tracking.
   const titleSize  = "text-xsmall"
@@ -229,25 +234,36 @@ export function PlaylistCard({
         >
           {title}
         </button>
-        <div className={cn("flex items-center gap-1.5 min-w-0 text-muted-foreground", metaSize, metaWeight, leadingCls, metaTracking)}>
+        {/* On a coarse pointer the owner is text and this row opens the
+            playlist, as on AlbumCard: a 24px link under the cover a thumb is
+            aiming at costs a page load on a miss, and "Go to owner" stays in
+            the sheet a long press raises. */}
+        <div
+          className={cn("flex items-center gap-1.5 min-w-0 text-muted-foreground", metaSize, metaWeight, leadingCls, metaTracking)}
+          onClick={coarse ? (onTitleClick ?? goPlaylist) : undefined}
+        >
           <span className="shrink-0">{songsLabel}</span>
           {/* Owner byline — ALWAYS shown so a mixed "All" grid is legible at a
               glance: "By you" marks your own, "By <name>" marks a saved one
               (the same cue Spotify / Tidal use). Owned isn't a link; a saved
-              owner navigates to their profile. */}
+              owner navigates to their profile, with a mouse. */}
           <span className="shrink-0" aria-hidden="true">·</span>
           {owned ? (
             <span className="truncate">By you</span>
           ) : showOwner ? (
             <span className="inline-flex min-w-0 shrink truncate">
               <span className="shrink-0">By&nbsp;</span>
-              <button
-                type="button"
-                onClick={onOwnerClick}
-                className="truncate link-underline pb-[6px] -mb-[6px] outline-none cursor-pointer"
-              >
-                {owner}
-              </button>
+              {coarse ? (
+                <span className="truncate pb-[6px] -mb-[6px]">{owner}</span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={goOwner}
+                  className="truncate link-underline pb-[6px] -mb-[6px] outline-none cursor-pointer"
+                >
+                  {owner}
+                </button>
+              )}
             </span>
           ) : null}
         </div>

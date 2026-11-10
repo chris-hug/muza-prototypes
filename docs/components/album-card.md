@@ -52,7 +52,7 @@ fills whatever it is in.
 | `owned` | uploaded by this user — Edit replaces the heart, the menu swaps Add → Edit and Report → Remove from library |
 | `inLibrary` | already saved — drops the heart and the menu's "Save to library", surfaces "Remove from library" |
 | `onMore` | **legacy** — the card raises its own sheet on a long press now; a host that passes this still gets called |
-| `onTitleClick` / `onArtistClick` | override the text destinations; the title falls back to opening the album |
+| `onTitleClick` / `onArtistClick` | override the text destinations; the title falls back to opening the album, the artist to `openArtist(slugify(artist))` |
 | `onAdd` `onEdit` `onAddToPlaylist` `onGoToArtist` `onGoToAlbum` `onRemove` `onReport` `onShowInfo` | the "…" menu's rows; a row only renders when its handler exists |
 | `hideGoToArtist` / `hideGoToAlbum` | drop a nav row on the page it would lead to |
 | `onPlay` | **declared but unused** — the card plays itself (see below) |
@@ -67,7 +67,7 @@ grid, and the Home rails.
 | cover — tap / click | open the album detail (`openAlbum(slugify(title))`) |
 | cover — long press (450–500ms, 8px tolerance) | the album's own `DetailMenuSheetBody` sheet |
 | title | open the album (or `onTitleClick`) |
-| artist | with a mouse, `onArtistClick`. On a coarse pointer it is plain text and the artist · year row opens the album |
+| artist | with a mouse, the artist page (or `onArtistClick`), and plain text where `hideGoToArtist` says you are already there. On a coarse pointer it is plain text and the artist · year row opens the album |
 | Play (hover) | play the album's **first track**, context = the album — never navigates |
 | Heart (hover) | `LibraryHeartButton`: toggles the library store, fills when saved, its label flips between "Save to library" and "Remove from library" |
 | ⋯ (hover) | the shared album menu |

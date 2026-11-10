@@ -40,7 +40,7 @@ instead of the heart), `19272:1625` / `1629` Add (the create tile).
 
 | | Leading cluster button | Byline | Menu's destructive row |
 |---|---|---|---|
-| Another user's playlist (`owner`) | ♥ `LibraryHeartButton` (`type="playlist"`, keyed `slugify(title)`) | `42 Songs · By Sarah K` — the name is a button → `onOwnerClick` | Report |
+| Another user's playlist (`owner`) | ♥ `LibraryHeartButton` (`type="playlist"`, keyed `slugify(title)`) | `42 Songs · By Sarah K` — with a mouse the name is a button to the owner; on touch it is text | Report |
 | Already saved (`inLibrary`) | nothing — the heart is dropped, "Remove from library" lives in the menu | as above | Report |
 | Your own (`owned`) | Edit (`Pencil`) → `onEdit` | `42 Songs · By you` — plain text, not a link | Delete playlist (`onDelete`) |
 
@@ -58,7 +58,7 @@ follows the count (`1 Song`, `1,234 Songs`).
 | `onEdit` `onDelete` `onReport` `onShowInfo` `onAdd` `onRemove` | menu / cluster handlers; a row only renders when its handler exists |
 | `onGoToOwner` | defaults to `openArtist(slugify(owner))` for a non-owned playlist with an owner |
 | `onGoToPlaylist` | off by default — the card *is* the playlist, a "Go to playlist" row would navigate to itself |
-| `onTitleClick` / `onOwnerClick` | override the text destinations; the title falls back to opening the playlist |
+| `onTitleClick` / `onOwnerClick` | override the text destinations; the title falls back to opening the playlist, the owner to `openArtist(slugify(owner))` |
 | `onMore` | called after a long press on the cover; the host renders the sheet |
 | `onPlay` | **declared but unused** — the card plays itself (below) |
 
@@ -86,7 +86,7 @@ rails, and the Playlists shelf on search.
 | cover — tap / click | `openPlaylist(slugify(title))` |
 | cover — long press (450–500ms, 8px tolerance) | the playlist's own `DetailMenuSheetBody` sheet |
 | title | open the playlist (or `onTitleClick`) |
-| owner name | `onOwnerClick` |
+| owner name | with a mouse, the owner's page (or `onOwnerClick`). On a coarse pointer it is plain text and the songs · owner row opens the playlist, as on an [Album Card](album-card.md); "Go to owner" stays in the long-press sheet. The gate is `useCoarsePointer()`, not the width |
 | Play (hover) | the playlist's **first track**, context = the playlist title — never navigates |
 | ♥ (hover) | toggles the library store; fills when saved; toasts Saved / Removed with Undo |
 | ⋯ (hover) | `PlaylistCardMenu` — the shared playlist menu |

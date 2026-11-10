@@ -10,7 +10,7 @@
  *   · Click hover Play button          → PLAY (first track, self-contained)
  *   · Click hover Heart                → SAVE to library (store-bound)
  *   · Long-press cover                 → onMore (parent renders Sheet)
- *   · Click artist text (mouse only)   → onArtistClick (artist page)
+ *   · Click artist text (mouse only)   → the artist page (or onArtistClick)
  *
  * Play / Save never navigate — the action cluster stops the cover's
  * useLongPress pointer gesture so a button press can't also open the page.
@@ -146,6 +146,11 @@ export function AlbumCard({
   // button and the heart) — they never navigate.
   const goAlbum = () => openAlbum(key)
   const coarse = useCoarsePointer()
+  // The same default the "…" menu's "Go to artist" bakes in. Almost no host
+  // passes `onArtistClick`, so without it the name was a button that did
+  // nothing. On the artist's own page there is nowhere to go, so no handler —
+  // and no handler, no control.
+  const goArtist = onArtistClick ?? (hideGoToArtist ? undefined : () => openArtist(slugify(artist)))
   // Start playback from the album's first track (context = album title).
   // The card always plays itself — the legacy `onPlay` prop (which hosts
   // historically wired to navigation) is intentionally NOT used here.
@@ -318,12 +323,12 @@ export function AlbumCard({
           className={cn("flex items-center gap-1.5 min-w-0 text-muted-foreground", metaSize, metaWeight, leadingCls, metaTracking)}
           onClick={coarse ? (onTitleClick ?? goAlbum) : undefined}
         >
-          {coarse ? (
+          {coarse || !goArtist ? (
             <span className="truncate pb-[6px] -mb-[6px]">{artist}</span>
           ) : (
             <button
               type="button"
-              onClick={onArtistClick}
+              onClick={goArtist}
               className="truncate link-underline pb-[6px] -mb-[6px] outline-none cursor-pointer text-left"
             >
               {artist}
