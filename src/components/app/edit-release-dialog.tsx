@@ -249,6 +249,7 @@ export function EditReleaseDialog({
               type="button"
               aria-label="Change cover"
               className={cn(
+                "touch-target",
                 // Sized to the cover it sits on: 24 on the phone's 64px thumb,
                 // 28 on the 96px one — a 28px badge on a 64px cover reads as a
                 // button with a picture behind it.

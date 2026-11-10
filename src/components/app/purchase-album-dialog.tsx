@@ -253,7 +253,7 @@ export function PurchaseAlbumDialog({
                       <button
                         type="button"
                         onClick={() => onOpenChange(false)}
-                        className="state-fade text-2xsmall text-muted-foreground hover:text-foreground link-underline cursor-pointer"
+                        className="relative touch-target state-fade text-2xsmall text-muted-foreground hover:text-foreground link-underline cursor-pointer"
                       >
                         Remove
                       </button>

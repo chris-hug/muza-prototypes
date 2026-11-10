@@ -203,7 +203,7 @@ export function MediaHeader({
         <button
           type="button"
           onClick={onOwnerClick}
-          className="flex items-center gap-1.5 min-w-0 hover:text-foreground transition-colors cursor-pointer"
+          className="relative touch-target flex items-center gap-1.5 min-w-0 hover:text-foreground transition-colors cursor-pointer"
         >
           {ownerAvatar && (
             // `min-w-6` floors the width so the circle can never be

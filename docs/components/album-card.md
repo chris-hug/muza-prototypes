@@ -75,7 +75,7 @@ grid, and the Home rails.
 **On touch the artist is not a link.** The name is 24px tall and sits right
 under the cover a thumb is aiming at, and a miss costs a page load rather than
 a miss — the rule a song row already follows
-([Song List Item](song-list-item.md)). So on a coarse pointer it renders as
+([Song List Item](song-list-item.md)). The title follows the same rule: on touch it is text too, and cover plus text are one tap. So on a coarse pointer it renders as
 text, the row opens the album like the title does, and "Go to artist" stays in
 the sheet a long press raises. The gate is `useCoarsePointer()`, not the window
 width: a mouse in a narrow window keeps the link.

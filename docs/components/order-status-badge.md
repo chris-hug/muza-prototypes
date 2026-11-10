@@ -94,6 +94,8 @@ Fixed, no steps. `w-fit shrink-0 whitespace-nowrap`; the menu is the app
 
 **Keyboard focus is `focus-ring`** — a 2px `outline` at 20% of `--ring`, no offset. One utility for every control in the app, so tabbing through a form looks like one system; pointer clicks show nothing (`outline-none` + `:focus-visible`).
 
+**The trigger carries `touch-target`.** The badge paints at 27 and stays that size; on a coarse pointer its target is 44 tall.
+
 ## Open questions
 
 - order-status-badge.tsx:35–39 colours `new` / `shipped` / `delivered` /

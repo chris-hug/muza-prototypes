@@ -120,7 +120,7 @@ Figma node 37:931 is the reference frame. The heights are exact:
 | `sm` | `h-8` 32px | `px-3` 12px | `text-2xsmall` 15px | `font-normal` |
 | `default` | `h-10` 40px | `px-[18px]` | `text-small` 19px | `font-medium` |
 | `lg` | `h-12` 48px | `px-10` 40px | `text-small` 19px | `font-medium` |
-| `icon-sm` | `size-8` 32px (40px hit area) | — | — | — |
+| `icon-sm` | `size-8` 32px (38px hit area with a mouse) | — | — | — |
 | `icon` | `size-10` 40px | — | — | — |
 | `icon-lg` | `size-12` 48px | — | — | — |
 
@@ -161,13 +161,16 @@ own `size-*` class — `[&_svg:not([class*='size-'])]:size-4`. Glyphs are also
 never on a path inside it, and a glyph never collapses when the label wraps
 or the row gets tight.
 
-**`icon-sm` is 32px to look at and 40×40 to hit.** It is the size list rows,
-sheet headers and the player's secondary controls use, and 32px is under the
-40×40 minimum touch target. The size adds `after:absolute after:-inset-1
-after:content-['']`: a pseudo-element hanging 4px past every edge, invisible,
-that catches the tap. The `relative` on the base class exists for this; take
-it off and the pseudo-element positions against the nearest ancestor instead.
-Layout is untouched — neighbours still see a 32px box.
+**Every Button is 44×44 to hit on a coarse pointer**, whatever its paint. The
+`touch-target` class is on the component, so a menu or dialog trigger that
+renders through Button keeps it. Layout is untouched: neighbours still see the
+painted box. Two Buttons closer than 12px cross targets, so open the gap there.
+
+**With a mouse `icon-sm` hits at 38×38.** It adds `after:absolute after:-inset-1
+after:content-['']`, a pseudo-element hanging 4px past the padding edge, which
+is inside the 1px border: 30 + 8, not the 40 this page used to claim. The
+`relative` on the base class exists for this; take it off and the pseudo-element
+positions against the nearest ancestor instead.
 
 Because an icon button is 32px around a 16px glyph, the *glyph* is 8px in
 from the box edge. A header that wants the glyph on its gutter line pulls the
@@ -278,8 +281,8 @@ is as wide as its label plus padding and reads none of the three measures
 (window, column, box). Where a button must fill its row — the `lg`
 confirming action in a `mobile="form"` dialog — the call site says so with
 `className="w-full"`; the component never stretches on its own. The one
-size that responds to anything is `icon-sm`'s 40×40 hit area, and that is a
-pointer concern, not a width one.
+size that responds to anything is the hit area, and that is a pointer concern,
+not a width one.
 
 ## Do not
 

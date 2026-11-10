@@ -1719,8 +1719,22 @@ img {
    boxes themselves 44 wide first, so the pseudo-element only adds height: the
    mini player's Play and Next touch, and their targets meet without crossing
    (player-bar.md). */
+/* The primitives are named here rather than at each call site. A census at 375
+   found 18 kinds of control still under 44, nearly all of them a Button or a
+   Tab somebody had not thought to mark. `tabs-trigger` takes `::before`
+   because its `::after` is the active underline. */
 @media (pointer: coarse) {
-  .touch-target::after {
+  [data-slot="select-trigger"] { position: relative; }
+  /* Two 38s side by side cannot both grow without crossing. */
+  [data-slot="toggle"] { min-width: 44px; }
+
+  .touch-target::after,
+  [data-slot="toggle"]::after,
+  [data-slot="checkbox"]::after,
+  [data-slot="radio-group-item"]::after,
+  [data-slot="switch"]::after,
+  [data-slot="select-trigger"]::after,
+  [data-slot="tabs-trigger"]::before {
     content: "";
     position: absolute;
     top: 50%;

@@ -228,6 +228,7 @@ export function SortHeader({
       onClick={onClick}
       style={style}
       className={cn(
+        "relative touch-target",
         "group/sort flex items-center gap-0.5 min-w-0 overflow-hidden select-none cursor-pointer",
         "state-fade outline-none rounded-sm focus-ring",
         className,

@@ -77,7 +77,7 @@ export function OrderStatusBadge({
         className={cn(
           // Mirror the Badge primitive's shape but make it tappable. The
           // chevron signals "this is interactive".
-          "inline-flex w-fit shrink-0 items-center gap-1 rounded-sm border",
+          "relative touch-target inline-flex w-fit shrink-0 items-center gap-1 rounded-sm border",
           "pt-[4px] pb-[6px] pl-[6px] pr-[4px] text-2xsmall font-normal leading-none whitespace-nowrap",
           "transition-[color,background-color,border-color,opacity] duration-[130ms] ease-[cubic-bezier(0.2,0,0,1)] cursor-pointer outline-none",
           "focus-ring",

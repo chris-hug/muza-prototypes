@@ -86,6 +86,7 @@ rails, and the Playlists shelf on search.
 | cover — tap / click | `openPlaylist(slugify(title))` |
 | cover — long press (450–500ms, 8px tolerance) | the playlist's own `DetailMenuSheetBody` sheet |
 | title | open the playlist (or `onTitleClick`) |
+| title | with a mouse, a link to the playlist. On a coarse pointer it is plain text and opens the playlist with the rest of the card |
 | owner name | with a mouse, the owner's page (or `onOwnerClick`). On a coarse pointer it is plain text and the songs · owner row opens the playlist, as on an [Album Card](album-card.md); "Go to owner" stays in the long-press sheet. The gate is `useCoarsePointer()`, not the width |
 | Play (hover) | the playlist's **first track**, context = the playlist title — never navigates |
 | ♥ (hover) | toggles the library store; fills when saved; toasts Saved / Removed with Undo |

@@ -300,13 +300,20 @@ export function AlbumCard({
              longer release names wrap instead of getting truncated
              mid-word. The "Owned" pill / pricing meta both live in
              the third row below, not here. */}
-        <button
-          type="button"
-          onClick={onTitleClick ?? goAlbum}
-          className={cn(titleSize, leadingCls, "font-normal text-foreground text-left line-clamp-2 link-underline pb-[6px] -mb-[6px] outline-none cursor-pointer")}
-        >
-          {title}
-        </button>
+        {/* Text on a coarse pointer, like the name below it: a 24px link between
+            a cover and a row that both open the same page was a target of its
+            own for nothing. Cover and text are one tap. */}
+        {coarse ? (
+          <p onClick={onTitleClick ?? goAlbum} className={cn(titleSize, leadingCls, "font-normal text-foreground text-left line-clamp-2 pb-[6px] -mb-[6px]")}>{title}</p>
+        ) : (
+          <button
+            type="button"
+            onClick={onTitleClick ?? goAlbum}
+            className={cn(titleSize, leadingCls, "font-normal text-foreground text-left line-clamp-2 link-underline pb-[6px] -mb-[6px] outline-none cursor-pointer")}
+          >
+            {title}
+          </button>
+        )}
         {/* Artist row — artist + optional year, on one line with the
              artist text taking the underline-on-hover affordance
              (independent click target) and the year as plain meta

@@ -282,7 +282,7 @@ function ProfileIdentityRow() {
             type="button"
             onClick={() => setEditAvatarOpen(true)}
             aria-label="Edit profile picture"
-            className="absolute -bottom-1 -right-1 size-7 rounded-full bg-secondary text-secondary-foreground border border-border hover:bg-secondary-hover transition-colors flex items-center justify-center cursor-pointer after:absolute after:-inset-1.5 after:content-['']"
+            className="touch-target absolute -bottom-1 -right-1 size-7 rounded-full bg-secondary text-secondary-foreground border border-border hover:bg-secondary-hover transition-colors flex items-center justify-center cursor-pointer after:absolute after:-inset-1.5 after:content-['']"
           >
             <Pencil className="size-3.5" />
           </button>
@@ -562,7 +562,7 @@ function PaymentMethodRow({
       <DropdownMenu>
         <DropdownMenuTrigger
           aria-label={`Manage ${method.brand} ${method.last4 ?? method.email}`}
-          className="size-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors outline-none focus-ring"
+          className="relative touch-target size-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors outline-none focus-ring"
         >
           <MoreHorizontal className="size-4" />
         </DropdownMenuTrigger>
@@ -668,7 +668,7 @@ function PaymentMethodDialog({
                 <button
                   type="button"
                   onClick={() => setReplacing(true)}
-                  className="text-xsmall text-primary-text link-underline"
+                  className="relative touch-target text-xsmall text-primary-text link-underline"
                 >
                   Replace
                 </button>

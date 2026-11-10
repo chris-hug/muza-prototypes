@@ -86,7 +86,7 @@ pad is a no-op that only shows up on a real notched phone.
 | `MobileTitleRow` | `h1` + optional `trailing` cluster | `text-2xlarge font-medium tracking-tight truncate`; row `min-h-9`, cluster `gap-2` |
 | `MobileIconButton` | round secondary action (the `+` / search pills) | `size-9 rounded-full bg-secondary`, glyph `18px`, `active:scale-[0.96]` |
 | `MobileAvatar` | trailing account image | `size-9 rounded-full`, `alt=""` |
-| `MobileSearchBar` | pill search field, optional Cancel / clear | `h-10 rounded-full bg-secondary pl-4 pr-3`, `text-base`, Cancel in `text-primary-text` |
+| `MobileSearchBar` | pill search field, optional Cancel / clear | `h-10 pointer-coarse:h-11 rounded-full bg-secondary pl-4 pr-3` (44 is the field's target; an input cannot carry a pseudo-element), `text-base`, Cancel in `text-primary-text` |
 | `MobilePillTabs` | horizontal-scroll filter strip | see below |
 | `MobileScopeToggle` | two-segment switch | `bg-muted/70 p-1`, segments `h-8 text-small font-medium`, active `bg-background` + shadow, `aria-pressed` |
 

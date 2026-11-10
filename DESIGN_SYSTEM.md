@@ -1169,7 +1169,9 @@ Tokens are **roles**, not colours. Never mix roles.
 **32px of paint may carry 44px of target.** WCAG 2.2 AA asks 24×24 and
 everything clears it; **44×44** is the AAA figure and Apple's, and it is the
 one a fingertip wants. `touch-target` grows an inert pseudo-element to 44
-without moving a pixel of paint, on coarse pointers only. **Never on two
+without moving a pixel of paint, on coarse pointers only. Button, Tabs, Toggle,
+Checkbox, Radio, Switch and Select carry it themselves; only a bespoke `<button>`
+adds the class. **Never on two
 controls closer than 12px apart** — overlapping hit areas are worse than small
 ones — unless both boxes are already 44 wide, so the pseudo-element only adds
 height ([player-bar.md](docs/components/player-bar.md)).

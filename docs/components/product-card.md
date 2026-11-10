@@ -30,7 +30,7 @@ linked from the Artist page section `8971:98290`.
 |---|---|
 | `cover` `title` `price` | required; `price` is a **formatted string** (`"32 $"`, `"€ 25"`) — formatting is the caller's, so the card carries no currency logic |
 | `priceLabel` | the tail; defaults to `"or more"`, pass `""` for none |
-| `onClick` | the card and the title; opens the product |
+| `onClick` | the card and the title; opens the product. On a coarse pointer the title is plain text and the card takes the tap |
 | `onAddToCart` | the pill |
 
 ## Usage
@@ -77,6 +77,8 @@ same height regardless.
 **Artwork carries `art-edge`** — a 1px outline inset by 1px, pure black at 10% in light and pure white at 10% in dark. Pure, never a tinted neutral: a tinted edge picks up the surface beneath it and reads as dirt along the image. It is an `outline`, so it costs no layout and follows the corner radius.
 
 **Text that navigates carries `link-underline`** — the line is a background gradient whose width runs 0 → 100% over 140ms, so it wipes in from the left and retracts the same way. `text-decoration` cannot be drawn, only faded.
+
+**`useCoarsePointer` makes the title plain text**, for the same reason as [Album Card](album-card.md): the card around it opens the same page.
 
 ## Open questions
 

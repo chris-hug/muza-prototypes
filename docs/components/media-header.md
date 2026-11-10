@@ -171,6 +171,8 @@ In the frame the window chips read: 375 → 351 stacked · 584 → 536 stacked �
 
 **Artwork carries `art-edge`** — a 1px outline inset by 1px, pure black at 10% in light and pure white at 10% in dark. Pure, never a tinted neutral: a tinted edge picks up the surface beneath it and reads as dirt along the image. It is an `outline`, so it costs no layout and follows the corner radius. On the cover and on every tile of the 2×2 playlist collage, plus the `size-6` owner avatar beside the meta line.
 
+**The owner carries `touch-target`.** It is 24 tall in the meta line with nothing else tappable near it, so it grows to 44 on a coarse pointer without taking anything from a neighbour.
+
 ## Open questions
 
 - media-header.tsx:3 says the header is "256px-tall" · the horizontal tier

@@ -243,6 +243,8 @@ exactly the confusion the name invites — it is a FIELD, so it takes
 `border-border` like the rest of the family. Pointing the field at it would repaint all of
 those. The name is inherited, the usage is deliberate, and neither changes.
 
+**The clear ✕ carries `touch-target`.** It paints at 16 and sits inside the field, so on a coarse pointer its 44 reaches 6px over the input. The ✕ is on top and wins that strip, which is the side of the miss you want.
+
 ## Open questions
 
 - ~~Type size disagreed across the family.~~ Settled: every form control is `text-small` (19px), and the `sm / default / lg` ladder is now one module (`src/lib/control-size.ts`) that `Button`, `Input`, `SelectTrigger`, `ComboboxTrigger`, `DatePicker` and `ChipInput` all read. See DESIGN_SYSTEM.md › Form controls › One size ladder.

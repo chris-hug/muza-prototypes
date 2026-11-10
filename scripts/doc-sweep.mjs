@@ -34,6 +34,7 @@ const DOCS = "docs/components"
    catalogue names differently on purpose — the doc is named for the thing a
    reader looks up, not for the module. */
 const ALIAS = {
+  "qty-stepper": "numberfield",
   "alert-dialog": "alertdialog",
   alert: "alerts",
   chip: "chips",

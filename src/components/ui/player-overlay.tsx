@@ -424,7 +424,11 @@ export function PlayerOverlay({
     // beyond their floor when there's spare height; the cover and waveform
     // grow into whatever's left.
     const FIXED_SECTIONS = 378
-    const MIN_COVER     = 140
+    // Was 140. Below a 558 window that floor no longer fits, and the deficit
+    // came out of the Info / Share / Radio row, which has `flex-1` and folded
+    // onto the transport: seen on an iPhone in Brave, where the toolbars leave
+    // the sheet about 500 tall. The cover is the one thing that can give.
+    const MIN_COVER     = 64
     // Sized so the cover fills the available width on the largest current
     // iPhone (Pro Max ≈ 440pt minus 32px horizontal padding = 408 max). On
     // smaller devices the width cap kicks in first.
@@ -584,7 +588,7 @@ export function PlayerOverlay({
             <button
               type="button"
               onClick={onPlayingFromClick}
-              className="group link-underline-group w-full text-left rounded-sm focus-visible:outline-none focus-ring"
+              className="relative touch-target group link-underline-group w-full text-left rounded-sm focus-visible:outline-none focus-ring"
             >
               <MarqueeText
                 containerClassName="leading-none"
@@ -645,7 +649,7 @@ export function PlayerOverlay({
               <button
                 type="button"
                 onClick={onArtistClick}
-                className="state-fade self-start flex items-center gap-1.5 min-w-0 max-w-full rounded-full hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/30"
+                className="relative touch-target state-fade self-start flex items-center gap-1.5 min-w-0 max-w-full rounded-full hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/30"
               >
                 <img
                   src={artistAvatar}
@@ -700,7 +704,9 @@ export function PlayerOverlay({
             row in that leftover space; `py-2` enforces an 8px minimum top
             and bottom padding so the icons never touch the neighbouring
             sections even when the region shrinks on small screens. */}
-        <div className="flex-1 min-h-0 w-full flex items-center justify-center py-2">
+        {/* `min-h-12`, not `min-h-0`: this row never yields its own height. If
+            anything is short it should be the cover, and it is a bug to see. */}
+        <div className="flex-1 min-h-12 w-full flex items-center justify-center py-2">
           <div className="flex items-center justify-center gap-8">
             <Button variant="ghost" size="icon-sm" aria-label="Info / credits">
               <Info className="size-5" strokeWidth={1.5} />

@@ -19,11 +19,11 @@ scrolling, from a 568px-tall SE to a 956px Pro Max.
 | Backdrop | the cover, full-bleed, `blur(32px) scale-110`, under the same `.frosted-glass` the tab bar and the mobile header use, so the overlay reads as one continuous glass with the rest of the chrome | `bg-background` under it all |
 | Drag handle | a `ghost` `Button`, `w-full py-4 h-auto rounded-none`, holding a `h-1 w-8 rounded-full` pill; tap → `onClose` | `bg-foreground/80` |
 | Playing from | "Playing from:" and the source as a `MarqueeText` — a link when `onPlayingFromClick` is passed | `text-xsmall leading-none font-normal`, `text-muted-foreground` / `text-foreground` |
-| Cover | a square, `rounded-xs shadow-md art-edge`, sized 140–440px by the budget below | `art-edge` is the 1px inset outline every piece of artwork carries — black at 10% in light, white at 10% in dark — so a pale cover still has an edge against the blurred version of itself behind it |
+| Cover | a square, `rounded-xs shadow-md art-edge`, sized 64–440px by the budget below | `art-edge` is the 1px inset outline every piece of artwork carries — black at 10% in light, white at 10% in dark — so a pale cover still has an edge against the blurred version of itself behind it |
 | Title row | `h2` with a `MarqueeText`, a `LibraryHeartButton` for the song and a "…" button, both `outline` `icon` | `text-large font-medium leading-tight text-foreground` |
 | Artist row | avatar `size-6 min-w-6 rounded-full ring-1 ring-border` + name; a link when `onArtistClick` is passed | `text-xsmall font-medium text-muted-foreground` |
 | Waveform row | `mt-3`, timestamps either side, the `Waveform` 40–160px tall; marked `data-swipe-ignore` because it owns its own horizontal drag (seek) | `text-2xsmall leading-none text-muted-foreground tabular-nums` |
-| Secondary icons | Info · Share · Radio, `ghost` `icon-sm`, glyphs `size-5` at stroke 1.5, `gap-8`, centred in a `flex-1` region with `py-2` so they never touch a neighbour | — |
+| Secondary icons | Info · Share · Radio, `ghost` `icon-sm`, glyphs `size-5` at stroke 1.5, `gap-8`, centred in a `flex-1 min-h-12` region with `py-2` so they never touch a neighbour. The floor matters: it was `min-h-0`, and under a 558 window the 140px cover floor took the row's height, so the icons folded onto the transport (iPhone in Brave, about 500 tall). Now the cover gives way, down to 64 | — |
 | Transport | Shuffle · Previous · **Play** · Next · Repeat, `gap-3`, sizes interpolated by height (below); **`shrink-0`, not `flex-1`** — pinned just above the tabs so the controls sit in the same place on every tab | `ghost`, `hover:bg-transparent` |
 | Tabs | `Tabs variant="pill"` — Lyrics · Now listening · Up next; `pt-5 pb-6`, the triggers `font-normal!` because the pill variant's own `font-medium` has equal specificity and wins by source order without it | — |
 
@@ -77,7 +77,7 @@ and width `W` and solves:
 FIXED     378   drag ~36 + playing-from ~50 + gap 8 + title block ~76
                 + icons floor 48 + transport floor 80 + tabs ~80
 available H − 378
-cover     clamp(140, min(available − 40, W − 32), 440)
+cover     clamp(64, min(available − 40, W − 32), 440)
 waveform  clamp(40, available − cover, 160)
 t         (H − 568) / (956 − 568), clamped 0–1
 ```
@@ -141,6 +141,8 @@ container pins it to this element wherever the overlay is mounted.
 | Keyboard focus | `focus-ring`, the 2px outline at 20% of `--ring` |
 | Transport | press is opacity, never geometry: `hover:opacity-70 active:opacity-40` on a shared `transportBtn`, whose transition names `scale` explicitly because Tailwind v4 compiles `scale-*` to its own property and a list saying `transform` animates nothing |
 | The three `hover:bg-transparent` transport buttons | also `[--hover-fill:transparent]` — they are `Button variant="ghost"`, and the variant's own `--hover-fill` would otherwise grow the accent surface they deliberately do not want |
+
+**"Playing from" and the artist carry `touch-target`.** They paint at 17 and 26; both are alone on their line, so 44 crosses nothing.
 
 ## Open questions
 

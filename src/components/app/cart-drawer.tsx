@@ -174,7 +174,7 @@ function CurrencyPicker() {
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label="Change currency"
-        className="inline-flex items-center gap-1 h-8 px-2 rounded-full text-xsmall text-muted-foreground hover:text-foreground hover:bg-muted transition-colors outline-none focus-ring"
+        className="relative touch-target inline-flex items-center gap-1 h-8 px-2 rounded-full text-xsmall text-muted-foreground hover:text-foreground hover:bg-muted transition-colors outline-none focus-ring"
       >
         <Globe className="size-3.5" />
         <span className="font-medium">{cart.currency.code}</span>
@@ -533,7 +533,7 @@ function ShippingAddressLink() {
       <button
         type="button"
         onClick={openDialog}
-        className="inline-flex items-center gap-1 text-foreground underline underline-offset-3 decoration-border hover:decoration-foreground transition-colors truncate text-left"
+        className="relative touch-target inline-flex items-center gap-1 text-foreground underline underline-offset-3 decoration-border hover:decoration-foreground transition-colors truncate text-left"
       >
         <MapPin className="size-3 shrink-0" />
         <span className="truncate">{formatAddress(cart.shippingAddress)}</span>
@@ -744,7 +744,7 @@ function WalletCoverage({ onTopUp }: { onTopUp: () => void }) {
         <button
           type="button"
           onClick={onTopUp}
-          className="text-destructive tabular-nums link-underline"
+          className="relative touch-target text-destructive tabular-nums link-underline"
         >
           short {cart.format(cart.walletShortfall)} · top up
         </button>
@@ -774,7 +774,7 @@ function FooterTrustLine() {
         render={
           <button
             type="button"
-            className="hover:text-foreground transition-colors underline underline-offset-3"
+            className="relative touch-target hover:text-foreground transition-colors underline underline-offset-3"
           />
         }
       >
@@ -860,7 +860,7 @@ function TopUpWalletDialog({
                   key={usd}
                   type="button"
                   onClick={() => setDraft((usd * cart.currency.rate).toFixed(cart.currency.decimals))}
-                  className="text-2xsmall px-2 py-1 rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors tabular-nums"
+                  className="relative touch-target text-2xsmall px-2 py-1 rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors tabular-nums"
                 >
                   {cart.format(usd)}
                 </button>
@@ -882,7 +882,7 @@ function TopUpWalletDialog({
               </div>
               <button
                 type="button"
-                className="text-2xsmall text-muted-foreground hover:text-foreground transition-colors underline underline-offset-3"
+                className="relative touch-target text-2xsmall text-muted-foreground hover:text-foreground transition-colors underline underline-offset-3"
               >
                 Change
               </button>

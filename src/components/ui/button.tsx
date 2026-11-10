@@ -102,9 +102,10 @@ const buttonVariants = cva(
         sm:         "h-8 px-3 text-2xsmall font-normal",
         lg:         "h-12 px-10 text-small font-medium",
         icon:       "size-10",
-        // 32px visual, 40×40 hit area via pseudo-element (skill: 40×40 min).
-        // The `relative` on the base + `after:absolute -inset-1` extends the
-        // clickable region by 4px on each side without affecting layout.
+        // 32px visual. With a mouse the pseudo-element adds 4px a side, which
+        // measures 38 rather than 40: an absolute box insets from the padding
+        // edge, inside the 1px border. On a coarse pointer app.css replaces it
+        // with the 44 every Button gets there.
         "icon-sm":  "size-8 after:absolute after:-inset-1 after:content-['']",
         "icon-lg":  "size-12",
       },
@@ -131,6 +132,9 @@ function Button({
       // variant's `h-auto`/`p-0` and the link ends up 40px tall with 18px of
       // side padding. Appending here puts it last, where it wins.
       className={cn(
+        // Here and not by data-slot in app.css: a menu or dialog trigger
+        // renders through Button and replaces the data-slot with its own.
+        "touch-target",
         buttonVariants({ variant, size }),
         variant === "link" && size !== "default" && "h-auto p-0",
         // …but it still has to sit on the SAME baseline as the pills it stands

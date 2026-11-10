@@ -45,8 +45,10 @@ export interface QtyStepperProps {
 }
 
 const SIZE = {
-  default: { wrap: "h-10", btn: "size-8", icon: "size-3.5", input: "min-w-[20px]" },
-  sm:      { wrap: "h-8",  btn: "size-6", icon: "size-3",   input: "min-w-[16px]" },
+  // On a coarse pointer the row is 44 tall and the field fills it, because an
+  // input cannot carry a pseudo-element. The ± stay small and grow by target.
+  default: { wrap: "h-10 pointer-coarse:h-11", btn: "relative touch-target size-8", icon: "size-3.5", input: "min-w-[20px] pointer-coarse:self-stretch" },
+  sm:      { wrap: "h-8 pointer-coarse:h-11",  btn: "relative touch-target size-6", icon: "size-3",   input: "min-w-[16px] pointer-coarse:self-stretch" },
 } as const
 
 export function QtyStepper({

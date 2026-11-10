@@ -128,7 +128,7 @@ function Input({
             type="button"
             onClick={onClear}
             aria-label="Clear"
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground outline-none focus-visible:text-foreground [&_svg]:size-4"
+            className="touch-target absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground outline-none focus-visible:text-foreground [&_svg]:size-4"
           >
             <X />
           </button>

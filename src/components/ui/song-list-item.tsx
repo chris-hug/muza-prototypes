@@ -618,7 +618,7 @@ export function SongListItem({
              drag the rows already answer to. Spotify and YouTube Music both
              show the "…" on every row for the same reasons. A long-press can
              be added later as an accelerator; it cannot be the only door. */
-        <div className="flex items-center gap-0.5 shrink-0 relative px-2 py-1.5">
+        <div className="flex items-center gap-0.5 pointer-coarse:gap-3 shrink-0 relative px-2 py-1.5">
           {/* Always-on left fade veil — sits just left of the cluster
                so the meta text dissolves into the row bg before the
                action icons instead of hard-truncating with an ellipsis.

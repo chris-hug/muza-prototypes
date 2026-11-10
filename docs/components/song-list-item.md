@@ -295,6 +295,9 @@ The duration is `text-right min-w-10 text-xsmall font-light tracking-[0.02em]
 text-muted-foreground leading-4` — the meta line's type on a 40px minimum
 track so columns of times line up. No tabular sizing beyond that.
 
+
+On a coarse pointer the ♥ and ⋯ sit 12px apart (`pointer-coarse:gap-3`). Both are 44 to hit, and at the old 2px their targets crossed: a miss saved the song.
+
 ## `compact` — the swipe-rail cluster, chosen by pointer
 
 `compact` is for rows inside a sideways-scrolling

@@ -90,7 +90,7 @@ export function ArtistHero({ name, cover, avatar, bio, artistId, isPlaying, onPl
               <button
                 type="button"
                 onClick={() => setBioOpen(true)}
-                className="underline underline-offset-[3px] [text-decoration-thickness:1px] cursor-pointer"
+                className="relative touch-target underline underline-offset-[3px] [text-decoration-thickness:1px] cursor-pointer"
               >
                 read more
               </button>

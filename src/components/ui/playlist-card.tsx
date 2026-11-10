@@ -227,13 +227,20 @@ export function PlaylistCard({
       </div>
 
       <div className={cn("flex flex-col min-w-0", rowsGap)}>
-        <button
-          type="button"
-          onClick={onTitleClick ?? goPlaylist}
-          className={cn(titleSize, leadingCls, "font-normal text-foreground text-left line-clamp-2 link-underline pb-[6px] -mb-[6px] outline-none cursor-pointer")}
-        >
-          {title}
-        </button>
+        {/* Text on a coarse pointer, like the name below it: a 24px link between
+            a cover and a row that both open the same page was a target of its
+            own for nothing. Cover and text are one tap. */}
+        {coarse ? (
+          <p onClick={onTitleClick ?? goPlaylist} className={cn(titleSize, leadingCls, "font-normal text-foreground text-left line-clamp-2 pb-[6px] -mb-[6px]")}>{title}</p>
+        ) : (
+          <button
+            type="button"
+            onClick={onTitleClick ?? goPlaylist}
+            className={cn(titleSize, leadingCls, "font-normal text-foreground text-left line-clamp-2 link-underline pb-[6px] -mb-[6px] outline-none cursor-pointer")}
+          >
+            {title}
+          </button>
+        )}
         {/* On a coarse pointer the owner is text and this row opens the
             playlist, as on AlbumCard: a 24px link under the cover a thumb is
             aiming at costs a page load on a miss, and "Go to owner" stays in

@@ -85,6 +85,8 @@ It reads none of the three measures.
   `pointer-events-none opacity-50` on the group — so the whole pill fades,
   not just the discs.
 
+**On a coarse pointer the row is 44 tall** and the − and + carry `touch-target`. They paint at 24 or 32 and sit at opposite ends, so their targets cannot meet. The count between them is read-only, so nothing is lost at the 1px border.
+
 ## Open questions
 
 - The section is titled **NumberField** and its id is `numberfield`; the

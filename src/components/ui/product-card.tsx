@@ -27,6 +27,7 @@
 
 import { ShoppingCart } from "lucide-react"
 
+import { useCoarsePointer } from "@/lib/use-media-query"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
@@ -48,6 +49,7 @@ export function ProductCard({
   cover, title, price, priceLabel = "or more",
   onClick, onAddToCart, className,
 }: ProductCardProps) {
+  const coarse = useCoarsePointer()
   const stop = (fn?: () => void) => (e: React.MouseEvent) => {
     e.stopPropagation()
     fn?.()
@@ -80,13 +82,18 @@ export function ProductCard({
            lines of height so cards in the same row stay flush
            regardless of how long each title is. */}
       <div className="flex flex-col gap-0.5 px-3 py-1 min-w-0">
-        <button
-          type="button"
-          onClick={stop(onClick)}
-          className="text-small font-normal leading-5 text-foreground text-left line-clamp-2 min-h-10 link-underline pb-[6px] -mb-[6px] outline-none cursor-pointer"
-        >
-          {title}
-        </button>
+        {/* Plain text on a coarse pointer: the card around it opens the same page. */}
+        {coarse ? (
+          <p className="text-small font-normal leading-5 text-foreground text-left line-clamp-2 min-h-10 pb-[6px] -mb-[6px]">{title}</p>
+        ) : (
+          <button
+            type="button"
+            onClick={stop(onClick)}
+            className="text-small font-normal leading-5 text-foreground text-left line-clamp-2 min-h-10 link-underline pb-[6px] -mb-[6px] outline-none cursor-pointer"
+          >
+            {title}
+          </button>
+        )}
         <div className="flex items-baseline gap-1 text-small leading-5">
           <span className="font-medium text-foreground">{price}</span>
           {priceLabel && (

@@ -11,7 +11,7 @@ export const filterTriggerCls = (active: boolean) =>
     // explicit pt/pb). The Select + Input variant (`pt-[6px] pb-[10px]`)
     // sits too high for chips because the lighter `font-normal` weight
     // exposes more empty space above the glyphs than below.
-    "press-ripple relative [--press-fill:var(--press-on-muted)]",
+    "press-ripple relative touch-target [--press-fill:var(--press-on-muted)]",
     "inline-flex items-center gap-1.5 h-10 pl-4 pr-3 rounded-full border pb-px",
     // House press: colour, 90ms, same curve as Button and Chip.
     "text-small font-normal whitespace-nowrap select-none cursor-pointer",

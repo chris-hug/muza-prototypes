@@ -84,6 +84,8 @@ Column-filling; no steps of its own. The table is `w-full` of its column with co
 - Selection is the caller's: set `data-state="selected"` on the row. A leading checkbox column is the Studio / Orders convention, with the live [`BulkActionBar`](bulk-action-bar.md) appearing once anything is ticked.
 - Resize as above, mouse only.
 
+**`SortHeader` carries `touch-target`.** The label paints at 26; the cell gives it room to reach 44 on a coarse pointer.
+
 ## Open questions
 
 - `media-list-table.tsx:7` and `artist-profile-view.tsx:635` describe the list tables as "text-xsmall muted headers, text-small body"; `TableCell` is `text-xsmall` and neither file overrides it, so the body is `text-xsmall` too.

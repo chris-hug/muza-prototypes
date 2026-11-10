@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Pause, Volume2 } from "lucide-react"
+import { useCoarsePointer } from "@/lib/use-media-query"
 import { cn } from "@/lib/utils"
 import { Waveform } from "@/components/ui/waveform"
 import { MarqueeText } from "@/components/ui/marquee-text"
@@ -308,6 +309,9 @@ export function PlayerBarB({
   bound,
   shuffle: shuffleBound,
 }: PlayerBarBProps) {
+  // On touch the track text is plain: the pill around it opens the player,
+  // and a 21px link inside it only took taps meant for that.
+  const coarse = useCoarsePointer()
   // Playback — local state unless bound to the global store.
   const [localPlaying, setLocalPlaying] = useState(false)
   const playing  = bound ? bound.playing : localPlaying
@@ -386,7 +390,7 @@ export function PlayerBarB({
 
           {/* Text + Plus button — positioned inside the solid pill. */}
           <div className="absolute inset-[19px_11px_19px_96px] flex items-center gap-1 min-w-0">
-            <TrackText title={track.title} artist={track.artist} album={track.album} gap="gap-1" onArtistClick={onArtistClick} onAlbumClick={onAlbumClick} />
+            <TrackText title={track.title} artist={track.artist} album={track.album} gap="gap-1" onArtistClick={coarse ? undefined : onArtistClick} onAlbumClick={coarse ? undefined : onAlbumClick} />
             <LibraryHeartButton
               type="song"
               id={slugify(track.title)}
@@ -499,7 +503,7 @@ export function PlayerBarB({
       >
 
         <div className="relative flex-1 flex items-center justify-between pl-[72px] pr-[3px] py-2 min-h-0">
-          <TrackText title={track.title} artist={track.artist} album={track.album} gap="gap-1" onArtistClick={onArtistClick} onAlbumClick={onAlbumClick} />
+          <TrackText title={track.title} artist={track.artist} album={track.album} gap="gap-1" onArtistClick={coarse ? undefined : onArtistClick} onAlbumClick={coarse ? undefined : onAlbumClick} />
 
           <div className="flex items-center shrink-0 h-full">
             {/* stopPropagation on every button so transport controls don't

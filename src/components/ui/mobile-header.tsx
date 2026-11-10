@@ -55,7 +55,7 @@ export function MobileIconButton({ label, onClick, children }: { label: string; 
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="relative flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground transition-[background-color] duration-[130ms] ease-[cubic-bezier(0.2,0,0,1)] hover:bg-secondary-hover active:bg-press-on-secondary outline-none focus-ring [&_svg]:size-[18px] after:absolute after:-inset-0.5 after:content-['']"
+      className="relative touch-target flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground transition-[background-color] duration-[130ms] ease-[cubic-bezier(0.2,0,0,1)] hover:bg-secondary-hover active:bg-press-on-secondary outline-none focus-ring [&_svg]:size-[18px] after:absolute after:-inset-0.5 after:content-['']"
     >
       {children}
     </button>
@@ -87,7 +87,7 @@ export function MobileSearchBar({
 }) {
   return (
     <div className="flex items-center gap-1">
-      <div className="flex flex-1 min-w-0 items-center gap-2 h-10 rounded-full bg-secondary pl-4 pr-3">
+      <div className="flex flex-1 min-w-0 items-center gap-2 h-10 pointer-coarse:h-11 rounded-full bg-secondary pl-4 pr-3">
         <Search className="size-4 shrink-0 text-muted-foreground" />
         <input
           value={value}
@@ -96,14 +96,14 @@ export function MobileSearchBar({
           onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); onSubmit?.() } }}
           placeholder={placeholder}
           autoFocus={autoFocus}
-          className="flex-1 min-w-0 bg-transparent outline-none text-base font-normal text-foreground placeholder:text-muted-foreground"
+          className="flex-1 min-w-0 self-stretch bg-transparent outline-none text-base font-normal text-foreground placeholder:text-muted-foreground"
         />
         {onClear && value
-          ? <button type="button" onClick={onClear} aria-label="Clear" className="state-fade shrink-0 text-muted-foreground hover:text-foreground"><X className="size-4" /></button>
+          ? <button type="button" onClick={onClear} aria-label="Clear" className="relative touch-target state-fade shrink-0 text-muted-foreground hover:text-foreground"><X className="size-4" /></button>
           : null}
       </div>
       {onCancel && (
-        <button type="button" onClick={onCancel} className="shrink-0 px-2 text-base font-normal text-primary-text">
+        <button type="button" onClick={onCancel} className="relative touch-target shrink-0 px-2 text-base font-normal text-primary-text">
           Cancel
         </button>
       )}
@@ -188,7 +188,7 @@ export function MobileScopeToggle({ options, value, onChange }: {
             onClick={() => onChange?.(o.value)}
             aria-pressed={active}
             className={cn(
-              "flex-1 h-8 rounded-full text-small font-medium transition-colors outline-none focus-ring",
+              "relative touch-target flex-1 h-8 rounded-full text-small font-medium transition-colors outline-none focus-ring",
               active ? "bg-background text-foreground shadow-[0_1px_2px_rgba(13,13,4,0.10)]" : "text-muted-foreground",
             )}
           >

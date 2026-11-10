@@ -24,7 +24,7 @@ disc can overhang it.
 |---|---|---|
 | Current track | the left section, `w-[max(15rem, calc(24cqw + 5rem))]` — floors at 240px, then 24% of the bar plus 80px, uncapped, so a wide screen gives the title more room. A **solid** pill (`bg-background`, inset 11px on the right) plus a fixed SVG lens on its right edge makes the protruding notch from Figma | — |
 | Disc | 96px, spindle 30, `absolute -left-[8px] -top-[8px]` — overhangs the pill by 8px; spins at one turn per 5s while playing, and **pauses in place** (the animation is always mounted, only its play-state toggles), so a pause never snaps it back to 0° | `ring-1 ring-black/10 shadow-md` |
-| Text | title as a `MarqueeText`; artist · album beneath, each a link when its handler is passed | `text-small text-foreground` · `text-xsmall text-muted-foreground`, links `hover:text-foreground` plus `link-underline`, the shared wipe-in underline |
+| Text | title as a `MarqueeText`; artist · album beneath, each a link when its handler is passed, and plain text on a coarse pointer because the pill already opens the player | `text-small text-foreground` · `text-xsmall text-muted-foreground`, links `hover:text-foreground` plus `link-underline`, the shared wipe-in underline |
 | Heart | a `LibraryHeartButton` for the song, `ghost` `icon`, glyph `size-5` | — |
 | Right section | `flex-1`, `rounded-r-full`, `px-3 gap-3` → `px-5 gap-6` from 688; `min-w` 392 → 448 (688) → 524 (800), content-driven | — |
 | Transport | `ShuffleToggle` (40×32, glyph 18) · Previous (30px) · **Play** (`size-12`, glyph 42, `hover:scale-110`) · Next · `RepeatToggle` — Shuffle and Repeat sit *inside* the transport row, outside the skip buttons, not in a far-right cluster | `text-foreground`, `hover:opacity-70 active:opacity-40` — opacity, not scale; the transport row's press is a colour step like every other press in the app |
@@ -147,6 +147,8 @@ image and the tap expands the bar.
 **Colour changes fade through `state-fade`** — 440ms in, 100ms out, on `cubic-bezier(0.2,0,0,1)`. Those links also carry it, so the colour and the underline arrive together.
 
 **Keyboard focus is `focus-ring`** — a 2px `outline` at 20% of `--ring`, no offset, the same one every control in the app draws; pointer clicks show nothing.
+
+**`useCoarsePointer` makes the mini pill's artist and album plain text.** The pill itself opens the player, so a 21px link inside it only took taps meant for that.
 
 ## Open questions
 
