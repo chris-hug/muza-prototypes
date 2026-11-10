@@ -845,6 +845,24 @@ const LIBRARY_SAVED_SEED = {
   song:     Object.fromEntries(SAVED_SONGS_SEED.map(s => [s.id, s])),
 }
 
+// Example data for Library › Offline. The songs are from other albums than
+// the six here on purpose: a song that came with an offline album is that
+// album's tile, so only singles saved on their own show in the songs block.
+const OFFLINE_SONG_IDS = new Set([
+  "witch-hunt-wayne-shorter", "infant-eyes-wayne-shorter", "cool-struttin-sonny-clark",
+  "cantaloupe-island-herbie-hancock", "one-finger-snap-herbie-hancock", "hat-and-beard-eric-dolphy",
+  "crescent-john-coltrane", "wise-one-john-coltrane", "greensleeves-john-coltrane",
+  "source-nubya-garcia", "afro-blue-robert-glasper",
+])
+const LIBRARY_OFFLINE_SEED = {
+  album: { a01: true, a03: true, a08: true, a09: true, a12: true, a14: true } as Record<string, true>,
+  playlist: {
+    "blue-note-essentials": true, "blue-note-late-night": true, "impulse-spiritual-jazz": true,
+    "coltrane-years-on-impulse": true, "strata-east-deep-cuts": true,
+  } as Record<string, true>,
+  song: Object.fromEntries(SAVED_SONGS_SEED.filter(s => OFFLINE_SONG_IDS.has(s.id)).map(s => [s.id, s])),
+}
+
 // Demo seed for the UserAccountProvider — pre-fills two of the
 // A Love Supreme tracks so the "X plays left" affordance has
 // something to show. Real wiring would persist these per-account.
@@ -2969,7 +2987,7 @@ export default function Home() {
   if (activeNav === "DesignSystem") {
     return (
       <CartProvider>
-        <UserLibraryProvider seed={LIBRARY_SEED} savedSeed={LIBRARY_SAVED_SEED}>
+        <UserLibraryProvider seed={LIBRARY_SEED} savedSeed={LIBRARY_SAVED_SEED} offlineSeed={LIBRARY_OFFLINE_SEED}>
           <UserAccountProvider initialTier="anonymous" initialPlayCounts={DEMO_PLAY_COUNTS}>
             <CreditsProvider>
               <PlayerProvider>
@@ -2987,7 +3005,7 @@ export default function Home() {
 
   return (
     <CartProvider>
-    <UserLibraryProvider seed={LIBRARY_SEED} savedSeed={LIBRARY_SAVED_SEED}>
+    <UserLibraryProvider seed={LIBRARY_SEED} savedSeed={LIBRARY_SAVED_SEED} offlineSeed={LIBRARY_OFFLINE_SEED}>
     <UserAccountProvider initialTier="anonymous" initialPlayCounts={DEMO_PLAY_COUNTS}>
     <CreditsProvider>
     <AddToPlaylistProvider>

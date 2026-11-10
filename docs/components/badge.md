@@ -90,7 +90,8 @@ obvious:
 | Surface | Badge? | Why |
 |---|---|---|
 | Search results (rows, cards) | no | the category tabs already name the type |
-| Library list rows / `MediaListItem` | no | the view is single-type |
+| Single-type library rows / `MediaListItem` | no | the view is single-type |
+| Library at rest and Library › Offline, list rows (`MediaListItem showType`) | yes | types share one list; nothing else names them |
 | Mobile "…" sheet header (`DetailMoreButton`) | yes | the sheet is context-free once open — album, playlist and artist |
 | Artist discography rows | yes | Album / Single / EP is a real distinction inside one list |
 | Studio | yes | mixed-type inventory |

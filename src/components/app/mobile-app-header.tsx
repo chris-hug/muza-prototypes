@@ -55,6 +55,8 @@ const Avatar = () => <ProfileMenu avatarClassName="size-9" triggerClassName="rel
 // the filters that type has. A second row for the filters read as a second
 // kind of navigation and cost a line on a screen that has none to spare. With
 // nothing active the row IS "all", so there is no All pill; ✕ returns there.
+// Offline works from either end: Offline then Albums lands on the same state
+// as Albums then Offline, and turning off one lit chip leaves the other on.
 // Horizontally swipable (MobilePillTabs scrolls on overflow).
 const LIBRARY_PAGES = ["Library", "Albums", "Artists", "Playlists", "Songs"]
 const CLEAR_TAB = "__clear"
@@ -65,6 +67,8 @@ const LIBRARY_TYPES: PillTab[] = [
   { value: "Songs", label: "Songs" },
 ]
 const LIBRARY_OFFLINE_TAB: PillTab = { value: "offline", label: "Offline" }
+// Not Artists: there is nothing about an artist to save offline.
+const OFFLINE_SUBFILTERS = LIBRARY_TYPES.filter(t => t.value !== "Artists")
 const LIBRARY_FILTERS: Record<string, PillTab[]> = {
   Albums: [{ value: "owned", label: "Owned" }, LIBRARY_OFFLINE_TAB],
   Artists: [],
@@ -235,11 +239,12 @@ function LibraryFilterRow({ activeNav, onNavChange }: { activeNav: string; onNav
     const offline = libraryStatus === "offline"
     return (
       <MobilePillTabs
-        tabs={offline ? [clearTab, LIBRARY_OFFLINE_TAB] : [...LIBRARY_TYPES, LIBRARY_OFFLINE_TAB]}
+        tabs={offline ? [clearTab, LIBRARY_OFFLINE_TAB, ...OFFLINE_SUBFILTERS] : [...LIBRARY_TYPES, LIBRARY_OFFLINE_TAB]}
         value={offline ? ["offline"] : []}
         onChange={v => {
-          if (v === CLEAR_TAB || v === "offline") setLibraryStatus(offline ? "all" : "offline")
-          else onNavChange(v)
+          if (v === CLEAR_TAB || v === "offline") { setLibraryStatus(offline ? "all" : "offline"); return }
+          if (offline) { scoped[v]?.[1]("offline"); setLibraryStatus("all") }
+          onNavChange(v)
         }}
       />
     )
@@ -247,14 +252,17 @@ function LibraryFilterRow({ activeNav, onNavChange }: { activeNav: string; onNav
 
   const type = LIBRARY_TYPES.find(t => t.value === activeNav)!
   const [status, setStatus] = scoped[activeNav] ?? ["all", () => {}]
-  // ✕ and the lit type both mean "back to everything".
   const clear = () => { setStatus("all"); onNavChange("Library") }
+  // The lit type comes off alone: with Offline still lit that is the mixed
+  // Offline view, not everything. ✕ is the one that clears both.
+  const dropType = () => { if (status === "offline") setLibraryStatus("offline"); clear() }
   return (
     <MobilePillTabs
       tabs={[clearTab, type, ...LIBRARY_FILTERS[activeNav]]}
       value={status === "all" ? [activeNav] : [activeNav, status]}
       onChange={v => {
-        if (v === CLEAR_TAB || v === activeNav) clear()
+        if (v === CLEAR_TAB) clear()
+        else if (v === activeNav) dropType()
         else setStatus(v === status ? "all" : v)
       }}
     />

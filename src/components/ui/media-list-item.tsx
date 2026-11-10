@@ -24,7 +24,7 @@ import { MoreHorizontal } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { type ContentType } from "@/components/ui/badge"
+import { ContentTypeBadge, type ContentType } from "@/components/ui/badge"
 import { CoverPlayButton } from "@/components/ui/cover-play-button"
 import {
   DropdownMenu,
@@ -58,12 +58,15 @@ export interface MediaListItemProps {
   /** Bespoke trailing content instead of the ⋯ menu — e.g. `SelectTrackButton`
    *  in the Add-music picker. Takes precedence over `menuItems`. */
   trailing?: React.ReactNode
+  /** Show the ContentTypeBadge at the row's right edge. Only where nothing
+   *  else names the type, i.e. a list that really mixes them. */
+  showType?: boolean
   className?: string
 }
 
 export function MediaListItem({
   type, title, cover, covers, subtitle, meta, playing = false,
-  onOpen, onPlay, onSubtitleClick, menuItems, trailing, className,
+  onOpen, onPlay, onSubtitleClick, menuItems, trailing, showType = false, className,
 }: MediaListItemProps) {
   // Primary (row-body) action. Containers always navigate (onOpen). A song
   // navigates to its release when `onOpen` is supplied (so the row opens the
@@ -128,6 +131,10 @@ export function MediaListItem({
           </div>
         )}
       </div>
+
+      {/* Right-aligned, not on the second line: there the badge starts wherever
+           the name happens to end and the column of types reads as noise. */}
+      {showType && <ContentTypeBadge type={type} />}
 
       {/* Trailing — either bespoke content (e.g. the pick affordance in the
            Add-music picker) or the ⋯ menu. `trailing` wins when both are

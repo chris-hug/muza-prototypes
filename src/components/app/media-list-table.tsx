@@ -462,13 +462,14 @@ export function SongListTable({ songs }: { songs: SavedSong[] }) {
 // Single-row components are shared by the per-type lists AND the
 // combined "All" list, so the menu wiring lives in one place.
 
-export function MobileAlbumRow({ album: a }: { album: AlbumRow }) {
+export function MobileAlbumRow({ album: a, showType }: { album: AlbumRow; showType?: boolean }) {
   const library = useUserLibrary()
   const { openAlbum, openArtist } = useMediaNav()
   const key = slugify(a.title)
   return (
     <MediaListItem
       type="album"
+      showType={showType}
       cover={a.cover}
       title={a.title}
       subtitle={a.artist}
@@ -489,13 +490,14 @@ export function MobileAlbumRow({ album: a }: { album: AlbumRow }) {
   )
 }
 
-export function MobilePlaylistRow({ playlist: p }: { playlist: PlaylistRow }) {
+export function MobilePlaylistRow({ playlist: p, showType }: { playlist: PlaylistRow; showType?: boolean }) {
   const { openPlaylist, openArtist } = useMediaNav()
   const key = slugify(p.title)
   const owner = p.owned ? "You" : (p.owner ?? "—")
   return (
     <MediaListItem
       type="playlist"
+      showType={showType}
       covers={p.covers}
       title={p.title}
       subtitle={owner}
@@ -516,13 +518,14 @@ export function MobilePlaylistRow({ playlist: p }: { playlist: PlaylistRow }) {
   )
 }
 
-export function MobileArtistRow({ artist: ar }: { artist: SavedArtist }) {
+export function MobileArtistRow({ artist: ar, showType }: { artist: SavedArtist; showType?: boolean }) {
   const { openArtist } = useMediaNav()
   const open = () => openArtist(slugify(ar.name))
   const { canNativeShare, copyLink, nativeShare } = useShare({ title: ar.name })
   return (
     <MediaListItem
       type="artist"
+      showType={showType}
       cover={ar.image}
       title={ar.name}
       onOpen={open}
@@ -586,9 +589,9 @@ export function LibraryAllMobileList({ albums, playlists, artists }: {
     <ul className="flex flex-col gap-1">
       {items.map(it => (
         <li key={it.key}>
-          {it.kind === "album"    && <MobileAlbumRow album={it.album} />}
-          {it.kind === "playlist" && <MobilePlaylistRow playlist={it.playlist} />}
-          {it.kind === "artist"   && <MobileArtistRow artist={it.artist} />}
+          {it.kind === "album"    && <MobileAlbumRow album={it.album} showType />}
+          {it.kind === "playlist" && <MobilePlaylistRow playlist={it.playlist} showType />}
+          {it.kind === "artist"   && <MobileArtistRow artist={it.artist} showType />}
         </li>
       ))}
     </ul>

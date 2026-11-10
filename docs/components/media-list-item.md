@@ -46,9 +46,17 @@ to the outer `rounded-xs` corner.
 
 A label renders like an artist — round avatar and name — because there is no
 label page yet; search renders it with no `onOpen` and no menu. Nothing
-distinguishes the two visually: the row renders **no badge** for a label (or
+distinguishes the two visually: by default the row renders **no badge** for a label (or
 for any other type), and the component's own comment, which for a long time
 claimed a "Label" badge, now says so.
+
+## `showType`
+
+`showType` puts the [`ContentTypeBadge`](badge.md) at the row's right edge,
+before the ⋯. It is for a list that really mixes types and has nothing else
+naming them, today Library's list view and Library › Offline. Right-aligned, so the types form a
+column; on the second line each badge started wherever the name happened to
+end. Off by default, since most lists are single-type or have category tabs.
 
 ## What a tap does
 

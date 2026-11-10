@@ -12,7 +12,8 @@
 
 import { useMemo } from "react"
 
-import { SongListItem } from "@/components/ui/song-list-item"
+import { MediaListItem } from "@/components/ui/media-list-item"
+import { SongListItem, SongMenuItems } from "@/components/ui/song-list-item"
 import { SongListTable } from "@/components/app/media-list-table"
 import { ChipChoice } from "@/components/ui/chip"
 import { SAVED_ALBUMS } from "@/components/app/library-albums-view"
@@ -65,7 +66,7 @@ export const SAVED_SONGS_SEED: SavedSong[] = [
 
 /** Every song available offline: saved on its own, or through its album.
  *  One song once, whichever way it got there. */
-export function useOfflineSongs(): SavedSong[] {
+function useOfflineSongs(): SavedSong[] {
   const library = useUserLibrary()
   const albumIdByTitle = useMemo(
     () => new Map(SAVED_ALBUMS.map(a => [a.title, a.id])),
@@ -78,7 +79,44 @@ export function useOfflineSongs(): SavedSong[] {
   return [...new Map([...library.offlineSongs(), ...viaAlbum].map(s => [s.id, s])).values()]
 }
 
-export function SongRows({ songs }: { songs: SavedSong[] }) {
+/** A song in a list that mixes types: the nav row every neighbour uses, so it
+ *  matches them. A SongListItem here brought its own heart and duration and
+ *  was the odd one out. The row plays; a song is the thing you came to hear. */
+export function MixedSongRow({ song: s }: { song: SavedSong }) {
+  const player = usePlayer()
+  const { openAlbum, openArtist } = useMediaNav()
+  const isThis = player.playingFrom === FROM && player.track?.title === s.title
+  const openAlbumOfSong = s.album && hasAlbumDetail(slugify(s.album)) ? () => openAlbum(slugify(s.album!)) : undefined
+  const openArtistOfSong = s.artist ? () => openArtist(slugify(s.artist!)) : undefined
+  return (
+    <MediaListItem
+      type="song"
+      showType
+      cover={s.cover}
+      title={s.title}
+      subtitle={s.artist}
+      meta={s.album}
+      playing={isThis && player.playing}
+      onPlay={() => {
+        if (isThis) { player.toggle(); return }
+        player.play(
+          { title: s.title, artist: s.artist ?? "", album: s.album ?? "", image: s.cover ?? "", totalTime: s.duration ?? "" },
+          FROM,
+        )
+      }}
+      onSubtitleClick={openArtistOfSong}
+      menuItems={
+        <SongMenuItems
+          title={s.title} artist={s.artist} album={s.album} cover={s.cover} duration={s.duration}
+          onArtistClick={openArtistOfSong}
+          onAlbumClick={openAlbumOfSong}
+        />
+      }
+    />
+  )
+}
+
+function SongRows({ songs }: { songs: SavedSong[] }) {
   const player = usePlayer()
   const { openAlbum, openArtist } = useMediaNav()
   return (
