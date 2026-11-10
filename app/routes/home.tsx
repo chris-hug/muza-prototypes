@@ -2949,8 +2949,15 @@ export default function Home() {
         prototype, so internal navigation doesn't remount the
         AppShell (which would kill sidebar state). The animation
         only fires once when transitioning into the AppShell from
-        the DS route. */}
-    <div key="app" className="flex h-screen bg-background [animation:pageFadeIn_250ms_ease-out]">
+        the DS route.
+
+        `h-svh`, not `h-screen`: 100vh on a phone is the height with the
+        browser bar gone, but the page itself never scrolls here (the
+        inner column does), so the bar never goes and the bottom of a
+        100vh shell sits under it — taking the footer nav, which is
+        pinned to that bottom, off the screen. Device emulation has no
+        browser bar, so it only showed on a real phone. */}
+    <div key="app" className="flex h-svh bg-background [animation:pageFadeIn_250ms_ease-out]">
       {/* On phones the sidebar is dropped for a bottom tab bar; the
           content takes the full width. */}
       {!footerNav && (

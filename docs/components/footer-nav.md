@@ -70,6 +70,12 @@ In the frame the chip is the window, so at 375 the bar is drawn window-wide
 with no gutters (it bleeds, as chrome does); at 608 and above the frame
 still renders it inside the column, which is a state the app never shows.
 
+**The shell above it is `h-svh`, not `h-screen`.** The bar pins to the bottom
+of the shell, so it is only on screen if the shell is. 100vh on a phone is the
+height with the browser bar gone, and the page never scrolls (the inner column
+does), so the bar never goes: a 100vh shell ended under it and the tabs with
+it. Device emulation has no browser bar, so only a real phone showed this.
+
 ## Behaviour
 
 - Tap a tab → `onNavChange(target)`; tap Studio → the sheet; tap a surface
