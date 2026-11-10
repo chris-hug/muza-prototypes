@@ -10,7 +10,7 @@ usage:
 
 `Tabs` switches one region between a few named views — a page's sections
 (Artist: Overview / Discography / Shop), a list's status filter (Library:
-All / Owned / Downloaded), a panel's modes (Player: Lyrics / Now listening /
+All / Owned / Offline), a panel's modes (Player: Lyrics / Now listening /
 Up next). Three looks, one primitive: a **segmented** control, an
 **underline** strip, and standalone **pills**.
 
@@ -97,13 +97,13 @@ filter row where the user should be able to rest on *any* tab
 ## Usage
 
 ```tsx
-// Library › Albums — the status filter, desktop and tablet only
+// Library › Albums — the status filter, desktop and tablet (the header's one row on phones)
 {footerNav ? <LibrarySortMenu /> : (
   <Tabs value={status} onValueChange={v => setStatus(v as Status)}>
     <TabsList variant="line" autoCenter={false}>
-      <TabsTrigger value="all">All albums</TabsTrigger>
+      <TabsTrigger value="all">All</TabsTrigger>
       <TabsTrigger value="owned">Owned</TabsTrigger>
-      <TabsTrigger value="downloaded">Downloaded</TabsTrigger>
+      <TabsTrigger value="offline">Offline</TabsTrigger>
     </TabsList>
   </Tabs>
 )}

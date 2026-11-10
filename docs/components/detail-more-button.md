@@ -209,9 +209,18 @@ The three groups, in order — an empty group is skipped and so is its divider:
 
 | Group | Rows |
 |---|---|
-| Manage / queue | Make private ⇄ Make public (owned playlist) · Add to a playlist (album only — you add an album's *tracks* to a playlist; a playlist is not addable to a playlist, an artist not at all) · Play next · Add to queue |
+| Manage / queue | Save offline ⇄ Remove from offline (album, playlist) · Download files (album bought with files) or Download files – $x (album bought for listening; opens the checkout for the difference, through `FilesPurchaseProvider`) · Make private ⇄ Make public (owned playlist) · Add to a playlist (album only — you add an album's *tracks* to a playlist; a playlist is not addable to a playlist, an artist not at all) · Play next · Add to queue |
 | Navigation | Go to album / Go to playlist (`onGoToSelf` — a card or row, never the item's own page) · Credits (owned album, since its pill is Edit) · Go to artist · Go to label · Go to owner (playlist — it has an owner, not an artist) · Artist info |
 | Destructive | **Delete playlist** (owned) in `text-destructive`, otherwise **Report** — a plain row, never styled destructive |
+
+**Offline and files are two things and the words keep them apart.** "Save
+offline" keeps something playable in the app on this device, and works on
+anything you can play, bought or not, so it is store-bound (`libraryId`) and an
+artist has no such row. "Download files" hands over the lossless files you paid
+to keep, so it exists only on albums you bought: with no price once they are
+paid for, with the remaining difference when you bought for listening. "Download" alone
+used to mean both. Both rows use the plain `Download` glyph, the mark people
+look for, and the label says which one it is; a saved row shows `Check`.
 
 ### What a CARD's sheet can offer, and what is missing on purpose
 

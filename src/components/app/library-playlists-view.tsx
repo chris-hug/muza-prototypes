@@ -13,7 +13,6 @@
  *   · 2×2 composite covers using album art from the playlist's tracks
  */
 
-import { useState } from "react"
 
 import { PlaylistCard } from "@/components/ui/playlist-card"
 import { PlaylistCreateCard } from "@/components/ui/playlist-create-card"
@@ -28,6 +27,7 @@ import { useMediaNav, slugify } from "@/lib/media-nav"
 import { useUserLibrary } from "@/lib/user-library"
 import { useLibraryView } from "@/lib/use-library-view"
 import { useLibrarySort, compareLibrary } from "@/lib/use-library-sort"
+import { useLibraryStatus } from "@/lib/use-library-status"
 import { useLibraryFilter, matchesLibraryQuery } from "@/lib/use-library-filter"
 import { useFooterNav } from "@/lib/use-media-query"
 
@@ -185,7 +185,7 @@ export function LibraryPlaylistsView() {
   // playlist catalog (rich for the demo, synthesized for the rest).
   const { openPlaylist } = useMediaNav()
   // Status filter (scalable dropdown) + persisted/shared view.
-  const [status, setStatus] = useState<"all" | "yours" | "saved">("all")
+  const [status, setStatus] = useLibraryStatus<"all" | "yours" | "saved" | "offline">("playlists")
   const [view, setView] = useLibraryView()
   const footerNav = useFooterNav()
   const [sort] = useLibrarySort()
@@ -199,9 +199,12 @@ export function LibraryPlaylistsView() {
     // In the library if it's yours (owned) or saved in the store. Toggling
     // a playlist's heart off on its detail page removes it here.
     const inLib = p.owned || library.inLibrary("playlist", slugify(p.title))
-    if (!inLib) return false
+    const offline = library.isOffline("playlist", slugify(p.title))
+    // Offline covers anything you can play, so it does not need the library.
+    if (!inLib && !(status === "offline" && offline)) return false
     if (status === "yours" && !p.owned) return false
     if (status === "saved" && p.owned) return false
+    if (status === "offline" && !offline) return false
     // Search-within-library — match title or owner name.
     return matchesLibraryQuery(query, p.title, p.owned ? "you" : p.owner)
   })
@@ -230,11 +233,12 @@ export function LibraryPlaylistsView() {
             {footerNav ? (
               <LibrarySortMenu />
             ) : (
-              <Tabs value={status} onValueChange={v => setStatus(v as "all" | "yours" | "saved")}>
+              <Tabs value={status} onValueChange={v => setStatus(v as typeof status)}>
                 <TabsList variant="line" autoCenter={false}>
-                  <TabsTrigger value="all">All playlists</TabsTrigger>
-                  <TabsTrigger value="yours">Created by you</TabsTrigger>
+                  <TabsTrigger value="all">All</TabsTrigger>
+                  <TabsTrigger value="yours">By me</TabsTrigger>
                   <TabsTrigger value="saved">Saved</TabsTrigger>
+                  <TabsTrigger value="offline">Offline</TabsTrigger>
                 </TabsList>
               </Tabs>
             )}
@@ -258,11 +262,15 @@ export function LibraryPlaylistsView() {
           </div>
         </div>
 
-        {view === "grid" ? (
+        {status === "offline" && playlists.length === 0 ? (
+          <p className="text-small text-muted-foreground max-w-md">
+            Nothing saved offline yet. Choose “Save offline” in any playlist’s menu and it’ll show up here.
+          </p>
+        ) : view === "grid" ? (
           <div className="@container">
             <ul className="grid-cards">
               {/* Create card only shows in the unfiltered / "yours" views. */}
-              {status !== "saved" && (
+              {(status === "all" || status === "yours") && (
                 <li>
                   <PlaylistCreateCard onClick={() => createPlaylist.open()} />
                 </li>
@@ -286,10 +294,10 @@ export function LibraryPlaylistsView() {
         ) : footerNav ? (
           <PlaylistMobileList playlists={playlists} />
         ) : (
-          // "saved" tab shows only others' playlists → no create row there.
+          // Only the unfiltered / "yours" views can show a create row.
           <PlaylistListTable
             playlists={playlists}
-            onCreate={status !== "saved" ? () => createPlaylist.open() : undefined}
+            onCreate={status === "all" || status === "yours" ? () => createPlaylist.open() : undefined}
           />
         )}
       </div>

@@ -34,7 +34,7 @@ import { useToast } from "@/components/ui/toast"
 import { useUserLibrary } from "@/lib/user-library"
 import { useUserAccount } from "@/lib/user-account"
 import { albumMetaFor, libraryIdForTitle } from "@/lib/album-meta"
-import { getAlbumDetail, hasAlbumDetail } from "@/lib/album-catalog"
+import { getAlbumDetail, hasAlbumDetail, filesPurchasePrice } from "@/lib/album-catalog"
 import { hasPlaylistDetail } from "@/lib/playlist-catalog"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 import { usePlayer } from "@/lib/player"
@@ -134,7 +134,7 @@ export function AlbumDetailView() {
       id:           cartLineId,
       shopId:       slugify(ALBUM.artist),
       shopName:     ALBUM.artist,
-      productTitle: `${ALBUM.title} — ${tier === "download" ? "Download" : "Listening"}`,
+      productTitle: `${ALBUM.title} — ${tier === "download" ? "Download files" : "Listening"}`,
       image:        ALBUM.cover,
       kind:         "digital",
       selected:     {},
@@ -180,15 +180,8 @@ export function AlbumDetailView() {
   // upgrade CTA when the user owns the stream tier but not download.
   // Only show the affordance when the delta is actually positive; a
   // $0 delta means the tiers are priced the same, no upgrade fee.
-  const rawUpgradeDelta = ALBUM.downloadPrice
-    ? Math.max(
-        0,
-        Number((ALBUM.downloadPrice).replace(/[^0-9.]/g, "")) -
-        Number((ALBUM.buyingPrice ?? "").replace(/[^0-9.]/g, "")),
-      )
-    : 0
-  const canUpgradeToDownload = isPurchased && !isDownloadable && !!ALBUM.downloadPrice && rawUpgradeDelta > 0
-  const upgradePriceStr = `$${rawUpgradeDelta.toFixed(2)}`
+  const upgradePriceStr = filesPurchasePrice(ALBUM)
+  const canUpgradeToDownload = isPurchased && !isDownloadable && !!upgradePriceStr
 
   // Overflow-menu config — shared by the in-page "…" (stacked layout)
   // and the floating mobile chrome's "…".
@@ -314,7 +307,7 @@ export function AlbumDetailView() {
            dialog shell as the regular purchase, but in `upgradeMode`
            the tier picker is hidden and the cart line shows just the
            delta. Success → library.upgradeToDownload, which flips
-           every surface (header CTA → "Download MP3", item meta
+           every surface (header CTA → "Download files", item meta
            remains "Owned"). */}
       <PurchaseAlbumDialog
         open={upgradeOpen}

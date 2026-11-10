@@ -14,6 +14,7 @@ import { registerAlbums } from "@/lib/album-catalog"
 import { CreditsProvider } from "@/components/app/credits-dialog"
 import { AddToPlaylistProvider } from "@/components/app/add-to-playlist-dialog"
 import { CreatePlaylistProvider } from "@/components/app/create-playlist-dialog"
+import { FilesPurchaseProvider } from "@/components/app/files-purchase-provider"
 import { PlaylistEditDrawer, PlaylistEditorProvider } from "@/components/app/playlist-edit-drawer"
 import { registerPlaylists } from "@/lib/playlist-catalog"
 import { AnimatedLogo } from "@/components/app/animated-logo"
@@ -812,8 +813,8 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
 // ─── Studio pages ─────────────────────────────────────────────────────────────
 
 // Demo seed for the UserLibraryProvider — first 12 SAVED_ALBUMS ids
-// are in the library; a04 + a14 + a18 are flagged as purchased so the
-// "Purchased" badge has a few examples to ride on out of the box.
+// are in the library; a14 + a18 are bought for listening and a09 with its
+// files, so every purchase state (and its menu rows) is there out of the box.
 // a07 (A Love Supreme) is intentionally absent so the buy → purchase
 // flow on the album detail page demonstrates the auto-add behavior.
 const LIBRARY_SEED = {
@@ -824,7 +825,7 @@ const LIBRARY_SEED = {
   a05: { added: true, purchased: false },
   a06: { added: true, purchased: false },
   a08: { added: true, purchased: false },
-  a09: { added: true, purchased: false },
+  a09: { added: true, purchased: true, tier: "download" as const },
   a10: { added: true, purchased: false },
   a11: { added: true, purchased: false },
   a12: { added: true, purchased: false },
@@ -2935,6 +2936,7 @@ export default function Home() {
     <CreditsProvider>
     <AddToPlaylistProvider>
     <CreatePlaylistProvider>
+    <FilesPurchaseProvider>
     <PlaylistEditorProvider>
     <PlayerProvider>
     <DetailActionsProvider>
@@ -3088,6 +3090,7 @@ export default function Home() {
     </DetailActionsProvider>
     </PlayerProvider>
     </PlaylistEditorProvider>
+    </FilesPurchaseProvider>
     </CreatePlaylistProvider>
     </AddToPlaylistProvider>
     </CreditsProvider>

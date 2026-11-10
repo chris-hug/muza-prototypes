@@ -30,6 +30,10 @@ import {
 
 export type LibraryItemType = "album" | "playlist" | "artist" | "song"
 
+/** What can be saved for playing without a connection. An artist cannot:
+ *  there is no finite set of tracks to save. */
+export type OfflineItemType = "album" | "playlist" | "song"
+
 interface LibraryEntry {
   added:     boolean
   purchased: boolean
@@ -61,9 +65,23 @@ interface SavedSets {
 
 const EMPTY_SAVED: SavedSets = { playlist: {}, artist: {}, song: {} }
 
+/** Saved offline, per type. Deliberately NOT part of `LibraryEntry`: offline
+ *  is about this device and works on anything you can play, whether or not
+ *  you bought it or even saved it to your library. The file purchase
+ *  (`tier: "download"`) is a different thing again, a licence to keep files. */
+interface OfflineSets {
+  album:    Record<string, true>
+  playlist: Record<string, true>
+  /** Songs carry their metadata, like `saved.song`: a song can be offline
+   *  without being in the library, and then nothing else could render it. */
+  song:     Record<string, SavedSong>
+}
+const EMPTY_OFFLINE: OfflineSets = { album: {}, playlist: {}, song: {} }
+
 interface PersistShape {
   albums: Record<string, LibraryEntry>
   saved:  SavedSets
+  offline: OfflineSets
 }
 
 interface UserLibraryContextValue {
@@ -91,6 +109,13 @@ interface UserLibraryContextValue {
   toggle:    (type: LibraryItemType, id: string, song?: SavedSong) => boolean
   /** All saved songs (most-recently-added first). */
   songs:     () => SavedSong[]
+
+  // ── Offline (this device) ────────────────────────────────────────
+  isOffline:     (type: OfflineItemType, id: string) => boolean
+  /** Flip offline. Returns the NEW state (`true` = now saved offline). */
+  toggleOffline: (type: OfflineItemType, id: string, song?: SavedSong) => boolean
+  /** Songs saved offline on their own (not via their album). */
+  offlineSongs:  () => SavedSong[]
 }
 
 const UserLibraryContext = createContext<UserLibraryContextValue | null>(null)
@@ -109,6 +134,7 @@ function loadPersisted(): PersistShape | null {
     return {
       albums: parsed.albums ?? {},
       saved:  { ...EMPTY_SAVED, ...(parsed.saved ?? {}) },
+      offline: { ...EMPTY_OFFLINE, ...(parsed.offline ?? {}) },
     }
   } catch {
     return null
@@ -136,14 +162,17 @@ export function UserLibraryProvider({
   const [saved, setSaved] = useState<SavedSets>(
     () => loadPersisted()?.saved ?? { ...EMPTY_SAVED, ...savedSeed },
   )
+  const [offline, setOffline] = useState<OfflineSets>(
+    () => loadPersisted()?.offline ?? EMPTY_OFFLINE,
+  )
 
   // Persist on any change.
   useEffect(() => {
     if (typeof window === "undefined") return
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ albums, saved }))
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ albums, saved, offline }))
     } catch { /* quota / private mode — ignore */ }
-  }, [albums, saved])
+  }, [albums, saved, offline])
 
   // ── Album mutators ───────────────────────────────────────────────
   const add = useCallback((albumId: string) => {
@@ -229,8 +258,20 @@ export function UserLibraryProvider({
       // Guard against malformed persisted entries (e.g. a pre-metadata
       // boolean leaking in) so consumers always get real song objects.
       songs: () => Object.values(saved.song).filter((s): s is SavedSong => Boolean(s && typeof s === "object" && (s as SavedSong).title)),
+      isOffline: (type, id) => Boolean(offline[type][id]),
+      toggleOffline: (type, id, song) => {
+        const next = !offline[type][id]
+        setOffline(prev => {
+          const nextType: Record<string, true | SavedSong> = { ...prev[type] }
+          if (next) nextType[id] = type === "song" ? (song ?? { id, title: id }) : true
+          else delete nextType[id]
+          return { ...prev, [type]: nextType }
+        })
+        return next
+      },
+      offlineSongs: () => Object.values(offline.song).filter((s): s is SavedSong => Boolean(s && typeof s === "object" && s.title)),
     }
-  }, [albums, saved, add, purchase, upgradeToDownload, remove, addSimple, removeSimple, addSong, removeSong])
+  }, [albums, saved, offline, add, purchase, upgradeToDownload, remove, addSimple, removeSimple, addSong, removeSong])
 
   return (
     <UserLibraryContext.Provider value={value}>

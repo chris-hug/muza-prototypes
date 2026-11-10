@@ -23,7 +23,7 @@ each band pads itself.
 |---|---|---|
 | Header | `shrink-0 px-6 pt-6 pb-4 border-b border-border`: `DialogHeader` (title `text-small`, description) + the **In cart** card | `shrink-0` so the buyer always sees what they are buying — the card never scrolls away or compresses when the body is tall |
 | In cart | `rounded-2xl border border-border`, a row of `size-12 rounded-xs` cover · title `text-small font-medium` · `artist · year · format` in `text-muted-foreground` · price `tabular-nums` with a **Remove** link (`text-2xsmall`) under it | mirrors the seller-side `SelectedReleaseCard` in the upload flow, so buying reads as the mirror of listing. Remove does what Cancel does but reads as a cart-line action |
-| Body | `flex-1 overflow-y-auto px-6 py-4 gap-6`: **Tier** (`RadioCardGroup` — Listening · Download) · **Contact** (email `Input` with a leading `Mail` glyph, `pl-10`) · **Payment** (`SquareContainer`) · **Total** (`text-large font-medium tabular-nums`) · the `ShieldCheck` line | the only scrolling band |
+| Body | `flex-1 overflow-y-auto px-6 py-4 gap-6`: **Tier** (`RadioCardGroup` — Listening · Download files) · **Contact** (email `Input` with a leading `Mail` glyph, `pl-10`) · **Payment** (`SquareContainer`) · **Total** (`text-large font-medium tabular-nums`) · the `ShieldCheck` line | the only scrolling band |
 | Footer | `DialogFooter` with `m-0 shrink-0 border-t bg-muted px-6 py-4 rounded-b-xl md:rounded-b-2xl`: **Add to cart** (`ghost`, cart glyph) when the host passes `onAddToCart`, otherwise Cancel (`ghost`) · **Confirm and pay $x.xx**. Add to cart takes the picked tier and its price, is not gated on the email, and closes the dialog; with `inCart` it reads **View cart** (✓) and calls `onOpenCart`. It replaces Cancel rather than joining it — Remove, the ✕ and the backdrop already dismiss, and three buttons do not fit a phone footer. This is where batch buy lives: the album page keeps one Buy button, as Bandcamp does (Check out now · Add to cart in its dialog) | `m-0` cancels `dialogFooterClass`'s full-bleed negative margins, which assume a `p-6` parent |
 
 Section labels (`SectionLabel`) are `text-small font-medium` — sentence case,
@@ -33,7 +33,7 @@ never uppercase.
 mocked at 1.4s. **Success** — `CircleCheck` in `text-primary-text`, "You own
 {title}" in `text-xlarge font-medium`, a **Your impact** card (`bg-muted/40`:
 "{artist} received $x — 100% of your purchase"), the confirmation and
-receipt lines, the item recap with a **Download** button on the download
+receipt lines, the item recap with a **Download files** button on the download
 tier, then **See in library** (`outline`) · **Play album** (primary). It
 stays open until the buyer picks an action — an earlier 1.5s auto-close felt
 abrupt.
@@ -46,7 +46,7 @@ abrupt.
 | `streamPrice` / `downloadPrice` | the two tiers, as strings (`"$2.99"`); the picker shows only when both are set |
 | `userEmail` | pre-fills the receipt field. Defaults to **empty**, so the field opens on its placeholder — nothing in the app passes it today, and a mock address defaulted in was what every dialog and every design-system frame showed |
 | `onPurchased(tier)` | fires on the success step; the album page uses it to mark the album owned in the library store |
-| `upgradeMode` + `upgradePrice` + `onUpgraded` | pay-the-difference "add download" flow: tier picker hidden, cart shows the delta, the title becomes "Add download to {title}", success says "100% of your upgrade" and calls `onUpgraded` |
+| `upgradeMode` + `upgradePrice` + `onUpgraded` | pay-the-difference flow for the files on an album you own: tier picker hidden, cart shows the delta, the title becomes "Download files", success says "100% of your upgrade" and calls `onUpgraded` |
 | `onGoToLibrary` | the success step's "See in library" |
 
 ## Usage

@@ -1218,7 +1218,7 @@ function StepMonetisation({
         >
           <div className="flex flex-col gap-4">
             {/* `items-end`: the label may be two lines here — "(optional)"
-                 sits above "Price for download" — and centring a two-line
+                 sits above "Price for files" — and centring a two-line
                  block against a one-line toggle lifts the toggle into the gap
                  between them. Aligned at the bottom, the toggle sits on the
                  same line as the words it qualifies. */}
@@ -1254,7 +1254,7 @@ function StepMonetisation({
                    out from under. */}
               <Label htmlFor="price-download" className="flex-col items-start gap-0.5">
                 <span className="text-xsmall font-normal text-muted-foreground leading-none">(optional)</span>
-                Price for download
+                Price for files
               </Label>
               <label className="flex items-center gap-1.5 cursor-pointer">
                 <span className="text-xsmall text-muted-foreground font-normal">Let fans pay more if they want</span>

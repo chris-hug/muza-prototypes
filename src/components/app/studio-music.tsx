@@ -369,7 +369,7 @@ type MonetisationKind = typeof MONETISATION_KINDS[number]
 const MONETISATION_KIND_LABELS: Record<MonetisationKind, string> = {
   "streaming":          "Streaming",
   "purchase":           "Purchase",
-  "purchase+download":  "Purchase + Download" }
+  "purchase+download":  "Purchase + Files" }
 
 function MonetisationMultiSelect({
   selected,

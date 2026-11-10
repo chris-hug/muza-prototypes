@@ -37,6 +37,7 @@ import { useDetailHeader } from "@/lib/detail-actions"
 import { useImageLuminance } from "@/lib/use-image-luminance"
 import { useSearchNav } from "@/lib/use-search-nav"
 import { useLibraryFilter } from "@/lib/use-library-filter"
+import { useLibraryStatus } from "@/lib/use-library-status"
 import { useCreatePlaylist } from "@/lib/create-playlist-context"
 import { ProfileMenu } from "@/components/app/topbar"
 
@@ -45,17 +46,27 @@ import { ProfileMenu } from "@/components/app/topbar"
 // (Your profile / purchases / Wallet / Settings / Sign out).
 const Avatar = () => <ProfileMenu avatarClassName="size-9" />
 
-// Mobile library filter pills. "All" → the combined LibraryAllView
-// (`?page=Library`); the rest navigate to their per-type routes. The
-// row is horizontally swipable (MobilePillTabs scrolls on overflow).
+// Mobile library filters: ONE row that changes with what is active. At rest
+// it offers the types and Offline; pick a type and it becomes ✕ · that type ·
+// the filters that type has. A second row for the filters read as a second
+// kind of navigation and cost a line on a screen that has none to spare. With
+// nothing active the row IS "all", so there is no All pill; ✕ returns there.
+// Horizontally swipable (MobilePillTabs scrolls on overflow).
 const LIBRARY_PAGES = ["Library", "Albums", "Artists", "Playlists", "Songs"]
-const LIBRARY_TABS: PillTab[] = [
-  { value: "Library", label: "All" },
+const CLEAR_TAB = "__clear"
+const LIBRARY_TYPES: PillTab[] = [
   { value: "Albums", label: "Albums" },
   { value: "Artists", label: "Artists" },
   { value: "Playlists", label: "Playlists" },
   { value: "Songs", label: "Songs" },
 ]
+const LIBRARY_OFFLINE_TAB: PillTab = { value: "offline", label: "Offline" }
+const LIBRARY_FILTERS: Record<string, PillTab[]> = {
+  Albums: [{ value: "owned", label: "Owned" }, LIBRARY_OFFLINE_TAB],
+  Artists: [],
+  Playlists: [{ value: "yours", label: "By me" }, { value: "saved", label: "Saved" }, LIBRARY_OFFLINE_TAB],
+  Songs: [LIBRARY_OFFLINE_TAB],
+}
 
 const DETAIL_PAGES = ["Album", "Playlist", "Artist"]
 
@@ -201,6 +212,48 @@ function DetailHeader({ onBack }: { onBack?: () => void }) {
 // Tapping the search icon grows it leftward into a full-width field
 // (the title + add button yield their space), all within a fixed-height
 // row so the header never jumps.
+function LibraryFilterRow({ activeNav, onNavChange }: { activeNav: string; onNavChange: (n: string) => void }) {
+  const [libraryStatus, setLibraryStatus] = useLibraryStatus<string>("library")
+  const [albumStatus, setAlbumStatus] = useLibraryStatus<string>("albums")
+  const [playlistStatus, setPlaylistStatus] = useLibraryStatus<string>("playlists")
+  const [songStatus, setSongStatus] = useLibraryStatus<string>("songs")
+  const scoped: Record<string, [string, (v: string) => void]> = {
+    Albums: [albumStatus, setAlbumStatus],
+    Playlists: [playlistStatus, setPlaylistStatus],
+    Songs: [songStatus, setSongStatus],
+  }
+  const clearTab: PillTab = { value: CLEAR_TAB, label: "", icon: <X />, ariaLabel: "Clear filters" }
+
+  if (activeNav === "Library") {
+    const offline = libraryStatus === "offline"
+    return (
+      <MobilePillTabs
+        tabs={offline ? [clearTab, LIBRARY_OFFLINE_TAB] : [...LIBRARY_TYPES, LIBRARY_OFFLINE_TAB]}
+        value={offline ? ["offline"] : []}
+        onChange={v => {
+          if (v === CLEAR_TAB || v === "offline") setLibraryStatus(offline ? "all" : "offline")
+          else onNavChange(v)
+        }}
+      />
+    )
+  }
+
+  const type = LIBRARY_TYPES.find(t => t.value === activeNav)!
+  const [status, setStatus] = scoped[activeNav] ?? ["all", () => {}]
+  // ✕ and the lit type both mean "back to everything".
+  const clear = () => { setStatus("all"); onNavChange("Library") }
+  return (
+    <MobilePillTabs
+      tabs={[clearTab, type, ...LIBRARY_FILTERS[activeNav]]}
+      value={status === "all" ? [activeNav] : [activeNav, status]}
+      onChange={v => {
+        if (v === CLEAR_TAB || v === activeNav) clear()
+        else setStatus(v === status ? "all" : v)
+      }}
+    />
+  )
+}
+
 function LibraryHeader({ activeNav, onNavChange }: { activeNav: string; onNavChange: (n: string) => void }) {
   const [open, setOpen] = useState(false)
   // Bound to the shared library-filter store, so the active library view
@@ -289,7 +342,7 @@ function LibraryHeader({ activeNav, onNavChange }: { activeNav: string; onNavCha
         </div>
       </div>
 
-      <MobilePillTabs value={activeNav} onChange={onNavChange} tabs={LIBRARY_TABS} />
+      <LibraryFilterRow activeNav={activeNav} onNavChange={onNavChange} />
     </MobileHeader>
   )
 }

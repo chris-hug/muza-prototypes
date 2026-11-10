@@ -27,13 +27,13 @@ export default function TabsBasicExample() {
 
       <Tabs defaultValue="all">
         <TabsList variant="line" autoCenter={false} className="w-full justify-start">
-          <TabsTrigger value="all">All albums</TabsTrigger>
+          <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="owned">Owned</TabsTrigger>
-          <TabsTrigger value="downloaded">Downloaded</TabsTrigger>
+          <TabsTrigger value="offline">Offline</TabsTrigger>
         </TabsList>
         <TabsContent value="all" className="pt-4 text-muted-foreground">Every album in your library.</TabsContent>
         <TabsContent value="owned" className="pt-4 text-muted-foreground">Albums you have bought.</TabsContent>
-        <TabsContent value="downloaded" className="pt-4 text-muted-foreground">Albums saved to this device.</TabsContent>
+        <TabsContent value="offline" className="pt-4 text-muted-foreground">Albums saved to this device.</TabsContent>
       </Tabs>
 
       <Tabs defaultValue="lyrics">

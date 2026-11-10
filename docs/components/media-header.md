@@ -21,7 +21,7 @@ playlist variants render a 2×2 composite cover with no format.
 | Composite cover | when `covers` has **four** entries (playlists), a `grid-cols-2 grid-rows-2` of them; with fewer it falls back to the single `cover`, which is why playlists must always pass `cover` too | — |
 | Title | `MarqueeText` as the page `h1` — one line, never wraps; when it does not fit it scrolls back and forth so the whole name is readable | `text-large` stacked, `text-2xlarge` from 560; `font-semibold leading-[1.2] text-foreground` |
 | Meta line | owner (avatar `size-6 min-w-6 rounded-full` + name), the type (`Disc3` + format, or `ListMusic` + "Playlist"), the year — or the playlist's "42 tracks · 3h 12m" passed in `year` — then the visibility `StatusBadge` on owned variants and the `PurchasedBadge` when `purchased` | `text-small font-normal leading-none text-muted-foreground`; the name `font-medium truncate`; owner `hover:text-foreground` |
-| CTA | `hasBuyingOption` → **Buy – $x** (was "Unlock All Songs"; see [One buy button](#one-buy-button)) (`outline-primary`, `lg`); else `downloadable` → **Download MP3** (`outline`); else `addDownloadPrice` → **Add download – $x** (`outline-primary`); else nothing. Full width of its column in both tiers | — |
+| CTA | `hasBuyingOption` → **Buy – $x** (was "Unlock All Songs"; see [One buy button](#one-buy-button)) (`outline-primary`, `lg`); else `downloadable` → **Download files** (`outline`); else `addDownloadPrice` → **Download files – $x** (`outline-primary`); else nothing. Full width of its column in both tiers | — |
 | Play · Shuffle | Play is the `default` `lg` button with the icon only (`px-0 min-w-12`), flipping to Pause with `aria-pressed` when `playing`; Shuffle is the shared `ShuffleToggle` in `secondary`, `min-w-12 h-12`, lit `primary` when `shuffleActive` — the same pop / halo the player bars use | — |
 | Action cluster | 48px `outline` `icon-lg` buttons (`size-12`): the heart (a store-bound `LibraryHeartButton` when `libraryId` is set, otherwise a plain Heart → `onAdd`) **or** Edit when owned; `ShareButton`; Info (albums only); the "…" `DetailMoreButton` | `variant="outline"` carries the glass — `bg-background/20 backdrop-blur-lg border` |
 
@@ -163,8 +163,8 @@ In the frame the window chips read: 375 → 351 stacked · 584 → 536 stacked �
   pick comes back through `onVisibilityChange`.
 - **Purchased**: the page drops the buy CTA (`hasBuyingOption={false}`) and
   the inline badge carries the state; the download tier surfaces
-  **Download MP3** in the freed slot, a stream-tier purchase can offer
-  **Add download – $x** via `addDownloadPrice`.
+  **Download files** in the freed slot, a stream-tier purchase can offer
+  **Download files – $x** via `addDownloadPrice`.
 - The title's marquee only runs when the text overflows its line.
 
 ## Artwork

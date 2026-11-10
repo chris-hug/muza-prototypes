@@ -367,7 +367,7 @@ export function EditReleaseDialog({
                       takes the second line whole and stays on the right. */}
                   <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
                     <FormLabel className="shrink-0">
-                      Price for download <span className="opacity-60">(optional)</span>
+                      Price for files <span className="opacity-60">(optional)</span>
                     </FormLabel>
                     <label className="flex shrink-0 items-center gap-1.5 ml-auto cursor-pointer">
                       <span className="text-xsmall text-muted-foreground font-normal">Let fans pay more if they want</span>

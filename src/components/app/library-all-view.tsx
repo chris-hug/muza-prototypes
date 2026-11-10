@@ -25,11 +25,21 @@ import { useUserLibrary } from "@/lib/user-library"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 import { useLibraryView } from "@/lib/use-library-view"
 import { useLibrarySort } from "@/lib/use-library-sort"
+import { useLibraryStatus } from "@/lib/use-library-status"
+import { SongRows, useOfflineSongs } from "@/components/app/library-songs-view"
 
 export function LibraryAllView() {
   const library = useUserLibrary()
   const [view, setView] = useLibraryView()
-  const albums = SAVED_ALBUMS.filter(a => library.isAdded(a.id))
+  // Offline is the row's one cross-type filter: everything saved for this
+  // device, whatever kind it is, and artists have nothing to save.
+  const [status] = useLibraryStatus<"all" | "offline">("library")
+  const offline = status === "offline"
+  const offlineSongs = useOfflineSongs()
+  const albums = SAVED_ALBUMS.filter(a => offline ? library.isOffline("album", a.id) : library.isAdded(a.id))
+  const playlists = offline ? SAVED_PLAYLISTS.filter(p => library.isOffline("playlist", slugify(p.title))) : SAVED_PLAYLISTS
+  const artists = offline ? [] : SAVED_ARTISTS
+  const empty = offline && albums.length === 0 && playlists.length === 0 && offlineSongs.length === 0
 
   return (
     <div className="flex-1 overflow-auto">
@@ -38,10 +48,17 @@ export function LibraryAllView() {
           <LibrarySortMenu />
           <LibraryViewToggle value={view} onChange={setView} />
         </div>
-        {view === "grid" ? (
-          <LibraryAllGrid albums={albums} playlists={SAVED_PLAYLISTS} artists={SAVED_ARTISTS} />
+        {empty ? (
+          <p className="text-small text-muted-foreground max-w-md">
+            Nothing saved offline yet. Choose “Save offline” in any album’s, playlist’s or song’s menu and it’ll show up here.
+          </p>
+        ) : view === "grid" ? (
+          <LibraryAllGrid albums={albums} playlists={playlists} artists={artists} />
         ) : (
-          <LibraryAllMobileList albums={albums} playlists={SAVED_PLAYLISTS} artists={SAVED_ARTISTS} />
+          <LibraryAllMobileList albums={albums} playlists={playlists} artists={artists} />
+        )}
+        {offline && offlineSongs.length > 0 && (
+          <div className="mt-6"><SongRows songs={offlineSongs} /></div>
         )}
       </div>
     </div>

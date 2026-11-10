@@ -395,6 +395,17 @@ export function getAlbumDetail(key?: string | null): AlbumDetail {
   return resolve(key) ?? BY_ID[DEFAULT_ALBUM_ID]
 }
 
+/** What the lossless files still cost someone who bought the album for
+ *  listening: the difference between the two tiers, or undefined when there
+ *  is no file tier or nothing left to pay. */
+export function filesPurchasePrice(album: AlbumDetail): string | undefined {
+  if (!album.downloadPrice) return undefined
+  const delta =
+    Number(album.downloadPrice.replace(/[^0-9.]/g, "")) -
+    Number((album.buyingPrice ?? "").replace(/[^0-9.]/g, ""))
+  return delta > 0 ? `$${delta.toFixed(2)}` : undefined
+}
+
 /** True when the key resolves to a real album page (rich or synthesized
  *  from the library) — i.e. navigating won't dump the user on the
  *  default fallback. Used to gate which rail cards are clickable. */

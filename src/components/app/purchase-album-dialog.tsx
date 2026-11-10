@@ -207,11 +207,11 @@ export function PurchaseAlbumDialog({
             <div className="shrink-0 flex flex-col gap-2.5 px-4 pt-3 pb-3 border-b border-border">
               <DialogHeader>
                 <DialogTitle>
-                  {upgradeMode ? `Add download to ${album.title}` : "Review and pay"}
+                  {upgradeMode ? "Download files" : "Review and pay"}
                 </DialogTitle>
                 <DialogDescription>
                   {upgradeMode
-                    ? "Upgrade your purchase to include the lossless download files. You've already paid the artist — this covers the difference."
+                    ? "Keep the lossless files and use them anywhere. You've already paid the artist — this covers the difference."
                     : "One-time purchase. Yours forever, no subscription."}
                 </DialogDescription>
               </DialogHeader>
@@ -291,7 +291,7 @@ export function PurchaseAlbumDialog({
                           selected={tier === "download"}
                           onSelect={() => setTier("download")}
                           icon={<Download />}
-                          title="Download"
+                          title="Download files"
                           description={`Lossless files + listening · ${downloadPrice}`}
                         />
                       )}
@@ -319,7 +319,7 @@ export function PurchaseAlbumDialog({
                     />
                   </div>
                   <p className="text-2xsmall text-muted-foreground">
-                    We'll send your receipt and a download link here.
+                    We'll send your receipt and a link to your files here.
                   </p>
                 </div>
               </div>
@@ -403,7 +403,7 @@ export function PurchaseAlbumDialog({
               <CircleCheck className="size-10 text-primary-text" strokeWidth={1.5} />
               <p className="text-xlarge font-medium text-foreground">
                 {upgradeMode
-                  ? `Download added to ${album.title}`
+                  ? `Your files for ${album.title} are ready`
                   : `You own ${album.title}`}
               </p>
             </div>
@@ -486,7 +486,7 @@ export function PurchaseAlbumDialog({
                     }}
                   >
                     <Download className="size-3.5" />
-                    Download
+                    Download files
                   </Button>
                 )}
               </div>
@@ -681,7 +681,7 @@ export function PurchaseAlbumDialogPreview({
                 selected={tier === "download"}
                 onSelect={() => setTier("download")}
                 icon={<Download />}
-                title="Download"
+                title="Download files"
                 description={`Lossless files + listening · ${downloadPrice}`}
               />
             )}
@@ -706,7 +706,7 @@ export function PurchaseAlbumDialogPreview({
               />
             </div>
             <p className="text-2xsmall text-muted-foreground">
-              We'll send your receipt and a download link here.
+              We'll send your receipt and a link to your files here.
             </p>
           </div>
         </div>

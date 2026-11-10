@@ -10,7 +10,7 @@
  * un-hearting a track removes it from this list.
  */
 
-import { useState, useMemo } from "react"
+import { useMemo } from "react"
 
 import { SongListItem } from "@/components/ui/song-list-item"
 import { SongListTable } from "@/components/app/media-list-table"
@@ -20,6 +20,7 @@ import { useUserLibrary, type SavedSong } from "@/lib/user-library"
 import { usePlayer } from "@/lib/player"
 import { useFooterNav } from "@/lib/use-media-query"
 import { useLibraryFilter, matchesLibraryQuery } from "@/lib/use-library-filter"
+import { useLibraryStatus } from "@/lib/use-library-status"
 import { LibrarySearchField } from "@/components/app/library-search-field"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 import { hasAlbumDetail } from "@/lib/album-catalog"
@@ -62,29 +63,66 @@ export const SAVED_SONGS_SEED: SavedSong[] = [
   cover: albumCover(r.album),
 }))
 
-export function LibrarySongsView() {
-  const library   = useUserLibrary()
-  const player    = usePlayer()
-  const footerNav = useFooterNav()
-  const { openAlbum, openArtist } = useMediaNav()
-  const [query] = useLibraryFilter()
-  // Songs have no status of their own — "Downloaded" derives from the song's
-  // ALBUM being downloaded (tier "download"). No "Owned" tab: you don't buy a
-  // single track here. Desktop-only, like the Albums status tabs.
-  const [status, setStatus] = useState<"all" | "downloaded">("all")
+/** Every song available offline: saved on its own, or through its album.
+ *  One song once, whichever way it got there. */
+export function useOfflineSongs(): SavedSong[] {
+  const library = useUserLibrary()
   const albumIdByTitle = useMemo(
     () => new Map(SAVED_ALBUMS.map(a => [a.title, a.id])),
     [],
   )
-  const isDownloaded = (s: SavedSong) => {
+  const viaAlbum = library.songs().filter(s => {
     const id = s.album ? albumIdByTitle.get(s.album) : undefined
-    return !!id && library.entryFor(id)?.tier === "download"
-  }
+    return !!id && library.isOffline("album", id)
+  })
+  return [...new Map([...library.offlineSongs(), ...viaAlbum].map(s => [s.id, s])).values()]
+}
+
+export function SongRows({ songs }: { songs: SavedSong[] }) {
+  const player = usePlayer()
+  const { openAlbum, openArtist } = useMediaNav()
+  return (
+    <ul className="flex flex-col gap-2">
+      {songs.map(s => {
+        const isThis = player.playing && player.playingFrom === FROM && player.track?.title === s.title
+        return (
+          <li key={s.id}>
+            <SongListItem
+              cover={s.cover}
+              title={s.title}
+              artist={s.artist}
+              album={s.album}
+              duration={s.duration}
+              playing={isThis}
+              onPlay={() => {
+                if (player.playingFrom === FROM && player.track?.title === s.title) { player.toggle(); return }
+                player.play(
+                  { title: s.title, artist: s.artist ?? "", album: s.album ?? "", image: s.cover ?? "", totalTime: s.duration },
+                  FROM,
+                )
+              }}
+              onArtistClick={s.artist ? () => openArtist(slugify(s.artist!)) : undefined}
+              onAlbumClick={s.album && hasAlbumDetail(slugify(s.album)) ? () => openAlbum(slugify(s.album!)) : undefined}
+            />
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+export function LibrarySongsView() {
+  const library   = useUserLibrary()
+  const footerNav = useFooterNav()
+  const [query] = useLibraryFilter()
+  // A song is offline if it was saved on its own or its ALBUM was. No "Owned"
+  // tab: you don't buy a single track here.
+  const [status, setStatus] = useLibraryStatus<"all" | "offline">("songs")
+  const offlineSongs = useOfflineSongs()
   const allSongs = library.songs()
-  const songs = allSongs
+  const songs = (status === "offline" ? offlineSongs : allSongs)
     // In-library search — match title / artist / album.
     .filter(s => matchesLibraryQuery(query, s.title, s.artist, s.album))
-    .filter(s => status === "all" || isDownloaded(s))
 
   return (
     <div className="flex-1 overflow-auto">
@@ -95,10 +133,10 @@ export function LibrarySongsView() {
             <h1 className="text-2xlarge font-medium text-foreground tracking-tight mb-4">Songs</h1>
             {/* Status tabs (left) + in-library search (right). */}
             <div className="flex items-center justify-between gap-4 mb-6">
-              <Tabs value={status} onValueChange={v => setStatus(v as "all" | "downloaded")}>
+              <Tabs value={status} onValueChange={v => setStatus(v as typeof status)}>
                 <TabsList variant="line" autoCenter={false}>
-                  <TabsTrigger value="all">All songs</TabsTrigger>
-                  <TabsTrigger value="downloaded">Downloaded</TabsTrigger>
+                  <TabsTrigger value="all">All</TabsTrigger>
+                  <TabsTrigger value="offline">Offline</TabsTrigger>
                 </TabsList>
               </Tabs>
               <LibrarySearchField />
@@ -108,40 +146,17 @@ export function LibrarySongsView() {
 
         {songs.length === 0 ? (
           <p className="text-small text-muted-foreground max-w-md">
-            {allSongs.length === 0
+            {status === "offline" && !query
+              ? "Nothing saved offline yet. Choose “Save offline” in any song’s or album’s menu and it’ll show up here."
+              : allSongs.length === 0
               ? "No saved songs yet. Tap the heart on any track — in the player or a song list — and it'll show up here."
               : query
                 ? `No songs match “${query}”.`
-                : "No downloaded songs yet — download an album to keep its tracks offline."}
+                : ""}
           </p>
         ) : footerNav ? (
           // Touch: stacked song rows (same component the detail pages use).
-          <ul className="flex flex-col gap-2">
-            {songs.map(s => {
-              const isThis = player.playing && player.playingFrom === FROM && player.track?.title === s.title
-              return (
-                <li key={s.id}>
-                  <SongListItem
-                    cover={s.cover}
-                    title={s.title}
-                    artist={s.artist}
-                    album={s.album}
-                    duration={s.duration}
-                    playing={isThis}
-                    onPlay={() => {
-                      if (player.playingFrom === FROM && player.track?.title === s.title) { player.toggle(); return }
-                      player.play(
-                        { title: s.title, artist: s.artist ?? "", album: s.album ?? "", image: s.cover ?? "", totalTime: s.duration },
-                        FROM,
-                      )
-                    }}
-                    onArtistClick={s.artist ? () => openArtist(slugify(s.artist!)) : undefined}
-                    onAlbumClick={s.album && hasAlbumDetail(slugify(s.album)) ? () => openAlbum(slugify(s.album!)) : undefined}
-                  />
-                </li>
-              )
-            })}
-          </ul>
+          <SongRows songs={songs} />
         ) : (
           // Desktop: the sortable list table (same chrome as Albums), with
           // an Album column.

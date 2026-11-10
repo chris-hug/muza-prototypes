@@ -10,7 +10,6 @@
  * Figma: 8950:97663 (Albums Feed) — 5-column grid on desktop.
  */
 
-import { useState } from "react"
 
 import { AlbumCard } from "@/components/ui/album-card"
 import { AlbumListTable, AlbumMobileList, LibrarySortMenu } from "@/components/app/media-list-table"
@@ -18,6 +17,7 @@ import { useUserLibrary } from "@/lib/user-library"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 import { useLibraryView } from "@/lib/use-library-view"
 import { useLibrarySort, compareLibrary } from "@/lib/use-library-sort"
+import { useLibraryStatus } from "@/lib/use-library-status"
 import { useLibraryFilter, matchesLibraryQuery } from "@/lib/use-library-filter"
 import { LibrarySearchField } from "@/components/app/library-search-field"
 import { useFooterNav } from "@/lib/use-media-query"
@@ -133,7 +133,7 @@ export function LibraryAlbumsView() {
   const library = useUserLibrary()
   // Status filter — a scalable dropdown (room for more lenses later)
   // rather than a binary segment. "all" = everything in the library.
-  const [status, setStatus] = useState<"all" | "owned" | "downloaded">("all")
+  const [status, setStatus] = useLibraryStatus<"all" | "owned" | "offline">("albums")
   // Tile (default) vs list mode — remembered + shared across library pages.
   const [view, setView] = useLibraryView()
   // Below the footer-nav breakpoint the wide sortable table doesn't fit;
@@ -144,10 +144,10 @@ export function LibraryAlbumsView() {
   const [query] = useLibraryFilter()
 
   const filtered = SAVED_ALBUMS
-    .filter(a => library.isAdded(a.id))
+    // Offline covers anything you can play, so it does not need the library.
+    .filter(a => status === "offline" ? library.isOffline("album", a.id) : library.isAdded(a.id))
     .filter(a => {
       if (status === "owned")      return library.isPurchased(a.id)
-      if (status === "downloaded") return library.entryFor(a.id)?.tier === "download"
       return true
     })
     .filter(a => matchesLibraryQuery(query, a.title, a.artist))
@@ -181,17 +181,16 @@ export function LibraryAlbumsView() {
              Studio toolbars. */}
         <div className="flex items-center justify-between gap-4 mb-6">
           {/* Left control: desktop = status filter; mobile = sort menu
-               (the header's filter pills replace the status filter
-               there). */}
+               (the status filter is in the header's one row there). */}
           <div className="flex items-center gap-2 min-w-0">
             {footerNav ? (
               <LibrarySortMenu />
             ) : (
-              <Tabs value={status} onValueChange={v => setStatus(v as "all" | "owned" | "downloaded")}>
+              <Tabs value={status} onValueChange={v => setStatus(v as typeof status)}>
                 <TabsList variant="line" autoCenter={false}>
-                  <TabsTrigger value="all">All albums</TabsTrigger>
+                  <TabsTrigger value="all">All</TabsTrigger>
                   <TabsTrigger value="owned">Owned</TabsTrigger>
-                  <TabsTrigger value="downloaded">Downloaded</TabsTrigger>
+                  <TabsTrigger value="offline">Offline</TabsTrigger>
                 </TabsList>
               </Tabs>
             )}
@@ -235,7 +234,11 @@ export function LibraryAlbumsView() {
              Each track is `minmax(143px, 220px)` — cards are clamped
              to a 143 floor and 220 ceiling. Below the 2-col threshold
              the grid drops to a single column. */}
-        {view === "grid" ? (
+        {status === "offline" && albums.length === 0 ? (
+          <p className="text-small text-muted-foreground max-w-md">
+            Nothing saved offline yet. Choose “Save offline” in any album’s menu and it’ll show up here.
+          </p>
+        ) : view === "grid" ? (
           <div className="@container">
             <ul className="grid-cards">
               {albums.map(a => (

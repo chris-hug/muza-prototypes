@@ -251,11 +251,11 @@ export function MediaHeader({
     </Button>
   ) : downloadable ? (
     <Button variant="outline" size="lg" onClick={onDownload} className="w-full">
-      <Download />Download MP3
+      <Download />Download files
     </Button>
   ) : addDownloadPrice ? (
     <Button variant="outline-primary" size="lg" onClick={onAddDownload} className="w-full">
-      <Download />Add download – {addDownloadPrice}
+      <Download />Download files – {addDownloadPrice}
     </Button>
   ) : null
 

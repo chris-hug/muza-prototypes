@@ -120,11 +120,14 @@ export interface PillTab {
   icon?: React.ReactNode
   /** Optional trailing count badge (Chip renders it). */
   count?: number | string
+  /** Accessible name for a tab with no visible label (an icon-only ✕). */
+  ariaLabel?: string
 }
 
 export function MobilePillTabs({ tabs, value, onChange, className }: {
   tabs: PillTab[]
-  value: string
+  /** More than one tab can be lit: a type and a filter on it. */
+  value: string | string[]
   onChange?: (v: string) => void
   /** Override the bleed to match the HOST's gutter (default: the mobile
    *  header's 12px). A strip that stops short of its surface edge crops
@@ -154,8 +157,9 @@ export function MobilePillTabs({ tabs, value, onChange, className }: {
              row of buttons rather than as a filter. `touch-target` keeps the
              finger area at 44 while the paint comes down. */
           size="sm"
-          selected={t.value === value}
+          selected={Array.isArray(value) ? value.includes(t.value) : t.value === value}
           count={t.count}
+          aria-label={t.ariaLabel}
           onClick={() => onChange?.(t.value)}
           className="touch-target shrink-0 [&_svg]:size-4 [&_svg]:shrink-0"
         >

@@ -18,7 +18,7 @@
 import {
   MoreHorizontal, Share, Link2, Plus, Heart, Pencil, Radio, Lock,
   ListPlus, ListStart, ListEnd, Mic, Building2, Info, Flag, Trash2,
-  Disc3, ListMusic,
+  Disc3, ListMusic, Check, Download,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -40,7 +40,8 @@ import { useCredits } from "@/lib/credits-context"
 import { useIsMobile } from "@/lib/use-media-query"
 import { slugify } from "@/lib/media-nav"
 import { useUserLibrary, type LibraryItemType, type SavedSong } from "@/lib/user-library"
-import { useLibraryToggle } from "@/lib/use-library-toggle"
+import { useLibraryToggle, useOfflineToggle } from "@/lib/use-library-toggle"
+import { useFilesPurchase } from "@/lib/files-purchase-context"
 
 export interface DetailMoreButtonProps {
   title:     string
@@ -215,6 +216,8 @@ function useDetailActions({
   // to the passed `inLibrary` + `onAdd` / `onRemove`.
   const library = useUserLibrary()
   const toggleLibrary = useLibraryToggle()
+  const toggleOffline = useOfflineToggle()
+  const filesPurchase = useFilesPurchase()
   // A playlist you OWN is in your library by definition — never offer to save
   // (or un-save) it; owners get Edit / Delete instead.
   const ownPlaylist = kind === "playlist" && owned
@@ -258,6 +261,35 @@ function useDetailActions({
 
   // ── Manage + queue ──────────────────────────────────────────────────────
   const g1: Action[] = []
+  // Two different things, and the words keep them apart. "Offline" is this
+  // device and works on anything you can play, bought or not. "Files" are the
+  // lossless files you paid to keep, so that row only exists on an album
+  // bought with them. "Download" alone was both, which is why neither read.
+  // They share the download glyph on purpose: it is the mark people look for,
+  // and the label says which one this is.
+  const offlineId = !isArtist ? libraryId : undefined
+  const savedOffline = !!offlineId && library.isOffline(isAlbum ? "album" : "playlist", offlineId)
+  if (offlineId) g1.push({
+    icon: savedOffline ? <Check /> : <Download />,
+    label: savedOffline ? "Remove from offline" : "Save offline",
+    onClick: () => toggleOffline(isAlbum ? "album" : "playlist", offlineId, libraryName ?? title),
+  })
+  const purchase = isAlbum && libraryId ? library.entryFor(libraryId) : undefined
+  if (purchase?.tier === "download") g1.push({
+    icon: <Download />,
+    label: "Download files",
+    // Prototype: no files to serve, so the toast stands in for the download.
+    onClick: () => toast({ title: "Preparing your files", description: title, type: "success" }),
+  })
+  // Bought for listening: the same action, with the difference still to pay.
+  const filesPrice = purchase?.purchased && purchase.tier !== "download" && libraryId
+    ? filesPurchase?.priceFor(libraryId)
+    : undefined
+  if (filesPrice && libraryId) g1.push({
+    icon: <Download />,
+    label: `Download files – ${filesPrice}`,
+    onClick: () => filesPurchase?.open(libraryId),
+  })
   if (isPlaylist && owned) g1.push({ icon: <Lock />, label: isPrivate ? "Make public" : "Make private", onClick: onMakePrivate })
   // Albums only — you add an album's tracks TO a playlist. A playlist can't be
   // added to a playlist, and an artist isn't addable at all.

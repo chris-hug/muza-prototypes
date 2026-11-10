@@ -3,7 +3,7 @@
 /*
  * Media Header for an album the user has BOUGHT at the download tier: the
  * buy CTA is gone, the inline Purchased badge sits in the meta line, and
- * "Download MP3" takes the slot the CTA used to occupy. The streaming tier
+ * "Download files" takes the slot the CTA used to occupy. The streaming tier
  * shows the badge only — pass `purchased` without `downloadable`.
  *
  * This file is a CALL SITE, not a copy: the real `MediaHeader`, the real

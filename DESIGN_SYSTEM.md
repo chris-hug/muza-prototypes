@@ -1373,7 +1373,7 @@ Context gating, nothing else:
 
 > **Reference.** A pointer to the view pages.
 
-- **Status filters are tabs, not a dropdown** — Playlists (All / By you / Saved), Albums (All / Owned / Downloaded), Songs (All / Downloaded). **Desktop only**: on mobile the strip competes with the content-type nav and reads as clutter, so it's hidden.
+- **Status filters are tabs, not a dropdown** — Playlists (All / By me / Saved / Offline), Albums (All / Owned / Offline), Songs (All / Offline). On phones types and filters share one row in the header, which changes with what is active: ✕ · the type · its filters. **Offline** means saved in the app for this device; **files** are the lossless files you paid to keep. Never call the first one "download".
 - **In-library search** is a single shared store, [`use-library-filter.ts`](src/lib/use-library-filter.ts) (`useSyncExternalStore`), so the desktop field and the mobile header field drive the same query. The header clears it on unmount — a collapsed mobile field must never leave a hidden filter applied.
 - **Playlist cards carry a byline** — "By you" for your own, "By {name}" for saved ones; see [docs/components/playlist-card.md](docs/components/playlist-card.md).
 - **List tables** get an **Added** column + sort, and a **create row** leading the list (the same pattern as Studio's upload row).

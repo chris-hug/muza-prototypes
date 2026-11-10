@@ -8,7 +8,7 @@
  */
 
 import { useCallback } from "react"
-import { useUserLibrary, type LibraryItemType, type SavedSong } from "@/lib/user-library"
+import { useUserLibrary, type LibraryItemType, type OfflineItemType, type SavedSong } from "@/lib/user-library"
 import { useToast } from "@/components/ui/toast"
 
 const TYPE_LABEL: Record<LibraryItemType, string> = {
@@ -36,6 +36,26 @@ export function useLibraryToggle() {
         data: { actionLabel: "Undo", onAction: () => library.toggle(type, id, song) },
       })
       return nowIn
+    },
+    [library, toast],
+  )
+}
+
+/** The same for offline: flip it, toast it, offer Undo. */
+export function useOfflineToggle() {
+  const library = useUserLibrary()
+  const { add: toast } = useToast()
+
+  return useCallback(
+    (type: OfflineItemType, id: string, name?: string, song?: SavedSong): boolean => {
+      const nowOffline = library.toggleOffline(type, id, song)
+      toast({
+        type:  nowOffline ? "success" : "default",
+        title: nowOffline ? "Saved offline" : "Removed from offline",
+        description: name ? `${name} · ${TYPE_LABEL[type]}` : TYPE_LABEL[type],
+        data: { actionLabel: "Undo", onAction: () => library.toggleOffline(type, id, song) },
+      })
+      return nowOffline
     },
     [library, toast],
   )
