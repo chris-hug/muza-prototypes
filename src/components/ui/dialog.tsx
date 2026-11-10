@@ -812,10 +812,17 @@ export const sheetPopupClass =
 
 function DialogPreview({
   className,
+  phoneClassName,
   children,
   showCloseButton = true,
 }: {
   className?: string
+  /** Classes the dialog sets for itself on a phone, applied after the
+   *  phone preview defaults. A dialog's own `max-md:` classes cannot reach
+   *  the preview: they answer the real window, and the frame only pretends
+   *  to be narrow. Pass the same values here, or the preview shows a
+   *  different sheet than the one that opens. */
+  phoneClassName?: string
   children: React.ReactNode
   showCloseButton?: boolean
 }) {
@@ -824,7 +831,7 @@ function DialogPreview({
     <div
       data-slot="dialog-preview"
       data-mobile={phone ? "sheet" : undefined}
-      className={cn("relative", dialogChromeClass, className, phone && dialogPreviewPhoneClass)}
+      className={cn("relative", dialogChromeClass, className, phone && dialogPreviewPhoneClass, phone && phoneClassName)}
     >
       {children}
       {showCloseButton && (

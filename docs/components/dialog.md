@@ -611,6 +611,8 @@ trigger opens the real, portaled sheet at the bottom of the browser.
 
 **Colour changes fade through `state-fade`** — `color, background-color, border-color, outline-color, opacity` on `cubic-bezier(0.2,0,0,1)`, 440ms in and 100ms out. The split needs no second mechanism: the transition that runs on the way in is the one declared on `:hover`, the one on the way out is the one on the element. Prose links inside a `DialogDescription` carry it too, through `*:[a]:state-fade`.
 
+**`DialogPreview` takes `phoneClassName`.** A dialog's own `max-md:` classes answer the real window, and a DS frame set to 320 only pretends to be narrow, so a preview showed a different sheet than the one that opens. `phoneClassName` is applied after the phone defaults; a dialog with phone spacing of its own passes the same values there (Login does).
+
 ## Open questions
 
 - `DialogFormActions` and `dialogFormActionsClass` have no call site since the form sheets moved their action into the bar. Remove them, or keep the band for a form with room for a full-width action?

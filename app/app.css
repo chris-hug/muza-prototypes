@@ -1854,6 +1854,28 @@ img {
     display: none;
   }
 
+  /* The login sheet with the keyboard up. Measured above: 169px over the
+     keyboard on an iPhone in Brave. Title, field and button need 151 of
+     it, so the mark, the line under the title and the fine print step aside
+     (they were read before the field took focus, and return with the
+     keyboard), and the sheet's own paddings shrink. The field and the button
+     keep their 48. */
+  [data-kb="open"] [data-login] {
+    /* 12 + title 19 + 8 + field 48 + 8 + button 48 + 8 = 151, inside the
+       161 the sheet may take (169 less its 8px top margin). At 20 / 12 / 12
+       it came to 199 and the button was half under the keyboard. 12 on top
+       still clears the grabber, which ends at 10. */
+    padding-top: 0.75rem;
+    padding-bottom: 0.5rem;
+    gap: 0.5rem;
+  }
+  [data-kb="open"] [data-login] form {
+    gap: 0.5rem;
+  }
+  [data-kb="open"] [data-login] [data-login-aside] {
+    display: none;
+  }
+
   /* The bottom SHEET is squeezed by the same amount, and it spends what it
      gets on rows: at a keyboard height the find screen's list is down to
      about half a row, so every 8px is a quarter of one. Same principle —

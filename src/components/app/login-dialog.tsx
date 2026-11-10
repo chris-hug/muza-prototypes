@@ -37,7 +37,8 @@ function LoginBody({ email, setEmail, onSubmit }: {
 }) {
   return (
     <form
-      className="flex flex-col gap-4"
+      // 12 between field and button: they are one action, typed then sent.
+      className="flex flex-col gap-3"
       onSubmit={e => { e.preventDefault(); onSubmit?.() }}
     >
       {/* No visible label. The dialog is one field long and the line above it
@@ -51,6 +52,13 @@ function LoginBody({ email, setEmail, onSubmit }: {
         type="email"
         aria-label="Email address"
         autoComplete="email"
+        // A phone keyboard for an address: no capital first letter, no
+        // autocorrect turning a name into a word, and "send" on the return key
+        // so the code goes out from the keyboard without reaching for the pill.
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        enterKeyHint="send"
         placeholder="Enter your email address"
         /* `?? ""` keeps the field CONTROLLED in the preview too. With
            `undefined` React hands the input back to the DOM, and a static
@@ -60,7 +68,10 @@ function LoginBody({ email, setEmail, onSubmit }: {
         value={email ?? ""}
         onChange={e => setEmail?.(e.target.value)}
       />
-      <Button type="submit" size="lg" className="w-full" disabled={!email?.trim()}>
+      {/* `px-4`, not the `lg` 40px: a full-width button centres its label and
+          needs no side padding to look like a button. At 40 the label needed
+          318px and pushed the form past a 320 phone (272 inside the sheet). */}
+      <Button type="submit" size="lg" className="w-full px-4" disabled={!email?.trim()}>
         Send me a one-time passcode
       </Button>
     </form>
@@ -85,9 +96,10 @@ function LoginHeading({ preview = false }: { preview?: boolean }) {
           reads as part of the headline instead of as the thing saying whose
           dialog this is. */}
       <div className="w-full flex flex-col items-center text-center pl-8">
-        <LogoMark className="w-10 h-auto text-foreground mb-2" />
+        {/* Wrapped: LogoMark does not pass data attributes through to its svg. */}
+        <span data-login-aside="" className="contents"><LogoMark className="w-10 h-auto text-foreground mb-2" /></span>
         <Title className="md:text-large">{TITLE}</Title>
-        <Desc className="mt-1.5">{DESCRIPTION}</Desc>
+        <Desc data-login-aside="" className="mt-1.5">{DESCRIPTION}</Desc>
       </div>
     </>
   )
@@ -104,13 +116,19 @@ export function LoginDialog({
   const [email, setEmail] = useState("")
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {/* Desktop width only — mobile bottom-sheet comes from the base. */}
-      <DialogContent className="md:max-w-md">
+      {/* Desktop width from here; the bottom sheet comes from the base. On a
+          phone the base's 12px inset and 8px gaps suit a sheet full of rows,
+          not a sheet of three things: the field and button ran to the edge and
+          the heading, form and fine print sat on top of each other. 24 at the
+          sides (the page gutter, so the field lines up with the page behind),
+          24 between the three blocks, 24 below before the home indicator, and
+          28 on top so the mark clears the grabber the base overlays at 6px. */}
+      <DialogContent data-login="" className="md:max-w-md max-md:px-6 max-md:pt-7 max-md:gap-6 max-md:pb-[max(24px,env(safe-area-inset-bottom))]">
         <DialogHeader>
           <LoginHeading />
         </DialogHeader>
         <LoginBody email={email} setEmail={setEmail} onSubmit={() => onOpenChange(false)} />
-        <p className="text-2xsmall text-muted-foreground">
+        <p data-login-aside="" className="text-2xsmall text-muted-foreground">
           By continuing you agree to Muza's Terms. We only email you the sign-in code.
         </p>
       </DialogContent>
@@ -121,7 +139,9 @@ export function LoginDialog({
 // ─── Static preview (DS kitchen sink) ─────────────────────────────────────────
 export function LoginDialogPreview({ className }: { className?: string }) {
   return (
-    <DialogPreview className={className ?? "md:max-w-md"}>
+    // The live sheet's phone spacing, restated for the frame (see
+    // `phoneClassName` in dialog.tsx). Keep the two in step.
+    <DialogPreview className={className ?? "md:max-w-md"} phoneClassName="!px-6 !pt-7 !gap-6 !pb-6">
       <DialogPreviewHeader>
         <LoginHeading preview />
       </DialogPreviewHeader>
@@ -132,7 +152,7 @@ export function LoginDialogPreview({ className }: { className?: string }) {
           rather than waiting for one. A frame documents what the component
           does on arrival. */}
       <LoginBody />
-      <p className="text-2xsmall text-muted-foreground">
+      <p data-login-aside="" className="text-2xsmall text-muted-foreground">
         By continuing you agree to Muza's Terms. We only email you the sign-in code.
       </p>
     </DialogPreview>
