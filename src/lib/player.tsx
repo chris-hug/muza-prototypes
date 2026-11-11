@@ -119,6 +119,12 @@ export function usePlayer(): PlayerState {
   return ctx
 }
 
+/** The player, or `null` outside a provider — for surfaces that also render
+ *  statically (a design-system frame) and must not throw there. */
+export function usePlayerOptional(): PlayerState | null {
+  return React.useContext(PlayerContext)
+}
+
 /** Convenience: has anything ever been loaded? Drives whether the
  *  persistent player chrome should render at all. */
 export function useHasActiveTrack(): boolean {

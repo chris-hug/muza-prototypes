@@ -18,16 +18,18 @@
  * MusicBrainz and Discogs.
  */
 
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 import {
   Dialog, DialogContent, DialogTitle,
 } from "@/components/ui/dialog"
-import { X as XIcon, ChevronRight } from "lucide-react"
+import { X as XIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useIsMobile } from "@/lib/use-media-query"
 import { getCredits, hasAlbumDetail, findTrack, peopleOnTrack, type Credits, type CreditGroup, type CreditPerson } from "@/lib/album-catalog"
+import { usePlayerOptional } from "@/lib/player"
+import { TrackNumberPlayButton } from "@/components/ui/song-list-item"
 import { artistImage } from "@/lib/artist-data"
 import { LibraryHeartButton } from "@/components/ui/library-heart-button"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -46,7 +48,7 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
     <CreditsContext.Provider value={{ open }}>
       {children}
       <Dialog open={!!credits} onOpenChange={o => { if (!o) setKey(null) }}>
-        {credits && <CreditsDialogContent credits={credits} initialTrack={findTrack(credits, req?.title)} onClose={() => setKey(null)} />}
+        {credits && <CreditsDialogContent credits={credits} focusTrack={findTrack(credits, req?.title)} onClose={() => setKey(null)} />}
       </Dialog>
     </CreditsContext.Provider>
   )
@@ -126,14 +128,12 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
  */
 export function CreditsContent({
   credits, heading, onArtist, onAlbum, bodyClassName = "max-h-[60vh]",
-  showCover = true, layout = "tabs", track, onTrack,
+  showCover = true, layout = "tabs", focusTrack,
 }: {
-  /** 1-based track number: render that SONG's credits — the album's people
-   *  filtered to it (`peopleOnTrack`). Omitted = the album's. */
-  track?:    number
-  /** Switch between the two: a number opens that song, `undefined` goes back
-   *  to the album. Omit for a static render (the rows stop being buttons). */
-  onTrack?:  (n?: number) => void
+  /** 1-based track to open on: the Credits panel starts scrolled to that
+   *  song's section, its header stuck at the top. A song's "Show credits"
+   *  and the player pass it; the album's ⓘ does not. */
+  focusTrack?: number
   /** The thumb in the header. Off where the cover is already on screen: the
    *  player shows the credits in place of its artwork, beside a thumb. */
   showCover?: boolean
@@ -149,19 +149,56 @@ export function CreditsContent({
   layout?: CreditsLayout
 }) {
 
-  const song = track ? credits.tracks[track - 1] : undefined
-  /* A song drops the Artwork & Notes group: a sleeve and its liner notes
-     belong to the record, not to one piece on it, and "Cover design" under
-     Gazzelloni credits nobody with anything they did on Gazzelloni. */
-  const people = song && track
-    ? peopleOnTrack(credits.people, track).filter(p => p.group !== "artwork")
-    : credits.people
   const meta = [credits.year && String(credits.year), credits.label].filter(Boolean).join(" · ")
   /* Whether the visible tab panel is scrolled — the veil under the tab bar
      shows only then (see `veil`). Reset on a tab change: each panel starts at
      its top. */
   const [scrolled, setScrolled] = useState(false)
   const onPanelScroll = (e: React.UIEvent<HTMLDivElement>) => setScrolled(e.currentTarget.scrollTop > 0)
+  const [tab, setTab] = useState("credits")
+
+  /* The player, when there is one — a track header plays its track and
+     shows the one playing. `null` in a static frame: the headers render,
+     inert. */
+  const player = usePlayerOptional()
+  const isCurrent = (title: string) =>
+    !!player?.track && player.track.album === credits.album && player.track.title === title
+  const playTrack = player && ((t: { title: string; duration: string }) => {
+    if (isCurrent(t.title)) { player.toggle(); return }
+    player.play(
+      { title: t.title, artist: credits.mainArtist, album: credits.album, image: credits.cover, totalTime: t.duration },
+      credits.album,
+    )
+  })
+
+  /* Open on `focusTrack`: scroll its section to the top of whatever box
+     scrolls the credits (the tab panel, or the whole page layout). Measured,
+     not `scrollIntoView`, which would also scroll the sheet and the page
+     behind it. */
+  const creditsRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!focusTrack) return
+    const go = () => {
+      const root = creditsRef.current
+      const el = root?.querySelector<HTMLElement>(`[data-track="${focusTrack}"]`)
+      let box = root?.parentElement ?? null
+      while (box && !/(auto|scroll)/.test(getComputedStyle(box).overflowY)) box = box.parentElement
+      if (!el || !box) return
+      // Tells a phone sheet's detent this scroll is a destination (dialog.tsx).
+      box.dataset.keepScroll = ""
+      // The dialog may be mid scale-in, so rects are scaled; the ratio of
+      // the box's drawn to laid-out height undoes that.
+      const scale = box.getBoundingClientRect().height / box.offsetHeight || 1
+      box.scrollTop += (el.getBoundingClientRect().top - box.getBoundingClientRect().top) / scale
+    }
+    /* On the first painted frame, and again once the dialog has opened: on
+       the mount pass the panel has no height yet, and the open transition can
+       reset a scroll set during it. A second call that finds the section in
+       place moves nothing. */
+    const f = requestAnimationFrame(go)
+    const t = setTimeout(go, 250)
+    return () => { cancelAnimationFrame(f); clearTimeout(t) }
+  }, [focusTrack])
 
   /* TWO type sizes in the whole dialog: `text-small` (19) for content —
      title, names, section titles, Overview, Notes — and `text-2xsmall` (15)
@@ -191,9 +228,8 @@ export function CreditsContent({
           between the lines looked uneven although no single value was. */}
       <div className="flex min-w-0 flex-col text-left">
         {heading}
-        {/* A song's title is not a link — it is what is open. */}
-        <Value onClick={song ? undefined : onAlbum} className="truncate text-small font-medium leading-6 text-foreground">
-          {song ? song.title : credits.album}
+        <Value onClick={onAlbum} className="truncate text-small font-medium leading-6 text-foreground">
+          {credits.album}
         </Value>
         <Value onClick={onArtist && (() => onArtist(credits.mainArtist))} className="truncate text-small text-muted-foreground leading-6">
           {credits.mainArtist}
@@ -208,15 +244,7 @@ export function CreditsContent({
         {/* The role line's size and colour — the header's secondary line and a
             person's secondary line are one thing; its height is the header's
             24px rhythm. */}
-        {/* A song says where it sits — "Track 3 · Out to Lunch" — in the line
-            the album uses for year · label; the album name is the way back to
-            the album's own page, as the album title is in album mode. */}
-        {song ? (
-          <p className="flex min-w-0 text-2xsmall text-muted-foreground leading-6">
-            <span className="shrink-0">Track {track} ·&nbsp;</span>
-            <Value onClick={onAlbum} className="truncate">{credits.album}</Value>
-          </p>
-        ) : meta && <p className="truncate text-2xsmall text-muted-foreground leading-6">{meta}</p>}
+        {meta && <p className="truncate text-2xsmall text-muted-foreground leading-6">{meta}</p>}
       </div>
     </div>
   )
@@ -229,16 +257,12 @@ export function CreditsContent({
     return s ? `${Math.round(s / 60)} min` : undefined
   })()
   const facts: [string, React.ReactNode][] = [
-    ...(song ? [
-      ["Track", `${track} of ${credits.tracks.length}`] as [string, React.ReactNode],
-      ["Duration", song.duration] as [string, React.ReactNode],
-    ] : []),
     ...(credits.recordingDate || credits.studio
       ? [["Recorded", <>{credits.recordingDate}{credits.recordingDate && credits.studio && <br />}{credits.studio}</>] as [string, React.ReactNode]]
       : []),
     ...(credits.year ? [["Released", String(credits.year)] as [string, React.ReactNode]] : []),
     ...(credits.label ? [["Label", [credits.label, credits.catalogNumber].filter(Boolean).join(" · ")] as [string, React.ReactNode]] : []),
-    ...(song ? [] : [["Tracks", [String(credits.tracks.length), total].filter(Boolean).join(" · ")] as [string, React.ReactNode]]),
+    ["Tracks", [String(credits.tracks.length), total].filter(Boolean).join(" · ")],
   ]
 
   const overview = (
@@ -252,100 +276,103 @@ export function CreditsContent({
     </dl>
   )
 
-  const groups = GROUP_ORDER
-    .map(g => [g, people.filter(p => p.group === g)] as const)
+  /* Credits are read TRACK BY TRACK, as Qobuz lays them out: each song a
+     section, its header sticky, the people who played on it below. A
+     song's people are the album's read for that track (`peopleOnTrack`):
+     roles without track numbers plus those naming it, numbers dropped —
+     Dolphy is "Bass clarinet" under Hat and Beard and "Flute" under
+     Gazzelloni, which "(1, 2), Flute (3)" only encoded.
+     Production and artwork are the RECORD's, not a song's, so they follow
+     the tracks once instead of repeating under each.
+     It replaced one list per album plus a separate dialog per song: two
+     views of one record that had to be kept apart, and a reader who wanted
+     the next track had to go back out. */
+  const PER_TRACK: CreditGroup[] = ["personnel", "composition"]
+  const albumGroups = GROUP_ORDER
+    .filter(g => !PER_TRACK.includes(g))
+    .map(g => [g, credits.people.filter(p => p.group === g)] as const)
     .filter(([, list]) => list.length > 0)
-  const hasTrackRefs = !song && people.some(p => p.roles.some(r => r.tracks?.length))
+
+  const personRows = (list: CreditPerson[]) => (
+    /* One row per PERSON, every role merged. Hairlines between rows, as
+       Tidal and Qobuz both draw them; they read as a ruled liner-note sheet
+       rather than as floating text. */
+    <ul className="divide-y divide-border/60">
+      {list.map(p => (
+        <li key={p.name} className="flex items-center gap-3 py-3">
+          <PersonAvatar name={p.name} />
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            {/* No page, no link and no heart — nothing to open or save.
+                The row keeps its shape (avatar, name, roles), so a
+                person without a page reads as credited, not as broken. */}
+            <Value
+              onClick={p.profile !== false && onArtist ? () => onArtist(p.name) : undefined}
+              className="text-small text-foreground leading-tight truncate"
+            >
+              {p.name}
+            </Value>
+            <p className="text-2xsmall text-muted-foreground leading-snug">{rolesLine(p.roles)}</p>
+          </div>
+          {p.profile !== false && (
+            <LibraryHeartButton type="artist" id={slugify(p.name)} name={p.name} size="icon-sm" className="touch-target shrink-0" />
+          )}
+        </li>
+      ))}
+    </ul>
+  )
+
+  /* The sticky bar every section hangs from. 48px, in the dialog's colour so
+     rows pass under it, with a 12px fade below — the same soft edge as the
+     veil, here because the bar, not the tab strip, is now the edge rows
+     scroll under. `-mx-2` + `pl-1`: the 48px play button's centre lands on
+     the 40px avatars' centre and the title on the names' left edge (52px),
+     so the bar and the rows share one grid. */
+  const stickyBar = (current: boolean) => cn(
+    "sticky top-0 z-10 flex h-12 items-center gap-2 rounded-md",
+    /* The player has no gutter to bleed into (`showCover` off, `px-0`): a
+       `-mx-2` bar was clipped at its right edge. There the bar stays inside
+       and the button alone pulls left by 4px onto the same grid. */
+    showCover ? "-mx-2 pl-1 pr-2" : "[&>button:first-child]:-ml-1",
+    "after:pointer-events-none after:absolute after:inset-x-2 after:top-full after:h-3",
+    "after:bg-[linear-gradient(to_bottom,var(--popover),transparent)]",
+    // The song playing wears the album page's playing row: `bg-muted`.
+    current ? "bg-muted" : "bg-popover",
+  )
 
   const creditsBody = (
-    <div className="flex flex-col gap-6">
-      {groups.map(([g, list]) => (
-        <section key={g} className="flex flex-col gap-1">
-          <SectionTitle>{GROUP_LABEL[g]}</SectionTitle>
-          {/* One row per PERSON, every role merged — a name appears once per
-              album. Hairlines between rows, as Tidal and Qobuz both draw
-              them; they read as a ruled liner-note sheet rather than as
-              floating text. */}
-          <ul className="divide-y divide-border/60">
-            {list.map(p => (
-              <li key={p.name} className="flex items-center gap-3 py-3">
-                <PersonAvatar name={p.name} />
-                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  {/* No page, no link and no heart — nothing to open or save.
-                      The row keeps its shape (avatar, name, roles), so a
-                      person without a page reads as credited, not as broken. */}
-                  <Value
-                    onClick={p.profile !== false && onArtist ? () => onArtist(p.name) : undefined}
-                    className="text-small text-foreground leading-tight truncate"
-                  >
-                    {p.name}
-                  </Value>
-                  <p className="text-2xsmall text-muted-foreground leading-snug">{rolesLine(p.roles)}</p>
-                </div>
-                {p.profile !== false && (
-                  <LibraryHeartButton type="artist" id={slugify(p.name)} name={p.name} size="icon-sm" className="touch-target shrink-0" />
-                )}
-              </li>
-            ))}
-          </ul>
+    <div ref={creditsRef} className="flex flex-col gap-6">
+      {credits.tracks.map((t, i) => {
+        const n = i + 1
+        const list = peopleOnTrack(credits.people, n).filter(p => PER_TRACK.includes(p.group))
+        const current = isCurrent(t.title)
+        return (
+          <section key={t.title} data-track={n} className="flex flex-col">
+            <div className={stickyBar(current)}>
+              <TrackNumberPlayButton
+                number={n}
+                title={t.title}
+                playing={current && !!player?.playing}
+                onToggle={playTrack ? () => playTrack(t) : undefined}
+              />
+              <p className="min-w-0 flex-1 truncate text-small font-medium text-foreground">{t.title}</p>
+              <span className="text-small tabular-nums text-muted-foreground">{t.duration}</span>
+            </div>
+            {personRows(list)}
+          </section>
+        )
+      })}
+      {albumGroups.map(([g, list]) => (
+        <section key={g} className="flex flex-col">
+          <div className={cn(stickyBar(false), showCover && "px-2")}>
+            <SectionTitle>{GROUP_LABEL[g]}</SectionTitle>
+          </div>
+          {personRows(list)}
         </section>
       ))}
-      {/* The album's track list, two jobs in one: the key to the "(1, 2)"
-          after a role, and the way into each song's credits. It used to show
-          only when a role named tracks; now that every row opens a song it is
-          always there (when there is somewhere to go — the static preview
-          without `onTrack` keeps the old rule).
-          Laid out on the PERSON row's grid: the number centred in a 40px
-          column where the avatar sits, so titles start on the names' line,
-          and the same `py-3` and gap. A 20px number column under 40px
-          avatars put the titles on a second, closer left edge and packed the
-          rows to 44px under 64px ones; the list read as a different, tighter
-          component. Ruled like the people, with a chevron that says "opens". */}
-      {!song && (onTrack || hasTrackRefs) && (
-        <section className="flex flex-col gap-1">
-          <SectionTitle>Tracks</SectionTitle>
-          <ol className="divide-y divide-border/60 text-small leading-snug">
-            {credits.tracks.map((t, i) => {
-              const row = (
-                <>
-                  <span className="w-10 shrink-0 text-center tabular-nums text-muted-foreground">{i + 1}</span>
-                  <span className="min-w-0 flex-1 truncate text-left text-foreground"><span className="link-underline">{t.title}</span></span>
-                  <span className="tabular-nums text-muted-foreground">{t.duration}</span>
-                  {onTrack && <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />}
-                </>
-              )
-              return (
-                <li key={t.title}>
-                  {onTrack ? (
-                    <button
-                      type="button"
-                      onClick={() => onTrack(i + 1)}
-                      aria-label={`${t.title} credits`}
-                      className="link-underline-group flex w-full min-h-11 items-center gap-3 py-3 outline-none cursor-pointer"
-                    >
-                      {row}
-                    </button>
-                  ) : (
-                    <div className="flex min-h-11 items-center gap-3 py-3">{row}</div>
-                  )}
-                </li>
-              )
-            })}
-          </ol>
-        </section>
-      )}
-      {/* The way back. A button, not a link in the header: it is where the
-          reader goes once the song is read, at the end of the list. */}
-      {song && onTrack && (
-        <Button variant="secondary" size="lg" className="self-start" onClick={() => onTrack(undefined)}>
-          All album credits
-        </Button>
-      )}
     </div>
   )
 
-  // Notes are about the album; a song shows none.
-  const notes = !song && credits.notes && (
+  const notes = credits.notes && (
     <div className="flex flex-col gap-2">
       <p className="text-small text-foreground leading-relaxed">{credits.notes.text}</p>
       {credits.notes.by && <p className="text-2xsmall text-muted-foreground">— {credits.notes.by}</p>}
@@ -391,7 +418,10 @@ export function CreditsContent({
      of empty space between the tabs and the first heading; at rest the gap
      is 24px. */
   const panel = cn(
-    "flex-1 min-h-0 overflow-y-auto pt-6 pb-10",
+    // No top PADDING on the scroller: a sticky bar sticks at the padding
+    // edge, 24px down, and rows showed through the band above it. The 24px
+    // is the content's own margin (`gap` below) instead.
+    "flex-1 min-h-0 overflow-y-auto pb-10",
     // Thin, in the app's ink, on a clear track — not the browser's grey slab.
     "[scrollbar-width:thin] [scrollbar-color:var(--muted-foreground)_transparent]",
     pad,
@@ -401,7 +431,9 @@ export function CreditsContent({
       aria-hidden="true"
       className={cn(
         "pointer-events-none absolute top-0 h-12.5 z-10 transition-opacity duration-200",
-        scrolled ? "opacity-100" : "opacity-0",
+        // Not on Credits: there a sticky bar is always at the top edge and
+        // carries its own fade; the veil would wash out its top 15px.
+        scrolled && !(layout === "tabs" && tab === "credits") ? "opacity-100" : "opacity-0",
         showCover ? "inset-x-3 md:inset-x-6" : "inset-x-0",
         "bg-[linear-gradient(to_bottom,var(--popover)_15px,color-mix(in_srgb,var(--popover)_92%,transparent)_25px,color-mix(in_srgb,var(--popover)_70%,transparent)_35px,color-mix(in_srgb,var(--popover)_35%,transparent)_45px,transparent_50px)]",
       )}
@@ -412,8 +444,11 @@ export function CreditsContent({
      switching tabs never moves the bar out from under the finger. Credits is
      the default tab, because "Show credits" is what was asked for. */
   return (
-    <Tabs defaultValue="credits" onValueChange={() => setScrolled(false)} className={cn("flex flex-col flex-1 min-h-0 gap-0", bodyClassName)}>
-      <div className={cn("shrink-0 flex flex-col gap-6 pt-3 md:pt-6 pb-0", pad)}>
+    <Tabs value={tab} onValueChange={v => { setTab(String(v)); setScrolled(false) }} className={cn("flex flex-col flex-1 min-h-0 gap-0", bodyClassName)}>
+      {/* `pb-3` here + `pt-3` in each panel: 24px to the first line at rest,
+          and still 12px between the tab strip and a track bar stuck under it
+          — with all 24 in the panel, the stuck bar touched the strip. */}
+      <div className={cn("shrink-0 flex flex-col gap-6 pt-3 md:pt-6 pb-3", pad)}>
         {header}
         <TabsList size="sm" className="w-full">
           <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -423,31 +458,15 @@ export function CreditsContent({
       </div>
       <div className="relative flex flex-1 min-h-0 flex-col">
         {veil}
-        <TabsContent value="overview" className={panel} onScroll={onPanelScroll}>{overview}</TabsContent>
-        <TabsContent value="credits"  className={panel} onScroll={onPanelScroll}>{creditsBody}</TabsContent>
-        {notes && <TabsContent value="notes" className={panel} onScroll={onPanelScroll}>{notes}</TabsContent>}
+        <TabsContent value="overview" className={panel} onScroll={onPanelScroll}><div className="pt-3">{overview}</div></TabsContent>
+        <TabsContent value="credits"  className={panel} onScroll={onPanelScroll}><div className="pt-3">{creditsBody}</div></TabsContent>
+        {notes && <TabsContent value="notes" className={panel} onScroll={onPanelScroll}><div className="pt-3">{notes}</div></TabsContent>}
       </div>
     </Tabs>
   )
 }
 
-/*
- * CreditsBrowser — CreditsContent that can move between an album's credits
- * and one song's, holding which is open. The live dialog and the player use
- * it; the DS preview renders CreditsContent fixed.
- *
- * Keyed by the track, so a switch remounts the body: it opens on Credits,
- * at the top, with no fade — a song's credits are a new page, not the old
- * one scrolled.
- */
-export function CreditsBrowser({
-  initialTrack, ...props
-}: Omit<React.ComponentProps<typeof CreditsContent>, "track" | "onTrack"> & { initialTrack?: number }) {
-  const [track, setTrack] = useState(initialTrack)
-  return <CreditsContent key={track ?? "album"} {...props} track={track} onTrack={setTrack} />
-}
-
-function CreditsDialogContent({ credits, initialTrack, onClose }: { credits: Credits; initialTrack?: number; onClose: () => void }) {
+function CreditsDialogContent({ credits, focusTrack, onClose }: { credits: Credits; focusTrack?: number; onClose: () => void }) {
   const { openArtist, openAlbum } = useMediaNav()
   // Navigate, then dismiss the dialog so the destination is visible.
   const go = (fn: () => void) => { fn(); onClose() }
@@ -475,15 +494,14 @@ function CreditsDialogContent({ credits, initialTrack, onClose }: { credits: Cre
         layout === "tabs" ? "h-[88svh] md:h-[min(85vh,44rem)]" : "max-h-[92svh] md:max-h-[85vh]",
       )}
     >
-      <CreditsBrowser
+      <CreditsContent
         credits={credits}
-        initialTrack={initialTrack}
+        focusTrack={focusTrack}
         layout={layout}
         /* Named for screen readers, not drawn: the title and the thumb
            already say what this is, and a grey "Album credits" over them was
-           a label for the obvious. "Credits", not "Album credits": the same
-           dialog shows a song's. */
-        heading={<DialogTitle className="sr-only">Credits</DialogTitle>}
+           a label for the obvious. */
+        heading={<DialogTitle className="sr-only">Album credits</DialogTitle>}
         onArtist={name => go(() => openArtist(slugify(name)))}
         onAlbum={albumLinkable ? () => go(() => openAlbum(slugify(credits.album))) : undefined}
         bodyClassName="min-h-0"
@@ -500,7 +518,7 @@ function CreditsDialogContent({ credits, initialTrack, onClose }: { credits: Cre
  * system's frame that is the window CHIP, so a "375" frame shows the sheet
  * shape — full width, top corners only — instead of the desktop card.
  */
-export function CreditsDialogPreview({ albumKey = "a07", layout = "tabs", track }: { albumKey?: string; layout?: CreditsLayout; track?: number }) {
+export function CreditsDialogPreview({ albumKey = "a07", layout = "tabs" }: { albumKey?: string; layout?: CreditsLayout }) {
   const phone = useIsMobile()
   return (
     <div
@@ -523,10 +541,6 @@ export function CreditsDialogPreview({ albumKey = "a07", layout = "tabs", track 
         heading={null}
         onArtist={() => {}}
         onAlbum={() => {}}
-        track={track}
-        /* No-op too, for the same reason: the frame must show the track rows
-           and "All album credits" as the buttons they are. */
-        onTrack={() => {}}
       />
       {/* The real dialog gets its ✕ from `DialogContent`; this preview builds
           its own card, so it has to carry one or the frame documents a dialog

@@ -468,7 +468,11 @@ function DialogContent({
       const box = e.target as HTMLElement
       if (!box || box === popupEl || box.scrollTop <= 0) return
       grown = true
-      if (grow()) box.scrollTop = 0
+      /* A box that scrolled ITSELF — the credits dialog opening on a song
+         halfway down — marks that with `data-keep-scroll`: the sheet still
+         takes its full height, but the scroll was a destination, not a
+         pull, and resetting it threw the reader back to the first track. */
+      if (grow() && !("keepScroll" in box.dataset)) box.scrollTop = 0
     }
 
     popupEl.addEventListener("scroll", onScroll, { capture: true, passive: true })

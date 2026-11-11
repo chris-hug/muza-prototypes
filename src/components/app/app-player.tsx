@@ -23,7 +23,7 @@ import { useMediaNav, slugify } from "@/lib/media-nav"
 import { hasAlbumDetail, getAlbumDetail, getCredits, findTrack } from "@/lib/album-catalog"
 import { hasPlaylistDetail, getPlaylistDetail } from "@/lib/playlist-catalog"
 import { getArtistProfile } from "@/lib/artist-catalog"
-import { CreditsBrowser } from "@/components/app/credits-dialog"
+import { CreditsContent } from "@/components/app/credits-dialog"
 import { SongMenuItems } from "@/components/ui/song-list-item"
 
 /** seconds → "m:ss" (mirrors the parseTime helpers in the player chrome). */
@@ -109,13 +109,13 @@ export function AppPlayer({ footerNav }: { footerNav: boolean }) {
   const onPrevious = canSkip ? () => (elapsed > 3 ? seek(0) : step(-1)) : undefined
 
   const creditsBody = hasAlbumDetail(albumKey) ? (
-    /* The player opens on the SONG playing, not on its album: that is the
-       question "who plays on this?" asks. Keyed by the title, so the next
-       track opens on its own credits. */
-    <CreditsBrowser
+    /* The album's credits, opened at the SONG playing — its section's bar
+       stuck at the top. Keyed by the title, so the next track lands on its
+       own section. */
+    <CreditsContent
       key={track.title}
       credits={getCredits(albumKey)}
-      initialTrack={findTrack(getCredits(albumKey), track.title)}
+      focusTrack={findTrack(getCredits(albumKey), track.title)}
       showCover={false}
       heading={null}
       onArtist={name => { setOverlayOpen(false); openArtist(slugify(name)) }}

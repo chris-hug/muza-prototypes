@@ -759,10 +759,11 @@ function SheetAction({
  * `CoverPlayButton`, but the idle state shows a track number
  * instead of an image. Always-mounted icons + CSS opacity
  * transitions (no JSX swaps) match the no-flicker pattern from
- * `CoverPlayButton`. Lives here (not in its own file) because it's
- * only ever used by `SongListItem` in the `trackNumber` mode.
+ * `CoverPlayButton`. Lives here, beside `SongListItem`'s `trackNumber`
+ * mode; also exported for the credits dialog's sticky track headers, so a
+ * track plays and shows "playing" the same way there as on the album page.
  */
-function TrackNumberPlayButton({
+export function TrackNumberPlayButton({
   number,
   title,
   playing,
