@@ -371,7 +371,10 @@ So the **first scroll grows the sheet to the full screen instead of
 scrolling** — the scroll position is put back to where it was, and everything
 after that is an ordinary scroll. Two detents, in the phrasing iOS uses, moved
 between by the reader's own gesture rather than by a handle. It lives in
-`DialogContent`, so every bottom sheet has it.
+`DialogContent`, so every bottom sheet has it — unless the content passes
+**`fixedHeight`**: a dialog that sets one height of its own and scrolls
+inside it (the credits dialog, `h-[80svh]`) read the detent as the sheet
+jumping to nearly full screen the moment it was scrolled.
 
 The growth animates from a MEASURED pixel height (CSS cannot interpolate from
 `height: auto`) and lifts `max-height` with it — the cap is what made the gap,

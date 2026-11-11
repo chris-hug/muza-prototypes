@@ -385,10 +385,16 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  fixedHeight = false,
   ref,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
+  /** The content sets its own height and keeps it: no grow-on-first-scroll
+   *  detent. For a dialog with a fixed height and its own inner scroller
+   *  (the credits dialog), where the detent read as the sheet jumping to
+   *  nearly the full screen the moment the reader scrolled. */
+  fixedHeight?: boolean
 }) {
   /* The presentation is the ROOT's, not the content's — see `Dialog`. A
      content component cannot choose it, because by the time it renders the
@@ -422,7 +428,7 @@ function DialogContent({
      interpolate from `height: auto`; `max-height` is lifted with it, or the
      sheet animates into the very cap that made the gap. */
   React.useEffect(() => {
-    if (!popupEl || form) return
+    if (!popupEl || form || fixedHeight) return
     let grown = false
 
     /* Where the grown sheet lives once the animation is over: the same cap the
@@ -468,16 +474,12 @@ function DialogContent({
       const box = e.target as HTMLElement
       if (!box || box === popupEl || box.scrollTop <= 0) return
       grown = true
-      /* A box that scrolled ITSELF — the credits dialog opening on a song
-         halfway down — marks that with `data-keep-scroll`: the sheet still
-         takes its full height, but the scroll was a destination, not a
-         pull, and resetting it threw the reader back to the first track. */
-      if (grow() && !("keepScroll" in box.dataset)) box.scrollTop = 0
+      if (grow()) box.scrollTop = 0
     }
 
     popupEl.addEventListener("scroll", onScroll, { capture: true, passive: true })
     return () => popupEl.removeEventListener("scroll", onScroll, { capture: true })
-  }, [popupEl, form])
+  }, [popupEl, form, fixedHeight])
 
   /* When the sheet SHRINKS, the focused field has to be found again.
      

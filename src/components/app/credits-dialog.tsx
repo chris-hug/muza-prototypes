@@ -195,11 +195,9 @@ export function CreditsContent({
       let box = root?.parentElement ?? null
       while (box && !/(auto|scroll)/.test(getComputedStyle(box).overflowY)) box = box.parentElement
       if (!root || !box) return
-      if (!byTrack.on || !byTrack.at) { box.dataset.keepScroll = ""; box.scrollTop = 0; return }
+      if (!byTrack.on || !byTrack.at) { box.scrollTop = 0; return }
       const el = root.querySelector<HTMLElement>(`[data-track="${byTrack.at}"]`)
       if (!el) return
-      // Tells a phone sheet's detent this scroll is a destination (dialog.tsx).
-      box.dataset.keepScroll = ""
       // The dialog may be mid scale-in, so rects are scaled; the ratio of
       // the box's drawn to laid-out height undoes that.
       const scale = box.getBoundingClientRect().height / box.offsetHeight || 1
@@ -591,6 +589,7 @@ function CreditsDialogContent({ credits, focusTrack, onClose }: { credits: Credi
       ? "page" : "tabs"
   return (
     <DialogContent
+      fixedHeight
       className={cn(
         // 576, the purchase / checkout dialogs' width. It was `md:max-w-md`
         // (448), where a role line like Dolphy's wrapped to three lines.
@@ -600,11 +599,13 @@ function CreditsDialogContent({ credits, focusTrack, onClose }: { credits: Credi
         // and its unprefixed twin side by side — so from 768 up the base won
         // and padded the body twice. Cancel the variant with a variant.
         "p-0 gap-0 md:p-0 md:gap-0 overflow-hidden flex flex-col",
-        // Tabs get a FIXED height so switching between short Notes and a
-        // long Credits list does not resize the sheet under the finger; the
-        // stacked page grows with its content up to the cap. `svh`, as every
-        // sheet height in the app (see Dialog).
-        layout === "tabs" ? "h-[88svh] md:h-[min(85vh,44rem)]" : "max-h-[92svh] md:max-h-[85vh]",
+        // ONE height, always: 80% of the viewport, phone and desktop, tabs
+        // and page alike. A height that followed the content resized the
+        // sheet when the tab or the reading changed, and the base sheet's
+        // grow-on-first-scroll detent jumped it to nearly full screen the
+        // moment the reader scrolled — so `fixedHeight` turns that off.
+        // `svh`, as every sheet height in the app (see Dialog).
+        "h-[80svh] max-h-[80svh]",
       )}
     >
       <CreditsContent

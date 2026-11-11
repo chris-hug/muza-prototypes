@@ -30,7 +30,7 @@ is the model, with its one data bug avoided (below).
 ## Anatomy
 
 ```tsx
-<DialogContent className="md:max-w-xl p-0 gap-0 overflow-hidden flex flex-col h-[88svh] md:h-[min(85vh,44rem)]">
+<DialogContent fixedHeight className="md:max-w-xl p-0 gap-0 overflow-hidden flex flex-col h-[80svh] max-h-[80svh]">
   <CreditsContent
     credits={credits}
     focusTrack={findTrack(credits, title)}   // track by track, at that song; undefined = the album's overview
@@ -87,9 +87,7 @@ between the two (state in `CreditsContent`); the provider keys the dialog by
 the request, so a second "Show credits" starts fresh. The player keys the body by the playing title, so the next
 track lands on its own section. The jump is measured, not `scrollIntoView`
 (which would scroll the sheet and page too), and runs again after the open
-transition; it marks the scroller `data-keep-scroll` so a phone sheet's
-detent grows the sheet without throwing the reader back to track 1 (see
-`dialog.tsx`).
+transition.
 
 Outside a provider `open` is a no-op, so menus that bake it in never crash.
 Data comes from `getCredits(albumKey)` in `album-catalog`. Three albums carry a
@@ -105,8 +103,12 @@ render for the design system.
 ## Sizing
 
 Reads the **window** at **768** through the base dialog: a bottom sheet
-below (`max-h-[92vh]`), a centred `md:max-w-xl` (576px, the purchase and checkout width) modal from there
-(`md:max-h-[85vh]`). `p-0` lets the cover header bleed to the edges; the
+below, a centred `md:max-w-xl` (576px, the purchase and checkout width) modal
+from there. **One height, always: `h-[80svh]`** — phone and desktop, tabs and
+page, album and track by track. A height that followed the content resized
+the sheet when the reading changed, and the base sheet's
+grow-on-first-scroll detent jumped it to nearly full screen the moment it was
+scrolled; `fixedHeight` turns that off (see [dialog.md](dialog.md)). `p-0` lets the cover header bleed to the edges; the
 metadata band pads itself. No column or box step. The preview reads
 `useIsMobile()` and drops to full width with top corners only at a phone
 chip, so a 375 frame shows the sheet shape.
