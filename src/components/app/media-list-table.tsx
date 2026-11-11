@@ -209,6 +209,12 @@ export function AlbumListTable({ albums }: { albums: AlbumRow[] }) {
   // carry, so a local item looks the same in every view.
   const hasCatalog = rows.some(a => !a.local)
   const hasLocal   = rows.some(a => a.local)
+  // Label gives way to Source when both would show: at a 1280 window the two
+  // fixed columns left Title and Artist ~50px each ("The B…", "Char…"). With
+  // local rows in the table, where an album comes from is the question the
+  // table answers; the label is on the album page. Owned (catalog only)
+  // keeps it.
+  const showLabel  = hasCatalog && !hasLocal
 
   return (
     <>
@@ -218,10 +224,10 @@ export function AlbumListTable({ albums }: { albums: AlbumRow[] }) {
         <col style={{ width: 64 }} />
         <col />
         <col />
-        {hasCatalog && <col style={{ width: 150 }} />}
+        {showLabel && <col style={{ width: 150 }} />}
         <col style={{ width: 72 }} />
         <col style={{ width: 132 }} />
-        {hasLocal && <col style={{ width: 280 }} />}
+        {hasLocal && <col style={{ width: 210 }} />}
         {hasCatalog && <col style={{ width: 96 }} />}
         <col style={{ width: 56 }} />
       </colgroup>
@@ -237,7 +243,7 @@ export function AlbumListTable({ albums }: { albums: AlbumRow[] }) {
             <SortHeader label="Artist" active={sort.startsWith("artist")} dir={sort === "artist-za" ? "desc" : "asc"}
               onClick={() => setSort(sort === "artist-az" ? "artist-za" : "artist-az")} />
           </TableHead>
-          {hasCatalog && <TableHead resizable={false}>
+          {showLabel && <TableHead resizable={false}>
             <SortHeader label="Label" active={sort.startsWith("label")} dir={sort === "label-za" ? "desc" : "asc"}
               onClick={() => setSort(sort === "label-az" ? "label-za" : "label-az")} />
           </TableHead>}
@@ -277,12 +283,12 @@ export function AlbumListTable({ albums }: { albums: AlbumRow[] }) {
                     ? <button type="button" onClick={l.onGoToArtist} className={linkCell}>{a.artist}</button>
                     : a.artist}
                 </TableCell>
-                {hasCatalog && <TableCell />}
+                {showLabel && <TableCell />}
                 <TableCell className="text-muted-foreground tabular-nums whitespace-nowrap">{a.year ?? "—"}</TableCell>
                 <TableCell className="text-muted-foreground tabular-nums whitespace-nowrap">{a.added.text}</TableCell>
                 <TableCell className="text-muted-foreground whitespace-nowrap truncate">
                   <span className="inline-flex items-center gap-1.5 max-w-full min-w-0">
-                    <LocalBadge />
+                    <LocalBadge className="shrink-0" />
                     <span className="truncate">{l.source.name} · {l.detail}</span>
                   </span>
                 </TableCell>
@@ -312,7 +318,7 @@ export function AlbumListTable({ albums }: { albums: AlbumRow[] }) {
               <TableCell className="text-muted-foreground whitespace-nowrap truncate">
                 <button type="button" onClick={() => openArtist(slugify(a.artist))} className={linkCell}>{a.artist}</button>
               </TableCell>
-              {hasCatalog && <TableCell className="text-muted-foreground whitespace-nowrap truncate">
+              {showLabel && <TableCell className="text-muted-foreground whitespace-nowrap truncate">
                 {a.label}
               </TableCell>}
               <TableCell className="text-muted-foreground tabular-nums whitespace-nowrap">
@@ -447,7 +453,7 @@ export function SongListTable({ songs }: { songs: SongRow[] }) {
         <col />
         <col />
         <col />
-        {hasLocal && <col style={{ width: 280 }} />}
+        {hasLocal && <col style={{ width: 210 }} />}
         <col style={{ width: 80 }} />
         <col style={{ width: 56 }} />
       </colgroup>
@@ -526,7 +532,7 @@ export function SongListTable({ songs }: { songs: SongRow[] }) {
                 <TableCell className="text-muted-foreground whitespace-nowrap truncate">
                   {l ? (
                     <span className="inline-flex items-center gap-1.5 max-w-full min-w-0">
-                      <LocalBadge />
+                      <LocalBadge className="shrink-0" />
                       <span className="truncate">{l.source.name} · {l.detail}</span>
                     </span>
                   ) : "muza"}
