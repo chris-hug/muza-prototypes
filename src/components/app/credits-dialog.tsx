@@ -388,16 +388,23 @@ export function CreditsContent({
      scroller's top: rows run up under the head and blur there; the bar
      holds just below it. No fade under the bar — Tidal's track headers have
      none, and every gradient tried here read as a smear or a band. */
+  /* The sticky bars run the dialog's FULL width (`-mx-4`, the gutter
+     cancelled) with NO radius: stuck, a bar is the lower edge of the head,
+     a full-width band, not a card floating under it (rounded bottom corners
+     were tried, and still read as a card). The padding puts the content back on the grid — `pl-3`: the
+     48px play button's centre on the avatars' centre, the title on the
+     names' edge; `pr-4`: the duration on the content's right edge. */
   const stickyShell = cn(
     "sticky top-[var(--head-h,0px)] z-10 bg-popover",
-    showCover && "-mx-2",
+    showCover && "-mx-4",
   )
-  const stickyBar = () => cn(
-    "relative flex h-12 items-center gap-2 rounded-md",
-    /* The player has no gutter to bleed into (`showCover` off, `px-0`): a
-       `-mx-2` bar was clipped at its right edge. There the bar stays inside
-       and the button alone pulls left by 4px onto the same grid. */
-    showCover ? "pl-1 pr-2" : "[&>button:first-child]:-ml-1",
+  const stickyBar = (edge = false) => cn(
+    "relative flex h-12 items-center gap-2",
+    edge ? "rounded-none" : "rounded-md",
+    /* The player has no gutter to bleed into (`showCover` off, `px-0`):
+       there the bar stays inside and the button alone pulls left by 4px
+       onto the same grid. */
+    !showCover ? "[&>button:first-child]:-ml-1" : edge ? "pl-3 pr-4" : "pl-1 pr-2",
   )
   /* A TRACK bar is the album page's track row: the whole bar plays, the
      hover fill grows from the pointer (`press-ripple` + `--hover-fill`, not
@@ -415,7 +422,7 @@ export function CreditsContent({
      the hover fill. `secondary` / `secondary-hover` were tried first and
      read as heavy grey slabs stacked down the list. */
   const trackBar = (current: boolean) => cn(
-    stickyBar(),
+    stickyBar(true),
     "group/trackbar",
     current ? "bg-secondary" : "bg-muted",
     // No `overflow-clip`: the ripple already fills the box and inherits its
@@ -507,7 +514,7 @@ export function CreditsContent({
       {albumGroups.map(([g, list]) => (
         <Fragment key={g}>
           <div className={stickyShell}>
-            <div className={cn(stickyBar(), showCover && "px-2")}>
+            <div className={cn(stickyBar(true), showCover && "px-4")}>
               <SectionTitle>{GROUP_LABEL[g]}</SectionTitle>
             </div>
           </div>
@@ -630,7 +637,10 @@ export function CreditsContent({
      gradient veil (paled the rows, read as a band); a masked blur under each
      sticky bar (a smear with a visible start). */
   const panel = cn(
-    "absolute inset-0 overflow-y-auto pb-10",
+    // Bottom: the album card that ends the list sits 8px from the sheet's
+    // edge, the same 8px it keeps at the sides (it bleeds 8px past the 16px
+    // gutter); 40px left it floating. The home indicator still gets its room.
+    "absolute inset-0 overflow-y-auto pb-[max(8px,env(safe-area-inset-bottom))]",
     // Thin, in the app's ink, on a clear track — not the browser's grey slab.
     "[scrollbar-width:thin] [scrollbar-color:var(--muted-foreground)_transparent]",
     pad,
