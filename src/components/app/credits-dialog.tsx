@@ -306,13 +306,14 @@ export function CreditsContent({
   }
 
   /* The panel FADES under the tab bar instead of being cut at its edge: a
-     row scrolled half out read as a broken row. A 32px mask on the panel's
-     top, eased rather than linear (a straight ramp read as a hard band at
-     20px), and 32px of top padding so nothing is faded at rest — only what
-     scrolls up into it. */
+     row scrolled half out read as a broken row. The mask is fully clear for
+     its first 12px — scrolled content never runs right up against the bar —
+     then eases in over 28px (a straight 20px ramp read as a hard band). The
+     panel's 40px top padding covers the whole mask, so nothing is faded at
+     rest; only what scrolls up into it. */
   const panel = cn(
-    "flex-1 min-h-0 overflow-y-auto pt-8 pb-10",
-    "[mask-image:linear-gradient(to_bottom,transparent,rgba(0,0,0,0.08)_0.5rem,rgba(0,0,0,0.3)_1rem,rgba(0,0,0,0.65)_1.5rem,black_2rem)]",
+    "flex-1 min-h-0 overflow-y-auto pt-10 pb-10",
+    "[mask-image:linear-gradient(to_bottom,transparent_0.75rem,rgba(0,0,0,0.08)_1.25rem,rgba(0,0,0,0.3)_1.75rem,rgba(0,0,0,0.65)_2.25rem,black_2.5rem)]",
     pad,
   )
 
