@@ -613,7 +613,7 @@ export function CreditsContent({
      included, and the bar dissolved into the fade with the rows. The veil
      stops at the gutters, so the scrollbar stays whole beside it.
      It is the `edge-fade` utility (app.css): the sheet's own glass
-     (`.sheet-glass`, 12px blur), masked out over 40px — the same fade the
+     (`.sheet-glass`, 12px blur), masked out over 32px — the same fade, at the same height, the
      sticky track bars hang below them. It was a
      hand-built gradient, 15px solid then a 35px ramp, which still read as a
      band with a hard start.
@@ -634,7 +634,9 @@ export function CreditsContent({
     <div
       aria-hidden="true"
       className={cn(
-        "absolute top-0 h-10 z-10 transition-opacity duration-200 edge-fade",
+        // h-8: the SAME fade, same height, as below every sticky bar — one
+        // fade in the dialog, not two (it was 40px here, 32px there).
+        "absolute top-0 h-8 z-10 transition-opacity duration-200 edge-fade",
         // Not over the track-by-track reading: there a sticky bar is always at
         // the top edge and carries its own fade; the veil would wash out its
         // top 15px.
