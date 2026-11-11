@@ -553,11 +553,7 @@ export function CreditsContent({
     // No top PADDING on the scroller: a sticky bar sticks at the padding
     // edge, 24px down, and rows showed through the band above it. The 24px
     // is the content's own margin (`gap` below) instead.
-    /* `contain: paint` keeps every descendant's paint inside the box. Without
-       it a row passing under the stuck track bar flickered through in the
-       12px between the head and the bar while scrolling — text painted past
-       the scroller's edge, beside a sticky layer. */
-    "flex-1 min-h-0 overflow-y-auto pb-10 [contain:paint]",
+    "flex-1 min-h-0 overflow-y-auto pb-10",
     // Thin, in the app's ink, on a clear track — not the browser's grey slab.
     "[scrollbar-width:thin] [scrollbar-color:var(--muted-foreground)_transparent]",
     pad,
@@ -585,7 +581,12 @@ export function CreditsContent({
       {/* `pb-3` here + `pt-3` in each panel: 24px to the first line at rest,
           and still 12px between the tab strip and a track bar stuck under it
           — with all 24 in the panel, the stuck bar touched the strip. */}
-      <div className={cn("shrink-0 flex flex-col gap-6 pt-3 md:pt-6 pb-3", pad)}>
+      {/* Track by track the 12px above the first bar moves OUT of the scroller
+          into this head (`pb-6`, panel `pt-0`): the bar then sits flush with
+          the scroller's top edge, at rest and stuck alike, and no row can
+          show in a strip above it. With the 12px inside the scroller, rows
+          flashed through there on every scroll. */}
+      <div className={cn("shrink-0 flex flex-col gap-6 pt-3 md:pt-6", byTrack.on && tab === "credits" ? "pb-6" : "pb-3", pad)}>
         {header}
         {/* No strip for ONE tab: a lone "Credits" pill switches nothing. */}
         {notes && (
@@ -597,7 +598,7 @@ export function CreditsContent({
       </div>
       <div className="relative flex flex-1 min-h-0 flex-col">
         {veil}
-        <TabsContent value="credits"  className={panel} onScroll={onPanelScroll}><div className="pt-3">{creditsBody}</div></TabsContent>
+        <TabsContent value="credits"  className={panel} onScroll={onPanelScroll}><div className={byTrack.on ? "pt-0" : "pt-3"}>{creditsBody}</div></TabsContent>
         {notes && <TabsContent value="notes" className={panel} onScroll={onPanelScroll}><div className="pt-3">{notes}</div></TabsContent>}
       </div>
     </Tabs>
