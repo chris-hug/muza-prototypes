@@ -23,7 +23,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import {
   Dialog, DialogContent, DialogTitle,
 } from "@/components/ui/dialog"
-import { X as XIcon } from "lucide-react"
+import { X as XIcon, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useIsMobile } from "@/lib/use-media-query"
@@ -48,7 +48,9 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
     <CreditsContext.Provider value={{ open }}>
       {children}
       <Dialog open={!!credits} onOpenChange={o => { if (!o) setKey(null) }}>
-        {credits && <CreditsDialogContent credits={credits} focusTrack={findTrack(credits, req?.title)} onClose={() => setKey(null)} />}
+        {/* Keyed by the request: a second "Show credits" while the dialog is
+            still open (or closing) starts fresh, at its own song. */}
+        {credits && <CreditsDialogContent key={`${req?.key}:${req?.title ?? ""}`} credits={credits} focusTrack={findTrack(credits, req?.title)} onClose={() => setKey(null)} />}
       </Dialog>
     </CreditsContext.Provider>
   )
@@ -130,9 +132,10 @@ export function CreditsContent({
   credits, heading, onArtist, onAlbum, bodyClassName = "max-h-[60vh]",
   showCover = true, layout = "tabs", focusTrack,
 }: {
-  /** 1-based track to open on: the Credits panel starts scrolled to that
-   *  song's section, its header stuck at the top. A song's "Show credits"
-   *  and the player pass it; the album's ⓘ does not. */
+  /** 1-based track to open on. With it the Credits tab opens TRACK BY
+   *  TRACK, scrolled to that song; without it, on the album's one-row-per-
+   *  musician overview. A song's "Show credits" and the player pass it; the
+   *  album's ⓘ does not. */
   focusTrack?: number
   /** The thumb in the header. Off where the cover is already on screen: the
    *  player shows the credits in place of its artwork, beside a thumb. */
@@ -171,19 +174,29 @@ export function CreditsContent({
     )
   })
 
-  /* Open on `focusTrack`: scroll its section to the top of whatever box
-     scrolls the credits (the tab panel, or the whole page layout). Measured,
-     not `scrollIntoView`, which would also scroll the sheet and the page
-     behind it. */
+  /* Which reading of the Credits tab is open: the album's (`on: false`) or
+     track by track, scrolled to `at`. The album's tracks list switches in,
+     "All album credits" switches back. */
+  const [byTrack, setByTrack] = useState<{ on: boolean; at?: number }>({ on: !!focusTrack, at: focusTrack })
+
+  /* Scroll to `at`: its section to the top of whatever box scrolls the
+     credits (the tab panel, or the whole page layout); back to the top on
+     the album's. Measured, not `scrollIntoView`, which would also scroll the
+     sheet and the page behind it. */
   const creditsRef = useRef<HTMLDivElement>(null)
+  const firstRun = useRef(true)
   useEffect(() => {
-    if (!focusTrack) return
+    const isFirst = firstRun.current
+    firstRun.current = false
+    if (!byTrack.on && isFirst) return   // album view on open: already at the top
     const go = () => {
       const root = creditsRef.current
-      const el = root?.querySelector<HTMLElement>(`[data-track="${focusTrack}"]`)
       let box = root?.parentElement ?? null
       while (box && !/(auto|scroll)/.test(getComputedStyle(box).overflowY)) box = box.parentElement
-      if (!el || !box) return
+      if (!root || !box) return
+      if (!byTrack.on || !byTrack.at) { box.dataset.keepScroll = ""; box.scrollTop = 0; return }
+      const el = root.querySelector<HTMLElement>(`[data-track="${byTrack.at}"]`)
+      if (!el) return
       // Tells a phone sheet's detent this scroll is a destination (dialog.tsx).
       box.dataset.keepScroll = ""
       // The dialog may be mid scale-in, so rects are scaled; the ratio of
@@ -198,7 +211,7 @@ export function CreditsContent({
     const f = requestAnimationFrame(go)
     const t = setTimeout(go, 250)
     return () => { cancelAnimationFrame(f); clearTimeout(t) }
-  }, [focusTrack])
+  }, [byTrack])
 
   /* TWO type sizes in the whole dialog: `text-small` (19) for content —
      title, names, section titles, Overview, Notes — and `text-2xsmall` (15)
@@ -276,22 +289,23 @@ export function CreditsContent({
     </dl>
   )
 
-  /* Credits are read TRACK BY TRACK, as Qobuz lays them out: each song a
-     section, its header sticky, the people who played on it below. A
-     song's people are the album's read for that track (`peopleOnTrack`):
-     roles without track numbers plus those naming it, numbers dropped —
-     Dolphy is "Bass clarinet" under Hat and Beard and "Flute" under
-     Gazzelloni, which "(1, 2), Flute (3)" only encoded.
-     Production and artwork are the RECORD's, not a song's, so they follow
-     the tracks once instead of repeating under each.
-     It replaced one list per album plus a separate dialog per song: two
-     views of one record that had to be kept apart, and a reader who wanted
-     the next track had to go back out. */
+  /* Two readings of one record.
+     ALBUM (the ⓘ on an album): every musician once, roles merged, track
+     numbers where a role is not the whole album — "Bass clarinet (1, 2),
+     Flute (3)". The compact overview of who is on the record.
+     TRACK BY TRACK (a song's "Show credits", the player): each song a
+     section under a sticky bar, as Qobuz lays it out, with the people on
+     THAT take — the album's people read for the track (`peopleOnTrack`),
+     numbers dropped. Production and the sleeve belong to the record, so
+     they follow the tracks once.
+     Track by track had replaced the album list outright; the overview of the
+     whole lineup was lost, and it is the better answer to "who is on this
+     album?". So the album keeps it and a song gets the per-track reading. */
   const PER_TRACK: CreditGroup[] = ["personnel", "composition"]
-  const albumGroups = GROUP_ORDER
-    .filter(g => !PER_TRACK.includes(g))
+  const groupsOf = (gs: CreditGroup[]) => gs
     .map(g => [g, credits.people.filter(p => p.group === g)] as const)
     .filter(([, list]) => list.length > 0)
+  const albumGroups = groupsOf(GROUP_ORDER.filter(g => !PER_TRACK.includes(g)))
 
   const personRows = (list: CreditPerson[]) => (
     /* One row per PERSON, every role merged. Hairlines between rows, as
@@ -339,8 +353,8 @@ export function CreditsContent({
     current ? "bg-muted" : "bg-popover",
   )
 
-  const creditsBody = (
-    <div ref={creditsRef} className="flex flex-col gap-6">
+  const trackByTrack = (
+    <>
       {credits.tracks.map((t, i) => {
         const n = i + 1
         const list = peopleOnTrack(credits.people, n).filter(p => PER_TRACK.includes(p.group))
@@ -369,6 +383,53 @@ export function CreditsContent({
           {personRows(list)}
         </section>
       ))}
+      {/* The way back to the overview, where the reader lands once the
+          songs are read. */}
+      <Button variant="secondary" size="lg" className="self-start" onClick={() => setByTrack({ on: false })}>
+        All album credits
+      </Button>
+    </>
+  )
+
+  const albumView = (
+    <>
+      {groupsOf(GROUP_ORDER).map(([g, list]) => (
+        <section key={g} className="flex flex-col gap-1">
+          <SectionTitle>{GROUP_LABEL[g]}</SectionTitle>
+          {personRows(list)}
+        </section>
+      ))}
+      {/* The album's tracks, two jobs: the key to the "(1, 2)" after a
+          role, and the way into the track-by-track reading — a row opens it
+          at that song. On the person row's grid: the number centred in the
+          avatar's 40px column, so titles start on the names' line, `py-3`
+          like the people, and a chevron that says "opens". */}
+      <section className="flex flex-col gap-1">
+        <SectionTitle>Tracks</SectionTitle>
+        <ol className="divide-y divide-border/60 text-small leading-snug">
+          {credits.tracks.map((t, i) => (
+            <li key={t.title}>
+              <button
+                type="button"
+                onClick={() => setByTrack({ on: true, at: i + 1 })}
+                aria-label={`${t.title} credits`}
+                className="link-underline-group flex w-full min-h-11 items-center gap-3 py-3 outline-none cursor-pointer"
+              >
+                <span className="w-10 shrink-0 text-center tabular-nums text-muted-foreground">{i + 1}</span>
+                <span className="min-w-0 flex-1 truncate text-left text-foreground"><span className="link-underline">{t.title}</span></span>
+                <span className="tabular-nums text-muted-foreground">{t.duration}</span>
+                <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+              </button>
+            </li>
+          ))}
+        </ol>
+      </section>
+    </>
+  )
+
+  const creditsBody = (
+    <div ref={creditsRef} className="flex flex-col gap-6">
+      {byTrack.on ? trackByTrack : albumView}
     </div>
   )
 
@@ -431,9 +492,10 @@ export function CreditsContent({
       aria-hidden="true"
       className={cn(
         "pointer-events-none absolute top-0 h-12.5 z-10 transition-opacity duration-200",
-        // Not on Credits: there a sticky bar is always at the top edge and
-        // carries its own fade; the veil would wash out its top 15px.
-        scrolled && !(layout === "tabs" && tab === "credits") ? "opacity-100" : "opacity-0",
+        // Not over the track-by-track reading: there a sticky bar is always at
+        // the top edge and carries its own fade; the veil would wash out its
+        // top 15px.
+        scrolled && !(tab === "credits" && byTrack.on) ? "opacity-100" : "opacity-0",
         showCover ? "inset-x-3 md:inset-x-6" : "inset-x-0",
         "bg-[linear-gradient(to_bottom,var(--popover)_15px,color-mix(in_srgb,var(--popover)_92%,transparent)_25px,color-mix(in_srgb,var(--popover)_70%,transparent)_35px,color-mix(in_srgb,var(--popover)_35%,transparent)_45px,transparent_50px)]",
       )}
