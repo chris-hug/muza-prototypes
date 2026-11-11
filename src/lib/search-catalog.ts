@@ -54,6 +54,9 @@ export interface SearchResult {
   /** Song playback fields (fed into the global player). */
   artist?:  string
   album?:   string
+  /** A hit in the listener's own files (see local-library), not the
+   *  catalog: the local album, and the track for a song. */
+  local?:   { albumId: string; trackId?: string }
 }
 
 // ─── Label index ────────────────────────────────────────────────────────────

@@ -12,7 +12,7 @@
 
 
 import { AlbumCard } from "@/components/ui/album-card"
-import { AlbumListTable, AlbumMobileList, LibrarySortMenu } from "@/components/app/media-list-table"
+import { AlbumListTable, AlbumMobileList, LibrarySortMenu, LibraryViewToggle } from "@/components/app/media-list-table"
 import { useUserLibrary } from "@/lib/user-library"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 import { useLibraryView } from "@/lib/use-library-view"
@@ -21,10 +21,8 @@ import { useLibraryStatus } from "@/lib/use-library-status"
 import { useLibraryFilter, matchesLibraryQuery } from "@/lib/use-library-filter"
 import { LibrarySearchField } from "@/components/app/library-search-field"
 import { useFooterNav } from "@/lib/use-media-query"
-import { Toggle } from "@/components/ui/toggle"
-import { ToggleGroup } from "@/components/ui/toggle-group"
 import { ChipChoice } from "@/components/ui/chip"
-import { LayoutGrid, List } from "lucide-react"
+import { useLocalAlbums, type LocalAlbum } from "@/lib/local-library"
 
 export interface SavedAlbum {
   id:           string
@@ -39,6 +37,17 @@ export interface SavedAlbum {
    *  without `streamPrice` are free under the Muza subscription. */
   streamPrice?: string
   downloadPrice?: string
+  /** The listener's own files rather than a catalog release. */
+  local?:       LocalAlbum
+}
+
+/** Local albums in the shape every album surface takes, so a grid, a list and
+ *  the table can hold both sources in one collection. The `local` field is
+ *  what each surface switches on. */
+export function useLocalAlbumRows(): SavedAlbum[] {
+  return useLocalAlbums().map(l => ({
+    id: l.id, cover: l.cover, title: l.title, artist: l.artist, year: l.year, local: l,
+  }))
 }
 
 const COVER = (seed: string) => `https://picsum.photos/seed/${seed}/400/400`
@@ -132,24 +141,25 @@ export function LibraryAlbumsView() {
   const { openAlbum } = useMediaNav()
   const library = useUserLibrary()
   // Status filter — a scalable dropdown (room for more lenses later)
-  // rather than a binary segment. "all" = everything in the library.
-  const [status, setStatus] = useLibraryStatus<"all" | "owned" | "offline">("albums")
-  // Tile (default) vs list mode — remembered + shared across library pages.
-  const [view, setView] = useLibraryView()
-  // Below the footer-nav breakpoint the wide sortable table doesn't fit;
-  // list mode renders a stack of MediaListItem nav rows instead.
+  // rather than a binary segment. "all" = everything in the library, from
+  // both sources; "owned" = bought on muza; "local" = your own files.
+  const [status, setStatus] = useLibraryStatus<"all" | "owned" | "local">("albums")
+  // Cards, list or table — the listener's choice, remembered + shared
+  // across library pages (see useLibraryView). Albums offers all three.
+  const [view, setView, viewOptions] = useLibraryView(["grid", "list", "table"])
   const footerNav = useFooterNav()
   // Mobile sort (the desktop table sorts via its own column headers).
   const [sort] = useLibrarySort()
   const [query] = useLibraryFilter()
 
-  const filtered = SAVED_ALBUMS
-    // Offline covers anything you can play, so it does not need the library.
-    .filter(a => status === "offline" ? library.isOffline("album", a.id) : library.isAdded(a.id))
-    .filter(a => {
-      if (status === "owned")      return library.isPurchased(a.id)
-      return true
-    })
+  // One library, two sources: local files sit in "All" next to the catalog
+  // albums, each marked; "Local" narrows to them, "Owned" to what you bought.
+  const catalog = status === "local" ? [] : SAVED_ALBUMS
+    .filter(a => library.isAdded(a.id))
+    .filter(a => status !== "owned" || library.isPurchased(a.id))
+  const localRows = useLocalAlbumRows()
+  const local = status === "owned" ? [] : localRows
+  const filtered = [...catalog, ...local]
     .filter(a => matchesLibraryQuery(query, a.title, a.artist))
   // On mobile the sort menu drives the order (grid + list both); on
   // desktop the order is the table's job, so leave it untouched.
@@ -193,7 +203,7 @@ export function LibraryAlbumsView() {
                 options={[
                   { value: "all", label: "All" },
                   { value: "owned", label: "Owned" },
-                  { value: "offline", label: "Offline" },
+                  { value: "local", label: "Local" },
                 ]}
               />
             )}
@@ -201,19 +211,7 @@ export function LibraryAlbumsView() {
           {/* Right cluster — desktop in-library search + view switch. */}
           <div className="flex grow items-center justify-end gap-3">
           {!footerNav && <LibrarySearchField />}
-          <ToggleGroup
-            size="sm"
-            value={[view]}
-            onValueChange={(v) => { if (v[0]) setView(v[0] as "grid" | "list") }}
-            aria-label="View mode"
-          >
-            <Toggle value="grid" aria-label="Tile view">
-              <LayoutGrid className="size-3.5" />
-            </Toggle>
-            <Toggle value="list" aria-label="List view">
-              <List className="size-3.5" />
-            </Toggle>
-          </ToggleGroup>
+          <LibraryViewToggle value={view} onChange={setView} options={viewOptions} />
           </div>
         </div>
 
@@ -237,9 +235,9 @@ export function LibraryAlbumsView() {
              Each track is `minmax(143px, 220px)` — cards are clamped
              to a 143 floor and 220 ceiling. Below the 2-col threshold
              the grid drops to a single column. */}
-        {status === "offline" && albums.length === 0 ? (
+        {status === "local" && albums.length === 0 ? (
           <p className="text-small text-muted-foreground max-w-md">
-            Nothing saved offline yet. Choose “Save offline” in the menu of an album you own and it’ll show up here.
+            No local music yet. Connect a folder on this computer or a server, and muza plays your own files here.
           </p>
         ) : view === "grid" ? (
           <div className="@container">
@@ -247,6 +245,7 @@ export function LibraryAlbumsView() {
               {albums.map(a => (
                 <li key={a.id}>
                   <AlbumCard
+                    local={a.local}
                     cover={a.cover}
                     title={a.title}
                     artist={a.artist}
@@ -264,7 +263,7 @@ export function LibraryAlbumsView() {
               ))}
             </ul>
           </div>
-        ) : footerNav ? (
+        ) : view === "list" ? (
           <AlbumMobileList albums={albums} />
         ) : (
           <AlbumListTable albums={albums} />

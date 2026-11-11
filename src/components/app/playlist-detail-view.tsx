@@ -37,6 +37,9 @@ import { hasAlbumDetail } from "@/lib/album-catalog"
 import { getPlaylistDetail, hasPlaylistDetail } from "@/lib/playlist-catalog"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 import { usePlayer } from "@/lib/player"
+import { usePlaylistAdditions } from "@/lib/playlist-additions"
+import { getLocalAlbum, useLocalAlbums } from "@/lib/local-library"
+import { LocalSongRow } from "@/components/app/local-song-rows"
 
 export function PlaylistDetailView() {
   const [params] = useSearchParams()
@@ -46,6 +49,12 @@ export function PlaylistDetailView() {
   const player = usePlayer()
   // This playlist is the active player source AND playing.
   const isThisPlaylistPlaying = player.playing && player.playingFrom === PLAYLIST.title
+  // Songs added through "Add to playlist" this session, after the catalog
+  // tracks. A local one shows as the local track, marked "Local" — unless
+  // its source was removed or local files are switched off, when it drops
+  // out as it does everywhere else.
+  const added = usePlaylistAdditions(PLAYLIST.title)
+  const localAlbums = useLocalAlbums()
 
   // Load a playlist track into the global player ("playing from" = the
   // playlist name). Tracks here carry their own cover / artist / album.
@@ -194,6 +203,30 @@ export function PlaylistDetailView() {
                 onArtistClick={() => openArtist(slugify(t.artist))}
                 onAlbumClick={hasAlbumDetail(albumKey) ? () => openAlbum(albumKey) : undefined}
                 // Own playlist → hide "Add to playlist" (it's already here).
+                hideAddToPlaylist={owned}
+              />
+            </li>
+          )
+        })}
+        {added.map(s => {
+          if (s.local) {
+            const album = getLocalAlbum(s.local.albumId)
+            const track = album?.tracks.find(t => t.id === s.local!.trackId)
+            if (!album || !track || !localAlbums.some(a => a.id === album.id)) return null
+            return <li key={s.id}><LocalSongRow album={album} track={track} labelled /></li>
+          }
+          return (
+            <li key={s.id}>
+              <SongListItem
+                cover={s.cover}
+                title={s.title}
+                artist={s.artist}
+                album={s.album}
+                duration={s.duration}
+                playing={isThisPlaylistPlaying && player.track?.title === s.title}
+                onPlay={() => playFromPlaylist({ title: s.title, artist: s.artist ?? "", album: s.album ?? "", cover: s.cover ?? "", duration: s.duration })}
+                onArtistClick={s.artist ? () => openArtist(slugify(s.artist!)) : undefined}
+                onAlbumClick={s.album && hasAlbumDetail(slugify(s.album)) ? () => openAlbum(slugify(s.album!)) : undefined}
                 hideAddToPlaylist={owned}
               />
             </li>

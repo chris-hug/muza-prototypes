@@ -27,7 +27,8 @@
 
 import * as React from "react"
 import { useState } from "react"
-import { Heart, Info, MoreHorizontal, ListPlus, Mic, Disc3, Share, Link2, Flag, Check, Download } from "lucide-react"
+import { Heart, Info, MoreHorizontal, ListPlus, Mic, Disc3, Share, Link2, Flag, FolderOpen } from "lucide-react"
+import { useLocalCopy } from "@/lib/use-local-actions"
 import { MenuHeart } from "@/components/ui/library-heart-button"
 import { AddMusicIcon } from "@/components/ui/media-icons"
 
@@ -56,8 +57,7 @@ import { useShare } from "@/lib/use-share"
 import { useCredits } from "@/lib/credits-context"
 import { slugify } from "@/lib/media-nav"
 import { useUserLibrary } from "@/lib/user-library"
-import { useLibraryToggle, useOfflineToggle } from "@/lib/use-library-toggle"
-import { useOfflineEligibility } from "@/lib/offline-eligibility"
+import { useLibraryToggle } from "@/lib/use-library-toggle"
 import { useAddToPlaylist } from "@/lib/add-to-playlist-context"
 import { SONG_DRAG_TYPE } from "@/lib/playlist-editor-context"
 import { useToast } from "@/components/ui/toast"
@@ -129,7 +129,9 @@ export interface SongListItemProps {
   artist?:  string
   album?:   string
   year?:    string | number
-  /** Optional small chip shown before the album/year line (e.g. "Demo"). */
+  /** A one-word label before the artist / album line: "Owned", "Local".
+   *  The same square-xs badge the album cards carry, so a song and its
+   *  album say it the same way. */
   badge?:   string
   /** Formatted duration like "3:42". Same style as the meta line. */
   duration?: string
@@ -177,6 +179,17 @@ export interface SongListItemProps {
   /** Click target for the artist text in the meta line. Also drives the
    *  menu's "Go to artist". */
   onArtistClick?:   () => void
+  /** A track from the listener's own files (see local-library). Drops the
+   *  heart: a file on disk is in the library by being there, so "Save" has
+   *  nothing to do. The host passes the local menu as `menuItems`
+   *  (`LocalSongMenuItems`), since Share, Credits and Report are about a
+   *  release on muza. */
+  local?: boolean
+  /** The release this track is on when `album` is left off the meta line
+   *  (the album page). Not drawn; it is what "Go to local copy" looks up,
+   *  which keyed on `album` alone and so never reached the album page's
+   *  rows — the one place the copy is most likely to be wanted. */
+  release?: string
   className?: string
 }
 
@@ -196,8 +209,12 @@ export interface SongListItemProps {
 export function SongMenuItems({
   title, artist, album, cover, duration,
   onAddToPlaylist, onArtistClick, onAlbumClick, onInfo, onReport,
-  hideAddToPlaylist, hideGoToArtist, hideGoToAlbum,
+  hideAddToPlaylist, hideGoToArtist, hideGoToAlbum, release,
 }: {
+  /** The release the song is on, when `album` is withheld from the row
+   *  (the album page: the header already says it). Only for lookups that
+   *  need it — "Go to local copy" — never drawn. */
+  release?: string
   title:    string
   artist?:  string
   album?:   string
@@ -214,7 +231,8 @@ export function SongMenuItems({
 }) {
   const { canNativeShare, copyLink, nativeShare } = useShare({ title, text: artist ? `${title} — ${artist}` : title })
   const credits = useCredits()
-  const showCredits = album ? () => credits.open(slugify(album)) : onInfo
+  // A song's ⋯ opens ITS credits, not the album's (see `peopleOnTrack`).
+  const showCredits = album ? () => credits.open(slugify(album), title) : onInfo
 
   const library = useUserLibrary()
   const toggleLibrary = useLibraryToggle()
@@ -222,9 +240,6 @@ export function SongMenuItems({
   const inLibrary = library.inLibrary("song", songId)
   const libraryLabel = inLibrary ? "Remove from library" : "Save to library"
   const handleSongLibrary = () => toggleLibrary("song", songId, title, { id: songId, title, artist, album, cover, duration })
-  const toggleOffline = useOfflineToggle()
-  const savedOffline = library.isOffline("song", songId)
-  const eligibility = useOfflineEligibility()
 
   const { add: toast } = useToast()
   const handleReport = onReport ?? (() => toast({
@@ -237,6 +252,9 @@ export function SongMenuItems({
   const addToPlaylist = useAddToPlaylist()
   const handleAddToPlaylist = onAddToPlaylist ?? (() =>
     addToPlaylist.open({ id: songId, title, artist, album, cover, duration }))
+  // The same release in the listener's own files — with the other ways off
+  // this song, so it reaches the player's menu and every catalog row.
+  const goToLocalCopy = useLocalCopy(album ?? release)
 
   return (
     <>
@@ -245,17 +263,11 @@ export function SongMenuItems({
         {canNativeShare ? "Share…" : "Copy link"}
       </DropdownMenuItem>
       <DropdownMenuItem onClick={handleSongLibrary}><MenuHeart filled={inLibrary} />{libraryLabel}</DropdownMenuItem>
-      {/* Offline is for songs you own, through their album (offline-eligibility). */}
-      {(savedOffline || eligibility.song(album)) && (
-        <DropdownMenuItem onClick={() => toggleOffline("song", songId, title, { id: songId, title, artist, album, cover, duration })}>
-          {savedOffline ? <Check /> : <Download />}
-          {savedOffline ? "Remove from offline" : "Save offline"}
-        </DropdownMenuItem>
-      )}
       {!hideAddToPlaylist && <DropdownMenuItem onClick={handleAddToPlaylist}><AddMusicIcon />Add to playlist</DropdownMenuItem>}
       <DropdownMenuSeparator />
       {onArtistClick && !hideGoToArtist && <DropdownMenuItem onClick={onArtistClick}><Mic />Go to artist</DropdownMenuItem>}
       {onAlbumClick && !hideGoToAlbum && <DropdownMenuItem onClick={onAlbumClick}><Disc3 />Go to album</DropdownMenuItem>}
+      {goToLocalCopy && <DropdownMenuItem onClick={goToLocalCopy}><FolderOpen />Go to local copy</DropdownMenuItem>}
       <DropdownMenuItem onClick={showCredits}><Info />Show credits</DropdownMenuItem>
       <DropdownMenuSeparator />
       <DropdownMenuItem variant="destructive" onClick={handleReport}><Flag />Report</DropdownMenuItem>
@@ -297,7 +309,7 @@ export function SongListItem({
   compact = false,
   onPlay, playing: playingProp, onAddToLibrary, onAddToPlaylist, menuItems, onInfo,
   onReport, hideAddToPlaylist, hideGoToArtist, hideGoToAlbum,
-  onTitleClick, onAlbumClick, onArtistClick, className,
+  onTitleClick, onAlbumClick, onArtistClick, local = false, release, className,
 }: SongListItemProps) {
   // Playback state. CONTROLLED when `playing` is passed (a global player
   // owns it — only the active row shows the wave, and playing another row
@@ -328,9 +340,15 @@ export function SongListItem({
      the song. The title keeps its link: a row given `onTitleClick` is a row
      whose title IS the destination. */
   const coarse = useCoarsePointer()
-  // "Show credits" opens the release credits for the track's album.
+  // "Show credits" opens the release credits for the track's album — from
+  // the menu AND the row's "i" button. The button used to call `onInfo`
+  // only, which no list passes, so on every catalog row it did nothing while
+  // the menu beside it worked. A local row's credits are its matched
+  // release's, handed in as `onInfo` (none when the files matched nothing).
   const credits = useCredits()
-  const showCredits = album ? () => credits.open(slugify(album)) : onInfo
+  // A song's ⋯ opens ITS credits, not the album's (see `peopleOnTrack`).
+  const showCredits = local ? onInfo : album ? () => credits.open(slugify(album), title) : onInfo
+  const goToLocalCopy = useLocalCopy(local ? undefined : (album ?? release))
 
   // Add-to-library — store-backed (animated heart + toast), keyed by the
   // song (title + artist so same-titled tracks stay distinct). The legacy
@@ -342,9 +360,6 @@ export function SongListItem({
   const songMeta = { id: songId, title, artist, album, cover, duration }
   const handleSongLibrary = () => { toggleLibrary("song", songId, title, songMeta); onAddToLibrary?.() }
   const libraryLabel = inLibrary ? "Remove from library" : "Save to library"
-  const toggleOffline = useOfflineToggle()
-  const savedOffline = library.isOffline("song", songId)
-  const eligibility = useOfflineEligibility()
 
   // Report — baked default (toast) so every song row offers it; a host may
   // override with its own `onReport`.
@@ -366,6 +381,7 @@ export function SongListItem({
   // their click handler. `menuItems` stays as a legacy full-override hatch.
   const menuContent = menuItems ?? (
     <SongMenuItems
+      release={release}
       title={title} artist={artist} album={album} cover={cover} duration={duration}
       onAddToPlaylist={onAddToPlaylist}
       onArtistClick={onArtistClick}
@@ -498,7 +514,7 @@ export function SongListItem({
           !badge && !artist && (album ? "@max-[260px]/row:hidden" : "@max-[380px]/row:hidden"),
         )}>
           {badge && (
-            <Badge variant="secondary" className="shrink-0">
+            <Badge variant="secondary" shape="square-xs" className="shrink-0">
               {badge}
             </Badge>
           )}
@@ -549,11 +565,13 @@ export function SongListItem({
                   {menuContent}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button variant="ghost" size="icon-sm" onClick={onInfo} aria-label="Song info">
-                <Info />
-              </Button>
+              {showCredits && (
+                <Button variant="ghost" size="icon-sm" onClick={showCredits} aria-label="Show credits">
+                  <Info />
+                </Button>
+              )}
             </div>
-            <LibraryHeartButton type="song" id={songId} name={title} song={songMeta} variant="ghost" size="icon-sm" />
+            {!local && <LibraryHeartButton type="song" id={songId} name={title} song={songMeta} variant="ghost" size="icon-sm" />}
           </div>
 
           {/* — Touch: single "…" → bottom sheet, narrow fade. Shown by
@@ -584,16 +602,10 @@ export function SongListItem({
                 </SheetHeader>
                 <div className="flex flex-col px-2 pb-4">
                   <SheetAction icon={<MenuHeart filled={inLibrary} />} label={libraryLabel} onClick={handleSongLibrary} />
-                  {(savedOffline || eligibility.song(album)) && (
-                    <SheetAction
-                      icon={savedOffline ? <Check /> : <Download />}
-                      label={savedOffline ? "Remove from offline" : "Save offline"}
-                      onClick={() => toggleOffline("song", songId, title, songMeta)}
-                    />
-                  )}
                   {!hideAddToPlaylist && <SheetAction icon={<AddMusicIcon />} label="Add to playlist" onClick={handleAddToPlaylist} />}
                   {onArtistClick && !hideGoToArtist && <SheetAction icon={<Mic />}   label="Go to artist" onClick={onArtistClick} />}
                   {onAlbumClick  && !hideGoToAlbum  && <SheetAction icon={<Disc3 />} label="Go to album"  onClick={onAlbumClick} />}
+                  {goToLocalCopy && <SheetAction icon={<FolderOpen />} label="Go to local copy" onClick={goToLocalCopy} />}
                   <SheetAction
                     icon={canNativeShare ? <Share /> : <Link2 />}
                     label={canNativeShare ? "Share…" : "Copy link"}
@@ -658,14 +670,16 @@ export function SongListItem({
                 {menuContent}
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={onInfo}
-              aria-label="Song info"
-            >
-              <Info />
-            </Button>
+            {showCredits && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={showCredits}
+                aria-label="Show credits"
+              >
+                <Info />
+              </Button>
+            )}
           </div>
 
           {/* Touch: the same menu the hover panel carries, in the row.
@@ -686,7 +700,7 @@ export function SongListItem({
 
           {/* Heart — always-visible "Save to library" save, sits right
                next to the duration. Store-backed + animated. */}
-          <LibraryHeartButton type="song" id={songId} name={title} song={songMeta} variant="ghost" size="icon-sm" />
+          {!local && <LibraryHeartButton type="song" id={songId} name={title} song={songMeta} variant="ghost" size="icon-sm" />}
 
           {/* Duration — `text-xsmall` with a min-width track. Dropped on very
                tight rows (below 300) so the title and meta line keep the
@@ -757,20 +771,43 @@ function SheetAction({
  * `CoverPlayButton`, but the idle state shows a track number
  * instead of an image. Always-mounted icons + CSS opacity
  * transitions (no JSX swaps) match the no-flicker pattern from
- * `CoverPlayButton`. Lives here (not in its own file) because it's
- * only ever used by `SongListItem` in the `trackNumber` mode.
+ * `CoverPlayButton`. Lives here, beside `SongListItem`'s `trackNumber`
+ * mode; also exported for the credits dialog's sticky track headers, so a
+ * track plays and shows "playing" the same way there as on the album page.
  */
-function TrackNumberPlayButton({
+/* Which hover shows the play icon: the button's own (`self`, the album
+   row), or a whole bar marked `group/trackbar` (the credits dialog's track
+   bars, which play on a click anywhere — so a hover anywhere has to say so).
+   Full class strings per group: Tailwind only compiles what it can read. */
+const TNPB_HOVER = {
+  self: {
+    num:   "group-hover/tnpb:opacity-0",
+    play:  "group-hover/tnpb:opacity-100",
+    wave:  "group-data-[playing]/tnpb:group-hover/tnpb:opacity-0",
+    pause: "group-data-[playing]/tnpb:group-hover/tnpb:opacity-100",
+  },
+  trackbar: {
+    num:   "group-hover/trackbar:opacity-0",
+    play:  "group-hover/trackbar:opacity-100",
+    wave:  "group-data-[playing]/tnpb:group-hover/trackbar:opacity-0",
+    pause: "group-data-[playing]/tnpb:group-hover/trackbar:opacity-100",
+  },
+} as const
+
+export function TrackNumberPlayButton({
   number,
   title,
   playing,
   onToggle,
+  hoverGroup = "self",
 }: {
   number: number
   title: string
   playing: boolean
   onToggle?: () => void
+  hoverGroup?: keyof typeof TNPB_HOVER
 }) {
+  const h = TNPB_HOVER[hoverGroup]
   return (
     <button
       type="button"
@@ -788,7 +825,7 @@ function TrackNumberPlayButton({
         aria-hidden="true"
         className={cn(
           "absolute text-base font-normal leading-none text-muted-foreground tabular-nums transition-opacity duration-150",
-          "group-hover/tnpb:opacity-0 group-data-[playing]/tnpb:opacity-0",
+          h.num, "group-data-[playing]/tnpb:opacity-0",
         )}
       >
         {number}
@@ -797,7 +834,7 @@ function TrackNumberPlayButton({
       <PlayFilledAlt
         className={cn(
           "absolute size-4 text-foreground opacity-0 transition-opacity duration-150",
-          "group-hover/tnpb:opacity-100 group-data-[playing]/tnpb:opacity-0",
+          h.play, "group-data-[playing]/tnpb:opacity-0",
         )}
       />
       {/* Playing + rest → 3D wave. Original pattern: opacity
@@ -806,14 +843,14 @@ function TrackNumberPlayButton({
         size={28}
         className={cn(
           "absolute text-foreground opacity-0 transition-opacity duration-150",
-          "group-data-[playing]/tnpb:opacity-100 group-data-[playing]/tnpb:group-hover/tnpb:opacity-0",
+          "group-data-[playing]/tnpb:opacity-100", h.wave,
         )}
       />
       {/* Playing + hover → Pause icon */}
       <PauseFilledAlt
         className={cn(
           "absolute size-4 text-foreground opacity-0 transition-opacity duration-150",
-          "group-data-[playing]/tnpb:group-hover/tnpb:opacity-100",
+          h.pause,
         )}
       />
     </button>

@@ -14,7 +14,7 @@ Up next). Three looks, one primitive: a **segmented** control, an
 
 **Tabs change the section; a filter on one list is a [`ChipChoice`](chips.md).**
 Artist's Overview / Discography / Shop are different pages of one thing, and
-the line says so. Library's All / Owned / Offline and Search's categories show
+the line says so. Library's All / Owned / Local and Search's categories show
 the same list with less in it. They used to be underlined tabs, which promised
 a destination that did not exist. `variant="pill"` did not fix it either: it
 looks nothing like the Chips the same filters use on a phone.

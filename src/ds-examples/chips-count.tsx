@@ -1,10 +1,10 @@
 "use client"
 
 /*
- * The filter chip with a `count` pill after the label, at BOTH steps — the
- * pair is the point: the count follows the chip's own size, `pill` (20px,
- * 17px numeral) on `md` and `pill-sm` (18px, 15px) on `sm`, so the number
- * never outsizes the label it belongs to.
+ * The filter chip with a `count` pill after the label, at BOTH steps. The
+ * count is ONE size on either (`pill`: 18px, 15px numeral), so the number
+ * never outsizes the label it belongs to — on the 40px chip it simply sits
+ * smaller beside a larger label.
  *
  * `md` (40px) is the toolbar step, level with a Button and a Select in the
  * same row — built for the Discography toolbar, retired when its kind list

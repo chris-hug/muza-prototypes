@@ -263,6 +263,18 @@ tracking, 18px leading) rather than a centred fixed-height box, so the
 artist → status gap equals the title → artist gap. `purchased` (bought) and
 `owned` (uploaded by this user) are independent flags.
 
+## Local files: `local`
+
+`local={album}` (a `LocalAlbum`, see `local-library`) makes the card one of
+the listener's own albums. Everything it does comes from `useLocalActions`:
+the title opens the local album page (never the host's `onTitleClick`, which
+would open the catalog release of the same name), Play plays the files, the
+artist links only when the files matched a muza release, and the ⋯ and the
+long-press sheet carry the local menu. The third line is the "Local" badge
+and the format, or why it cannot play. No heart: a file on disk is in the
+library by being there. A source that is not connected dims the cover to 60%
+and its menu leads with "Reconnect…" (to Settings › Local music).
+
 ## Missing artwork
 
 The cover is `CoverArt`: a square `<img>` that swaps to a `bg-muted` box with

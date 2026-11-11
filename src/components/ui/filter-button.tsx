@@ -39,6 +39,6 @@ export function FilterChevron() {
 export function FilterCount({ count }: { count: number }) {
   if (count <= 0) return null
   return (
-    <Badge variant="inverse" shape="pill-sm">{count}</Badge>
+    <Badge variant="inverse" shape="pill">{count}</Badge>
   )
 }

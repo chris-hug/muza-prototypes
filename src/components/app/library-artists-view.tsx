@@ -32,7 +32,7 @@ export function LibraryArtistsView() {
   const [, setParams] = useSearchParams()
   const footerNav = useFooterNav()
   const [sort] = useLibrarySort()
-  const [view, setView] = useLibraryView()
+  const [view, setView, viewOptions] = useLibraryView()
   const [query] = useLibraryFilter()
   const library = useUserLibrary()
   // Only artists currently in the library (seeded with the demo set;
@@ -64,7 +64,7 @@ export function LibraryArtistsView() {
         {footerNav ? (
           <div className="flex items-center justify-between gap-4 mb-6">
             <LibrarySortMenu />
-            <LibraryViewToggle value={view} onChange={setView} />
+            <LibraryViewToggle value={view} onChange={setView} options={viewOptions} />
           </div>
         ) : (
           <div className="flex items-center justify-between gap-4 mb-6">
@@ -75,7 +75,7 @@ export function LibraryArtistsView() {
           </div>
         )}
 
-        {footerNav && view === "list" ? (
+        {footerNav && view !== "grid" ? (
           <ArtistMobileList artists={artists} />
         ) : (
           <ul className="grid-cards">

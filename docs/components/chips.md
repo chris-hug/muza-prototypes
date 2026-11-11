@@ -63,12 +63,12 @@ button and a `Select` in one toolbar read as one row. `ChipDismiss` has no
 <Chip size="md" count={12} selected={active}>Albums</Chip>
 ```
 
-`count` renders a `Badge` in the `count` variant after the label, and **the
-badge follows the chip's own step**: `pill` on a `md` chip (20px circle, 17px
-numeral), `pill-sm` on a `sm` one (18px, 15px). On the 32px chip the larger
-pill put the count a type size ABOVE its own label, which made the number the
-loudest thing in the pill — a count is a footnote to a label, not a headline.
-15px is where it stops: the floor for anything read as language. The `count`
+`count` renders a `Badge` in the `count` variant and `pill` shape after the
+label — **one size on either chip** (18px circle, 15px numeral). There were
+two, a 20px / 17px pill for the `md` chip and the 18px one for `sm`; the
+larger put the count a type size above its own label, and only the
+design-system page ever showed it. A count is a footnote to a label, not a
+headline, and 15px is where it stops: the floor for anything read as language. The `count`
 variant owns both of its colour states through `group-data-[selected]/chip:`
 (see [badge](badge.md)); nothing is patched at the call site.
 

@@ -2,9 +2,10 @@
 
 /*
  * SettingsView — top-level user Settings surface, reachable from the
- * profile menu (`?page=Settings`). Four tabs (Account · General ·
- * Artist verification · About) mirroring the Figma spec at
- * file dbSHgvquI2o4TFie2iAJxv › node 7215:181705.
+ * profile menu (`?page=Settings`). Five tabs (Account · General · Local
+ * music · Artist verification · About) mirroring the Figma spec at
+ * file dbSHgvquI2o4TFie2iAJxv › node 7215:181705; Local music follows the
+ * production desktop app (see settings-local-music).
  *
  * Wallet stays its own route for ARTIST payouts; Settings here is the
  * fan/listener surface: profile, audio, notifications, and the
@@ -42,6 +43,8 @@ import { Sun, Moon } from "lucide-react"
 import { useTheme } from "@/components/app/theme-provider"
 import { useUserAccount } from "@/lib/user-account"
 import { SubscriptionCheckoutDialog } from "@/components/app/subscription-dialogs"
+import { LocalMusicTab } from "@/components/app/settings-local-music"
+import { useSearchParams } from "react-router"
 
 // Mock current user — shared so the topbar trigger and the Account
 // hero render the same identity. Real wiring would come from auth.
@@ -49,15 +52,25 @@ export const CURRENT_USERNAME = "Chris-123"
 
 // ─── Shell ────────────────────────────────────────────────────────────────────
 
-type SettingsTab = "account" | "general" | "verification" | "about"
+type SettingsTab = "account" | "general" | "local" | "verification" | "about"
+const SETTINGS_TABS: SettingsTab[] = ["account", "general", "local", "verification", "about"]
 
 export function SettingsView({
   initialTab = "account",
 }: {
   initialTab?: SettingsTab
 }) {
+  // `?settings-tab=local&source=nas` — the library's "Reconnect" lands on
+  // Local music with that source marked. Read on mount; after that the tabs
+  // are the page's own state.
+  const [params] = useSearchParams()
+  const fromUrl = params.get("settings-tab") as SettingsTab | null
+  const [tab, setTab] = useState<SettingsTab>(fromUrl && SETTINGS_TABS.includes(fromUrl) ? fromUrl : initialTab)
+  useEffect(() => {
+    if (fromUrl && SETTINGS_TABS.includes(fromUrl)) setTab(fromUrl)
+  }, [fromUrl])
   return (
-    <Tabs defaultValue={initialTab} className="flex flex-col h-full gap-0">
+    <Tabs value={tab} onValueChange={v => setTab(v as SettingsTab)} className="flex flex-col h-full gap-0">
       {/* Header — same chrome as Studio pages (px-page + pt-8 + border-b
            under the tab strip) so navigating here feels like every
            other top-level page. */}
@@ -68,6 +81,7 @@ export function SettingsView({
         <TabsList variant="line" className="w-auto justify-start gap-0 h-auto pb-0">
           <TabsTrigger value="account"      className="flex-none px-4 pb-3 text-small">Account</TabsTrigger>
           <TabsTrigger value="general"      className="flex-none px-4 pb-3 text-small">General</TabsTrigger>
+          <TabsTrigger value="local"        className="flex-none px-4 pb-3 text-small">Local music</TabsTrigger>
           <TabsTrigger value="verification" className="flex-none px-4 pb-3 text-small">Artist verification</TabsTrigger>
           <TabsTrigger value="about"        className="flex-none px-4 pb-3 text-small">About</TabsTrigger>
         </TabsList>
@@ -80,6 +94,7 @@ export function SettingsView({
         <div className="mx-auto max-w-[760px] px-page py-6 sm:py-10">
           <TabsContent value="account"><AccountTab /></TabsContent>
           <TabsContent value="general"><GeneralTab /></TabsContent>
+          <TabsContent value="local"><LocalMusicTab focusSource={params.get("source")} /></TabsContent>
           <TabsContent value="verification"><VerificationTab /></TabsContent>
           <TabsContent value="about"><AboutTab /></TabsContent>
         </div>

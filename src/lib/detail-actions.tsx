@@ -76,7 +76,7 @@ export function usePublishDetailHeader(config: DetailHeaderConfig) {
       "onAdd", "onAddMusic", "onEdit", "onPlayRadio", "onAddToPlaylist",
       "onPlayNext", "onAddToQueue", "onMakePrivate", "onGoToArtist",
       "onGoToLabel", "onGoToOwner", "onGoToSelf", "onArtistInfo",
-      "onRemove", "onReport", "onShowInfo",
+      "onRemove", "onReport", "onShowInfo", "onOpenLocalCopy",
     ] as const
 
     const menu = {
@@ -93,6 +93,9 @@ export function usePublishDetailHeader(config: DetailHeaderConfig) {
       get libraryId() { return ref.current.menu?.libraryId },
       get libraryName() { return ref.current.menu?.libraryName },
       get librarySong() { return ref.current.menu?.librarySong },
+      // Local files: the whole column switches on this, so it must reach the
+      // chrome's sheet too, or the phone shows the catalog menu for a folder.
+      get local() { return ref.current.menu?.local },
     } as DetailMenu
 
     for (const key of HANDLERS) {

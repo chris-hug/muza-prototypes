@@ -9,7 +9,7 @@
  * `w-40 grow max-w-56`: 160px is what the toolbar measures when it decides
  * whether everything fits on one line, 224px is what the field takes when
  * there is room. At a fixed 224 it pushed the filter chips into a scroll box
- * at a 733px window, with "Offline" cut in half behind it.
+ * at a 733px window, with the last chip (then "Offline", now "Local") cut in half behind it.
  */
 
 import { Search, X } from "lucide-react"

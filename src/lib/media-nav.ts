@@ -40,6 +40,9 @@ export function useMediaNav() {
           next.delete("artist-kind")
           next.delete("artist-view")
           next.delete("list")
+          // Settings' landing state (see openLocalSettings) is one visit too.
+          next.delete("settings-tab")
+          next.delete("source")
           next.set(key, value)
           return next
         },
@@ -75,5 +78,22 @@ export function useMediaNav() {
     )
   }, [setParams])
 
-  return { openAlbum, openPlaylist, openArtist, openArtistDiscography }
+  // Settings › Local music, optionally pointing at one source — where a
+  // source that is not connected gets reconnected (the library's grey rows
+  // and the "can't play" toast lead here).
+  const openLocalSettings = useCallback((sourceId?: string) => {
+    setParams(
+      prev => {
+        const next = new URLSearchParams()
+        next.set("page", "Settings")
+        next.set("settings-tab", "local")
+        if (sourceId) next.set("source", sourceId)
+        void prev
+        return next
+      },
+      { replace: false },
+    )
+  }, [setParams])
+
+  return { openAlbum, openPlaylist, openArtist, openArtistDiscography, openLocalSettings }
 }

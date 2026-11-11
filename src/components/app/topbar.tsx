@@ -183,7 +183,7 @@ function CartButton({ onOpen }: { onOpen: () => void }) {
         <Badge
           aria-hidden="true"
           variant="inverse"
-          shape="pill-sm"
+          shape="pill"
           // Anchored by its LEFT edge at the icon's upper-right corner, so a
           // second digit grows outward. Pinned by its right edge, "12" grew
           // inward and covered most of the 18px cart.

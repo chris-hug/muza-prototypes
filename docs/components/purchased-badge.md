@@ -1,74 +1,58 @@
 ---
 title: Purchased Badge
 source: src/components/ui/purchased-badge.tsx
-related: [badge, album-card, media-header, media-list-item]
+related: [badge, album-card, media-header, media-list-item, song-list-item]
 usage:
   - Album card pricing row | /?page=Albums
   - Media Header meta line | /?page=Album
+  - Songs table, under the title | /?page=Songs
 ---
 
-`PurchasedBadge` is the "Owned" mark — a check glyph and the word, in
-foreground ink, with no pill around it — shown wherever an album the user
-has paid for appears: the `AlbumCard` pricing row, the `MediaHeader` meta
-line, the library table's rows.
+`PurchasedBadge` is the "Owned" mark: a `Badge` in `variant="secondary"`,
+`shape="square-xs"` — an 18px label, the word only, on the `bg-accent` fill
+the count pills use. It shows wherever an album the user has paid for
+appears: the `AlbumCard` pricing row, the `MediaHeader` meta line, the
+library table's Price column, and — for a song whose album is bought — the
+song list row and the Songs table.
+
+Its sibling is `LocalBadge` ("Local", `src/components/ui/local-badge.tsx`):
+the same badge, followed by plain meta text — the file format, or why the
+source cannot play ("Not connected"). The two are one family on purpose:
+"is this mine" is answered the same way whether you bought it on muza or it
+is your own file.
 
 ## Anatomy
 
 ```tsx
-<span aria-label="Owned" className="inline-flex items-center gap-1 text-small text-foreground">
-  <CircleCheckBig className="size-3.5 shrink-0" />
-  Owned
-</span>
+<Badge variant="secondary" shape="square-xs" className="shrink-0">Owned</Badge>
 ```
 
-One span, one glyph (`CircleCheckBig`, 14px), one word. `text-foreground`,
-not `text-muted-foreground`: it sits beside muted meta (a price, a year) and
-is meant to be one step more present than them — ownership is the fact the
-row is answering. No border and no fill: a `bg-muted` pill was tried and read
-too loud next to the surrounding meta in card and header rows.
-
-It is not a `Badge`. A `Badge` is a 26px box with a border slot; this is
-inline text that shares the line box of whatever it sits in.
+No glyph. It used to be a `CircleCheckBig` and the word in foreground ink,
+and before that a `bg-muted` 26px pill; the pill read too loud beside the
+meta, and at 18px a glyph is detail nobody reads — the word already says it.
+`square-xs` owns its line height, so the word sits the same in a card's
+18px line and a header's tighter one (see [badge](badge.md)).
 
 ## Usage
 
 ```tsx
-<PurchasedBadge />                                  // MediaHeader meta line — text-small
-<PurchasedBadge className="text-xsmall [&_svg]:size-3" />   // a tighter row
+<PurchasedBadge />           // card pricing row, header meta, table cell
+<LocalBadge detail="FLAC" /> // a local album: badge + format
 ```
 
-`className` is the only prop and it is the size: pass a text-size alias and
-the label follows; the glyph is `size-3.5` and is overridden with an
-`[&_svg]:size-*` class. `AlbumCard` passes its meta line's own classes
-(`text-xsmall font-light tracking-[0.02em] leading-[18px]`) plus
-`[&_svg]:size-3`, so "Owned" sits on the exact rhythm of the price line it
-replaces (`album-card.tsx:306–309`). The library table
-(`media-list-table.tsx:279`) wraps it in an `inline-flex justify-end` to
-right-align it in its column.
-
-Both consumers call the component rather than inlining the markup, so a
-glyph swap, a size bump or a copy change lands everywhere in one edit.
+`className` is passed through (layout only — `shrink-0` is already on). The
+library table wraps it in an `inline-flex justify-end` to right-align it in
+the Price column; the Songs table puts it under the title, since a track has
+no Price column and beside the title it moved with each title's length.
+A list row (`SongListItem`, `MediaListItem`) takes the word as its `badge`
+prop and draws the same badge at the head of its second line.
 
 ## Sizing
 
-Fixed, no steps. Inline; it reads none of the three measures. When the row
-gets tight it is the neighbour that truncates — the badge is `shrink-0` on
-its glyph and one word long.
+Fixed: 18px tall, `px-1.5`, `text-2xsmall`. Inline; it reads none of the
+three measures. When the row gets tight the neighbour truncates — the badge
+is `shrink-0` and one word long.
 
 ## Behaviour
 
-None. `aria-label="Owned"` names it for a reader even though the visible
-text says the same; the glyph is decorative.
-
-## Open questions
-
-- purchased-badge.tsx:22 says `text-small` "defaults to 18px" · the alias is
-  19px (`--text-small: var(--text-sm)`, app.css:256, and the type scale in
-  DESIGN_SYSTEM.md).
-- The former home.tsx demo labelled a `text-2xsmall [&_svg]:size-3` badge
-  "as rendered in AlbumCard's pricing row" · AlbumCard passes `text-xsmall`
-  with its meta weight and tracking (album-card.tsx:119–122, 309). The
-  example here uses `text-xsmall`.
-- `aria-label="Owned"` on a span whose text content is "Owned" is redundant
-  for a screen reader; whether the label should instead say more ("Owned —
-  purchased album") is not recorded.
+None.

@@ -1,11 +1,11 @@
 "use client"
 
 /*
- * useLibraryStatus — which status filter (All / Owned / Offline …) each
+ * useLibraryStatus — which status filter (All / Owned / Local …) each
  * library page is showing. Module state rather than `useState`, because a
  * library view unmounts when you open an album: with local state the filter
- * was gone by the time you came back, so browsing your Offline albums meant
- * picking Offline again after every single one. Per page, and only for this
+ * was gone by the time you came back, so browsing your Local albums meant
+ * picking Local again after every single one. Per page, and only for this
  * visit (not persisted): reopening the app should start from everything.
  */
 

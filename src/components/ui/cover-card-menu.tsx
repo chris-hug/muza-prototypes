@@ -34,7 +34,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { DetailMenuItems } from "@/components/ui/detail-more-button"
+import { DetailMenuItems, type DetailMoreButtonProps } from "@/components/ui/detail-more-button"
 import { slugify } from "@/lib/media-nav"
 import { libraryIdForTitle } from "@/lib/album-meta"
 
@@ -87,6 +87,9 @@ export interface AlbumCardMenuProps extends CommonProps {
    *  track rows, hide "Go to album"). */
   hideGoToArtist?:  boolean
   hideGoToAlbum?:   boolean
+  /** A local album (the listener's own files): the menu switches to the
+   *  local column — see `useLocalActions` / DetailMoreButton's `local`. */
+  localMenu?: Pick<DetailMoreButtonProps, "local" | "onGoToArtist">
   className?: string
 }
 
@@ -100,7 +103,8 @@ export interface AlbumCardMenuProps extends CommonProps {
 export function AlbumCardMenuItems(props: AlbumCardMenuProps) {
   const { owned, onEdit, onAddToPlaylist,
           onGoToArtist, onGoToAlbum, onReport,
-          shareTitle, hideGoToArtist, hideGoToAlbum } = props
+          shareTitle, hideGoToArtist, hideGoToAlbum, localMenu } = props
+  if (localMenu) return <DetailMenuItems kind="album" title={shareTitle ?? ""} {...localMenu} />
   // Save-to-library is BAKED store-bound, keyed the SAME as the album detail
   // page (the catalog library id from the title, slug fallback for synthesized
   // albums). So the card menu's "Save / Remove from library" is present and

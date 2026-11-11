@@ -60,9 +60,33 @@ import { useSearchParams } from "react-router"
 import { getRailList } from "@/lib/rail-list"
 import { searchCatalog, type SearchResult, type SearchKind } from "@/lib/search-catalog"
 import { IconSwap } from "@/components/ui/icon-swap"
+import { useLocalAlbums, getLocalAlbum, type LocalAlbum } from "@/lib/local-library"
+import { useLocalActions } from "@/lib/use-local-actions"
+import { LocalSongRow } from "@/components/app/local-song-rows"
+import { DetailMenuItems } from "@/components/ui/detail-more-button"
 
 type Scope = "catalog" | "library"
-type TabKey = "all" | SearchKind
+type TabKey = "all" | SearchKind | "local"
+
+/** Hits in the listener's own files: albums by title or artist, tracks by
+ *  title, artist or album — the same fields the library search matches. */
+function searchLocal(query: string, albums: LocalAlbum[]): SearchResult[] {
+  const q = query.trim().toLowerCase()
+  if (!q) return []
+  const has = (...v: (string | undefined)[]) => v.some(x => x?.toLowerCase().includes(q))
+  const out: SearchResult[] = []
+  for (const a of albums) {
+    if (has(a.title, a.artist)) {
+      out.push({ id: `local:${a.id}`, kind: "album", title: a.title, cover: a.cover, subtitle: a.artist, year: a.year, local: { albumId: a.id } })
+    }
+    for (const t of a.tracks) {
+      if (has(t.title, a.artist, a.title)) {
+        out.push({ id: `local:${t.id}`, kind: "song", title: t.title, cover: a.cover, artist: a.artist, album: a.title, duration: t.duration, local: { albumId: a.id, trackId: t.id } })
+      }
+    }
+  }
+  return out
+}
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "all",      label: "All" },
@@ -81,7 +105,7 @@ export function SearchResultsView({ query }: { query: string }) {
   const [params, setParams] = useSearchParams()
   const [tab, setTabState] = useState<TabKey>(() => {
     const type = params.get("type")
-    return TABS.some(t => t.key === type) ? (type as TabKey) : "all"
+    return type === "local" || TABS.some(t => t.key === type) ? (type as TabKey) : "all"
   })
   const setTab = (next: TabKey) => {
     setTabState(next)
@@ -104,21 +128,43 @@ export function SearchResultsView({ query }: { query: string }) {
     return [...rail.items, ...found.filter(r => !titles.has(`${r.kind}:${r.title.toLowerCase()}`))]
   }, [query, listKey])
 
+  // Local files are part of YOUR library, not the muza catalog: they join
+  // the results under "My Library" (each marked, with a "Local" chip to
+  // narrow to them), and under "Muza Catalog" a line says how many matched
+  // there instead, one tap from them. Production promises local music "in
+  // your playlists and search"; this is what that search looks like.
+  const localAlbums = useLocalAlbums()
+  const localHits = useMemo(() => searchLocal(query, localAlbums), [query, localAlbums])
+
   // Scope: "My Library" keeps only saved items (labels aren't saveable, so
-  // they never appear under My Library).
+  // they never appear under My Library), plus the local hits.
   const scoped = scope === "library"
-    ? all.filter(r => r.libraryType && r.libraryId && library.inLibrary(r.libraryType, r.libraryId))
+    ? [...all.filter(r => r.libraryType && r.libraryId && library.inLibrary(r.libraryType, r.libraryId)), ...localHits]
     : all
 
-  const visible = tab === "all" ? scoped : scoped.filter(r => r.kind === tab)
+  const visible = tab === "all" ? scoped
+    : tab === "local" ? scoped.filter(r => r.local)
+    : scoped.filter(r => r.kind === tab)
 
   // Only offer category tabs that actually have results (All is always shown),
   // so users never click into an empty tab (e.g. Labels with no matches). If
   // the active tab empties out after the query narrows, fall back to All.
   const tabCounts = scoped.reduce((c, r) => { c[r.kind] = (c[r.kind] ?? 0) + 1; return c }, {} as Record<SearchKind, number>)
-  const visibleTabs = TABS.filter(t => t.key === "all" || (tabCounts[t.key as SearchKind] ?? 0) > 0)
+  const visibleTabs = [
+    ...TABS.filter(t => t.key === "all" || (tabCounts[t.key as SearchKind] ?? 0) > 0),
+    // A source filter, so it sits after the types, as Local does in the
+    // library's filter row.
+    ...(scope === "library" && localHits.length > 0 ? [{ key: "local" as TabKey, label: "Local" }] : []),
+  ]
+  // The local-matches line switches scope and tab in one URL write; take
+  // the tab from there.
+  const typeParam = params.get("type")
   useEffect(() => {
-    if (tab !== "all" && !scoped.some(r => r.kind === tab)) setTab("all")
+    if (typeParam === "local" && tab !== "local") setTabState("local")
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typeParam])
+  useEffect(() => {
+    if (tab !== "all" && !scoped.some(r => (tab === "local" ? !!r.local : r.kind === tab))) setTab("all")
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, query, scope])
 
@@ -195,6 +241,31 @@ export function SearchResultsView({ query }: { query: string }) {
         />
       )}
 
+      {scope === "catalog" && localHits.length > 0 && (
+        <p className="text-xsmall text-muted-foreground -mt-1">
+          {localHits.length} {localHits.length === 1 ? "match" : "matches"} in your local files.{" "}
+          <button
+            type="button"
+            // One URL write for scope and tab, and the tab state follows the
+            // URL (effect below). Setting the tab state here as well let a
+            // render see "Local" while the scope was still the catalog, where
+            // Local does not exist, and the fallback to All overwrote the
+            // scope switch with it.
+            onClick={() => {
+              setParams(prev => {
+                const url = new URLSearchParams(prev)
+                url.set("scope", "library")
+                url.set("type", "local")
+                return url
+              }, { replace: true })
+            }}
+            className="link-underline text-foreground cursor-pointer outline-none"
+          >
+            Show
+          </button>
+        </p>
+      )}
+
       {/* Results. The "All" tab is a relevance-ordered set of shelves
           (Top result + per-type sections); a specific tab is a flat list. */}
       {visible.length === 0 ? (
@@ -203,7 +274,7 @@ export function SearchResultsView({ query }: { query: string }) {
           {scope === "library" ? " in your library" : ""} for “{query}”.
         </p>
       ) : tab === "all" ? (
-        <AllResults visible={visible} onShowAll={setTab} />
+        <AllWithLocal visible={visible} onShowAll={setTab} />
       ) : (
         <ul className="flex flex-col gap-1">
           {visible.map(r => (
@@ -216,6 +287,7 @@ export function SearchResultsView({ query }: { query: string }) {
 }
 
 function labelFor(tab: TabKey): string {
+  if (tab === "local") return "Local files"
   return TABS.find(t => t.key === tab)?.label ?? "Results"
 }
 
@@ -317,7 +389,65 @@ function TopCover({ r }: { r: SearchResult }) {
 }
 
 // ─── One result row ──────────────────────────────────────────────────────────
+/** A local hit: the album as a list row, the track as the local song row —
+ *  both marked "Local", both with the local menu. */
+function LocalSearchRow({ r }: { r: SearchResult }) {
+  const actions = useLocalActions()
+  const album = r.local && getLocalAlbum(r.local.albumId)
+  if (!album) return null
+  if (r.kind === "song") {
+    const track = album.tracks.find(t => t.id === r.local!.trackId)
+    return track ? <LocalSongRow album={album} track={track} labelled /> : null
+  }
+  const l = actions(album)
+  return (
+    <MediaListItem
+      type="album"
+      cover={album.cover}
+      title={album.title}
+      subtitle={album.artist}
+      badge="Local"
+      meta={l.detail}
+      onOpen={l.open}
+      onSubtitleClick={l.onGoToArtist}
+      className={l.available ? undefined : "opacity-60"}
+      menuItems={<DetailMenuItems kind="album" title={album.title} {...l.menu} />}
+    />
+  )
+}
+
+// "All" with local hits: the catalog / library shelves as they were, then
+// the local hits in a section of their own. Mixing them into Top result and
+// the type rails would put a folder rip at the top of a muza search; kept
+// apart, under its own heading, each one still marked.
+function AllWithLocal({ visible, onShowAll }: { visible: SearchResult[]; onShowAll: (k: TabKey) => void }) {
+  const rest  = visible.filter(r => !r.local)
+  const local = visible.filter(r => r.local)
+  const LOCAL_PREVIEW = 5
+  const localList = (
+    <ul className="flex flex-col gap-1">
+      {local.slice(0, LOCAL_PREVIEW).map(r => <li key={r.id}><LocalSearchRow r={r} /></li>)}
+    </ul>
+  )
+  if (rest.length === 0) return localList
+  return (
+    <div className="flex flex-col gap-4 sm:gap-6">
+      <AllResults visible={rest} onShowAll={onShowAll} />
+      {local.length > 0 && (
+        <ListSection title="In your local files" onShowAll={local.length > LOCAL_PREVIEW ? () => onShowAll("local") : undefined}>
+          {localList}
+        </ListSection>
+      )}
+    </div>
+  )
+}
+
 export function SearchRow({ r }: { r: SearchResult }) {
+  if (r.local) return <LocalSearchRow r={r} />
+  return <CatalogSearchRow r={r} />
+}
+
+function CatalogSearchRow({ r }: { r: SearchResult }) {
   const { openAlbum, openArtist, openPlaylist } = useMediaNav()
   const library = useUserLibrary()
   const toggleLibrary = useLibraryToggle()

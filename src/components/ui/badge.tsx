@@ -95,29 +95,40 @@ const badgeVariants = cva(
         // one uniform height across the app whether or not they have
         // an icon.
         square: "rounded-sm h-[26px] px-[6px] pb-px text-2xsmall",
-        // Tiny inline badge for use INSIDE other text rows (e.g. an
-        // album card title line). 18px tall · 4px x-padding · tighter
-        // icon. Drops below the 26px chip height so it doesn't push
-        // the surrounding line-box and stays optically right-sized
-        // next to body text.
-        "square-xs": "rounded-[1px] border-0 h-[18px] px-1 pb-px text-2xsmall gap-0.5 [&>svg]:size-2.5",
+        // Tiny inline badge for use INSIDE other text rows: "Owned" and
+        // "Local" in a card's last line, the album header's meta line, the
+        // library table. 18px tall, so it doesn't push the line box and
+        // stays optically right-sized next to body text. Word only — at
+        // this size an icon is detail nobody can read.
+        // `rounded-[4px]`: the 1px corner it was drawn with read as a
+        // square cut-out next to the app's soft shapes; 4 is the sm corner
+        // scaled to 18px of height. `px-1.5` gives a one-word label room.
+        // No `pb-px`, unlike the larger shapes. Measured on "Owned" (cap and
+        // ascender to baseline, no descender — what these labels are): with
+        // the nudge the ink sat 3.6px from the top and 4.6 from the bottom,
+        // half a pixel high; without it, 4.1 and 4.1.
+        // `leading-[18px]` (= its height) because the badge otherwise
+        // inherits the line height of wherever it sits: under a card
+        // (leading-[18px]) the ink sat 4.4 / 3.8, in the album page's meta
+        // line (leading-none) 4.9 / 3.3 — the same badge, visibly two.
+        // Owning its line height makes it one thing on every surface. It
+        // must come after `text-2xsmall`: tailwind-merge drops a leading
+        // that a later text size would reset.
+        "square-xs": "rounded-[4px] border-0 h-[18px] px-1.5 text-2xsmall leading-[18px] gap-0.5 [&>svg]:size-2.5",
+        // The count pill — ONE size. There used to be two, `pill` (20px,
+        // 17px numeral) for a 40px Chip and `pill-sm` (18px, 15px) for a
+        // 32px one; in the product only the small one was ever reached (the
+        // 40px chip with a count exists on the design-system page alone),
+        // and the large one's single call site was a menu row where 17px
+        // put the number a size above its label. A count is a footnote to a
+        // label, so it sits under it; 15px is the floor for anything read as
+        // language, so it goes no lower.
         // `pb-px` mirrors the optical-center nudge Button/Tabs use —
         // Founders Grotesk numerals sit low in a flex-centered box.
-        // `border-transparent` overrides the base border so the pill
-        // (typically a count inside another chip) reads as a fill,
-        // not a stroked badge.
-        // `px-1` (not 1.5) so a SINGLE digit lands inside `min-w-5` and the
-        // pill renders as a true 20×20 circle; two digits push it wider on
-        // their own. At 1.5 even a "3" came out 22.8×20 — a slight oval that
-        // reads as a mis-centred number rather than a round count.
-        pill:   "rounded-full justify-center h-5 min-w-5 px-1 pb-px text-xsmall border-transparent",
-        // The same pill inside a `sm` Chip (32px, 15px label). At 20px with a
-        // 17px numeral the count read as the loudest thing in the pill — it
-        // was a size ABOVE the label it belongs to. 18px with a 15px numeral
-        // sits under the label instead, which is what a count is. 15px is the
-        // floor for anything a person reads as language, and a count is a
-        // word here, so it does not go lower.
-        "pill-sm": "rounded-full justify-center h-[18px] min-w-[18px] px-1 pb-px text-2xsmall border-transparent",
+        // `border-transparent` overrides the base border so the pill reads
+        // as a fill, not a stroked badge. `px-1` so a single digit lands
+        // inside `min-w-[18px]` as a true circle; two digits widen it.
+        pill: "rounded-full justify-center h-[18px] min-w-[18px] px-1 pb-px text-2xsmall border-transparent",
       },
     },
     // Measured, not guessed. The inverse count is medium weight, and with the
@@ -126,7 +137,16 @@ const badgeVariants = cva(
     // digit plus `px-1` came out 19 wide on an 18 height: an oval, which reads
     // as a numeral off centre, the very thing this was reported for.
     compoundVariants: [
-      { variant: "inverse", shape: "pill-sm", class: "pb-0 px-0.5" },
+      { variant: "inverse", shape: "pill", class: "pb-0 px-0.5" },
+      // The inline label's fill is the count's (`bg-accent`), not
+      // secondary's `bg-muted`: on the near-white page `muted` all but
+      // vanished at 18px, and `accent` is the one step up that still reads
+      // as quiet. Only at xs — the 26px secondary badge keeps its own fill.
+      { variant: "secondary", shape: "square-xs", class: "bg-accent" },
+      // `square-xs` drops the border for the filled label, which left the
+      // outline variant at this size with no outline at all — a word on a
+      // faint wash. The outline IS that variant, so it comes back here.
+      { variant: "outline", shape: "square-xs", class: "border" },
     ],
     defaultVariants: {
       variant: "secondary",

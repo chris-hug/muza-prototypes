@@ -248,6 +248,8 @@ interface PlayerOverlayProps {
   onRadio?:     () => void
   /** The ⋯ menu's items, the same song menu every row uses. */
   menuItems?:   React.ReactNode
+  /** Playing your own files: no heart (a file on disk is in the library). */
+  local?:       boolean
   /** Fired when the user scrubs the waveform (seconds). */
   onSeek?:      (seconds: number) => void
   /** Navigate to the track's artist / album (the artist row + "playing
@@ -357,6 +359,7 @@ export function PlayerOverlay({
   credits,
   onRadio,
   menuItems,
+  local = false,
   onSeek,
   onArtistClick,
   onPlayingFromClick,
@@ -544,13 +547,23 @@ export function PlayerOverlay({
       >
 
         {/* Top band. In a Sheet it is the sheet's own grabber, so the player
-            is pulled down like every other sheet; the band keeps its 36px so the
-            height budget below does not change. Standalone (the design-system
-            frame) it is still a button that closes. */}
+            is pulled down like every other sheet — and a tap on it closes too;
+            the band keeps its 36px so the height budget below does not change.
+            Standalone (the design-system frame) it is a button that closes. */}
         {inSheet ? (
-          <div className="shrink-0 w-full h-9 flex items-center justify-center">
+          // The grabber is also a tap target that closes. Pulling it down
+          // works (the sheet's own swipe), but people tap the pill first —
+          // and with a mouse there is no flick, only a long drag — so a tap
+          // that did nothing read as a stuck player. Full-width, the band's
+          // own 36px, so the swipe still starts anywhere on it.
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close player"
+            className="shrink-0 w-full h-9 flex items-center justify-center cursor-pointer outline-none focus-ring"
+          >
             <SheetGrabber />
-          </div>
+          </button>
         ) : (
           <Button
             variant="ghost"
@@ -696,7 +709,7 @@ export function PlayerOverlay({
               <h2 className="flex-1 min-w-0 text-large font-medium leading-tight text-foreground">
                 <MarqueeText>{track.title}</MarqueeText>
               </h2>
-              <LibraryHeartButton
+              {!local && <LibraryHeartButton
                 type="song"
                 id={slugify(track.title)}
                 name={track.title}
@@ -704,7 +717,7 @@ export function PlayerOverlay({
                 variant="outline"
                 size="icon-lg"
                 iconClassName="size-5"
-              />
+              />}
               {menuItems && (
                 <DropdownMenu>
                   <DropdownMenuTrigger render={<Button variant="outline" size="icon-lg" aria-label="More options" />}>

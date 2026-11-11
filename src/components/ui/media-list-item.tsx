@@ -22,6 +22,7 @@
 import * as React from "react"
 import { MoreHorizontal } from "lucide-react"
 
+import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ContentTypeBadge, type ContentType } from "@/components/ui/badge"
@@ -45,6 +46,10 @@ export interface MediaListItemProps {
   /** Second line, after the dot — year (album/track) or "123 Songs"
    *  (playlist). */
   meta?:     string
+  /** A one-word label leading the second line: "Owned", "Local". The
+   *  square-xs badge the album cards and song rows carry, so every list
+   *  says it the same way. */
+  badge?:    string
   /** Song only — marks this row as the currently-playing item. */
   playing?:  boolean
   /** Containers (album/playlist/artist) — open the detail page. */
@@ -65,7 +70,7 @@ export interface MediaListItemProps {
 }
 
 export function MediaListItem({
-  type, title, cover, covers, subtitle, meta, playing = false,
+  type, title, cover, covers, subtitle, meta, badge, playing = false,
   onOpen, onPlay, onSubtitleClick, menuItems, trailing, showType = false, className,
 }: MediaListItemProps) {
   // Primary (row-body) action. Containers always navigate (onOpen). A song
@@ -104,8 +109,9 @@ export function MediaListItem({
       {/* Title + meta. */}
       <div className="flex-1 min-w-0 flex flex-col gap-0.5">
         <p className="text-xsmall font-normal leading-5 text-foreground truncate">{title}</p>
-        {(type !== "artist" && (subtitle || meta)) && (
+        {(type !== "artist" && (badge || subtitle || meta)) && (
           <div className="flex items-center gap-1.5 min-w-0 text-xsmall font-light tracking-[0.02em] text-muted-foreground leading-5">
+            {badge && <Badge variant="secondary" shape="square-xs" className="shrink-0">{badge}</Badge>}
             {subtitle && (
               onSubtitleClick ? (
                 <button

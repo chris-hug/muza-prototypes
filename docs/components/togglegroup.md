@@ -8,8 +8,11 @@ usage:
 ---
 
 `ToggleGroup` is the segmented control: a `bg-muted` pill track holding two
-or more `Toggle` segments, one of which is pressed. It is the grid ⇄ list
-switch on every library toolbar and the Artist discography, the Muza Catalog
+or more `Toggle` segments, one of which is pressed. It is the view switch on
+every library toolbar (`LibraryViewToggle`: cards · list · table, each page
+offering the forms that fit its items — Albums all three, Songs list and
+table, Playlists / Artists / All cards and table; one shared, remembered
+choice, see `useLibraryView`) and the Artist discography grid ⇄ list, the Muza Catalog
 ⇄ My Library scope switch on Search, and the light ⇄ dark picker in
 Settings.
 
@@ -17,8 +20,9 @@ Settings.
 
 ```tsx
 <ToggleGroup size="sm" value={[view]} onValueChange={v => { if (v[0]) setView(v[0]) }} aria-label="View mode">
-  <Toggle value="grid" aria-label="Tile view"><LayoutGrid className="size-3.5" /></Toggle>
+  <Toggle value="grid" aria-label="Card view"><LayoutGrid className="size-3.5" /></Toggle>
   <Toggle value="list" aria-label="List view"><List className="size-3.5" /></Toggle>
+  <Toggle value="table" aria-label="Table view"><Table2 className="size-3.5" /></Toggle>
 </ToggleGroup>
 ```
 

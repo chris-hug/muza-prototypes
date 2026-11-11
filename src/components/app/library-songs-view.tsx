@@ -10,13 +10,15 @@
  * un-hearting a track removes it from this list.
  */
 
-import { useMemo } from "react"
 
 import { MediaListItem } from "@/components/ui/media-list-item"
 import { SongListItem, SongMenuItems } from "@/components/ui/song-list-item"
-import { SongListTable } from "@/components/app/media-list-table"
+import { SongListTable, LibraryViewToggle, type SongRow } from "@/components/app/media-list-table"
+import { useLibraryView } from "@/lib/use-library-view"
 import { ChipChoice } from "@/components/ui/chip"
 import { SAVED_ALBUMS } from "@/components/app/library-albums-view"
+import { LocalSongRow } from "@/components/app/local-song-rows"
+import { useLocalAlbums, localSongId } from "@/lib/local-library"
 import { useUserLibrary, type SavedSong } from "@/lib/user-library"
 import { usePlayer } from "@/lib/player"
 import { useFooterNav } from "@/lib/use-media-query"
@@ -64,21 +66,6 @@ export const SAVED_SONGS_SEED: SavedSong[] = [
   cover: albumCover(r.album),
 }))
 
-/** Every song available offline: saved on its own, or through its album.
- *  One song once, whichever way it got there. */
-function useOfflineSongs(): SavedSong[] {
-  const library = useUserLibrary()
-  const albumIdByTitle = useMemo(
-    () => new Map(SAVED_ALBUMS.map(a => [a.title, a.id])),
-    [],
-  )
-  const viaAlbum = library.songs().filter(s => {
-    const id = s.album ? albumIdByTitle.get(s.album) : undefined
-    return !!id && library.isOffline("album", id)
-  })
-  return [...new Map([...library.offlineSongs(), ...viaAlbum].map(s => [s.id, s])).values()]
-}
-
 /** A song in a list that mixes types: the nav row every neighbour uses, so it
  *  matches them. A SongListItem here brought its own heart and duration and
  *  was the odd one out. The row plays; a song is the thing you came to hear. */
@@ -116,16 +103,31 @@ export function MixedSongRow({ song: s }: { song: SavedSong }) {
   )
 }
 
-function SongRows({ songs }: { songs: SavedSong[] }) {
+/** "Owned" when the song's album is bought — a single track is not sold on
+ *  its own, so owning the album is what owning the song means. One rule for
+ *  the list and the table. */
+function useSongOwned() {
+  const library = useUserLibrary()
+  return (s: SavedSong) => {
+    const a = s.album ? SAVED_ALBUMS.find(x => x.title === s.album) : undefined
+    return !!a && library.isPurchased(a.id)
+  }
+}
+
+function SongRows({ songs }: { songs: SongRow[] }) {
   const player = usePlayer()
   const { openAlbum, openArtist } = useMediaNav()
   return (
     <ul className="flex flex-col gap-2">
       {songs.map(s => {
+        if (s.local) return (
+          <li key={s.id}><LocalSongRow album={s.local.album} track={s.local.track} labelled /></li>
+        )
         const isThis = player.playing && player.playingFrom === FROM && player.track?.title === s.title
         return (
           <li key={s.id}>
             <SongListItem
+              badge={s.owned ? "Owned" : undefined}
               cover={s.cover}
               title={s.title}
               artist={s.artist}
@@ -153,14 +155,35 @@ export function LibrarySongsView() {
   const library   = useUserLibrary()
   const footerNav = useFooterNav()
   const [query] = useLibraryFilter()
-  // A song is offline if it was saved on its own or its ALBUM was. No "Owned"
-  // tab: you don't buy a single track here.
-  const [status, setStatus] = useLibraryStatus<"all" | "offline">("songs")
-  const offlineSongs = useOfflineSongs()
+  // The same three lenses as Albums. "All" is the songs you saved and the
+  // tracks in your own files, each local one marked; "Owned" the saved songs
+  // whose album you bought (a track is not sold on its own); "Local" only
+  // your files. An "All" without the local tracks, which this page had
+  // first, read as the files having gone missing.
+  const [status, setStatus] = useLibraryStatus<"all" | "owned" | "local">("songs")
+  // List or table, the listener's choice (shared with the other library
+  // pages, see useLibraryView). No cards: a song has no cover of its own
+  // worth a tile, and a grid of the same album art says nothing.
+  const [view, setView, viewOptions] = useLibraryView(["list", "table"])
+  const owned = useSongOwned()
   const allSongs = library.songs()
-  const songs = (status === "offline" ? offlineSongs : allSongs)
+  const songs = allSongs
     // In-library search — match title / artist / album.
     .filter(s => matchesLibraryQuery(query, s.title, s.artist, s.album))
+    .filter(s => status !== "owned" || owned(s))
+  const localAlbums = useLocalAlbums()
+  const localRows: SongRow[] = status === "owned" ? [] : localAlbums.flatMap(album => album.tracks
+    .filter(t => matchesLibraryQuery(query, t.title, album.artist, album.title))
+    .map((track): SongRow => ({
+      id: `${album.id}:${localSongId(album, track)}`,
+      title: track.title, artist: album.artist, album: album.title,
+      cover: album.cover, duration: track.duration,
+      local: { album, track },
+    })))
+  const rows: SongRow[] = [
+    ...(status === "local" ? [] : songs.map(s => ({ ...s, owned: owned(s) }))),
+    ...localRows,
+  ].sort((a, b) => a.title.localeCompare(b.title))
 
   return (
     <div className="flex-1 overflow-auto">
@@ -177,31 +200,36 @@ export function LibrarySongsView() {
                 onChange={setStatus}
                 options={[
                   { value: "all", label: "All" },
-                  { value: "offline", label: "Offline" },
+                  { value: "owned", label: "Owned" },
+                  { value: "local", label: "Local" },
                 ]}
               />
-              <LibrarySearchField />
+              <div className="flex grow items-center justify-end gap-3">
+                <LibrarySearchField />
+                <LibraryViewToggle value={view} onChange={setView} options={viewOptions} />
+              </div>
             </div>
           </>
         )}
 
-        {songs.length === 0 ? (
+        {rows.length === 0 ? (
           <p className="text-small text-muted-foreground max-w-md">
-            {status === "offline" && !query
-              ? "Nothing saved offline yet. Choose “Save offline” on an album you own, or a song from one, and it’ll show up here."
-              : allSongs.length === 0
-              ? "No saved songs yet. Tap the heart on any track — in the player or a song list — and it'll show up here."
-              : query
-                ? `No songs match “${query}”.`
-                : ""}
+            {query
+              ? `No ${status === "local" ? "local " : status === "owned" ? "owned " : ""}songs match “${query}”.`
+              : status === "local"
+                ? "No local music yet. Connect a folder on this computer or a server, and muza plays your own files here."
+                : status === "owned"
+                  ? "No owned songs yet. Buy an album and its songs you saved show up here."
+                  : "No saved songs yet. Tap the heart on any track — in the player or a song list — and it'll show up here."}
           </p>
-        ) : footerNav ? (
-          // Touch: stacked song rows (same component the detail pages use).
-          <SongRows songs={songs} />
+        ) : view === "list" ? (
+          // Stacked song rows (the component the detail pages use); the
+          // only form on a phone. Local tracks are LocalSongRows, marked.
+          <SongRows songs={rows} />
         ) : (
-          // Desktop: the sortable list table (same chrome as Albums), with
-          // an Album column.
-          <SongListTable songs={songs} />
+          // The sortable table (same chrome as Albums), with an Album
+          // column, and a Source column while a local track is listed.
+          <SongListTable songs={rows} />
         )}
       </div>
     </div>
