@@ -308,9 +308,12 @@ export function CreditsContent({
     ...(total ? [["Run time", total] as [string, React.ReactNode]] : []),
   ]
 
-  const overview = (
+  /* `lead` puts facts in front — the album card names the main artist as a
+     fact ("Main artist  John Coltrane"); in the album's own reading the head
+     already says it. */
+  const factList = (lead: [string, React.ReactNode][] = []) => (
     <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-small leading-snug">
-      {facts.map(([k, v]) => (
+      {[...lead, ...facts].map(([k, v]) => (
         <div key={k} className="contents">
           <dt className="text-muted-foreground">{k}</dt>
           <dd className="text-foreground">{v}</dd>
@@ -318,6 +321,7 @@ export function CreditsContent({
       ))}
     </dl>
   )
+  const overview = factList()
 
   /* Two readings of one record.
      ALBUM (the ⓘ on an album): every musician once, roles merged, track
@@ -478,19 +482,14 @@ export function CreditsContent({
         onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); showAlbumCredits() } }}
         className="relative flex w-full flex-col gap-3 rounded-xl bg-muted p-4 text-left press-ripple state-fade-quick cursor-pointer outline-none focus-ring [--hover-fill:var(--secondary)]"
       >
-        {/* Album and main artist on the head's 24px rhythm, the label on the
-            artist's line at the right — the same arrangement as the head. */}
-        <span className="flex items-end gap-3">
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate text-small font-medium leading-6 text-foreground">{credits.album}</span>
-            <span className="truncate text-small leading-6 text-muted-foreground">{credits.mainArtist}</span>
-          </span>
-          <span className="flex shrink-0 items-center gap-1 text-2xsmall leading-6 text-muted-foreground">
+        <span className="flex items-center gap-3">
+          <span className="min-w-0 flex-1 truncate text-small font-medium text-foreground">{credits.album}</span>
+          <span className="flex shrink-0 items-center gap-1 text-2xsmall text-muted-foreground">
             All album credits
             <ChevronRight aria-hidden="true" className="size-4" />
           </span>
         </span>
-        {overview}
+        {factList([["Main artist", credits.mainArtist]])}
       </div>
     </div>
   )
