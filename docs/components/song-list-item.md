@@ -44,8 +44,11 @@ Both are a single stable DOM with four always-mounted layers crossfading on
 Both bind their hover to the **row** (`group/song`), not the 48px thumb: the
 play affordance appears as soon as the pointer is anywhere on the row.
 
-`TrackNumberPlayButton` lives inside `song-list-item.tsx` rather than its own
-file because nothing else uses it.
+`TrackNumberPlayButton` lives inside `song-list-item.tsx` and is exported for
+the credits dialog's track bars, so a track plays and shows "playing" the same
+way in both. `hoverGroup` picks whose hover shows the play icon: `"self"` (the
+button's, the default) or `"trackbar"` (a whole bar marked `group/trackbar`,
+which plays on a click anywhere).
 
 ## The meta line is optional
 

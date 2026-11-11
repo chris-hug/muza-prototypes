@@ -378,18 +378,19 @@ export function CreditsContent({
      Engineering") and a person's name were the same 19px on the same ground,
      told apart only by weight, and a song did not read as the thing the
      list is divided by. A third type size would have broken the two-size
-     rule, so the difference is the surface: `bg-secondary` for every song,
-     one step darker (`secondary-hover`) for the one playing — the step a
-     Button takes on hover, so the hover fill on an idle bar arrives at the
-     same colour. */
+     rule, so the difference is the surface — the LIGHTEST fill there is,
+     `bg-muted`, for every song; `bg-secondary` for the one playing, and as
+     the hover fill. `secondary` / `secondary-hover` were tried first and
+     read as heavy grey slabs stacked down the list. */
   const trackBar = (current: boolean) => cn(
     stickyBar(),
-    current ? "bg-secondary-hover" : "bg-secondary",
+    "group/trackbar",
+    current ? "bg-secondary" : "bg-muted",
     // No `overflow-clip` as the row has: the ripple already fills the box and
     // inherits its radius, and clipping would cut the fade hung below it.
     "press-ripple state-fade-quick",
     playTrack && "cursor-pointer",
-    !current && playTrack && "[--hover-fill:var(--secondary-hover)]",
+    !current && playTrack && "[--hover-fill:var(--secondary)]",
   )
 
   const trackByTrack = (
@@ -409,6 +410,9 @@ export function CreditsContent({
                 title={t.title}
                 playing={current && !!player?.playing}
                 onToggle={playTrack ? () => playTrack(t) : undefined}
+                // The play icon shows on a hover anywhere on the bar, since a
+                // click anywhere plays.
+                hoverGroup={playTrack ? "trackbar" : "self"}
               />
               <p className="min-w-0 flex-1 truncate text-small font-medium text-foreground">{t.title}</p>
               <span className="text-small tabular-nums text-muted-foreground">{t.duration}</span>
@@ -558,10 +562,13 @@ export function CreditsContent({
           — with all 24 in the panel, the stuck bar touched the strip. */}
       <div className={cn("shrink-0 flex flex-col gap-6 pt-3 md:pt-6 pb-3", pad)}>
         {header}
-        <TabsList size="sm" className="w-full">
-          <TabsTrigger value="credits">Credits</TabsTrigger>
-          {notes && <TabsTrigger value="notes">Notes</TabsTrigger>}
-        </TabsList>
+        {/* No strip for ONE tab: a lone "Credits" pill switches nothing. */}
+        {notes && (
+          <TabsList size="sm" className="w-full">
+            <TabsTrigger value="credits">Credits</TabsTrigger>
+            <TabsTrigger value="notes">Notes</TabsTrigger>
+          </TabsList>
+        )}
       </div>
       <div className="relative flex flex-1 min-h-0 flex-col">
         {veil}

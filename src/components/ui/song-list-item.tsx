@@ -763,17 +763,39 @@ function SheetAction({
  * mode; also exported for the credits dialog's sticky track headers, so a
  * track plays and shows "playing" the same way there as on the album page.
  */
+/* Which hover shows the play icon: the button's own (`self`, the album
+   row), or a whole bar marked `group/trackbar` (the credits dialog's track
+   bars, which play on a click anywhere — so a hover anywhere has to say so).
+   Full class strings per group: Tailwind only compiles what it can read. */
+const TNPB_HOVER = {
+  self: {
+    num:   "group-hover/tnpb:opacity-0",
+    play:  "group-hover/tnpb:opacity-100",
+    wave:  "group-data-[playing]/tnpb:group-hover/tnpb:opacity-0",
+    pause: "group-data-[playing]/tnpb:group-hover/tnpb:opacity-100",
+  },
+  trackbar: {
+    num:   "group-hover/trackbar:opacity-0",
+    play:  "group-hover/trackbar:opacity-100",
+    wave:  "group-data-[playing]/tnpb:group-hover/trackbar:opacity-0",
+    pause: "group-data-[playing]/tnpb:group-hover/trackbar:opacity-100",
+  },
+} as const
+
 export function TrackNumberPlayButton({
   number,
   title,
   playing,
   onToggle,
+  hoverGroup = "self",
 }: {
   number: number
   title: string
   playing: boolean
   onToggle?: () => void
+  hoverGroup?: keyof typeof TNPB_HOVER
 }) {
+  const h = TNPB_HOVER[hoverGroup]
   return (
     <button
       type="button"
@@ -791,7 +813,7 @@ export function TrackNumberPlayButton({
         aria-hidden="true"
         className={cn(
           "absolute text-base font-normal leading-none text-muted-foreground tabular-nums transition-opacity duration-150",
-          "group-hover/tnpb:opacity-0 group-data-[playing]/tnpb:opacity-0",
+          h.num, "group-data-[playing]/tnpb:opacity-0",
         )}
       >
         {number}
@@ -800,7 +822,7 @@ export function TrackNumberPlayButton({
       <PlayFilledAlt
         className={cn(
           "absolute size-4 text-foreground opacity-0 transition-opacity duration-150",
-          "group-hover/tnpb:opacity-100 group-data-[playing]/tnpb:opacity-0",
+          h.play, "group-data-[playing]/tnpb:opacity-0",
         )}
       />
       {/* Playing + rest → 3D wave. Original pattern: opacity
@@ -809,14 +831,14 @@ export function TrackNumberPlayButton({
         size={28}
         className={cn(
           "absolute text-foreground opacity-0 transition-opacity duration-150",
-          "group-data-[playing]/tnpb:opacity-100 group-data-[playing]/tnpb:group-hover/tnpb:opacity-0",
+          "group-data-[playing]/tnpb:opacity-100", h.wave,
         )}
       />
       {/* Playing + hover → Pause icon */}
       <PauseFilledAlt
         className={cn(
           "absolute size-4 text-foreground opacity-0 transition-opacity duration-150",
-          "group-data-[playing]/tnpb:group-hover/tnpb:opacity-100",
+          h.pause,
         )}
       />
     </button>
