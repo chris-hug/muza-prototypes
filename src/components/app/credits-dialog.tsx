@@ -341,7 +341,7 @@ export function CreditsContent({
      scroll under. `-mx-2` + `pl-1`: the 48px play button's centre lands on
      the 40px avatars' centre and the title on the names' left edge (52px),
      so the bar and the rows share one grid. */
-  const stickyBar = (current: boolean) => cn(
+  const stickyBar = () => cn(
     "sticky top-0 z-10 flex h-12 items-center gap-2 rounded-md",
     /* The player has no gutter to bleed into (`showCover` off, `px-0`): a
        `-mx-2` bar was clipped at its right edge. There the bar stays inside
@@ -349,8 +349,6 @@ export function CreditsContent({
     showCover ? "-mx-2 pl-1 pr-2" : "[&>button:first-child]:-ml-1",
     "after:pointer-events-none after:absolute after:inset-x-2 after:top-full after:h-3",
     "after:bg-[linear-gradient(to_bottom,var(--popover),transparent)]",
-    // The song playing wears the album page's playing row: `bg-muted`.
-    current ? "bg-muted" : "bg-popover",
   )
   /* A TRACK bar is the album page's track row: the whole bar plays, the
      hover fill grows from the pointer (`press-ripple` + `--hover-fill`, not
@@ -358,13 +356,23 @@ export function CreditsContent({
      ripples. It had no hover at all and read as a heading, not as something
      to press. Clicks on the button itself are its own, as on the row.
      The SECTION bars (Production, Artwork) play nothing and stay inert. */
+  /* A track bar is a FILLED band, a section bar is not. With both in the
+     dialog's colour a song title, a section title ("Production &
+     Engineering") and a person's name were the same 19px on the same ground,
+     told apart only by weight, and a song did not read as the thing the
+     list is divided by. A third type size would have broken the two-size
+     rule, so the difference is the surface: `bg-secondary` for every song,
+     one step darker (`secondary-hover`) for the one playing — the step a
+     Button takes on hover, so the hover fill on an idle bar arrives at the
+     same colour. */
   const trackBar = (current: boolean) => cn(
-    stickyBar(current),
+    stickyBar(),
+    current ? "bg-secondary-hover" : "bg-secondary",
     // No `overflow-clip` as the row has: the ripple already fills the box and
     // inherits its radius, and clipping would cut the fade hung below it.
     "press-ripple state-fade-quick",
     playTrack && "cursor-pointer",
-    !current && playTrack && "[--hover-fill:var(--muted)]",
+    !current && playTrack && "[--hover-fill:var(--secondary-hover)]",
   )
 
   const trackByTrack = (
@@ -394,7 +402,7 @@ export function CreditsContent({
       })}
       {albumGroups.map(([g, list]) => (
         <section key={g} className="flex flex-col">
-          <div className={cn(stickyBar(false), showCover && "px-2")}>
+          <div className={cn(stickyBar(), "bg-popover", showCover && "px-2")}>
             <SectionTitle>{GROUP_LABEL[g]}</SectionTitle>
           </div>
           {personRows(list)}
