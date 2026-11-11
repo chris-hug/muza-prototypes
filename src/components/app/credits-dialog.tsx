@@ -299,7 +299,9 @@ export function CreditsContent({
       : []),
     ...(credits.year ? [["Released", String(credits.year)] as [string, React.ReactNode]] : []),
     ...(credits.label ? [["Label", [credits.label, credits.catalogNumber].filter(Boolean).join(" · ")] as [string, React.ReactNode]] : []),
-    ["Tracks", [String(credits.tracks.length), total].filter(Boolean).join(" · ")],
+    // Two facts, two rows: "Tracks 5 · 42 min" read as one number in two units.
+    ["Songs", String(credits.tracks.length)],
+    ...(total ? [["Run time", total] as [string, React.ReactNode]] : []),
   ]
 
   const overview = (
