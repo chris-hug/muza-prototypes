@@ -241,12 +241,10 @@ export function CreditsContent({
           between the lines looked uneven although no single value was. */}
       <div className="flex min-w-0 flex-col text-left">
         {heading}
-        {/* Track by track the whole head is ONE target (below), so the
-            title and artist are plain text there, not links inside a link. */}
-        <Value onClick={byTrack.on ? undefined : onAlbum} className="truncate text-small font-medium leading-6 text-foreground">
+        <Value onClick={onAlbum} className="truncate text-small font-medium leading-6 text-foreground">
           {credits.album}
         </Value>
-        <Value onClick={byTrack.on ? undefined : onArtist && (() => onArtist(credits.mainArtist))} className="truncate text-small text-muted-foreground leading-6">
+        <Value onClick={onArtist && (() => onArtist(credits.mainArtist))} className="truncate text-small text-muted-foreground leading-6">
           {credits.mainArtist}
         </Value>
         {/* Year · label where the ⋯ sheet has the content-type badge. The
@@ -264,29 +262,22 @@ export function CreditsContent({
     </div>
   )
 
-  /* Track by track the album's head IS the way to its credits: the whole
-     row — thumb, title, artist — is one target, with "All album credits ›"
-     at its end. It was a separate pill under the head, which read as a
-     second, smaller thing about the same album. The row wears the album
-     row's hover (`press-ripple`, fill `muted`), bled 8px past the gutter so
-     the fill has room around the thumb.
-     The label sits at the row's BOTTOM right, on the year · label line — a
-     centred label floated mid-row, attached to nothing. The row stops 40px
-     short of the right edge (`mr-10`): run to the edge, its hover fill
-     swallowed the ✕, and the close button looked like part of the row. */
+  /* Track by track, "All album credits ›" stands on its own line above the
+     head, left-aligned and on the ✕'s centre line: the ✕ is 32px at `top-4`
+     (centre 32px down), the head starts at `pt-3` / `md:pt-6`, so the 32px
+     button moves down 4px on a phone and up 8px from `md`; `-ml-2` puts its
+     text on the thumb's edge.
+     Tried and dropped: a pill under the head (a second, smaller thing about
+     the same album); the whole head as one clickable row with the label at
+     its end (its hover fill ran into the ✕, and held clear of it the label
+     floated). */
   const header = byTrack.on ? (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={showAlbumCredits}
-      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); showAlbumCredits() } }}
-      className="relative -m-2 mr-10 flex items-center gap-3 rounded-xl p-2 press-ripple state-fade-quick cursor-pointer outline-none focus-ring [--hover-fill:var(--muted)]"
-    >
-      {identity}
-      <span className="flex shrink-0 items-center gap-1 self-end text-2xsmall leading-6 text-muted-foreground">
+    <div className="flex flex-col gap-2">
+      <Button variant="ghost" size="sm" className="-ml-2 self-start mt-1 md:-mt-2" onClick={showAlbumCredits}>
         All album credits
-        <ChevronRight aria-hidden="true" className="size-4" />
-      </span>
+        <ChevronRight />
+      </Button>
+      {identity}
     </div>
   ) : identity
 
