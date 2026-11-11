@@ -553,7 +553,11 @@ export function CreditsContent({
     // No top PADDING on the scroller: a sticky bar sticks at the padding
     // edge, 24px down, and rows showed through the band above it. The 24px
     // is the content's own margin (`gap` below) instead.
-    "flex-1 min-h-0 overflow-y-auto pb-10",
+    /* `contain: paint` keeps every descendant's paint inside the box. Without
+       it a row passing under the stuck track bar flickered through in the
+       12px between the head and the bar while scrolling — text painted past
+       the scroller's edge, beside a sticky layer. */
+    "flex-1 min-h-0 overflow-y-auto pb-10 [contain:paint]",
     // Thin, in the app's ink, on a clear track — not the browser's grey slab.
     "[scrollbar-width:thin] [scrollbar-color:var(--muted-foreground)_transparent]",
     pad,
