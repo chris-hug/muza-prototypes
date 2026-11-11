@@ -171,12 +171,16 @@ export function CreditsContent({
           className="size-18 shrink-0 rounded-xs object-cover bg-secondary art-edge"
         />
       )}
-      <div className="flex min-w-0 flex-col gap-1 text-left">
+      {/* Three lines on ONE 24px rhythm, no gaps: 3 × 24 = 72, the thumb's
+          height, so the text block sits flush with it top and bottom. They
+          had three line heights (24 · 19 · 21) plus 4px gaps, and the space
+          between the lines looked uneven although no single value was. */}
+      <div className="flex min-w-0 flex-col text-left">
         {heading}
-        <Value onClick={onAlbum} className="truncate text-small font-medium leading-tight text-foreground">
+        <Value onClick={onAlbum} className="truncate text-small font-medium leading-6 text-foreground">
           {credits.album}
         </Value>
-        <Value onClick={onArtist && (() => onArtist(credits.mainArtist))} className="truncate text-small text-muted-foreground leading-none">
+        <Value onClick={onArtist && (() => onArtist(credits.mainArtist))} className="truncate text-small text-muted-foreground leading-6">
           {credits.mainArtist}
         </Value>
         {/* Year · label where the ⋯ sheet has the content-type badge. The
@@ -186,9 +190,10 @@ export function CreditsContent({
             physical format of each pressing (78 RPM, 10", LP), iTunes mostly
             says "Album" and puts "– EP" in the title. Year and label are
             facts every source agrees on. */}
-        {/* The role line's style exactly — the header's secondary line and a
-            person's secondary line are one thing. */}
-        {meta && <p className="truncate text-2xsmall text-muted-foreground leading-snug">{meta}</p>}
+        {/* The role line's size and colour — the header's secondary line and a
+            person's secondary line are one thing; its height is the header's
+            24px rhythm. */}
+        {meta && <p className="truncate text-2xsmall text-muted-foreground leading-6">{meta}</p>}
       </div>
     </div>
   )
