@@ -601,12 +601,12 @@
    bar) dissolves instead of being cut. Hang it BELOW the edge, as tall as
    the fade should run (24–40px).
 
-   It is `.sheet-glass` (below), faded out: the same 12px blur and 72% of the
-   surface colour (`--edge-fade-color`, default `--popover`), so where it is
-   whole it is the sheet's own glass — rows pass under it blurred and muted,
-   not bleached. A MASK on an eased ramp (100 · 90 · 55 · 20 · 0%) then
-   takes the whole glass away toward its lower edge, so there is no line
-   where it starts or stops. It replaced a plain white gradient, which
+   It is `.sheet-glass` (below), faded in and out: the same 12px blur over
+   the surface colour (`--edge-fade-color`, default `--popover`) — solid at
+   the top, thinning to the glass's 72% and below, so rows pass under it
+   blurred and muted, not bleached. A MASK on an eased ramp then takes the
+   whole glass away toward its lower edge, so there is no line where it
+   starts or stops. It replaced a plain white gradient, which
    paled the rows but did not blur them, and read as a smear.
 
    Only the standard `backdrop-filter`, never a hand-written `-webkit-` twin:
@@ -615,8 +615,16 @@
 @utility edge-fade {
   pointer-events: none;
   backdrop-filter: blur(12px);
-  background-color: color-mix(in srgb, var(--edge-fade-color, var(--popover)) 72%, transparent);
-  mask-image: linear-gradient(to bottom, #000 0%, rgb(0 0 0 / 0.9) 25%, rgb(0 0 0 / 0.55) 55%, rgb(0 0 0 / 0.2) 80%, transparent 100%);
+  /* SOLID at the top edge, then the glass: it continues the opaque edge
+     above it (a sticky bar, the head) without a seam. Glass from the first
+     pixel made a hard line there — opaque bar, then a band of blurred rows
+     that started all at once. */
+  background-image: linear-gradient(to bottom,
+    var(--edge-fade-color, var(--popover)) 0%,
+    color-mix(in srgb, var(--edge-fade-color, var(--popover)) 88%, transparent) 30%,
+    color-mix(in srgb, var(--edge-fade-color, var(--popover)) 72%, transparent) 60%,
+    color-mix(in srgb, var(--edge-fade-color, var(--popover)) 50%, transparent) 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 20%, rgb(0 0 0 / 0.75) 45%, rgb(0 0 0 / 0.4) 70%, rgb(0 0 0 / 0.12) 88%, transparent 100%);
 }
 
 @utility art-edge {

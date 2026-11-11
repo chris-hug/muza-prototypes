@@ -374,8 +374,8 @@ export function CreditsContent({
   const stickyShell = cn(
     "sticky top-0 z-10 bg-popover",
     showCover && "-mx-2",
-    // `edge-fade` (app.css): the sheet's glass, masked out over 24px.
-    "after:absolute after:inset-x-0 after:top-full after:h-6 after:edge-fade",
+    // `edge-fade` (app.css): the sheet's glass, masked out over 32px.
+    "after:absolute after:inset-x-0 after:top-full after:h-8 after:edge-fade",
   )
   const stickyBar = () => cn(
     "relative flex h-12 items-center gap-2 rounded-md",
@@ -582,12 +582,12 @@ export function CreditsContent({
     </div>
   )
 
-  /* The dialog's own gutter: 16px on a phone, 24px from `md`. None in the
-     player, which pads its own panel. It was the ⋯ sheet's 12px, but the
-     bars and the album card bleed 8px past the gutter, and at 12 they ran to
-     4px from the sheet's edge; 16 leaves them 8, and puts the thumb on the
-     ✕'s 16px inset. */
-  const pad = showCover ? "px-4 md:px-6" : "px-0"
+  /* The dialog's own gutter: 16px, at EVERY size — the ✕'s inset, so the
+     thumb and the ✕ share an edge. None in the player, which pads its own
+     panel. It was 12 on a phone and 24 from `md`: two layouts of one
+     dialog, and at 12 the bars and the album card (which bleed 8px past the
+     gutter) sat 4px from the sheet's edge. */
+  const pad = showCover ? "px-4" : "px-0"
 
   if (layout === "page") {
     return (
@@ -639,7 +639,7 @@ export function CreditsContent({
         // the top edge and carries its own fade; the veil would wash out its
         // top 15px.
         scrolled && !(tab === "credits" && byTrack.on) ? "opacity-100" : "opacity-0",
-        showCover ? "inset-x-4 md:inset-x-6" : "inset-x-0",
+        showCover ? "inset-x-4" : "inset-x-0",
       )}
     />
   )
