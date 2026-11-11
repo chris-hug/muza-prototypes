@@ -8,17 +8,34 @@ usage:
 ---
 
 `CreditsDialog` is the release metadata behind every "Show credits" action
-and the MediaHeader's ⓘ — a 3:2 cover header over main artist, album, label,
-recording date and the per-instrument performers. Albums only; a playlist
-has no release credits.
+and the MediaHeader's ⓘ: a compact header (the ⋯ sheet's: thumb, title, main artist, year · label) over **Credits**
+and **Notes**. One dialog per album, and two readings of its Credits: the
+**album's** (every musician once, roles merged — the compact overview of the
+lineup) when the album's credits are asked for, **track by track** (each
+song under a sticky bar, with the people on that take) when a song's are. A
+playlist has no release credits.
+
+Credits are a Muza strength — the catalogue is iTunes, MusicBrainz and Discogs
+together — so the dialog is built to show a full record the way a jazz listener
+reads a sleeve: who played what, on which track, where and when it was
+recorded, who produced and engineered it. Benchmarked against Spotify, Apple
+Music, Tidal and Qobuz (notes in the Superlist task); Qobuz's structure — a
+compact header, Overview / Credits / Review, one row per person with an avatar —
+is the model, with its one data bug avoided (below).
+
+**Two layouts are live while they are compared:** `"tabs"` (the default) and
+`"page"`, the same sections stacked in one scroll. The live dialog reads
+`?credits=page` from the URL. One of them goes when the decision is made.
 
 ## Anatomy
 
 ```tsx
-<DialogContent className="md:max-w-md p-0 gap-0 overflow-hidden flex flex-col max-h-[92vh] md:max-h-[85vh]">
+<DialogContent fixedHeight className="md:max-w-xl p-0 gap-0 overflow-hidden flex flex-col h-[80svh] max-h-[80svh]">
   <CreditsContent
     credits={credits}
-    heading={<DialogTitle className="md:text-large font-medium leading-none">Album credits</DialogTitle>}
+    focusTrack={findTrack(credits, title)}   // track by track, at that song; undefined = the album's overview
+    layout="tabs"            // or "page"
+    heading={<DialogTitle className="sr-only">Credits</DialogTitle>}
     onArtist={name => go(() => openArtist(slugify(name)))}
     onAlbum={albumLinkable ? () => go(() => openAlbum(slugify(credits.album))) : undefined}
     bodyClassName="min-h-0"
@@ -28,14 +45,29 @@ has no release credits.
 
 | Part | What it wears | Why |
 |---|---|---|
-| Cover header | `relative aspect-[3/2] w-full shrink-0 overflow-hidden bg-muted`: the cover once as a backdrop (`object-cover scale-125 blur-2xl opacity-80`), a `from-black/30` gradient, then the real cover `h-full aspect-square rounded-xs shadow-lg` centred on top | a square in a 3:2 frame would letterbox; the blurred copy fills the sides with the artwork's own colour instead of a flat bar |
-| Scroll box | `flex flex-col flex-1 min-h-0 overflow-y-auto` + `bodyClassName` — `min-h-0` in the live sheet (grows to the dialog's cap), `max-h-[50vh]` in the preview | **the cover is inside it**: one scroll box for the whole body, so the header scrolls away |
-| Metadata body | `flex flex-col gap-5 p-6` | no scroller of its own; it moves with the cover |
-| Heading | `DialogTitle md:text-large font-medium leading-none` — "Album credits" | slotted, so the live dialog passes a real `DialogTitle` for a11y while the preview passes a `<p>` |
-| Fields | `Field`: label `text-2xsmall text-muted-foreground leading-[16px]`, value `text-small text-foreground leading-[20px]` — Main artist · Album · Label · Recording Date | label and recording date render only when the catalog has them |
-| Performers | "Performers" `text-small font-medium`, then role → names, comma-joined | role is the label, names the value |
-| `showCover` | `false` drops the 3:2 header and pads the body `pt-2 pb-12` instead of `p-6` | the player shows these credits in place of its artwork, beside a 48px thumb, so a second cover would repeat the screen |
-| Links | a value with a handler is a `<button>` carrying `link-underline`; without one it is plain text | main artist, album (when `hasAlbumDetail`) and every performer navigate. The affordance cannot come apart from the behaviour: no handler, no underline, no tab stop. `CreditsDialogPreview` passes no-op handlers so the design-system frame shows the links the product has without navigating the page away |
+| Header | the ⋯ sheet's identity block (`DetailMenuSheetBody`): `size-18 rounded-xs art-edge` thumb · title `text-small font-medium` · artist `text-small text-muted-foreground` · year · label `text-2xsmall` where the sheet has its content-type badge (the sheet's layout, the dialog's two sizes — see Type). Gutter `px-3`, `md:px-6` | the credits are reached from that sheet's "Credits" tile, so both open on one header instead of two. It replaced a 3:2 cover that spent a third of a phone on the artwork the reader just came from; before that, four equal label/value rows where the title weighed as much as a recording date. **No Album / EP / Single badge:** the sources disagree, and for old jazz the type is a modern label applied afterwards — MusicBrainz editors give a 1940 set of 78s today's categories, Discogs records the format of each pressing (78 RPM, 10", LP), iTunes mostly says "Album" and puts "– EP" in the title. Year and label are what every source agrees on. The catalogue number is an Overview fact. The `heading` slot is an `sr-only` `DialogTitle` ("Album credits") — named for screen readers, not drawn |
+| All album credits (track by track) | `Button ghost sm` "All album credits ›" on its own line above the head, left-aligned (`-ml-2`, text on the thumb's edge) and on the ✕'s centre line (`-mt-2`); the album card at the end does the same | tried and dropped: a pill under the head (a second, smaller thing about the same album); the whole head as one clickable row with the label at its end (its hover ran into the ✕, and held clear of it the label floated) |
+| Album card (track by track) | at the end of the list: the album's name with "All album credits ›", then the Release facts led by "Main artist"; `rounded-xl bg-muted p-4`, the whole card opens the album's credits (`role="button"`, `press-ripple`, hover fill `secondary`) | the release facts would split a song from its credits anywhere else; with the way to the album's credits they are one thing, so one card — the pill that used to sit under it said the same thing twice |
+| Tabs | `TabsList size="sm"` full width: Credits · Notes — only when there are Notes; one tab gets no strip. Credits is the default. There was an Overview tab; its facts now sit in the album's Credits (Release, below) | "Show credits" is what was asked for. Header and tab bar hold; only the panel scrolls, so switching tabs never moves the bar. **The head is glass over the panel**, as Tidal does it: the panel runs the full body height, the head (identity + tabs) lies over its top as `.sheet-glass` (the sheet's colour at 72% over a 12px blur), and rows slide UNDER it, blurred and faintly legible, instead of fading out at an edge. A 1px hairline (`shadow-[0_1px_0_var(--border)]`) appears under the head once the panel has scrolled. The head's height is measured (`ResizeObserver` → `--head-h`): it is the panel's top padding (+12px) and the sticky bars' `top`. The scrollbar is thin, `--muted-foreground` on a clear track. Tried and dropped: a hard cut (a row sliced in half); a white gradient veil (paled the rows, read as a band); a masked blur under each sticky bar (a smear with a visible start) |
+| Release | the **album card** — the same card that ends the track-by-track reading (album name, then the facts led by Main artist: Recorded (date + studio) · Released · Label (label · catalogue number) · Songs · Run time), inert here, LAST, after the Tracks; `-mx-2` like the bars | one set of facts, one look and one place — the end — in both readings; a row is left out when the catalogue has no value |
+| Credits — album | sections Personnel · Composition · Production & Engineering · Artwork & Notes, `text-small font-medium` titles; one row per person in a `divide-y divide-border/60` list; then **Tracks**, then the album card | the overview of who is on the record — the reading track by track replaced it once and lost exactly that. Opens from the album's ⓘ and the ⋯ "Credits" tile |
+| Tracks (album) | the track-by-track reading's bars, not sticky, 4px apart, and GHOST: no fill at rest, `muted` hover fill, playing `bg-secondary` — five filled bands stacked read as a wall; `TrackNumberPlayButton` that plays, title `font-medium`, duration, chevron; the bar opens that song's credits (`role="button"`, hover fill `secondary`) | one song looks like one song in both readings; it was a ruled text list here and a band there |
+| Credits — track by track | one section per track under a sticky bar, then that track's people (`peopleOnTrack`: roles without track numbers plus those naming it, numbers dropped); Production & Engineering and Artwork & Notes follow ONCE under bars of their own; then the album card | Qobuz's layout, for a song's question "who is on this take?" — Dolphy is "Bass clarinet" under Hat and Beard, "Flute" under Gazzelloni. Production and the sleeve belong to the record |
+| Track bar | sticks under the glass head (`top: var(--head-h)`), FULL dialog width (`-mx-4`) with NO radius — stuck, it is the head's lower edge, a band, not a card under it (rounded bottom corners still read as a card); `pl-3 pr-4` put the button and title back on the rows' grid. A square `bg-popover` sticky shell around a rounded `h-12` band — a rounded band that was itself sticky let rows show through its corners. Every bar and list is a SIBLING in one container: a bar sticky inside its own section was pushed off before the next arrived, and the previous song's last rows flashed past the top edge. Band: a filled band in the lightest fill, `bg-muted`; the song playing `bg-secondary` with the wave in its button (`secondary` / `secondary-hover` read as heavy slabs); NO fade below — Tidal's track headers have none. Section bars (Production, Artwork) stay unfilled, `bg-popover`. The band, not a type size, is what tells a song title from a section title and a name — all three are `text-small`, and on one ground they read alike. The whole bar plays the track (or pauses the one playing), with the album row's hover — a `--hover-fill:var(--secondary)` circle grown from the pointer by `press-ripple` — a pointer cursor, and the play icon on a hover ANYWHERE on the bar (`TrackNumberPlayButton hoverGroup="trackbar"`), since a click anywhere plays; section bars (Production, Artwork) stay inert. the padding lands the button's centre on the avatars' and the title on the names' edge | Same button and playing row as the album page, so playing reads the same in both |
+| Person row | `PersonAvatar` `size-10` (portrait, else initials) · name `text-small` (a link) · roles `text-2xsmall text-muted-foreground` · `LibraryHeartButton type="artist"` `icon-sm touch-target` | **one row per person, every role merged** — a name appears once per album ("Tenor saxophone, Composer"). A role can name its tracks: "Bass clarinet (1, 2), Flute (3)", the liner-note convention, instead of a credits block per track repeating the same five names. Every person with an artist page gets the link and the heart. **Without a page** (`profile: false` — sleeve designers, photographers, liner-note writers) the name is plain text and there is no heart; the row keeps its avatar, name and roles, so it reads as credited, not broken. Out to Lunch marks Reid Miles and A. B. Spellman to show the state |
+| Initials | first letter of the first and the last word, dots dropped — "Mark Ernestus" ME, "A. B. Spellman" AS | sidemen rarely have a photo, so initials are the common case and wear the portrait's circle, size and `art-edge`. Names are stored as read ("Mark Ernestus"), never as "Ernestus, Mark": Qobuz splits a sort-name at the comma and shows the first name as a role |
+| Notes | `text-small leading-relaxed`, "— Muza" under it | prototype copy written for the three curated albums, not quoted liner notes |
+| `showCover` | `false` drops the thumb and the side padding | the player shows these credits in place of its artwork, beside its own thumb |
+| Links | a value with a handler is a `<button>` carrying `link-underline`; without one it is plain text | title (when `hasAlbumDetail`), main artist and every person navigate. No handler, no underline, no tab stop. `CreditsDialogPreview` passes no-op handlers so the design-system frame shows the links without navigating away |
+
+## Type
+
+**Two sizes in the whole dialog.** `text-small` (19px) for content: title,
+names, section titles, release facts, Tracks, Notes. `text-2xsmall` (15px) for
+everything secondary: roles, year · label, the tab labels, initials. Rank
+comes from weight (`font-medium` for the title and section titles) and colour
+(`text-muted-foreground`). It had four — 21 · 19 · 17 · 15 — and read as busy
+before a single name was read.
 
 ## Usage
 
@@ -45,11 +77,26 @@ page mounts its own). Any descendant opens it by key:
 ```tsx
 const credits = useCredits()
 <Button onClick={() => credits.open("a07")}>Show credits</Button>
+<Button onClick={() => credits.open("a06", "Gazzelloni")}>Song credits</Button>  // same dialog, at track 3
 ```
 
+**Where it opens:** a song's ⋯ "Show credits", a track row's ⓘ on the album
+page and the player open **track by track at that song** — its bar stuck at
+the top (`focusTrack`). The album's ⓘ and the ⋯ sheet's "Credits" tile open
+**the album's overview**. Inside, a Tracks row switches in; "All album credits ›" above the head and the album card switch back (state in `CreditsContent`); the provider keys the dialog by
+the request, so a second "Show credits" starts fresh. The player keys the body by the playing title, so the next
+track lands on its own section. The jump is measured, not `scrollIntoView`
+(which would scroll the sheet and page too), and runs again after the open
+transition.
+
 Outside a provider `open` is a no-op, so menus that bake it in never crash.
-Data comes from `getCredits(albumKey)` in `album-catalog` — hand-curated for
-the prototype; production would source MusicBrainz / Discogs.
+Data comes from `getCredits(albumKey)` in `album-catalog`. Three albums carry a
+full record in `album-credits.ts` (A Love Supreme, Blue Train, Out to Lunch —
+the instrument changes with the track — and Black Radio, a different lineup
+on nearly every track, transcribed from MusicBrainz's recording-level
+credits); the rest derive
+one row per person from the album's lineup. Production fills the same shape
+from iTunes, MusicBrainz and Discogs.
 
 `CreditsDialogPreview albumKey` renders `CreditsContent` inline in a
 bordered `bg-popover` card with a plain heading and no handlers — a static
@@ -57,9 +104,26 @@ render for the design system.
 
 ## Sizing
 
+**Gutter and top, the same at every size:** 16px sides (`px-4`, the ✕'s
+inset) and 24px above the head (`pt-6`). At the bottom the album card ends
+8px from the sheet's edge — the 8px it keeps at the sides (more on a phone
+with a home indicator). It was 12px on a phone and 24px from
+`md` — two layouts of one dialog — and at 12 the bars and the album card,
+which bleed 8px past the gutter, sat 4px from the sheet's edge, and the thumb
+right under the grabber.
+
 Reads the **window** at **768** through the base dialog: a bottom sheet
-below (`max-h-[92vh]`), a centred `md:max-w-md` (448px) modal from there
-(`md:max-h-[85vh]`). `p-0` lets the cover header bleed to the edges; the
+below, a centred `md:max-w-xl` (576px, the purchase and checkout width) modal
+from there. **One height, always: `h-[80svh]`** — phone and desktop, tabs and
+page, album and track by track. A height that followed the content resized
+the sheet when the reading changed, and the base sheet's
+grow-on-first-scroll detent jumped it to nearly full screen the moment it was
+scrolled; `fixedHeight` turns that off (see [dialog.md](dialog.md)).
+**Whole pixels:** the height is `round(down, 80svh, 1px)` and from `md` the
+sheet sits at a whole `10svh` from the top (`md:translate-y-0`) instead of
+the base `top-1/2 -translate-y-1/2`. 80svh is fractional, and half of it put
+the sheet at y = 120.1 — every sticky track bar snapped between pixel rows as
+the panel scrolled and wobbled 1–2px. `p-0` lets the cover header bleed to the edges; the
 metadata band pads itself. No column or box step. The preview reads
 `useIsMobile()` and drops to full width with top corners only at a phone
 chip, so a 375 frame shows the sheet shape.
@@ -72,19 +136,19 @@ chip, so a 375 frame shows the sheet shape.
   closes the dialog so the destination is visible.
 - The album link is offered only when `hasAlbumDetail(slugify(album))` —
   navigating must not land on the default fallback page.
-- **The cover scrolls away.** It was a fixed header above a scrolling body,
-  which on a phone spent 40% of the sheet on a picture the reader had just
-  come from — and the performers, which is what anyone opens credits for, read
-  through a ~200px slot. One scroll box hands that space to the list when the
-  reader asks for it, and scrolling back brings the cover home. The sheet
-  itself still cannot scroll (`DialogContent` pins that), so this box is the
-  only thing that moves.
+- **Only the content scrolls.** In tabs, the header and the tab bar hold and
+  the panel scrolls; in the page layout the whole body scrolls in one box.
+  The sheet itself cannot scroll (`DialogContent` pins that).
 
 ## Artwork
 
-**Artwork carries `art-edge`** — a 1px outline inset by 1px, pure black at 10% in light and pure white at 10% in dark. Pure, never a tinted neutral: a tinted edge picks up the surface beneath it and reads as dirt along the image. It is an `outline`, so it costs no layout and follows the corner radius. On the 3:2 cover header.
+**Artwork carries `art-edge`** — a 1px outline inset by 1px, pure black at 10% in light and pure white at 10% in dark. Pure, never a tinted neutral: a tinted edge picks up the surface beneath it and reads as dirt along the image. It is an `outline`, so it costs no layout and follows the corner radius. On the header thumb and on every portrait and initials circle.
 
 ## Open questions
 
-- credits-dialog.tsx:157–161 (comment) still explains the mobile-sheet positioning ("full-width, bottom-anchored, top-rounded, slides up") that the next comment says now comes from the base `DialogContent`. One of the two comments is redundant.
+- Tabs or one page? Both layouts are live (`?credits=page`) until the decision is made; the loser and the URL switch go then.
+- In the player the track bars and their fade are `bg-popover` over the frosted glass, so they read as solid bands. They need the glass's own surface, or a translucent bar with its own blur.
+- The track bars play without the album page's listening check (`account.canListen` → paywall). Wire it in once the dialog owns that flow.
+- An album without a curated record repeats its whole lineup under every track. Correct, but long; collapse identical lineups ("Tracks 1–5: …")?
+- Notes text: show Discogs' notes, Apple's editorial text, or our own? Licensing decides.
 - `p-0 gap-0` on the popup cancels only the phone padding; see [dialog.md](dialog.md), open questions.

@@ -231,7 +231,8 @@ export function SongMenuItems({
 }) {
   const { canNativeShare, copyLink, nativeShare } = useShare({ title, text: artist ? `${title} — ${artist}` : title })
   const credits = useCredits()
-  const showCredits = album ? () => credits.open(slugify(album)) : onInfo
+  // A song's ⋯ opens ITS credits, not the album's (see `peopleOnTrack`).
+  const showCredits = album ? () => credits.open(slugify(album), title) : onInfo
 
   const library = useUserLibrary()
   const toggleLibrary = useLibraryToggle()
@@ -345,7 +346,8 @@ export function SongListItem({
   // the menu beside it worked. A local row's credits are its matched
   // release's, handed in as `onInfo` (none when the files matched nothing).
   const credits = useCredits()
-  const showCredits = local ? onInfo : album ? () => credits.open(slugify(album)) : onInfo
+  // A song's ⋯ opens ITS credits, not the album's (see `peopleOnTrack`).
+  const showCredits = local ? onInfo : album ? () => credits.open(slugify(album), title) : onInfo
   const goToLocalCopy = useLocalCopy(local ? undefined : (album ?? release))
 
   // Add-to-library — store-backed (animated heart + toast), keyed by the
@@ -769,20 +771,43 @@ function SheetAction({
  * `CoverPlayButton`, but the idle state shows a track number
  * instead of an image. Always-mounted icons + CSS opacity
  * transitions (no JSX swaps) match the no-flicker pattern from
- * `CoverPlayButton`. Lives here (not in its own file) because it's
- * only ever used by `SongListItem` in the `trackNumber` mode.
+ * `CoverPlayButton`. Lives here, beside `SongListItem`'s `trackNumber`
+ * mode; also exported for the credits dialog's sticky track headers, so a
+ * track plays and shows "playing" the same way there as on the album page.
  */
-function TrackNumberPlayButton({
+/* Which hover shows the play icon: the button's own (`self`, the album
+   row), or a whole bar marked `group/trackbar` (the credits dialog's track
+   bars, which play on a click anywhere — so a hover anywhere has to say so).
+   Full class strings per group: Tailwind only compiles what it can read. */
+const TNPB_HOVER = {
+  self: {
+    num:   "group-hover/tnpb:opacity-0",
+    play:  "group-hover/tnpb:opacity-100",
+    wave:  "group-data-[playing]/tnpb:group-hover/tnpb:opacity-0",
+    pause: "group-data-[playing]/tnpb:group-hover/tnpb:opacity-100",
+  },
+  trackbar: {
+    num:   "group-hover/trackbar:opacity-0",
+    play:  "group-hover/trackbar:opacity-100",
+    wave:  "group-data-[playing]/tnpb:group-hover/trackbar:opacity-0",
+    pause: "group-data-[playing]/tnpb:group-hover/trackbar:opacity-100",
+  },
+} as const
+
+export function TrackNumberPlayButton({
   number,
   title,
   playing,
   onToggle,
+  hoverGroup = "self",
 }: {
   number: number
   title: string
   playing: boolean
   onToggle?: () => void
+  hoverGroup?: keyof typeof TNPB_HOVER
 }) {
+  const h = TNPB_HOVER[hoverGroup]
   return (
     <button
       type="button"
@@ -800,7 +825,7 @@ function TrackNumberPlayButton({
         aria-hidden="true"
         className={cn(
           "absolute text-base font-normal leading-none text-muted-foreground tabular-nums transition-opacity duration-150",
-          "group-hover/tnpb:opacity-0 group-data-[playing]/tnpb:opacity-0",
+          h.num, "group-data-[playing]/tnpb:opacity-0",
         )}
       >
         {number}
@@ -809,7 +834,7 @@ function TrackNumberPlayButton({
       <PlayFilledAlt
         className={cn(
           "absolute size-4 text-foreground opacity-0 transition-opacity duration-150",
-          "group-hover/tnpb:opacity-100 group-data-[playing]/tnpb:opacity-0",
+          h.play, "group-data-[playing]/tnpb:opacity-0",
         )}
       />
       {/* Playing + rest → 3D wave. Original pattern: opacity
@@ -818,14 +843,14 @@ function TrackNumberPlayButton({
         size={28}
         className={cn(
           "absolute text-foreground opacity-0 transition-opacity duration-150",
-          "group-data-[playing]/tnpb:opacity-100 group-data-[playing]/tnpb:group-hover/tnpb:opacity-0",
+          "group-data-[playing]/tnpb:opacity-100", h.wave,
         )}
       />
       {/* Playing + hover → Pause icon */}
       <PauseFilledAlt
         className={cn(
           "absolute size-4 text-foreground opacity-0 transition-opacity duration-150",
-          "group-data-[playing]/tnpb:group-hover/tnpb:opacity-100",
+          h.pause,
         )}
       />
     </button>

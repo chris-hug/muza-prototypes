@@ -14,6 +14,7 @@
  * SAVED_ALBUMS so artwork always resolves.
  */
 
+import { ALBUM_CREDITS, type CreditPerson } from "@/lib/album-credits"
 import { SAVED_ALBUMS, type SavedAlbum } from "@/components/app/library-albums-view"
 import { slugify as slug } from "@/lib/media-nav"
 import { artistImage } from "@/lib/artist-data"
@@ -60,14 +61,22 @@ export interface AlbumDetail {
 }
 
 // ── Credits (release metadata for the "Show credits" dialog) ─────────
+export type { CreditPerson, CreditGroup } from "@/lib/album-credits"
 export interface Credits {
   mainArtist:    string
   album:         string
   cover:         string
   label?:        string
+  /** Release year — the hero's first fact. */
+  year?:         number
+  /** Only when the catalog has a real one; the year is not repeated here. */
   recordingDate?: string
-  /** Role → contributor name(s). */
-  performers:    { role: string; names: string[] }[]
+  catalogNumber?: string
+  studio?:        string
+  tracks:         { title: string; duration: string }[]
+  /** One entry per person, every role merged — see `album-credits.ts`. */
+  people:         CreditPerson[]
+  notes?:         { by?: string; text: string }
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -277,12 +286,44 @@ const ALBUMS: AlbumDetail[] = [
       ["Black Unity", 1971], ["Deaf Dumb Blind", 1970], ["Izipho Zam", 1973],
     ]),
   },
+  // Black Radio — the prototype's album where the lineup changes with almost
+  // every track (a guest singer per song, and not even the band is constant).
+  // Tracks and durations: MusicBrainz release b2cca2a2 (Blue Note CD, 2012).
+  {
+    id: "a30",
+    cover: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/cb/c7/1d/cbc71df4-e2b7-4ea4-7edb-563a9aaf7b31/00602537433919.rgb.jpg/600x600bb.jpg",
+    title: "Black Radio", artist: "Robert Glasper", artistAvatar: avatar("Robert Glasper"),
+    year: 2012, format: "Album", buyingPrice: "$2.99", downloadPrice: "$5.99",
+    label: "Blue Note",
+    tracks: [
+      { id: "t1",  title: "Lift Off / Mic Check",         duration: "3:58" },
+      { id: "t2",  title: "Afro Blue",                    duration: "5:13" },
+      { id: "t3",  title: "Cherish the Day",              duration: "5:53" },
+      { id: "t4",  title: "Always Shine",                 duration: "5:22" },
+      { id: "t5",  title: "Gonna Be Alright (F.T.B.)",    duration: "6:14" },
+      { id: "t6",  title: "Move Love",                    duration: "3:22" },
+      { id: "t7",  title: "Ah Yeah",                      duration: "5:13" },
+      { id: "t8",  title: "The Consequences of Jealousy", duration: "6:12" },
+      { id: "t9",  title: "Why Do We Try",                duration: "6:32" },
+      { id: "t10", title: "Black Radio",                  duration: "5:26" },
+      { id: "t11", title: "Letter to Hermione",           duration: "4:53" },
+      { id: "t12", title: "Smells Like Teen Spirit",      duration: "7:26" },
+    ],
+    artistsOnAlbum: lineup(
+      ["Robert Glasper", "Piano"], ["Casey Benjamin", "Saxophone, Vocoder"],
+      ["Derrick Hodge", "Bass"], ["Chris Dave", "Drums"],
+    ),
+    moreFrom: rail(3, [
+      ["Black Radio 2", 2013], ["ArtScience", 2016], ["Fuck Yo Feelings", 2019],
+      ["Black Radio III", 2022], ["Double-Booked", 2009], ["In My Element", 2007],
+    ]),
+  },
 ]
 
 const BY_ID:   Record<string, AlbumDetail> = Object.fromEntries(ALBUMS.map(a => [a.id, a]))
 const BY_SLUG: Record<string, AlbumDetail> = Object.fromEntries(ALBUMS.map(a => [slug(a.title), a]))
 
-/** The hand-authored rich albums (a01–a08) — used by search to surface
+/** The hand-authored rich albums (a01–a08, a30) — used by search to surface
  *  real track-level results (every track carries its album's cover, artist
  *  and year). Synthesized albums have only generic placeholder tracks, so
  *  search draws songs from these. */
@@ -419,16 +460,57 @@ export function hasAlbumDetail(key?: string | null): boolean {
  *  the key is unknown. */
 export function getCredits(key?: string | null): Credits {
   const a = getAlbumDetail(key)
-  const performers: Credits["performers"] = [
-    { role: "Main", names: [a.artist] },
-    ...a.artistsOnAlbum.map(p => ({ role: p.role ?? "Performer", names: [p.name] })),
-  ]
+  const curated = ALBUM_CREDITS[a.id]
+  /* Without a curated record the people come from the album's lineup — one
+     row per name, roles merged, so the main artist's instrument and their
+     "Main artist" credit are one line, not two. */
+  const people: CreditPerson[] = curated?.people ?? (() => {
+    const byName = new Map<string, CreditPerson>()
+    const add = (name: string, role: string) => {
+      const p = byName.get(name) ?? { name, group: "personnel" as const, roles: [] }
+      if (!p.roles.some(r => r.role === role)) p.roles.push({ role })
+      byName.set(name, p)
+    }
+    for (const p of a.artistsOnAlbum) add(p.name, p.role ?? "Performer")
+    if (!byName.has(a.artist)) add(a.artist, "Main artist")
+    return [byName.get(a.artist)!, ...[...byName.values()].filter(p => p.name !== a.artist)]
+  })()
   return {
     mainArtist: a.artist,
     album: a.title,
     cover: a.cover,
     label: a.label,
-    recordingDate: a.recordingDate ?? String(a.year),
-    performers,
+    year: a.year,
+    recordingDate: a.recordingDate,
+    catalogNumber: curated?.catalogNumber,
+    studio: curated?.studio,
+    tracks: a.tracks.map(t => ({ title: t.title, duration: t.duration })),
+    people,
+    notes: curated?.notes,
   }
+}
+
+/* ── Song credits ───────────────────────────────────────────────────────────
+   A song's credits are NOT a second record: they are the album's, read for
+   one track. A role with no track numbers is the whole album's and applies;
+   a role with numbers applies only where they include this track. People
+   left with no role on it drop out. So Dolphy on Out to Lunch track 3 is
+   "Flute, Composer", and the numbers themselves are gone — on one track
+   they would say nothing. One record means the two views can never
+   disagree, and the sources (MusicBrainz relates most credits to the
+   recording, Discogs to the release with track ranges) both map onto it. */
+
+/** 1-based position of `title` on the album, or `undefined` if it is not on it. */
+export function findTrack(credits: Credits, title?: string): number | undefined {
+  if (!title) return undefined
+  const t = title.trim().toLowerCase()
+  const i = credits.tracks.findIndex(x => x.title.trim().toLowerCase() === t)
+  return i >= 0 ? i + 1 : undefined
+}
+
+/** The album's people as they are credited on track `n`. */
+export function peopleOnTrack(people: CreditPerson[], n: number): CreditPerson[] {
+  return people
+    .map(p => ({ ...p, roles: p.roles.filter(r => !r.tracks || r.tracks.includes(n)).map(r => ({ role: r.role })) }))
+    .filter(p => p.roles.length > 0)
 }

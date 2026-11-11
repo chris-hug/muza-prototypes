@@ -22,7 +22,7 @@ import { PlayerOverlay, type QueueTrack } from "@/components/ui/player-overlay"
 import { usePlayer } from "@/lib/player"
 import { useUserLibrary } from "@/lib/user-library"
 import { useMediaNav, slugify } from "@/lib/media-nav"
-import { hasAlbumDetail, getAlbumDetail, getCredits } from "@/lib/album-catalog"
+import { hasAlbumDetail, getAlbumDetail, getCredits, findTrack } from "@/lib/album-catalog"
 import { hasPlaylistDetail, getPlaylistDetail } from "@/lib/playlist-catalog"
 import { getArtistProfile } from "@/lib/artist-catalog"
 import { CreditsContent } from "@/components/app/credits-dialog"
@@ -127,10 +127,15 @@ export function AppPlayer({ footerNav }: { footerNav: boolean }) {
   // its files matched a release, and then they are that release's.
   const creditsKey = localTrack ? localTrack.match?.key : albumKey
   const creditsBody = creditsKey && hasAlbumDetail(creditsKey) ? (
+    /* The album's credits, opened at the SONG playing — its section's bar
+       stuck at the top. Keyed by the title, so the next track lands on its
+       own section. */
     <CreditsContent
+      key={track.title}
       credits={getCredits(creditsKey)}
+      focusTrack={findTrack(getCredits(creditsKey), track.title)}
       showCover={false}
-      heading={<p className="text-small font-medium leading-none text-foreground">Album credits</p>}
+      heading={null}
       onArtist={name => { setOverlayOpen(false); openArtist(slugify(name)) }}
       onAlbum={() => { setOverlayOpen(false); openAlbum(creditsKey) }}
       bodyClassName="min-h-0"

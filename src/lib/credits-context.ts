@@ -10,8 +10,11 @@
 import { createContext, useContext } from "react"
 
 export interface CreditsContextValue {
-  /** Open the credits dialog for an album key (title slug or library id). */
-  open: (albumKey: string) => void
+  /** Open the credits dialog for an album key (title slug or library id).
+   *  With `trackTitle`, it opens on that song's credits — the album's, read
+   *  for one track — and the album's are one tap away. A title that is not
+   *  on the album falls back to the album's credits. */
+  open: (albumKey: string, trackTitle?: string) => void
 }
 
 export const CreditsContext = createContext<CreditsContextValue>({ open: () => {} })

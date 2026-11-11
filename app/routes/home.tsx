@@ -2970,14 +2970,14 @@ export default function Home() {
       <CartProvider>
         <UserLibraryProvider seed={LIBRARY_SEED} savedSeed={LIBRARY_SAVED_SEED}>
           <UserAccountProvider initialTier="anonymous" initialPlayCounts={DEMO_PLAY_COUNTS}>
-            <CreditsProvider>
-              <PlayerProvider>
+            <PlayerProvider>
+              <CreditsProvider>
                 <TopProgressBar loading={navLoading} />
                 <div key="ds" className="h-screen [animation:pageFadeIn_250ms_ease-out]">
                   <DesignSystem />
                 </div>
-              </PlayerProvider>
-            </CreditsProvider>
+              </CreditsProvider>
+            </PlayerProvider>
           </UserAccountProvider>
         </UserLibraryProvider>
       </CartProvider>
@@ -2988,12 +2988,14 @@ export default function Home() {
     <CartProvider>
     <UserLibraryProvider seed={LIBRARY_SEED} savedSeed={LIBRARY_SAVED_SEED}>
     <UserAccountProvider initialTier="anonymous" initialPlayCounts={DEMO_PLAY_COUNTS}>
+    {/* The player wraps the credits: the credits dialog's track bars play
+        their track and show the one playing. */}
+    <PlayerProvider>
     <CreditsProvider>
     <AddToPlaylistProvider>
     <CreatePlaylistProvider>
     <FilesPurchaseProvider>
     <PlaylistEditorProvider>
-    <PlayerProvider>
     <DetailActionsProvider>
     {/* Top progress bar — fires on every activeNav change. Sits
         outside the keyed AppShell wrapper so it isn't remounted
@@ -3145,12 +3147,12 @@ export default function Home() {
       )}
     </div>
     </DetailActionsProvider>
-    </PlayerProvider>
     </PlaylistEditorProvider>
     </FilesPurchaseProvider>
     </CreatePlaylistProvider>
     </AddToPlaylistProvider>
     </CreditsProvider>
+    </PlayerProvider>
     </UserAccountProvider>
     </UserLibraryProvider>
     </CartProvider>
