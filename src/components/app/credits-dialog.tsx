@@ -267,16 +267,15 @@ export function CreditsContent({
 
   /* Track by track, "All album credits ›" stands on its own line above the
      head, left-aligned and on the ✕'s centre line: the ✕ is 32px at `top-4`
-     (centre 32px down), the head starts at `pt-3` / `md:pt-6`, so the 32px
-     button moves down 4px on a phone and up 8px from `md`; `-ml-2` puts its
-     text on the thumb's edge.
+     (centre 32px down), the head starts at `pt-6`, so the 32px button moves
+     up 8px (`-mt-2`); `-ml-2` puts its text on the thumb's edge.
      Tried and dropped: a pill under the head (a second, smaller thing about
      the same album); the whole head as one clickable row with the label at
      its end (its hover fill ran into the ✕, and held clear of it the label
      floated). */
   const header = byTrack.on ? (
     <div className="flex flex-col gap-2">
-      <Button variant="ghost" size="sm" className="-ml-2 self-start mt-1 md:-mt-2" onClick={showAlbumCredits}>
+      <Button variant="ghost" size="sm" className="-ml-2 self-start -mt-2" onClick={showAlbumCredits}>
         All album credits
         <ChevronRight />
       </Button>
@@ -375,8 +374,8 @@ export function CreditsContent({
   const stickyShell = cn(
     "sticky top-0 z-10 bg-popover",
     showCover && "-mx-2",
-    "after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-3",
-    "after:bg-[linear-gradient(to_bottom,var(--popover),transparent)]",
+    // `edge-fade` (app.css): the sheet's glass, masked out over 24px.
+    "after:absolute after:inset-x-0 after:top-full after:h-6 after:edge-fade",
   )
   const stickyBar = () => cn(
     "relative flex h-12 items-center gap-2 rounded-md",
@@ -583,14 +582,17 @@ export function CreditsContent({
     </div>
   )
 
-  /* The dialog's own gutter: 12px on a phone (the ⋯ sheet's `px-3`), 24px
-     from `md`. None in the player, which pads its own panel. */
-  const pad = showCover ? "px-3 md:px-6" : "px-0"
+  /* The dialog's own gutter: 16px on a phone, 24px from `md`. None in the
+     player, which pads its own panel. It was the ⋯ sheet's 12px, but the
+     bars and the album card bleed 8px past the gutter, and at 12 they ran to
+     4px from the sheet's edge; 16 leaves them 8, and puts the thumb on the
+     ✕'s 16px inset. */
+  const pad = showCover ? "px-4 md:px-6" : "px-0"
 
   if (layout === "page") {
     return (
       <div className={cn("flex flex-col flex-1 min-h-0 overflow-y-auto", bodyClassName)}>
-        <div className={cn("flex flex-col gap-8 pt-3 md:pt-6 pb-10", pad)}>
+        <div className={cn("flex flex-col gap-8 pt-6 pb-10", pad)}>
           {header}
           {creditsBody}
           {notes && (
@@ -610,9 +612,11 @@ export function CreditsContent({
      the scroller: a mask fades everything the element paints, scrollbar
      included, and the bar dissolved into the fade with the rows. The veil
      stops at the gutters, so the scrollbar stays whole beside it.
-     Clear for 15px (scrolled content never runs up against the bar), then
-     eased out over 35px; a straight 20px ramp read as a hard band, 12 + 28
-     as too tight.
+     It is the `edge-fade` utility (app.css): the sheet's own glass
+     (`.sheet-glass`, 12px blur), masked out over 40px — the same fade the
+     sticky track bars hang below them. It was a
+     hand-built gradient, 15px solid then a 35px ramp, which still read as a
+     band with a hard start.
      The veil only shows once the panel is scrolled. At rest there is nothing
      under it to fade, and padding the panel by the veil's 50px left a band
      of empty space between the tabs and the first heading; at rest the gap
@@ -630,13 +634,12 @@ export function CreditsContent({
     <div
       aria-hidden="true"
       className={cn(
-        "pointer-events-none absolute top-0 h-12.5 z-10 transition-opacity duration-200",
+        "absolute top-0 h-10 z-10 transition-opacity duration-200 edge-fade",
         // Not over the track-by-track reading: there a sticky bar is always at
         // the top edge and carries its own fade; the veil would wash out its
         // top 15px.
         scrolled && !(tab === "credits" && byTrack.on) ? "opacity-100" : "opacity-0",
-        showCover ? "inset-x-3 md:inset-x-6" : "inset-x-0",
-        "bg-[linear-gradient(to_bottom,var(--popover)_15px,color-mix(in_srgb,var(--popover)_92%,transparent)_25px,color-mix(in_srgb,var(--popover)_70%,transparent)_35px,color-mix(in_srgb,var(--popover)_35%,transparent)_45px,transparent_50px)]",
+        showCover ? "inset-x-4 md:inset-x-6" : "inset-x-0",
       )}
     />
   )
@@ -654,7 +657,9 @@ export function CreditsContent({
           the scroller's top edge, at rest and stuck alike, and no row can
           show in a strip above it. With the 12px inside the scroller, rows
           flashed through there on every scroll. */}
-      <div className={cn("shrink-0 flex flex-col gap-6 pt-3 md:pt-6", byTrack.on && tab === "credits" ? "pb-6" : "pb-3", pad)}>
+      {/* `pt-6` on a phone too: at the ⋯ sheet's 12px the thumb sat right
+          under the sheet's grabber, with nothing to breathe. */}
+      <div className={cn("shrink-0 flex flex-col gap-6 pt-6", byTrack.on && tab === "credits" ? "pb-6" : "pb-3", pad)}>
         {header}
         {/* No strip for ONE tab: a lone "Credits" pill switches nothing. */}
         {notes && (
