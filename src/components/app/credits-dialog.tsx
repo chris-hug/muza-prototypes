@@ -415,6 +415,48 @@ export function CreditsContent({
      flashed by, cut hard. As siblings, every bar sticks to the same top and
      the next one slides over the last. `mb-6` on each list is the space a
      `gap` gave between sections. */
+  /* One card, the album: its name, then the release facts led by the main
+     artist — the SAME card in both readings. Track by track it ends the list
+     and the whole card opens the album's credits ("All album credits ›" in
+     its title row; `role="button"` because a `<button>` may not contain the
+     `<dl>`). In the album's reading it sits between the people and the
+     tracks and opens nothing — that is where it would lead. It was a titled
+     "Release" list there and a card here: one set of facts, two looks.
+     `bg-muted` and the album row's hover fill, the track bars' kin. */
+  const albumCard = (link: boolean) => {
+    const title = (
+      <span className="flex items-center gap-3">
+        <span className="min-w-0 flex-1 truncate text-small font-medium text-foreground">{credits.album}</span>
+        {link && (
+          <span className="flex shrink-0 items-center gap-1 text-2xsmall text-muted-foreground">
+            All album credits
+            <ChevronRight aria-hidden="true" className="size-4" />
+          </span>
+        )}
+      </span>
+    )
+    // Bled 8px past the gutter like the track bars, so card and bars share
+    // one width; the text inside then starts on the bars' number column.
+    const card = cn("relative flex flex-col gap-3 rounded-xl bg-muted p-4 text-left", showCover && "-mx-2")
+    return link ? (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={showAlbumCredits}
+        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); showAlbumCredits() } }}
+        className={cn(card, "press-ripple state-fade-quick cursor-pointer outline-none focus-ring [--hover-fill:var(--secondary)]")}
+      >
+        {title}
+        {factList([["Main artist", credits.mainArtist]])}
+      </div>
+    ) : (
+      <div className={card}>
+        {title}
+        {factList([["Main artist", credits.mainArtist]])}
+      </div>
+    )
+  }
+
   const trackByTrack = (
     <div className="flex flex-col">
       {credits.tracks.map((t, i) => {
@@ -459,29 +501,7 @@ export function CreditsContent({
           reading has them between people and tracks — here they would split
           the songs from their credits) and where to go next — the album's
           page, or its credits as one list. */}
-      {/* One card, the album: its name, the release facts, and the way to
-          its credits as one list — the whole card is that button, with "All
-          album credits ›" in its title row, as in the head above. A separate
-          pill under the card said the same thing a second time. `bg-muted`
-          and the album row's hover fill, so it reads as the track bars' kin.
-          A `div role="button"`: the facts are a `<dl>`, which a `<button>`
-          may not contain. */}
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={showAlbumCredits}
-        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); showAlbumCredits() } }}
-        className="relative flex w-full flex-col gap-3 rounded-xl bg-muted p-4 text-left press-ripple state-fade-quick cursor-pointer outline-none focus-ring [--hover-fill:var(--secondary)]"
-      >
-        <span className="flex items-center gap-3">
-          <span className="min-w-0 flex-1 truncate text-small font-medium text-foreground">{credits.album}</span>
-          <span className="flex shrink-0 items-center gap-1 text-2xsmall text-muted-foreground">
-            All album credits
-            <ChevronRight aria-hidden="true" className="size-4" />
-          </span>
-        </span>
-        {factList([["Main artist", credits.mainArtist]])}
-      </div>
+      {albumCard(true)}
     </div>
   )
 
@@ -496,35 +516,50 @@ export function CreditsContent({
       {/* The release facts, between the people and the tracks: where and
           when it was recorded, when it came out, on which label. They were an
           Overview tab of their own — four lines behind a tab, a tap away from
-          the credits they belong with. */}
-      <section className="flex flex-col gap-3">
-        <SectionTitle>Release</SectionTitle>
-        {overview}
-      </section>
+          the credits they belong with. The album card, as at the end of the
+          track-by-track reading, inert here. */}
+      {albumCard(false)}
       {/* The album's tracks, two jobs: the key to the "(1, 2)" after a
-          role, and the way into the track-by-track reading — a row opens it
-          at that song. On the person row's grid: the number centred in the
-          avatar's 40px column, so titles start on the names' line, `py-3`
-          like the people, and a chevron that says "opens". */}
+          role, and the way into the track-by-track reading. They wear the
+          track-by-track reading's BARS — the same band, number, play button,
+          title and duration, the playing one marked — so a song looks like
+          one song in both readings; here they are not sticky, and stacked
+          4px apart. The bar opens that song's credits (chevron at its end);
+          the number is the play button, as on the album page. It was a ruled
+          text list here and a band there: one song, two looks. */}
       <section className="flex flex-col gap-1">
         <SectionTitle>Tracks</SectionTitle>
-        <ol className="divide-y divide-border/60 text-small leading-snug">
-          {credits.tracks.map((t, i) => (
-            <li key={t.title}>
-              <button
-                type="button"
-                onClick={() => setByTrack({ on: true, at: i + 1 })}
+        <div className="flex flex-col gap-1">
+          {credits.tracks.map((t, i) => {
+            const current = isCurrent(t.title)
+            const open = () => setByTrack({ on: true, at: i + 1 })
+            return (
+              <div
+                key={t.title}
+                role="button"
+                tabIndex={0}
                 aria-label={`${t.title} credits`}
-                className="link-underline-group flex w-full min-h-11 items-center gap-3 py-3 outline-none cursor-pointer"
+                onClick={e => { if (!(e.target as Element).closest("button, a")) open() }}
+                onKeyDown={e => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); open() } }}
+                className={cn(
+                  stickyBar(), showCover && "-mx-2",
+                  current ? "bg-secondary" : "bg-muted [--hover-fill:var(--secondary)]",
+                  "press-ripple state-fade-quick cursor-pointer outline-none focus-ring",
+                )}
               >
-                <span className="w-10 shrink-0 text-center tabular-nums text-muted-foreground">{i + 1}</span>
-                <span className="min-w-0 flex-1 truncate text-left text-foreground"><span className="link-underline">{t.title}</span></span>
-                <span className="tabular-nums text-muted-foreground">{t.duration}</span>
+                <TrackNumberPlayButton
+                  number={i + 1}
+                  title={t.title}
+                  playing={current && !!player?.playing}
+                  onToggle={playTrack ? () => playTrack(t) : undefined}
+                />
+                <p className="min-w-0 flex-1 truncate text-small font-medium text-foreground">{t.title}</p>
+                <span className="text-small tabular-nums text-muted-foreground">{t.duration}</span>
                 <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
-              </button>
-            </li>
-          ))}
-        </ol>
+              </div>
+            )
+          })}
+        </div>
       </section>
     </>
   )
