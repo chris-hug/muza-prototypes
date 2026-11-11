@@ -352,6 +352,20 @@ export function CreditsContent({
     // The song playing wears the album page's playing row: `bg-muted`.
     current ? "bg-muted" : "bg-popover",
   )
+  /* A TRACK bar is the album page's track row: the whole bar plays, the
+     hover fill grows from the pointer (`press-ripple` + `--hover-fill`, not
+     `hover:bg-*`, which would arrive twice — see app.css), and a press
+     ripples. It had no hover at all and read as a heading, not as something
+     to press. Clicks on the button itself are its own, as on the row.
+     The SECTION bars (Production, Artwork) play nothing and stay inert. */
+  const trackBar = (current: boolean) => cn(
+    stickyBar(current),
+    // No `overflow-clip` as the row has: the ripple already fills the box and
+    // inherits its radius, and clipping would cut the fade hung below it.
+    "press-ripple state-fade-quick",
+    playTrack && "cursor-pointer",
+    !current && playTrack && "[--hover-fill:var(--muted)]",
+  )
 
   const trackByTrack = (
     <>
@@ -361,7 +375,10 @@ export function CreditsContent({
         const current = isCurrent(t.title)
         return (
           <section key={t.title} data-track={n} className="flex flex-col">
-            <div className={stickyBar(current)}>
+            <div
+              className={trackBar(current)}
+              onClick={playTrack ? e => { if (!(e.target as Element).closest("button, a")) playTrack(t) } : undefined}
+            >
               <TrackNumberPlayButton
                 number={n}
                 title={t.title}
