@@ -19,7 +19,7 @@
  * MusicBrainz and Discogs.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { Fragment, useCallback, useEffect, useRef, useState } from "react"
 
 import {
   Dialog, DialogContent, DialogTitle,
@@ -269,7 +269,10 @@ export function CreditsContent({
      sits on the thumb's edge. */
   const header = byTrack.on ? (
     <div className="flex flex-col gap-2">
-      <Button variant="ghost" size="sm" className="-ml-2 self-start" onClick={() => { setByTrack({ on: false }); setTab("credits") }}>
+      {/* On the ✕'s centre line: the ✕ is 32px at `top-4` (centre 32px down),
+          the header starts at `pt-3` / `md:pt-6`, so the 32px button moves
+          down 4px on a phone and up 8px from `md`. */}
+      <Button variant="ghost" size="sm" className="-ml-2 self-start mt-1 md:-mt-2" onClick={() => { setByTrack({ on: false }); setTab("credits") }}>
         <ChevronLeft />
         All album credits
       </Button>
@@ -356,14 +359,21 @@ export function CreditsContent({
      scroll under. `-mx-2` + `pl-1`: the 48px play button's centre lands on
      the 40px avatars' centre and the title on the names' left edge (52px),
      so the bar and the rows share one grid. */
+  /* The STICKY element is a square of the dialog's colour; the rounded band
+     sits inside it. With the band itself sticky, rows scrolling under it
+     showed through its rounded corners — a flicker at each corner. */
+  const stickyShell = cn(
+    "sticky top-0 z-10 bg-popover",
+    showCover && "-mx-2",
+    "after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-3",
+    "after:bg-[linear-gradient(to_bottom,var(--popover),transparent)]",
+  )
   const stickyBar = () => cn(
-    "sticky top-0 z-10 flex h-12 items-center gap-2 rounded-md",
+    "relative flex h-12 items-center gap-2 rounded-md",
     /* The player has no gutter to bleed into (`showCover` off, `px-0`): a
        `-mx-2` bar was clipped at its right edge. There the bar stays inside
        and the button alone pulls left by 4px onto the same grid. */
-    showCover ? "-mx-2 pl-1 pr-2" : "[&>button:first-child]:-ml-1",
-    "after:pointer-events-none after:absolute after:inset-x-2 after:top-full after:h-3",
-    "after:bg-[linear-gradient(to_bottom,var(--popover),transparent)]",
+    showCover ? "pl-1 pr-2" : "[&>button:first-child]:-ml-1",
   )
   /* A TRACK bar is the album page's track row: the whole bar plays, the
      hover fill grows from the pointer (`press-ripple` + `--hover-fill`, not
@@ -384,55 +394,68 @@ export function CreditsContent({
     stickyBar(),
     "group/trackbar",
     current ? "bg-secondary" : "bg-muted",
-    // No `overflow-clip` as the row has: the ripple already fills the box and
-    // inherits its radius, and clipping would cut the fade hung below it.
+    // No `overflow-clip`: the ripple already fills the box and inherits its
+    // radius.
     "press-ripple state-fade-quick",
     playTrack && "cursor-pointer",
     !current && playTrack && "[--hover-fill:var(--secondary)]",
   )
 
+  /* ONE container for every bar and list, not a section per track. A sticky
+     element only sticks inside its parent: with a section each, the old bar
+     was pushed off by its section's end BEFORE the next arrived, and for a
+     moment nothing covered the top edge — the last rows of the previous song
+     flashed by, cut hard. As siblings, every bar sticks to the same top and
+     the next one slides over the last. `mb-6` on each list is the space a
+     `gap` gave between sections. */
   const trackByTrack = (
-    <>
+    <div className="flex flex-col">
       {credits.tracks.map((t, i) => {
         const n = i + 1
         const list = peopleOnTrack(credits.people, n).filter(p => PER_TRACK.includes(p.group))
         const current = isCurrent(t.title)
         return (
-          <section key={t.title} data-track={n} className="flex flex-col">
-            <div
-              className={trackBar(current)}
-              onClick={playTrack ? e => { if (!(e.target as Element).closest("button, a")) playTrack(t) } : undefined}
-            >
-              <TrackNumberPlayButton
-                number={n}
-                title={t.title}
-                playing={current && !!player?.playing}
-                onToggle={playTrack ? () => playTrack(t) : undefined}
-                // The play icon shows on a hover anywhere on the bar, since a
-                // click anywhere plays.
-                hoverGroup={playTrack ? "trackbar" : "self"}
-              />
-              <p className="min-w-0 flex-1 truncate text-small font-medium text-foreground">{t.title}</p>
-              <span className="text-small tabular-nums text-muted-foreground">{t.duration}</span>
+          <Fragment key={t.title}>
+            <div data-track={n} className={stickyShell}>
+              <div
+                className={trackBar(current)}
+                onClick={playTrack ? e => { if (!(e.target as Element).closest("button, a")) playTrack(t) } : undefined}
+              >
+                <TrackNumberPlayButton
+                  number={n}
+                  title={t.title}
+                  playing={current && !!player?.playing}
+                  onToggle={playTrack ? () => playTrack(t) : undefined}
+                  // The play icon shows on a hover anywhere on the bar, since
+                  // a click anywhere plays.
+                  hoverGroup={playTrack ? "trackbar" : "self"}
+                />
+                <p className="min-w-0 flex-1 truncate text-small font-medium text-foreground">{t.title}</p>
+                <span className="text-small tabular-nums text-muted-foreground">{t.duration}</span>
+              </div>
             </div>
-            {personRows(list)}
-          </section>
+            <div className="mb-6">{personRows(list)}</div>
+          </Fragment>
         )
       })}
       {albumGroups.map(([g, list]) => (
-        <section key={g} className="flex flex-col">
-          <div className={cn(stickyBar(), "bg-popover", showCover && "px-2")}>
-            <SectionTitle>{GROUP_LABEL[g]}</SectionTitle>
+        <Fragment key={g}>
+          <div className={stickyShell}>
+            <div className={cn(stickyBar(), showCover && "px-2")}>
+              <SectionTitle>{GROUP_LABEL[g]}</SectionTitle>
+            </div>
           </div>
-          {personRows(list)}
-        </section>
+          <div className="mb-6">{personRows(list)}</div>
+        </Fragment>
       ))}
       {/* The way back to the overview, where the reader lands once the
-          songs are read. */}
-      <Button variant="secondary" size="lg" className="self-start" onClick={() => setByTrack({ on: false })}>
+          songs are read. Ghost, as the one at the top: the same action
+          twice, one look. */}
+      <Button variant="ghost" size="sm" className="-ml-2 self-start" onClick={() => setByTrack({ on: false })}>
+        <ChevronLeft />
         All album credits
       </Button>
-    </>
+    </div>
   )
 
   const albumView = (
