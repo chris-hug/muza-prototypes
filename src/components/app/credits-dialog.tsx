@@ -269,17 +269,21 @@ export function CreditsContent({
      at its end. It was a separate pill under the head, which read as a
      second, smaller thing about the same album. The row wears the album
      row's hover (`press-ripple`, fill `muted`), bled 8px past the gutter so
-     the fill has room around the thumb; `mr-10` keeps it clear of the ✕. */
+     the fill has room around the thumb.
+     The label sits at the row's BOTTOM right, on the year · label line and
+     flush with the content's right edge — under the ✕, not beside it. Centred
+     and held 40px off the edge to clear the ✕, it floated in the middle of
+     the row, attached to nothing. */
   const header = byTrack.on ? (
     <div
       role="button"
       tabIndex={0}
       onClick={showAlbumCredits}
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); showAlbumCredits() } }}
-      className="relative -m-2 mr-10 flex items-center gap-3 rounded-xl p-2 press-ripple state-fade-quick cursor-pointer outline-none focus-ring [--hover-fill:var(--muted)]"
+      className="relative -m-2 flex items-center gap-3 rounded-xl p-2 press-ripple state-fade-quick cursor-pointer outline-none focus-ring [--hover-fill:var(--muted)]"
     >
       {identity}
-      <span className="flex shrink-0 items-center gap-1 text-2xsmall text-muted-foreground">
+      <span className="flex shrink-0 items-center gap-1 self-end text-2xsmall leading-6 text-muted-foreground">
         All album credits
         <ChevronRight aria-hidden="true" className="size-4" />
       </span>
@@ -474,9 +478,14 @@ export function CreditsContent({
         onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); showAlbumCredits() } }}
         className="relative flex w-full flex-col gap-3 rounded-xl bg-muted p-4 text-left press-ripple state-fade-quick cursor-pointer outline-none focus-ring [--hover-fill:var(--secondary)]"
       >
-        <span className="flex items-center gap-3">
-          <span className="min-w-0 flex-1 truncate text-small font-medium text-foreground">{credits.album}</span>
-          <span className="flex shrink-0 items-center gap-1 text-2xsmall text-muted-foreground">
+        {/* Album and main artist on the head's 24px rhythm, the label on the
+            artist's line at the right — the same arrangement as the head. */}
+        <span className="flex items-end gap-3">
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="truncate text-small font-medium leading-6 text-foreground">{credits.album}</span>
+            <span className="truncate text-small leading-6 text-muted-foreground">{credits.mainArtist}</span>
+          </span>
+          <span className="flex shrink-0 items-center gap-1 text-2xsmall leading-6 text-muted-foreground">
             All album credits
             <ChevronRight aria-hidden="true" className="size-4" />
           </span>
