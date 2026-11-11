@@ -513,12 +513,6 @@ export function CreditsContent({
           {personRows(list)}
         </section>
       ))}
-      {/* The release facts, between the people and the tracks: where and
-          when it was recorded, when it came out, on which label. They were an
-          Overview tab of their own — four lines behind a tab, a tap away from
-          the credits they belong with. The album card, as at the end of the
-          track-by-track reading, inert here. */}
-      {albumCard(false)}
       {/* The album's tracks, two jobs: the key to the "(1, 2)" after a
           role, and the way into the track-by-track reading. They wear the
           track-by-track reading's BARS — the same band, number, play button,
@@ -561,6 +555,12 @@ export function CreditsContent({
           })}
         </div>
       </section>
+      {/* The release facts — where and when it was recorded, when it came
+          out, on which label — in the album card, LAST, as in the
+          track-by-track reading: both readings end on the album. Inert here.
+          They were an Overview tab of their own, four lines a tap away from
+          the credits they belong with. */}
+      {albumCard(false)}
     </>
   )
 
