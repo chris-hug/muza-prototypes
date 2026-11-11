@@ -28,7 +28,7 @@ recovery action is the same however the order got there. `STATUS_CONFIG`,
 | `payment_failed` | `bg-destructive text-destructive-foreground border-destructive` — a filled flare | action required |
 | `new` | blue tint | paid, not yet shipped |
 | `shipped` | amber tint | on its way |
-| `delivered` | green tint | done |
+| `delivered` | Mint (`BADGE_MINT`, the palette's green — the same as a sale badge) | done |
 | `refunded` | `bg-muted text-muted-foreground border-border` | closed, money returned |
 | `cancelled` | red tint | closed, not fulfilled |
 

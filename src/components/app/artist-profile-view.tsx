@@ -27,15 +27,14 @@
 import * as React from "react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useSearchParams } from "react-router"
-import { ArrowUp, ArrowUpDown, LayoutGrid, List, MoreHorizontal } from "lucide-react"
+import { ArrowUp, ArrowUpDown, LayoutGrid, MoreHorizontal, PanelsTopLeft as TableIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { useMediaQuery, useFooterNav } from "@/lib/use-media-query"
+import { useMediaQuery, useFooterNav, useIsMobile } from "@/lib/use-media-query"
 import { ContentTypeBadge, contentTypeConfig } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { MultiSelect } from "@/components/ui/multi-select"
-import { Separator } from "@/components/ui/separator"
 import { SingleSelect } from "@/components/ui/single-select"
 import { TableBody, TableCell, TableHead, TableRow, SortHeader } from "@/components/ui/table"
 import {
@@ -61,6 +60,11 @@ import { AlbumCard } from "@/components/ui/album-card"
 import { ArtistCard } from "@/components/ui/artist-card"
 import { PlaylistCard } from "@/components/ui/playlist-card"
 import { ProductCard } from "@/components/ui/product-card"
+import { usePublishedListings } from "@/lib/shop-listings"
+import { useCart } from "@/lib/cart"
+import { cropStyle, discountPercent, PRODUCT_KINDS, type ProductKind, type ShopProduct } from "@/lib/shop-product"
+import { ChipChoice } from "@/components/ui/chip"
+import { ProductDialog } from "@/components/app/product-dialog"
 import { SongListItem } from "@/components/ui/song-list-item"
 import { CoverPlayButton } from "@/components/ui/cover-play-button"
 import { CardRail } from "@/components/app/card-rail"
@@ -82,7 +86,9 @@ function ArtistProfilePage({ profile }: { profile: ArtistProfile }) {
   const TOP_SONGS = profile.topSongs
   const TOP_ALBUMS = profile.topAlbums
   const DISCOGRAPHY = profile.discography
-  const PRODUCTS = profile.products
+  // Products published from the Studio in this session lead the list.
+  const published = usePublishedListings().filter(l => l.artist === profile.name)
+  const PRODUCTS = [...published, ...profile.products]
   const CURATED_PLAYLISTS = profile.playlists
   const SIMILAR_ARTISTS = profile.similar
   const { openAlbum, openPlaylist, openArtist } = useMediaNav()
@@ -91,6 +97,19 @@ function ArtistProfilePage({ profile }: { profile: ArtistProfile }) {
   // page as you left it, and an album's "All albums" can open it filtered.
   // Read on mount only.
   const [params, setParams] = useSearchParams()
+  // A product opens in a dialog over the page, as designed: closing it
+  // leaves the reader where they were in the rail or the grid.
+  const [openProduct, setOpenProduct] = useState<ShopProduct | null>(null)
+  // Prices through the cart's formatter, as the dialog and the cart show
+  // them: "$120.00", in whatever currency the buyer picked.
+  const cart = useCart()
+  const [kindFilter, setKindFilter] = useState<"all" | ProductKind>("all")
+  const shopKinds = PRODUCT_KINDS.filter(k => PRODUCTS.some(p => p.kind === k))
+  const shownProducts = PRODUCTS.filter(p => kindFilter === "all" || p.kind === kindFilter)
+  const [shopView, setShopView] = useState<"grid" | "list">(() => params.get("artist-view") === "list" ? "list" : "grid")
+  // In-page reflow, the same step Discography folds its Type column at.
+  const shopShowType = useMediaQuery("(min-width: 640px)")
+  const shopCompact = useIsMobile()
   // The route shell only resets the scroll when `page` changes, and an
   // artist-to-artist hop keeps it. Same reset the album page does.
   const rootRef = useRef<HTMLDivElement>(null)
@@ -271,8 +290,14 @@ function ArtistProfilePage({ profile }: { profile: ArtistProfile }) {
 
             <CardRail title="Products" showAllLabel="All products" onShowAll={() => openTab("products")}>
               {PRODUCTS.map(p => (
-                <li key={p.id}>
-                  <ProductCard cover={p.cover} title={p.title} price={p.price} />
+                <li key={p.id} className="self-stretch">
+                  {/* `self-stretch`: the rail lines its items up at the top
+                       (`items-start`, right for covers), which left each
+                       product tile at its own height — a sale price wrapped a
+                       line and its pill sat lower than its neighbours'. The
+                       tile is `h-full`, so a stretched <li> makes every one
+                       in the rail as tall as the tallest. */}
+                  <ProductCard cover={p.images[0]?.src ?? ""} images={p.images} title={p.title} price={cart.format(p.price)} priceLabel={p.priceMode === "min" ? "or more" : ""} badge={p.kind} compareAt={discountPercent(p) ? cart.format(p.compareAt!) : undefined} discount={discountPercent(p) ? `${discountPercent(p)}% off` : undefined} isNew={p.isNew} onClick={() => setOpenProduct(p)} />
                 </li>
               ))}
             </CardRail>
@@ -311,25 +336,163 @@ function ArtistProfilePage({ profile }: { profile: ArtistProfile }) {
         )}
 
         {tab === "products" && (
-          <section className="flex flex-col gap-4">
-            {/* Same header band as Discography — pt-8 + separator so
-                 the grid sits at the matching vertical offset under
-                 the tab strip. */}
-            <div className="flex flex-col gap-2 pt-8">
-              <Separator />
+          <section className="@container/shop flex flex-col gap-6">
+            {/* `@container/shop`: the grid below counts its columns from
+                 this box. A container query cannot read the element it
+                 styles, so the container is the section, not the list. */}
+            {/* Category filter — the same Chip row the Library filters
+                 with, and the same categories the Studio lists under.
+                 Only categories this artist sells are offered; with one,
+                 there is nothing to choose and no row. */}
+            {/* One toolbar row like Discography's: the filter left, the
+                 grid / list switch right. `artist-view` is shared with
+                 Discography — a reader who prefers lists prefers them on
+                 both tabs. */}
+            <div className="flex items-center justify-between gap-4 pt-8">
+              <div className="min-w-0">
+                {/* Chips where there is room; a dropdown on a phone, like
+                     Discography's filter. Six chips on a 351px column were a
+                     strip you had to swipe to find "Other". Swapped at the
+                     768 presentation gate (`useIsMobile`), the one width
+                     allowed to replace a component (responsive.md). */}
+                {shopKinds.length > 1 && (shopCompact ? (
+                  <SingleSelect
+                    value={kindFilter}
+                    onChange={setKindFilter}
+                    icon={null}
+                    options={[{ value: "all" as const, label: "All products" }, ...shopKinds.map(k => ({ value: k, label: k }))]}
+                  />
+                ) : (
+                  <ChipChoice
+                    aria-label="Filter products"
+                    value={kindFilter}
+                    onChange={setKindFilter}
+                    options={[{ value: "all", label: "All" }, ...shopKinds.map(k => ({ value: k, label: k }))]}
+                  />
+                ))}
+              </div>
+              <ToggleGroup
+                value={[shopView]}
+                onValueChange={vals => {
+                  const next = vals[0] as "grid" | "list" | undefined
+                  if (next) { setShopView(next); setParams(prev => { const u = new URLSearchParams(prev); if (next === "list") u.set("artist-view", "list"); else u.delete("artist-view"); return u }, { replace: true }) }
+                }}
+                className="shrink-0"
+              >
+                <Toggle value="grid" aria-label="Grid view"><LayoutGrid strokeWidth={1.5} /></Toggle>
+                <Toggle value="list" aria-label="Table view"><TableIcon strokeWidth={1.5} /></Toggle>
+              </ToggleGroup>
             </div>
-            <ul className="grid grid-cols-[repeat(auto-fill,minmax(192px,1fr))] gap-x-4 gap-y-6">
-              {PRODUCTS.map(p => (
+            {shopView === "grid" ? (
+            /* Fluid: the column count steps with the section's width (1 ·
+                 464→2 · 692→3 · 928→4 · 1164→5), and each card fills its
+                 column. One on a phone: a product tile carries a price, two
+                 badges and a pill, and at half of 351px it was a squeeze.
+                 It was auto-fill tracks of 192px+ holding cards capped at
+                 220px, which left a strip of nothing beside every card once
+                 a track grew past the cap — on a phone, half the row. */
+            <ul className="grid grid-cols-1 gap-x-4 gap-y-6 @min-[464px]/shop:grid-cols-2 @min-[692px]/shop:grid-cols-3 @min-[928px]/shop:grid-cols-4 @min-[1164px]/shop:grid-cols-5">
+              {shownProducts.map(p => (
                 <li key={p.id}>
-                  <ProductCard cover={p.cover} title={p.title} price={p.price} />
+                  <ProductCard cover={p.images[0]?.src ?? ""} images={p.images} title={p.title} price={cart.format(p.price)} priceLabel={p.priceMode === "min" ? "or more" : ""} badge={p.kind} compareAt={discountPercent(p) ? cart.format(p.compareAt!) : undefined} discount={discountPercent(p) ? `${discountPercent(p)}% off` : undefined} isNew={p.isNew} onClick={() => setOpenProduct(p)} className="max-w-none" />
                 </li>
               ))}
             </ul>
+            ) : (
+            /* List view — the Discography table's chrome: the same
+                 TableRow / TableCell primitives, a 64px image column, a
+                 muted pill on the hovered row. The whole row opens the
+                 product. Type folds under the title below 640px, the way
+                 Discography folds its columns, so a phone gets a list, not
+                 a table that scrolls sideways. */
+            <table className="w-full table-fixed">
+              <colgroup>
+                <col style={{ width: 64 }} />
+                <col />
+                {shopShowType && <col style={{ width: 200 }} />}
+                <col style={{ width: shopShowType ? 240 : 96 }} />
+              </colgroup>
+              {/* The Discography table's head classes: sticky per <th>
+                   under the page scroll. */}
+{/* On a phone the table becomes a list: no column heads, the
+                   image, the title with its type folded under it, and the
+                   price as a fixed column on the right. Heads over two
+                   columns name nothing a row does not already say. */}
+              {!shopCompact && (
+                            <thead className="[&_tr]:border-b [&_tr]:border-border [&_th]:sticky [&_th]:top-0 [&_th]:z-10 [&_th]:bg-background">
+                  <TableRow>
+                    <TableHead resizable={false} className="px-2" />
+                    {/* Resizable, as the DS head is by default: Product and Type
+                         give and take width between them, like Discography's
+                         Title and Band. Image and price stay fixed. */}
+                    <TableHead>Product</TableHead>
+                    {shopShowType && <TableHead>Type</TableHead>}
+                    <TableHead resizable={false} className="text-right">Price</TableHead>
+                  </TableRow>
+                </thead>
+              )}
+              <TableBody>
+                {shownProducts.map(p => {
+                  const off = discountPercent(p)
+                  return (
+                    <TableRow
+                      key={p.id}
+                      onClick={() => setOpenProduct(p)}
+                      className={cn(
+                        "group/row cursor-pointer border-b-0 hover:bg-transparent",
+                        "[&>td]:group-hover/row:bg-muted [&>td:first-child]:group-hover/row:rounded-l-md [&>td:last-child]:group-hover/row:rounded-r-md",
+                        "[&_td]:py-1.5",
+                      )}
+                    >
+                      <TableCell className="px-2">
+                        {/* 48px, `rounded-xs` (2px): list artwork everywhere — song and
+                             album rows, Studio's products, Orders. */}
+                        <img src={p.images[0]?.src} alt="" style={cropStyle(p.images[0]?.crop)} className="size-12 rounded-xs object-cover art-edge" />
+                      </TableCell>
+                      <TableCell className="text-foreground truncate">
+                        <button type="button" onClick={e => { e.stopPropagation(); setOpenProduct(p) }} className="block w-full min-w-0 text-left outline-none focus-ring cursor-pointer">
+                          <span className="block truncate link-underline">{p.title}</span>
+                          {/* Folded under the title, still as the category
+                               Badge: the same label the tile and the dialog
+                               use, not plain text. */}
+                          {!shopShowType && (
+                            <Badge variant="secondary" className="mt-1">{p.kind}</Badge>
+                          )}
+                        </button>
+                      </TableCell>
+                      {shopShowType && (
+                        <TableCell>
+                          <Badge variant="secondary">{p.kind}</Badge>
+                        </TableCell>
+                      )}
+                      {/* The sale lives with the price: the saving is about
+                           what it costs, not what it is. The badge drops
+                           below 640px, where the struck price says it alone. */}
+                      <TableCell className={cn("text-right tabular-nums whitespace-nowrap", !shopShowType && "pl-2")}>
+                        {/* Narrow, 96px: "$120.00" plus the cell's right
+                             padding and an 8px left, nothing spare. */}
+                        {/* Narrow: the price and its tail stack, right-
+                             aligned, so "$32.00 or more" never gets cut by
+                             the fixed column. */}
+                        <span className={cn("inline-flex justify-end gap-1.5", shopShowType ? "items-center" : "flex-col items-end gap-0")}>
+                          <span className="font-medium text-foreground">{cart.format(p.price)}</span>
+                          {off > 0 && <span className="text-xsmall text-muted-foreground line-through">{cart.format(p.compareAt!)}</span>}
+                          {off > 0 && shopShowType && <Badge variant="new">{off}% off</Badge>}
+                          {p.priceMode === "min" && <span className="text-xsmall text-muted-foreground">or more</span>}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </table>
+            )}
           </section>
         )}
 
         <div className="pb-24" />
       </div>
+      <ProductDialog product={openProduct} onOpenChange={o => { if (!o) setOpenProduct(null) }} />
     </div>
   )
 }
@@ -438,18 +601,20 @@ function DiscographyView({
     .filter(k => counts[k] > 0)
 
   return (
-    <section className="flex flex-col gap-4">
-      {/* Header band — matches CardRail / TopSongsRow rhythm: pt-6 +
-           separator + gap-2 to the row of controls below. That way
-           Discography's first row sits at the same vertical offset
-           below the tab strip as Overview's first section header. */}
+    <section className="flex flex-col gap-6">
+      {/* Header band — the artist tabs share one grid: the first thing
+           under the tab strip starts 32px down (`pt-8`, Overview's first
+           heading, Shop's chips, this toolbar), and content starts 24px
+           under a toolbar. This band used to put a Separator between the
+           padding and the controls: 0px tall, because Separator never
+           draws (see separator.tsx), but its `gap-2` still pushed the
+           toolbar 8px below the others. */}
       {/* One-row toolbar — separator on top, then [Filter] [Sort]
            on the left and the [Grid/List toggle] on the right. The
            SingleSelect (the sort one) is hidden on list view because the table header
            itself carries sortable controls there (same pattern as
            Studio/Music). */}
-      <div className="flex flex-col gap-2 pt-8">
-        <Separator />
+      <div className="pt-8">
         {/* Wraps on narrow screens. The trigger buttons are `shrink-0` (all
              Buttons are), so on a 360px phone the filter + sort pair — 240px
              and 202px — overflowed the 336px row and ran off the right edge,
@@ -497,8 +662,10 @@ function DiscographyView({
           <Toggle value="grid" aria-label="Grid view">
             <LayoutGrid strokeWidth={1.5} />
           </Toggle>
-          <Toggle value="list" aria-label="List view">
-            <List strokeWidth={1.5} />
+          <Toggle value="list" aria-label="Table view">
+            {/* A table icon: both "list" views on the artist page are
+                 tables with column heads, not lists of rows. */}
+            <TableIcon strokeWidth={1.5} />
           </Toggle>
         </ToggleGroup>
         </div>
@@ -506,8 +673,9 @@ function DiscographyView({
 
       {view === "grid" ? (
         // Releases grid — same auto-fill template as Library/Albums so
-        // card widths stay flush with the rest of the app.
-        <ul className="grid grid-cols-[repeat(auto-fill,minmax(192px,1fr))] gap-x-4 gap-y-6 pt-2">
+        // card widths stay flush with the rest of the app. No top padding:
+        // the section's gap-6 is the toolbar-to-content step on every tab.
+        <ul className="grid grid-cols-[repeat(auto-fill,minmax(192px,1fr))] gap-x-4 gap-y-6">
           {visible.map(r => {
             const meta  = albumMetaFor(r.title)
             const libId = libraryIdForTitle(r.title)

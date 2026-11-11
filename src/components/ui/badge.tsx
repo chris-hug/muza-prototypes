@@ -19,6 +19,16 @@ import { cn } from "@/lib/utils"
 //   text-2xsmall font-normal leading-none · icon slot: size-3 (12px)
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** The Mint pair from the avatar palette (`src/lib/avatar.ts`): the system's
+ *  one soft green. Exported because every "good" state uses it — the `new`
+ *  variant, a sale on a product, an order marked Delivered, a full match in
+ *  the upload dialog — and they used Tailwind's `green-*` before, a second
+ *  green with no place in the palette. One constant, so the greens cannot
+ *  drift apart again. */
+export const BADGE_MINT =
+  "bg-[#F4FAF6] text-[#27563F] border-[#27563F]/15 " +
+  "dark:bg-[#27563F] dark:text-[#F4FAF6] dark:border-[#F4FAF6]/15"
+
 const badgeVariants = cva(
   [
     "inline-flex w-fit shrink-0 items-center gap-1",
@@ -52,9 +62,7 @@ const badgeVariants = cva(
         // `updated` = Honey. Mode-aware: pale bg + dark fg in light
         // mode, flipped (dark bg + pale fg) in dark mode. Both ways
         // clear ≥4.5:1.
-        new:
-          "bg-[#F4FAF6] text-[#27563F] border-[#27563F]/15 " +
-          "dark:bg-[#27563F] dark:text-[#F4FAF6] dark:border-[#F4FAF6]/15",
+        new: BADGE_MINT,
         updated:
           "bg-[#FEF8E0] text-[#5C4612] border-[#5C4612]/15 " +
           "dark:bg-[#5C4612] dark:text-[#FEF8E0] dark:border-[#FEF8E0]/15",

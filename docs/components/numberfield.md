@@ -29,17 +29,26 @@ hand-kept `atMin` / `atMax` flags.
 |---|---|---|
 | Group (the pill) | `flex items-center gap-0.5 border border-border rounded-full px-1` + the size's height; `block` adds `w-full justify-between`; disabled adds `opacity-50 pointer-events-none` | the border is the same hairline as `Input`; `px-1` is the 4px ring between the pill and the round buttons |
 | − / + | `flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-40 disabled:hover:bg-transparent transition-colors` + the size's box | round, so the hover fill is a disc inside the pill; muted until hovered, so the number is what you read |
-| Value | `bg-transparent text-center text-small text-foreground tabular-nums outline-none border-0 cursor-default` + the size's `min-w` | `text-small` (19px) matches `SelectTrigger`'s text, one step under `Input`'s `text-base`; `tabular-nums` so 9 → 10 does not nudge the buttons |
+| Value | `bg-transparent text-center text-small text-foreground tabular-nums outline-none border-0 cursor-default` + the size's width | `text-small` (19px) matches `SelectTrigger`'s text, one step under `Input`'s `text-base`; `tabular-nums` so 9 → 10 does not nudge the buttons |
 
-Two sizes, both derived from a neighbour rather than chosen:
+Three sizes, each derived from a neighbour rather than chosen:
 
-| `size` | Pill | Button | Glyph | Value floor | Pairs with |
+| `size` | Pill | Button | Glyph | Value width | Pairs with |
 |---|---|---|---|---|---|
-| `default` | `h-10` (40px) | `size-8` | `size-3.5` | `min-w-[20px]` | `Input`, `SelectTrigger`, `Button` default |
-| `sm` | `h-8` (32px) | `size-6` | `size-3` | `min-w-[16px]` | `Button` `sm`, `SelectTrigger` `sm` |
+| `default` | `h-10` (40px) | `size-8` | `size-3.5` | `w-10` | `Input`, `SelectTrigger`, `Button` default |
+| `sm` | `h-8` (32px) | `size-6` | `size-3` | `w-8` | `Button` `sm`, `SelectTrigger` `sm` |
+| `lg` | `h-12` (48px) | `size-10` | `size-4` | `w-10` | `Input` / `SelectTrigger` / `Button` `lg` — the cart line, where it shares a row with the price field |
 
 A `size-8` button in an `h-10` pill with `px-1` leaves 4px on every side of
 the disc — the hover fill never touches the border.
+
+**The value has a width, not a floor.** It used to carry only `min-w-[20px]`,
+and an `<input>` with no width is as wide as its `size` attribute (20
+characters, about 170px here), so a stepper outside a `block` layout came out
+266px wide with the number marooned in the middle. It was invisible in the
+cart, where the stepper is `block` and fills its cell anyway; the product
+dialog showed it. `w-10` holds two digits at `text-small` with room. Width,
+not a floor, is the fix: the stepper is the size of its parts.
 
 Props: `value` / `onChange` (controlled, required), `min` (default **1**),
 `max` (none), `step` (1), `disabled`, `size`, `block`, `className`,

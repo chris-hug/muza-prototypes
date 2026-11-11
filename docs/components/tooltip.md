@@ -54,7 +54,7 @@ rounding — the "⌘K" case.
     <TooltipTrigger render={<span className="inline-flex" />}>
       {button}
     </TooltipTrigger>
-    <TooltipContent side="bottom">Finish shop setup to publish. Save Draft in the meantime.</TooltipContent>
+    <TooltipContent side="bottom">Finish shop setup to publish. Save a draft in the meantime.</TooltipContent>
   </Tooltip>
 </TooltipProvider>
 ```

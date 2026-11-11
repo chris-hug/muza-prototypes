@@ -5,6 +5,7 @@ related: [chip-input, badge, button, filter-menu, mobile-header, multi-select]
 usage:
   - Shop › Products → Create listing (Release Type + artist chips) | /?page=Shop&shop-tab=products
   - Library status filters (ChipChoice) | /?page=Albums
+  - Artist › Shop category filter (ChipChoice) | /?page=Artist&artist-tab=products
 ---
 
 A `Chip` is a pill you press to pick or filter — a genre, a release type, a

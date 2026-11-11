@@ -34,7 +34,7 @@ export interface QtyStepperProps {
   /** Step size. Defaults to 1 (integer-only stepping). */
   step?:    number
   disabled?: boolean
-  size?:    "sm" | "default"
+  size?:    "sm" | "default" | "lg"
   /** When true, fills the parent width and spreads −/value/+ across it.
    *  Use inside grid cells where the stepper should match neighbours. */
   block?:   boolean
@@ -47,8 +47,12 @@ export interface QtyStepperProps {
 const SIZE = {
   // On a coarse pointer the row is 44 tall and the field fills it, because an
   // input cannot carry a pseudo-element. The ± stay small and grow by target.
-  default: { wrap: "h-10 pointer-coarse:h-11", btn: "relative touch-target size-8", icon: "size-3.5", input: "min-w-[20px] pointer-coarse:self-stretch" },
-  sm:      { wrap: "h-8 pointer-coarse:h-11",  btn: "relative touch-target size-6", icon: "size-3",   input: "min-w-[16px] pointer-coarse:self-stretch" },
+  default: { wrap: "h-10 pointer-coarse:h-11", btn: "relative touch-target size-8", icon: "size-3.5", input: "w-10 pointer-coarse:self-stretch" },
+  sm:      { wrap: "h-8 pointer-coarse:h-11",  btn: "relative touch-target size-6", icon: "size-3",   input: "w-8 pointer-coarse:self-stretch" },
+  // 48px, the `lg` step of Input / SelectTrigger / Button: a stepper sharing
+  // a row with any of them takes their height. Already 44+ on a coarse
+  // pointer, so it does not grow there.
+  lg:      { wrap: "h-12",                       btn: "relative size-10",              icon: "size-4",   input: "w-10" },
 } as const
 
 export function QtyStepper({

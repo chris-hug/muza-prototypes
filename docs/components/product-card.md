@@ -16,21 +16,25 @@ full-width secondary "Add to cart" pill at the foot. It is a Phase 2 component
 
 | Part | Classes | Why |
 |---|---|---|
-| Card | `group/product flex flex-col bg-background border border-border rounded-2xl overflow-hidden w-full max-w-[220px] min-w-0`, `cursor-pointer` only when `onClick` is passed | a bordered surface, unlike the media cards, because a product is a thing to buy rather than artwork to open; the 220 cap is the cover cap of the card ladder |
+| Card | `group/product flex h-full flex-col bg-background border border-border rounded-2xl overflow-hidden w-full max-w-[220px] min-w-0`, `cursor-pointer` only when `onClick` is passed | a bordered surface, unlike the media cards, because a product is a thing to buy rather than artwork to open; the 220 cap is the cover cap of the card ladder |
 | Cover | `relative w-full bg-accent aspect-[188.8/142] overflow-hidden` around an `<img … object-cover>` | 188.8 : 142 (≈ 1.33 : 1) is the Figma frame; the `bg-accent` fill is what shows through a transparent asset |
-| Text | `flex flex-col gap-0.5 px-3 py-1 min-w-0` | 12px horizontal padding per the spec, 4px vertical to keep the card compact |
-| Title | `<button>` · `text-small font-normal leading-5 text-foreground text-left line-clamp-2 min-h-10`, underline on hover / focus, `pb-[6px] -mb-[6px]` | clamps at two lines **and** reserves two (`min-h-10` = 40px) so a row of tiles stays flush whatever each title's length |
+| Text | `flex flex-col gap-2 px-3 pt-3 min-w-0` | one rhythm: 12px under the image, 6px from title to price (`-mt-0.5` on the price row: the price belongs to the title), 8px from price to badge. It was `py-1 gap-0.5` with the badge on `mt-1.5` and the pill on `pt-2` — four different gaps in one card |
+| Title | `<button>` · `text-small font-normal leading-5 text-foreground text-left line-clamp-2`, underline on hover / focus, `pb-[6px] -mb-[6px]` | clamps at two lines and takes only the lines it has. Title, price and badge stack from the top; the pill alone is bottom-aligned (`mt-auto` on its wrapper, `h-full` on the card), so the pills of a row line up without reserving empty title lines |
 | Price row | `flex items-baseline gap-1 text-small leading-5` — price `font-medium text-foreground`, label `text-xsmall font-normal text-muted-foreground` | the price is the one `font-medium` on the card; the tail is a size and a tone down |
-| Add to cart | `p-3 pt-2` → `Button variant="secondary" size="sm" className="w-full"` with a `ShoppingCart` glyph | the design-system Secondary pill, full width |
+| Add to cart | `p-3` (12px, the same as the image above the text) → `Button variant="secondary" size="sm" className="w-full"` with a `ShoppingCart` glyph | the design-system Secondary pill, full width |
 
 Figma: file `dbSHgvquI2o4TFie2iAJxv` › `21054:5234` `ProductCardVerticalSmall`,
 linked from the Artist page section `8971:98290`.
 
 | Prop | What it does |
 |---|---|
+| `images` | every product image (`ProductImage`: `src` + the seller's `crop`), cover first. The cover is drawn with its crop; with two or more, a pointer that can hover sees the second one fade in over it (200ms) |
 | `cover` `title` `price` | required; `price` is a **formatted string** (`"32 $"`, `"€ 25"`) — formatting is the caller's, so the card carries no currency logic |
+| `badge` | the category ("Vinyl", "Compact Disc", "Cassette", "Apparel", "Other") as a `secondary` Badge under the price, the same label the dialog shows above its title. It is what the Shop tab's filter chips filter by, so the card says which chip it belongs to |
+| `compareAt` · `discount` | on sale: the old price (formatted like `price`) struck through after it, and the saving ("20% off") as a `new` (Mint) Badge on the image, top-left — the badge the dialog shows, so a sale reads the same on the tile and inside. The artist page passes both only when `discountPercent()` is above 0 |
+| `isNew` | a "New" flag on the image, top-left, before the saving: `outline` (glass) so it reads on any photo. Rare by intent — a flag on every tile is a flag on none. Flags sit on the picture rather than in the text block so they cost the tile no height |
 | `priceLabel` | the tail; defaults to `"or more"`, pass `""` for none |
-| `onClick` | the card and the title; opens the product. On a coarse pointer the title is plain text and the card takes the tap |
+| `onClick` | the card and the title; on the artist page it opens the product dialog (`product-dialog.tsx`), where every image is in a gallery. On a coarse pointer the title is plain text and the card takes the tap |
 | `onAddToCart` | the pill |
 
 ## Usage
@@ -51,14 +55,36 @@ linked from the Artist page section `8971:98290`.
 
 Used by the artist page's Products rail and Shop tab (`artist-profile-view.tsx`).
 
+## Images
+
+A product has up to eight images, in the order the seller set in the listing
+editor; the first is the cover. The tile shows the cover and, **on hover only**,
+the second image. That is the whole of the tile's job: say there is more than
+one picture. Dots on a 192px tile were the alternative and would have been the
+loudest thing on it. Touch never hovers, so a phone sees the cover and gets
+every image in the product dialog: a swipeable strip, a row of every thumbnail
+under it (past four it scrolls, and the fifth is cut at the edge to say so),
+and chevrons where a pointer can hover.
+
+**Each image carries the seller's crop** — a focal point and a zoom, set per
+image in the listing editor (`image-crop-dialog.tsx`), applied with
+`cropStyle()` from `shop-product.ts`. A focal point rather than a cut-out, so
+the tile's 4:3 and the gallery's wider frame crop around the same place
+without one crop per shape.
+
+The card prints `price` as given; on the artist page that is
+`cart.format(product.price)` — "$120.00", the format of the dialog and the cart, and `priceLabel` is `"or more"` only for a
+product sold at a minimum price. A fixed price has no tail.
+
 ## Sizing
 
 The **column** decides through the parent — a `.grid-cards` track or a
 [Card Rail](card-rail.md) `<li>` — with the card's own `max-w-[220px]` cap on
 top, the same 220 the media covers cap at. Fixed, no steps: nothing on the
 card reads its width. Unlike a square cover the tile's height is not the
-track's width; the two reserved title lines and the pill make every tile the
-same height regardless.
+track's width. The artist's Shop tab lifts the cap (`className="max-w-none"`) and sets the column count itself, 1 · 464→2 · 692→3 · 928→4 · 1164→5 by its own container (one on a phone), so each tile fills its column: under the 220 cap a 192px+ auto-fill track left an empty strip beside every card, half a row on a phone. A row's tiles share the tallest one's height (`h-full` on the
+card); the text stacks from the top and the pill sits at the bottom, so the
+pills line up and nothing reserves empty lines.
 
 ## Behaviour
 
@@ -67,8 +93,8 @@ same height regardless.
   keyboard path land on the same action.
 - **Add to cart → `onAddToCart`**, propagation stopped so the card's open
   does not also fire.
-- No long press, no menu, no hover darkening — the title underline is the only
-  hover state.
+- No long press, no menu, no hover darkening — the title underline and the
+  second image are the only hover states.
 - Keyboard: the title button and the pill are focusable; the card `<div>`
   itself is not.
 

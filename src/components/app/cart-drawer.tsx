@@ -58,6 +58,7 @@ import {
   type CartLine, type ShopGroup, type ShippingAddress,
 } from "@/lib/cart"
 import { useToast } from "@/components/ui/toast"
+import { ColorDot } from "@/components/app/color-dot"
 
 // ─── Drawer root ─────────────────────────────────────────────────────────────
 
@@ -259,10 +260,13 @@ function LineRow({ line }: { line: CartLine }) {
     // py-6 lifts the row off the divider; first/last collapse so the
     // boundaries hug the card's inner edges instead of leaving extra air.
     <div className="flex items-start gap-4 py-6 first:pt-0 last:pb-0">
+      {/* `rounded-xs` (2px), the radius of product and release artwork
+           everywhere else (shop table, Studio, Orders). Kept at 80px: the
+           line is a card of controls, and the picture anchors it. */}
       <img
         src={line.image}
         alt=""
-        className="size-20 rounded-sm object-cover shrink-0 art-edge"
+        className="size-20 rounded-xs object-cover shrink-0 art-edge"
         draggable={false}
       />
 
@@ -300,7 +304,9 @@ function LineRow({ line }: { line: CartLine }) {
                 </SelectTrigger>
                 <SelectContent>
                   {line.variants!.colors!.map(c => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                    // The swatch rides in the item's label, so the trigger,
+                    // which shows the chosen item's label, carries it too.
+                    <SelectItem key={c} value={c}><ColorDot name={c} />{c}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -325,7 +331,9 @@ function LineRow({ line }: { line: CartLine }) {
 
         {/* Price input + qty stepper — same 2-column grid as variants so
              the four inputs read as one tidy 2×2 grid. Stepper uses
-             `block` to stretch across its grid cell, matching price width. */}
+             `block` to stretch across its grid cell, matching price width,
+             and `lg` to match its height: the price field is an `lg` Input,
+             and two controls in one row are one height. */}
         <div className="grid grid-cols-2 gap-2 items-start">
           <PriceInput line={line} />
           <QtyStepper
@@ -333,6 +341,7 @@ function LineRow({ line }: { line: CartLine }) {
             onChange={n => cart.setQty(line.id, n)}
             max={line.stock ?? Number.POSITIVE_INFINITY}
             ariaLabel={`quantity for ${line.productTitle}`}
+            size="lg"
             block
           />
         </div>
@@ -407,17 +416,12 @@ function PriceInput({ line }: { line: CartLine }) {
     )
   }
 
+  // The symbol goes through Input's text adornments, which sit on the
+  // value's own line. It used to be a span pinned at `top-5` — half of a
+  // 40px field, written when this field was 40px; at 48 it sat 4px off.
+  const symbol = <span className="tabular-nums">{cart.currency.symbol}</span>
   return (
-    <div className="relative flex-1 min-w-0">
-      {/* Currency symbol pinned to the input field's vertical centre
-           (top-5 = 20px = half the 40px field height). Using a fixed offset
-           rather than `top-1/2` because the wrapper now also contains the
-           hint below, so `1/2` would land in the gap between them. */}
-      {cart.currency.side === "prefix" && (
-        <span className="absolute left-3 top-5 -translate-y-1/2 text-small text-muted-foreground pointer-events-none tabular-nums">
-          {cart.currency.symbol}
-        </span>
-      )}
+    <div className="flex-1 min-w-0">
       <Input
         inputMode="decimal"
         value={draft}
@@ -430,18 +434,12 @@ function PriceInput({ line }: { line: CartLine }) {
           cart.setPrice(line.id, clampedUsd)
           setDraft((clampedUsd * cart.currency.rate).toFixed(cart.currency.decimals))
         }}
-        className={cn(
-          "tabular-nums",
-          cart.currency.side === "prefix" ? "pl-7" : "pr-9",
-        )}
+        startText={cart.currency.side === "prefix" ? symbol : undefined}
+        endText={cart.currency.side === "suffix" ? symbol : undefined}
+        className={cn("tabular-nums", cart.currency.side === "suffix" && "pr-10")}
         aria-label={`Price for ${line.productTitle}`}
         hint={`${cart.format(line.minPrice)} or more`}
       />
-      {cart.currency.side === "suffix" && (
-        <span className="absolute right-3 top-5 -translate-y-1/2 text-small text-muted-foreground pointer-events-none tabular-nums">
-          {cart.currency.symbol}
-        </span>
-      )}
     </div>
   )
 }
@@ -818,7 +816,11 @@ function TopUpWalletDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      {/* Wider than the base `md:max-w-sm` (384): its footer holds two `lg`
+           buttons, and "Add $160.00 to wallet" beside "Cancel" needs ~400px
+           of content. At 384 the grid column grew past the dialog and every
+           row was cut off on the right. */}
+      <DialogContent className="md:max-w-lg">
         <DialogHeader>
           <DialogTitle>Top up wallet</DialogTitle>
           <DialogDescription>

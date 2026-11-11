@@ -18,6 +18,7 @@
 import { registerAlbums } from "@/lib/album-catalog"
 import { registerPlaylists } from "@/lib/playlist-catalog"
 import { artistImage } from "@/lib/artist-data"
+import { COLOR_SWATCHES, type ProductImage, type ShopProduct } from "@/lib/shop-product"
 import { slugify } from "@/lib/media-nav"
 
 // ─── Mock data ──────────────────────────────────────────────────────────────
@@ -121,15 +122,77 @@ const TOP_ALBUMS = (
   return { id: r.id, title: r.title, cover: r.cover, artist: "Sun Ra", year: r.year }
 })
 
-const PRODUCTS = [
-  { id: "p1", title: "Space Is the Place — Vinyl Reissue",       price: "32 $",  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
-  { id: "p2", title: "Lanquidity (Deluxe 4LP Box)",              price: "120 $", cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
-  { id: "p3", title: "Arkestra Tour Tee — Black",                price: "35 $",  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
-  { id: "p4", title: "Saturn Records Cap",                       price: "28 $",  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
-  { id: "p5", title: "Cosmic Equation Poster",                   price: "18 $",  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
-  { id: "p6", title: "Space Is the Place Tote Bag",              price: "22 $",  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
-  { id: "p7", title: "Sun Ra Arkestra Enamel Pin",              price: "12 $",  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
-  { id: "p8", title: "Astro-Black Mythology Hoodie",            price: "65 $",  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg" },
+// Product photos, one set per category, from Wikimedia Commons under free
+// licences (CC0, public domain, CC BY 2.0, CC BY-SA 3.0/4.0). Authors and
+// licences are on each file's page: commons.wikimedia.org/wiki/File:<name>.
+// A shipped product would carry the seller's own uploads; these only have to
+// read as the thing being sold. Plain items were picked over branded ones.
+const C = "https://upload.wikimedia.org/wikipedia/commons"
+const T = "https://thumb.wikimedia.org/wikipedia/commons/thumb"
+const PHOTO = {
+  vinylSpin:   `${T}/c/c1/Das_Vinyl_dreht_sich.jpg/1280px-Das_Vinyl_dreht_sich.jpg`,
+  vinylTeal:   `${T}/e/ec/Audio-Technica_turntable_playing_coloured_vinyl.jpg/1280px-Audio-Technica_turntable_playing_coloured_vinyl.jpg`,
+  vinylGold:   `${T}/9/94/White_Rega_P3_turntable_and_Pro-Ject_TubeBox_II_preamp%2C_playing_coloured_vinyl.jpg/1280px-White_Rega_P3_turntable_and_Pro-Ject_TubeBox_II_preamp%2C_playing_coloured_vinyl.jpg`,
+  vinylGroove: `${T}/4/4c/Groove_and_needle_in_close_embrace_from_beginning_to_end.jpg/1280px-Groove_and_needle_in_close_embrace_from_beginning_to_end.jpg`,
+  lpSleeve:    `${C}/d/d4/LP_Sleeve.jpg`,
+  cdJewel:     `${T}/f/f4/Audio_CD_with_Copy_Protection_%28Open_Jewel_Case_%E2%80%93_With_Compact_Disc%29.jpg/1280px-Audio_CD_with_Copy_Protection_%28Open_Jewel_Case_%E2%80%93_With_Compact_Disc%29.jpg`,
+  cdClear:     `${T}/5/52/Photoelasticity_-_Clear_CD_case_centre.jpg/1280px-Photoelasticity_-_Clear_CD_case_centre.jpg`,
+  tapeTable:   `${T}/5/55/DAT_%26_Compact_Cassette_hor.jpg/1280px-DAT_%26_Compact_Cassette_hor.jpg`,
+  tapeStack:   `${T}/4/4c/2023_Kaseta_magnetofonowa_i_minikaseta_%281%29.jpg/1280px-2023_Kaseta_magnetofonowa_i_minikaseta_%281%29.jpg`,
+  teeFront:    `${T}/d/d7/Ironed_black_T-shirt_%28001%29.JPG/1280px-Ironed_black_T-shirt_%28001%29.JPG`,
+  teeSide:     `${T}/7/7f/Ironed_black_T-shirt_%28002%29.JPG/1280px-Ironed_black_T-shirt_%28002%29.JPG`,
+  hoodieBack:  `${T}/7/77/Hoodie_with_a_DIP-8_integrated_circuit_design.jpg/1280px-Hoodie_with_a_DIP-8_integrated_circuit_design.jpg`,
+  hoodieFlat:  `${C}/c/c2/Hoodie_m7agar.jpg`,
+  capNavy:     `${C}/e/eb/Baseball_cap.jpg`,
+  capPlaid:    `${T}/b/b4/Madras_plaid_baseball_cap_by_Polo_Ralph_Lauren.jpg/1280px-Madras_plaid_baseball_cap_by_Polo_Ralph_Lauren.jpg`,
+  toteYellow:  `${C}/8/89/Totebag.jpg`,
+  toteWorn:    `${C}/e/e4/Tote_bag-making_18.jpg`,
+  posterOpera: `${T}/9/9c/Paul_Maurou_-_Poster_for_Edmond_Audran%27s_Gillette_de_Narbonne.jpg/1280px-Paul_Maurou_-_Poster_for_Edmond_Audran%27s_Gillette_de_Narbonne.jpg`,
+  posterPiano: `${T}/c/c0/C._Bechstein_Poster%2C_about_1920_edit.jpg/1280px-C._Bechstein_Poster%2C_about_1920_edit.jpg`,
+  pinSingle:   `${T}/e/e1/Sleepground_Lapel_pin_%28Sandbox%29.jpg/1280px-Sleepground_Lapel_pin_%28Sandbox%29.jpg`,
+  pinBoard:    `${T}/9/93/Lapel_pin_collection.jpg/1280px-Lapel_pin_collection.jpg`,
+}
+
+const imgs = (...srcs: string[]): ProductImage[] => srcs.map(src => ({ src }))
+/** The 200px sleeves above, at the 600px the gallery needs. */
+const big = (cover: string) => cover.replace("200x200bb", "600x600bb")
+
+const APPAREL_COLORS = (["Black", "Teal", "Coral", "Cream"] as const).map(name => ({ name, value: COLOR_SWATCHES[name] }))
+const APPAREL_SIZES = [{ label: "XS" }, { label: "S", soldOut: true }, { label: "M" }, { label: "L" }, { label: "XL" }]
+
+function songRef(artist: string, song: { title: string; album: string; year: number; cover: string; duration?: string }) {
+  return { title: song.title, artist, album: song.album, year: song.year, cover: song.cover, duration: song.duration }
+}
+
+const SUN_RA_COVER = "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/e7/31/78/e731786e-eba2-2d1c-6ff6-ff6e2354d48c/00011105024921.rgb.jpg/600x600bb.jpg"
+const sunRa = (p: Omit<ShopProduct, "artist" | "artistImage">): ShopProduct => ({
+  ...p, artist: ARTIST.name, artistImage: ARTIST.cover,
+})
+// Every category the listing editor offers (Vinyl, Compact Disc, Cassette,
+// Apparel, Other) and every shape the product dialog has: records linked to a
+// song on muza, fixed prices with and without a sale, minimum prices,
+// apparel with colours and sizes.
+const PRODUCTS: ShopProduct[] = [
+  sunRa({ id: "p1",  title: "Space Is the Place — Vinyl Reissue", kind: "Vinyl",        price: 32,  priceMode: "min",   linkedSong: songRef(ARTIST.name, TOP_SONGS[0]),
+    images: imgs(SUN_RA_COVER, PHOTO.vinylSpin, PHOTO.lpSleeve, PHOTO.vinylGroove, PHOTO.vinylTeal, PHOTO.vinylGold) }),
+  sunRa({ id: "p2",  title: "Lanquidity — Deluxe 4LP Box",        kind: "Vinyl",        price: 120, priceMode: "fixed", compareAt: 150, linkedSong: songRef(ARTIST.name, TOP_SONGS[1]),
+    images: imgs(big(COVER_LANQUIDITY), PHOTO.vinylGold, PHOTO.vinylTeal) }),
+  sunRa({ id: "p3",  title: "Sleeping Beauty — CD",               kind: "Compact Disc", price: 14,  priceMode: "fixed", linkedSong: songRef(ARTIST.name, TOP_SONGS[2]),
+    images: imgs(big(COVER_SLEEPING), PHOTO.cdJewel, PHOTO.cdClear) }),
+  sunRa({ id: "p4",  title: "Lanquidity — Limited Cassette",      kind: "Cassette",     price: 10,  priceMode: "min",   isNew: true,   linkedSong: songRef(ARTIST.name, TOP_SONGS[1]),
+    images: imgs(PHOTO.tapeTable, PHOTO.tapeStack) }),
+  sunRa({ id: "p5",  title: "Arkestra Tour Tee",                  kind: "Apparel",      price: 35,  priceMode: "min",   colors: [APPAREL_COLORS[0], APPAREL_COLORS[3]], sizes: APPAREL_SIZES,
+    images: imgs(PHOTO.teeFront, PHOTO.teeSide) }),
+  sunRa({ id: "p6",  title: "Astro-Black Mythology Hoodie",       kind: "Apparel",      price: 65,  priceMode: "fixed", compareAt: 80, colors: APPAREL_COLORS, sizes: APPAREL_SIZES,
+    images: imgs(PHOTO.hoodieBack, PHOTO.hoodieFlat) }),
+  sunRa({ id: "p7",  title: "Saturn Records Cap",                 kind: "Apparel",      price: 28,  priceMode: "fixed", colors: [{ name: "Navy", value: COLOR_SWATCHES.Navy }, { name: "Plaid", value: COLOR_SWATCHES.Plaid }],
+    images: imgs(PHOTO.capNavy, PHOTO.capPlaid) }),
+  sunRa({ id: "p8",  title: "Space Is the Place Tote Bag",        kind: "Other",        price: 22,  priceMode: "min",
+    images: imgs(PHOTO.toteYellow, PHOTO.toteWorn) }),
+  sunRa({ id: "p9",  title: "Arkestra at the Opera — Poster",     kind: "Other",        price: 18,  priceMode: "fixed",
+    images: imgs(PHOTO.posterOpera, PHOTO.posterPiano) }),
+  sunRa({ id: "p10", title: "Sun Ra Arkestra Enamel Pin",         kind: "Other",        price: 12,  priceMode: "fixed",
+    images: imgs(PHOTO.pinSingle, PHOTO.pinBoard) }),
 ]
 
 // 2×2 composite covers for the Curated Playlists row.
@@ -174,7 +237,7 @@ export interface ArtistProfile {
   topSongs: ArtistSong[]
   discography: ArtistRelease[]
   topAlbums: { id: string; title: string; cover: string; artist: string; year: number }[]
-  products: { id: string; title: string; price: string; cover: string }[]
+  products: ShopProduct[]
   playlists: { id: string; title: string; songCount: number; owner?: string; owned?: boolean; covers: string[] }[]
   similar: { id: string; name: string; image: string }[]
 }
@@ -1085,11 +1148,18 @@ function buildProfile(s: ArtistSeed): ArtistProfile {
     discography,
     topAlbums: featured.map(r => ({ id: r.id, title: r.title, cover: r.cover, artist: s.name, year: r.year })),
     products: [
-      { id: `${s.prefix}-p1`, title: `${lead.title} \u2014 Vinyl Reissue`, price: "32 $", cover: lead.cover },
-      { id: `${s.prefix}-p2`, title: `${next.title} \u2014 Vinyl Reissue`, price: "34 $", cover: next.cover },
-      { id: `${s.prefix}-p3`, title: `${s.name} Tee \u2014 Black`, price: "35 $", cover: lead.cover },
-      { id: `${s.prefix}-p4`, title: `${s.name} Tote Bag`, price: "22 $", cover: next.cover },
-    ],
+      { id: `${s.prefix}-p1`, title: `${lead.title} \u2014 Vinyl Reissue`, kind: "Vinyl" as const, price: 32, priceMode: "min" as const,
+        images: imgs(lead.cover, PHOTO.vinylSpin, PHOTO.lpSleeve),
+        linkedSong: songRef(s.name, { title: s.songs[0][0], album: s.songs[0][1], year: s.songs[0][2], duration: s.songs[0][3], cover: s.songs[0][4] }) },
+      { id: `${s.prefix}-p2`, title: `${next.title} \u2014 CD`, kind: "Compact Disc" as const, price: 14, priceMode: "fixed" as const,
+        images: imgs(next.cover, PHOTO.cdJewel) },
+      { id: `${s.prefix}-p3`, title: `${next.title} \u2014 Cassette`, kind: "Cassette" as const, price: 9, priceMode: "min" as const,
+        images: imgs(PHOTO.tapeTable, PHOTO.tapeStack) },
+      { id: `${s.prefix}-p4`, title: `${s.name} Tee`, kind: "Apparel" as const, price: 35, priceMode: "min" as const,
+        images: imgs(PHOTO.teeFront, PHOTO.teeSide), colors: [APPAREL_COLORS[0], APPAREL_COLORS[3]], sizes: APPAREL_SIZES },
+      { id: `${s.prefix}-p5`, title: `${s.name} Tote Bag`, kind: "Other" as const, price: 22, priceMode: "fixed" as const,
+        images: imgs(PHOTO.toteYellow, PHOTO.toteWorn) },
+    ].map((p): ShopProduct => ({ ...p, artist: s.name, artistImage: s.cover })),
     playlists: [`${s.name} Essentials`, `${lead.title} and After`, `${s.name}: Deep Cuts`, `Late Night ${s.name}`, `${s.name} Live`, `Starting with ${s.name}`].map((title, i) => ({
       id: `${s.prefix}-cp${i + 1}`, title, songCount: 18 + i * 7, owner: OWNERS[i % OWNERS.length], covers: composite(i * 2),
     })),
@@ -1116,6 +1186,11 @@ for (const p of Object.values(PROFILES)) {
   registerPlaylists(p.playlists.map(x => ({
     id: x.id, title: x.title, covers: x.covers,
     songCount: x.songCount, owner: x.owner, owned: x.owned })))
+}
+
+/** True when the slug has a profile of its own, not the Sun Ra fallback. */
+export function hasArtistProfile(slug?: string | null): boolean {
+  return !!slug && slug in PROFILES
 }
 
 export function getArtistProfile(slug?: string | null): ArtistProfile {

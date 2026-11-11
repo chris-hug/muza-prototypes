@@ -648,7 +648,7 @@ function FulfillmentRow({ fulfillment, onOpen, onProductClick }: {
               src={item.image}
               alt={item.productTitle}
               draggable={false}
-              className="size-14 rounded-sm object-cover art-edge"
+              className="size-14 rounded-xs object-cover art-edge"
             />
           ))}
         </div>

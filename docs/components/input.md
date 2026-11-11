@@ -38,8 +38,19 @@ them gets a bare `<input data-slot="input">` and nothing else:
 | Props present | DOM |
 |---|---|
 | none | `<input data-slot="input">` |
-| `startIcon` and/or `onClear` | `<div data-slot="input-affordances" class="relative w-full min-w-0">` around the input, with the icon `<span>` and/or the clear `<button>` overlaid |
+| `startIcon`, `startText`, `endText` and/or `onClear` | `<div data-slot="input-affordances" class="relative w-full min-w-0">` around the input, with the icon / text `<span>`s and/or the clear `<button>` overlaid |
 | `hint` | `<Field.Root data-slot="input-wrapper" class="flex flex-col gap-1.5 w-full">` around whichever of the two above applies, plus the hint |
+
+**Text inside the field is `startText` / `endText`, never `startIcon`.** A
+currency symbol before the amount, a unit after it ("per item"). The icon slot
+centres on the BOX (`top-1/2`), which is right for a drawn shape, but the value
+is not centred in the box: the ladder lifts it with uneven padding
+(`pt-[10px] pb-[14px]` at `lg`), so a "$" in the icon slot sat 2px under the
+number beside it. The text slots take the field's full height with the same
+padding and type size as the value, and land on its line by construction.
+`startText` reserves room for one character; `endText` cannot know its own
+width, so the call site adds a `pr-*` (`pr-24` for "per item"). Used by the
+cart's price field and the product dialog's.
 
 The wrapper is `min-w-0` because a grid or flex item defaults to
 `min-width: auto`; without it a wide placeholder or a long value would force

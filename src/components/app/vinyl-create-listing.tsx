@@ -5,7 +5,7 @@
  *
  * Mirrors the Figma flow (node 7860:211319) with eight stacked sections:
  *   1. Release Information     — title combobox with inline "add unlinked" row
- *   2. Image Upload            — drop zone for cover art
+ *   2. Images                  — up to eight, cover first, drag to reorder
  *   3. Artists & Credits       — main artist chips, featured search, credits
  *   4. Tracklist               — disk-grouped track rows with variable-length disks
  *   5. Pricing & Inventory     — fixed-price / name-your-price tabs, stock, digital DL
@@ -18,9 +18,9 @@
  *   - Row dropdown → "Edit" → <VinylCreateListing mode="edit" product={…} />
  */
 
-import React, { useMemo, useState } from "react"
+import React, { useMemo, useRef, useState } from "react"
 import {
-  Upload, Plus, Minus, X, Link2, GripVertical, Trash2, Disc3,
+  Upload, Plus, Minus, X, Link2, GripVertical, Trash2, Disc3, Crop,
 } from "lucide-react"
 
 import { Badge, ContentTypeBadge } from "@/components/ui/badge"
@@ -38,6 +38,8 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { DatePicker } from "@/components/ui/date-picker"
 import { cn } from "@/lib/utils"
+import { cropStyle, type ImageCrop, type ShopProduct } from "@/lib/shop-product"
+import { ImageCropDialog } from "@/components/app/image-crop-dialog"
 import {
   Tabs, TabsList, TabsTrigger, TabsContent,
 } from "@/components/ui/tabs"
@@ -362,21 +364,306 @@ function ReleaseInformationSection({
 }
 
 // ─── Image Upload ─────────────────────────────────────────────────────────────
+//
+// Up to eight images per product, in the order the buyer will see them: the
+// first is the cover on the tile, in the cart and at the head of the product
+// page's gallery. Before this the section took one picture and the product
+// page had nothing to show.
+//
+// Reordering is pointer events, not HTML drag-and-drop. The tracklist below
+// uses the native API and it does nothing on a phone or tablet, because no
+// mobile browser fires `dragstart` from a touch. Pointer events cover mouse,
+// pen and finger with one code path:
+//   · mouse: press anywhere on a tile and drag (4px before it counts, so a
+//     click on the ✕ is still a click);
+//   · touch: drag by the grip. Only the grip is `touch-none`; the rest of the
+//     tile still scrolls the form, which a whole-tile grab would have taken
+//     away on a page that is mostly scrolling;
+//   · keyboard: focus the grip, arrow keys move the image one place.
+// The tile under the pointer follows it, the others slide aside to show
+// where it will land, and the order is written once, on release. The first
+// version reordered the list live as the pointer crossed a tile: React moves
+// DOM nodes to do that, and moving the node that holds pointer capture
+// releases it, so the drag dropped events mid-gesture and tiles jumped.
 
-function ImageUploadSection() {
+export interface ListingImage { id: string; src: string; name: string; crop?: ImageCrop }
+
+export const MAX_LISTING_IMAGES = 8
+const ACCEPTED_IMAGE = /^image\/(jpeg|png|webp)$/
+
+function moveItem<T>(xs: T[], from: number, to: number): T[] {
+  if (from === to || to < 0 || to >= xs.length) return xs
+  const next = xs.slice()
+  const [item] = next.splice(from, 1)
+  next.splice(to, 0, item)
+  return next
+}
+
+function ImageUploadSection({
+  images, setImages,
+}: {
+  images: ListingImage[]
+  setImages: React.Dispatch<React.SetStateAction<ListingImage[]>>
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const listRef = useRef<HTMLUListElement>(null)
+  const tileRefs = useRef(new Map<string, HTMLElement>())
+  const [fileOver, setFileOver] = useState(false)
+  const [cropping, setCropping] = useState<ListingImage | null>(null)
+  /** The gesture. `slots` are the tiles' places at the start, relative to
+   *  the list, so a scroll during the drag does not move the targets. */
+  const press = useRef<{
+    id: string; from: number; pointerId: number; x: number; y: number
+    slots: { x: number; y: number }[]
+  } | null>(null)
+  const [drag, setDrag] = useState<{ id: string; from: number; to: number; dx: number; dy: number } | null>(null)
+  // True for the two frames after a drop. The tiles are re-rendered in their
+  // new order AND lose their offsets in the same commit; with the transition
+  // on, each would animate from its offset measured against its OLD slot and
+  // fly in from the wrong place.
+  const [settling, setSettling] = useState(false)
+  const room = MAX_LISTING_IMAGES - images.length
+
+  function addFiles(files: FileList | null) {
+    if (!files) return
+    const picked = Array.from(files)
+      .filter(f => ACCEPTED_IMAGE.test(f.type))
+      .slice(0, room)
+      .map(f => ({ id: crypto.randomUUID(), src: URL.createObjectURL(f), name: f.name }))
+    if (picked.length) setImages(xs => [...xs, ...picked])
+  }
+
+  function remove(id: string) {
+    setImages(xs => {
+      const gone = xs.find(x => x.id === id)
+      // Only URLs this tab minted; the seeded ones are remote.
+      if (gone?.src.startsWith("blob:")) URL.revokeObjectURL(gone.src)
+      return xs.filter(x => x.id !== id)
+    })
+  }
+
+  function onPointerDown(e: React.PointerEvent, index: number, viaGrip: boolean) {
+    if (e.button !== 0 || images.length < 2) return
+    if (e.pointerType !== "mouse" && !viaGrip) return
+    const list = listRef.current?.getBoundingClientRect()
+    if (!list) return
+    const slots = images.map(img => {
+      const r = tileRefs.current.get(img.id)!.getBoundingClientRect()
+      return { x: r.left - list.left + r.width / 2, y: r.top - list.top + r.height / 2 }
+    })
+    press.current = { id: images[index].id, from: index, pointerId: e.pointerId, x: e.clientX, y: e.clientY, slots }
+    // Capture on the TILE, whichever part was pressed: it is the node that
+    // receives the moves, and nothing moves it in the DOM until release.
+    tileRefs.current.get(images[index].id)?.setPointerCapture(e.pointerId)
+    // The grip starts at once; a mouse press on the tile waits for 4px, so a
+    // click on the ✕ is still a click.
+    if (viaGrip) setDrag({ id: images[index].id, from: index, to: index, dx: 0, dy: 0 })
+  }
+
+  function onPointerMove(e: React.PointerEvent) {
+    const p = press.current
+    if (!p || e.pointerId !== p.pointerId) return
+    const dx = e.clientX - p.x
+    const dy = e.clientY - p.y
+    if (!drag && Math.hypot(dx, dy) < 4) return
+    // The landing slot is the one whose centre is nearest to where the
+    // dragged tile's centre now is.
+    const cx = p.slots[p.from].x + dx
+    const cy = p.slots[p.from].y + dy
+    let to = p.from
+    let best = Infinity
+    p.slots.forEach((s, i) => {
+      const d = Math.hypot(s.x - cx, s.y - cy)
+      if (d < best) { best = d; to = i }
+    })
+    setDrag({ id: p.id, from: p.from, to, dx, dy })
+  }
+
+  function onPointerUp(e: React.PointerEvent) {
+    const p = press.current
+    if (!p || e.pointerId !== p.pointerId) return
+    if (drag && drag.to !== drag.from) setImages(xs => moveItem(xs, drag.from, drag.to))
+    press.current = null
+    setDrag(null)
+    setSettling(true)
+    requestAnimationFrame(() => requestAnimationFrame(() => setSettling(false)))
+  }
+
+  function onPointerCancel() {
+    press.current = null
+    setDrag(null)
+  }
+
+  /** Where a tile is drawn while a drag is on: the dragged one under the
+   *  pointer, the ones between its old and new place one slot over. */
+  function offsetFor(index: number): { x: number; y: number } | null {
+    const p = press.current
+    if (!drag || !p) return null
+    if (index === drag.from) return { x: drag.dx, y: drag.dy }
+    let shown = index
+    if (drag.from < drag.to && index > drag.from && index <= drag.to) shown = index - 1
+    if (drag.to < drag.from && index >= drag.to && index < drag.from) shown = index + 1
+    if (shown === index) return null
+    return { x: p.slots[shown].x - p.slots[index].x, y: p.slots[shown].y - p.slots[index].y }
+  }
+
+  function onGripKey(e: React.KeyboardEvent, index: number) {
+    const step = e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1
+      : e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : 0
+    if (!step) return
+    e.preventDefault()
+    setImages(xs => moveItem(xs, index, index + step))
+  }
+
+  const dropZoneHandlers = {
+    onDragOver: (e: React.DragEvent) => {
+      if (!e.dataTransfer.types.includes("Files")) return
+      e.preventDefault()
+      setFileOver(true)
+    },
+    onDragLeave: () => setFileOver(false),
+    onDrop: (e: React.DragEvent) => {
+      e.preventDefault()
+      setFileOver(false)
+      addFiles(e.dataTransfer.files)
+    },
+  }
+
   return (
-    <FormSection title="Image Upload">
-      <div className="border border-dashed border-border rounded-xl bg-muted/40 flex flex-col items-center justify-center gap-2 py-12 cursor-pointer hover:bg-muted transition-colors">
-        <div className="size-10 rounded-full bg-background border border-border flex items-center justify-center">
-          <Upload className="size-4 text-foreground" />
-        </div>
-        <p className="text-small text-foreground">Drag cover art here</p>
-        <p className="text-xsmall text-muted-foreground">
-          or <span className="text-primary-text">browse files</span>
-        </p>
-      </div>
+    <FormSection title="Images">
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        multiple
+        hidden
+        onChange={e => { addFiles(e.target.files); e.target.value = "" }}
+      />
+
+      {images.length === 0 ? (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          {...dropZoneHandlers}
+          className={cn(
+            "border border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-2 py-12 cursor-pointer transition-colors outline-none focus-ring",
+            fileOver ? "bg-muted" : "bg-muted/40 hover:bg-muted",
+          )}
+        >
+          <span className="size-10 rounded-full bg-background border border-border flex items-center justify-center">
+            <Upload className="size-4 text-foreground" />
+          </span>
+          <span className="text-small text-foreground">Drag images here</span>
+          <span className="text-xsmall text-muted-foreground">
+            or <span className="text-primary-text">browse files</span>
+          </span>
+        </button>
+      ) : (
+        <ul
+          ref={listRef}
+          aria-label="Product images"
+          {...dropZoneHandlers}
+          className={cn(
+            "grid grid-cols-3 sm:grid-cols-4 gap-3 rounded-xl transition-colors",
+            fileOver && "bg-muted",
+          )}
+        >
+          {images.map((img, i) => {
+            const off = offsetFor(i)
+            const dragging = drag?.id === img.id
+            // The cover badge follows where the image will LAND, so the
+            // seller sees which one becomes the cover before letting go.
+            const landsAt = drag ? (dragging ? drag.to : (off ? i + (drag.from < drag.to ? -1 : 1) : i)) : i
+            return (
+              <li
+                key={img.id}
+                ref={el => { if (el) tileRefs.current.set(img.id, el); else tileRefs.current.delete(img.id) }}
+                onPointerDown={e => onPointerDown(e, i, false)}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+                onPointerCancel={onPointerCancel}
+                style={off ? { transform: `translate(${off.x}px, ${off.y}px)` } : undefined}
+                className={cn(
+                  "relative aspect-square rounded-lg overflow-hidden bg-accent select-none",
+                  dragging
+                    // Under the pointer: no transition, or it trails behind.
+                    ? "z-10 cursor-grabbing shadow-lg scale-105 transition-[scale,box-shadow] duration-150"
+                    : cn("cursor-grab", !settling && "transition-transform duration-200 ease-[cubic-bezier(0.2,0,0,1)]"),
+                )}
+              >
+                <img src={img.src} alt={img.name} draggable={false} style={cropStyle(img.crop)} className="size-full object-cover art-edge pointer-events-none" />
+                {landsAt === 0 && (
+                  <Badge variant="secondary" className="absolute left-2 top-2">Cover</Badge>
+                )}
+                <button
+                  type="button"
+                  onPointerDown={e => e.stopPropagation()}
+                  onClick={() => remove(img.id)}
+                  aria-label={`Remove image ${i + 1}`}
+                  className="touch-target absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-background/90 text-foreground outline-none focus-ring hover:bg-background cursor-pointer"
+                >
+                  <X className="size-3.5" />
+                </button>
+                {/* Frame this image: where it is cropped on the tile and in
+                     the gallery. Per image, because a cover and a detail
+                     shot want different crops. */}
+                <button
+                  type="button"
+                  onPointerDown={e => e.stopPropagation()}
+                  onClick={() => setCropping(img)}
+                  aria-label={`Adjust image ${i + 1}`}
+                  className="touch-target absolute right-2 bottom-2 flex size-7 items-center justify-center rounded-full bg-background/90 text-foreground outline-none focus-ring hover:bg-background cursor-pointer"
+                >
+                  <Crop className="size-3.5" />
+                </button>
+                {images.length > 1 && (
+                  <button
+                    type="button"
+                    onPointerDown={e => {
+                      // Handled by the tile, flagged as the grip: the tile
+                      // owns capture and every later event of the gesture.
+                      e.stopPropagation()
+                      onPointerDown(e, i, true)
+                    }}
+                    onKeyDown={e => onGripKey(e, i)}
+                    aria-label={`Move image ${i + 1} of ${images.length}. Use the arrow keys.`}
+                    className="touch-target touch-none absolute left-2 bottom-2 flex size-7 items-center justify-center rounded-full bg-background/90 text-foreground outline-none focus-ring hover:bg-background cursor-grab"
+                  >
+                    <GripVertical className="size-3.5" />
+                  </button>
+                )}
+              </li>
+            )
+          })}
+          {room > 0 && (
+            <li className="aspect-square">
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                aria-label="Add images"
+                className="size-full rounded-lg border border-dashed border-border bg-muted/40 hover:bg-muted transition-colors flex flex-col items-center justify-center gap-1 text-muted-foreground outline-none focus-ring cursor-pointer"
+              >
+                <Plus className="size-5" />
+                <span className="text-2xsmall">Add</span>
+              </button>
+            </li>
+          )}
+        </ul>
+      )}
+
+      <ImageCropDialog
+        image={cropping}
+        onOpenChange={o => { if (!o) setCropping(null) }}
+        onSave={crop => {
+          const id = cropping?.id
+          setImages(xs => xs.map(x => x.id === id ? { ...x, crop } : x))
+        }}
+      />
+
       <p className="text-2xsmall text-muted-foreground">
-        Requires JPG, PNG, or WEBP · Min 1600×1600px
+        {images.length > 1
+          ? `The first image is the cover. Drag to change the order. ${images.length} of ${MAX_LISTING_IMAGES}.`
+          : `Up to ${MAX_LISTING_IMAGES} images. JPG, PNG or WEBP, min 1600×1600px.`}
       </p>
     </FormSection>
   )
@@ -735,9 +1022,12 @@ function TracklistSection({
 
 // ─── Pricing & Inventory ──────────────────────────────────────────────────────
 
-function PricingInventorySection() {
-  const [nameYourPrice, setNameYourPrice] = useState(false)
-  const [price,    setPrice]    = useState("1.00")
+// `price` and the price mode are lifted: publishing hands them to the buyer
+// side, where they decide whether the dialog shows a price or asks for one.
+function PricingInventorySection({ price, setPrice, nameYourPrice, setNameYourPrice }: {
+  price: string; setPrice: (v: string) => void
+  nameYourPrice: boolean; setNameYourPrice: (v: boolean) => void
+}) {
   const [currency, setCurrency] = useState("USD")
   const [stock,    setStock]    = useState("")
   const [includeDL, setIncludeDL] = useState(false)
@@ -978,12 +1268,28 @@ function ScheduleRow({
 
 // ─── VinylCreateListing ───────────────────────────────────────────────────────
 
+function seedImages(id: string): ListingImage[] {
+  return ["front", "back", "record"].map(side => ({
+    id: `${id}-${side}`,
+    src: `https://picsum.photos/seed/${id}-${side}/800/800`,
+    name: `${side}.jpg`,
+  }))
+}
+
 export interface VinylDraft {
   id?:      string
   title:    string
   type:     ReleaseType
   year:     string
   variant:  string
+  /** Cover first, in the order set in Images. */
+  images?:  ListingImage[]
+  /** Fixed price or the minimum, as typed (USD). */
+  price?:   string
+  /** The first main artist — whose page the product is listed on. */
+  artist?:  string
+  nameYourPrice?: boolean
+  linkedSong?: ShopProduct["linkedSong"]
 }
 
 interface VinylCreateListingProps {
@@ -1006,6 +1312,8 @@ export function VinylCreateListing({
   // input, or pulled from a linked release.
   const [mainArtists, setMainArtists] = useState<string[]>(["Chris Test"])
   const [tracks,  setTracks]  = useState<Track[]>(DEFAULT_TRACKS)
+  // Editing an existing product opens with its pictures; a new one is empty.
+  const [images,  setImages]  = useState<ListingImage[]>(() => initial?.id ? seedImages(initial.id) : [])
   /** When the user picks an existing release from the dropdown, we lock the
    *  release-level fields (title, type, year, main artist, tracklist) since
    *  those come from the release database. Clearing or retyping the title
@@ -1013,10 +1321,24 @@ export function VinylCreateListing({
   const [linkedId, setLinkedId] = useState<string | null>(null)
   const linked = linkedId !== null
 
-  const draft: VinylDraft = { id: initial?.id, title, type, year, variant }
+  const [price,   setPrice]   = useState("1.00")
+  const [nameYourPrice, setNameYourPrice] = useState(false)
+  // The release this pressing is of, when picked from the catalogue. Its
+  // first track becomes the product's play row: the buyer can listen first.
+  const [linkedRelease, setLinkedRelease] = useState<ExistingRelease | null>(null)
+  const draft: VinylDraft = {
+    id: initial?.id, title, type, year, variant, images, price, nameYourPrice,
+    artist: mainArtists[0],
+    linkedSong: linked && linkedRelease?.tracks[0] ? {
+      title: linkedRelease.tracks[0].title, artist: linkedRelease.artist,
+      album: linkedRelease.title, year: linkedRelease.year, cover: linkedRelease.cover,
+      duration: linkedRelease.tracks[0].duration,
+    } : undefined,
+  }
 
   function handleLinkedRelease(r: ExistingRelease) {
     setLinkedId(r.value)
+    setLinkedRelease(r)
     setYear(String(r.year))
     setMainArtists([r.artist])
     setTracks(
@@ -1050,15 +1372,23 @@ export function VinylCreateListing({
   const heading = mode === "create" ? "Create Listing" : "Edit Listing"
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col">
 
       {/* ── Top bar ──────────────────────────────────────────────────────
            Back-arrow icon-button on the left replaces the old "Cancel"
            button. The seller is in a focused sub-flow (tabs above are
            intentionally hidden); the arrow communicates "step out and
            go back" more clearly than a generic Cancel, and matches the
-           same affordance used on the buyer-side purchase-detail page. */}
-      <div className="shrink-0 flex items-center justify-between gap-6 px-page pt-8 pb-6 border-b border-border bg-background">
+           same affordance used on the buyer-side purchase-detail page.
+
+           Sticky, because the form is long and the way out is up here: at
+           the end of Visibility & Publishing there was no action in sight.
+           The layout meant this bar to stay put with the body scrolling
+           under it (`h-full overflow-hidden` + an `overflow-auto` body), but
+           nothing above gives the editor a height, so the page scrolled and
+           took the bar with it. Sticky works against whichever ancestor
+           scrolls, so it does not depend on that height. */}
+      <div className="sticky top-0 z-20 shrink-0 flex items-center justify-between gap-6 px-page pt-8 pb-6 border-b border-border bg-background">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon-sm" onClick={onCancel} aria-label="Back to products">
             <ArrowLeft className="size-4" />
@@ -1067,13 +1397,13 @@ export function VinylCreateListing({
           <Badge variant="secondary"><Disc3 />Vinyl</Badge>
         </div>
         <div className="flex items-center gap-3">
-          <Button size="lg" variant="outline" onClick={() => onSave(draft)}>Save Draft</Button>
+          <Button size="lg" variant="outline" onClick={() => onSave(draft)}>Save draft</Button>
           <PublishButton mode={mode} onPublish={() => onPublish(draft)} />
         </div>
       </div>
 
       {/* ── Form body ────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1">
         <div className="max-w-[720px] mx-auto px-8 py-10 flex flex-col gap-6">
           <ReleaseInformationSection
             title={title}    onTitleChange={handleTitleChange}
@@ -1083,14 +1413,14 @@ export function VinylCreateListing({
             onLinkedRelease={handleLinkedRelease}
             linked={linked}
           />
-          <ImageUploadSection />
+          <ImageUploadSection images={images} setImages={setImages} />
           <ArtistsCreditsSection
             mainArtists={mainArtists}
             setMainArtists={setMainArtists}
             linked={linked}
           />
           <TracklistSection tracks={tracks} setTracks={setTracks} linked={linked} />
-          <PricingInventorySection />
+          <PricingInventorySection price={price} setPrice={setPrice} nameYourPrice={nameYourPrice} setNameYourPrice={setNameYourPrice} />
           <ShippingSection />
           <DescriptionSection />
           <VisibilityPublishingSection artistName={mainArtists[0] || "your"} />
@@ -1104,9 +1434,9 @@ export function VinylCreateListing({
 //
 // Wraps the primary submit button with the shop-live check so creating
 // a listing pre-onboarding gracefully degrades:
-//   · Edit mode ("Save Changes") — always enabled. Saving an existing
+//   · Edit mode ("Save changes") — always enabled. Saving an existing
 //     listing doesn't promote it; status stays as-is.
-//   · Create mode ("Publish Listing") — disabled when the shop isn't
+//   · Create mode ("Publish") — disabled when the shop isn't
 //     live. A tooltip explains why and points back at the saved-draft
 //     path. The disabled button has pointer-events:none on the
 //     <button>, so we wrap it in a span trigger that captures hover.
@@ -1118,7 +1448,7 @@ function PublishButton({ mode, onPublish }: {
   const { isShopLive } = useShopSettings()
   const isCreate  = mode === "create"
   const disabled  = isCreate && !isShopLive
-  const label     = isCreate ? "Publish Listing" : "Save Changes"
+  const label     = isCreate ? "Publish" : "Save changes"
 
   const button = (
     <Button size="lg" onClick={onPublish} disabled={disabled}>
@@ -1135,7 +1465,7 @@ function PublishButton({ mode, onPublish }: {
           {button}
         </TooltipTrigger>
         <TooltipContent side="bottom">
-          Finish shop setup to publish. Save Draft in the meantime.
+          Finish shop setup to publish. Save a draft in the meantime.
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

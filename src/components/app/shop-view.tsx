@@ -29,6 +29,9 @@ import { OrdersView } from "@/components/app/orders-view"
 import { ShopSettingsView } from "@/components/app/shop-settings-view"
 import { ShopSettingsProvider, useShopSettings } from "@/lib/shop-settings"
 import { VinylCreateListing, type VinylDraft } from "@/components/app/vinyl-create-listing"
+import { publishListing } from "@/lib/shop-listings"
+import { getArtistProfile } from "@/lib/artist-catalog"
+import { slugify } from "@/lib/media-nav"
 
 // Tab order: Orders first — it's the daily-attention surface (new
 // payments, shipments to send, refund requests). Products is the
@@ -56,7 +59,7 @@ export function ShopView() {
 // When the seller is in the create/edit flow (`editing !== null`), the
 // tab bar is hidden entirely. The seller can't switch tabs mid-form
 // since (a) it's weird UX and (b) the half-filled form has no defined
-// behaviour on tab change. The form's own back / Save Draft / Publish
+// behaviour on tab change. The form's own back / Save draft / Publish
 // affordances are the only ways out.
 
 function ShopChrome() {
@@ -70,12 +73,42 @@ function ShopChrome() {
 
 function EditingChrome({ onClose }: { onClose: () => void }) {
   const { editing } = useShopSettings()
+  const [, setParams] = useSearchParams()
   if (!editing) return null
 
   // Stubbed handlers — wire to real persistence later. The form
   // always exits via the same handler so we don't drift behaviours.
   const handleSave    = (_d: VinylDraft) => onClose()
-  const handlePublish = (_d: VinylDraft) => onClose()
+  // Publishing puts the product on the buyer side and takes the seller
+  // there, to the artist's Shop tab, where it is first. The account in the
+  // prototype ("Chris Test") has no artist page of its own, so a main artist
+  // without one lists on the default artist page, Sun Ra's.
+  const handlePublish = (d: VinylDraft) => {
+    const slug = slugify(d.artist ?? "")
+    const profile = getArtistProfile(slug)
+    const images = (d.images ?? []).map(i => ({ src: i.src, crop: i.crop }))
+    const amount = Number(d.price ?? "")
+    publishListing({
+      id:          d.id ?? `listing-${Date.now()}`,
+      title:       d.title.trim() || "Untitled vinyl",
+      artist:      profile.name,
+      artistImage: profile.cover,
+      kind:        "Vinyl",
+      images:      images.length ? images : [{ src: "https://picsum.photos/seed/new-listing/1200/900" }],
+      price:       Number.isFinite(amount) && amount > 0 ? amount : 1,
+      priceMode:   d.nameYourPrice ? "min" : "fixed",
+      linkedSong:  d.linkedSong,
+    })
+    onClose()
+    setParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set("page", "Artist")
+      next.set("artist", slugify(profile.name))
+      next.set("artist-tab", "products")
+      next.delete("shop-tab")
+      return next
+    })
+  }
 
   if (editing.productType === "Vinyl") {
     return (

@@ -35,6 +35,13 @@ interface InputProps extends Omit<React.ComponentProps<"input">, "size"> {
   size?: ControlSize
   /** Leading glyph inside the field (e.g. a search icon). Adds left padding. */
   startIcon?: React.ReactNode
+  /** Leading TEXT inside the field — a currency symbol. Sits on the value's
+   *  own line, not the box's centre; see `TEXT_ADORNMENT_CLS`. */
+  startText?: React.ReactNode
+  /** Trailing TEXT inside the field — a unit ("per item") or a currency
+   *  symbol that follows the amount. The field does not know how wide it is:
+   *  reserve room with a `pr-*` on `className`. */
+  endText?: React.ReactNode
   /** Shows a clear (✕) button whenever `value` is non-empty. */
   onClear?: () => void
 }
@@ -85,8 +92,19 @@ const FIELD_CLS =
 
 const HINT_CLS = "text-2xsmall leading-snug"
 
+/* Text inside the field, before or after the value — "$", "per item".
+   NOT the icon slot's `top-1/2`: the value is not centred in the box. The
+   ladder lifts it with uneven padding (`pt-[10px] pb-[14px]` at lg), because
+   Founders Grotesk sits low in a centred line. A glyph centred on the box
+   therefore lands 2px under the number beside it — the "$" that sat low in
+   the cart. So the adornment takes the field's full height and the SAME
+   vertical padding and type size as the value, and lands on its line by
+   construction. Icons keep `startIcon`: a drawn shape is centred on the box. */
+const TEXT_ADORNMENT_CLS =
+  "pointer-events-none absolute inset-y-0 flex items-center text-muted-foreground tabular-nums"
+
 function Input({
-  className, type, size = "lg", hint, hintTone = "default", startIcon, onClear, ...props
+  className, type, size = "lg", hint, hintTone = "default", startIcon, startText, endText, onClear, ...props
 }: InputProps) {
   const showClear = !!onClear && !!props.value
 
@@ -100,6 +118,8 @@ function Input({
         SIZE_CLS[size],
         // Reserve room for the affordances that overlay the field.
         startIcon && "pl-10",
+        // A one-character prefix ("$") plus the gap the value keeps from it.
+        startText && (size === "sm" ? "pl-6" : size === "default" ? "pl-8" : "pl-9"),
         showClear && "pr-10",
         className,
       )}
@@ -109,7 +129,7 @@ function Input({
 
   // Leading icon and/or trailing clear — both overlay the field, so wrap it
   // in a relative box. Purely additive: without either prop nothing changes.
-  if (startIcon || onClear) {
+  if (startIcon || startText || endText || onClear) {
     // `min-w-0` so the wrapper can shrink inside grid/flex parents (a grid item
     // defaults to min-width:auto and would otherwise force overflow).
     field = (
@@ -122,7 +142,17 @@ function Input({
             {startIcon}
           </span>
         )}
+        {startText && (
+          <span aria-hidden="true" className={cn(TEXT_ADORNMENT_CLS, CONTROL_SIZE[size], CONTROL_PAD_Y[size], "h-auto", size === "sm" ? "left-3" : size === "default" ? "left-4" : "left-5")}>
+            {startText}
+          </span>
+        )}
         {field}
+        {endText && (
+          <span className={cn(TEXT_ADORNMENT_CLS, CONTROL_SIZE[size], CONTROL_PAD_Y[size], "h-auto", size === "sm" ? "right-3" : size === "default" ? "right-4" : "right-5")}>
+            {endText}
+          </span>
+        )}
         {showClear && (
           <button
             type="button"

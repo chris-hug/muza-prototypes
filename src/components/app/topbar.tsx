@@ -184,7 +184,10 @@ function CartButton({ onOpen }: { onOpen: () => void }) {
           aria-hidden="true"
           variant="inverse"
           shape="pill-sm"
-          className="absolute top-0.5 right-0.5"
+          // Anchored by its LEFT edge at the icon's upper-right corner, so a
+          // second digit grows outward. Pinned by its right edge, "12" grew
+          // inward and covered most of the 18px cart.
+          className="absolute top-0 left-6"
         >
           {cart.count > 99 ? "99+" : cart.count}
         </Badge>

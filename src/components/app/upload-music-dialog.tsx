@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Badge, ContentTypeBadge } from "@/components/ui/badge"
+import { Badge, ContentTypeBadge, BADGE_MINT } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { FormItem, FormLabel, FormControl } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
@@ -153,7 +153,7 @@ function MatchBadge({ score }: { score: number }) {
   const good = score >= 60
   return (
     <Badge className={cn(
-      good ? "bg-green-50 text-green-700 border-transparent" : "bg-red-50 text-red-600 border-transparent"
+      good ? BADGE_MINT : "bg-red-50 text-red-600 border-transparent"
     )}>
       {good ? <Check className="size-3" /> : <AlertTriangle className="size-3" />}
       {score}%
@@ -1351,7 +1351,7 @@ function StepTrackMatching({
         }} />
         <Badge className={cn(
           "border-transparent",
-          matched === tracks.length ? "bg-green-50 text-green-700"
+          matched === tracks.length ? BADGE_MINT
             : matched > 0          ? "bg-yellow-50 text-yellow-700"
                                    : "bg-red-50 text-red-600"
         )}>
