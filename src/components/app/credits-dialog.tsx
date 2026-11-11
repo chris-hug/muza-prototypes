@@ -143,6 +143,11 @@ export function CreditsContent({
 }) {
 
   const meta = [credits.year && String(credits.year), credits.label].filter(Boolean).join(" · ")
+  /* Whether the visible tab panel is scrolled — the veil under the tab bar
+     shows only then (see `veil`). Reset on a tab change: each panel starts at
+     its top. */
+  const [scrolled, setScrolled] = useState(false)
+  const onPanelScroll = (e: React.UIEvent<HTMLDivElement>) => setScrolled(e.currentTarget.scrollTop > 0)
 
   /* TWO type sizes in the whole dialog: `text-small` (19) for content —
      title, names, section titles, Overview, Notes — and `text-2xsmall` (15)
@@ -306,22 +311,41 @@ export function CreditsContent({
   }
 
   /* The panel FADES under the tab bar instead of being cut at its edge: a
-     row scrolled half out read as a broken row. The mask is fully clear for
-     its first 12px — scrolled content never runs right up against the bar —
-     then eases in over 28px (a straight 20px ramp read as a hard band). The
-     panel's 40px top padding covers the whole mask, so nothing is faded at
-     rest; only what scrolls up into it. */
+     row scrolled half out read as a broken row. The fade is a VEIL in the
+     dialog's own colour laid over the content column, not a `mask-image` on
+     the scroller: a mask fades everything the element paints, scrollbar
+     included, and the bar dissolved into the fade with the rows. The veil
+     stops at the gutters, so the scrollbar stays whole beside it.
+     Clear for 15px (scrolled content never runs up against the bar), then
+     eased out over 35px; a straight 20px ramp read as a hard band, 12 + 28
+     as too tight.
+     The veil only shows once the panel is scrolled. At rest there is nothing
+     under it to fade, and padding the panel by the veil's 50px left a band
+     of empty space between the tabs and the first heading; at rest the gap
+     is 24px. */
   const panel = cn(
-    "flex-1 min-h-0 overflow-y-auto pt-10 pb-10",
-    "[mask-image:linear-gradient(to_bottom,transparent_0.75rem,rgba(0,0,0,0.08)_1.25rem,rgba(0,0,0,0.3)_1.75rem,rgba(0,0,0,0.65)_2.25rem,black_2.5rem)]",
+    "flex-1 min-h-0 overflow-y-auto pt-6 pb-10",
+    // Thin, in the app's ink, on a clear track — not the browser's grey slab.
+    "[scrollbar-width:thin] [scrollbar-color:var(--muted-foreground)_transparent]",
     pad,
+  )
+  const veil = (
+    <div
+      aria-hidden="true"
+      className={cn(
+        "pointer-events-none absolute top-0 h-12.5 z-10 transition-opacity duration-200",
+        scrolled ? "opacity-100" : "opacity-0",
+        showCover ? "inset-x-3 md:inset-x-6" : "inset-x-0",
+        "bg-[linear-gradient(to_bottom,var(--popover)_15px,color-mix(in_srgb,var(--popover)_92%,transparent)_25px,color-mix(in_srgb,var(--popover)_70%,transparent)_35px,color-mix(in_srgb,var(--popover)_35%,transparent)_45px,transparent_50px)]",
+      )}
+    />
   )
 
   /* Tabs: the header and the tab bar hold, the panel under them scrolls —
      switching tabs never moves the bar out from under the finger. Credits is
      the default tab, because "Show credits" is what was asked for. */
   return (
-    <Tabs defaultValue="credits" className={cn("flex flex-col flex-1 min-h-0 gap-0", bodyClassName)}>
+    <Tabs defaultValue="credits" onValueChange={() => setScrolled(false)} className={cn("flex flex-col flex-1 min-h-0 gap-0", bodyClassName)}>
       <div className={cn("shrink-0 flex flex-col gap-6 pt-3 md:pt-6 pb-0", pad)}>
         {header}
         <TabsList size="sm" className="w-full">
@@ -330,9 +354,12 @@ export function CreditsContent({
           {notes && <TabsTrigger value="notes">Notes</TabsTrigger>}
         </TabsList>
       </div>
-      <TabsContent value="overview" className={panel}>{overview}</TabsContent>
-      <TabsContent value="credits"  className={panel}>{creditsBody}</TabsContent>
-      {notes && <TabsContent value="notes" className={panel}>{notes}</TabsContent>}
+      <div className="relative flex flex-1 min-h-0 flex-col">
+        {veil}
+        <TabsContent value="overview" className={panel} onScroll={onPanelScroll}>{overview}</TabsContent>
+        <TabsContent value="credits"  className={panel} onScroll={onPanelScroll}>{creditsBody}</TabsContent>
+        {notes && <TabsContent value="notes" className={panel} onScroll={onPanelScroll}>{notes}</TabsContent>}
+      </div>
     </Tabs>
   )
 }
