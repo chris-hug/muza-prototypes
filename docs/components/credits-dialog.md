@@ -8,8 +8,8 @@ usage:
 ---
 
 `CreditsDialog` is the release metadata behind every "Show credits" action
-and the MediaHeader's ⓘ: a compact header (thumb, title, main artist, year ·
-label · catalogue number) over **Overview** (the session facts), **Credits**
+and the MediaHeader's ⓘ: a compact header (the ⋯ sheet's: thumb, title, main artist, Album badge,
+year) over **Overview** (the session facts), **Credits**
 (one row per person, grouped) and **Notes**. Albums only; a playlist has no
 release credits.
 
@@ -42,7 +42,7 @@ is the model, with its one data bug avoided (below).
 
 | Part | What it wears | Why |
 |---|---|---|
-| Header | `size-20 rounded-xs art-edge` thumb · title `text-large font-medium` · main artist `text-small` · `text-2xsmall` meta: year · label catalogue number | the 3:2 cover it replaced spent a third of a phone on the artwork the reader just came from. Before that the dialog opened on four equal label/value rows, where the title weighed as much as a recording date. The `heading` slot is an `sr-only` `DialogTitle` ("Album credits"): the dialog is named for screen readers, but a grey "Album credits" over the title and thumb only labelled the obvious, so it is not drawn (`null` in the preview and the player) |
+| Header | the ⋯ sheet's identity block (`DetailMenuSheetBody`): `size-18 rounded-xs art-edge` thumb · title `text-base font-medium` · artist `text-small text-muted-foreground` · `ContentTypeBadge` "Album" + year `text-xsmall`. Gutter `px-3`, `md:px-6` | the credits are reached from that sheet's "Credits" tile, so both open on one header instead of two. It replaced a 3:2 cover that spent a third of a phone on the artwork the reader just came from; before that, four equal label/value rows where the title weighed as much as a recording date. Label and catalogue number are Overview facts. The `heading` slot is an `sr-only` `DialogTitle` ("Album credits") — named for screen readers, not drawn |
 | Tabs | `TabsList size="sm"` full width: Overview · Credits · Notes (Notes only with text). Credits is the default | "Show credits" is what was asked for. Header and tab bar hold; only the panel scrolls, so switching tabs never moves the bar. The tabs dialog has a fixed height (`h-[88svh]`, `md:h-[min(85vh,44rem)]`) so a short Overview and a long Credits list do not resize the sheet under the finger |
 | Overview | a `dl`, label `text-muted-foreground`, value `text-foreground`: Recorded (date + studio) · Released · Label (label · catalogue number) · Tracks (count · total minutes) | the session facts a sleeve prints; a row is left out when the catalogue has no value |
 | Credits | sections Personnel · Composition · Production & Engineering · Artwork & Notes, `text-small font-medium` titles; rows in a `divide-y divide-border/60` list | MusicBrainz and Discogs name roles differently; four fixed sections keep it from becoming Tidal's twelve role headings. The hairlines read as a ruled liner-note sheet |

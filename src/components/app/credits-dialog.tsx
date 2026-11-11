@@ -31,6 +31,7 @@ import { getCredits, hasAlbumDetail, type Credits, type CreditGroup, type Credit
 import { artistImage } from "@/lib/artist-data"
 import { LibraryHeartButton } from "@/components/ui/library-heart-button"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { ContentTypeBadge } from "@/components/ui/badge"
 import { CreditsContext } from "@/lib/credits-context"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 
@@ -141,36 +142,35 @@ export function CreditsContent({
   bodyClassName?: string
   layout?: CreditsLayout
 }) {
-  const meta = [
-    credits.year && String(credits.year),
-    [credits.label, credits.catalogNumber].filter(Boolean).join(" "),
-  ].filter((m): m is string => !!m)
 
-  /* Compact header, after Qobuz: a thumb beside the title, not the 3:2 cover
-     it replaces. The cover is what the reader just came from; a large one
-     spent a third of a phone on it before the first name. The title still
-     leads — it was four equal label/value rows before that. */
+  /* Compact header — the SAME identity block as the ⋯ sheet
+     (`DetailMenuSheetBody`): 72px thumb · title `text-base` · artist · the
+     content-type badge and the year. The credits are reached from that sheet
+     ("Credits" tile), so the two open on one header instead of two. It
+     replaced a 3:2 cover that spent a third of a phone on the artwork the
+     reader had just come from. Label and catalogue number are Overview facts. */
   const header = (
-    <div className="flex items-center gap-4">
+    <div className="flex flex-row items-center gap-3">
       {showCover && (
         <img
           src={credits.cover}
           alt=""
           draggable={false}
-          className="size-20 shrink-0 rounded-xs object-cover shadow-sm art-edge"
+          className="size-18 shrink-0 rounded-xs object-cover bg-secondary art-edge"
         />
       )}
-      <div className="flex min-w-0 flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-1 text-left">
         {heading}
-        <Value onClick={onAlbum} className="text-large font-medium leading-tight tracking-[-0.01em] text-foreground">
+        <Value onClick={onAlbum} className="truncate text-base font-medium leading-tight text-foreground">
           {credits.album}
         </Value>
-        <Value onClick={onArtist && (() => onArtist(credits.mainArtist))} className="text-small text-foreground leading-tight">
+        <Value onClick={onArtist && (() => onArtist(credits.mainArtist))} className="truncate text-small text-muted-foreground leading-none">
           {credits.mainArtist}
         </Value>
-        {meta.length > 0 && (
-          <p className="text-2xsmall text-muted-foreground leading-tight">{meta.join(" · ")}</p>
-        )}
+        <div className="flex min-w-0 items-center gap-2">
+          <ContentTypeBadge type="album" />
+          {credits.year && <span className="truncate text-xsmall text-muted-foreground">{credits.year}</span>}
+        </div>
       </div>
     </div>
   )
@@ -262,12 +262,14 @@ export function CreditsContent({
     </div>
   )
 
-  const pad = showCover ? "px-6" : "px-0"
+  /* The dialog's own gutter: 12px on a phone (the ⋯ sheet's `px-3`), 24px
+     from `md`. None in the player, which pads its own panel. */
+  const pad = showCover ? "px-3 md:px-6" : "px-0"
 
   if (layout === "page") {
     return (
       <div className={cn("flex flex-col flex-1 min-h-0 overflow-y-auto", bodyClassName)}>
-        <div className={cn("flex flex-col gap-8 pt-6 pb-10", pad)}>
+        <div className={cn("flex flex-col gap-8 pt-3 md:pt-6 pb-10", pad)}>
           {header}
           <section className="flex flex-col gap-3">
             <SectionTitle>Overview</SectionTitle>
@@ -290,7 +292,7 @@ export function CreditsContent({
      the default tab, because "Show credits" is what was asked for. */
   return (
     <Tabs defaultValue="credits" className={cn("flex flex-col flex-1 min-h-0 gap-0", bodyClassName)}>
-      <div className={cn("shrink-0 flex flex-col gap-4 pt-6 pb-4", pad)}>
+      <div className={cn("shrink-0 flex flex-col gap-6 pt-3 md:pt-6 pb-4", pad)}>
         {header}
         <TabsList size="sm" className="w-full">
           <TabsTrigger value="overview">Overview</TabsTrigger>
