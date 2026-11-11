@@ -324,7 +324,7 @@ The sheet's header is the song itself — 44px cover (`size-11 rounded-xs`),
 title, then `artist · album` in `text-small text-muted-foreground` — and its
 body is a column of `SheetAction`s, each a full-width `button` wrapped in
 `SheetClose` so picking one dismisses the sheet. Items, top to bottom: Save /
-Remove from library · Save offline / Remove from offline · Add to playlist · Go to artist · Go to album · Share… /
+Remove from library · Save offline / Remove from offline (only on a song you own, through its album) · Add to playlist · Go to artist · Go to album · Share… /
 Copy link · Show credits · Report (destructive). The gated ones follow the
 same `hide…` flags as the desktop menu.
 
@@ -342,6 +342,8 @@ the **same** items; a surface hides only what is redundant there:
 
 `SongMenuItems`: Share… (native) / Copy link · Save / Remove from library ·
 Save offline / Remove from offline · Add to playlist · ─ · Go to artist · Go to album · Show credits · ─ · Report.
+Save offline appears only on a song you own (its album is bought, see
+`useOfflineEligibility`); a song already offline keeps Remove from offline.
 "Go to artist" and "Go to album" need both their click handler **and** the
 flag clear — a row with no `onAlbumClick` has nowhere to go. Share, library,
 credits and report are self-wired: `useShare`, `useUserLibrary` +

@@ -188,7 +188,7 @@ export function LibrarySongsView() {
         {songs.length === 0 ? (
           <p className="text-small text-muted-foreground max-w-md">
             {status === "offline" && !query
-              ? "Nothing saved offline yet. Choose “Save offline” in any song’s or album’s menu and it’ll show up here."
+              ? "Nothing saved offline yet. Choose “Save offline” on an album you own, or a song from one, and it’ll show up here."
               : allSongs.length === 0
               ? "No saved songs yet. Tap the heart on any track — in the player or a song list — and it'll show up here."
               : query

@@ -54,7 +54,7 @@ export function LibraryAllView() {
         </div>
         {empty ? (
           <p className="text-small text-muted-foreground max-w-md">
-            Nothing saved offline yet. Choose “Save offline” in any album’s, playlist’s or song’s menu and it’ll show up here.
+            Nothing saved offline yet. Choose “Save offline” on music you own, an album, a song or a playlist, and it’ll show up here.
           </p>
         ) : offline ? (
           <OfflineList albums={albums} playlists={playlists} songs={offlineSongs} />

@@ -625,16 +625,6 @@ const HOME_NEW_ALBUMS = [
   { id: "h-na-12", title: "Under Tangled Silence",             artist: "Djrum",                          cover: "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/4a/2d/6f/4a2d6f89-f204-8f91-9812-f9bd203e33b0/cover.jpg/600x600bb.jpg" },
 ]
 
-// A few releases marked as already-purchased on the live home rails, so the
-// "Owned" label shows up without buying first. Spread across both album
-// rails — two priced-looking titles per rail.
-const HOME_OWNED = new Set<string>([
-  "Promises",          // New Albums
-  "Black Acid Soul",   // New Albums
-  "Maiden Voyage",     // Albums of the week
-  "Glass Bead Game",   // Albums of the week
-])
-
 const HOME_WEEKLY_ALBUMS = [
   { id: "h-wa-1",  title: "Maiden Voyage",                     artist: "Herbie Hancock",                 cover: "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/23/49/49/234949c3-db74-f0eb-30f5-d715526e459b/19UMGIM73745.rgb.jpg/600x600bb.jpg" },
   { id: "h-wa-2",  title: "A Love Supreme",                    artist: "John Coltrane",                  cover: "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/e5/24/aa/e524aacd-467b-66f3-8931-0fcd6750a4b9/08UMGIM07914.rgb.jpg/600x600bb.jpg" },
@@ -727,9 +717,11 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
     const meta  = albumMetaFor(a.title)
     const libId = libraryIdForTitle(a.title)
     const key   = slugify(a.title)
-    // Seed a handful of "Owned" releases across the rails so the purchased
-    // state is visible on the live home page even before the user buys.
-    const owned = (libId ? library.isPurchased(libId) : false) || HOME_OWNED.has(a.title)
+    // Owned only when the store says so. The rails used to paint "Owned" on a
+    // fixed list of titles the store didn't know, so the card said Owned and
+    // its menu (and the album page) treated it as not bought. The owned
+    // releases on Home are real purchases in LIBRARY_SEED instead.
+    const owned = library.isPurchased(libId ?? key)
     return (
       <AlbumCard
         cover={a.cover}
@@ -816,24 +808,31 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
 // ─── Studio pages ─────────────────────────────────────────────────────────────
 
 // Demo seed for the UserLibraryProvider — first 12 SAVED_ALBUMS ids
-// are in the library; a14 + a18 are bought for listening and a09 with its
-// files, so every purchase state (and its menu rows) is there out of the box.
-// a07 (A Love Supreme) is intentionally absent so the buy → purchase
-// flow on the album detail page demonstrates the auto-add behavior.
+// are in the library. a09 is bought with its files; a02, a03, a05, a08, a12,
+// a14 and a18 for listening, so every purchase state (and its menu rows) is
+// there out of the box, and Library › Offline has owned music to show (offline
+// is for music you own, see offline-eligibility). The rest are saved, not
+// bought, and offer no "Save offline". a07 (A Love Supreme) is intentionally
+// absent so the buy → purchase flow on the album detail page demonstrates the
+// auto-add behavior.
 const LIBRARY_SEED = {
   a01: { added: true, purchased: false },
-  a02: { added: true, purchased: false },
-  a03: { added: true, purchased: false },
+  a02: { added: true, purchased: true, tier: "stream" as const },
+  a03: { added: true, purchased: true, tier: "stream" as const },
   a04: { added: true, purchased: false },
-  a05: { added: true, purchased: false },
+  a05: { added: true, purchased: true, tier: "stream" as const },
   a06: { added: true, purchased: false },
-  a08: { added: true, purchased: false },
+  a08: { added: true, purchased: true, tier: "stream" as const },
   a09: { added: true, purchased: true, tier: "download" as const },
   a10: { added: true, purchased: false },
   a11: { added: true, purchased: false },
-  a12: { added: true, purchased: false },
+  a12: { added: true, purchased: true, tier: "stream" as const },
   a14: { added: true, purchased: true, tier: "stream" as const },
   a18: { added: true, purchased: true, tier: "stream" as const },
+  // Home › New Albums: bought, outside the library catalog, so keyed by the
+  // card's title slug (the key AlbumCard and the album page use).
+  promises:          { added: true, purchased: true, tier: "stream" as const },
+  "black-acid-soul": { added: true, purchased: true, tier: "stream" as const },
 }
 
 // Seed for the non-album saved sets so the Artists / Playlists library
@@ -845,17 +844,18 @@ const LIBRARY_SAVED_SEED = {
   song:     Object.fromEntries(SAVED_SONGS_SEED.map(s => [s.id, s])),
 }
 
-// Example data for Library › Offline. The songs are from other albums than
-// the six here on purpose: a song that came with an offline album is that
-// album's tile, so only singles saved on their own show in the songs block.
+// Example data for Library › Offline, all of it owned (offline is for music
+// you own). The songs are from bought albums that are NOT offline themselves
+// (Speak No Evil, Empyrean Isles) on purpose: a song that came with an offline
+// album is that album's tile, so only songs saved on their own show in the
+// songs block. Each playlist holds songs from the bought albums; only those go
+// offline.
 const OFFLINE_SONG_IDS = new Set([
-  "witch-hunt-wayne-shorter", "infant-eyes-wayne-shorter", "cool-struttin-sonny-clark",
-  "cantaloupe-island-herbie-hancock", "one-finger-snap-herbie-hancock", "hat-and-beard-eric-dolphy",
-  "crescent-john-coltrane", "wise-one-john-coltrane", "greensleeves-john-coltrane",
-  "source-nubya-garcia", "afro-blue-robert-glasper",
+  "witch-hunt-wayne-shorter", "infant-eyes-wayne-shorter",
+  "cantaloupe-island-herbie-hancock", "one-finger-snap-herbie-hancock",
 ])
 const LIBRARY_OFFLINE_SEED = {
-  album: { a01: true, a03: true, a08: true, a09: true, a12: true, a14: true } as Record<string, true>,
+  album: { a03: true, a08: true, a09: true, a12: true, a14: true } as Record<string, true>,
   playlist: {
     "blue-note-essentials": true, "blue-note-late-night": true, "impulse-spiritual-jazz": true,
     "coltrane-years-on-impulse": true, "strata-east-deep-cuts": true,

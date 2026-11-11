@@ -25,7 +25,7 @@ const SEED = {
 }
 
 const STATES = [
-  { id: "a01", heading: "Not purchased", when: "You can listen, but you don't own it. No option for files.", note: "Example: Maiden Voyage" },
+  { id: "a01", heading: "Not purchased", when: "You can listen, but you don't own it. No option for files, and none for offline.", note: "Example: Maiden Voyage" },
   { id: "a14", heading: "Purchased for listening", when: "Owned. The files are available for the difference in price.", note: "Example: Glass Bead Game. Download files opens checkout." },
   { id: "a09", heading: "Files paid for", when: "Owned, with the lossless files.", note: "Example: The Black Saint and the Sinner Lady" },
 ]
@@ -34,7 +34,7 @@ const Y = "Yes", N = "No"
 const MATRIX: [string, string, string, string, string, string][] = [
   ["Copy link", Y, Y, Y, Y, Y],
   ["Save to library", Y, "No, it's already yours", Y, Y, Y],
-  ["Save offline", Y, Y, Y, Y, N],
+  ["Save offline", "Purchased or uploaded", "Only the songs you own", "Only the songs you own", "If you own its album", N],
   ["Download files", "Purchased only, see above", N, N, N, N],
   ["Add to a playlist", "Where available", N, N, "Not in your own playlist", N],
   ["Credits", Y, N, N, Y, N],
@@ -72,8 +72,10 @@ function Menu({ id, heading, when, note }: (typeof STATES)[number]) {
 
 function Page() {
   const library = useUserLibrary()
-  const allOffline = STATES.every(s => library.isOffline("album", s.id))
-  const setAll = (on: boolean) => STATES.forEach(s => {
+  // Only the albums you own can be offline, so the switch only moves those.
+  const owned = STATES.filter(s => library.isPurchased(s.id))
+  const allOffline = owned.every(s => library.isOffline("album", s.id))
+  const setAll = (on: boolean) => owned.forEach(s => {
     if (library.isOffline("album", s.id) !== on) library.toggleOffline("album", s.id)
   })
 
@@ -84,7 +86,7 @@ function Page() {
       <header className="flex flex-col gap-3">
         <h1 className="text-2xlarge font-medium tracking-tight text-foreground text-balance">What the album menu shows</h1>
         <p className="text-large text-muted-foreground max-w-[65ch]">
-          The ⋯ menu of an album depends on what you bought. Save offline is always there. Download files depends on the purchase.
+          The ⋯ menu of an album depends on what you bought. Save offline and Download files are only there once it is yours.
         </p>
       </header>
 
@@ -92,7 +94,7 @@ function Page() {
         <h2 className="text-xlarge font-medium tracking-tight text-foreground">Three purchase states, three menus</h2>
         <div className="flex items-center gap-3">
           <Switch id="offline" checked={allOffline} onCheckedChange={setAll} />
-          <Label htmlFor="offline">Album is saved offline</Label>
+          <Label htmlFor="offline">Albums you own are saved offline</Label>
         </div>
         <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))]">
           {STATES.map(s => <Menu key={s.id} {...s} />)}
@@ -107,7 +109,7 @@ function Page() {
         <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))]">
           <div className="flex flex-col gap-1">
             <h3 className="text-large font-medium text-foreground">Offline</h3>
-            <p className="text-small text-muted-foreground">Saved in the app on this device, playable without internet. Works on anything you can play, purchased or not.</p>
+            <p className="text-small text-muted-foreground">Saved in the app on this device, playable without internet. Only for music that is yours: albums you bought or uploaded and their songs. A playlist saves the songs in it that you own. Streamed music stays online for now.</p>
           </div>
           <div className="flex flex-col gap-1">
             <h3 className="text-large font-medium text-foreground">Files</h3>

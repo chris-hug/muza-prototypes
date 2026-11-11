@@ -57,6 +57,7 @@ import { useCredits } from "@/lib/credits-context"
 import { slugify } from "@/lib/media-nav"
 import { useUserLibrary } from "@/lib/user-library"
 import { useLibraryToggle, useOfflineToggle } from "@/lib/use-library-toggle"
+import { useOfflineEligibility } from "@/lib/offline-eligibility"
 import { useAddToPlaylist } from "@/lib/add-to-playlist-context"
 import { SONG_DRAG_TYPE } from "@/lib/playlist-editor-context"
 import { useToast } from "@/components/ui/toast"
@@ -223,6 +224,7 @@ export function SongMenuItems({
   const handleSongLibrary = () => toggleLibrary("song", songId, title, { id: songId, title, artist, album, cover, duration })
   const toggleOffline = useOfflineToggle()
   const savedOffline = library.isOffline("song", songId)
+  const eligibility = useOfflineEligibility()
 
   const { add: toast } = useToast()
   const handleReport = onReport ?? (() => toast({
@@ -243,10 +245,13 @@ export function SongMenuItems({
         {canNativeShare ? "Share…" : "Copy link"}
       </DropdownMenuItem>
       <DropdownMenuItem onClick={handleSongLibrary}><MenuHeart filled={inLibrary} />{libraryLabel}</DropdownMenuItem>
-      <DropdownMenuItem onClick={() => toggleOffline("song", songId, title, { id: songId, title, artist, album, cover, duration })}>
-        {savedOffline ? <Check /> : <Download />}
-        {savedOffline ? "Remove from offline" : "Save offline"}
-      </DropdownMenuItem>
+      {/* Offline is for songs you own, through their album (offline-eligibility). */}
+      {(savedOffline || eligibility.song(album)) && (
+        <DropdownMenuItem onClick={() => toggleOffline("song", songId, title, { id: songId, title, artist, album, cover, duration })}>
+          {savedOffline ? <Check /> : <Download />}
+          {savedOffline ? "Remove from offline" : "Save offline"}
+        </DropdownMenuItem>
+      )}
       {!hideAddToPlaylist && <DropdownMenuItem onClick={handleAddToPlaylist}><AddMusicIcon />Add to playlist</DropdownMenuItem>}
       <DropdownMenuSeparator />
       {onArtistClick && !hideGoToArtist && <DropdownMenuItem onClick={onArtistClick}><Mic />Go to artist</DropdownMenuItem>}
@@ -339,6 +344,7 @@ export function SongListItem({
   const libraryLabel = inLibrary ? "Remove from library" : "Save to library"
   const toggleOffline = useOfflineToggle()
   const savedOffline = library.isOffline("song", songId)
+  const eligibility = useOfflineEligibility()
 
   // Report — baked default (toast) so every song row offers it; a host may
   // override with its own `onReport`.
@@ -578,11 +584,13 @@ export function SongListItem({
                 </SheetHeader>
                 <div className="flex flex-col px-2 pb-4">
                   <SheetAction icon={<MenuHeart filled={inLibrary} />} label={libraryLabel} onClick={handleSongLibrary} />
-                  <SheetAction
-                    icon={savedOffline ? <Check /> : <Download />}
-                    label={savedOffline ? "Remove from offline" : "Save offline"}
-                    onClick={() => toggleOffline("song", songId, title, songMeta)}
-                  />
+                  {(savedOffline || eligibility.song(album)) && (
+                    <SheetAction
+                      icon={savedOffline ? <Check /> : <Download />}
+                      label={savedOffline ? "Remove from offline" : "Save offline"}
+                      onClick={() => toggleOffline("song", songId, title, songMeta)}
+                    />
+                  )}
                   {!hideAddToPlaylist && <SheetAction icon={<AddMusicIcon />} label="Add to playlist" onClick={handleAddToPlaylist} />}
                   {onArtistClick && !hideGoToArtist && <SheetAction icon={<Mic />}   label="Go to artist" onClick={onArtistClick} />}
                   {onAlbumClick  && !hideGoToAlbum  && <SheetAction icon={<Disc3 />} label="Go to album"  onClick={onAlbumClick} />}

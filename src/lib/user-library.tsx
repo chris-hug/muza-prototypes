@@ -66,8 +66,9 @@ interface SavedSets {
 const EMPTY_SAVED: SavedSets = { playlist: {}, artist: {}, song: {} }
 
 /** Saved offline, per type. Deliberately NOT part of `LibraryEntry`: offline
- *  is about this device and works on anything you can play, whether or not
- *  you bought it or even saved it to your library. The file purchase
+ *  is about this device, and an album can be offline without being in your
+ *  library. WHAT may go offline (music you own) is decided by the menus
+ *  through `useOfflineEligibility`, not here. The file purchase
  *  (`tier: "download"`) is a different thing again, a licence to keep files. */
 export interface OfflineSets {
   album:    Record<string, true>
@@ -84,6 +85,9 @@ interface PersistShape {
   offline: OfflineSets
   /** The demo's offline seed has been applied; see `offlineSeed`. */
   offlineSeeded?: boolean
+  /** Which demo seed this library was stored under. Below `SEED_VERSION` it
+   *  gets the seed's purchases and offline sets once; see below. */
+  seedVersion?: number
   /** When each item was saved offline, keyed `type:id`. Apart from the sets
    *  so what is already stored keeps working; an item without a time sorts
    *  by its synthetic added date instead. */
@@ -132,6 +136,10 @@ const UserLibraryContext = createContext<UserLibraryContextValue | null>(null)
 // v1 persisted data is incompatible — a fresh key discards it cleanly.
 const STORAGE_KEY = "muza.library.v2"
 
+/** Bump when the demo seed changes in a way a stored library must pick up.
+ *  2: offline is owned-only, and Home's "Owned" albums are real purchases. */
+const SEED_VERSION = 2
+
 /** Read persisted state from localStorage (browser only). */
 function loadPersisted(): PersistShape | null {
   if (typeof window === "undefined") return null
@@ -144,6 +152,7 @@ function loadPersisted(): PersistShape | null {
       saved:  { ...EMPTY_SAVED, ...(parsed.saved ?? {}) },
       offline: { ...EMPTY_OFFLINE, ...(parsed.offline ?? {}) },
       offlineSeeded: parsed.offlineSeeded,
+      seedVersion: parsed.seedVersion,
       offlineAt: parsed.offlineAt,
     }
   } catch {
@@ -176,14 +185,30 @@ export function UserLibraryProvider({
   children:   ReactNode
 }) {
   // Lazy init: prefer persisted state; fall back to the demo seed.
-  const [albums, setAlbums] = useState<Record<string, LibraryEntry>>(
-    () => (persist ? loadPersisted()?.albums : undefined) ?? seed ?? {},
-  )
+  //
+  // A library stored under an older seed (`seedVersion` below SEED_VERSION)
+  // holds the old demo: offline albums and songs nobody bought, and Home's
+  // "Owned" albums only labelled, not bought. Once, it takes
+  // the seed's purchases (a purchase is only ever added, never taken away) and
+  // its offline sets are replaced by the seed's. That drops what the visitor
+  // saved offline themselves too, which is the price of the demo not showing
+  // streamed music on the device.
+  const [albums, setAlbums] = useState<Record<string, LibraryEntry>>(() => {
+    const stored = persist ? loadPersisted() : null
+    if (!stored) return seed ?? {}
+    if ((stored.seedVersion ?? 0) >= SEED_VERSION || !seed) return stored.albums
+    const next = { ...stored.albums }
+    for (const [id, e] of Object.entries(seed)) {
+      if (e.purchased && !next[id]?.purchased) next[id] = { ...e, added: next[id]?.added ?? e.added }
+    }
+    return next
+  })
   const [saved, setSaved] = useState<SavedSets>(
     () => (persist ? loadPersisted()?.saved : undefined) ?? { ...EMPTY_SAVED, ...savedSeed },
   )
   const [offline, setOffline] = useState<OfflineSets>(() => {
     const stored = persist ? loadPersisted() : null
+    if (stored && (stored.seedVersion ?? 0) < SEED_VERSION && offlineSeed) return offlineSeed
     const base = stored?.offline ?? EMPTY_OFFLINE
     if (stored?.offlineSeeded || !offlineSeed) return base
     return {
@@ -201,7 +226,7 @@ export function UserLibraryProvider({
   useEffect(() => {
     if (typeof window === "undefined" || !persist) return
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ albums, saved, offline, offlineSeeded: true, offlineAt }))
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ albums, saved, offline, offlineSeeded: true, seedVersion: SEED_VERSION, offlineAt }))
     } catch { /* quota / private mode — ignore */ }
   }, [albums, saved, offline, offlineAt, persist])
 

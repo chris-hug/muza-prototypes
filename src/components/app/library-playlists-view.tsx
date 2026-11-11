@@ -266,7 +266,7 @@ export function LibraryPlaylistsView() {
 
         {status === "offline" && playlists.length === 0 ? (
           <p className="text-small text-muted-foreground max-w-md">
-            Nothing saved offline yet. Choose “Save offline” in any playlist’s menu and it’ll show up here.
+            Nothing saved offline yet. Choose “Save offline” in a playlist’s menu and the songs in it that you own will show up here.
           </p>
         ) : view === "grid" ? (
           <div className="@container">

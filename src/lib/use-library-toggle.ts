@@ -41,18 +41,21 @@ export function useLibraryToggle() {
   )
 }
 
-/** The same for offline: flip it, toast it, offer Undo. */
+/** The same for offline: flip it, toast it, offer Undo. `detail` replaces the
+ *  type in the toast body; a playlist uses it to say how many of its songs
+ *  are yours, since only those go offline. */
 export function useOfflineToggle() {
   const library = useUserLibrary()
   const { add: toast } = useToast()
 
   return useCallback(
-    (type: OfflineItemType, id: string, name?: string, song?: SavedSong): boolean => {
+    (type: OfflineItemType, id: string, name?: string, song?: SavedSong, detail?: string): boolean => {
       const nowOffline = library.toggleOffline(type, id, song)
+      const tail = detail ?? TYPE_LABEL[type]
       toast({
         type:  nowOffline ? "success" : "default",
         title: nowOffline ? "Saved offline" : "Removed from offline",
-        description: name ? `${name} · ${TYPE_LABEL[type]}` : TYPE_LABEL[type],
+        description: name ? `${name} · ${tail}` : tail,
         data: { actionLabel: "Undo", onAction: () => library.toggleOffline(type, id, song) },
       })
       return nowOffline

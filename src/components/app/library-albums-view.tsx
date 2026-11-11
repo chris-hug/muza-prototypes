@@ -239,7 +239,7 @@ export function LibraryAlbumsView() {
              the grid drops to a single column. */}
         {status === "offline" && albums.length === 0 ? (
           <p className="text-small text-muted-foreground max-w-md">
-            Nothing saved offline yet. Choose “Save offline” in any album’s menu and it’ll show up here.
+            Nothing saved offline yet. Choose “Save offline” in the menu of an album you own and it’ll show up here.
           </p>
         ) : view === "grid" ? (
           <div className="@container">
