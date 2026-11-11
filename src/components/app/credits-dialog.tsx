@@ -270,17 +270,17 @@ export function CreditsContent({
      second, smaller thing about the same album. The row wears the album
      row's hover (`press-ripple`, fill `muted`), bled 8px past the gutter so
      the fill has room around the thumb.
-     The label sits at the row's BOTTOM right, on the year · label line and
-     flush with the content's right edge — under the ✕, not beside it. Centred
-     and held 40px off the edge to clear the ✕, it floated in the middle of
-     the row, attached to nothing. */
+     The label sits at the row's BOTTOM right, on the year · label line — a
+     centred label floated mid-row, attached to nothing. The row stops 40px
+     short of the right edge (`mr-10`): run to the edge, its hover fill
+     swallowed the ✕, and the close button looked like part of the row. */
   const header = byTrack.on ? (
     <div
       role="button"
       tabIndex={0}
       onClick={showAlbumCredits}
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); showAlbumCredits() } }}
-      className="relative -m-2 flex items-center gap-3 rounded-xl p-2 press-ripple state-fade-quick cursor-pointer outline-none focus-ring [--hover-fill:var(--muted)]"
+      className="relative -m-2 mr-10 flex items-center gap-3 rounded-xl p-2 press-ripple state-fade-quick cursor-pointer outline-none focus-ring [--hover-fill:var(--muted)]"
     >
       {identity}
       <span className="flex shrink-0 items-center gap-1 self-end text-2xsmall leading-6 text-muted-foreground">
