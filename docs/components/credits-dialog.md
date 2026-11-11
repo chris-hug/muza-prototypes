@@ -8,17 +8,31 @@ usage:
 ---
 
 `CreditsDialog` is the release metadata behind every "Show credits" action
-and the MediaHeader's ⓘ — a 3:2 cover header over main artist, album, label,
-recording date and the per-instrument performers. Albums only; a playlist
-has no release credits.
+and the MediaHeader's ⓘ: a compact header (thumb, title, main artist, year ·
+label · catalogue number) over **Overview** (the session facts), **Credits**
+(one row per person, grouped) and **Notes**. Albums only; a playlist has no
+release credits.
+
+Credits are a Muza strength — the catalogue is iTunes, MusicBrainz and Discogs
+together — so the dialog is built to show a full record the way a jazz listener
+reads a sleeve: who played what, on which track, where and when it was
+recorded, who produced and engineered it. Benchmarked against Spotify, Apple
+Music, Tidal and Qobuz (notes in the Superlist task); Qobuz's structure — a
+compact header, Overview / Credits / Review, one row per person with an avatar —
+is the model, with its one data bug avoided (below).
+
+**Two layouts are live while they are compared:** `"tabs"` (the default) and
+`"page"`, the same sections stacked in one scroll. The live dialog reads
+`?credits=page` from the URL. One of them goes when the decision is made.
 
 ## Anatomy
 
 ```tsx
-<DialogContent className="md:max-w-md p-0 gap-0 overflow-hidden flex flex-col max-h-[92vh] md:max-h-[85vh]">
+<DialogContent className="md:max-w-md p-0 gap-0 overflow-hidden flex flex-col h-[88svh] md:h-[min(85vh,44rem)]">
   <CreditsContent
     credits={credits}
-    heading={<DialogTitle className="md:text-large font-medium leading-none">Album credits</DialogTitle>}
+    layout="tabs"            // or "page"
+    heading={<DialogTitle className="text-2xsmall md:text-2xsmall font-normal leading-none text-muted-foreground">Album credits</DialogTitle>}
     onArtist={name => go(() => openArtist(slugify(name)))}
     onAlbum={albumLinkable ? () => go(() => openAlbum(slugify(credits.album))) : undefined}
     bodyClassName="min-h-0"
@@ -28,14 +42,16 @@ has no release credits.
 
 | Part | What it wears | Why |
 |---|---|---|
-| Cover header | `relative aspect-[3/2] w-full shrink-0 overflow-hidden bg-muted`: the cover once as a backdrop (`object-cover scale-125 blur-2xl opacity-80`), a `from-black/30` gradient, then the real cover `h-full aspect-square rounded-xs shadow-lg` centred on top | a square in a 3:2 frame would letterbox; the blurred copy fills the sides with the artwork's own colour instead of a flat bar |
-| Scroll box | `flex flex-col flex-1 min-h-0 overflow-y-auto` + `bodyClassName` — `min-h-0` in the live sheet (grows to the dialog's cap), `max-h-[50vh]` in the preview | **the cover is inside it**: one scroll box for the whole body, so the header scrolls away |
-| Metadata body | `flex flex-col gap-5 p-6` | no scroller of its own; it moves with the cover |
-| Heading | `DialogTitle md:text-large font-medium leading-none` — "Album credits" | slotted, so the live dialog passes a real `DialogTitle` for a11y while the preview passes a `<p>` |
-| Fields | `Field`: label `text-2xsmall text-muted-foreground leading-[16px]`, value `text-small text-foreground leading-[20px]` — Main artist · Album · Label · Recording Date | label and recording date render only when the catalog has them |
-| Performers | "Performers" `text-small font-medium`, then role → names, comma-joined | role is the label, names the value |
-| `showCover` | `false` drops the 3:2 header and pads the body `pt-2 pb-12` instead of `p-6` | the player shows these credits in place of its artwork, beside a 48px thumb, so a second cover would repeat the screen |
-| Links | a value with a handler is a `<button>` carrying `link-underline`; without one it is plain text | main artist, album (when `hasAlbumDetail`) and every performer navigate. The affordance cannot come apart from the behaviour: no handler, no underline, no tab stop. `CreditsDialogPreview` passes no-op handlers so the design-system frame shows the links the product has without navigating the page away |
+| Header | `size-20 rounded-xs art-edge` thumb · eyebrow (`heading` slot, `text-2xsmall text-muted-foreground` "Album credits") · title `text-large font-medium` · main artist `text-small` · `text-2xsmall` meta: year · label catalogue number | the 3:2 cover it replaced spent a third of a phone on the artwork the reader just came from. Before that the dialog opened on four equal label/value rows, where the title weighed as much as a recording date. The eyebrow is the `DialogTitle` in the live dialog, so it is still named "Album credits" |
+| Tabs | `TabsList size="sm"` full width: Overview · Credits · Notes (Notes only with text). Credits is the default | "Show credits" is what was asked for. Header and tab bar hold; only the panel scrolls, so switching tabs never moves the bar. The tabs dialog has a fixed height (`h-[88svh]`, `md:h-[min(85vh,44rem)]`) so a short Overview and a long Credits list do not resize the sheet under the finger |
+| Overview | a `dl`, label `text-muted-foreground`, value `text-foreground`: Recorded (date + studio) · Released · Label (label · catalogue number) · Tracks (count · total minutes) | the session facts a sleeve prints; a row is left out when the catalogue has no value |
+| Credits | sections Personnel · Composition · Production & Engineering · Artwork & Notes, `text-small font-medium` titles; rows in a `divide-y divide-border/60` list | MusicBrainz and Discogs name roles differently; four fixed sections keep it from becoming Tidal's twelve role headings. The hairlines read as a ruled liner-note sheet |
+| Person row | `PersonAvatar` `size-10` (portrait, else initials) · name `text-small` (a link) · roles `text-2xsmall text-muted-foreground` · `LibraryHeartButton type="artist"` `icon-sm touch-target` | **one row per person, every role merged** — a name appears once per album ("Tenor saxophone, Composer"). A role can name its tracks: "Bass clarinet (1, 2), Flute (3)", the liner-note convention, instead of a credits block per track repeating the same five names. Every person gets the heart: we assume every credited name has an artist page |
+| Initials | first letter of the first and the last word, dots dropped — "Mark Ernestus" ME, "A. B. Spellman" AS | sidemen rarely have a photo, so initials are the common case and wear the portrait's circle, size and `art-edge`. Names are stored as read ("Mark Ernestus"), never as "Ernestus, Mark": Qobuz splits a sort-name at the comma and shows the first name as a role |
+| Tracks key | number · title · duration, only when a role names tracks | the key to "(1, 2)"; an album with one lineup throughout shows no list it does not need |
+| Notes | `text-small leading-relaxed`, "— Muza" under it | prototype copy written for the three curated albums, not quoted liner notes |
+| `showCover` | `false` drops the thumb and the side padding | the player shows these credits in place of its artwork, beside its own thumb |
+| Links | a value with a handler is a `<button>` carrying `link-underline`; without one it is plain text | title (when `hasAlbumDetail`), main artist and every person navigate. No handler, no underline, no tab stop. `CreditsDialogPreview` passes no-op handlers so the design-system frame shows the links without navigating away |
 
 ## Usage
 
@@ -48,8 +64,11 @@ const credits = useCredits()
 ```
 
 Outside a provider `open` is a no-op, so menus that bake it in never crash.
-Data comes from `getCredits(albumKey)` in `album-catalog` — hand-curated for
-the prototype; production would source MusicBrainz / Discogs.
+Data comes from `getCredits(albumKey)` in `album-catalog`. Three albums carry a
+full record in `album-credits.ts` (A Love Supreme, Blue Train, Out to Lunch —
+the last one because the instrument changes with the track); the rest derive
+one row per person from the album's lineup. Production fills the same shape
+from iTunes, MusicBrainz and Discogs.
 
 `CreditsDialogPreview albumKey` renders `CreditsContent` inline in a
 bordered `bg-popover` card with a plain heading and no handlers — a static
@@ -72,19 +91,17 @@ chip, so a 375 frame shows the sheet shape.
   closes the dialog so the destination is visible.
 - The album link is offered only when `hasAlbumDetail(slugify(album))` —
   navigating must not land on the default fallback page.
-- **The cover scrolls away.** It was a fixed header above a scrolling body,
-  which on a phone spent 40% of the sheet on a picture the reader had just
-  come from — and the performers, which is what anyone opens credits for, read
-  through a ~200px slot. One scroll box hands that space to the list when the
-  reader asks for it, and scrolling back brings the cover home. The sheet
-  itself still cannot scroll (`DialogContent` pins that), so this box is the
-  only thing that moves.
+- **Only the content scrolls.** In tabs, the header and the tab bar hold and
+  the panel scrolls; in the page layout the whole body scrolls in one box.
+  The sheet itself cannot scroll (`DialogContent` pins that).
 
 ## Artwork
 
-**Artwork carries `art-edge`** — a 1px outline inset by 1px, pure black at 10% in light and pure white at 10% in dark. Pure, never a tinted neutral: a tinted edge picks up the surface beneath it and reads as dirt along the image. It is an `outline`, so it costs no layout and follows the corner radius. On the 3:2 cover header.
+**Artwork carries `art-edge`** — a 1px outline inset by 1px, pure black at 10% in light and pure white at 10% in dark. Pure, never a tinted neutral: a tinted edge picks up the surface beneath it and reads as dirt along the image. It is an `outline`, so it costs no layout and follows the corner radius. On the header thumb and on every portrait and initials circle.
 
 ## Open questions
 
-- credits-dialog.tsx:157–161 (comment) still explains the mobile-sheet positioning ("full-width, bottom-anchored, top-rounded, slides up") that the next comment says now comes from the base `DialogContent`. One of the two comments is redundant.
+- Tabs or one page? Both layouts are live (`?credits=page`) until the decision is made; the loser and the URL switch go then.
+- The player's credits panel renders the same body; not yet checked there with tabs.
+- Notes text: show Discogs' notes, Apple's editorial text, or our own? Licensing decides.
 - `p-0 gap-0` on the popup cancels only the phone padding; see [dialog.md](dialog.md), open questions.

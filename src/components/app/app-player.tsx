@@ -112,7 +112,7 @@ export function AppPlayer({ footerNav }: { footerNav: boolean }) {
     <CreditsContent
       credits={getCredits(albumKey)}
       showCover={false}
-      heading={<p className="text-small font-medium leading-none text-foreground">Album credits</p>}
+      heading={<p className="text-2xsmall leading-none text-muted-foreground">Album credits</p>}
       onArtist={name => { setOverlayOpen(false); openArtist(slugify(name)) }}
       onAlbum={() => { setOverlayOpen(false); openAlbum(albumKey) }}
       bodyClassName="min-h-0"

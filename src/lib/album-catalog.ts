@@ -14,6 +14,7 @@
  * SAVED_ALBUMS so artwork always resolves.
  */
 
+import { ALBUM_CREDITS, type CreditPerson } from "@/lib/album-credits"
 import { SAVED_ALBUMS, type SavedAlbum } from "@/components/app/library-albums-view"
 import { slugify as slug } from "@/lib/media-nav"
 import { artistImage } from "@/lib/artist-data"
@@ -60,14 +61,22 @@ export interface AlbumDetail {
 }
 
 // ── Credits (release metadata for the "Show credits" dialog) ─────────
+export type { CreditPerson, CreditGroup } from "@/lib/album-credits"
 export interface Credits {
   mainArtist:    string
   album:         string
   cover:         string
   label?:        string
+  /** Release year — the hero's first fact. */
+  year?:         number
+  /** Only when the catalog has a real one; the year is not repeated here. */
   recordingDate?: string
-  /** Role → contributor name(s). */
-  performers:    { role: string; names: string[] }[]
+  catalogNumber?: string
+  studio?:        string
+  tracks:         { title: string; duration: string }[]
+  /** One entry per person, every role merged — see `album-credits.ts`. */
+  people:         CreditPerson[]
+  notes?:         { by?: string; text: string }
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -419,16 +428,32 @@ export function hasAlbumDetail(key?: string | null): boolean {
  *  the key is unknown. */
 export function getCredits(key?: string | null): Credits {
   const a = getAlbumDetail(key)
-  const performers: Credits["performers"] = [
-    { role: "Main", names: [a.artist] },
-    ...a.artistsOnAlbum.map(p => ({ role: p.role ?? "Performer", names: [p.name] })),
-  ]
+  const curated = ALBUM_CREDITS[a.id]
+  /* Without a curated record the people come from the album's lineup — one
+     row per name, roles merged, so the main artist's instrument and their
+     "Main artist" credit are one line, not two. */
+  const people: CreditPerson[] = curated?.people ?? (() => {
+    const byName = new Map<string, CreditPerson>()
+    const add = (name: string, role: string) => {
+      const p = byName.get(name) ?? { name, group: "personnel" as const, roles: [] }
+      if (!p.roles.some(r => r.role === role)) p.roles.push({ role })
+      byName.set(name, p)
+    }
+    for (const p of a.artistsOnAlbum) add(p.name, p.role ?? "Performer")
+    if (!byName.has(a.artist)) add(a.artist, "Main artist")
+    return [byName.get(a.artist)!, ...[...byName.values()].filter(p => p.name !== a.artist)]
+  })()
   return {
     mainArtist: a.artist,
     album: a.title,
     cover: a.cover,
     label: a.label,
-    recordingDate: a.recordingDate ?? String(a.year),
-    performers,
+    year: a.year,
+    recordingDate: a.recordingDate,
+    catalogNumber: curated?.catalogNumber,
+    studio: curated?.studio,
+    tracks: a.tracks.map(t => ({ title: t.title, duration: t.duration })),
+    people,
+    notes: curated?.notes,
   }
 }
