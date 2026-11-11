@@ -144,8 +144,14 @@ export function CreditsContent({
 
   const meta = [credits.year && String(credits.year), credits.label].filter(Boolean).join(" · ")
 
-  /* Compact header — the SAME identity block as the ⋯ sheet
-     (`DetailMenuSheetBody`): 72px thumb · title `text-base` · artist · the
+  /* TWO type sizes in the whole dialog: `text-small` (19) for content —
+     title, names, section titles, Overview, Notes — and `text-2xsmall` (15)
+     for everything secondary — roles, year · label, tabs, initials. Rank comes
+     from weight and colour. It had four (21 · 19 · 17 · 15), and the sheet read
+     as busy before a single name was read.
+
+     Compact header — the same identity block as the ⋯ sheet
+     (`DetailMenuSheetBody`): 72px thumb · title · artist · the
      year · label (the sheet's type badge is left out, see below). The credits are reached from that sheet
      ("Credits" tile), so the two open on one header instead of two. It
      replaced a 3:2 cover that spent a third of a phone on the artwork the
@@ -162,7 +168,7 @@ export function CreditsContent({
       )}
       <div className="flex min-w-0 flex-col gap-1 text-left">
         {heading}
-        <Value onClick={onAlbum} className="truncate text-base font-medium leading-tight text-foreground">
+        <Value onClick={onAlbum} className="truncate text-small font-medium leading-tight text-foreground">
           {credits.album}
         </Value>
         <Value onClick={onArtist && (() => onArtist(credits.mainArtist))} className="truncate text-small text-muted-foreground leading-none">
@@ -175,7 +181,9 @@ export function CreditsContent({
             physical format of each pressing (78 RPM, 10", LP), iTunes mostly
             says "Album" and puts "– EP" in the title. Year and label are
             facts every source agrees on. */}
-        {meta && <p className="truncate text-xsmall text-muted-foreground leading-tight">{meta}</p>}
+        {/* The role line's style exactly — the header's secondary line and a
+            person's secondary line are one thing. */}
+        {meta && <p className="truncate text-2xsmall text-muted-foreground leading-snug">{meta}</p>}
       </div>
     </div>
   )
