@@ -154,12 +154,25 @@ export function CreditsContent({
 }) {
 
   const meta = [credits.year && String(credits.year), credits.label].filter(Boolean).join(" · ")
-  /* Whether the visible tab panel is scrolled — the veil under the tab bar
-     shows only then (see `veil`). Reset on a tab change: each panel starts at
+  /* Whether the visible tab panel is scrolled — the head's hairline shows
+     only then. Reset on a tab change: each panel starts at
      its top. */
   const [scrolled, setScrolled] = useState(false)
   const onPanelScroll = (e: React.UIEvent<HTMLDivElement>) => setScrolled(e.currentTarget.scrollTop > 0)
   const [tab, setTab] = useState("credits")
+  /* The head (identity + tabs) OVERLAYS the scroller as glass, so the panel
+     needs its height: as top padding, and as the sticky bars' `top`. Measured,
+     because it changes — the track-by-track link line, the tab strip only
+     when there are Notes, a title that wraps. */
+  const headRef = useRef<HTMLDivElement>(null)
+  const [headH, setHeadH] = useState(0)
+  useEffect(() => {
+    const el = headRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setHeadH(Math.round(el.offsetHeight)))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   /* The player, when there is one — a track header plays its track and
      shows the one playing. `null` in a static frame: the headers render,
@@ -204,7 +217,9 @@ export function CreditsContent({
       // The dialog may be mid scale-in, so rects are scaled; the ratio of
       // the box's drawn to laid-out height undoes that.
       const scale = box.getBoundingClientRect().height / box.offsetHeight || 1
-      box.scrollTop += (el.getBoundingClientRect().top - box.getBoundingClientRect().top) / scale
+      // The head overlays the scroller; land the bar under it, not behind it.
+      const head = parseFloat(getComputedStyle(box).getPropertyValue("--head-h")) || 0
+      box.scrollTop += (el.getBoundingClientRect().top - box.getBoundingClientRect().top) / scale - head
     }
     /* On the first painted frame, and again once the dialog has opened: on
        the mount pass the panel has no height yet, and the open transition can
@@ -363,19 +378,19 @@ export function CreditsContent({
   )
 
   /* The sticky bar every section hangs from. 48px, in the dialog's colour so
-     rows pass under it, with a 12px fade below — the same soft edge as the
-     veil, here because the bar, not the tab strip, is now the edge rows
-     scroll under. `-mx-2` + `pl-1`: the 48px play button's centre lands on
+     rows pass under it. `-mx-2` + `pl-1`: the 48px play button's centre lands on
      the 40px avatars' centre and the title on the names' left edge (52px),
      so the bar and the rows share one grid. */
   /* The STICKY element is a square of the dialog's colour; the rounded band
      sits inside it. With the band itself sticky, rows scrolling under it
      showed through its rounded corners — a flicker at each corner. */
+  /* Sticks UNDER the glass head (`--head-h`, measured), not at the
+     scroller's top: rows run up under the head and blur there; the bar
+     holds just below it. No fade under the bar — Tidal's track headers have
+     none, and every gradient tried here read as a smear or a band. */
   const stickyShell = cn(
-    "sticky top-0 z-10 bg-popover",
+    "sticky top-[var(--head-h,0px)] z-10 bg-popover",
     showCover && "-mx-2",
-    // `edge-fade` (app.css): the sheet's glass, masked out over 32px.
-    "after:absolute after:inset-x-0 after:top-full after:h-8 after:edge-fade",
   )
   const stickyBar = () => cn(
     "relative flex h-12 items-center gap-2 rounded-md",
@@ -606,62 +621,45 @@ export function CreditsContent({
     )
   }
 
-  /* The panel FADES under the tab bar instead of being cut at its edge: a
-     row scrolled half out read as a broken row. The fade is a VEIL in the
-     dialog's own colour laid over the content column, not a `mask-image` on
-     the scroller: a mask fades everything the element paints, scrollbar
-     included, and the bar dissolved into the fade with the rows. The veil
-     stops at the gutters, so the scrollbar stays whole beside it.
-     It is the `edge-fade` utility (app.css): the sheet's own glass
-     (`.sheet-glass`, 12px blur), masked out over 32px — the same fade, at the same height, the
-     sticky track bars hang below them. It was a
-     hand-built gradient, 15px solid then a 35px ramp, which still read as a
-     band with a hard start.
-     The veil only shows once the panel is scrolled. At rest there is nothing
-     under it to fade, and padding the panel by the veil's 50px left a band
-     of empty space between the tabs and the first heading; at rest the gap
-     is 24px. */
+  /* The panel runs the FULL height of the body; the head lies over its top
+     as glass. That is how Tidal does it, and the reason it looks calm: rows
+     do not fade out at an edge, they slide under a translucent, blurred head
+     and stay faintly legible there, and a 1px hairline under the head says
+     "there is more above" once the panel has moved.
+     Tried and dropped, in order: a hard cut (a row sliced in half); a white
+     gradient veil (paled the rows, read as a band); a masked blur under each
+     sticky bar (a smear with a visible start). */
   const panel = cn(
-    // No top PADDING on the scroller: a sticky bar sticks at the padding
-    // edge, 24px down, and rows showed through the band above it. The 24px
-    // is the content's own margin (`gap` below) instead.
-    "flex-1 min-h-0 overflow-y-auto pb-10",
+    "absolute inset-0 overflow-y-auto pb-10",
     // Thin, in the app's ink, on a clear track — not the browser's grey slab.
     "[scrollbar-width:thin] [scrollbar-color:var(--muted-foreground)_transparent]",
     pad,
   )
-  const veil = (
-    <div
-      aria-hidden="true"
-      className={cn(
-        // h-8: the SAME fade, same height, as below every sticky bar — one
-        // fade in the dialog, not two (it was 40px here, 32px there).
-        "absolute top-0 h-8 z-10 transition-opacity duration-200 edge-fade",
-        // Not over the track-by-track reading: there a sticky bar is always at
-        // the top edge and carries its own fade; the veil would wash out its
-        // top 15px.
-        scrolled && !(tab === "credits" && byTrack.on) ? "opacity-100" : "opacity-0",
-        showCover ? "inset-x-4" : "inset-x-0",
-      )}
-    />
-  )
+  // 12px between the head and the first line at rest.
+  const panelInner = "pt-[calc(var(--head-h,0px)+12px)]"
 
-  /* Tabs: the header and the tab bar hold, the panel under them scrolls —
+  /* Tabs: the head and the tab bar hold, the panel under them scrolls —
      switching tabs never moves the bar out from under the finger. Credits is
      the default tab, because "Show credits" is what was asked for. */
   return (
-    <Tabs value={tab} onValueChange={v => { setTab(String(v)); setScrolled(false) }} className={cn("flex flex-col flex-1 min-h-0 gap-0", bodyClassName)}>
-      {/* `pb-3` here + `pt-3` in each panel: 24px to the first line at rest,
-          and still 12px between the tab strip and a track bar stuck under it
-          — with all 24 in the panel, the stuck bar touched the strip. */}
-      {/* Track by track the 12px above the first bar moves OUT of the scroller
-          into this head (`pb-6`, panel `pt-0`): the bar then sits flush with
-          the scroller's top edge, at rest and stuck alike, and no row can
-          show in a strip above it. With the 12px inside the scroller, rows
-          flashed through there on every scroll. */}
-      {/* `pt-6` on a phone too: at the ⋯ sheet's 12px the thumb sat right
-          under the sheet's grabber, with nothing to breathe. */}
-      <div className={cn("shrink-0 flex flex-col gap-6 pt-6", byTrack.on && tab === "credits" ? "pb-6" : "pb-3", pad)}>
+    <Tabs
+      value={tab}
+      onValueChange={v => { setTab(String(v)); setScrolled(false) }}
+      className={cn("relative flex flex-col flex-1 min-h-0 gap-0", bodyClassName)}
+      style={{ "--head-h": `${headH}px` } as React.CSSProperties}
+    >
+      {/* The head: `.sheet-glass` (the sheet's own glass — its colour at 72%
+          over a 12px blur), with Tidal's hairline under it once scrolled.
+          `pt-6`, the same at every size: at 12px the thumb sat under the
+          sheet's grabber. */}
+      <div
+        ref={headRef}
+        className={cn(
+          "sheet-glass absolute inset-x-0 top-0 z-20 flex flex-col gap-6 pt-6 pb-3 transition-shadow duration-200",
+          scrolled ? "shadow-[0_1px_0_var(--border)]" : "shadow-none",
+          pad,
+        )}
+      >
         {header}
         {/* No strip for ONE tab: a lone "Credits" pill switches nothing. */}
         {notes && (
@@ -671,10 +669,9 @@ export function CreditsContent({
           </TabsList>
         )}
       </div>
-      <div className="relative flex flex-1 min-h-0 flex-col">
-        {veil}
-        <TabsContent value="credits"  className={panel} onScroll={onPanelScroll}><div className={byTrack.on ? "pt-0" : "pt-3"}>{creditsBody}</div></TabsContent>
-        {notes && <TabsContent value="notes" className={panel} onScroll={onPanelScroll}><div className="pt-3">{notes}</div></TabsContent>}
+      <div className="relative flex-1 min-h-0">
+        <TabsContent value="credits" className={panel} onScroll={onPanelScroll}><div className={panelInner}>{creditsBody}</div></TabsContent>
+        {notes && <TabsContent value="notes" className={panel} onScroll={onPanelScroll}><div className={panelInner}>{notes}</div></TabsContent>}
       </div>
     </Tabs>
   )
