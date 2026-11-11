@@ -224,8 +224,9 @@ export function CreditsContent({
      ("Credits" tile), so the two open on one header instead of two. It
      replaced a 3:2 cover that spent a third of a phone on the artwork the
      reader had just come from. The catalogue number is a Release fact. */
+  const showAlbumCredits = () => { setByTrack({ on: false }); setTab("credits") }
   const identity = (
-    <div className="flex flex-row items-center gap-3">
+    <div className="flex flex-1 min-w-0 flex-row items-center gap-3">
       {showCover && (
         <img
           src={credits.cover}
@@ -240,10 +241,12 @@ export function CreditsContent({
           between the lines looked uneven although no single value was. */}
       <div className="flex min-w-0 flex-col text-left">
         {heading}
-        <Value onClick={onAlbum} className="truncate text-small font-medium leading-6 text-foreground">
+        {/* Track by track the whole head is ONE target (below), so the
+            title and artist are plain text there, not links inside a link. */}
+        <Value onClick={byTrack.on ? undefined : onAlbum} className="truncate text-small font-medium leading-6 text-foreground">
           {credits.album}
         </Value>
-        <Value onClick={onArtist && (() => onArtist(credits.mainArtist))} className="truncate text-small text-muted-foreground leading-6">
+        <Value onClick={byTrack.on ? undefined : onArtist && (() => onArtist(credits.mainArtist))} className="truncate text-small text-muted-foreground leading-6">
           {credits.mainArtist}
         </Value>
         {/* Year · label where the ⋯ sheet has the content-type badge. The
@@ -261,17 +264,25 @@ export function CreditsContent({
     </div>
   )
 
-  /* Track by track, "All album credits" sits UNDER the identity block, in
-     the slot the tab strip takes, at the strip's size (`sm`, 32px). Not a
-     back control — no chevron, not on the ✕'s line: it switches to the
-     other reading of the same album, it does not undo a step. */
-  const showAlbumCredits = () => { setByTrack({ on: false }); setTab("credits") }
+  /* Track by track the album's head IS the way to its credits: the whole
+     row — thumb, title, artist — is one target, with "All album credits ›"
+     at its end. It was a separate pill under the head, which read as a
+     second, smaller thing about the same album. The row wears the album
+     row's hover (`press-ripple`, fill `muted`), bled 8px past the gutter so
+     the fill has room around the thumb; `mr-10` keeps it clear of the ✕. */
   const header = byTrack.on ? (
-    <div className="flex flex-col gap-6">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={showAlbumCredits}
+      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); showAlbumCredits() } }}
+      className="relative -m-2 mr-10 flex items-center gap-3 rounded-xl p-2 press-ripple state-fade-quick cursor-pointer outline-none focus-ring [--hover-fill:var(--muted)]"
+    >
       {identity}
-      <Button variant="secondary" size="sm" className="self-start" onClick={showAlbumCredits}>
+      <span className="flex shrink-0 items-center gap-1 text-2xsmall text-muted-foreground">
         All album credits
-      </Button>
+        <ChevronRight aria-hidden="true" className="size-4" />
+      </span>
     </div>
   ) : identity
 
@@ -447,41 +458,29 @@ export function CreditsContent({
           reading has them between people and tracks — here they would split
           the songs from their credits) and where to go next — the album's
           page, or its credits as one list. */}
-      {/* One card, the album: its name, the release facts, and — when it has
-          a page — the whole card opens it, the way the album rows elsewhere
-          open on a tap anywhere. `bg-muted` and the album row's hover fill,
-          so it reads as the track bars' kin, not as a new kind of box. */}
-      {(() => {
-        const body = (
-          <>
-            <span className="flex items-center gap-2">
-              <span className="min-w-0 flex-1 truncate text-small font-medium text-foreground">{credits.album}</span>
-              {onAlbum && <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />}
-            </span>
-            {overview}
-          </>
-        )
-        const card = "relative flex w-full flex-col gap-3 rounded-xl bg-muted p-4 text-left"
-        return onAlbum ? (
-          /* A `div role="link"`, not a `<button>`: the facts are a `<dl>`,
-             which a button may not contain. */
-          <div
-            role="link"
-            tabIndex={0}
-            onClick={onAlbum}
-            onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onAlbum() } }}
-            aria-label={`Go to album ${credits.album}`}
-            className={cn(card, "press-ripple state-fade-quick cursor-pointer outline-none focus-ring [--hover-fill:var(--secondary)]")}
-          >
-            {body}
-          </div>
-        ) : (
-          <div className={card}>{body}</div>
-        )
-      })()}
-      <Button variant="secondary" size="lg" className="mt-3 self-start" onClick={showAlbumCredits}>
-        All album credits
-      </Button>
+      {/* One card, the album: its name, the release facts, and the way to
+          its credits as one list — the whole card is that button, with "All
+          album credits ›" in its title row, as in the head above. A separate
+          pill under the card said the same thing a second time. `bg-muted`
+          and the album row's hover fill, so it reads as the track bars' kin.
+          A `div role="button"`: the facts are a `<dl>`, which a `<button>`
+          may not contain. */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={showAlbumCredits}
+        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); showAlbumCredits() } }}
+        className="relative flex w-full flex-col gap-3 rounded-xl bg-muted p-4 text-left press-ripple state-fade-quick cursor-pointer outline-none focus-ring [--hover-fill:var(--secondary)]"
+      >
+        <span className="flex items-center gap-3">
+          <span className="min-w-0 flex-1 truncate text-small font-medium text-foreground">{credits.album}</span>
+          <span className="flex shrink-0 items-center gap-1 text-2xsmall text-muted-foreground">
+            All album credits
+            <ChevronRight aria-hidden="true" className="size-4" />
+          </span>
+        </span>
+        {overview}
+      </div>
     </div>
   )
 
