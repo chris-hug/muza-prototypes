@@ -119,8 +119,8 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 /*
  * CreditsContent — the body (compact header + Overview / Credits / Notes),
  * reused by the live dialog, the player and the static DS preview. `heading`
- * is slotted so the live dialog can pass a real `DialogTitle` (a11y) while the
- * others pass a plain eyebrow. `onArtist`/`onAlbum` make names navigable; omit
+ * is slotted so the live dialog can pass an `sr-only` `DialogTitle` (a11y);
+ * the others pass `null`. `onArtist`/`onAlbum` make names navigable; omit
  * them for a static render.
  */
 export function CreditsContent({
@@ -131,6 +131,8 @@ export function CreditsContent({
    *  player shows the credits in place of its artwork, beside a thumb. */
   showCover?: boolean
   credits:   Credits
+  /** The dialog's accessible name (`DialogTitle sr-only` in the live dialog);
+   *  `null` where the host is already named. Nothing visible. */
   heading:   React.ReactNode
   onArtist?: (name: string) => void
   onAlbum?:  () => void
@@ -332,7 +334,10 @@ function CreditsDialogContent({ credits, onClose }: { credits: Credits; onClose:
       <CreditsContent
         credits={credits}
         layout={layout}
-        heading={<DialogTitle className="text-2xsmall md:text-2xsmall font-normal leading-none text-muted-foreground">Album credits</DialogTitle>}
+        /* Named for screen readers, not drawn: the title and the thumb
+           already say what this is, and a grey "Album credits" over them was
+           a label for the obvious. */
+        heading={<DialogTitle className="sr-only">Album credits</DialogTitle>}
         onArtist={name => go(() => openArtist(slugify(name)))}
         onAlbum={albumLinkable ? () => go(() => openAlbum(slugify(credits.album))) : undefined}
         bodyClassName="min-h-0"
@@ -369,7 +374,7 @@ export function CreditsDialogPreview({ albumKey = "a07", layout = "tabs" }: { al
       <CreditsContent
         credits={getCredits(albumKey)}
         layout={layout}
-        heading={<p className="text-2xsmall leading-none text-muted-foreground">Album credits</p>}
+        heading={null}
         onArtist={() => {}}
         onAlbum={() => {}}
       />

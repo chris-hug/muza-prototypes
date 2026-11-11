@@ -32,7 +32,7 @@ is the model, with its one data bug avoided (below).
   <CreditsContent
     credits={credits}
     layout="tabs"            // or "page"
-    heading={<DialogTitle className="text-2xsmall md:text-2xsmall font-normal leading-none text-muted-foreground">Album credits</DialogTitle>}
+    heading={<DialogTitle className="sr-only">Album credits</DialogTitle>}
     onArtist={name => go(() => openArtist(slugify(name)))}
     onAlbum={albumLinkable ? () => go(() => openAlbum(slugify(credits.album))) : undefined}
     bodyClassName="min-h-0"
@@ -42,7 +42,7 @@ is the model, with its one data bug avoided (below).
 
 | Part | What it wears | Why |
 |---|---|---|
-| Header | `size-20 rounded-xs art-edge` thumb · eyebrow (`heading` slot, `text-2xsmall text-muted-foreground` "Album credits") · title `text-large font-medium` · main artist `text-small` · `text-2xsmall` meta: year · label catalogue number | the 3:2 cover it replaced spent a third of a phone on the artwork the reader just came from. Before that the dialog opened on four equal label/value rows, where the title weighed as much as a recording date. The eyebrow is the `DialogTitle` in the live dialog, so it is still named "Album credits" |
+| Header | `size-20 rounded-xs art-edge` thumb · title `text-large font-medium` · main artist `text-small` · `text-2xsmall` meta: year · label catalogue number | the 3:2 cover it replaced spent a third of a phone on the artwork the reader just came from. Before that the dialog opened on four equal label/value rows, where the title weighed as much as a recording date. The `heading` slot is an `sr-only` `DialogTitle` ("Album credits"): the dialog is named for screen readers, but a grey "Album credits" over the title and thumb only labelled the obvious, so it is not drawn (`null` in the preview and the player) |
 | Tabs | `TabsList size="sm"` full width: Overview · Credits · Notes (Notes only with text). Credits is the default | "Show credits" is what was asked for. Header and tab bar hold; only the panel scrolls, so switching tabs never moves the bar. The tabs dialog has a fixed height (`h-[88svh]`, `md:h-[min(85vh,44rem)]`) so a short Overview and a long Credits list do not resize the sheet under the finger |
 | Overview | a `dl`, label `text-muted-foreground`, value `text-foreground`: Recorded (date + studio) · Released · Label (label · catalogue number) · Tracks (count · total minutes) | the session facts a sleeve prints; a row is left out when the catalogue has no value |
 | Credits | sections Personnel · Composition · Production & Engineering · Artwork & Notes, `text-small font-medium` titles; rows in a `divide-y divide-border/60` list | MusicBrainz and Discogs name roles differently; four fixed sections keep it from becoming Tidal's twelve role headings. The hairlines read as a ruled liner-note sheet |
