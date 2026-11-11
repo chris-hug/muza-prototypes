@@ -3,10 +3,11 @@
 /*
  * CreditsDialog — release metadata surfaced by every "Show credits"
  * action (and the MediaHeader "i" button). A compact header (thumb, title,
- * main artist, year · label · catalogue number) over Overview (recording
- * session facts), Credits (one row per person, roles merged, grouped into
- * Personnel · Composition · Production & Engineering · Artwork & Notes) and
- * Notes. As tabs, or stacked (`?credits=page`) while the two are compared.
+ * main artist, year · label) over Credits and Notes. Credits read two ways:
+ * the album's (one row per person, roles merged, grouped into Personnel ·
+ * Composition · Production & Engineering · Artwork & Notes, then the release
+ * facts and the tracks) or track by track (a song's). As tabs, or stacked
+ * (`?credits=page`) while the two are compared.
  * Every name links to its artist and carries the library heart.
  *
  * Mounted once via `CreditsProvider`; any descendant opens it with
@@ -23,7 +24,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import {
   Dialog, DialogContent, DialogTitle,
 } from "@/components/ui/dialog"
-import { X as XIcon, ChevronRight } from "lucide-react"
+import { X as XIcon, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useIsMobile } from "@/lib/use-media-query"
@@ -72,7 +73,7 @@ function Value({ children, onClick, className }: { children: React.ReactNode; on
   )
 }
 
-/** `"tabs"` — Overview · Credits · Notes, as Qobuz does it; `"page"` — the
+/** `"tabs"` — Credits · Notes; `"page"` — the
  *  same sections stacked in one scroll. Both are live so they can be judged
  *  side by side; the dialog reads `?credits=page` from the URL. */
 export type CreditsLayout = "tabs" | "page"
@@ -122,7 +123,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 /*
- * CreditsContent — the body (compact header + Overview / Credits / Notes),
+ * CreditsContent — the body (compact header + Credits / Notes),
  * reused by the live dialog, the player and the static DS preview. `heading`
  * is slotted so the live dialog can pass an `sr-only` `DialogTitle` (a11y);
  * the others pass `null`. `onArtist`/`onAlbum` make names navigable; omit
@@ -214,7 +215,7 @@ export function CreditsContent({
   }, [byTrack])
 
   /* TWO type sizes in the whole dialog: `text-small` (19) for content —
-     title, names, section titles, Overview, Notes — and `text-2xsmall` (15)
+     title, names, section titles, release facts, Notes — and `text-2xsmall` (15)
      for everything secondary — roles, year · label, tabs, initials. Rank comes
      from weight and colour. It had four (21 · 19 · 17 · 15), and the sheet read
      as busy before a single name was read.
@@ -224,8 +225,8 @@ export function CreditsContent({
      year · label (the sheet's type badge is left out, see below). The credits are reached from that sheet
      ("Credits" tile), so the two open on one header instead of two. It
      replaced a 3:2 cover that spent a third of a phone on the artwork the
-     reader had just come from. The catalogue number is an Overview fact. */
-  const header = (
+     reader had just come from. The catalogue number is a Release fact. */
+  const identity = (
     <div className="flex flex-row items-center gap-3">
       {showCover && (
         <img
@@ -261,6 +262,22 @@ export function CreditsContent({
       </div>
     </div>
   )
+
+  /* Track by track, a way back to the album's overview sits ABOVE the
+     identity block, on its own line, as a dialog's back control does (see
+     `dialogHeaderClass`): inline it would indent the title. The button at the
+     end of the list was the only way back, and it is a long scroll away on
+     an album of ten tracks. `-ml-2` hangs the 32px button so its chevron
+     sits on the thumb's edge. */
+  const header = byTrack.on ? (
+    <div className="flex flex-col gap-2">
+      <Button variant="ghost" size="sm" className="-ml-2 self-start" onClick={() => { setByTrack({ on: false }); setTab("credits") }}>
+        <ChevronLeft />
+        All album credits
+      </Button>
+      {identity}
+    </div>
+  ) : identity
 
   const total = (() => {
     const s = credits.tracks.reduce((sum, t) => {
@@ -424,6 +441,14 @@ export function CreditsContent({
           {personRows(list)}
         </section>
       ))}
+      {/* The release facts, between the people and the tracks: where and
+          when it was recorded, when it came out, on which label. They were an
+          Overview tab of their own — four lines behind a tab, a tap away from
+          the credits they belong with. */}
+      <section className="flex flex-col gap-3">
+        <SectionTitle>Release</SectionTitle>
+        {overview}
+      </section>
       {/* The album's tracks, two jobs: the key to the "(1, 2)" after a
           role, and the way into the track-by-track reading — a row opens it
           at that song. On the person row's grid: the number centred in the
@@ -474,10 +499,6 @@ export function CreditsContent({
       <div className={cn("flex flex-col flex-1 min-h-0 overflow-y-auto", bodyClassName)}>
         <div className={cn("flex flex-col gap-8 pt-3 md:pt-6 pb-10", pad)}>
           {header}
-          <section className="flex flex-col gap-3">
-            <SectionTitle>Overview</SectionTitle>
-            {overview}
-          </section>
           {creditsBody}
           {notes && (
             <section className="flex flex-col gap-3">
@@ -538,14 +559,12 @@ export function CreditsContent({
       <div className={cn("shrink-0 flex flex-col gap-6 pt-3 md:pt-6 pb-3", pad)}>
         {header}
         <TabsList size="sm" className="w-full">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="credits">Credits</TabsTrigger>
           {notes && <TabsTrigger value="notes">Notes</TabsTrigger>}
         </TabsList>
       </div>
       <div className="relative flex flex-1 min-h-0 flex-col">
         {veil}
-        <TabsContent value="overview" className={panel} onScroll={onPanelScroll}><div className="pt-3">{overview}</div></TabsContent>
         <TabsContent value="credits"  className={panel} onScroll={onPanelScroll}><div className="pt-3">{creditsBody}</div></TabsContent>
         {notes && <TabsContent value="notes" className={panel} onScroll={onPanelScroll}><div className="pt-3">{notes}</div></TabsContent>}
       </div>
@@ -574,7 +593,7 @@ function CreditsDialogContent({ credits, focusTrack, onClose }: { credits: Credi
         // and its unprefixed twin side by side — so from 768 up the base won
         // and padded the body twice. Cancel the variant with a variant.
         "p-0 gap-0 md:p-0 md:gap-0 overflow-hidden flex flex-col",
-        // Tabs get a FIXED height so switching between a short Overview and a
+        // Tabs get a FIXED height so switching between short Notes and a
         // long Credits list does not resize the sheet under the finger; the
         // stacked page grows with its content up to the cap. `svh`, as every
         // sheet height in the app (see Dialog).
