@@ -1,7 +1,9 @@
 /*
  * Curated album credits — the shape the production database will fill from
- * iTunes, MusicBrainz and Discogs together, hand-written here for three
+ * iTunes, MusicBrainz and Discogs together, hand-written here for four
  * albums so the credits dialog can show what a full record looks like.
+ * Black Radio (a30) is transcribed from MusicBrainz's recording-level
+ * credits; the other three were written by hand.
  *
  * Why this shape:
  * - ONE entry per person. A name appears once per album, with every role it
@@ -118,5 +120,61 @@ export const ALBUM_CREDITS: Record<string, AlbumCreditsData> = {
       by: "Muza",
       text: "Dolphy's only album as a leader for Blue Note. He changes instrument with the piece — bass clarinet, flute, alto — and Hutcherson's vibraphone takes the place a piano would usually hold.",
     },
+  },
+  // Black Radio — a different lineup on nearly every track: a guest voice
+  // per song, and even the band changes (no Casey Benjamin on 5 and 7, Jahi
+  // Sundance's turntables on four tracks only). Every credit below is
+  // MusicBrainz's recording-level data for release b2cca2a2 (Blue Note CD,
+  // 2012); "writer" there is "Composer" here.
+  a30: {
+    catalogNumber: "509990 88333 2 7",
+    people: [
+      { name: "Robert Glasper", group: "personnel", roles: [
+        { role: "Piano" }, { role: "Rhodes piano", tracks: [1, 2, 3, 4, 5, 6, 7, 8, 9, 12] },
+        { role: "Synthesizer", tracks: [10] }, { role: "Arranger", tracks: [2, 11, 12] },
+        { role: "Composer", tracks: [1, 4, 5, 6, 7, 8, 10] },
+        { role: "Producer", tracks: [1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12] }, { role: "Co-producer", tracks: [7] },
+      ] },
+      { name: "Casey Benjamin", group: "personnel", roles: [
+        { role: "Vocoder", tracks: [1, 3, 4, 8, 12] }, { role: "Flute", tracks: [2, 11] },
+        { role: "Saxophone", tracks: [3, 6, 9, 10] }, { role: "Arranger", tracks: [8] },
+      ] },
+      { name: "Derrick Hodge", group: "personnel", roles: [{ role: "Bass" }, { role: "Composer", tracks: [7, 10] }] },
+      { name: "Chris Dave", group: "personnel", roles: [
+        { role: "Drums" }, { role: "Percussion", tracks: [9] }, { role: "Composer", tracks: [10] },
+      ] },
+      { name: "Jahi Sundance",       group: "personnel", roles: [{ role: "Turntables", tracks: [1, 8, 10, 12] }] },
+      { name: "Shafiq Husayn",       group: "personnel", roles: [{ role: "Vocals", tracks: [1] }, { role: "Composer", tracks: [1] }] },
+      { name: "Erykah Badu",         group: "personnel", roles: [{ role: "Vocals", tracks: [2] }] },
+      { name: "Lalah Hathaway",      group: "personnel", roles: [{ role: "Vocals", tracks: [3] }, { role: "Additional vocals", tracks: [12] }] },
+      { name: "Lupe Fiasco",         group: "personnel", roles: [{ role: "Vocals", tracks: [4] }, { role: "Composer", tracks: [4] }] },
+      { name: "Bilal",               group: "personnel", roles: [{ role: "Vocals", tracks: [4, 11] }] },
+      { name: "Ledisi",              group: "personnel", roles: [{ role: "Vocals", tracks: [5] }, { role: "Composer", tracks: [5] }] },
+      { name: "Anita Bias",          group: "personnel", roles: [{ role: "Vocals", tracks: [6] }, { role: "Composer", tracks: [6] }] },
+      { name: "Amber Strother",      group: "personnel", roles: [{ role: "Vocals", tracks: [6] }, { role: "Composer", tracks: [6] }] },
+      { name: "Paris Strother",      group: "personnel", roles: [{ role: "Keyboards", tracks: [6] }] },
+      { name: "Musiq Soulchild",     group: "personnel", roles: [{ role: "Vocals", tracks: [7] }, { role: "Finger snaps", tracks: [7] }, { role: "Composer", tracks: [7] }] },
+      { name: "Chrisette Michele",   group: "personnel", roles: [{ role: "Vocals", tracks: [7] }, { role: "Composer", tracks: [7] }] },
+      { name: "Meshell Ndegeocello", group: "personnel", roles: [{ role: "Vocals", tracks: [8] }, { role: "Lyricist", tracks: [8] }] },
+      { name: "Stokley",             group: "personnel", roles: [{ role: "Vocals", tracks: [9] }, { role: "Percussion", tracks: [9, 12] }, { role: "Composer", tracks: [9] }] },
+      { name: "Yasiin Bey",          group: "personnel", roles: [{ role: "Vocals", tracks: [10] }, { role: "Composer", tracks: [10] }] },
+      { name: "Mongo Santamaría",    group: "composition", roles: [{ role: "Composer", tracks: [2] }] },
+      { name: "Oscar Brown Jr.",     group: "composition", roles: [{ role: "Lyricist", tracks: [2] }] },
+      { name: "Sade Adu",            group: "composition", roles: [{ role: "Composer", tracks: [3] }] },
+      { name: "Andrew Hale",         group: "composition", roles: [{ role: "Composer", tracks: [3] }] },
+      { name: "Stuart Matthewman",   group: "composition", roles: [{ role: "Composer", tracks: [3] }] },
+      { name: "Jeffrey Allen",       group: "composition", roles: [{ role: "Composer", tracks: [9] }] },
+      { name: "Ricky Kinchen",       group: "composition", roles: [{ role: "Composer", tracks: [9] }] },
+      { name: "Homer O’Dell",        group: "composition", roles: [{ role: "Composer", tracks: [9] }] },
+      { name: "Lawrence Waddell",    group: "composition", roles: [{ role: "Composer", tracks: [9] }] },
+      { name: "David Bowie",         group: "composition", roles: [{ role: "Composer", tracks: [11] }, { role: "Lyricist", tracks: [11] }] },
+      { name: "Kurt Cobain",         group: "composition", roles: [{ role: "Composer", tracks: [12] }, { role: "Lyricist", tracks: [12] }] },
+      { name: "Dave Grohl",          group: "composition", roles: [{ role: "Composer", tracks: [12] }] },
+      { name: "Krist Novoselic",     group: "composition", roles: [{ role: "Composer", tracks: [12] }] },
+      { name: "Bryan-Michael Cox",   group: "production",  roles: [{ role: "Co-producer", tracks: [7] }] },
+      { name: "Qmillion",            group: "production",  roles: [{ role: "Recording engineer" }, { role: "Mixing" }], profile: false },
+      { name: "Todd Bergman",        group: "production",  roles: [{ role: "Assistant engineer" }], profile: false },
+      { name: "Max Ross",            group: "production",  roles: [{ role: "Engineer", tracks: [2] }], profile: false },
+    ],
   },
 }

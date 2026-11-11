@@ -24,7 +24,7 @@ import { Fragment, useCallback, useEffect, useRef, useState } from "react"
 import {
   Dialog, DialogContent, DialogTitle,
 } from "@/components/ui/dialog"
-import { X as XIcon, ChevronLeft, ChevronRight } from "lucide-react"
+import { X as XIcon, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useIsMobile } from "@/lib/use-media-query"
@@ -261,22 +261,17 @@ export function CreditsContent({
     </div>
   )
 
-  /* Track by track, a way back to the album's overview sits ABOVE the
-     identity block, on its own line, as a dialog's back control does (see
-     `dialogHeaderClass`): inline it would indent the title. The button at the
-     end of the list was the only way back, and it is a long scroll away on
-     an album of ten tracks. `-ml-2` hangs the 32px button so its chevron
-     sits on the thumb's edge. */
+  /* Track by track, "All album credits" sits UNDER the identity block, in
+     the slot the tab strip takes, at the strip's size (`sm`, 32px). Not a
+     back control — no chevron, not on the ✕'s line: it switches to the
+     other reading of the same album, it does not undo a step. */
+  const showAlbumCredits = () => { setByTrack({ on: false }); setTab("credits") }
   const header = byTrack.on ? (
-    <div className="flex flex-col gap-2">
-      {/* On the ✕'s centre line: the ✕ is 32px at `top-4` (centre 32px down),
-          the header starts at `pt-3` / `md:pt-6`, so the 32px button moves
-          down 4px on a phone and up 8px from `md`. */}
-      <Button variant="ghost" size="sm" className="-ml-2 self-start mt-1 md:-mt-2" onClick={() => { setByTrack({ on: false }); setTab("credits") }}>
-        <ChevronLeft />
+    <div className="flex flex-col gap-6">
+      {identity}
+      <Button variant="secondary" size="sm" className="self-start" onClick={showAlbumCredits}>
         All album credits
       </Button>
-      {identity}
     </div>
   ) : identity
 
@@ -448,11 +443,43 @@ export function CreditsContent({
           <div className="mb-6">{personRows(list)}</div>
         </Fragment>
       ))}
-      {/* The way back to the overview, where the reader lands once the
-          songs are read. Ghost, as the one at the top: the same action
-          twice, one look. */}
-      <Button variant="ghost" size="sm" className="-ml-2 self-start" onClick={() => setByTrack({ on: false })}>
-        <ChevronLeft />
+      {/* The end of a song's credits: the release facts (where the album's
+          reading has them between people and tracks — here they would split
+          the songs from their credits) and where to go next — the album's
+          page, or its credits as one list. */}
+      {/* One card, the album: its name, the release facts, and — when it has
+          a page — the whole card opens it, the way the album rows elsewhere
+          open on a tap anywhere. `bg-muted` and the album row's hover fill,
+          so it reads as the track bars' kin, not as a new kind of box. */}
+      {(() => {
+        const body = (
+          <>
+            <span className="flex items-center gap-2">
+              <span className="min-w-0 flex-1 truncate text-small font-medium text-foreground">{credits.album}</span>
+              {onAlbum && <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />}
+            </span>
+            {overview}
+          </>
+        )
+        const card = "relative flex w-full flex-col gap-3 rounded-xl bg-muted p-4 text-left"
+        return onAlbum ? (
+          /* A `div role="link"`, not a `<button>`: the facts are a `<dl>`,
+             which a button may not contain. */
+          <div
+            role="link"
+            tabIndex={0}
+            onClick={onAlbum}
+            onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onAlbum() } }}
+            aria-label={`Go to album ${credits.album}`}
+            className={cn(card, "press-ripple state-fade-quick cursor-pointer outline-none focus-ring [--hover-fill:var(--secondary)]")}
+          >
+            {body}
+          </div>
+        ) : (
+          <div className={card}>{body}</div>
+        )
+      })()}
+      <Button variant="secondary" size="lg" className="mt-3 self-start" onClick={showAlbumCredits}>
         All album credits
       </Button>
     </div>
@@ -633,7 +660,15 @@ function CreditsDialogContent({ credits, focusTrack, onClose }: { credits: Credi
         // grow-on-first-scroll detent jumped it to nearly full screen the
         // moment the reader scrolled — so `fixedHeight` turns that off.
         // `svh`, as every sheet height in the app (see Dialog).
-        "h-[80svh] max-h-[80svh]",
+        // Whole pixels, top and height. 80svh is fractional (960.8px), and
+        // the base centring (`top-1/2 -translate-y-1/2`) put the sheet at
+        // y = 120.1 — every sticky track bar then snapped between two pixel
+        // rows as the panel scrolled, and wobbled 1–2px. `round()` makes the
+        // height whole; from `md` the sheet is placed at a whole 10svh
+        // (centred, since it is 80 high) instead of translated by half its
+        // height.
+        "h-[round(down,80svh,1px)] max-h-[round(down,80svh,1px)]",
+        "md:top-[round(down,10svh,1px)] md:translate-y-0",
       )}
     >
       <CreditsContent

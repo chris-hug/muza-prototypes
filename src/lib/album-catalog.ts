@@ -286,12 +286,44 @@ const ALBUMS: AlbumDetail[] = [
       ["Black Unity", 1971], ["Deaf Dumb Blind", 1970], ["Izipho Zam", 1973],
     ]),
   },
+  // Black Radio — the prototype's album where the lineup changes with almost
+  // every track (a guest singer per song, and not even the band is constant).
+  // Tracks and durations: MusicBrainz release b2cca2a2 (Blue Note CD, 2012).
+  {
+    id: "a30",
+    cover: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/cb/c7/1d/cbc71df4-e2b7-4ea4-7edb-563a9aaf7b31/00602537433919.rgb.jpg/600x600bb.jpg",
+    title: "Black Radio", artist: "Robert Glasper", artistAvatar: avatar("Robert Glasper"),
+    year: 2012, format: "Album", buyingPrice: "$2.99", downloadPrice: "$5.99",
+    label: "Blue Note",
+    tracks: [
+      { id: "t1",  title: "Lift Off / Mic Check",         duration: "3:58" },
+      { id: "t2",  title: "Afro Blue",                    duration: "5:13" },
+      { id: "t3",  title: "Cherish the Day",              duration: "5:53" },
+      { id: "t4",  title: "Always Shine",                 duration: "5:22" },
+      { id: "t5",  title: "Gonna Be Alright (F.T.B.)",    duration: "6:14" },
+      { id: "t6",  title: "Move Love",                    duration: "3:22" },
+      { id: "t7",  title: "Ah Yeah",                      duration: "5:13" },
+      { id: "t8",  title: "The Consequences of Jealousy", duration: "6:12" },
+      { id: "t9",  title: "Why Do We Try",                duration: "6:32" },
+      { id: "t10", title: "Black Radio",                  duration: "5:26" },
+      { id: "t11", title: "Letter to Hermione",           duration: "4:53" },
+      { id: "t12", title: "Smells Like Teen Spirit",      duration: "7:26" },
+    ],
+    artistsOnAlbum: lineup(
+      ["Robert Glasper", "Piano"], ["Casey Benjamin", "Saxophone, Vocoder"],
+      ["Derrick Hodge", "Bass"], ["Chris Dave", "Drums"],
+    ),
+    moreFrom: rail(3, [
+      ["Black Radio 2", 2013], ["ArtScience", 2016], ["Fuck Yo Feelings", 2019],
+      ["Black Radio III", 2022], ["Double-Booked", 2009], ["In My Element", 2007],
+    ]),
+  },
 ]
 
 const BY_ID:   Record<string, AlbumDetail> = Object.fromEntries(ALBUMS.map(a => [a.id, a]))
 const BY_SLUG: Record<string, AlbumDetail> = Object.fromEntries(ALBUMS.map(a => [slug(a.title), a]))
 
-/** The hand-authored rich albums (a01–a08) — used by search to surface
+/** The hand-authored rich albums (a01–a08, a30) — used by search to surface
  *  real track-level results (every track carries its album's cover, artist
  *  and year). Synthesized albums have only generic placeholder tracks, so
  *  search draws songs from these. */
