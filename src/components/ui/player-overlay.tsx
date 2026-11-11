@@ -449,12 +449,13 @@ export function PlayerOverlay({
     if (!el) return
 
     // Sum of non-dynamic heights: drag (~36) + "Playing from" (~37, one line) +
-    // cover-to-meta gap (8) + title+artist+mt-3 (~76) + secondary icons
+    // cover-to-meta gap (8) + title+artist+mt-3 (~84: the title row is the
+    // 48px ♥ / ⋯ pair, not the 40 it was) + secondary icons
     // region floor (py-2 + 32 = 48) + transport region floor (py-2 + ~64 max
-    // play button = 80) + tabs (~80) = 365. Both flex-1 regions can grow
+    // play button = 80) + tabs (~80) = 373. Both flex-1 regions can grow
     // beyond their floor when there's spare height; the cover and waveform
     // grow into whatever's left.
-    const FIXED_SECTIONS = 365
+    const FIXED_SECTIONS = 373
     // Was 140. Below a 558 window that floor no longer fits, and the deficit
     // came out of the Info / Share / Radio row, which has `flex-1` and folded
     // onto the transport: seen on an iPhone in Brave, where the toolbars leave
@@ -701,12 +702,13 @@ export function PlayerOverlay({
                 name={track.title}
                 song={{ id: slugify(track.title), title: track.title, artist: track.artist, album: track.album, cover: track.image, duration: totalTime }}
                 variant="outline"
-                size="icon"
+                size="icon-lg"
+                iconClassName="size-5"
               />
               {menuItems && (
                 <DropdownMenu>
-                  <DropdownMenuTrigger render={<Button variant="outline" size="icon" aria-label="More options" />}>
-                    <MoreVertical strokeWidth={1.5} />
+                  <DropdownMenuTrigger render={<Button variant="outline" size="icon-lg" aria-label="More options" />}>
+                    <MoreVertical strokeWidth={1.5} className="size-5" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">{menuItems}</DropdownMenuContent>
                 </DropdownMenu>

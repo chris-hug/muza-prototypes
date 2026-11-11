@@ -20,7 +20,7 @@ scrolling, from a 568px-tall SE to a 956px Pro Max.
 | Top band | in the app (`inSheet`), a 36px band holding the `SheetGrabber`: the overlay is a bottom [Sheet](drawer.md), pulled down to close like every other. Standalone, a `ghost` `Button` (`w-full py-4 h-auto rounded-none`) whose tap → `onClose` | `bg-border` grabber · `bg-foreground/80` pill |
 | Playing from | one line: "Playing from:" then the source as a `MarqueeText`, which scrolls when it does not fit — a link when `onPlayingFromClick` is passed. Two lines spent a row of the cover's height | `text-xsmall leading-none font-normal`, `text-muted-foreground` / `text-foreground` |
 | Cover | a square, `rounded-xs shadow-md art-edge`, sized 64–440px by the budget below | `art-edge` is the 1px inset outline every piece of artwork carries — black at 10% in light, white at 10% in dark — so a pale cover still has an edge against the blurred version of itself behind it |
-| Title row | `h2` with a `MarqueeText`, a `LibraryHeartButton` for the song and a "…" button, both `outline` `icon` | `text-large font-medium leading-tight text-foreground` |
+| Title row | `h2` with a `MarqueeText`, a `LibraryHeartButton` for the song and a "…" button, both `outline` `icon-lg` (48px) with `size-5` glyphs. They were `icon` (40), which reached 44 only through the invisible `touch-target`; production's player draws them at about 46, and a pair this close to the thumb should *look* as tappable as it is | `text-large font-medium leading-tight text-foreground` |
 | Artist row | avatar `size-6 min-w-6 rounded-full ring-1 ring-border` + name; a link when `onArtistClick` is passed | `text-xsmall font-medium text-muted-foreground` |
 | Waveform row | `mt-3`, timestamps either side, the `Waveform` 40–160px tall; marked `data-swipe-ignore` because it owns its own horizontal drag (seek) | `text-2xsmall leading-none text-muted-foreground tabular-nums` |
 | Secondary icons | Info · Share · Radio, `ghost` `icon-sm`, glyphs `size-5` at stroke 1.5, `gap-8`, centred in a `flex-1 min-h-12` region with `py-2` so they never touch a neighbour. The floor matters: it was `min-h-0`, and under a 558 window the 140px cover floor took the row's height, so the icons folded onto the transport (iPhone in Brave, about 500 tall). Now the cover gives way, down to 64 | — |
@@ -74,9 +74,9 @@ Two measures, neither the window.
 and width `W` and solves:
 
 ```text
-FIXED     365   drag ~36 + playing-from ~37 + gap 8 + title block ~76
+FIXED     373   drag ~36 + playing-from ~37 + gap 8 + title block ~84
                 + icons floor 48 + transport floor 80 + tabs ~80
-available H − 365
+available H − 373
 cover     clamp(64, min(available − 40, W − 32), 440)
 waveform  clamp(40, available − cover, 160)
 t         (H − 568) / (956 − 568), clamped 0–1
