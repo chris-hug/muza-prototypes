@@ -12,6 +12,8 @@
  * chrome on a fresh session).
  */
 
+import { LocalSongMenuItems } from "@/components/app/local-song-rows"
+import { localAlbumFromPlaying } from "@/lib/local-library"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
@@ -53,17 +55,29 @@ export function AppPlayer({ footerNav }: { footerNav: boolean }) {
   // only links when a detail record exists. Tapping closes the overlay so
   // the destination page is visible.
   const albumKey = slugify(track.album)
-  const onArtistClick = () => { setOverlayOpen(false); openArtist(slugify(track.artist)) }
-  const onAlbumClick = hasAlbumDetail(albumKey)
-    ? () => { setOverlayOpen(false); openAlbum(albumKey) }
-    : undefined
+  // A local track's album is its local page, and its artist has a page only
+  // when the files matched a release on muza (an unknown name would land on
+  // the fallback profile, someone else entirely).
+  const localTrack = localAlbumFromPlaying(playingFrom)
+  const onArtistClick = localTrack && !localTrack.match
+    ? undefined
+    : () => { setOverlayOpen(false); openArtist(slugify(track.artist)) }
+  const onAlbumClick = localTrack
+    ? () => { setOverlayOpen(false); openAlbum(localTrack.id) }
+    : hasAlbumDetail(albumKey)
+      ? () => { setOverlayOpen(false); openAlbum(albumKey) }
+      : undefined
 
   // "Playing from" → the actual source. It's a playlist when the context
   // label resolves to one, otherwise the album (the label, or failing that
   // the track's own album).
   const fromKey = slugify(playingFrom)
+  // Your own files: "Playing from" reads "<album> · Local" and opens the local
+  // album page; its queue is the folder's tracks.
+  const localFrom = localTrack
   const onPlayingFromClick =
-    hasPlaylistDetail(fromKey) ? () => { setOverlayOpen(false); openPlaylist(fromKey) }
+    localFrom ? () => { setOverlayOpen(false); openAlbum(localFrom.id) }
+    : hasPlaylistDetail(fromKey) ? () => { setOverlayOpen(false); openPlaylist(fromKey) }
     : hasAlbumDetail(fromKey)  ? () => { setOverlayOpen(false); openAlbum(fromKey) }
     : onAlbumClick
 
@@ -80,7 +94,8 @@ export function AppPlayer({ footerNav }: { footerNav: boolean }) {
     return p.name === name ? p.topSongs.map(s => ({ title: s.title, artist: name, album: s.album, image: s.cover, duration: s.duration })) : []
   }
   const sourceTracks: QueueTrack[] =
-    radioArtist ? radioSongs(radioArtist)
+    localFrom ? localFrom.tracks.map(t => ({ title: t.title, artist: localFrom.artist, album: localFrom.title, image: localFrom.cover, duration: t.duration }))
+    : radioArtist ? radioSongs(radioArtist)
     : hasPlaylistDetail(fromKey)
       ? getPlaylistDetail(fromKey).tracks.map(t => ({ title: t.title, artist: t.artist, album: t.album, image: t.cover, duration: t.duration }))
     : hasAlbumDetail(fromKey)
@@ -108,13 +123,16 @@ export function AppPlayer({ footerNav }: { footerNav: boolean }) {
   const onNext = canSkip ? () => step(1) : undefined
   const onPrevious = canSkip ? () => (elapsed > 3 ? seek(0) : step(-1)) : undefined
 
-  const creditsBody = hasAlbumDetail(albumKey) ? (
+  // Credits are a muza release's data: a local track shows them only when
+  // its files matched a release, and then they are that release's.
+  const creditsKey = localTrack ? localTrack.match?.key : albumKey
+  const creditsBody = creditsKey && hasAlbumDetail(creditsKey) ? (
     <CreditsContent
-      credits={getCredits(albumKey)}
+      credits={getCredits(creditsKey)}
       showCover={false}
       heading={<p className="text-small font-medium leading-none text-foreground">Album credits</p>}
       onArtist={name => { setOverlayOpen(false); openArtist(slugify(name)) }}
-      onAlbum={() => { setOverlayOpen(false); openAlbum(albumKey) }}
+      onAlbum={() => { setOverlayOpen(false); openAlbum(creditsKey) }}
       bodyClassName="min-h-0"
     />
   ) : undefined
@@ -122,7 +140,10 @@ export function AppPlayer({ footerNav }: { footerNav: boolean }) {
   const onRadio = ownRadio.length
     ? () => { const s = ownRadio[0]; play({ title: s.title, artist: s.artist, album: s.album ?? "", image: s.image, totalTime: s.duration }, `${track.artist} Radio`) }
     : undefined
-  const menuItems = (
+  const localSongTrack = localTrack?.tracks.find(t => t.title === track.title)
+  const menuItems = localTrack && localSongTrack ? (
+    <LocalSongMenuItems album={localTrack} track={localSongTrack} />
+  ) : (
     <SongMenuItems
       title={track.title} artist={track.artist} album={track.album} cover={track.image} duration={track.totalTime}
       onArtistClick={onArtistClick}
@@ -160,6 +181,7 @@ export function AppPlayer({ footerNav }: { footerNav: boolean }) {
             onExpand={() => setOverlayOpen(true)}
             onPrevious={onPrevious}
             onNext={onNext}
+            local={!!localTrack}
           />
         </div>
 
@@ -193,6 +215,7 @@ export function AppPlayer({ footerNav }: { footerNav: boolean }) {
                 credits={creditsBody}
                 onRadio={onRadio}
                 menuItems={menuItems}
+                local={!!localTrack}
               />
             </div>
           </SheetContent>
@@ -218,6 +241,7 @@ export function AppPlayer({ footerNav }: { footerNav: boolean }) {
         className="pointer-events-auto w-full"
         onPrevious={onPrevious}
         onNext={onNext}
+        local={!!localTrack}
       />
     </div>
   )

@@ -183,7 +183,7 @@ function CartButton({ onOpen }: { onOpen: () => void }) {
         <Badge
           aria-hidden="true"
           variant="inverse"
-          shape="pill-sm"
+          shape="pill"
           className="absolute top-0.5 right-0.5"
         >
           {cart.count > 99 ? "99+" : cart.count}

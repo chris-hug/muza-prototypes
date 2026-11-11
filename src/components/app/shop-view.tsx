@@ -150,7 +150,7 @@ function TabsChrome() {
               {t.value === "orders" && actionRequired > 0 && (
                 <Badge
                   variant="inverse"
-                  shape="pill-sm"
+                  shape="pill"
                   aria-label={`${actionRequired} ${actionRequired === 1 ? "new order" : "new orders"}`}
                 >
                   {actionRequired > 99 ? "99+" : actionRequired}

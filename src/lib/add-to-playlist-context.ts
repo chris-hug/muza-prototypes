@@ -9,11 +9,11 @@
  */
 
 import { createContext, useContext } from "react"
-import type { SavedSong } from "@/lib/user-library"
+import type { PlaylistSong } from "@/lib/playlist-additions"
 
 export interface AddToPlaylistContextValue {
   /** Open the "Add to playlist" dialog for a track. */
-  open: (song: SavedSong) => void
+  open: (song: PlaylistSong) => void
 }
 
 export const AddToPlaylistContext = createContext<AddToPlaylistContextValue>({ open: () => {} })

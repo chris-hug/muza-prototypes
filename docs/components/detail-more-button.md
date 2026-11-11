@@ -209,28 +209,21 @@ The three groups, in order — an empty group is skipped and so is its divider:
 
 | Group | Rows |
 |---|---|
-| Manage / queue | Save offline ⇄ Remove from offline (album you own, playlist with songs you own) · Download files (album bought with files) or Download files – $x (album bought for listening; opens the checkout for the difference, through `FilesPurchaseProvider`) · Make private ⇄ Make public (owned playlist) · Add to a playlist (album only — you add an album's *tracks* to a playlist; a playlist is not addable to a playlist, an artist not at all) · Play next · Add to queue |
+| Manage / queue | Download files (album bought with files) or Download files – $x (album bought for listening; opens the checkout for the difference, through `FilesPurchaseProvider`) · Make private ⇄ Make public (owned playlist) · Add to a playlist (album only — you add an album's *tracks* to a playlist; a playlist is not addable to a playlist, an artist not at all) · Play next · Add to queue |
 | Navigation | Go to album / Go to playlist (`onGoToSelf` — a card or row, never the item's own page) · Credits (owned album, since its pill is Edit) · Go to artist · Go to label · Go to owner (playlist — it has an owner, not an artist) · Artist info |
 | Destructive | **Delete playlist** (owned) in `text-destructive`, otherwise **Report** — a plain row, never styled destructive |
 
-**Offline and files are two things and the words keep them apart.** "Save
-offline" keeps something playable in the app on this device, and only music
-that is yours: an album you bought (either tier) or uploaded, and a song from
-one. A playlist offers it when it holds songs you own, and saves only those;
-the toast says how many. It is store-bound (`libraryId`) and an artist has no
-such row. The rule is one hook, `useOfflineEligibility`
-(`src/lib/offline-eligibility.ts`), used by this menu and the song menu.
-Something already saved keeps its "Remove from offline" whatever the rule says.
+**There is no "Save offline".** muza does not keep its music on the device
+for playing without a connection — not streamed, and not bought either. The
+one thing that plays offline is the listener's own files, which are a source
+of their own (see **Local files** below). The prototype offered "Save offline"
+twice — first on anything you could play, then only on music you own — and
+both promised something the product will not do.
 
-Why owned only: offline listening is being built for music you own. Keeping
-*streamed* music on the device is a separate piece of work — a streaming
-service that allows it needs protection for those files, which muza does not
-have — and it is not needed until the streaming catalogue is. The prototype
-used to offer "Save offline" on everything you could play, which promised the
-second thing. "Download files" hands over the lossless files you paid
+"Download files" hands over the lossless files you paid
 to keep, so it exists only on albums you bought: with no price once they are
 paid for, with the remaining difference when you bought for listening. "Download" alone
-used to mean both. Both rows use the plain `Download` glyph, the mark people
+used to mean both this and offline. Both rows use the plain `Download` glyph, the mark people
 look for, and the label says which one it is; a saved row shows `Check`.
 
 The overview for the team is `?page=MenuOptions`: the three purchase states as
@@ -379,26 +372,28 @@ phone sheets. One menu per media kind. If two surfaces show different rows for
 the same object, that is a bug. A row with no handler is dropped, never shown
 disabled.
 
-| Row | Album | Playlist (yours) | Playlist (saved) | Artist | Song |
-|---|---|---|---|---|---|
-| Share (adaptive: native share, else Copy link) | tile | tile | tile | tile | ✓ |
-| Save to library / Remove from library | tile | — | tile | tile | ✓ |
-| Credits | tile (in the list if owned) | — | — | — | ✓ "Show credits" |
-| Edit / Edit info | owned | tile | — | — | — |
-| Add music | — | tile | — | — | — |
-| Play radio | — | — | — | tile | — |
-| Save offline / Remove from offline | owned or uploaded | songs you own | songs you own | — | if you own its album |
-| Download files | see below | — | — | — | — |
-| Make private / Make public | — | ✓ | — | — | — |
-| Add to a playlist | ✓ | — | — | — | ✓ |
-| Play next · Add to queue | if wired | if wired | if wired | if wired | — |
-| Go to album / Go to playlist | ✓ | ✓ | ✓ | — | ✓ |
-| Go to artist | ✓ | — | — | — | ✓ |
-| Go to owner | — | — | ✓ | — | — |
-| Go to label | ✓ | — | — | — | — |
-| Artist info | — | — | — | ✓ | — |
-| Delete playlist | — | ✓ destructive | — | — | — |
-| Report | if not owned | — | ✓ | ✓ | ✓ |
+| Row | Album | Playlist (yours) | Playlist (saved) | Artist | Song | Local files |
+|---|---|---|---|---|---|---|
+| Open on muza | — | — | — | — | — | first row, if the files match a release on muza |
+| Go to local copy | when it is also in your local files | — | — | — | — | — |
+| Show in Finder / Explorer | — | — | — | — | — | ✓ |
+| Share (adaptive: native share, else Copy link) | tile | tile | tile | tile | ✓ | — nobody else can open it |
+| Save to library / Remove from library | tile | — | tile | tile | ✓ | — in the library by being on disk |
+| Credits | tile (in the list if owned) | — | — | — | ✓ "Show credits" | — |
+| Edit / Edit info | owned | tile | — | — | — | — |
+| Add music | — | tile | — | — | — | — |
+| Play radio | — | — | — | tile | — | — |
+| Download files | see below | — | — | — | — | — |
+| Make private / Make public | — | ✓ | — | — | — | — |
+| Add to a playlist | ✓ | — | — | — | ✓ | songs |
+| Play next · Add to queue | if wired | if wired | if wired | if wired | — | — |
+| Go to album / Go to playlist | ✓ | ✓ | ✓ | — | ✓ | songs → their local album |
+| Go to artist | ✓ | — | — | — | ✓ | if the files match a release on muza |
+| Go to owner | — | — | ✓ | — | — | — |
+| Go to label | ✓ | — | — | — | — | — |
+| Artist info | — | — | — | ✓ | — | — |
+| Delete playlist | — | ✓ destructive | — | — | — | — |
+| Report | if not owned | — | ✓ | ✓ | ✓ | — |
 
 **Download files, by purchase state (albums only):**
 
@@ -408,14 +403,35 @@ disabled.
 | Purchased for listening | `Download files – $x`, where `$x` is the difference between the two tiers; opens checkout. No row if the album offers no files or there is no difference to pay |
 | Files paid for | `Download files` |
 
+**Local files** (an album or song from the listener's own folder, see
+`local-library`) are their own kind, switched on by the `local` prop. Not a
+release on muza, so nothing that is about one: no Share, Save, Report, no
+tiles on the sheet. "Open on muza" leads when the files match a release — it
+is the way back to the artist, and the reason a matched folder is worth more
+than a plain player — with "Show credits" beside it (the matched release's;
+unmatched files have none), then "Show in Finder" (Explorer on Windows) and,
+matched only, "Go to artist". On a phone or tablet there is no "Show in
+Finder": the files play from a computer or server elsewhere and there is no
+file manager to hand them to, so the row is left out (decided by platform, not
+window width — a narrow desktop window still has a Finder).
+
+The other direction: a catalog album the listener also has in their own
+files gets **"Go to local copy"** in its navigation group (beside "Go to
+artist"), through `onOpenLocalCopy`. The album page also says it as a muted
+line under the meta, but on a phone the header is the slim chrome and its
+sheet is the only place the way to your copy can be; it is a menu handler,
+so `usePublishDetailHeader` forwards it there. `useLocalActions` builds the handlers once for the card,
+the row, the table, the album page and the phone's chrome sheet (which reads
+`local` through `usePublishDetailHeader`).
+
 **Context gating is the only per-surface difference:** no "Go to album" on the
 album page, no "Go to artist" on the artist page, no "Add to a playlist" inside
 your own playlist.
 
 **Fixed copy:** "Save to library" / "Remove from library", never "Add"; "Save"
-and "Remove" on the phone sheet's tiles only. "Save offline" / "Remove from
-offline". "Download files", never "Download" alone, "Add download" or "Download
-MP3". "Add to a playlist", "Show credits", "Go to artist", "Go to owner".
+and "Remove" on the phone sheet's tiles only. "Download files", never "Download" alone, "Add download" or "Download
+MP3". "Add to a playlist", "Show credits", "Go to artist", "Go to owner", "Open on
+muza", "Show in Finder" ("Show in Explorer" on Windows, "Show in folder" elsewhere — the OS's own word).
 
 ## Open questions
 

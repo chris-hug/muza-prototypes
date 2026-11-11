@@ -283,6 +283,8 @@ interface PlayerBarBProps {
   /** Transport skips; the buttons are disabled without them. */
   onPrevious?:  () => void
   onNext?:      () => void
+  /** Playing your own files: no heart (a file on disk is in the library). */
+  local?:       boolean
   /** Drive play/pause from the global player store instead of local state.
    *  When set, the play buttons toggle the store and the disc / icons
    *  reflect `bound.playing`. The DS showcase omits this and stays
@@ -311,6 +313,7 @@ export function PlayerBarB({
   onExpand,
   onPrevious,
   onNext,
+  local = false,
   bound,
   shuffle: shuffleBound,
 }: PlayerBarBProps) {
@@ -396,7 +399,7 @@ export function PlayerBarB({
           {/* Text + Plus button — positioned inside the solid pill. */}
           <div className="absolute inset-[19px_11px_19px_96px] flex items-center gap-1 min-w-0">
             <TrackText title={track.title} artist={track.artist} album={track.album} gap="gap-1" onArtistClick={coarse ? undefined : onArtistClick} onAlbumClick={coarse ? undefined : onAlbumClick} />
-            <LibraryHeartButton
+            {!local && <LibraryHeartButton
               type="song"
               id={slugify(track.title)}
               name={track.title}
@@ -404,7 +407,7 @@ export function PlayerBarB({
               variant="ghost"
               size="icon"
               iconClassName="size-5"
-            />
+            />}
           </div>
         </div>
 

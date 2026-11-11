@@ -62,7 +62,11 @@ in the 60px row. Pass a meta field in `trackNumber` mode only when a track
 actually differs — a guest artist, say.
 
 Order inside the line is `badge` · `artist` · `album` · `year`. The badge is
-a `Badge variant="secondary"` and `shrink-0`; the two dots are `aria-hidden`
+a `Badge variant="secondary" shape="square-xs"` and `shrink-0` — the same
+one-word label the album cards carry, so Library › Songs says "Owned" (the
+song's album is bought; a track is not sold alone) and "Local" (your own
+files) the way Albums does. The album page of a local album leaves it off:
+its header already says it once for every track; the two dots are `aria-hidden`
 `shrink-0` spans so they are never the part that ellipses, and each one is
 gated on there being something before it (`artist &&` before the album,
 `(artist || album) &&` before the year).
@@ -184,7 +188,7 @@ activate()
 | Cover / track number | `<button>` | calls `activate()` itself — same toggle, one place |
 | Title, artist, album text | `<button>` each | its own `on…Click`; never plays |
 | ♥ | `LibraryHeartButton` → `Button`, and `stopPropagation` by default | toggles the library; never plays |
-| ⋯ trigger, ⓘ | `Button` | opens the menu / `onInfo`; never plays |
+| ⋯ trigger, ⓘ | `Button` | opens the menu / the credits (as "Show credits"); never plays |
 | Duration | plain `<span>` | **falls through to the row and plays** — it is text, not a control |
 | Meta gutter, the veil | `pointer-events-none` / not a button | falls through and plays |
 
@@ -324,7 +328,7 @@ The sheet's header is the song itself — 44px cover (`size-11 rounded-xs`),
 title, then `artist · album` in `text-small text-muted-foreground` — and its
 body is a column of `SheetAction`s, each a full-width `button` wrapped in
 `SheetClose` so picking one dismisses the sheet. Items, top to bottom: Save /
-Remove from library · Save offline / Remove from offline (only on a song you own, through its album) · Add to playlist · Go to artist · Go to album · Share… /
+Remove from library · Add to playlist · Go to artist · Go to album · Share… /
 Copy link · Show credits · Report (destructive). The gated ones follow the
 same `hide…` flags as the desktop menu.
 
@@ -341,9 +345,19 @@ the **same** items; a surface hides only what is redundant there:
 ```
 
 `SongMenuItems`: Share… (native) / Copy link · Save / Remove from library ·
-Save offline / Remove from offline · Add to playlist · ─ · Go to artist · Go to album · Show credits · ─ · Report.
-Save offline appears only on a song you own (its album is bought, see
-`useOfflineEligibility`); a song already offline keeps Remove from offline.
+Add to playlist · ─ · Go to artist · Go to album · Show credits · ─ · Report.
+A catalog song whose album the listener also has in their own files gets
+"Go to local copy" after "Go to album", in the menu, the touch sheet and the
+player's ⋯ alike — `useLocalCopy(album)` finds the matched local album and
+the row disappears when there is none (or local files or matching are off).
+
+There is no "Save offline": muza keeps no music on the device (see Detail
+Menu). A track from the listener's own files is a **local** row instead —
+`local` drops the heart (a file on disk is in the library by being there) and
+the host passes `LocalSongMenuItems` as `menuItems` (`local-song-rows.tsx`):
+Add to playlist · Open on muza (matched files) · ─ · Show in Finder (Explorer on Windows) · Go to
+artist (matched). `LocalSongRows` builds those rows for a local album page and
+Library › Songs › Local, greyed when the source is not connected.
 "Go to artist" and "Go to album" need both their click handler **and** the
 flag clear — a row with no `onAlbumClick` has nowhere to go. Share, library,
 credits and report are self-wired: `useShare`, `useUserLibrary` +
@@ -421,5 +435,5 @@ inside a 60px row read as busy.
 - song-list-item.tsx:19–20 (header comment) claims the duration is `text-small text-muted-foreground` · source renders it `text-xsmall` (song-list-item.tsx:514). Documented above as `text-xsmall`.
 - song-list-item.tsx:341–342 says "year drops first (≤380), then album (≤260)" and :511 says the duration is "Dropped on very tight rows (≤300)" · the variants are `@max-[380px]` / `@max-[260px]` / `@max-[300px]`, which Tailwind v4 compiles to `@container (width < N)` — exclusive, so a row exactly 380px wide still shows the year. The table above matches the compiled CSS; the source comments are off by one.
 - song-list-item.tsx:99–101 documents `onAddToLibrary` as the "Always-visible quick action — saves the song to the library (Heart)" · the visible heart is `LibraryHeartButton` (song-list-item.tsx:410, 508), which never calls `onAddToLibrary`; the only caller is `handleSongLibrary` (song-list-item.tsx:238), reached from the compact touch sheet's first action (song-list-item.tsx:440). Documented above without that claim.
-- The ⓘ button calls `onInfo` directly (song-list-item.tsx:498) while the menu's "Show credits" uses `showCredits` — `credits.open(slugify(album))` when `album` is set, else `onInfo` (song-list-item.tsx:228). A cover-mode row with an `album` but no `onInfo` (playlist, library, search) has a working "Show credits" and an inert ⓘ. Recorded as observed; unclear whether ⓘ should also fall back to the album credits.
+- Resolved: the ⓘ button called `onInfo` only, so a cover-mode row with an `album` and no `onInfo` (playlist, library, search) had a working "Show credits" in its menu and an inert ⓘ beside it. ⓘ now runs the same `showCredits` as the menu and is not drawn when there are no credits to show. A `local` row takes its credits from `onInfo` alone — the matched release's, from `useLocalActions` — since its album title names no muza release.
 - song-list-item.tsx:527 claims a "44px+ hit target" for `SheetAction` · the classes are `px-3 py-3 text-base` with no explicit min-height; the 44 depends on `text-base`'s line height, which is not stated in the file.

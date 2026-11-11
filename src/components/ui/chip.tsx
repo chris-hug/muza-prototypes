@@ -93,10 +93,9 @@ function Chip({
   const resolvedVariant = selected
     ? (activeStyle === "outline" ? "selected-outline" : "selected")
     : (variant ?? "default")
-  // The count follows the chip's own step: a badge sized for the 40px chip
-  // shouts inside the 32px one. `sm` is the component's default size, so an
-  // omitted `size` resolves the same way the label does.
-  const countShape = (size ?? "sm") === "sm" ? "pill-sm" : "pill"
+  // One count size at every chip step (see Badge's `pill`): on the 32px chip
+  // a larger count put the number above its own label, and the 40px chip
+  // with a count is not used in the product.
 
   return (
     <button
@@ -110,7 +109,7 @@ function Chip({
       {count !== undefined && (
         // The `count` variant owns both states (resting on the chip's fill,
         // and inverted while the chip is selected) — no colour patching here.
-        <Badge shape={countShape} variant="count">{count}</Badge>
+        <Badge shape="pill" variant="count">{count}</Badge>
       )}
     </button>
   )

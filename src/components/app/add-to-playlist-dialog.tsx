@@ -12,8 +12,9 @@
  * Mounted once via `AddToPlaylistProvider`; any descendant opens it with
  * `useAddToPlaylist().open(song)`. Outside a provider `open` is a no-op.
  *
- * Prototype: playlists are the static catalog and add/create only toast (no
- * membership store yet) — wire to a real playlist-tracks store when it lands.
+ * Prototype: playlists are the static catalog; an added song is kept for the
+ * session in playlist-additions and shown at the end of that playlist. Create
+ * only toasts — wire both to a real playlist-tracks store when it lands.
  */
 
 import { useCallback, useMemo, useRef, useState } from "react"
@@ -29,6 +30,7 @@ import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { navRowClass } from "@/components/ui/nav-row"
 import { useToast } from "@/components/ui/toast"
+import { playlistAdditions, type PlaylistSong } from "@/lib/playlist-additions"
 import { useIsMobile } from "@/lib/use-media-query"
 import { MediaListItem } from "@/components/ui/media-list-item"
 import { SelectTrackButton } from "@/components/ui/select-track-button"
@@ -38,14 +40,13 @@ import {
 } from "@/components/ui/alert-dialog"
 import { getAllPlaylists } from "@/lib/playlist-catalog"
 import { AddToPlaylistContext } from "@/lib/add-to-playlist-context"
-import type { SavedSong } from "@/lib/user-library"
 
 export { useAddToPlaylist } from "@/lib/add-to-playlist-context"
 
 export function AddToPlaylistProvider({ children }: { children: React.ReactNode }) {
   const [mode, setMode] = useState<"list" | "create">("list")
-  const [song, setSong] = useState<SavedSong | null>(null)
-  const open = useCallback((s: SavedSong) => setSong(s), [])
+  const [song, setSong] = useState<PlaylistSong | null>(null)
+  const open = useCallback((s: PlaylistSong) => setSong(s), [])
   /* The sheet holds picks, and the dialog that can be flicked away lives out
      here — so the CONTENT registers a veto and the root asks it before every
      close. Returning true means "I have taken over" (a confirmation is up);
@@ -86,7 +87,7 @@ export function AddToPlaylistProvider({ children }: { children: React.ReactNode 
 }
 
 function AddToPlaylistContent({ song, guard, onClose, mode, setMode }: {
-  song: SavedSong
+  song: PlaylistSong
   guard: React.RefObject<() => boolean>
   onClose: () => void
   /** Lifted to the provider: the step decides the ROOT's presentation, and the
@@ -116,6 +117,7 @@ function AddToPlaylistContent({ song, guard, onClose, mode, setMode }: {
   }, [owned, query])
 
   const done = (playlistTitle: string) => {
+    playlistAdditions.add(playlistTitle, song)
     toast({
       title: "Added to playlist",
       description: `“${song.title}” → ${playlistTitle}`,
@@ -127,6 +129,7 @@ function AddToPlaylistContent({ song, guard, onClose, mode, setMode }: {
   /** Commit every pick at once — the bar's action. */
   const commit = () => {
     if (picked.length === 0) return
+    picked.forEach(title => playlistAdditions.add(title, song))
     toast({
       title: picked.length === 1 ? "Added to playlist" : `Added to ${picked.length} playlists`,
       // One name reads better than a count; past one, the count does.

@@ -810,9 +810,9 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
 // Demo seed for the UserLibraryProvider — first 12 SAVED_ALBUMS ids
 // are in the library. a09 is bought with its files; a02, a03, a05, a08, a12,
 // a14 and a18 for listening, so every purchase state (and its menu rows) is
-// there out of the box, and Library › Offline has owned music to show (offline
-// is for music you own, see offline-eligibility). The rest are saved, not
-// bought, and offer no "Save offline". a07 (A Love Supreme) is intentionally
+// there out of the box. a02 is also among the listener's local files (see
+// local-library), which is what makes its local copy read "Owned on muza".
+// The rest are saved, not bought. a07 (A Love Supreme) is intentionally
 // absent so the buy → purchase flow on the album detail page demonstrates the
 // auto-add behavior.
 const LIBRARY_SEED = {
@@ -842,25 +842,6 @@ const LIBRARY_SAVED_SEED = {
   artist:   Object.fromEntries(SAVED_ARTISTS.map(a => [slugify(a.name), true as const])),
   playlist: Object.fromEntries(SAVED_PLAYLISTS.map(p => [slugify(p.title), true as const])),
   song:     Object.fromEntries(SAVED_SONGS_SEED.map(s => [s.id, s])),
-}
-
-// Example data for Library › Offline, all of it owned (offline is for music
-// you own). The songs are from bought albums that are NOT offline themselves
-// (Speak No Evil, Empyrean Isles) on purpose: a song that came with an offline
-// album is that album's tile, so only songs saved on their own show in the
-// songs block. Each playlist holds songs from the bought albums; only those go
-// offline.
-const OFFLINE_SONG_IDS = new Set([
-  "witch-hunt-wayne-shorter", "infant-eyes-wayne-shorter",
-  "cantaloupe-island-herbie-hancock", "one-finger-snap-herbie-hancock",
-])
-const LIBRARY_OFFLINE_SEED = {
-  album: { a03: true, a08: true, a09: true, a12: true, a14: true } as Record<string, true>,
-  playlist: {
-    "blue-note-essentials": true, "blue-note-late-night": true, "impulse-spiritual-jazz": true,
-    "coltrane-years-on-impulse": true, "strata-east-deep-cuts": true,
-  } as Record<string, true>,
-  song: Object.fromEntries(SAVED_SONGS_SEED.filter(s => OFFLINE_SONG_IDS.has(s.id)).map(s => [s.id, s])),
 }
 
 // Demo seed for the UserAccountProvider — pre-fills two of the
@@ -2987,7 +2968,7 @@ export default function Home() {
   if (activeNav === "DesignSystem") {
     return (
       <CartProvider>
-        <UserLibraryProvider seed={LIBRARY_SEED} savedSeed={LIBRARY_SAVED_SEED} offlineSeed={LIBRARY_OFFLINE_SEED}>
+        <UserLibraryProvider seed={LIBRARY_SEED} savedSeed={LIBRARY_SAVED_SEED}>
           <UserAccountProvider initialTier="anonymous" initialPlayCounts={DEMO_PLAY_COUNTS}>
             <CreditsProvider>
               <PlayerProvider>
@@ -3005,7 +2986,7 @@ export default function Home() {
 
   return (
     <CartProvider>
-    <UserLibraryProvider seed={LIBRARY_SEED} savedSeed={LIBRARY_SAVED_SEED} offlineSeed={LIBRARY_OFFLINE_SEED}>
+    <UserLibraryProvider seed={LIBRARY_SEED} savedSeed={LIBRARY_SAVED_SEED}>
     <UserAccountProvider initialTier="anonymous" initialPlayCounts={DEMO_PLAY_COUNTS}>
     <CreditsProvider>
     <AddToPlaylistProvider>

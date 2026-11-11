@@ -50,11 +50,18 @@ distinguishes the two visually: by default the row renders **no badge** for a la
 for any other type), and the component's own comment, which for a long time
 claimed a "Label" badge, now says so.
 
+## `badge`
+
+A one-word label at the head of the second line — "Owned", "Local" — drawn as
+the `square-xs` badge the cards and song rows use, so a list says ownership
+and source the way a card does. Albums list: an owned album gets "Owned"; a
+local one gets "Local" with the format as `meta`.
+
 ## `showType`
 
 `showType` puts the [`ContentTypeBadge`](badge.md) at the row's right edge,
 before the ⋯. It is for a list that really mixes types and has nothing else
-naming them, today Library's list view and Library › Offline. Right-aligned, so the types form a
+naming them, today Library's list view and Library › Local. Right-aligned, so the types form a
 column; on the second line each badge started wherever the name happened to
 end. Off by default, since most lists are single-type or have category tabs.
 

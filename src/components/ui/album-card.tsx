@@ -35,6 +35,9 @@ import { CoverArt } from "@/components/ui/cover-art"
 import { AlbumCardMenu } from "@/components/ui/cover-card-menu"
 import { LibraryHeartButton } from "@/components/ui/library-heart-button"
 import { PurchasedBadge } from "@/components/ui/purchased-badge"
+import { LocalBadge } from "@/components/ui/local-badge"
+import { useLocalActions } from "@/lib/use-local-actions"
+import { localPlayingFrom, type LocalAlbum } from "@/lib/local-library"
 import { useLongPress } from "@/lib/use-long-press"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { DetailMenuSheetBody } from "@/components/ui/detail-more-button"
@@ -61,6 +64,11 @@ const COVER_BTN_SM = `${COVER_BTN} size-6 [&_svg]:size-3`
 const COVER_BTN_LG = `${COVER_BTN} size-10 [&_svg]:size-4`
 
 export interface AlbumCardProps {
+  /** The listener's own files, not a catalog release (see local-library).
+   *  The card opens the local page, plays the files, shows the LocalBadge in
+   *  the price row, drops the heart (being on disk is being in the library)
+   *  and carries the local menu. A source that is off greys the card. */
+  local?:         LocalAlbum
   cover:          string
   title:          string
   artist:         string
@@ -111,11 +119,13 @@ export function AlbumCard({
   onPlay, onMore, onAdd, onEdit, onAddToPlaylist,
   onGoToArtist, onGoToAlbum, onRemove, onReport, onShowInfo,
   onTitleClick, onArtistClick, hideGoToArtist, hideGoToAlbum, inLibrary,
-  className,
+  local, className,
 }: AlbumCardProps) {
   const { openAlbum, openArtist } = useMediaNav()
   const player = usePlayer()
-  const key = slugify(title)
+  const localActions = useLocalActions()
+  const l = local ? localActions(local) : undefined
+  const key = local ? local.id : slugify(title)
   // Library key: the catalog id (matches the detail page + seed) so the card
   // heart / menu Save stay in sync with the detail; slug fallback for
   // synthesized albums not in the catalog.
@@ -139,19 +149,25 @@ export function AlbumCard({
   // (with its own cover/artist) — even titles the catalog didn't seed.
   // Never overrides a richer/library record (registerAlbums is idempotent).
   useEffect(() => {
+    // Local files are not a catalog record; their page resolves them itself.
+    if (local) return
     registerAlbums([{ id: key, title, cover, artist, year: typeof year === "number" ? year : undefined, streamPrice, downloadPrice }])
-  }, [key, title, cover, artist, year, streamPrice, downloadPrice])
+  }, [local, key, title, cover, artist, year, streamPrice, downloadPrice])
 
   // The card is a NAV surface: tapping the cover (or title) opens the
   // detail page. Playing and saving are their OWN affordances (the Play
   // button and the heart) — they never navigate.
   const goAlbum = () => openAlbum(key)
+  // A host's title handler opens the CATALOG page by title slug; for local
+  // files that would land on the muza release, so the card opens itself.
+  const openSelf = l ? goAlbum : (onTitleClick ?? goAlbum)
   const coarse = useCoarsePointer()
   // The same default the "…" menu's "Go to artist" bakes in. Almost no host
   // passes `onArtistClick`, so without it the name was a button that did
   // nothing. On the artist's own page there is nowhere to go, so no handler —
   // and no handler, no control.
-  const goArtist = onArtistClick ?? (hideGoToArtist ? undefined : () => openArtist(slugify(artist)))
+  // A local album has an artist page only when its files matched muza.
+  const goArtist = l ? l.onGoToArtist : onArtistClick ?? (hideGoToArtist ? undefined : () => openArtist(slugify(artist)))
   // Start playback from the album's first track (context = album title).
   // The card always plays itself — the legacy `onPlay` prop (which hosts
   // historically wired to navigation) is intentionally NOT used here.
@@ -165,12 +181,13 @@ export function AlbumCard({
    * Without it every press restarted track 1: the icon said Play while the
    * album was audibly playing, and pressing it did the one thing a Play glyph
    * promises not to do on something already running. */
-  const thisAlbumTitle = getAlbumDetail(key).title
+  const thisAlbumTitle = local ? localPlayingFrom(local) : getAlbumDetail(key).title
   const isThisAlbum    = !!player.track && player.playingFrom === thisAlbumTitle
   const isPlaying      = isThisAlbum && player.playing
 
   const playAlbum = () => {
     if (isThisAlbum) { player.toggle(); return }
+    if (l) { l.play(); return }
     const al = getAlbumDetail(key)
     const t = al.tracks[0]
     if (t) player.play({ title: t.title, artist: al.artist, album: al.title, image: al.cover, totalTime: t.duration }, al.title)
@@ -207,7 +224,7 @@ export function AlbumCard({
         // touch here stopped the browser panning the rail whenever a swipe
         // started on artwork — which is nearly always. The long press is
         // driven by a timer, so it survives leaving the gesture to the browser.
-        className="relative aspect-square w-full overflow-hidden cursor-pointer select-none"
+        className={cn("relative aspect-square w-full overflow-hidden cursor-pointer select-none", l && !l.available && "opacity-60")}
       >
         <CoverArt src={cover} alt={title} />
 
@@ -250,7 +267,7 @@ export function AlbumCard({
               >
                 <Pencil />
               </Button>
-            ) : inLibrary ? null : (
+            ) : inLibrary || local ? null : (
               // Store-bound: toggles save/remove + animates + toasts; stops
               // propagation so it never opens the detail page.
               <LibraryHeartButton
@@ -282,6 +299,7 @@ export function AlbumCard({
               onRemove={onRemove}
               onReport={onReport}
               onShowInfo={onShowInfo}
+              localMenu={l?.menu}
             />
           </div>
           <Button
@@ -305,11 +323,11 @@ export function AlbumCard({
             a cover and a row that both open the same page was a target of its
             own for nothing. Cover and text are one tap. */}
         {coarse ? (
-          <p onClick={onTitleClick ?? goAlbum} className={cn(titleSize, leadingCls, "font-normal text-foreground text-left line-clamp-2 pb-[6px] -mb-[6px]")}>{title}</p>
+          <p onClick={openSelf} className={cn(titleSize, leadingCls, "font-normal text-foreground text-left line-clamp-2 pb-[6px] -mb-[6px]")}>{title}</p>
         ) : (
           <button
             type="button"
-            onClick={onTitleClick ?? goAlbum}
+            onClick={openSelf}
             className={cn(titleSize, leadingCls, "font-normal text-foreground text-left line-clamp-2 link-underline pb-[6px] -mb-[6px] outline-none cursor-pointer")}
           >
             {title}
@@ -329,7 +347,7 @@ export function AlbumCard({
              narrow window keeps the link. */}
         <div
           className={cn("flex items-center gap-1.5 min-w-0 text-muted-foreground", metaSize, metaWeight, leadingCls, metaTracking)}
-          onClick={coarse ? (onTitleClick ?? goAlbum) : undefined}
+          onClick={coarse ? (openSelf) : undefined}
         >
           {coarse || !goArtist ? (
             <span className="truncate pb-[6px] -mb-[6px]">{artist}</span>
@@ -359,11 +377,13 @@ export function AlbumCard({
              same line-height as the meta row, so the artist→status gap matches
              the title→artist gap exactly (no centred fixed-height box, which
              would sit a hair tighter against the meta line). */}
-        {purchased ? (
+        {l ? (
+          <LocalBadge detail={l.detail} unavailable={!l.available} className={cn("text-muted-foreground", metaSize, metaWeight, metaTracking, leadingCls)} />
+        ) : purchased ? (
           // Match the meta treatment (weight + tracking) AND its line box, so
           // "Owned" sits on the same rhythm as a price line; it keeps
           // `text-foreground` (slightly more present than the muted price).
-          <PurchasedBadge className={cn("flex items-center", metaSize, metaWeight, metaTracking, leadingCls, "[&_svg]:size-3")} />
+          <span className={cn("flex items-center", leadingCls)}><PurchasedBadge /></span>
         ) : streamPrice ? (
           <span className={cn("flex items-center gap-1.5 text-muted-foreground tabular-nums", metaSize, metaWeight, metaTracking, leadingCls)}>
             <span>{streamPrice}</span>
@@ -385,6 +405,16 @@ export function AlbumCard({
           shape for a mouse. */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent side="bottom">
+          {l ? (
+            <DetailMenuSheetBody
+              kind="album"
+              title={title}
+              subtitle={artist}
+              cover={cover}
+              meta={l.label}
+              {...l.menu}
+            />
+          ) : (
           <DetailMenuSheetBody
             kind="album"
             title={title}
@@ -404,6 +434,7 @@ export function AlbumCard({
             onReport={onReport}
             onShowInfo={onShowInfo}
           />
+          )}
         </SheetContent>
       </Sheet>
     </div>

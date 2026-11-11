@@ -30,10 +30,6 @@ import {
 
 export type LibraryItemType = "album" | "playlist" | "artist" | "song"
 
-/** What can be saved for playing without a connection. An artist cannot:
- *  there is no finite set of tracks to save. */
-export type OfflineItemType = "album" | "playlist" | "song"
-
 interface LibraryEntry {
   added:     boolean
   purchased: boolean
@@ -65,33 +61,13 @@ interface SavedSets {
 
 const EMPTY_SAVED: SavedSets = { playlist: {}, artist: {}, song: {} }
 
-/** Saved offline, per type. Deliberately NOT part of `LibraryEntry`: offline
- *  is about this device, and an album can be offline without being in your
- *  library. WHAT may go offline (music you own) is decided by the menus
- *  through `useOfflineEligibility`, not here. The file purchase
- *  (`tier: "download"`) is a different thing again, a licence to keep files. */
-export interface OfflineSets {
-  album:    Record<string, true>
-  playlist: Record<string, true>
-  /** Songs carry their metadata, like `saved.song`: a song can be offline
-   *  without being in the library, and then nothing else could render it. */
-  song:     Record<string, SavedSong>
-}
-const EMPTY_OFFLINE: OfflineSets = { album: {}, playlist: {}, song: {} }
 
 interface PersistShape {
   albums: Record<string, LibraryEntry>
   saved:  SavedSets
-  offline: OfflineSets
-  /** The demo's offline seed has been applied; see `offlineSeed`. */
-  offlineSeeded?: boolean
   /** Which demo seed this library was stored under. Below `SEED_VERSION` it
-   *  gets the seed's purchases and offline sets once; see below. */
+   *  gets the seed's purchases once; see below. */
   seedVersion?: number
-  /** When each item was saved offline, keyed `type:id`. Apart from the sets
-   *  so what is already stored keeps working; an item without a time sorts
-   *  by its synthetic added date instead. */
-  offlineAt?: Record<string, number>
 }
 
 interface UserLibraryContextValue {
@@ -119,15 +95,6 @@ interface UserLibraryContextValue {
   toggle:    (type: LibraryItemType, id: string, song?: SavedSong) => boolean
   /** All saved songs (most-recently-added first). */
   songs:     () => SavedSong[]
-
-  // ── Offline (this device) ────────────────────────────────────────
-  isOffline:     (type: OfflineItemType, id: string) => boolean
-  /** When it was saved offline; undefined for the demo seed. */
-  offlineSavedAt: (type: OfflineItemType, id: string) => number | undefined
-  /** Flip offline. Returns the NEW state (`true` = now saved offline). */
-  toggleOffline: (type: OfflineItemType, id: string, song?: SavedSong) => boolean
-  /** Songs saved offline on their own (not via their album). */
-  offlineSongs:  () => SavedSong[]
 }
 
 const UserLibraryContext = createContext<UserLibraryContextValue | null>(null)
@@ -137,7 +104,8 @@ const UserLibraryContext = createContext<UserLibraryContextValue | null>(null)
 const STORAGE_KEY = "muza.library.v2"
 
 /** Bump when the demo seed changes in a way a stored library must pick up.
- *  2: offline is owned-only, and Home's "Owned" albums are real purchases. */
+ *  2: Home's "Owned" albums are real purchases. (It also replaced the
+ *  offline sets of the time; offline is gone since — see local-library.) */
 const SEED_VERSION = 2
 
 /** Read persisted state from localStorage (browser only). */
@@ -150,10 +118,7 @@ function loadPersisted(): PersistShape | null {
     return {
       albums: parsed.albums ?? {},
       saved:  { ...EMPTY_SAVED, ...(parsed.saved ?? {}) },
-      offline: { ...EMPTY_OFFLINE, ...(parsed.offline ?? {}) },
-      offlineSeeded: parsed.offlineSeeded,
       seedVersion: parsed.seedVersion,
-      offlineAt: parsed.offlineAt,
     }
   } catch {
     return null
@@ -168,11 +133,6 @@ export function UserLibraryProvider({
   /** Optional seed for the non-album saved sets (playlist / artist /
    *  song), so those library grids also open populated. */
   savedSeed,
-  /** Optional seed for the offline sets, so Library › Offline has something
-   *  to show. Unlike the seeds above it is also merged into a library that
-   *  is already stored, once: every existing visitor has one, and offline
-   *  would stay empty for all of them. The flag keeps what you remove gone. */
-  offlineSeed,
   /** `false` keeps this provider in memory: it neither reads nor writes
    *  the visitor's stored library. For a page that shows fixed states. */
   persist = true,
@@ -180,19 +140,16 @@ export function UserLibraryProvider({
 }: {
   seed?:      Record<string, LibraryEntry>
   savedSeed?: Partial<SavedSets>
-  offlineSeed?: OfflineSets
   persist?:   boolean
   children:   ReactNode
 }) {
   // Lazy init: prefer persisted state; fall back to the demo seed.
   //
   // A library stored under an older seed (`seedVersion` below SEED_VERSION)
-  // holds the old demo: offline albums and songs nobody bought, and Home's
-  // "Owned" albums only labelled, not bought. Once, it takes
-  // the seed's purchases (a purchase is only ever added, never taken away) and
-  // its offline sets are replaced by the seed's. That drops what the visitor
-  // saved offline themselves too, which is the price of the demo not showing
-  // streamed music on the device.
+  // holds the old demo, where Home's "Owned" albums were only labelled, not
+  // bought. Once, it takes the seed's purchases (a purchase is only ever
+  // added, never taken away). An `offline` field still in old storage is
+  // simply no longer read.
   const [albums, setAlbums] = useState<Record<string, LibraryEntry>>(() => {
     const stored = persist ? loadPersisted() : null
     if (!stored) return seed ?? {}
@@ -206,29 +163,14 @@ export function UserLibraryProvider({
   const [saved, setSaved] = useState<SavedSets>(
     () => (persist ? loadPersisted()?.saved : undefined) ?? { ...EMPTY_SAVED, ...savedSeed },
   )
-  const [offline, setOffline] = useState<OfflineSets>(() => {
-    const stored = persist ? loadPersisted() : null
-    if (stored && (stored.seedVersion ?? 0) < SEED_VERSION && offlineSeed) return offlineSeed
-    const base = stored?.offline ?? EMPTY_OFFLINE
-    if (stored?.offlineSeeded || !offlineSeed) return base
-    return {
-      album:    { ...offlineSeed.album,    ...base.album },
-      playlist: { ...offlineSeed.playlist, ...base.playlist },
-      song:     { ...offlineSeed.song,     ...base.song },
-    }
-  })
-
-  const [offlineAt, setOfflineAt] = useState<Record<string, number>>(
-    () => (persist ? loadPersisted()?.offlineAt : undefined) ?? {},
-  )
 
   // Persist on any change.
   useEffect(() => {
     if (typeof window === "undefined" || !persist) return
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ albums, saved, offline, offlineSeeded: true, seedVersion: SEED_VERSION, offlineAt }))
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ albums, saved, seedVersion: SEED_VERSION }))
     } catch { /* quota / private mode — ignore */ }
-  }, [albums, saved, offline, offlineAt, persist])
+  }, [albums, saved, persist])
 
   // ── Album mutators ───────────────────────────────────────────────
   const add = useCallback((albumId: string) => {
@@ -314,25 +256,8 @@ export function UserLibraryProvider({
       // Guard against malformed persisted entries (e.g. a pre-metadata
       // boolean leaking in) so consumers always get real song objects.
       songs: () => Object.values(saved.song).filter((s): s is SavedSong => Boolean(s && typeof s === "object" && (s as SavedSong).title)),
-      isOffline: (type, id) => Boolean(offline[type][id]),
-      offlineSavedAt: (type, id) => offlineAt[`${type}:${id}`],
-      toggleOffline: (type, id, song) => {
-        const next = !offline[type][id]
-        setOfflineAt(prev => {
-          const { [`${type}:${id}`]: _gone, ...rest } = prev
-          return next ? { ...rest, [`${type}:${id}`]: Date.now() } : rest
-        })
-        setOffline(prev => {
-          const nextType: Record<string, true | SavedSong> = { ...prev[type] }
-          if (next) nextType[id] = type === "song" ? (song ?? { id, title: id }) : true
-          else delete nextType[id]
-          return { ...prev, [type]: nextType }
-        })
-        return next
-      },
-      offlineSongs: () => Object.values(offline.song).filter((s): s is SavedSong => Boolean(s && typeof s === "object" && s.title)),
     }
-  }, [albums, saved, offline, offlineAt, add, purchase, upgradeToDownload, remove, addSimple, removeSimple, addSong, removeSong])
+  }, [albums, saved, add, purchase, upgradeToDownload, remove, addSimple, removeSimple, addSong, removeSong])
 
   return (
     <UserLibraryContext.Provider value={value}>

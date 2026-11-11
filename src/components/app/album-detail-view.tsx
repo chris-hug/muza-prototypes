@@ -14,6 +14,7 @@
  * into the param, so the same component renders any catalog album.
  */
 
+import { useLocalActions } from "@/lib/use-local-actions"
 import { useEffect, useRef, useState } from "react"
 import { useSearchParams } from "react-router"
 import { DetailMoreButton } from "@/components/ui/detail-more-button"
@@ -28,6 +29,8 @@ import { ArtistCard } from "@/components/ui/artist-card"
 import { PlaylistCard } from "@/components/ui/playlist-card"
 import { CardRail } from "@/components/app/card-rail"
 import { PurchaseAlbumDialog } from "@/components/app/purchase-album-dialog"
+import { LocalAlbumView } from "@/components/app/local-album-view"
+import { getLocalAlbum, useLocalAlbums, useLocalState } from "@/lib/local-library"
 import { CartDrawer } from "@/components/app/cart-drawer"
 import { railArtist, railPlaylist } from "@/lib/rail-list"
 import { useSearchNav } from "@/lib/use-search-nav"
@@ -85,7 +88,16 @@ const PLAYLISTS_WITH_ARTIST = [
   { id: "p9", title: "Post-Bop Heroes",             songCount: 38, owner: "Muza Editorial", covers: pickCovers(4) },
 ] as const
 
+/** `?album=local-…` is one of the listener's own albums, which has its own
+ *  page; any other key is a catalog release. Split here, at the top, so
+ *  neither page carries the other's hooks. */
 export function AlbumDetailView() {
+  const [params] = useSearchParams()
+  const local = getLocalAlbum(params.get("album"))
+  return local ? <LocalAlbumView album={local} /> : <CatalogAlbumDetailView />
+}
+
+function CatalogAlbumDetailView() {
   // The album shown is driven by `?album=<key>` (title slug or library
   // id); unknown keys fall back to the default. The in-page rails use
   // `useMediaNav` to hop to another album / playlist without leaving the
@@ -95,6 +107,20 @@ export function AlbumDetailView() {
   const credits = useCredits()
   const { openSearch } = useSearchNav()
   const ALBUM = getAlbumDetail(params.get("album"))
+
+  // The same release in the listener's own files (matched to this album):
+  // linked from the meta line, so you can tell this is muza's version and
+  // reach yours in one tap.
+  const { matching } = useLocalState()
+  const localAlbums = useLocalAlbums()
+  const localActions = useLocalActions()
+  const albumKey = params.get("album")
+  const localCopyAlbum = matching
+    ? localAlbums.find(a => a.match && (a.match.libraryId === ALBUM.id || a.match.key === albumKey || a.match.key === slugify(ALBUM.title)))
+    : undefined
+  const localCopy = localCopyAlbum
+    ? { detail: localActions(localCopyAlbum).detail, onOpen: localActions(localCopyAlbum).open }
+    : undefined
 
   // Hopping between albums keeps the same route (page stays "Album"), so
   // the route shell's scroll-to-top (keyed on `page`) doesn't fire —
@@ -200,6 +226,7 @@ export function AlbumDetailView() {
     libraryId: ALBUM.id,
     libraryName: ALBUM.title,
     onGoToArtist: () => openArtist(slugify(ALBUM.artist)),
+    onOpenLocalCopy: localCopy?.onOpen,
   }
   // No `coverSrc` — album covers are framed squares on the light page,
   // so the floating back / "…" sit over the light bg and stay dark.
@@ -237,6 +264,7 @@ export function AlbumDetailView() {
         libraryType="album"
         libraryId={ALBUM.id}
         libraryName={ALBUM.title}
+        localCopy={localCopy}
         playing={isThisAlbumPlaying}
         shuffleActive={player.shuffle}
         onPlay={() => {
@@ -368,6 +396,7 @@ export function AlbumDetailView() {
               // come via `onInfo` instead. No "Go to album" (you're here);
               // "Go to artist" stays.
               hideGoToAlbum
+              release={ALBUM.title}
               onArtistClick={() => openArtist(slugify(ALBUM.artist))}
               onInfo={() => credits.open(slugify(ALBUM.title))}
               playing={isThisAlbumPlaying && player.track?.title === t.title}

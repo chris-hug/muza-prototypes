@@ -51,12 +51,14 @@ import { getRailList } from "@/lib/rail-list"
 const Avatar = () => <ProfileMenu avatarClassName="size-9" triggerClassName="relative touch-target" />
 
 // Mobile library filters: ONE row that changes with what is active. At rest
-// it offers the types and Offline; pick a type and it becomes ✕ · that type ·
+// it offers the types and Local; pick a type and it becomes ✕ · that type ·
 // the filters that type has. A second row for the filters read as a second
 // kind of navigation and cost a line on a screen that has none to spare. With
 // nothing active the row IS "all", so there is no All pill; ✕ returns there.
-// Offline works from either end: Offline then Albums lands on the same state
-// as Albums then Offline, and turning off one lit chip leaves the other on.
+// Local (your own files) works from either end: Local then Albums lands on the
+// same state as Albums then Local, and turning off one lit chip leaves the
+// other on. It replaced Offline: muza keeps no music on the device, and your
+// own files are the only thing that plays without a connection.
 // Horizontally swipable (MobilePillTabs scrolls on overflow).
 const LIBRARY_PAGES = ["Library", "Albums", "Artists", "Playlists", "Songs"]
 const CLEAR_TAB = "__clear"
@@ -66,14 +68,15 @@ const LIBRARY_TYPES: PillTab[] = [
   { value: "Playlists", label: "Playlists" },
   { value: "Songs", label: "Songs" },
 ]
-const LIBRARY_OFFLINE_TAB: PillTab = { value: "offline", label: "Offline" }
-// Not Artists: there is nothing about an artist to save offline.
-const OFFLINE_SUBFILTERS = LIBRARY_TYPES.filter(t => t.value !== "Artists")
+const LIBRARY_LOCAL_TAB: PillTab = { value: "local", label: "Local" }
+// Local files arrive as albums (a folder) and their songs. No local artists or
+// playlists yet: those come with the connect flow, not with a folder.
+const LOCAL_SUBFILTERS = LIBRARY_TYPES.filter(t => t.value === "Albums" || t.value === "Songs")
 const LIBRARY_FILTERS: Record<string, PillTab[]> = {
-  Albums: [{ value: "owned", label: "Owned" }, LIBRARY_OFFLINE_TAB],
+  Albums: [{ value: "owned", label: "Owned" }, LIBRARY_LOCAL_TAB],
   Artists: [],
-  Playlists: [{ value: "yours", label: "By me" }, { value: "saved", label: "Saved" }, LIBRARY_OFFLINE_TAB],
-  Songs: [LIBRARY_OFFLINE_TAB],
+  Playlists: [{ value: "yours", label: "By me" }, { value: "saved", label: "Saved" }],
+  Songs: [{ value: "owned", label: "Owned" }, LIBRARY_LOCAL_TAB],
 }
 
 const DETAIL_PAGES = ["Album", "Playlist", "Artist"]
@@ -236,14 +239,14 @@ function LibraryFilterRow({ activeNav, onNavChange }: { activeNav: string; onNav
   const clearTab: PillTab = { value: CLEAR_TAB, label: "", icon: <X />, ariaLabel: "Clear filters" }
 
   if (activeNav === "Library") {
-    const offline = libraryStatus === "offline"
+    const local = libraryStatus === "local"
     return (
       <MobilePillTabs
-        tabs={offline ? [clearTab, LIBRARY_OFFLINE_TAB, ...OFFLINE_SUBFILTERS] : [...LIBRARY_TYPES, LIBRARY_OFFLINE_TAB]}
-        value={offline ? ["offline"] : []}
+        tabs={local ? [clearTab, LIBRARY_LOCAL_TAB, ...LOCAL_SUBFILTERS] : [...LIBRARY_TYPES, LIBRARY_LOCAL_TAB]}
+        value={local ? ["local"] : []}
         onChange={v => {
-          if (v === CLEAR_TAB || v === "offline") { setLibraryStatus(offline ? "all" : "offline"); return }
-          if (offline) { scoped[v]?.[1]("offline"); setLibraryStatus("all") }
+          if (v === CLEAR_TAB || v === "local") { setLibraryStatus(local ? "all" : "local"); return }
+          if (local) { scoped[v]?.[1]("local"); setLibraryStatus("all") }
           onNavChange(v)
         }}
       />
@@ -253,9 +256,9 @@ function LibraryFilterRow({ activeNav, onNavChange }: { activeNav: string; onNav
   const type = LIBRARY_TYPES.find(t => t.value === activeNav)!
   const [status, setStatus] = scoped[activeNav] ?? ["all", () => {}]
   const clear = () => { setStatus("all"); onNavChange("Library") }
-  // The lit type comes off alone: with Offline still lit that is the mixed
-  // Offline view, not everything. ✕ is the one that clears both.
-  const dropType = () => { if (status === "offline") setLibraryStatus("offline"); clear() }
+  // The lit type comes off alone: with Local still lit that is the mixed
+  // Local view, not everything. ✕ is the one that clears both.
+  const dropType = () => { if (status === "local") setLibraryStatus("local"); clear() }
   return (
     <MobilePillTabs
       tabs={[clearTab, type, ...LIBRARY_FILTERS[activeNav]]}

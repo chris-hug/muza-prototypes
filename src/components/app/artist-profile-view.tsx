@@ -64,6 +64,7 @@ import { ProductCard } from "@/components/ui/product-card"
 import { SongListItem } from "@/components/ui/song-list-item"
 import { CoverPlayButton } from "@/components/ui/cover-play-button"
 import { CardRail } from "@/components/app/card-rail"
+import { ArtistLocalSection } from "@/components/app/artist-local-section"
 import { usePublishDetailHeader } from "@/lib/detail-actions"
 
 // ─── View ───────────────────────────────────────────────────────────────────
@@ -330,6 +331,11 @@ function ArtistProfilePage({ profile }: { profile: ArtistProfile }) {
 
         <div className="pb-24" />
       </div>
+
+      {/* The listener's own files of this artist — theirs, not the
+           artist's, so after the page's content and in a band of their
+           own across the full width (artist-local-section). */}
+      {tab === "overview" && <ArtistLocalSection artistName={ARTIST.name} />}
     </div>
   )
 }

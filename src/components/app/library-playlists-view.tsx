@@ -16,13 +16,10 @@
 
 import { PlaylistCard } from "@/components/ui/playlist-card"
 import { PlaylistCreateCard } from "@/components/ui/playlist-create-card"
-import { PlaylistListTable, PlaylistMobileList, LibrarySortMenu } from "@/components/app/media-list-table"
+import { PlaylistListTable, PlaylistMobileList, LibrarySortMenu, LibraryViewToggle } from "@/components/app/media-list-table"
 import { LibrarySearchField } from "@/components/app/library-search-field"
 import { useCreatePlaylist } from "@/components/app/create-playlist-dialog"
-import { Toggle } from "@/components/ui/toggle"
-import { ToggleGroup } from "@/components/ui/toggle-group"
 import { ChipChoice } from "@/components/ui/chip"
-import { LayoutGrid, List } from "lucide-react"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 import { useUserLibrary } from "@/lib/user-library"
 import { useLibraryView } from "@/lib/use-library-view"
@@ -185,8 +182,8 @@ export function LibraryPlaylistsView() {
   // playlist catalog (rich for the demo, synthesized for the rest).
   const { openPlaylist } = useMediaNav()
   // Status filter (scalable dropdown) + persisted/shared view.
-  const [status, setStatus] = useLibraryStatus<"all" | "yours" | "saved" | "offline">("playlists")
-  const [view, setView] = useLibraryView()
+  const [status, setStatus] = useLibraryStatus<"all" | "yours" | "saved">("playlists")
+  const [view, setView, viewOptions] = useLibraryView()
   const footerNav = useFooterNav()
   const [sort] = useLibrarySort()
   const [query] = useLibraryFilter()
@@ -199,12 +196,9 @@ export function LibraryPlaylistsView() {
     // In the library if it's yours (owned) or saved in the store. Toggling
     // a playlist's heart off on its detail page removes it here.
     const inLib = p.owned || library.inLibrary("playlist", slugify(p.title))
-    const offline = library.isOffline("playlist", slugify(p.title))
-    // Offline covers anything you can play, so it does not need the library.
-    if (!inLib && !(status === "offline" && offline)) return false
+    if (!inLib) return false
     if (status === "yours" && !p.owned) return false
     if (status === "saved" && p.owned) return false
-    if (status === "offline" && !offline) return false
     // Search-within-library — match title or owner name.
     return matchesLibraryQuery(query, p.title, p.owned ? "you" : p.owner)
   })
@@ -240,7 +234,6 @@ export function LibraryPlaylistsView() {
                   { value: "all", label: "All" },
                   { value: "yours", label: "By me" },
                   { value: "saved", label: "Saved" },
-                  { value: "offline", label: "Offline" },
                 ]}
               />
             )}
@@ -248,27 +241,11 @@ export function LibraryPlaylistsView() {
           {/* Right cluster — desktop in-library search + view switch. */}
           <div className="flex grow items-center justify-end gap-3">
           {!footerNav && <LibrarySearchField />}
-          <ToggleGroup
-            size="sm"
-            value={[view]}
-            onValueChange={(v) => { if (v[0]) setView(v[0] as "grid" | "list") }}
-            aria-label="View mode"
-          >
-            <Toggle value="grid" aria-label="Tile view">
-              <LayoutGrid className="size-3.5" />
-            </Toggle>
-            <Toggle value="list" aria-label="List view">
-              <List className="size-3.5" />
-            </Toggle>
-          </ToggleGroup>
+          <LibraryViewToggle value={view} onChange={setView} options={viewOptions} />
           </div>
         </div>
 
-        {status === "offline" && playlists.length === 0 ? (
-          <p className="text-small text-muted-foreground max-w-md">
-            Nothing saved offline yet. Choose “Save offline” in a playlist’s menu and the songs in it that you own will show up here.
-          </p>
-        ) : view === "grid" ? (
+        {view === "grid" ? (
           <div className="@container">
             <ul className="grid-cards">
               {/* Create card only shows in the unfiltered / "yours" views. */}

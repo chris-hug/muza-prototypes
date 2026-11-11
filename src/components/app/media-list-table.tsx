@@ -12,8 +12,8 @@
  * context menu as the tile cards.
  */
 
-import { useMemo, useState } from "react"
-import { ArrowUpDown, MoreHorizontal, Mic, Share, Link2, Check, LayoutGrid, List, Plus } from "lucide-react"
+import { useMemo, useState, type ReactNode } from "react"
+import { ArrowUpDown, MoreHorizontal, Mic, Share, Link2, Check, LayoutGrid, List, Plus, Table2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -29,6 +29,11 @@ import { MediaListItem } from "@/components/ui/media-list-item"
 import { SongMenuItems } from "@/components/ui/song-list-item"
 import { CoverPlayButton } from "@/components/ui/cover-play-button"
 import { PurchasedBadge } from "@/components/ui/purchased-badge"
+import { LocalBadge } from "@/components/ui/local-badge"
+import { DetailMenuItems } from "@/components/ui/detail-more-button"
+import { useLocalActions } from "@/lib/use-local-actions"
+import { localPlayingFrom, type LocalAlbum, type LocalTrack } from "@/lib/local-library"
+import { LocalSongMenuItems } from "@/components/app/local-song-rows"
 import { useUserLibrary, type SavedSong } from "@/lib/user-library"
 import { usePlayer } from "@/lib/player"
 import { useMediaNav, slugify } from "@/lib/media-nav"
@@ -143,6 +148,10 @@ export interface AlbumRow {
   year?:          number
   streamPrice?:   string
   downloadPrice?: string
+  /** Set when the album is the listener's own files, not a catalog release
+   *  (see local-library). The row then opens the local page, fills the
+   *  Source column, and carries the local menu. */
+  local?:         LocalAlbum
 }
 
 type AlbumSort =
@@ -153,6 +162,7 @@ type AlbumSort =
 export function AlbumListTable({ albums }: { albums: AlbumRow[] }) {
   const library = useUserLibrary()
   const { openAlbum, openArtist } = useMediaNav()
+  const localActions = useLocalActions()
   const [sort, setSort] = useState<AlbumSort>("added-desc")
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
@@ -189,6 +199,17 @@ export function AlbumListTable({ albums }: { albums: AlbumRow[] }) {
   const toggleAll = () => setSelectedIds(allSelected ? new Set() : new Set(rows.map(a => a.id)))
   const clear = () => setSelectedIds(new Set())
 
+  // The columns follow what the rows are. Label and Price describe a
+  // release on muza, so they exist only while a catalog row does; a local
+  // row leaves them empty (a "Local" badge under "Price" read as a price).
+  // Source exists only while a local row does: the "Local" badge, where the
+  // files live and their format, and "muza" for a catalog row — an empty
+  // cell would read as unknown, when the source is known. The badge is on
+  // every local row, mixed or not: the same label the cards and lists
+  // carry, so a local item looks the same in every view.
+  const hasCatalog = rows.some(a => !a.local)
+  const hasLocal   = rows.some(a => a.local)
+
   return (
     <>
     <table className="w-full table-fixed">
@@ -197,10 +218,11 @@ export function AlbumListTable({ albums }: { albums: AlbumRow[] }) {
         <col style={{ width: 64 }} />
         <col />
         <col />
-        <col style={{ width: 150 }} />
+        {hasCatalog && <col style={{ width: 150 }} />}
         <col style={{ width: 72 }} />
         <col style={{ width: 132 }} />
-        <col style={{ width: 96 }} />
+        {hasLocal && <col style={{ width: 280 }} />}
+        {hasCatalog && <col style={{ width: 96 }} />}
         <col style={{ width: 56 }} />
       </colgroup>
       <thead className={HEAD_CLS}>
@@ -215,10 +237,10 @@ export function AlbumListTable({ albums }: { albums: AlbumRow[] }) {
             <SortHeader label="Artist" active={sort.startsWith("artist")} dir={sort === "artist-za" ? "desc" : "asc"}
               onClick={() => setSort(sort === "artist-az" ? "artist-za" : "artist-az")} />
           </TableHead>
-          <TableHead resizable={false}>
+          {hasCatalog && <TableHead resizable={false}>
             <SortHeader label="Label" active={sort.startsWith("label")} dir={sort === "label-za" ? "desc" : "asc"}
               onClick={() => setSort(sort === "label-az" ? "label-za" : "label-az")} />
-          </TableHead>
+          </TableHead>}
           <TableHead resizable={false}>
             <SortHeader label="Year" active={sort.startsWith("year")} dir={sort === "year-asc" ? "asc" : "desc"}
               onClick={() => setSort(sort === "year-desc" ? "year-asc" : "year-desc")} />
@@ -227,13 +249,57 @@ export function AlbumListTable({ albums }: { albums: AlbumRow[] }) {
             <SortHeader label="Added" active={sort.startsWith("added")} dir={sort === "added-asc" ? "asc" : "desc"}
               onClick={() => setSort(sort === "added-desc" ? "added-asc" : "added-desc")} />
           </TableHead>
-          <TableHead resizable={false} className="text-right">Price</TableHead>
+          {hasLocal && <TableHead resizable={false}>Source</TableHead>}
+          {hasCatalog && <TableHead resizable={false} className="text-right">Price</TableHead>}
           <TableHead resizable={false} className="px-2" />
         </TableRow>
       </thead>
       <TableBody>
         {rows.map(a => {
           const purchased = library.isPurchased(a.id)
+          if (a.local) {
+            // Local files: where they live and their format in Source, no
+            // label and no price (the tags rarely carry a label; there is
+            // nothing to buy), and the artist links only when the files
+            // matched a catalog release.
+            const l = localActions(a.local)
+            return (
+              <TableRow key={a.id} className={cn(rowCls(selectedIds.has(a.id)), !l.available && "opacity-60")}>
+                <SelectCell checked={selectedIds.has(a.id)} onToggle={() => toggle(a.id)} />
+                <TableCell className="px-2">
+                  <CoverThumb src={a.cover} alt={a.title} onClick={l.open} />
+                </TableCell>
+                <TableCell className="text-foreground whitespace-nowrap truncate">
+                  <button type="button" onClick={l.open} className={linkCell}>{a.title}</button>
+                </TableCell>
+                <TableCell className="text-muted-foreground whitespace-nowrap truncate">
+                  {l.onGoToArtist
+                    ? <button type="button" onClick={l.onGoToArtist} className={linkCell}>{a.artist}</button>
+                    : a.artist}
+                </TableCell>
+                {hasCatalog && <TableCell />}
+                <TableCell className="text-muted-foreground tabular-nums whitespace-nowrap">{a.year ?? "—"}</TableCell>
+                <TableCell className="text-muted-foreground tabular-nums whitespace-nowrap">{a.added.text}</TableCell>
+                <TableCell className="text-muted-foreground whitespace-nowrap truncate">
+                  <span className="inline-flex items-center gap-1.5 max-w-full min-w-0">
+                    <LocalBadge />
+                    <span className="truncate">{l.source.name} · {l.detail}</span>
+                  </span>
+                </TableCell>
+                {hasCatalog && <TableCell />}
+                <TableCell className="px-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="More options" />}>
+                      <MoreHorizontal />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" sideOffset={6}>
+                      <DetailMenuItems kind="album" title={a.title} {...l.menu} />
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            )
+          }
           return (
             <TableRow key={a.id} className={rowCls(selectedIds.has(a.id))}>
               <SelectCell checked={selectedIds.has(a.id)} onToggle={() => toggle(a.id)} />
@@ -246,15 +312,16 @@ export function AlbumListTable({ albums }: { albums: AlbumRow[] }) {
               <TableCell className="text-muted-foreground whitespace-nowrap truncate">
                 <button type="button" onClick={() => openArtist(slugify(a.artist))} className={linkCell}>{a.artist}</button>
               </TableCell>
-              <TableCell className="text-muted-foreground whitespace-nowrap truncate">
+              {hasCatalog && <TableCell className="text-muted-foreground whitespace-nowrap truncate">
                 {a.label}
-              </TableCell>
+              </TableCell>}
               <TableCell className="text-muted-foreground tabular-nums whitespace-nowrap">
                 {a.year ?? "—"}
               </TableCell>
               <TableCell className="text-muted-foreground tabular-nums whitespace-nowrap">
                 {a.added.text}
               </TableCell>
+              {hasLocal && <TableCell className="text-muted-foreground whitespace-nowrap">muza</TableCell>}
               <TableCell className="text-right text-muted-foreground whitespace-nowrap tabular-nums">
                 {purchased
                   ? <span className="inline-flex justify-end"><PurchasedBadge /></span>
@@ -307,10 +374,22 @@ const durationSecs = (d?: string) => {
   return (m || 0) * 60 + (s || 0)
 }
 
-export function SongListTable({ songs }: { songs: SavedSong[] }) {
+/** A song row. `local` is set for a track from the listener's own files:
+ *  it plays from its local album, fills the Source column and carries the
+ *  local song menu (see the Albums table for the column rule). */
+export type SongRow = SavedSong & {
+  local?: { album: LocalAlbum; track: LocalTrack }
+  /** The song's album is bought: "Owned" under the title. The table has no
+   *  Price column for it to sit in, as the Albums table does — a track is
+   *  not sold on its own — so it marks the title, as the list row does. */
+  owned?: boolean
+}
+
+export function SongListTable({ songs }: { songs: SongRow[] }) {
   const library = useUserLibrary()
   const player  = usePlayer()
   const { openAlbum, openArtist } = useMediaNav()
+  const localActions = useLocalActions()
   const [sort, setSort] = useState<SongSort>("title-az")
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
@@ -341,7 +420,17 @@ export function SongListTable({ songs }: { songs: SavedSong[] }) {
   const toggleAll = () => setSelectedIds(allSelected ? new Set() : new Set(rows.map(s => s.id)))
   const clear = () => setSelectedIds(new Set())
 
-  const play = (s: SavedSong) => {
+  // Same column rule as the Albums table: Source only while a local row
+  // exists, with the "Local" badge on every local row.
+  const hasLocal = rows.some(s => s.local)
+
+  const play = (s: SongRow) => {
+    if (s.local) {
+      const from = localPlayingFrom(s.local.album)
+      if (player.playingFrom === from && player.track?.title === s.title) { player.toggle(); return }
+      localActions(s.local.album).play(s.local.track)
+      return
+    }
     if (player.playingFrom === FROM_SONGS && player.track?.title === s.title) { player.toggle(); return }
     player.play(
       { title: s.title, artist: s.artist ?? "", album: s.album ?? "", image: s.cover ?? "", totalTime: s.duration },
@@ -358,6 +447,7 @@ export function SongListTable({ songs }: { songs: SavedSong[] }) {
         <col />
         <col />
         <col />
+        {hasLocal && <col style={{ width: 280 }} />}
         <col style={{ width: 80 }} />
         <col style={{ width: 56 }} />
       </colgroup>
@@ -377,6 +467,7 @@ export function SongListTable({ songs }: { songs: SavedSong[] }) {
             <SortHeader label="Album" active={sort.startsWith("album")} dir={sort === "album-za" ? "desc" : "asc"}
               onClick={() => setSort(sort === "album-az" ? "album-za" : "album-az")} />
           </TableHead>
+          {hasLocal && <TableHead resizable={false}>Source</TableHead>}
           <TableHead resizable={false} className="text-right">
             <SortHeader label="Time" active={sort.startsWith("duration")} dir={sort === "duration-asc" ? "asc" : "desc"}
               onClick={() => setSort(sort === "duration-desc" ? "duration-asc" : "duration-desc")} />
@@ -386,10 +477,14 @@ export function SongListTable({ songs }: { songs: SavedSong[] }) {
       </thead>
       <TableBody>
         {rows.map(s => {
-          const linkAlbum = s.album && hasAlbumDetail(slugify(s.album))
-          const isThis = player.playing && player.playingFrom === FROM_SONGS && player.track?.title === s.title
+          const l = s.local ? localActions(s.local.album) : undefined
+          const linkAlbum = !l && s.album && hasAlbumDetail(slugify(s.album))
+          const onAlbum   = l ? l.open : linkAlbum ? () => openAlbum(slugify(s.album!)) : undefined
+          const onArtist  = l ? l.onGoToArtist : s.artist ? () => openArtist(slugify(s.artist!)) : undefined
+          const from      = s.local ? localPlayingFrom(s.local.album) : FROM_SONGS
+          const isThis = player.playing && player.playingFrom === from && player.track?.title === s.title
           return (
-            <TableRow key={s.id} className={rowCls(selectedIds.has(s.id))}>
+            <TableRow key={s.id} className={cn(rowCls(selectedIds.has(s.id)), l && !l.available && "opacity-60")}>
               <SelectCell checked={selectedIds.has(s.id)} onToggle={() => toggle(s.id)} />
               <TableCell className="px-2">
                 {/* Cover doubles as the play/pause button — hover (anywhere
@@ -404,20 +499,39 @@ export function SongListTable({ songs }: { songs: SavedSong[] }) {
                 />
               </TableCell>
               <TableCell className="text-foreground whitespace-nowrap truncate">
-                <button type="button" onClick={() => play(s)} className={linkCell}>{s.title}</button>
+                {s.owned ? (
+                  // Under the title, not beside it: beside, the badge moved
+                  // with each title's length and the column read ragged.
+                  <span className="flex flex-col items-start gap-0.5 max-w-full min-w-0">
+                    <button type="button" onClick={() => play(s)} className={cn(linkCell, "truncate min-w-0")}>{s.title}</button>
+                    <PurchasedBadge />
+                  </span>
+                ) : (
+                  <button type="button" onClick={() => play(s)} className={linkCell}>{s.title}</button>
+                )}
               </TableCell>
               <TableCell className="text-muted-foreground whitespace-nowrap truncate">
                 {s.artist
-                  ? <button type="button" onClick={() => openArtist(slugify(s.artist!))} className={linkCell}>{s.artist}</button>
+                  ? (onArtist ? <button type="button" onClick={onArtist} className={linkCell}>{s.artist}</button> : s.artist)
                   : "—"}
               </TableCell>
               <TableCell className="text-muted-foreground whitespace-nowrap truncate">
                 {s.album
-                  ? (linkAlbum
-                      ? <button type="button" onClick={() => openAlbum(slugify(s.album!))} className={linkCell}>{s.album}</button>
+                  ? (onAlbum
+                      ? <button type="button" onClick={onAlbum} className={linkCell}>{s.album}</button>
                       : s.album)
                   : "—"}
               </TableCell>
+              {hasLocal && (
+                <TableCell className="text-muted-foreground whitespace-nowrap truncate">
+                  {l ? (
+                    <span className="inline-flex items-center gap-1.5 max-w-full min-w-0">
+                      <LocalBadge />
+                      <span className="truncate">{l.source.name} · {l.detail}</span>
+                    </span>
+                  ) : "muza"}
+                </TableCell>
+              )}
               <TableCell className="text-right text-muted-foreground tabular-nums whitespace-nowrap">
                 {s.duration ?? "—"}
               </TableCell>
@@ -430,15 +544,19 @@ export function SongListTable({ songs }: { songs: SavedSong[] }) {
                     {/* The shared song menu — same items as every SongListItem
                         row. Keyed by (title, artist) = s.id, so Save/Remove
                         targets this exact row. */}
-                    <SongMenuItems
-                      title={s.title}
-                      artist={s.artist}
-                      album={s.album}
-                      cover={s.cover}
-                      duration={s.duration}
-                      onArtistClick={s.artist ? () => openArtist(slugify(s.artist!)) : undefined}
-                      onAlbumClick={linkAlbum ? () => openAlbum(slugify(s.album!)) : undefined}
-                    />
+                    {s.local ? (
+                      <LocalSongMenuItems album={s.local.album} track={s.local.track} />
+                    ) : (
+                      <SongMenuItems
+                        title={s.title}
+                        artist={s.artist}
+                        album={s.album}
+                        cover={s.cover}
+                        duration={s.duration}
+                        onArtistClick={onArtist}
+                        onAlbumClick={onAlbum}
+                      />
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
@@ -465,7 +583,28 @@ export function SongListTable({ songs }: { songs: SavedSong[] }) {
 export function MobileAlbumRow({ album: a, showType }: { album: AlbumRow; showType?: boolean }) {
   const library = useUserLibrary()
   const { openAlbum, openArtist } = useMediaNav()
+  const localActions = useLocalActions()
   const key = slugify(a.title)
+  if (a.local) {
+    const l = localActions(a.local)
+    return (
+      <MediaListItem
+        type="album"
+        showType={showType}
+        cover={a.cover}
+        title={a.title}
+        subtitle={a.artist}
+        // The "Local" badge leads the line, the format (or why it cannot
+        // play) follows the artist, as on the card.
+        badge="Local"
+        meta={l.detail}
+        onOpen={l.open}
+        onSubtitleClick={l.onGoToArtist}
+        className={l.available ? undefined : "opacity-60"}
+        menuItems={<DetailMenuItems kind="album" title={a.title} {...l.menu} />}
+      />
+    )
+  }
   return (
     <MediaListItem
       type="album"
@@ -474,6 +613,7 @@ export function MobileAlbumRow({ album: a, showType }: { album: AlbumRow; showTy
       title={a.title}
       subtitle={a.artist}
       meta={a.year ? String(a.year) : undefined}
+      badge={library.isPurchased(a.id) ? "Owned" : undefined}
       onOpen={() => openAlbum(key)}
       onSubtitleClick={() => openArtist(slugify(a.artist))}
       menuItems={
@@ -599,10 +739,21 @@ export function LibraryAllMobileList({ albums, playlists, artists }: {
 }
 
 // Shared grid/list view switch for the library toolbars.
-export function LibraryViewToggle({ value, onChange }: {
+// The view switch every library page uses. `options` is what that page
+// offers (the third value of `useLibraryView`), so one control draws two
+// or three segments in the same order everywhere: cards, list, table.
+const VIEW_OPTIONS: Record<LibraryView, { label: string; icon: ReactNode }> = {
+  grid:  { label: "Card view",  icon: <LayoutGrid className="size-3.5" /> },
+  list:  { label: "List view",  icon: <List className="size-3.5" /> },
+  table: { label: "Table view", icon: <Table2 className="size-3.5" /> },
+}
+
+export function LibraryViewToggle({ value, onChange, options = ["grid", "table"] }: {
   value: LibraryView
   onChange: (v: LibraryView) => void
+  options?: LibraryView[]
 }) {
+  if (options.length < 2) return null
   return (
     <ToggleGroup
       size="sm"
@@ -610,8 +761,9 @@ export function LibraryViewToggle({ value, onChange }: {
       onValueChange={(v) => { if (v[0]) onChange(v[0] as LibraryView) }}
       aria-label="View mode"
     >
-      <Toggle value="grid" aria-label="Tile view"><LayoutGrid className="size-3.5" /></Toggle>
-      <Toggle value="list" aria-label="List view"><List className="size-3.5" /></Toggle>
+      {(["grid", "list", "table"] as const).filter(v => options.includes(v)).map(v => (
+        <Toggle key={v} value={v} aria-label={VIEW_OPTIONS[v].label}>{VIEW_OPTIONS[v].icon}</Toggle>
+      ))}
     </ToggleGroup>
   )
 }

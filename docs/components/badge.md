@@ -33,7 +33,7 @@ borderless badge are the same height and a row of mixed badges aligns.
 | `success` | a saturated mint fill with dark ink | "Beta" / "Recommended"; no call site today |
 | `new` / `updated` | pale tint + dark ink in light mode, flipped in dark (the `user-avatar` palette's Mint and Honey) | the design-system page's section flags — `Section` in `home.tsx` |
 | `count` | `bg-accent text-foreground`; `group-data-[selected]/chip:bg-background/20 …:text-primary-foreground` | the number inside a `Chip` — see [chips](chips.md) |
-| `inverse` | `bg-foreground text-background font-medium tabular-nums` | a count that asks for attention on its own: new orders on a tab, the cart, active filters. With `pill-sm` it is a true 18×18 circle (`pb-0 px-0.5`, measured: the numeral within 0.03px of centre). It replaced three hand-built pills that sat 0.78px low |
+| `inverse` | `bg-foreground text-background font-medium tabular-nums` | a count that asks for attention on its own: new orders on a tab, the cart, active filters. With `pill` it is a true 18×18 circle (`pb-0 px-0.5`, measured: the numeral within 0.03px of centre). It replaced three hand-built pills that sat 0.78px low |
 | `destructive` | `bg-destructive text-white` | an error flag |
 
 **`count` owns both of its states.** It sits one step above a chip's
@@ -54,15 +54,30 @@ loud, and there is no token to retheme them with.
 | `shape` | Box | Use it for |
 |---|---|---|
 | `square` (default) | `rounded-sm h-[26px] px-[6px] pb-px text-2xsmall` | every label badge |
-| `square-xs` | `rounded-[1px] border-0 h-[18px] px-1 pb-px gap-0.5 [&>svg]:size-2.5` | a badge inside a text line, so it does not push the line box; no call site today |
-| `pill` | `rounded-full justify-center h-5 min-w-5 px-1 pb-px text-xsmall border-transparent` | the `count` inside a `md` Chip |
-| `pill-sm` | the same, at `h-[18px] min-w-[18px] text-2xsmall` | the `count` inside a `sm` Chip — 20/17 there put the number a type size above its own label |
+| `square-xs` | `rounded-[4px] border-0 h-[18px] px-1.5 text-2xsmall leading-[18px] gap-0.5 [&>svg]:size-2.5`, no `pb-px` | a one-word label inside a text line, so it does not push the line box: **Owned** and **Local** (see [Purchased Badge](purchased-badge.md)). With `secondary` the fill is `bg-accent` (the count's), with `outline` the 1px border comes back |
+| `pill` | `rounded-full justify-center h-[18px] min-w-[18px] px-1 pb-px text-2xsmall border-transparent` | every count: inside a Chip (either size), a filter button, the cart, a Shop tab, the Discography kind filter |
 
 `square` is a **fixed 26px**, not padding-derived, so a badge with a glyph
 (`ContentTypeBadge`) and one without are the same height. `pill` is `px-1`,
-not `px-1.5`: a single digit then lands inside `min-w-5` and the pill is a
-true 20×20 circle — at `px-1.5` a "3" measured 22.8×20, a slight oval that
-read as a mis-centred number. Two digits widen it on their own.
+not `px-1.5`: a single digit then lands inside `min-w-[18px]` and the pill is
+a true circle — at `px-1.5` a "3" measured 22.8×20 on the old 20px pill, a
+slight oval that read as a mis-centred number. Two digits widen it on their
+own.
+
+**One count size.** There were two, `pill` (20px, 17px numeral) for a 40px
+Chip and `pill-sm` (18px, 15px) for a 32px one. In the product only the small
+one was reached — the 40px chip with a count lived on the design-system page
+alone — and the large one's one call site was a menu row where 17px put the
+number a size above its label. A count is a footnote to its label; 15px is the
+floor for anything read as language. So `pill` is now the 18px one, and
+`pill-sm` is gone.
+
+**`square-xs` owns its line height** (`leading-[18px]`, its own height).
+Without it the badge inherited whatever line it sat in, and the same "Local"
+badge drew its word half a pixel apart under a card (`leading-[18px]`) and in
+the album page's meta line (`leading-none`) — measured 4.4 / 3.8 against
+4.9 / 3.3 from the ink to the edges. It drops `pb-px`: on "Owned" (cap and
+ascender, no descender) the nudge put the ink 3.6 / 4.6, without it 4.1 / 4.1.
 
 `pb-px` on every shape is the optical nudge Button, Tabs and Chip carry:
 Founders Grotesk sits low in a flex-centred box, and one pixel of bottom
@@ -92,7 +107,7 @@ obvious:
 |---|---|---|
 | Search results (rows, cards) | no | the category tabs already name the type |
 | Single-type library rows / `MediaListItem` | no | the view is single-type |
-| Library at rest and Library › Offline, list rows (`MediaListItem showType`) | yes | types share one list; nothing else names them |
+| Library at rest and Library › Local, list rows (`MediaListItem showType`) | yes | types share one list; nothing else names them |
 | Mobile "…" sheet header (`DetailMoreButton`) | yes | the sheet is context-free once open — album, playlist and artist |
 | Artist discography rows | yes | Album / Single / EP is a real distinction inside one list |
 | Studio | yes | mixed-type inventory |
@@ -145,5 +160,5 @@ handler).
   · the source has `rounded-sm` (8px at the 12px base radius), `px-[6px]`,
   `font-normal`, no `default` variant, and `bg-muted text-foreground`. The
   source is taken as the rule here.
-- `primary`, `success` and `square-xs` have no call site outside `badge.tsx`.
+- `primary` and `success` have no call site outside `badge.tsx`.
   Whether they stay is not recorded.

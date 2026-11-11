@@ -18,46 +18,42 @@ import {
 import { AlbumCard } from "@/components/ui/album-card"
 import { PlaylistCard } from "@/components/ui/playlist-card"
 import { ArtistCard } from "@/components/ui/artist-card"
-import { SAVED_ALBUMS } from "@/components/app/library-albums-view"
+import { SAVED_ALBUMS, useLocalAlbumRows } from "@/components/app/library-albums-view"
 import { SAVED_PLAYLISTS } from "@/components/app/library-playlists-view"
 import { SAVED_ARTISTS } from "@/components/app/library-artists-view"
-import { useUserLibrary, type SavedSong } from "@/lib/user-library"
+import { useUserLibrary } from "@/lib/user-library"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 import { useLibraryView } from "@/lib/use-library-view"
-import { useLibrarySort, addedTs } from "@/lib/use-library-sort"
+import { useLibrarySort } from "@/lib/use-library-sort"
 import { useLibraryStatus } from "@/lib/use-library-status"
-import { MixedSongRow } from "@/components/app/library-songs-view"
 
 export function LibraryAllView() {
   const library = useUserLibrary()
-  const [view, setView] = useLibraryView()
-  // Offline is the row's one cross-type filter: everything saved for this
-  // device, whatever kind it is, and artists have nothing to save.
-  const [status] = useLibraryStatus<"all" | "offline">("library")
-  const offline = status === "offline"
-  // Only songs saved on their own. What came with an album or a playlist is
-  // already that row; listing it again doubled the album (and only the album:
-  // a playlist's songs never appeared here). Songs › Offline still has them.
-  const offlineSongs = library.offlineSongs()
-  const albums = SAVED_ALBUMS.filter(a => offline ? library.isOffline("album", a.id) : library.isAdded(a.id))
-  const playlists = offline ? SAVED_PLAYLISTS.filter(p => library.isOffline("playlist", slugify(p.title))) : SAVED_PLAYLISTS
-  const artists = offline ? [] : SAVED_ARTISTS
-  const empty = offline && albums.length === 0 && playlists.length === 0 && offlineSongs.length === 0
+  const [view, setView, viewOptions] = useLibraryView()
+  // Local is the row's one cross-type filter: the listener's own files,
+  // whatever kind. Today that is albums only (a folder of tracks reads as an
+  // album; loose files and local playlists come with the connect flow).
+  // Without the filter, local albums sit in the collection with the catalog,
+  // each marked — one library, narrowed by source.
+  const [status] = useLibraryStatus<"all" | "local">("library")
+  const localOnly = status === "local"
+  const localAlbumRows = useLocalAlbumRows()
+  const albums = localOnly ? localAlbumRows : [...SAVED_ALBUMS.filter(a => library.isAdded(a.id)), ...localAlbumRows]
+  const playlists = localOnly ? [] : SAVED_PLAYLISTS
+  const artists = localOnly ? [] : SAVED_ARTISTS
+  const empty = localOnly && albums.length === 0
 
   return (
     <div className="flex-1 overflow-auto">
       <div className="mx-auto max-w-[1480px] px-page pt-4 pb-12">
         <div className="flex items-center justify-between gap-4 mb-4">
           <LibrarySortMenu />
-          {/* Offline has one form, so nothing to switch between. */}
-          {!offline && <LibraryViewToggle value={view} onChange={setView} />}
+          <LibraryViewToggle value={view} onChange={setView} options={viewOptions} />
         </div>
         {empty ? (
           <p className="text-small text-muted-foreground max-w-md">
-            Nothing saved offline yet. Choose “Save offline” on music you own, an album, a song or a playlist, and it’ll show up here.
+            No local music yet. Connect a folder on this computer or a server, and muza plays your own files here.
           </p>
-        ) : offline ? (
-          <OfflineList albums={albums} playlists={playlists} songs={offlineSongs} />
         ) : view === "grid" ? (
           <LibraryAllGrid albums={albums} playlists={playlists} artists={artists} />
         ) : (
@@ -65,36 +61,6 @@ export function LibraryAllView() {
         )}
       </div>
     </div>
-  )
-}
-
-// Offline is the one view holding songs next to albums and playlists, and
-// songs have no card. Cards above rows made two surfaces out of one list, so
-// every type is the same row, sorted together, and the badge names the type.
-function OfflineList({ albums, playlists, songs }: {
-  albums: typeof SAVED_ALBUMS
-  playlists: typeof SAVED_PLAYLISTS
-  songs: SavedSong[]
-}) {
-  const library = useUserLibrary()
-  const [sort] = useLibrarySort()
-  // "Recently added" means saved for this device, not added to the library.
-  // A new save is always newer than the synthetic date the seed falls back on.
-  const savedAt = (type: "album" | "playlist" | "song", id: string, title: string) =>
-    library.offlineSavedAt(type, id) ?? addedTs(title)
-  const items = [
-    ...albums.map(a => ({ key: `al-${a.id}`, title: a.title, at: savedAt("album", a.id, a.title), row: <MobileAlbumRow album={a} showType /> })),
-    ...playlists.map(p => ({ key: `pl-${p.id}`, title: p.title, at: savedAt("playlist", slugify(p.title), p.title), row: <MobilePlaylistRow playlist={p} showType /> })),
-    ...songs.map(s => ({ key: `so-${s.id}`, title: s.title, at: savedAt("song", s.id, s.title), row: <MixedSongRow song={s} /> })),
-  ].sort((a, b) =>
-    sort === "title-az" ? a.title.localeCompare(b.title)
-    : sort === "added-asc" ? a.at - b.at
-    : b.at - a.at,
-  )
-  return (
-    <ul className="flex flex-col gap-1">
-      {items.map(it => <li key={it.key}>{it.row}</li>)}
-    </ul>
   )
 }
 
@@ -117,6 +83,7 @@ function LibraryAllGrid({ albums, playlists, artists }: {
           <li key={it.key}>
             {it.kind === "album" && (
               <AlbumCard
+                local={it.album.local}
                 cover={it.album.cover}
                 title={it.album.title}
                 artist={it.album.artist}

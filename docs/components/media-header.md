@@ -78,6 +78,33 @@ heart, so the menu's Save and the heart flip together, and its navigation
 routes to `onOwnerClick` — as "Go to artist" for a release, "Go to owner"
 for a playlist.
 
+## Local albums: `local`
+
+`local={{ detail, unavailable, match, onOpenOnMuza, menu }}` turns the header
+into a local album's. The meta line carries the "Local" badge and the format.
+The CTA slot is the way back to muza — "Also on muza" (to buy or stream) or
+"Owned on muza" — as an outline link button, nothing when the files matched
+no release, and "Reconnect" while the source is off (the one thing worth
+doing until it is back). Heart and Share are gone (they are about a release
+on muza); Info stays when the files matched a release and opens its credits.
+The ⋯ spreads the local menu. The owner is plain text without a match: no
+handler, no control.
+
+The mirror on a catalog album: `localCopy={{ detail, onOpen }}` when the
+listener has the same release in their own files. A line of its own under
+the meta, `text-xsmall` and muted, and the whole line is one `<button>`: a
+folder glyph, "Go to local copy" (`link-underline`, the text-link underline
+every inline link here uses), the format, a chevron; `focus-ring`, and it
+inks to foreground on hover through `state-fade` (the system's state
+transition). Short on purpose: the sentence it replaced ("You
+also have this in your local files (MP3). Go to local copy") truncated on a
+phone before its link and left nothing to tap. Not in the meta line: there,
+in foreground ink, it read as a fact about this release and was the loudest
+thing on the line. It is words, not the
+Local badge: the badge is how you tell where you are (the local page has it,
+the catalog page does not), and on the catalog page it would say the
+opposite.
+
 ## Usage
 
 ```tsx

@@ -15,10 +15,11 @@
  * shows there. useIsMobile keys off width and is reliable on real devices.
  */
 
+import { SHOW_IN_FOLDER } from "@/lib/local-library"
 import {
   MoreHorizontal, Share, Link2, Plus, Heart, Pencil, Radio, Lock,
-  ListPlus, ListStart, ListEnd, Mic, Building2, Info, Flag, Trash2,
-  Disc3, ListMusic, Check, Download,
+  ListPlus, ListStart, ListEnd, Mic, Building2, Info, Flag, Trash2, RefreshCw,
+  Disc3, ListMusic, Download, FolderOpen, ExternalLink,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -40,8 +41,7 @@ import { useCredits } from "@/lib/credits-context"
 import { useIsMobile } from "@/lib/use-media-query"
 import { slugify } from "@/lib/media-nav"
 import { useUserLibrary, type LibraryItemType, type SavedSong } from "@/lib/user-library"
-import { useLibraryToggle, useOfflineToggle } from "@/lib/use-library-toggle"
-import { useOfflineEligibility } from "@/lib/offline-eligibility"
+import { useLibraryToggle } from "@/lib/use-library-toggle"
 import { useFilesPurchase } from "@/lib/files-purchase-context"
 
 export interface DetailMoreButtonProps {
@@ -92,6 +92,25 @@ export interface DetailMoreButtonProps {
   onRemove?:        () => void
   onReport?:        () => void
   onShowInfo?:      () => void
+  /** A catalog album the listener also has in their own files: "Open local
+   *  copy", beside the other ways off this page. The header shows it as a
+   *  line too, but on a phone the header is the slim chrome and this sheet
+   *  is the only place it can be. */
+  onOpenLocalCopy?: () => void
+  /** The item is from the listener's own files (see local-library), not the
+   *  muza catalog. It gets its own column of the matrix: no Share (nobody
+   *  else can open it), no Save (it is in the library by being on disk), no
+   *  Credits or Report (they are about a release on muza). It gains "Show in
+   *  folder", and "Open on muza" when the files match a catalog release.
+   *  "Go to artist" stays, through `onGoToArtist`, only when matched. */
+  local?: {
+    onShowInFolder?: () => void
+    onOpenOnMuza?:   () => void
+    /** Matched files only: the matched release's credits. */
+    onShowCredits?:  () => void
+    /** Source not connected: to Settings › Local music, to reconnect it. */
+    onReconnect?:    () => void
+  }
   className?: string
   triggerVariant?: "ghost" | "outline"
   triggerSize?:    "icon-sm" | "icon" | "icon-lg"
@@ -198,7 +217,7 @@ function useDetailActions({
   libraryType, libraryId, libraryName, librarySong,
   onAdd, onAddMusic, onEdit, onPlayRadio, onAddToPlaylist, onPlayNext, onAddToQueue,
   onMakePrivate, onGoToArtist, onGoToLabel, onGoToOwner, onGoToSelf, onArtistInfo,
-  onRemove, onReport,
+  onRemove, onReport, onOpenLocalCopy, local,
 }: DetailMoreButtonProps): { quick: Action[]; groups: Action[][]; flat: Action[]; badgeType: ContentType } {
   const { canNativeShare, copyLink, nativeShare } = useShare({
     title, text: subtitle ? `${title} — ${subtitle}` : title,
@@ -217,8 +236,6 @@ function useDetailActions({
   // to the passed `inLibrary` + `onAdd` / `onRemove`.
   const library = useUserLibrary()
   const toggleLibrary = useLibraryToggle()
-  const toggleOffline = useOfflineToggle()
-  const eligibility = useOfflineEligibility()
   const filesPurchase = useFilesPurchase()
   // A playlist you OWN is in your library by definition — never offer to save
   // (or un-save) it; owners get Edit / Delete instead.
@@ -232,6 +249,23 @@ function useDetailActions({
   const isAlbum    = kind === "album"
   const isPlaylist = kind === "playlist"
   const isArtist   = kind === "artist"
+
+  // ── Local files: their own column ───────────────────────────────────────
+  // "Open on muza" leads — it is the one thing here that is about muza, and
+  // the reason a matched folder is worth more than a plain player, with the
+  // matched release's credits beside it. No tiles: there is no Share / Save
+  // trio to promote.
+  if (local) {
+    const localGroups = [
+      // An unreachable source leads with the way to fix it.
+      [{ icon: <RefreshCw />,    label: "Reconnect…",   onClick: local.onReconnect }],
+      [{ icon: <ExternalLink />, label: "Open on muza", onClick: local.onOpenOnMuza },
+       { icon: <Info />,         label: "Show credits", onClick: local.onShowCredits }],
+      [{ icon: <FolderOpen />, label: SHOW_IN_FOLDER ?? "", onClick: local.onShowInFolder },
+       { icon: <Mic />,        label: "Go to artist",   onClick: onGoToArtist }],
+    ].map(g => (g as Action[]).filter(a => a.onClick)).filter(g => g.length > 0)
+    return { quick: [], groups: localGroups, flat: localGroups.flat(), badgeType: "album" as ContentType }
+  }
 
   // ── Quick actions (sheet tiles; lead the dropdown) ──────────────────────
   // One adaptive share row: native sheet where available, else copy link.
@@ -263,26 +297,9 @@ function useDetailActions({
 
   // ── Manage + queue ──────────────────────────────────────────────────────
   const g1: Action[] = []
-  // Two different things, and the words keep them apart. "Offline" is this
-  // device, and only for music that is yours: an album you bought or
-  // uploaded, and in a playlist the songs you own (see offline-eligibility).
   // "Files" are the lossless files you paid to keep, so that row only exists
-  // on an album bought with them. "Download" alone was both, which is why
-  // neither read. They share the download glyph on purpose: it is the mark
-  // people look for, and the label says which one this is. Something already
-  // saved keeps its "Remove from offline", eligible or not.
-  const offlineId = !isArtist ? libraryId : undefined
-  const savedOffline = !!offlineId && library.isOffline(isAlbum ? "album" : "playlist", offlineId)
-  const ownedInPlaylist = isPlaylist && offlineId ? eligibility.playlistOwnedCount(offlineId) : 0
-  const mayGoOffline = !!offlineId && (isAlbum ? eligibility.album(offlineId, !!owned) : ownedInPlaylist > 0)
-  if (offlineId && (savedOffline || mayGoOffline)) g1.push({
-    icon: savedOffline ? <Check /> : <Download />,
-    label: savedOffline ? "Remove from offline" : "Save offline",
-    onClick: () => toggleOffline(
-      isAlbum ? "album" : "playlist", offlineId, libraryName ?? title, undefined,
-      isPlaylist ? `${ownedInPlaylist} ${ownedInPlaylist === 1 ? "song" : "songs"} you own` : undefined,
-    ),
-  })
+  // on an album bought with them. There is no "Save offline": muza does not
+  // keep music on the device for offline play (see local-library).
   const purchase = isAlbum && libraryId ? library.entryFor(libraryId) : undefined
   if (purchase?.tier === "download") g1.push({
     icon: <Download />,
@@ -312,6 +329,7 @@ function useDetailActions({
   if (onGoToSelf && isPlaylist) g2.push({ icon: <ListMusic />, label: "Go to playlist", onClick: onGoToSelf })
   if (isAlbum) {
     if (owned) g2.push(showCredits)            // credits in-list for owned (tile is Edit)
+    if (onOpenLocalCopy) g2.push({ icon: <FolderOpen />, label: "Go to local copy", onClick: onOpenLocalCopy })
     if (onGoToArtist) g2.push({ icon: <Mic />,       label: "Go to artist", onClick: onGoToArtist })
     if (onGoToLabel)  g2.push({ icon: <Building2 />, label: "Go to label",  onClick: onGoToLabel })
   }

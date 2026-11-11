@@ -1,41 +1,31 @@
 "use client"
 
 /*
- * PurchasedBadge — the "Owned" marker shown wherever an album the
- * user has paid for appears.
+ * PurchasedBadge — the "Owned" marker shown wherever an album the user has
+ * paid for appears.
  *
- * Plain inline check + "Owned" text in foreground color. No pill
- * chrome (border / bg fill) — the bg-muted pill version we tried
- * read too loud next to the surrounding meta in card / header
- * rows. Just the glyph + label, sized to fit alongside body text.
+ * The smallest Badge the system has (`secondary` · `square-xs`: 18px, no
+ * border, the muted fill), with the word only. It used to be a check glyph +
+ * "Owned" as bare inline text; that read fine alone, but once local files got
+ * their own marker the two needed to be one quiet family, and at this size a
+ * glyph is detail nobody can see. An earlier `bg-muted` pill was dropped for
+ * reading too loud — that was the 26px chip; this is 18px and borderless.
  *
- * Consumers: `AlbumCard` (pricing row), `MediaHeader` (meta line).
- * Both call this component directly rather than inlining the
- * markup, so any tweak (icon swap, size bump, copy change) lands
- * everywhere in one edit.
+ * Consumers: `AlbumCard` (pricing row), `MediaHeader` (meta line), the library
+ * table. Its sibling for your own files is `LocalBadge`.
  */
 
-import { CircleCheckBig } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
 export interface PurchasedBadgeProps {
-  /** Caller-controlled text size class — defaults to `text-small`
-   *  (18px). The icon scales relative to text via `size-3.5`. Override
-   *  by passing e.g. `text-2xsmall` when squeezing into a tight row. */
   className?: string
 }
 
 export function PurchasedBadge({ className }: PurchasedBadgeProps) {
   return (
-    <span
-      aria-label="Owned"
-      className={cn(
-        "inline-flex items-center gap-1 text-small text-foreground",
-        className,
-      )}
-    >
-      <CircleCheckBig className="size-3.5 shrink-0" />
+    <Badge variant="secondary" shape="square-xs" className={cn("shrink-0", className)}>
       Owned
-    </span>
+    </Badge>
   )
 }
