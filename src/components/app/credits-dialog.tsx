@@ -31,7 +31,6 @@ import { getCredits, hasAlbumDetail, type Credits, type CreditGroup, type Credit
 import { artistImage } from "@/lib/artist-data"
 import { LibraryHeartButton } from "@/components/ui/library-heart-button"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { ContentTypeBadge } from "@/components/ui/badge"
 import { CreditsContext } from "@/lib/credits-context"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 
@@ -143,12 +142,14 @@ export function CreditsContent({
   layout?: CreditsLayout
 }) {
 
+  const meta = [credits.year && String(credits.year), credits.label].filter(Boolean).join(" · ")
+
   /* Compact header — the SAME identity block as the ⋯ sheet
      (`DetailMenuSheetBody`): 72px thumb · title `text-base` · artist · the
-     content-type badge and the year. The credits are reached from that sheet
+     year · label (the sheet's type badge is left out, see below). The credits are reached from that sheet
      ("Credits" tile), so the two open on one header instead of two. It
      replaced a 3:2 cover that spent a third of a phone on the artwork the
-     reader had just come from. Label and catalogue number are Overview facts. */
+     reader had just come from. The catalogue number is an Overview fact. */
   const header = (
     <div className="flex flex-row items-center gap-3">
       {showCover && (
@@ -167,10 +168,14 @@ export function CreditsContent({
         <Value onClick={onArtist && (() => onArtist(credits.mainArtist))} className="truncate text-small text-muted-foreground leading-none">
           {credits.mainArtist}
         </Value>
-        <div className="flex min-w-0 items-center gap-2">
-          <ContentTypeBadge type="album" />
-          {credits.year && <span className="truncate text-xsmall text-muted-foreground">{credits.year}</span>}
-        </div>
+        {/* Year · label where the ⋯ sheet has the content-type badge. The
+            sources disagree on the type, and for old jazz it is a modern
+            label stuck on afterwards: MusicBrainz editors assign today's
+            Album / Single / EP to a 1940 set of 78s, Discogs records the
+            physical format of each pressing (78 RPM, 10", LP), iTunes mostly
+            says "Album" and puts "– EP" in the title. Year and label are
+            facts every source agrees on. */}
+        {meta && <p className="truncate text-xsmall text-muted-foreground leading-tight">{meta}</p>}
       </div>
     </div>
   )

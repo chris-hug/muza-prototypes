@@ -8,8 +8,7 @@ usage:
 ---
 
 `CreditsDialog` is the release metadata behind every "Show credits" action
-and the MediaHeader's ⓘ: a compact header (the ⋯ sheet's: thumb, title, main artist, Album badge,
-year) over **Overview** (the session facts), **Credits**
+and the MediaHeader's ⓘ: a compact header (the ⋯ sheet's: thumb, title, main artist, year · label) over **Overview** (the session facts), **Credits**
 (one row per person, grouped) and **Notes**. Albums only; a playlist has no
 release credits.
 
@@ -42,7 +41,7 @@ is the model, with its one data bug avoided (below).
 
 | Part | What it wears | Why |
 |---|---|---|
-| Header | the ⋯ sheet's identity block (`DetailMenuSheetBody`): `size-18 rounded-xs art-edge` thumb · title `text-base font-medium` · artist `text-small text-muted-foreground` · `ContentTypeBadge` "Album" + year `text-xsmall`. Gutter `px-3`, `md:px-6` | the credits are reached from that sheet's "Credits" tile, so both open on one header instead of two. It replaced a 3:2 cover that spent a third of a phone on the artwork the reader just came from; before that, four equal label/value rows where the title weighed as much as a recording date. Label and catalogue number are Overview facts. The `heading` slot is an `sr-only` `DialogTitle` ("Album credits") — named for screen readers, not drawn |
+| Header | the ⋯ sheet's identity block (`DetailMenuSheetBody`): `size-18 rounded-xs art-edge` thumb · title `text-base font-medium` · artist `text-small text-muted-foreground` · year · label `text-xsmall` where the sheet has its content-type badge. Gutter `px-3`, `md:px-6` | the credits are reached from that sheet's "Credits" tile, so both open on one header instead of two. It replaced a 3:2 cover that spent a third of a phone on the artwork the reader just came from; before that, four equal label/value rows where the title weighed as much as a recording date. **No Album / EP / Single badge:** the sources disagree, and for old jazz the type is a modern label applied afterwards — MusicBrainz editors give a 1940 set of 78s today's categories, Discogs records the format of each pressing (78 RPM, 10", LP), iTunes mostly says "Album" and puts "– EP" in the title. Year and label are what every source agrees on. The catalogue number is an Overview fact. The `heading` slot is an `sr-only` `DialogTitle` ("Album credits") — named for screen readers, not drawn |
 | Tabs | `TabsList size="sm"` full width: Overview · Credits · Notes (Notes only with text). Credits is the default | "Show credits" is what was asked for. Header and tab bar hold; only the panel scrolls, so switching tabs never moves the bar. The tabs dialog has a fixed height (`h-[88svh]`, `md:h-[min(85vh,44rem)]`) so a short Overview and a long Credits list do not resize the sheet under the finger |
 | Overview | a `dl`, label `text-muted-foreground`, value `text-foreground`: Recorded (date + studio) · Released · Label (label · catalogue number) · Tracks (count · total minutes) | the session facts a sleeve prints; a row is left out when the catalogue has no value |
 | Credits | sections Personnel · Composition · Production & Engineering · Artwork & Notes, `text-small font-medium` titles; rows in a `divide-y divide-border/60` list | MusicBrainz and Discogs name roles differently; four fixed sections keep it from becoming Tidal's twelve role headings. The hairlines read as a ruled liner-note sheet |
