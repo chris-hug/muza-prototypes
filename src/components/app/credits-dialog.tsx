@@ -517,8 +517,8 @@ export function CreditsContent({
           role, and the way into the track-by-track reading. They wear the
           track-by-track reading's BARS — the same band, number, play button,
           title and duration, the playing one marked — so a song looks like
-          one song in both readings; here they are not sticky, and stacked
-          4px apart. The bar opens that song's credits (chevron at its end);
+          one song in both readings; here they are not sticky, stacked 4px
+          apart, and ghost — filled only on hover or while playing. The bar opens that song's credits (chevron at its end);
           the number is the play button, as on the album page. It was a ruled
           text list here and a band there: one song, two looks. */}
       <section className="flex flex-col gap-1">
@@ -537,7 +537,10 @@ export function CreditsContent({
                 onKeyDown={e => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); open() } }}
                 className={cn(
                   stickyBar(), showCover && "-mx-2",
-                  current ? "bg-secondary" : "bg-muted [--hover-fill:var(--secondary)]",
+                  // Ghost: no fill at rest, the bars' `muted` on hover. Here
+                  // they are a list to pick from, not dividers to hold, and
+                  // five filled bands stacked read as a wall.
+                  current ? "bg-secondary" : "[--hover-fill:var(--muted)]",
                   "press-ripple state-fade-quick cursor-pointer outline-none focus-ring",
                 )}
               >
