@@ -214,7 +214,8 @@ export function SongMenuItems({
 }) {
   const { canNativeShare, copyLink, nativeShare } = useShare({ title, text: artist ? `${title} — ${artist}` : title })
   const credits = useCredits()
-  const showCredits = album ? () => credits.open(slugify(album)) : onInfo
+  // A song's ⋯ opens ITS credits, not the album's (see `peopleOnTrack`).
+  const showCredits = album ? () => credits.open(slugify(album), title) : onInfo
 
   const library = useUserLibrary()
   const toggleLibrary = useLibraryToggle()
@@ -330,7 +331,8 @@ export function SongListItem({
   const coarse = useCoarsePointer()
   // "Show credits" opens the release credits for the track's album.
   const credits = useCredits()
-  const showCredits = album ? () => credits.open(slugify(album)) : onInfo
+  // A song's ⋯ opens ITS credits, not the album's (see `peopleOnTrack`).
+  const showCredits = album ? () => credits.open(slugify(album), title) : onInfo
 
   // Add-to-library — store-backed (animated heart + toast), keyed by the
   // song (title + artist so same-titled tracks stay distinct). The legacy

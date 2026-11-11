@@ -366,10 +366,11 @@ export function AlbumDetailView() {
               // Album page: no per-track artist/album in the meta line (would
               // just repeat the header), so `album` is NOT passed — credits
               // come via `onInfo` instead. No "Go to album" (you're here);
-              // "Go to artist" stays.
+              // "Go to artist" stays. A row's ⓘ opens THAT song's credits;
+              // the header's ⓘ is the album's.
               hideGoToAlbum
               onArtistClick={() => openArtist(slugify(ALBUM.artist))}
-              onInfo={() => credits.open(slugify(ALBUM.title))}
+              onInfo={() => credits.open(slugify(ALBUM.title), t.title)}
               playing={isThisAlbumPlaying && player.track?.title === t.title}
               onPlay={() => {
                 // Same track again → pause/resume; otherwise load it.

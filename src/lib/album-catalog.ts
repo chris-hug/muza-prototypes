@@ -457,3 +457,28 @@ export function getCredits(key?: string | null): Credits {
     notes: curated?.notes,
   }
 }
+
+/* ── Song credits ───────────────────────────────────────────────────────────
+   A song's credits are NOT a second record: they are the album's, read for
+   one track. A role with no track numbers is the whole album's and applies;
+   a role with numbers applies only where they include this track. People
+   left with no role on it drop out. So Dolphy on Out to Lunch track 3 is
+   "Flute, Composer", and the numbers themselves are gone — on one track
+   they would say nothing. One record means the two views can never
+   disagree, and the sources (MusicBrainz relates most credits to the
+   recording, Discogs to the release with track ranges) both map onto it. */
+
+/** 1-based position of `title` on the album, or `undefined` if it is not on it. */
+export function findTrack(credits: Credits, title?: string): number | undefined {
+  if (!title) return undefined
+  const t = title.trim().toLowerCase()
+  const i = credits.tracks.findIndex(x => x.title.trim().toLowerCase() === t)
+  return i >= 0 ? i + 1 : undefined
+}
+
+/** The album's people as they are credited on track `n`. */
+export function peopleOnTrack(people: CreditPerson[], n: number): CreditPerson[] {
+  return people
+    .map(p => ({ ...p, roles: p.roles.filter(r => !r.tracks || r.tracks.includes(n)).map(r => ({ role: r.role })) }))
+    .filter(p => p.roles.length > 0)
+}
