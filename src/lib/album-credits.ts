@@ -35,6 +35,10 @@ export interface CreditPerson {
   name: string
   group: CreditGroup
   roles: CreditRole[]
+  /** `false` when the catalogue has no artist page for the name — common for
+   *  sleeve designers, photographers and liner-note writers. The row then
+   *  shows the name as plain text and no heart. Omitted = has a page. */
+  profile?: false
 }
 
 export interface AlbumCreditsData {
@@ -106,8 +110,9 @@ export const ALBUM_CREDITS: Record<string, AlbumCreditsData> = {
       { name: "Tony Williams",     group: "personnel", roles: [{ role: "Drums" }] },
       { name: "Alfred Lion",       group: "production", roles: [{ role: "Producer" }] },
       { name: "Rudy Van Gelder",   group: "production", roles: [{ role: "Recording engineer" }] },
-      { name: "Reid Miles",        group: "artwork",    roles: [{ role: "Cover design" }] },
-      { name: "A. B. Spellman",    group: "artwork",    roles: [{ role: "Liner notes" }] },
+      // No artist page for these two — the prototype's example of that state.
+      { name: "Reid Miles",        group: "artwork",    roles: [{ role: "Cover design" }], profile: false },
+      { name: "A. B. Spellman",    group: "artwork",    roles: [{ role: "Liner notes" }],  profile: false },
     ],
     notes: {
       by: "Muza",

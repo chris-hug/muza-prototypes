@@ -234,15 +234,20 @@ export function CreditsContent({
               <li key={p.name} className="flex items-center gap-3 py-3">
                 <PersonAvatar name={p.name} />
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  {/* No page, no link and no heart — nothing to open or save.
+                      The row keeps its shape (avatar, name, roles), so a
+                      person without a page reads as credited, not as broken. */}
                   <Value
-                    onClick={onArtist && (() => onArtist(p.name))}
+                    onClick={p.profile !== false && onArtist ? () => onArtist(p.name) : undefined}
                     className="text-small text-foreground leading-tight truncate"
                   >
                     {p.name}
                   </Value>
                   <p className="text-2xsmall text-muted-foreground leading-snug">{rolesLine(p.roles)}</p>
                 </div>
-                <LibraryHeartButton type="artist" id={slugify(p.name)} name={p.name} size="icon-sm" className="touch-target shrink-0" />
+                {p.profile !== false && (
+                  <LibraryHeartButton type="artist" id={slugify(p.name)} name={p.name} size="icon-sm" className="touch-target shrink-0" />
+                )}
               </li>
             ))}
           </ul>
@@ -300,12 +305,23 @@ export function CreditsContent({
     )
   }
 
+  /* The panel FADES under the tab bar instead of being cut at its edge: a
+     row scrolled half out read as a broken row. A 32px mask on the panel's
+     top, eased rather than linear (a straight ramp read as a hard band at
+     20px), and 32px of top padding so nothing is faded at rest — only what
+     scrolls up into it. */
+  const panel = cn(
+    "flex-1 min-h-0 overflow-y-auto pt-8 pb-10",
+    "[mask-image:linear-gradient(to_bottom,transparent,rgba(0,0,0,0.08)_0.5rem,rgba(0,0,0,0.3)_1rem,rgba(0,0,0,0.65)_1.5rem,black_2rem)]",
+    pad,
+  )
+
   /* Tabs: the header and the tab bar hold, the panel under them scrolls —
      switching tabs never moves the bar out from under the finger. Credits is
      the default tab, because "Show credits" is what was asked for. */
   return (
     <Tabs defaultValue="credits" className={cn("flex flex-col flex-1 min-h-0 gap-0", bodyClassName)}>
-      <div className={cn("shrink-0 flex flex-col gap-6 pt-3 md:pt-6 pb-4", pad)}>
+      <div className={cn("shrink-0 flex flex-col gap-6 pt-3 md:pt-6 pb-0", pad)}>
         {header}
         <TabsList size="sm" className="w-full">
           <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -313,9 +329,9 @@ export function CreditsContent({
           {notes && <TabsTrigger value="notes">Notes</TabsTrigger>}
         </TabsList>
       </div>
-      <TabsContent value="overview" className={cn("flex-1 min-h-0 overflow-y-auto pt-2 pb-10", pad)}>{overview}</TabsContent>
-      <TabsContent value="credits"  className={cn("flex-1 min-h-0 overflow-y-auto pt-2 pb-10", pad)}>{creditsBody}</TabsContent>
-      {notes && <TabsContent value="notes" className={cn("flex-1 min-h-0 overflow-y-auto pt-2 pb-10", pad)}>{notes}</TabsContent>}
+      <TabsContent value="overview" className={panel}>{overview}</TabsContent>
+      <TabsContent value="credits"  className={panel}>{creditsBody}</TabsContent>
+      {notes && <TabsContent value="notes" className={panel}>{notes}</TabsContent>}
     </Tabs>
   )
 }
@@ -333,7 +349,9 @@ function CreditsDialogContent({ credits, onClose }: { credits: Credits; onClose:
   return (
     <DialogContent
       className={cn(
-        "md:max-w-md",
+        // 576, the purchase / checkout dialogs' width. It was `md:max-w-md`
+        // (448), where a role line like Dolphy's wrapped to three lines.
+        "md:max-w-xl",
         // `md:p-0` / `md:gap-0` are NOT redundant beside `p-0 gap-0`. The base
         // chrome sets `md:p-6 md:gap-5`, and tailwind-merge keeps a variant
         // and its unprefixed twin side by side — so from 768 up the base won
@@ -376,7 +394,7 @@ export function CreditsDialogPreview({ albumKey = "a07", layout = "tabs" }: { al
       data-mobile={phone ? "sheet" : undefined}
       className={cn(
         "relative w-full border border-border bg-popover overflow-hidden",
-        phone ? "max-w-full" : "max-w-md rounded-xl md:rounded-2xl",
+        phone ? "max-w-full" : "max-w-xl rounded-xl md:rounded-2xl",
       )}
     >
       {/* The navigation handlers are passed even though this preview goes
