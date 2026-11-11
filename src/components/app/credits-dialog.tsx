@@ -167,6 +167,9 @@ export function CreditsContent({
   const player = usePlayerOptional()
   const isCurrent = (title: string) =>
     !!player?.track && player.track.album === credits.album && player.track.title === title
+  /* Marked as playing only while it PLAYS, as the album page's rows are: a
+     loaded but paused track wore the playing fill and read as selected. */
+  const isPlaying = (title: string) => isCurrent(title) && !!player?.playing
   const playTrack = player && ((t: { title: string; duration: string }) => {
     if (isCurrent(t.title)) { player.toggle(); return }
     player.play(
@@ -462,7 +465,7 @@ export function CreditsContent({
       {credits.tracks.map((t, i) => {
         const n = i + 1
         const list = peopleOnTrack(credits.people, n).filter(p => PER_TRACK.includes(p.group))
-        const current = isCurrent(t.title)
+        const current = isPlaying(t.title)
         return (
           <Fragment key={t.title}>
             <div data-track={n} className={stickyShell}>
@@ -473,7 +476,7 @@ export function CreditsContent({
                 <TrackNumberPlayButton
                   number={n}
                   title={t.title}
-                  playing={current && !!player?.playing}
+                  playing={current}
                   onToggle={playTrack ? () => playTrack(t) : undefined}
                   // The play icon shows on a hover anywhere on the bar, since
                   // a click anywhere plays.
@@ -525,7 +528,7 @@ export function CreditsContent({
         <SectionTitle>Tracks</SectionTitle>
         <div className="flex flex-col gap-1">
           {credits.tracks.map((t, i) => {
-            const current = isCurrent(t.title)
+            const current = isPlaying(t.title)
             const open = () => setByTrack({ on: true, at: i + 1 })
             return (
               <div
@@ -547,7 +550,7 @@ export function CreditsContent({
                 <TrackNumberPlayButton
                   number={i + 1}
                   title={t.title}
-                  playing={current && !!player?.playing}
+                  playing={current}
                   onToggle={playTrack ? () => playTrack(t) : undefined}
                 />
                 <p className="min-w-0 flex-1 truncate text-small font-medium text-foreground">{t.title}</p>
