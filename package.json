@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "react-router dev",
     "prebuild": "git fetch --unshallow 2>/dev/null || true",
-    "build": "react-router build && cp -r dist/client/* dist/",
+    "build": "react-router build && cp -r dist/client/* dist/ && mkdir -p dist/research/credits && cp dist/index.html dist/research/credits/index.html",
     "start": "react-router-serve ./build/server/index.js",
     "lint": "eslint",
     "release": "node scripts/release.mjs",

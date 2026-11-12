@@ -12,6 +12,12 @@ import {
 // allows it: Spotify blocks its phone web player, Deezer serves the desktop
 // layout squeezed, Qobuz refuses widths under 1024px. Apple Music is missing
 // (not signed in).
+//
+// Deep link. The demo host is static with no SPA fallback (any path but `/`
+// is a 404), so `npm run build` copies the SPA index.html to
+// research/credits/index.html. Captures live in a sibling folder,
+// `credits-captures/`: a folder named `credits/` made the host redirect the
+// page URL into it and answer 403.
 
 export function meta() {
   return [{ title: "Credits in streaming apps · muza research" }]
@@ -84,13 +90,13 @@ const MATRIX = [
 function Shot({ file, alt, narrow, native }: { file: string; alt: string; narrow?: boolean; native?: boolean }) {
   return (
     <a
-      href={`/research/credits/${file}`}
+      href={`/research/credits-captures/${file}`}
       target="_blank"
       rel="noreferrer"
       className="flex items-start justify-center rounded-xl bg-muted p-3"
     >
       <img
-        src={`/research/credits/${file}`}
+        src={`/research/credits-captures/${file}`}
         alt={alt}
         loading="lazy"
         className={native ? "max-w-full rounded-xs" : narrow ? "w-full max-w-[375px] rounded-xs" : "w-full rounded-xs"}
