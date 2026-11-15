@@ -27,13 +27,13 @@
 
 import * as React from "react"
 import { useState } from "react"
-import { Heart, Info, MoreHorizontal, ListPlus, Mic, Disc3, Share, Link2, Flag, FolderOpen } from "lucide-react"
-import { useLocalCopy } from "@/lib/use-local-actions"
+import { Heart, Info, MoreHorizontal, ListPlus, Mic, Disc3, Share, Link2, Flag } from "lucide-react"
 import { MenuHeart } from "@/components/ui/library-heart-button"
 import { AddMusicIcon } from "@/components/ui/media-icons"
 
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
+import { OfflineMark } from "@/components/ui/local-badge"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -129,10 +129,13 @@ export interface SongListItemProps {
   artist?:  string
   album?:   string
   year?:    string | number
-  /** A one-word label before the artist / album line: "Owned", "Local".
+  /** A one-word label before the artist / album line: "Owned", "Imported".
    *  The same square-xs badge the album cards carry, so a song and its
    *  album say it the same way. */
   badge?:   string
+  /** Plays offline on this device: the offline mark after the badge
+   *  (offline.ts). */
+  offline?: boolean
   /** Formatted duration like "3:42". Same style as the meta line. */
   duration?: string
   /** Compact / dense variant for swipeable list rails (Artist › Top
@@ -185,11 +188,6 @@ export interface SongListItemProps {
    *  (`LocalSongMenuItems`), since Share, Credits and Report are about a
    *  release on muza. */
   local?: boolean
-  /** The release this track is on when `album` is left off the meta line
-   *  (the album page). Not drawn; it is what "Go to local copy" looks up,
-   *  which keyed on `album` alone and so never reached the album page's
-   *  rows — the one place the copy is most likely to be wanted. */
-  release?: string
   className?: string
 }
 
@@ -209,12 +207,8 @@ export interface SongListItemProps {
 export function SongMenuItems({
   title, artist, album, cover, duration,
   onAddToPlaylist, onArtistClick, onAlbumClick, onInfo, onReport,
-  hideAddToPlaylist, hideGoToArtist, hideGoToAlbum, release,
+  hideAddToPlaylist, hideGoToArtist, hideGoToAlbum,
 }: {
-  /** The release the song is on, when `album` is withheld from the row
-   *  (the album page: the header already says it). Only for lookups that
-   *  need it — "Go to local copy" — never drawn. */
-  release?: string
   title:    string
   artist?:  string
   album?:   string
@@ -252,9 +246,6 @@ export function SongMenuItems({
   const addToPlaylist = useAddToPlaylist()
   const handleAddToPlaylist = onAddToPlaylist ?? (() =>
     addToPlaylist.open({ id: songId, title, artist, album, cover, duration }))
-  // The same release in the listener's own files — with the other ways off
-  // this song, so it reaches the player's menu and every catalog row.
-  const goToLocalCopy = useLocalCopy(album ?? release)
 
   return (
     <>
@@ -267,7 +258,6 @@ export function SongMenuItems({
       <DropdownMenuSeparator />
       {onArtistClick && !hideGoToArtist && <DropdownMenuItem onClick={onArtistClick}><Mic />Go to artist</DropdownMenuItem>}
       {onAlbumClick && !hideGoToAlbum && <DropdownMenuItem onClick={onAlbumClick}><Disc3 />Go to album</DropdownMenuItem>}
-      {goToLocalCopy && <DropdownMenuItem onClick={goToLocalCopy}><FolderOpen />Go to local copy</DropdownMenuItem>}
       <DropdownMenuItem onClick={showCredits}><Info />Show credits</DropdownMenuItem>
       <DropdownMenuSeparator />
       <DropdownMenuItem variant="destructive" onClick={handleReport}><Flag />Report</DropdownMenuItem>
@@ -305,11 +295,11 @@ function Linkable({
 }
 
 export function SongListItem({
-  cover, trackNumber, title, artist, album, year, badge, duration,
+  cover, trackNumber, title, artist, album, year, badge, offline = false, duration,
   compact = false,
   onPlay, playing: playingProp, onAddToLibrary, onAddToPlaylist, menuItems, onInfo,
   onReport, hideAddToPlaylist, hideGoToArtist, hideGoToAlbum,
-  onTitleClick, onAlbumClick, onArtistClick, local = false, release, className,
+  onTitleClick, onAlbumClick, onArtistClick, local = false, className,
 }: SongListItemProps) {
   // Playback state. CONTROLLED when `playing` is passed (a global player
   // owns it — only the active row shows the wave, and playing another row
@@ -343,12 +333,11 @@ export function SongListItem({
   // "Show credits" opens the release credits for the track's album — from
   // the menu AND the row's "i" button. The button used to call `onInfo`
   // only, which no list passes, so on every catalog row it did nothing while
-  // the menu beside it worked. A local row's credits are its matched
-  // release's, handed in as `onInfo` (none when the files matched nothing).
+  // the menu beside it worked. An imported row has no credits (it is not
+  // matched to a release), so its host passes no `onInfo`.
   const credits = useCredits()
   // A song's ⋯ opens ITS credits, not the album's (see `peopleOnTrack`).
   const showCredits = local ? onInfo : album ? () => credits.open(slugify(album), title) : onInfo
-  const goToLocalCopy = useLocalCopy(local ? undefined : (album ?? release))
 
   // Add-to-library — store-backed (animated heart + toast), keyed by the
   // song (title + artist so same-titled tracks stay distinct). The legacy
@@ -381,7 +370,6 @@ export function SongListItem({
   // their click handler. `menuItems` stays as a legacy full-override hatch.
   const menuContent = menuItems ?? (
     <SongMenuItems
-      release={release}
       title={title} artist={artist} album={album} cover={cover} duration={duration}
       onAddToPlaylist={onAddToPlaylist}
       onArtistClick={onArtistClick}
@@ -518,6 +506,7 @@ export function SongListItem({
               {badge}
             </Badge>
           )}
+          {badge && offline && <OfflineMark />}
           {artist && (
             <Linkable onClick={coarse ? undefined : onArtistClick} className="truncate min-w-0">
               {artist}
@@ -605,7 +594,6 @@ export function SongListItem({
                   {!hideAddToPlaylist && <SheetAction icon={<AddMusicIcon />} label="Add to playlist" onClick={handleAddToPlaylist} />}
                   {onArtistClick && !hideGoToArtist && <SheetAction icon={<Mic />}   label="Go to artist" onClick={onArtistClick} />}
                   {onAlbumClick  && !hideGoToAlbum  && <SheetAction icon={<Disc3 />} label="Go to album"  onClick={onAlbumClick} />}
-                  {goToLocalCopy && <SheetAction icon={<FolderOpen />} label="Go to local copy" onClick={goToLocalCopy} />}
                   <SheetAction
                     icon={canNativeShare ? <Share /> : <Link2 />}
                     label={canNativeShare ? "Share…" : "Copy link"}

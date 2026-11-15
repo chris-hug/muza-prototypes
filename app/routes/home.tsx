@@ -16,6 +16,7 @@ import { AddToPlaylistProvider } from "@/components/app/add-to-playlist-dialog"
 import { CreatePlaylistProvider } from "@/components/app/create-playlist-dialog"
 import { FilesPurchaseProvider } from "@/components/app/files-purchase-provider"
 import { MenuOptionsView } from "@/components/app/menu-options-view"
+import { OfflineModelView } from "@/components/app/offline-model-view"
 import { PlaylistEditDrawer, PlaylistEditorProvider } from "@/components/app/playlist-edit-drawer"
 import { registerPlaylists } from "@/lib/playlist-catalog"
 import { AnimatedLogo } from "@/components/app/animated-logo"
@@ -814,17 +815,16 @@ function HomeView({ onNavigate }: { onNavigate: (view: string) => void }) {
 // ─── Studio pages ─────────────────────────────────────────────────────────────
 
 // Demo seed for the UserLibraryProvider — first 12 SAVED_ALBUMS ids
-// are in the library. a09 is bought with its files; a02, a03, a05, a08, a12,
+// are in the library. a09 and a03 are bought with their files — a09 already
+// downloaded on this device, a03 not (offline.ts) — and a02, a05, a08, a12,
 // a14 and a18 for listening, so every purchase state (and its menu rows) is
-// there out of the box. a02 is also among the listener's local files (see
-// local-library), which is what makes its local copy read "Owned on muza".
-// The rest are saved, not bought. a07 (A Love Supreme) is intentionally
+// there out of the box. The rest are saved, not bought. a07 (A Love Supreme) is intentionally
 // absent so the buy → purchase flow on the album detail page demonstrates the
 // auto-add behavior.
 const LIBRARY_SEED = {
   a01: { added: true, purchased: false },
   a02: { added: true, purchased: true, tier: "stream" as const },
-  a03: { added: true, purchased: true, tier: "stream" as const },
+  a03: { added: true, purchased: true, tier: "download" as const },
   a04: { added: true, purchased: false },
   a05: { added: true, purchased: true, tier: "stream" as const },
   a06: { added: true, purchased: false },
@@ -3122,6 +3122,7 @@ export default function Home() {
             {activeNav === "ArtistSongs" && <ArtistTopSongsView />}
             {activeNav === "RailList" && <RailListView />}
             {activeNav === "MenuOptions" && <MenuOptionsView />}
+            {activeNav === "OfflineModel" && <OfflineModelView />}
             {activeNav === "Album"     && <AlbumDetailView />}
             {activeNav === "Playlist"  && <PlaylistDetailView />}
             {Object.keys(STUDIO_TABS).includes(activeNav) && (

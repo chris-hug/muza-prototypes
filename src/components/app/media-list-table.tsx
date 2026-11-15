@@ -32,7 +32,8 @@ import { PurchasedBadge } from "@/components/ui/purchased-badge"
 import { LocalBadge } from "@/components/ui/local-badge"
 import { DetailMenuItems } from "@/components/ui/detail-more-button"
 import { useLocalActions } from "@/lib/use-local-actions"
-import { localPlayingFrom, type LocalAlbum, type LocalTrack } from "@/lib/local-library"
+import { useDeviceDownloads } from "@/lib/offline"
+import { localPlayingFrom, IMPORTED, type LocalAlbum, type LocalTrack } from "@/lib/local-library"
 import { LocalSongMenuItems } from "@/components/app/local-song-rows"
 import { useUserLibrary, type SavedSong } from "@/lib/user-library"
 import { usePlayer } from "@/lib/player"
@@ -160,6 +161,8 @@ type AlbumSort =
   | "added-desc" | "added-asc"
 
 export function AlbumListTable({ albums }: { albums: AlbumRow[] }) {
+  // Files downloaded on this device: the offline mark after "Owned".
+  const downloads = useDeviceDownloads()
   const library = useUserLibrary()
   const { openAlbum, openArtist } = useMediaNav()
   const localActions = useLocalActions()
@@ -279,17 +282,15 @@ export function AlbumListTable({ albums }: { albums: AlbumRow[] }) {
                   <button type="button" onClick={l.open} className={linkCell}>{a.title}</button>
                 </TableCell>
                 <TableCell className="text-muted-foreground whitespace-nowrap truncate">
-                  {l.onGoToArtist
-                    ? <button type="button" onClick={l.onGoToArtist} className={linkCell}>{a.artist}</button>
-                    : a.artist}
+                  {a.artist}
                 </TableCell>
                 {showLabel && <TableCell />}
                 <TableCell className="text-muted-foreground tabular-nums whitespace-nowrap">{a.year ?? "—"}</TableCell>
                 <TableCell className="text-muted-foreground tabular-nums whitespace-nowrap">{a.added.text}</TableCell>
                 <TableCell className="text-muted-foreground whitespace-nowrap truncate">
                   <span className="inline-flex items-center gap-1.5 max-w-full min-w-0">
-                    <LocalBadge className="shrink-0" />
-                    <span className="truncate">{l.source.name} · {l.detail}</span>
+                    <LocalBadge className="shrink-0" savedOffline={l.savedOffline} />
+                    <span className="truncate">{[l.source.name, l.detail].filter(Boolean).join(" · ")}</span>
                   </span>
                 </TableCell>
                 {hasCatalog && <TableCell />}
@@ -330,7 +331,7 @@ export function AlbumListTable({ albums }: { albums: AlbumRow[] }) {
               {hasLocal && <TableCell className="text-muted-foreground whitespace-nowrap">muza</TableCell>}
               <TableCell className="text-right text-muted-foreground whitespace-nowrap tabular-nums">
                 {purchased
-                  ? <span className="inline-flex justify-end"><PurchasedBadge /></span>
+                  ? <span className="inline-flex justify-end"><PurchasedBadge offline={downloads.includes(a.id)} /></span>
                   : a.streamPrice ?? "Free"}
               </TableCell>
               <TableCell className="px-2">
@@ -486,7 +487,7 @@ export function SongListTable({ songs }: { songs: SongRow[] }) {
           const l = s.local ? localActions(s.local.album) : undefined
           const linkAlbum = !l && s.album && hasAlbumDetail(slugify(s.album))
           const onAlbum   = l ? l.open : linkAlbum ? () => openAlbum(slugify(s.album!)) : undefined
-          const onArtist  = l ? l.onGoToArtist : s.artist ? () => openArtist(slugify(s.artist!)) : undefined
+          const onArtist  = l ? undefined : s.artist ? () => openArtist(slugify(s.artist!)) : undefined
           const from      = s.local ? localPlayingFrom(s.local.album) : FROM_SONGS
           const isThis = player.playing && player.playingFrom === from && player.track?.title === s.title
           return (
@@ -533,7 +534,7 @@ export function SongListTable({ songs }: { songs: SongRow[] }) {
                   {l ? (
                     <span className="inline-flex items-center gap-1.5 max-w-full min-w-0">
                       <LocalBadge className="shrink-0" />
-                      <span className="truncate">{l.source.name} · {l.detail}</span>
+                      <span className="truncate">{[l.source.name, l.detail].filter(Boolean).join(" · ")}</span>
                     </span>
                   ) : "muza"}
                 </TableCell>
@@ -587,6 +588,7 @@ export function SongListTable({ songs }: { songs: SongRow[] }) {
 // combined "All" list, so the menu wiring lives in one place.
 
 export function MobileAlbumRow({ album: a, showType }: { album: AlbumRow; showType?: boolean }) {
+  const downloads = useDeviceDownloads()
   const library = useUserLibrary()
   const { openAlbum, openArtist } = useMediaNav()
   const localActions = useLocalActions()
@@ -600,12 +602,12 @@ export function MobileAlbumRow({ album: a, showType }: { album: AlbumRow; showTy
         cover={a.cover}
         title={a.title}
         subtitle={a.artist}
-        // The "Local" badge leads the line, the format (or why it cannot
-        // play) follows the artist, as on the card.
-        badge="Local"
+        // The "Imported" badge leads the line; why it cannot play, when its
+        // source is off, follows the artist, as on the card.
+        badge={IMPORTED}
+        offline={l.savedOffline}
         meta={l.detail}
         onOpen={l.open}
-        onSubtitleClick={l.onGoToArtist}
         className={l.available ? undefined : "opacity-60"}
         menuItems={<DetailMenuItems kind="album" title={a.title} {...l.menu} />}
       />
@@ -620,6 +622,7 @@ export function MobileAlbumRow({ album: a, showType }: { album: AlbumRow; showTy
       subtitle={a.artist}
       meta={a.year ? String(a.year) : undefined}
       badge={library.isPurchased(a.id) ? "Owned" : undefined}
+      offline={library.isPurchased(a.id) && downloads.includes(a.id)}
       onOpen={() => openAlbum(key)}
       onSubtitleClick={() => openArtist(slugify(a.artist))}
       menuItems={

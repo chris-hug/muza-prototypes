@@ -118,6 +118,7 @@ Instead: **inject the capture script + a floating dev-only "📸 Capture to Figm
 | `--accent-foreground` | `#1D1C18` | — | text on accent |
 | `--destructive` | `#DC2626` | — | error / delete |
 | `--destructive-foreground` | `#FEF2F2` | — | text on destructive |
+| `--warning` | `#F59E0B` | — | needs you, nothing lost (imported source not connected) — never delete |
 | `--border` | `#DADDCD` | — | dividers, input borders |
 | `--input` | `#EDEFE4` | — | input background fill |
 | `--ring` | `#1D1C18` | — | focus ring |
@@ -309,6 +310,7 @@ All map 1:1 to CSS custom properties in `app/app.css`. Light + dark modes are di
 | `card-foreground` | `#0D0D04` | `#F9FAF0` | `--card-foreground` |
 | `destructive` | `#DC2626` (tw-red-600) | `#7F1D1D` (tw-red-900) | `--destructive` |
 | `destructive-foreground` | `#FEF2F2` (tw-red-50) | `#FEF2F2` | `--destructive-foreground` |
+| `warning` | `#F59E0B` (tw-amber-500) | `#F59E0B` | `--warning` |
 | `foreground` | `#0D0D04` (neutrals-950) | `#F9FAF0` (neutrals-50) | `--foreground` |
 | `foreground` 15% | α | α | (alpha) |
 | `input` | `#ECEEDF` (neutrals-200) | `#DADDCD` (neutrals-300) | `--input` |

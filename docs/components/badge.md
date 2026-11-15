@@ -73,7 +73,7 @@ floor for anything read as language. So `pill` is now the 18px one, and
 `pill-sm` is gone.
 
 **`square-xs` owns its line height** (`leading-[18px]`, its own height).
-Without it the badge inherited whatever line it sat in, and the same "Local"
+Without it the badge inherited whatever line it sat in, and the same "Imported"
 badge drew its word half a pixel apart under a card (`leading-[18px]`) and in
 the album page's meta line (`leading-none`) — measured 4.4 / 3.8 against
 4.9 / 3.3 from the ink to the edges. It drops `pb-px`: on "Owned" (cap and

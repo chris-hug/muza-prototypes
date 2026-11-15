@@ -24,6 +24,7 @@ import { usePlayer } from "@/lib/player"
 import { useFooterNav } from "@/lib/use-media-query"
 import { useLibraryFilter, matchesLibraryQuery } from "@/lib/use-library-filter"
 import { useLibraryStatus } from "@/lib/use-library-status"
+import { deviceDownloads, importedOffline, useDeviceDownloads, useOfflineFilterShown } from "@/lib/offline"
 import { LibrarySearchField } from "@/components/app/library-search-field"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 import { hasAlbumDetail } from "@/lib/album-catalog"
@@ -106,6 +107,15 @@ export function MixedSongRow({ song: s }: { song: SavedSong }) {
 /** "Owned" when the song's album is bought — a single track is not sold on
  *  its own, so owning the album is what owning the song means. One rule for
  *  the list and the table. */
+/** The saved song's album is downloaded on this device (its files). */
+function useSongDownloaded() {
+  useDeviceDownloads()
+  return (s: SavedSong) => {
+    const a = s.album ? SAVED_ALBUMS.find(x => x.title === s.album) : undefined
+    return !!a && deviceDownloads.has(a.id)
+  }
+}
+
 function useSongOwned() {
   const library = useUserLibrary()
   return (s: SavedSong) => {
@@ -116,6 +126,7 @@ function useSongOwned() {
 
 function SongRows({ songs }: { songs: SongRow[] }) {
   const player = usePlayer()
+  const downloaded = useSongDownloaded()
   const { openAlbum, openArtist } = useMediaNav()
   return (
     <ul className="flex flex-col gap-2">
@@ -128,6 +139,7 @@ function SongRows({ songs }: { songs: SongRow[] }) {
           <li key={s.id}>
             <SongListItem
               badge={s.owned ? "Owned" : undefined}
+              offline={s.owned && downloaded(s)}
               cover={s.cover}
               title={s.title}
               artist={s.artist}
@@ -155,24 +167,33 @@ export function LibrarySongsView() {
   const library   = useUserLibrary()
   const footerNav = useFooterNav()
   const [query] = useLibraryFilter()
-  // The same three lenses as Albums. "All" is the songs you saved and the
-  // tracks in your own files, each local one marked; "Owned" the saved songs
-  // whose album you bought (a track is not sold on its own); "Local" only
-  // your files. An "All" without the local tracks, which this page had
-  // first, read as the files having gone missing.
-  const [status, setStatus] = useLibraryStatus<"all" | "owned" | "local">("songs")
+  // The same lenses as Albums. "All" is the songs you saved and the tracks
+  // in your own files, each imported one marked; "Owned" the saved songs
+  // whose album you bought (a track is not sold on its own); "Imported"
+  // only your files; "Offline" what plays here without a connection —
+  // songs of a downloaded album, imported tracks on or saved to this device
+  // (offline.ts), offered only when it differs from Imported. An "All"
+  // without the imported tracks, which this page had first, read as the
+  // files having gone missing.
+  const [status, setStatus] = useLibraryStatus<"all" | "owned" | "local" | "offline">("songs")
+  const downloaded = useSongDownloaded()
   // List or table, the listener's choice (shared with the other library
   // pages, see useLibraryView). No cards: a song has no cover of its own
   // worth a tile, and a grid of the same album art says nothing.
   const [view, setView, viewOptions] = useLibraryView(["list", "table"])
   const owned = useSongOwned()
+  const localAlbums = useLocalAlbums()
+  const offlineShown = useOfflineFilterShown(localAlbums)
+  const effStatus = status === "offline" && !offlineShown ? "all" : status
   const allSongs = library.songs()
   const songs = allSongs
     // In-library search — match title / artist / album.
     .filter(s => matchesLibraryQuery(query, s.title, s.artist, s.album))
-    .filter(s => status !== "owned" || owned(s))
-  const localAlbums = useLocalAlbums()
-  const localRows: SongRow[] = status === "owned" ? [] : localAlbums.flatMap(album => album.tracks
+    .filter(s => effStatus !== "owned" || owned(s))
+    .filter(s => effStatus !== "offline" || downloaded(s))
+  const localRows: SongRow[] = effStatus === "owned" ? [] : localAlbums
+    .filter(album => effStatus !== "offline" || importedOffline(album))
+    .flatMap(album => album.tracks
     .filter(t => matchesLibraryQuery(query, t.title, album.artist, album.title))
     .map((track): SongRow => ({
       id: `${album.id}:${localSongId(album, track)}`,
@@ -181,7 +202,7 @@ export function LibrarySongsView() {
       local: { album, track },
     })))
   const rows: SongRow[] = [
-    ...(status === "local" ? [] : songs.map(s => ({ ...s, owned: owned(s) }))),
+    ...(effStatus === "local" ? [] : songs.map(s => ({ ...s, owned: owned(s) }))),
     ...localRows,
   ].sort((a, b) => a.title.localeCompare(b.title))
 
@@ -196,12 +217,13 @@ export function LibrarySongsView() {
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 mb-6">
               <ChipChoice
                 aria-label="Filter songs"
-                value={status}
+                value={effStatus}
                 onChange={setStatus}
                 options={[
                   { value: "all", label: "All" },
                   { value: "owned", label: "Owned" },
-                  { value: "local", label: "Local" },
+                  { value: "local", label: "Imported" },
+                  ...(offlineShown ? [{ value: "offline" as const, label: "Offline" }] : []),
                 ]}
               />
               <div className="flex grow items-center justify-end gap-3">
@@ -215,10 +237,12 @@ export function LibrarySongsView() {
         {rows.length === 0 ? (
           <p className="text-small text-muted-foreground max-w-md">
             {query
-              ? `No ${status === "local" ? "local " : status === "owned" ? "owned " : ""}songs match “${query}”.`
-              : status === "local"
-                ? "No local music yet. Connect a folder on this computer or a server, and muza plays your own files here."
-                : status === "owned"
+              ? `No ${effStatus === "local" ? "imported " : effStatus === "owned" ? "owned " : effStatus === "offline" ? "offline " : ""}songs match “${query}”.`
+              : effStatus === "local"
+                ? "No imported music yet. Add a folder on this computer or a server in Settings, and muza plays your own files here."
+                : effStatus === "offline"
+                  ? "Nothing plays offline on this device yet."
+                : effStatus === "owned"
                   ? "No owned songs yet. Buy an album and its songs you saved show up here."
                   : "No saved songs yet. Tap the heart on any track — in the player or a song list — and it'll show up here."}
           </p>

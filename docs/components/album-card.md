@@ -263,17 +263,24 @@ tracking, 18px leading) rather than a centred fixed-height box, so the
 artist → status gap equals the title → artist gap. `purchased` (bought) and
 `owned` (uploaded by this user) are independent flags.
 
-## Local files: `local`
+## Imported: `local`
 
 `local={album}` (a `LocalAlbum`, see `local-library`) makes the card one of
-the listener's own albums. Everything it does comes from `useLocalActions`:
-the title opens the local album page (never the host's `onTitleClick`, which
-would open the catalog release of the same name), Play plays the files, the
-artist links only when the files matched a muza release, and the ⋯ and the
-long-press sheet carry the local menu. The third line is the "Local" badge
-and the format, or why it cannot play. No heart: a file on disk is in the
-library by being there. A source that is not connected dims the cover to 60%
-and its menu leads with "Reconnect…" (to Settings › Local music).
+the listener's imported albums. Everything it does comes from
+`useLocalActions`: the title opens the imported album page (never the host's
+`onTitleClick`, which would open the catalog release of the same name), Play
+plays the files, the artist is plain text (imported music is not matched to
+muza, so there is no artist page to go to), and the ⋯ and the long-press
+sheet carry the imported menu (Save offline / Remove offline copy, Show in
+Finder). The third line is the "Imported" badge — with the offline mark when
+a copy is saved on this device. When its source is off (and nothing is
+saved) the badge turns broken — a small amber dot before the word — and a
+"Reconnect" link follows it, to Settings › Imported music. (The file format followed it once, "Local FLAC"; cut
+as detail nobody needs.) No heart: imported music is in the library by being
+imported. A source that is off, with no copy saved, dims the cover to 60%.
+
+An owned album whose files are downloaded on this device shows the offline
+mark after "Owned" (`PurchasedBadge offline`, see `offline.ts`).
 
 ## Missing artwork
 

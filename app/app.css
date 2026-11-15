@@ -752,6 +752,7 @@
   --color-accent:                  var(--accent);
   --color-accent-foreground:       var(--accent-foreground);
   --color-destructive:             var(--destructive);
+  --color-warning:                 var(--warning);
   --color-destructive-hover:       var(--destructive-hover);
   --color-destructive-active:      var(--destructive-active);
   --color-destructive-foreground:  var(--destructive-foreground);
@@ -1050,6 +1051,9 @@
   --tw-red-600:          oklch(57.71% 0.2151 27.3);    /* #DC2626 */
   --tw-red-900:          oklch(39.59% 0.1331 25.7);    /* #7F1D1D */
 
+  /* tailwind colors/amber */
+  --tw-amber-500:        oklch(76.86% 0.1647 70.08);   /* #F59E0B */
+
   /* Alpha primitives */
   --muza-neutrals-a75-700: oklch(44.13% 0.0237 107.4 / 0.75);  /* #545445 @75% */
   --muza-neutrals-a50-50:  oklch(98.16% 0.0131 111.4 / 0.5);   /* #F9FAF0 @50% */
@@ -1121,6 +1125,11 @@
   --accent-foreground:       var(--muza-neutrals-900);        /* text on an accent surface */
 
   --destructive:             var(--tw-red-600);               /* delete and its confirmation, and nothing else */
+  /* Something needs you but nothing is lost: an imported source that is not
+     connected (the dot in its "Imported" badge). Never for delete — that is
+     `destructive`. Amber reads on both the light and the dark page, so one
+     value serves both modes. */
+  --warning:                 var(--tw-amber-500);
   /* Was a plain alpha (`/85`, `/70`) on the Button. Alpha mixes with whatever
      is BEHIND the button, so the same press read differently on a card, a
      dialog and a photo. A computed mix is the surface's own colour, like
@@ -1188,6 +1197,7 @@
   --accent-foreground:       var(--muza-neutrals-50);
 
   --destructive:             var(--tw-red-900);
+  --warning:                 var(--tw-amber-500);
   /* Dark starts from red-900, so darkening would go to mud — it lifts. */
   --destructive-hover:       color-mix(in srgb, white 12%, var(--tw-red-900));
   --destructive-active:      color-mix(in srgb, white 24%, var(--tw-red-900));
@@ -1262,6 +1272,7 @@
   --accent-foreground:       var(--muza-neutrals-900);
 
   --destructive:             var(--tw-red-600);
+  --warning:                 var(--tw-amber-500);
   --destructive-hover:       color-mix(in srgb, black 12%, var(--tw-red-600));
   --destructive-active:      color-mix(in srgb, black 24%, var(--tw-red-600));
   --destructive-foreground:  var(--tw-red-50);

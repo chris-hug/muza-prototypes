@@ -23,6 +23,7 @@ import { LibrarySearchField } from "@/components/app/library-search-field"
 import { useFooterNav } from "@/lib/use-media-query"
 import { ChipChoice } from "@/components/ui/chip"
 import { useLocalAlbums, type LocalAlbum } from "@/lib/local-library"
+import { deviceDownloads, importedOffline, useDeviceDownloads, useOfflineFilterShown } from "@/lib/offline"
 
 export interface SavedAlbum {
   id:           string
@@ -142,8 +143,18 @@ export function LibraryAlbumsView() {
   const library = useUserLibrary()
   // Status filter — a scalable dropdown (room for more lenses later)
   // rather than a binary segment. "all" = everything in the library, from
-  // both sources; "owned" = bought on muza; "local" = your own files.
-  const [status, setStatus] = useLibraryStatus<"all" | "owned" | "local">("albums")
+  // both sources; "owned" = bought on muza; "local" = imported (your own
+  // files); "offline" = what plays here with no connection — downloaded
+  // files of owned albums and imported music on or saved to this device
+  // (see offline.ts). Offline is offered only when it differs from
+  // Imported: on the computer holding every folder they are one list.
+  const [status, setStatus] = useLibraryStatus<"all" | "owned" | "local" | "offline">("albums")
+  useDeviceDownloads()
+  const localAll = useLocalAlbums()
+  const offlineShown = useOfflineFilterShown(localAll)
+  // The filter went away (the last download removed): fall back to All
+  // rather than show an empty list under a chip that is no longer there.
+  const effStatus = status === "offline" && !offlineShown ? "all" : status
   // Cards, list or table — the listener's choice, remembered + shared
   // across library pages (see useLibraryView). Albums offers all three.
   const [view, setView, viewOptions] = useLibraryView(["grid", "list", "table"])
@@ -154,11 +165,13 @@ export function LibraryAlbumsView() {
 
   // One library, two sources: local files sit in "All" next to the catalog
   // albums, each marked; "Local" narrows to them, "Owned" to what you bought.
-  const catalog = status === "local" ? [] : SAVED_ALBUMS
+  const catalog = effStatus === "local" ? [] : SAVED_ALBUMS
     .filter(a => library.isAdded(a.id))
-    .filter(a => status !== "owned" || library.isPurchased(a.id))
+    .filter(a => effStatus !== "owned" || library.isPurchased(a.id))
+    .filter(a => effStatus !== "offline" || deviceDownloads.has(a.id))
   const localRows = useLocalAlbumRows()
-  const local = status === "owned" ? [] : localRows
+  const local = effStatus === "owned" ? [] : localRows
+    .filter(a => effStatus !== "offline" || (a.local && importedOffline(a.local)))
   const filtered = [...catalog, ...local]
     .filter(a => matchesLibraryQuery(query, a.title, a.artist))
   // On mobile the sort menu drives the order (grid + list both); on
@@ -198,12 +211,13 @@ export function LibraryAlbumsView() {
             ) : (
               <ChipChoice
                 aria-label="Filter albums"
-                value={status}
+                value={effStatus}
                 onChange={setStatus}
                 options={[
                   { value: "all", label: "All" },
                   { value: "owned", label: "Owned" },
-                  { value: "local", label: "Local" },
+                  { value: "local", label: "Imported" },
+                  ...(offlineShown ? [{ value: "offline" as const, label: "Offline" }] : []),
                 ]}
               />
             )}
@@ -235,9 +249,9 @@ export function LibraryAlbumsView() {
              Each track is `minmax(143px, 220px)` — cards are clamped
              to a 143 floor and 220 ceiling. Below the 2-col threshold
              the grid drops to a single column. */}
-        {status === "local" && albums.length === 0 ? (
+        {effStatus === "local" && albums.length === 0 ? (
           <p className="text-small text-muted-foreground max-w-md">
-            No local music yet. Connect a folder on this computer or a server, and muza plays your own files here.
+            No imported music yet. Add a folder on this computer or a server in Settings, and muza plays your own files here.
           </p>
         ) : view === "grid" ? (
           <div className="@container">

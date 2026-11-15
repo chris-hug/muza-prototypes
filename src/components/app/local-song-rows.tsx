@@ -1,16 +1,16 @@
 "use client"
 
 /*
- * Local tracks as song rows — the album page of a local album and Library ›
- * Songs › Local both list them.
+ * Imported tracks as song rows — the album page of an imported album and
+ * Library › Songs › Imported both list them.
  *
  * The rows are ordinary SongListItems with `local`: no heart (a file on disk is
  * in the library already) and the local song menu below instead of the catalog
- * one. A source that is off greys the rows and refuses to play, with the reason
- * in a toast, rather than hiding them.
+ * one. A source that is off (and no copy saved offline) greys the rows and
+ * refuses to play, with the reason in a toast, rather than hiding them.
  */
 
-import { ExternalLink, FolderOpen, Info, Mic, RefreshCw } from "lucide-react"
+import { CircleArrowDown, CircleX, FolderOpen, RefreshCw } from "lucide-react"
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { AddMusicIcon } from "@/components/ui/media-icons"
 import { SongListItem } from "@/components/ui/song-list-item"
@@ -19,31 +19,32 @@ import { usePlayer } from "@/lib/player"
 import { useLocalActions } from "@/lib/use-local-actions"
 import { cn } from "@/lib/utils"
 import {
-  localPlayingFrom, localSongId, SHOW_IN_FOLDER,
+  localPlayingFrom, localSongId, SHOW_IN_FOLDER, IMPORTED,
   type LocalAlbum, type LocalTrack,
 } from "@/lib/local-library"
 
-/** The song menu's local column: Add to playlist (a playlist may mix your
- *  files with the catalog), Open on muza and Show credits when matched, Show in
- *  Finder / Explorer, and Go to artist when matched. No Share, Save or Report. */
+/** The song menu's imported column: Add to playlist (a playlist may mix your
+ *  files with the catalog), Save offline / Remove offline copy — for the
+ *  whole album, the unit a copy is kept in, so the row says "album" — and
+ *  Show in Finder / Explorer. No Share, Save, credits, artist or Report:
+ *  imported music is not linked to the catalog (see local-library). */
 export function LocalSongMenuItems({ album, track }: { album: LocalAlbum; track: LocalTrack }) {
   const l = useLocalActions()(album)
   const addToPlaylist = useAddToPlaylist()
   const song = {
     id: localSongId(album, track), title: track.title, artist: album.artist, album: album.title,
     cover: album.cover, duration: track.duration,
-    // So the playlist shows it as the local track it is, marked "Local".
+    // So the playlist shows it as the imported track it is, marked so.
     local: { albumId: album.id, trackId: track.id },
   }
   return (
     <>
       {l.onReconnect && <><DropdownMenuItem onClick={l.onReconnect}><RefreshCw />Reconnect…</DropdownMenuItem><DropdownMenuSeparator /></>}
       <DropdownMenuItem onClick={() => addToPlaylist.open(song)}><AddMusicIcon />Add to playlist</DropdownMenuItem>
-      {l.onOpenOnMuza && <DropdownMenuItem onClick={l.onOpenOnMuza}><ExternalLink />Open on muza</DropdownMenuItem>}
-      {l.onShowCredits && <DropdownMenuItem onClick={l.onShowCredits}><Info />Show credits</DropdownMenuItem>}
-      {(l.onShowInFolder || l.onGoToArtist) && <DropdownMenuSeparator />}
+      {l.onSaveOffline && <DropdownMenuItem onClick={l.onSaveOffline}><CircleArrowDown />Save album offline</DropdownMenuItem>}
+      {l.onRemoveOffline && <DropdownMenuItem onClick={l.onRemoveOffline}><CircleX />Remove offline copy</DropdownMenuItem>}
+      {l.onShowInFolder && <DropdownMenuSeparator />}
       {l.onShowInFolder && <DropdownMenuItem onClick={l.onShowInFolder}><FolderOpen />{SHOW_IN_FOLDER}</DropdownMenuItem>}
-      {l.onGoToArtist && <DropdownMenuItem onClick={l.onGoToArtist}><Mic />Go to artist</DropdownMenuItem>}
     </>
   )
 }
@@ -56,7 +57,7 @@ export function LocalSongRow({ album, track, trackNumber, labelled = false }: {
   /** Album page: the number, and no cover / artist / album (the header
    *  already says them). */
   trackNumber?: number
-  /** The "Local" badge — Library › Songs. Not on the album page, whose
+  /** The "Imported" badge — Library › Songs. Not on the album page, whose
    *  header already says it once for every track. */
   labelled?: boolean
 }) {
@@ -67,7 +68,8 @@ export function LocalSongRow({ album, track, trackNumber, labelled = false }: {
   return (
     <SongListItem
       local
-      badge={labelled ? "Local" : undefined}
+      badge={labelled ? IMPORTED : undefined}
+      offline={labelled && l.savedOffline}
       trackNumber={trackNumber}
       cover={numbered ? undefined : album.cover}
       title={track.title}
@@ -76,9 +78,7 @@ export function LocalSongRow({ album, track, trackNumber, labelled = false }: {
       duration={track.duration}
       playing={isThis && player.playing}
       onPlay={() => (isThis ? player.toggle() : l.play(track))}
-      onArtistClick={numbered ? undefined : l.onGoToArtist}
       onAlbumClick={numbered ? undefined : l.open}
-      onInfo={l.onShowCredits}
       menuItems={<LocalSongMenuItems album={album} track={track} />}
       className={cn(!l.available && "opacity-60")}
     />

@@ -55,11 +55,11 @@ export function AppPlayer({ footerNav }: { footerNav: boolean }) {
   // only links when a detail record exists. Tapping closes the overlay so
   // the destination page is visible.
   const albumKey = slugify(track.album)
-  // A local track's album is its local page, and its artist has a page only
-  // when the files matched a release on muza (an unknown name would land on
-  // the fallback profile, someone else entirely).
+  // An imported track's album is its imported page, and its artist has no
+  // page: imported music is not matched to muza (see local-library), and an
+  // unmatched name would land on the fallback profile, someone else entirely.
   const localTrack = localAlbumFromPlaying(playingFrom)
-  const onArtistClick = localTrack && !localTrack.match
+  const onArtistClick = localTrack
     ? undefined
     : () => { setOverlayOpen(false); openArtist(slugify(track.artist)) }
   const onAlbumClick = localTrack
@@ -123,9 +123,9 @@ export function AppPlayer({ footerNav }: { footerNav: boolean }) {
   const onNext = canSkip ? () => step(1) : undefined
   const onPrevious = canSkip ? () => (elapsed > 3 ? seek(0) : step(-1)) : undefined
 
-  // Credits are a muza release's data: a local track shows them only when
-  // its files matched a release, and then they are that release's.
-  const creditsKey = localTrack ? localTrack.match?.key : albumKey
+  // Credits are a muza release's data. An imported track is not matched to
+  // a release, so it has none — no Credits, rather than a guess.
+  const creditsKey = localTrack ? undefined : albumKey
   const creditsBody = creditsKey && hasAlbumDetail(creditsKey) ? (
     /* The album's credits, opened at the SONG playing — its section's bar
        stuck at the top. Keyed by the title, so the next track lands on its

@@ -60,7 +60,7 @@ import { useSearchParams } from "react-router"
 import { getRailList } from "@/lib/rail-list"
 import { searchCatalog, type SearchResult, type SearchKind } from "@/lib/search-catalog"
 import { IconSwap } from "@/components/ui/icon-swap"
-import { useLocalAlbums, getLocalAlbum, type LocalAlbum } from "@/lib/local-library"
+import { useLocalAlbums, getLocalAlbum, IMPORTED, type LocalAlbum } from "@/lib/local-library"
 import { useLocalActions } from "@/lib/use-local-actions"
 import { LocalSongRow } from "@/components/app/local-song-rows"
 import { DetailMenuItems } from "@/components/ui/detail-more-button"
@@ -154,7 +154,7 @@ export function SearchResultsView({ query }: { query: string }) {
     ...TABS.filter(t => t.key === "all" || (tabCounts[t.key as SearchKind] ?? 0) > 0),
     // A source filter, so it sits after the types, as Local does in the
     // library's filter row.
-    ...(scope === "library" && localHits.length > 0 ? [{ key: "local" as TabKey, label: "Local" }] : []),
+    ...(scope === "library" && localHits.length > 0 ? [{ key: "local" as TabKey, label: "Imported" }] : []),
   ]
   // The local-matches line switches scope and tab in one URL write; take
   // the tab from there.
@@ -243,7 +243,7 @@ export function SearchResultsView({ query }: { query: string }) {
 
       {scope === "catalog" && localHits.length > 0 && (
         <p className="text-xsmall text-muted-foreground -mt-1">
-          {localHits.length} {localHits.length === 1 ? "match" : "matches"} in your local files.{" "}
+          {localHits.length} {localHits.length === 1 ? "match" : "matches"} in your imported music.{" "}
           <button
             type="button"
             // One URL write for scope and tab, and the tab state follows the
@@ -287,7 +287,7 @@ export function SearchResultsView({ query }: { query: string }) {
 }
 
 function labelFor(tab: TabKey): string {
-  if (tab === "local") return "Local files"
+  if (tab === "local") return "Imported music"
   return TABS.find(t => t.key === tab)?.label ?? "Results"
 }
 
@@ -406,10 +406,9 @@ function LocalSearchRow({ r }: { r: SearchResult }) {
       cover={album.cover}
       title={album.title}
       subtitle={album.artist}
-      badge="Local"
+      badge={IMPORTED}
       meta={l.detail}
       onOpen={l.open}
-      onSubtitleClick={l.onGoToArtist}
       className={l.available ? undefined : "opacity-60"}
       menuItems={<DetailMenuItems kind="album" title={album.title} {...l.menu} />}
     />
@@ -434,7 +433,7 @@ function AllWithLocal({ visible, onShowAll }: { visible: SearchResult[]; onShowA
     <div className="flex flex-col gap-4 sm:gap-6">
       <AllResults visible={rest} onShowAll={onShowAll} />
       {local.length > 0 && (
-        <ListSection title="In your local files" onShowAll={local.length > LOCAL_PREVIEW ? () => onShowAll("local") : undefined}>
+        <ListSection title="In your imported music" onShowAll={local.length > LOCAL_PREVIEW ? () => onShowAll("local") : undefined}>
           {localList}
         </ListSection>
       )}

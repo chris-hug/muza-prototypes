@@ -15,9 +15,19 @@ appears: the `AlbumCard` pricing row, the `MediaHeader` meta line, the
 library table's Price column, and — for a song whose album is bought — the
 song list row and the Songs table.
 
-Its sibling is `LocalBadge` ("Local", `src/components/ui/local-badge.tsx`):
-the same badge, followed by plain meta text — the file format, or why the
-source cannot play ("Not connected"). The two are one family on purpose:
+Its sibling is `LocalBadge` ("Imported", `src/components/ui/local-badge.tsx`):
+the same badge, the word alone — followed by plain meta text only when the
+source cannot play ("Not connected"). The file format used to follow it
+("Local FLAC"); cut as detail nobody needs to tell their files from muza's.
+"Imported" was "Local" until the same files had to read right on the phone,
+where they are not local at all.
+
+Both take the **offline mark** (`OfflineMark`, a small `CircleArrowDown`)
+after the word when the album plays on this device without a connection:
+`<PurchasedBadge offline />` for downloaded files, `savedOffline` on
+`LocalBadge` for a saved copy. One mark for both ways in — the listener's
+question is "does it play here", not how it got there.
+The two are one family on purpose:
 "is this mine" is answered the same way whether you bought it on muza or it
 is your own file.
 
@@ -37,7 +47,10 @@ meta, and at 18px a glyph is detail nobody reads — the word already says it.
 
 ```tsx
 <PurchasedBadge />           // card pricing row, header meta, table cell
-<LocalBadge detail="FLAC" /> // a local album: badge + format
+<PurchasedBadge offline />   // files downloaded on this device
+<LocalBadge />                          // an imported album: the word
+<LocalBadge savedOffline />             // a copy saved on this device
+<LocalBadge unavailable onReconnect={go} />      // source off: broken badge + "Reconnect"
 ```
 
 `className` is passed through (layout only — `shrink-0` is already on). The

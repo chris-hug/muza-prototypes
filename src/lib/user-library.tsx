@@ -105,8 +105,10 @@ const STORAGE_KEY = "muza.library.v2"
 
 /** Bump when the demo seed changes in a way a stored library must pick up.
  *  2: Home's "Owned" albums are real purchases. (It also replaced the
- *  offline sets of the time; offline is gone since — see local-library.) */
-const SEED_VERSION = 2
+ *  offline sets of the time.)
+ *  3: Blue Train (a03) is bought with its files, so a downloaded album
+ *  (a09) and one still to download sit side by side (see offline.ts). */
+const SEED_VERSION = 3
 
 /** Read persisted state from localStorage (browser only). */
 function loadPersisted(): PersistShape | null {
@@ -157,6 +159,8 @@ export function UserLibraryProvider({
     const next = { ...stored.albums }
     for (const [id, e] of Object.entries(seed)) {
       if (e.purchased && !next[id]?.purchased) next[id] = { ...e, added: next[id]?.added ?? e.added }
+      // A seed tier upgrade (stream → download) reaches a stored purchase too.
+      else if (e.tier === "download" && next[id]?.purchased && next[id]?.tier !== "download") next[id] = { ...next[id], tier: "download" }
     }
     return next
   })

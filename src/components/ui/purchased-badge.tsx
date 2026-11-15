@@ -16,16 +16,22 @@
  */
 
 import { Badge } from "@/components/ui/badge"
+import { OfflineMark } from "@/components/ui/local-badge"
 import { cn } from "@/lib/utils"
 
 export interface PurchasedBadgeProps {
   className?: string
+  /** The album's files are downloaded on this device: the offline mark
+   *  follows the word (offline.ts). */
+  offline?: boolean
 }
 
-export function PurchasedBadge({ className }: PurchasedBadgeProps) {
-  return (
+export function PurchasedBadge({ className, offline = false }: PurchasedBadgeProps) {
+  const badge = (
     <Badge variant="secondary" shape="square-xs" className={cn("shrink-0", className)}>
       Owned
     </Badge>
   )
+  if (!offline) return badge
+  return <span className="inline-flex items-center gap-1.5 shrink-0">{badge}<OfflineMark /></span>
 }

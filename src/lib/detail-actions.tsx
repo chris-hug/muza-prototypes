@@ -76,7 +76,7 @@ export function usePublishDetailHeader(config: DetailHeaderConfig) {
       "onAdd", "onAddMusic", "onEdit", "onPlayRadio", "onAddToPlaylist",
       "onPlayNext", "onAddToQueue", "onMakePrivate", "onGoToArtist",
       "onGoToLabel", "onGoToOwner", "onGoToSelf", "onArtistInfo",
-      "onRemove", "onReport", "onShowInfo", "onOpenLocalCopy",
+      "onRemove", "onReport", "onShowInfo",
     ] as const
 
     const menu = {

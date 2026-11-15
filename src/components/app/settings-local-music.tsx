@@ -1,7 +1,9 @@
 "use client"
 
 /*
- * Settings › Local music — where the listener's own files come from.
+ * Settings › Imported music — where the listener's own files come from.
+ * (Tab id `local`, as in the code; the listener sees "Imported music", see
+ * local-library for why the word changed.)
  *
  * Built on what the production desktop app ships (v1.0.92): a "Show local
  * files" switch, then "Music sources" with Add folder / Add files and one row
@@ -17,11 +19,10 @@
  *    same as one that worked, and the library's grey rows had nowhere to
  *    send you. The library's "Reconnect" lands here, on that row.
  *  · The row is titled by the folder's own name and says where it lives
- *    ("This Mac", "Home server") before the path; the path alone, cut at
- *    the end, hid the one part that told two folders apart.
- *  · "Match with muza" is its own switch: it is what puts "Also on muza",
- *    the release's credits and its artist on your files, and someone who
- *    wants a plain player should be able to say no.
+ *    ("MacBook", "Home server") before the path; the path alone, cut at the
+ *    end, hid the one part that told two folders apart.
+ *  · No "Match with muza": imported music is not matched to the catalog
+ *    (see local-library).
  *  · Remove takes the source's music out of the library at once, with Undo
  *    in the toast; nothing on disk is touched, and the row says so.
  */
@@ -183,7 +184,7 @@ function SourceRow({ source, index, focused }: { source: LocalSource; index: num
 }
 
 export function LocalMusicTab({ focusSource }: { focusSource?: string | null }) {
-  const { sources, enabled, matching } = useLocalState()
+  const { sources, enabled } = useLocalState()
   const { add: toast } = useToast()
 
   // The system's folder picker, simulated: it always picks the one folder
@@ -197,26 +198,18 @@ export function LocalMusicTab({ focusSource }: { focusSource?: string | null }) 
   }
   const addFiles = () => {
     if (sources.some(s => s.id === "files")) { localSources.rescan("files"); return }
-    localSources.add({ id: "files", kind: "files", name: "This Mac", path: "~/Desktop" })
+    localSources.add({ id: "files", kind: "files", name: "MacBook", path: "~/Desktop" })
   }
 
   return (
     <div className="flex flex-col gap-8 sm:gap-10">
-      <Section title="Local files">
+      <Section title="Imported music">
         <SwitchRow
           id="local-show"
-          title="Show local files"
+          title="Show imported music"
           description="Play music stored on this computer or your network alongside muza. Files are never uploaded."
           checked={enabled}
           onCheckedChange={localSources.setEnabled}
-        />
-        <div className="h-px bg-border/60" />
-        <SwitchRow
-          id="local-match"
-          title="Match with muza"
-          description="Recognise your files as releases on muza, to show “Also on muza”, the credits and the artist."
-          checked={matching}
-          onCheckedChange={localSources.setMatching}
         />
       </Section>
 
@@ -246,7 +239,7 @@ export function LocalMusicTab({ focusSource }: { focusSource?: string | null }) 
         )}
         {!enabled && sources.length > 0 && (
           <p className="text-xsmall text-muted-foreground mt-4">
-            Local files are hidden. Your sources stay here, ready when you switch them back on.
+            Imported music is hidden. Your sources stay here, ready when you switch it back on.
           </p>
         )}
       </Section>

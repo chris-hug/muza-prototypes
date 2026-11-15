@@ -81,7 +81,7 @@ export function SettingsView({
         <TabsList variant="line" className="w-auto justify-start gap-0 h-auto pb-0">
           <TabsTrigger value="account"      className="flex-none px-4 pb-3 text-small">Account</TabsTrigger>
           <TabsTrigger value="general"      className="flex-none px-4 pb-3 text-small">General</TabsTrigger>
-          <TabsTrigger value="local"        className="flex-none px-4 pb-3 text-small">Local music</TabsTrigger>
+          <TabsTrigger value="local"        className="flex-none px-4 pb-3 text-small">Imported music</TabsTrigger>
           <TabsTrigger value="verification" className="flex-none px-4 pb-3 text-small">Artist verification</TabsTrigger>
           <TabsTrigger value="about"        className="flex-none px-4 pb-3 text-small">About</TabsTrigger>
         </TabsList>

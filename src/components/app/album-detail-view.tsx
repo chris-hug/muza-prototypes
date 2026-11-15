@@ -14,7 +14,6 @@
  * into the param, so the same component renders any catalog album.
  */
 
-import { useLocalActions } from "@/lib/use-local-actions"
 import { useEffect, useRef, useState } from "react"
 import { useSearchParams } from "react-router"
 import { DetailMoreButton } from "@/components/ui/detail-more-button"
@@ -30,7 +29,8 @@ import { PlaylistCard } from "@/components/ui/playlist-card"
 import { CardRail } from "@/components/app/card-rail"
 import { PurchaseAlbumDialog } from "@/components/app/purchase-album-dialog"
 import { LocalAlbumView } from "@/components/app/local-album-view"
-import { getLocalAlbum, useLocalAlbums, useLocalState } from "@/lib/local-library"
+import { getLocalAlbum } from "@/lib/local-library"
+import { useDownloadFiles } from "@/lib/offline"
 import { CartDrawer } from "@/components/app/cart-drawer"
 import { railArtist, railPlaylist } from "@/lib/rail-list"
 import { useSearchNav } from "@/lib/use-search-nav"
@@ -107,20 +107,6 @@ function CatalogAlbumDetailView() {
   const credits = useCredits()
   const { openSearch } = useSearchNav()
   const ALBUM = getAlbumDetail(params.get("album"))
-
-  // The same release in the listener's own files (matched to this album):
-  // linked from the meta line, so you can tell this is muza's version and
-  // reach yours in one tap.
-  const { matching } = useLocalState()
-  const localAlbums = useLocalAlbums()
-  const localActions = useLocalActions()
-  const albumKey = params.get("album")
-  const localCopyAlbum = matching
-    ? localAlbums.find(a => a.match && (a.match.libraryId === ALBUM.id || a.match.key === albumKey || a.match.key === slugify(ALBUM.title)))
-    : undefined
-  const localCopy = localCopyAlbum
-    ? { detail: localActions(localCopyAlbum).detail, onOpen: localActions(localCopyAlbum).open }
-    : undefined
 
   // Hopping between albums keeps the same route (page stays "Album"), so
   // the route shell's scroll-to-top (keyed on `page`) doesn't fire —
@@ -205,6 +191,8 @@ function CatalogAlbumDetailView() {
   }
   const isPurchased    = library.isPurchased(ALBUM.id)
   const isDownloadable = library.entryFor(ALBUM.id)?.tier === "download"
+  // Files bought: this device may have its copy already (offline.ts).
+  const files = useDownloadFiles()(ALBUM.id, ALBUM.title)
   // Delta between stream and download prices — surfaces as the
   // upgrade CTA when the user owns the stream tier but not download.
   // Only show the affordance when the delta is actually positive; a
@@ -226,7 +214,6 @@ function CatalogAlbumDetailView() {
     libraryId: ALBUM.id,
     libraryName: ALBUM.title,
     onGoToArtist: () => openArtist(slugify(ALBUM.artist)),
-    onOpenLocalCopy: localCopy?.onOpen,
   }
   // No `coverSrc` — album covers are framed squares on the light page,
   // so the floating back / "…" sit over the light bg and stay dark.
@@ -264,7 +251,6 @@ function CatalogAlbumDetailView() {
         libraryType="album"
         libraryId={ALBUM.id}
         libraryName={ALBUM.title}
-        localCopy={localCopy}
         playing={isThisAlbumPlaying}
         shuffleActive={player.shuffle}
         onPlay={() => {
@@ -291,12 +277,11 @@ function CatalogAlbumDetailView() {
         buyingPrice={ALBUM.buyingPrice}
         onBuy={() => setBuyOpen(true)}
         purchased={isPurchased}
-        downloadable={isDownloadable}
-        onDownload={() => {
-          // Real wiring would trigger the download flow / signed URL
-          // request. For the prototype we noop — UI presence is what
-          // we're communicating.
-        }}
+        // Downloaded here already: no CTA, the meta line's offline mark
+        // says it, and the "…" has "Remove download".
+        downloadable={isDownloadable && !files?.downloaded}
+        downloaded={!!files?.downloaded}
+        onDownload={files?.download}
         addDownloadPrice={canUpgradeToDownload ? upgradePriceStr : undefined}
         onAddDownload={() => setUpgradeOpen(true)}
       />
@@ -397,7 +382,6 @@ function CatalogAlbumDetailView() {
               // "Go to artist" stays. A row's ⓘ opens THAT song's credits;
               // the header's ⓘ is the album's.
               hideGoToAlbum
-              release={ALBUM.title}
               onArtistClick={() => openArtist(slugify(ALBUM.artist))}
               onInfo={() => credits.open(slugify(ALBUM.title), t.title)}
               playing={isThisAlbumPlaying && player.track?.title === t.title}

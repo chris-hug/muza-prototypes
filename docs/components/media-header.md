@@ -78,32 +78,35 @@ heart, so the menu's Save and the heart flip together, and its navigation
 routes to `onOwnerClick` — as "Go to artist" for a release, "Go to owner"
 for a playlist.
 
-## Local albums: `local`
+## Imported albums: `local`
 
-`local={{ detail, unavailable, match, onOpenOnMuza, menu }}` turns the header
-into a local album's. The meta line carries the "Local" badge and the format.
-The CTA slot is the way back to muza — "Also on muza" (to buy or stream) or
-"Owned on muza" — as an outline link button, nothing when the files matched
-no release, and "Reconnect" while the source is off (the one thing worth
-doing until it is back). Heart and Share are gone (they are about a release
-on muza); Info stays when the files matched a release and opens its credits.
-The ⋯ spreads the local menu. The owner is plain text without a match: no
-handler, no control.
+`local={{ detail, unavailable, savedOffline, menu }}` turns the header into
+an imported album's (the listener's own files, see `local-library`). The
+"Imported" badge sits on a **line of its own** under the meta — with the
+offline mark when a copy is saved on this device. When the source is off and
+nothing is saved, the badge turns **broken** (a small amber `warning` dot before
+the word) and a "Reconnect" link follows it in place of the reason — "Not
+connected" said what was wrong and left you there. In the meta line, beside the
+year, it read as one more fact about the release; it says where this copy
+comes from.
 
-The mirror on a catalog album: `localCopy={{ detail, onOpen }}` when the
-listener has the same release in their own files. A line of its own under
-the meta, `text-xsmall` and muted, and the whole line is one `<button>`: a
-folder glyph, "Go to local copy" (`link-underline`, the text-link underline
-every inline link here uses), the format, a chevron; `focus-ring`, and it
-inks to foreground on hover through `state-fade` (the system's state
-transition). Short on purpose: the sentence it replaced ("You
-also have this in your local files (MP3). Go to local copy") truncated on a
-phone before its link and left nothing to tap. Not in the meta line: there,
-in foreground ink, it read as a fact about this release and was the loudest
-thing on the line. It is words, not the
-Local badge: the badge is how you tell where you are (the local page has it,
-the catalog page does not), and on the catalog page it would say the
-opposite.
+No CTA. "Reconnect" is the link after the broken badge (to Settings ›
+Imported music, on that source's row); a full-width Reconnect button as well
+said the same thing twice, louder, and went.
+
+"Save offline" is a row in the ⋯ like every imported action; a button here
+made it the page's headline act. The slot used to hold "Also on muza" /
+"Owned on muza" too; both needed the files matched to a muza release and went
+with the decision not to match (see Detail Menu). Heart, Share and Info are gone: no
+release to save, share or credit. The owner is plain text: no artist page to
+go to, so no handler, no control.
+
+## Downloaded files: `downloaded`
+
+An album bought with its files, downloaded on this device (`offline.ts`):
+`downloaded` puts the offline mark after "Owned", and the album page passes
+`downloadable={isDownloadable && !downloaded}`, so the "Download files" CTA is
+gone once this device has them ("Remove download" is in the ⋯).
 
 ## Usage
 

@@ -31,21 +31,20 @@ const STATES = [
 ]
 
 const Y = "Yes", N = "No"
-// The last column is local files (album or song from your own folder). They
-// are not a release on muza, so sharing, saving and reporting a release are
-// gone; what they gain is the way back to muza. Credits come with that way
-// back: when the files match a release, its credits are the files' credits.
+// The last column is imported music (album or song from your own files).
+// It is not a release on muza and is not matched to one, so sharing, saving,
+// credits, the artist and reporting are gone; what it gains is "Save offline"
+// where the files are elsewhere, and the folder on a computer.
 const MATRIX: [string, string, string, string, string, string, string][] = [
   ["Copy link", Y, Y, Y, Y, Y, "No, nobody else can open it"],
-  ["Save to library", Y, "No, it's already yours", Y, Y, Y, "No, it's in your library by being on disk"],
+  ["Save to library", Y, "No, it's already yours", Y, Y, Y, "No, it's in your library by being imported"],
   ["Download files", "Purchased only, see above", N, N, N, N, N],
+  ["Save offline / Remove offline copy", N, N, N, N, N, "Where the files are on another device (album; songs save their album)"],
   ["Add to a playlist", "Where available", N, N, "Not in your own playlist", N, "Songs"],
-  ["Credits", Y, N, N, Y, N, "When the files match a release on muza"],
-  ["Open on muza", N, N, N, N, N, "When the files match a release on muza"],
-  ["Go to local copy", "When it is also in your local files", N, N, N, N, N],
-  ["Show in Finder / Explorer", N, N, N, N, N, Y],
-  ["Go to album / playlist", "Not on its own page", "Not on its own page", "Not on its own page", "Not on the album page", N, "Songs, to their local album"],
-  ["Go to artist", Y, N, N, "Not on the artist page", N, "When the files match a release on muza"],
+  ["Credits", Y, N, N, Y, N, "No, not matched to a release"],
+  ["Show in Finder / Explorer", N, N, N, N, N, "On a computer"],
+  ["Go to album / playlist", "Not on its own page", "Not on its own page", "Not on its own page", "Not on the album page", N, "Songs, to their imported album"],
+  ["Go to artist", Y, N, N, "Not on the artist page", N, "No, not matched to an artist"],
   ["Go to owner", N, N, "Where available", N, N, N],
   ["Add music, Edit info, Make private", N, Y, N, N, N, N],
   ["Delete playlist", N, Y, N, N, N, N],
@@ -54,8 +53,9 @@ const MATRIX: [string, string, string, string, string, string, string][] = [
 ]
 
 const LOCAL_STATES = [
-  { id: "local-cool-struttin", heading: "On muza too", note: "Example: Cool Struttin' as MP3s. Open on muza goes to the release, where you can buy it." },
-  { id: "local-kitchen-tapes", heading: "Only in your files", note: "Example: Kitchen Tapes, Vol. 1. Nothing to link to." },
+  { id: "local-song-for-my-father", heading: "On another device", note: "Example: Song for My Father, on the home server. Save offline keeps a copy here. (The server is off, so the row waits until it answers.)" },
+  { id: "local-kitchen-tapes", heading: "Saved offline", note: "Example: Kitchen Tapes, Vol. 1. Plays with the server off; Remove offline copy frees the space." },
+  { id: "local-rehearsals-2024", heading: "On this computer", note: "Example: Rehearsals 2024, in a folder on this Mac. Nothing to save: the files are here." },
 ]
 
 function LocalMenu({ id, heading, note }: (typeof LOCAL_STATES)[number]) {
@@ -124,7 +124,7 @@ function Page() {
       </section>
 
       <section className="flex flex-col gap-5">
-        <h2 className="text-xlarge font-medium tracking-tight text-foreground">Your own files</h2>
+        <h2 className="text-xlarge font-medium tracking-tight text-foreground">Imported music</h2>
         <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))]">
           {LOCAL_STATES.map(s => <LocalMenu key={s.id} {...s} />)}
         </div>
@@ -134,12 +134,12 @@ function Page() {
         <h2 className="text-xlarge font-medium tracking-tight text-foreground">Two words, two things</h2>
         <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))]">
           <div className="flex flex-col gap-1">
-            <h3 className="text-large font-medium text-foreground">Local</h3>
-            <p className="text-small text-muted-foreground">Your own files, on this computer or a server, played by muza. The only music that plays without internet: muza doesn't keep its music on the device, whether you bought it or not.</p>
+            <h3 className="text-large font-medium text-foreground">Save offline</h3>
+            <p className="text-small text-muted-foreground">For imported music: keep a copy on this device, free, so it plays without a connection to the computer or server that holds it.</p>
           </div>
           <div className="flex flex-col gap-1">
-            <h3 className="text-large font-medium text-foreground">Files</h3>
-            <p className="text-small text-muted-foreground">The lossless files that are yours to keep. "Download" only appears where you actually get files, and always with the word "files".</p>
+            <h3 className="text-large font-medium text-foreground">Download files</h3>
+            <p className="text-small text-muted-foreground">For music bought on muza: the lossless files that are yours to keep, paid for. "Download" only appears where you actually get files, and always with the word "files".</p>
           </div>
         </div>
       </section>
@@ -150,7 +150,7 @@ function Page() {
           <Table className="min-w-[1040px]">
             <TableHeader>
               <TableRow>
-                {["Option", "Album", "Your playlist", "Saved playlist", "Song", "Artist", "Local files"].map(h => <TableHead key={h}>{h}</TableHead>)}
+                {["Option", "Album", "Your playlist", "Saved playlist", "Song", "Artist", "Imported"].map(h => <TableHead key={h}>{h}</TableHead>)}
               </TableRow>
             </TableHeader>
             <TableBody>

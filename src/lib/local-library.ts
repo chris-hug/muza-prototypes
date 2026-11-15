@@ -1,13 +1,30 @@
 /*
- * Local library — music that lives on the listener's own machine or server,
- * played through the muza player (the way Roon or iTunes play a folder).
+ * Imported music — the listener's own files, from a folder on their computer
+ * or a server, played through the muza player (the way Roon or iTunes play a
+ * folder). Code calls it "local" (ids `local-…`, this module's name); the
+ * listener sees "Imported".
  *
- * This replaces "Save offline". muza will not keep streamed or bought music on
- * the device for offline play, whatever you own; the one thing that plays
- * without a connection is your own files. So the library has two SOURCES, the
- * muza catalog and Local, and the question this module answers is the one the
- * UI keeps asking: is this item local, where does it live, can it be reached
- * right now, and does muza have it too.
+ * Why "Imported" and not "Local": the same files show on every device the
+ * listener uses. On the MacBook that holds them they are local; on the phone
+ * they stream from the MacBook and are not local at all. "Local" was true on
+ * one device and false on the others. The word has to name where the music
+ * came from — brought in from outside muza, as against "Owned", bought on
+ * muza — not where it sits. ("My files" was tried and dropped: too close to
+ * "Owned", both say "mine".)
+ *
+ * Deliberately NOT linked to the muza catalog. An earlier version matched the
+ * files to muza releases ("Also on muza", "Go to local copy", credits, an
+ * artist-page band). The product call (Nov 2026) was: the listener's own
+ * files are preferred, knowing which version you hear is information nobody
+ * asked for, and matching is the costliest backend piece. So imported music
+ * is an island: it plays, it sits in the library and in search, and that is
+ * all.
+ *
+ * Offline: an imported album can be "saved offline" on a device that does
+ * not hold the files (the phone, or any computer for a server's folder), so
+ * it plays with no connection to the MacBook or server. That is a different
+ * thing from an owned album's "Download files", which is a paid file
+ * download (see detail-more-button) — hence two different words.
  *
  * Mock data. How a folder gets connected and how its tags are read is backend
  * work (Nevo's "how user connects local file" and "Metadata" tickets); the
@@ -15,7 +32,6 @@
  */
 
 import { useMemo, useSyncExternalStore } from "react"
-import { useUserLibrary } from "@/lib/user-library"
 import { slugify } from "@/lib/media-nav"
 
 export interface LocalSource {
@@ -60,10 +76,6 @@ export interface LocalAlbum {
   /** Folder inside the source. */
   folder:   string
   tracks:   LocalTrack[]
-  /** The catalog album these files are, by its library id and its page key.
-   *  Set only on a confident match (artist + title + track count, or an ISRC
-   *  from the tags): a wrong "Also on muza" costs more than a missing one. */
-  match?:   { libraryId: string; key: string }
 }
 
 /** The menu row that opens the files' folder, named the way the operating
@@ -81,7 +93,7 @@ export interface LocalAlbum {
 type NavigatorUAData = Navigator & { userAgentData?: { platform?: string; mobile?: boolean } }
 const NAV = typeof navigator === "undefined" ? undefined : (navigator as NavigatorUAData)
 const PLATFORM = NAV ? (NAV.userAgentData?.platform ?? NAV.platform ?? "") : ""
-const HANDHELD = !!NAV && (
+export const HANDHELD = !!NAV && (
   NAV.userAgentData?.mobile === true ||
   /android|iphone|ipad|ipod/i.test(NAV.userAgent) ||
   (/mac/i.test(PLATFORM) && NAV.maxTouchPoints > 1)
@@ -93,15 +105,17 @@ export const SHOW_IN_FOLDER: string | null =
   "Show in folder"
 
 const SEED_SOURCES: LocalSource[] = [
-  { id: "mac", kind: "folder", name: "This Mac", path: "~/Music/Jazz", available: true, tracks: 13, lastSeen: "Scanned 2 minutes ago" },
-  { id: "recordings", kind: "folder", name: "This Mac", path: "~/Music/My recordings", available: true, tracks: 3, lastSeen: "Scanned yesterday" },
+  // Named by the device, not "This Mac": the name shows on every device the
+  // listener uses, and on the phone "This Mac" would be wrong.
+  { id: "mac", kind: "folder", name: "MacBook", path: "~/Music/Jazz", available: true, tracks: 10, lastSeen: "Scanned 2 minutes ago" },
+  { id: "recordings", kind: "folder", name: "MacBook", path: "~/Music/My recordings", available: true, tracks: 3, lastSeen: "Scanned yesterday" },
   {
     // A folder on a network drive: the production app adds folders, and a
     // server's share is a folder like any other — until the drive is off.
     id: "nas", kind: "server", name: "Home server", path: "/Volumes/Home server/Music", available: false,
     // Short: it stands after the badge in a card's last line.
     unavailableReason: "Not connected",
-    tracks: 4, lastSeen: "Last reached 3 days ago",
+    tracks: 7, lastSeen: "Last reached 3 days ago",
   },
 ]
 
@@ -109,7 +123,7 @@ const SEED_SOURCES: LocalSource[] = [
  *  picker: its album is in LOCAL_ALBUMS and appears once the folder is
  *  added — so adding a source visibly fills the library. */
 export const PICKABLE_FOLDER: Omit<LocalSource, "available" | "tracks" | "lastSeen"> = {
-  id: "downloads", kind: "folder", name: "This Mac", path: "~/Downloads/Bandcamp",
+  id: "downloads", kind: "folder", name: "MacBook", path: "~/Downloads/Bandcamp",
 }
 
 // ─── Sources store ───────────────────────────────────────────────────────────
@@ -121,20 +135,22 @@ export const PICKABLE_FOLDER: Omit<LocalSource, "available" | "tracks" | "lastSe
 
 interface LocalState {
   sources:  LocalSource[]
-  /** "Show local files" — production's master switch. Off hides every local
-   *  item from the library, search and player queues; the sources stay. */
+  /** "Show imported music" — production's master switch. Off hides every
+   *  imported item from the library, search and player queues; the sources
+   *  stay. */
   enabled:  boolean
-  /** Match files with muza releases ("Also on muza", credits, artist). */
-  matching: boolean
+  /** Albums saved offline on this device, by id. */
+  offline:  string[]
 }
-let state: LocalState = { sources: SEED_SOURCES, enabled: true, matching: true }
+// Seeded with one album saved offline, so the mark shows without saving one.
+let state: LocalState = { sources: SEED_SOURCES, enabled: true, offline: ["local-kitchen-tapes"] }
 const listeners = new Set<() => void>()
 const emit = (next: LocalState) => { state = next; listeners.forEach(l => l()) }
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l) } }
 const patch = (id: string, p: Partial<LocalSource>) =>
   emit({ ...state, sources: state.sources.map(s => (s.id === id ? { ...s, ...p } : s)) })
 
-/** Re-renders on any change to the sources or the matching switch. */
+/** Re-renders on any change to the sources, the switch or offline copies. */
 export function useLocalState(): LocalState {
   return useSyncExternalStore(subscribe, () => state, () => state)
 }
@@ -185,8 +201,12 @@ export const localSources = {
     sources.splice(Math.min(index, sources.length), 0, source)
     emit({ ...state, sources })
   },
-  setMatching(matching: boolean) { emit({ ...state, matching }) },
   setEnabled(enabled: boolean) { emit({ ...state, enabled }) },
+  /** Save an album offline on this device, or remove that copy. */
+  setOffline(albumId: string, on: boolean) {
+    const rest = state.offline.filter(id => id !== albumId)
+    emit({ ...state, offline: on ? [...rest, albumId] : rest })
+  },
 }
 const reconnectAttempts = new Map<string, number>()
 
@@ -206,26 +226,23 @@ const t = (album: string, rows: [string, string][]): LocalTrack[] =>
 
 export const LOCAL_ALBUMS: LocalAlbum[] = [
   {
-    // Bought on muza for listening as well: the "Owned on muza" case.
     id: "local-speak-no-evil", title: "Speak No Evil", artist: "Wayne Shorter", year: 1966,
     cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/a8/ee/3c/a8ee3cc7-e694-f7e1-5208-2c67f9ae5ed5/13ULAIM49176.rgb.jpg/600x600bb.jpg",
     format: "FLAC", sourceId: "mac", folder: "Wayne Shorter/Speak No Evil (1966)",
     tracks: t("local-speak-no-evil", [["Witch Hunt", "8:08"], ["Fee-Fi-Fo-Fum", "5:53"], ["Dance Cadaverous", "6:45"], ["Speak No Evil", "8:23"], ["Infant Eyes", "6:52"], ["Wild Flower", "6:01"]]),
-    match: { libraryId: "a02", key: "speak-no-evil" },
   },
   {
-    // On muza, not bought: the "Also on muza" case.
     id: "local-cool-struttin", title: "Cool Struttin'", artist: "Sonny Clark", year: 1958,
     cover: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/d6/a3/1d/d6a31d82-038d-a73f-5452-0380d8bd9bae/00724349532755.jpg/600x600bb.jpg",
     format: "MP3", sourceId: "mac", folder: "Sonny Clark/Cool Struttin'",
     tracks: t("local-cool-struttin", [["Cool Struttin'", "9:22"], ["Blue Minor", "10:19"], ["Sippin' at Bells", "8:18"], ["Deep Night", "9:32"]]),
-    match: { libraryId: "a04", key: "cool-struttin" },
   },
   {
-    // Not on muza: no link at all.
+    // On the server, which is off — and saved offline (LocalState.offline),
+    // so it still plays: the case "Save offline" exists for.
     id: "local-kitchen-tapes", title: "Kitchen Tapes, Vol. 1", artist: "The Basement Trio", year: 2019,
     cover: PLACEHOLDER("kitchen-tapes"),
-    format: "ALAC", sourceId: "mac", folder: "The Basement Trio/Kitchen Tapes, Vol. 1",
+    format: "ALAC", sourceId: "nas", folder: "The Basement Trio/Kitchen Tapes, Vol. 1",
     tracks: t("local-kitchen-tapes", [["Kettle", "4:12"], ["Second Take", "6:40"], ["Window Light", "5:05"]]),
   },
   {
@@ -247,7 +264,6 @@ export const LOCAL_ALBUMS: LocalAlbum[] = [
     cover: "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/7f/d0/cb/7fd0cbcc-3e89-4010-5cac-e91f1bb42909/19UMGIM60341.rgb.jpg/600x600bb.jpg",
     format: "FLAC", sourceId: "nas", folder: "Horace Silver/Song for My Father",
     tracks: t("local-song-for-my-father", [["Song for My Father", "7:17"], ["The Natives Are Restless Tonight", "6:09"], ["Calcutta Cutie", "8:31"], ["Que Pasa", "7:46"]]),
-    match: { libraryId: "a33", key: "song-for-my-father" },
   },
 ]
 
@@ -267,21 +283,42 @@ export function localSource(album: LocalAlbum): LocalSource {
     ?? { id: album.sourceId, kind: "folder", name: "Removed source", path: "", available: false, unavailableReason: "Removed", tracks: 0, lastSeen: "" }
 }
 
-/** What follows the "Local" badge: the format, or — where the source is
- *  off — the reason it cannot play. */
-export function localDetail(album: LocalAlbum): string {
-  const source = localSource(album)
-  return source.available ? album.format : source.unavailableReason ?? "Not connected"
+/** Whether the source's files are on the device in hand. A folder is on
+ *  the computer that added it; a server's folder never is; on a phone or
+ *  tablet nothing is. The prototype treats any desktop as that computer.
+ *  Where the files are on the device, "Save offline" has nothing to do. */
+export function onThisDevice(source: LocalSource): boolean {
+  return !HANDHELD && source.kind !== "server"
 }
+
+/** An album saved offline on this device. */
+export const isSavedOffline = (album: LocalAlbum) => state.offline.includes(album.id)
+
+/** It can play right now: its source answers, or a copy is saved offline. */
+export const isPlayable = (album: LocalAlbum) => localSource(album).available || isSavedOffline(album)
+
+/** What follows the "Imported" badge: nothing while it plays, the reason it
+ *  cannot when its source is off and no copy is saved. The file format used
+ *  to follow ("Local FLAC"); it was cut as detail the listener does not need
+ *  to tell their files from muza's — the badge says that. The reason stays,
+ *  so a greyed item says why instead of looking broken. */
+export function localDetail(album: LocalAlbum): string {
+  if (isPlayable(album)) return ""
+  return localSource(album).unavailableReason ?? "Not connected"
+}
+
+/** The badge's word. One constant: it was "Local" and changed once already. */
+export const IMPORTED = "Imported"
 
 /** The same in words, for a meta slot that is plain text (list rows). */
 export function localLabel(album: LocalAlbum): string {
-  return `Local · ${localDetail(album)}`
+  const detail = localDetail(album)
+  return detail ? `${IMPORTED} · ${detail}` : IMPORTED
 }
 
 /** The player's "Playing from" for a local album. The suffix is how the
  *  player tells a local source from a catalog one with the same title. */
-export const LOCAL_FROM_SUFFIX = " · Local"
+export const LOCAL_FROM_SUFFIX = " · Imported"
 export const localPlayingFrom = (album: LocalAlbum) => `${album.title}${LOCAL_FROM_SUFFIX}`
 export function localAlbumFromPlaying(playingFrom: string): LocalAlbum | undefined {
   if (!playingFrom.endsWith(LOCAL_FROM_SUFFIX)) return undefined
@@ -292,16 +329,3 @@ export function localAlbumFromPlaying(playingFrom: string): LocalAlbum | undefin
 /** Song id for a local track — the same scheme the song rows use. */
 export const localSongId = (album: LocalAlbum, track: LocalTrack) =>
   slugify(`${track.title}-${album.artist}`)
-
-/** What muza has of a local album: nothing, the album to buy or stream
- *  ("also"), or the album you already bought ("owned"). */
-export type LocalMatch = "none" | "also" | "owned"
-export function useLocalMatch() {
-  const library = useUserLibrary()
-  const { matching } = useLocalState()
-  return useMemo(
-    () => (album: LocalAlbum): LocalMatch =>
-      !matching || !album.match ? "none" : library.isPurchased(album.match.libraryId) ? "owned" : "also",
-    [library, matching],
-  )
-}

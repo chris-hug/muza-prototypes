@@ -67,8 +67,10 @@ actually differs — a guest artist, say.
 Order inside the line is `badge` · `artist` · `album` · `year`. The badge is
 a `Badge variant="secondary" shape="square-xs"` and `shrink-0` — the same
 one-word label the album cards carry, so Library › Songs says "Owned" (the
-song's album is bought; a track is not sold alone) and "Local" (your own
-files) the way Albums does. The album page of a local album leaves it off:
+song's album is bought; a track is not sold alone) and "Imported" (your own
+files) the way Albums does; `offline` adds the offline mark after the badge
+when the song plays here without a connection. The album page of an imported
+album leaves the badge off:
 its header already says it once for every track; the two dots are `aria-hidden`
 `shrink-0` spans so they are never the part that ellipses, and each one is
 gated on there being something before it (`artist &&` before the album,
@@ -349,18 +351,15 @@ the **same** items; a surface hides only what is redundant there:
 
 `SongMenuItems`: Share… (native) / Copy link · Save / Remove from library ·
 Add to playlist · ─ · Go to artist · Go to album · Show credits · ─ · Report.
-A catalog song whose album the listener also has in their own files gets
-"Go to local copy" after "Go to album", in the menu, the touch sheet and the
-player's ⋯ alike — `useLocalCopy(album)` finds the matched local album and
-the row disappears when there is none (or local files or matching are off).
-
-There is no "Save offline": muza keeps no music on the device (see Detail
-Menu). A track from the listener's own files is a **local** row instead —
-`local` drops the heart (a file on disk is in the library by being there) and
-the host passes `LocalSongMenuItems` as `menuItems` (`local-song-rows.tsx`):
-Add to playlist · Open on muza (matched files) · ─ · Show in Finder (Explorer on Windows) · Go to
-artist (matched). `LocalSongRows` builds those rows for a local album page and
-Library › Songs › Local, greyed when the source is not connected.
+A track from the listener's own files is an **imported** row instead —
+`local` drops the heart (imported music is in the library by being imported)
+and the host passes `LocalSongMenuItems` as `menuItems`
+(`local-song-rows.tsx`): Add to playlist · Save album offline / Remove offline
+copy (a copy is kept per album) · ─ · Show in Finder (Explorer on Windows).
+No credits, artist or "Open on muza": imported music is not matched to the
+catalog (see Detail Menu). `LocalSongRows` builds those rows for an imported
+album page and Library › Songs › Imported, greyed when the source is off and
+nothing is saved.
 "Go to artist" and "Go to album" need both their click handler **and** the
 flag clear — a row with no `onAlbumClick` has nowhere to go. Share, library,
 credits and report are self-wired: `useShare`, `useUserLibrary` +

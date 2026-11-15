@@ -1,14 +1,15 @@
 "use client"
 
 /*
- * LocalAlbumView — the page for one of the listener's own albums (a folder of
- * files on this computer or a server, see local-library).
+ * LocalAlbumView — the page for one of the listener's imported albums (a
+ * folder of files on their computer or a server, see local-library).
  *
  * The catalog album page, minus what is about a release on muza: no buy, no
- * heart, no Share, no credits, no rails of related releases (the files carry
- * no such data). What it adds is the way back to muza — "Also on muza" /
- * "Owned on muza" in the CTA slot when the files match a release — and the
- * source in the meta line, with the reason when it is not connected.
+ * heart, no Share, no credits, no artist link, no rails of related releases
+ * (the files carry no such data, and imported music is not matched to the
+ * catalog). The meta line carries the "Imported" badge, the offline mark
+ * when a copy is saved on this device, and the reason when it cannot play.
+ * "Save offline" is in the "…" menu, with the other imported actions.
  */
 
 import { MediaHeader } from "@/components/ui/media-header"
@@ -48,7 +49,6 @@ export function LocalAlbumView({ album }: { album: LocalAlbum }) {
         title={album.title}
         owner={album.artist}
         year={album.year}
-        onOwnerClick={l.onGoToArtist}
         playing={isThis && player.playing}
         shuffleActive={player.shuffle}
         onPlay={() => (isThis ? player.toggle() : l.play())}
@@ -60,8 +60,7 @@ export function LocalAlbumView({ album }: { album: LocalAlbum }) {
         local={{
           detail: l.detail,
           unavailable: !l.available,
-          match: l.match,
-          onOpenOnMuza: l.onOpenOnMuza,
+          savedOffline: l.savedOffline,
           menu: l.menu,
         }}
       />

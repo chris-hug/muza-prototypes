@@ -18,8 +18,8 @@
 import { SHOW_IN_FOLDER } from "@/lib/local-library"
 import {
   MoreHorizontal, Share, Link2, Plus, Heart, Pencil, Radio, Lock,
-  ListPlus, ListStart, ListEnd, Mic, Building2, Info, Flag, Trash2, RefreshCw,
-  Disc3, ListMusic, Download, FolderOpen, ExternalLink,
+  ListPlus, ListStart, ListEnd, Mic, Building2, Info, Flag, Trash2,
+  Disc3, ListMusic, Download, FolderOpen, CircleArrowDown, CircleX, RefreshCw,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -40,6 +40,7 @@ import { useToast } from "@/components/ui/toast"
 import { useCredits } from "@/lib/credits-context"
 import { useIsMobile } from "@/lib/use-media-query"
 import { slugify } from "@/lib/media-nav"
+import { useDownloadFiles } from "@/lib/offline"
 import { useUserLibrary, type LibraryItemType, type SavedSong } from "@/lib/user-library"
 import { useLibraryToggle } from "@/lib/use-library-toggle"
 import { useFilesPurchase } from "@/lib/files-purchase-context"
@@ -92,24 +93,23 @@ export interface DetailMoreButtonProps {
   onRemove?:        () => void
   onReport?:        () => void
   onShowInfo?:      () => void
-  /** A catalog album the listener also has in their own files: "Open local
-   *  copy", beside the other ways off this page. The header shows it as a
-   *  line too, but on a phone the header is the slim chrome and this sheet
-   *  is the only place it can be. */
-  onOpenLocalCopy?: () => void
-  /** The item is from the listener's own files (see local-library), not the
-   *  muza catalog. It gets its own column of the matrix: no Share (nobody
-   *  else can open it), no Save (it is in the library by being on disk), no
-   *  Credits or Report (they are about a release on muza). It gains "Show in
-   *  folder", and "Open on muza" when the files match a catalog release.
-   *  "Go to artist" stays, through `onGoToArtist`, only when matched. */
+  /** The item is imported — the listener's own files (see local-library),
+   *  not the muza catalog. It gets its own column of the matrix: no Share
+   *  (nobody else can open it), no Save (it is in the library by being
+   *  imported), no Credits, artist or Report (they are about a release on
+   *  muza, and imported music is not matched to one). It gains "Save
+   *  offline" / "Remove offline copy" where the files are elsewhere, and
+   *  "Show in folder" on a computer. */
   local?: {
-    onShowInFolder?: () => void
-    onOpenOnMuza?:   () => void
-    /** Matched files only: the matched release's credits. */
-    onShowCredits?:  () => void
-    /** Source not connected: to Settings › Local music, to reconnect it. */
-    onReconnect?:    () => void
+    /** Source off, no copy saved: to Settings › Imported music, to
+     *  reconnect it. */
+    onReconnect?:     () => void
+    onShowInFolder?:  () => void
+    /** Keep a copy on this device, to play with no connection to the
+     *  machine or server holding the files. Not "Download": that is an
+     *  owned album's paid "Download files" — a different act. */
+    onSaveOffline?:   () => void
+    onRemoveOffline?: () => void
   }
   className?: string
   triggerVariant?: "ghost" | "outline"
@@ -217,7 +217,7 @@ function useDetailActions({
   libraryType, libraryId, libraryName, librarySong,
   onAdd, onAddMusic, onEdit, onPlayRadio, onAddToPlaylist, onPlayNext, onAddToQueue,
   onMakePrivate, onGoToArtist, onGoToLabel, onGoToOwner, onGoToSelf, onArtistInfo,
-  onRemove, onReport, onOpenLocalCopy, local,
+  onRemove, onReport, local,
 }: DetailMoreButtonProps): { quick: Action[]; groups: Action[][]; flat: Action[]; badgeType: ContentType } {
   const { canNativeShare, copyLink, nativeShare } = useShare({
     title, text: subtitle ? `${title} — ${subtitle}` : title,
@@ -235,6 +235,7 @@ function useDetailActions({
   // toggles there — in sync with the header / card hearts. Otherwise falls back
   // to the passed `inLibrary` + `onAdd` / `onRemove`.
   const library = useUserLibrary()
+  const downloadFiles = useDownloadFiles()
   const toggleLibrary = useLibraryToggle()
   const filesPurchase = useFilesPurchase()
   // A playlist you OWN is in your library by definition — never offer to save
@@ -250,19 +251,16 @@ function useDetailActions({
   const isPlaylist = kind === "playlist"
   const isArtist   = kind === "artist"
 
-  // ── Local files: their own column ───────────────────────────────────────
-  // "Open on muza" leads — it is the one thing here that is about muza, and
-  // the reason a matched folder is worth more than a plain player, with the
-  // matched release's credits beside it. No tiles: there is no Share / Save
-  // trio to promote.
+  // ── Imported: its own column ────────────────────────────────────────────
+  // Offline leads — on a phone it is the reason to open this menu at all.
+  // No tiles: there is no Share / Save trio to promote.
   if (local) {
     const localGroups = [
       // An unreachable source leads with the way to fix it.
-      [{ icon: <RefreshCw />,    label: "Reconnect…",   onClick: local.onReconnect }],
-      [{ icon: <ExternalLink />, label: "Open on muza", onClick: local.onOpenOnMuza },
-       { icon: <Info />,         label: "Show credits", onClick: local.onShowCredits }],
-      [{ icon: <FolderOpen />, label: SHOW_IN_FOLDER ?? "", onClick: local.onShowInFolder },
-       { icon: <Mic />,        label: "Go to artist",   onClick: onGoToArtist }],
+      [{ icon: <RefreshCw />, label: "Reconnect…", onClick: local.onReconnect }],
+      [{ icon: <CircleArrowDown />, label: "Save offline",        onClick: local.onSaveOffline },
+       { icon: <CircleX />,         label: "Remove offline copy", onClick: local.onRemoveOffline }],
+      [{ icon: <FolderOpen />, label: SHOW_IN_FOLDER ?? "", onClick: local.onShowInFolder }],
     ].map(g => (g as Action[]).filter(a => a.onClick)).filter(g => g.length > 0)
     return { quick: [], groups: localGroups, flat: localGroups.flat(), badgeType: "album" as ContentType }
   }
@@ -301,12 +299,12 @@ function useDetailActions({
   // on an album bought with them. There is no "Save offline": muza does not
   // keep music on the device for offline play (see local-library).
   const purchase = isAlbum && libraryId ? library.entryFor(libraryId) : undefined
-  if (purchase?.tier === "download") g1.push({
-    icon: <Download />,
-    label: "Download files",
-    // Prototype: no files to serve, so the toast stands in for the download.
-    onClick: () => toast({ title: "Preparing your files", description: title, type: "success" }),
-  })
+  // Bought with files: download them to THIS device, or remove this
+  // device's copy (offline.ts). Free — the files are paid for; every device
+  // fetches its own copy from muza.
+  const files = isAlbum ? downloadFiles(libraryId, title) : undefined
+  if (files?.download) g1.push({ icon: <Download />, label: "Download files", onClick: files.download })
+  if (files?.remove)   g1.push({ icon: <CircleX />,  label: "Remove download", onClick: files.remove })
   // Bought for listening: the same action, with the difference still to pay.
   const filesPrice = purchase?.purchased && purchase.tier !== "download" && libraryId
     ? filesPurchase?.priceFor(libraryId)
@@ -329,7 +327,6 @@ function useDetailActions({
   if (onGoToSelf && isPlaylist) g2.push({ icon: <ListMusic />, label: "Go to playlist", onClick: onGoToSelf })
   if (isAlbum) {
     if (owned) g2.push(showCredits)            // credits in-list for owned (tile is Edit)
-    if (onOpenLocalCopy) g2.push({ icon: <FolderOpen />, label: "Go to local copy", onClick: onOpenLocalCopy })
     if (onGoToArtist) g2.push({ icon: <Mic />,       label: "Go to artist", onClick: onGoToArtist })
     if (onGoToLabel)  g2.push({ icon: <Building2 />, label: "Go to label",  onClick: onGoToLabel })
   }

@@ -209,16 +209,17 @@ The three groups, in order — an empty group is skipped and so is its divider:
 
 | Group | Rows |
 |---|---|
-| Manage / queue | Download files (album bought with files) or Download files – $x (album bought for listening; opens the checkout for the difference, through `FilesPurchaseProvider`) · Make private ⇄ Make public (owned playlist) · Add to a playlist (album only — you add an album's *tracks* to a playlist; a playlist is not addable to a playlist, an artist not at all) · Play next · Add to queue |
+| Manage / queue | Download files / Remove download (album bought with files, per device) or Download files – $x (album bought for listening; opens the checkout for the difference, through `FilesPurchaseProvider`) · Make private ⇄ Make public (owned playlist) · Add to a playlist (album only — you add an album's *tracks* to a playlist; a playlist is not addable to a playlist, an artist not at all) · Play next · Add to queue |
 | Navigation | Go to album / Go to playlist (`onGoToSelf` — a card or row, never the item's own page) · Credits (owned album, since its pill is Edit) · Go to artist · Go to label · Go to owner (playlist — it has an owner, not an artist) · Artist info |
 | Destructive | **Delete playlist** (owned) in `text-destructive`, otherwise **Report** — a plain row, never styled destructive |
 
-**There is no "Save offline".** muza does not keep its music on the device
-for playing without a connection — not streamed, and not bought either. The
-one thing that plays offline is the listener's own files, which are a source
-of their own (see **Local files** below). The prototype offered "Save offline"
-twice — first on anything you could play, then only on music you own — and
-both promised something the product will not do.
+**Offline is only for files you have.** Music bought to stream never plays
+without a connection. Files come two ways: bought on muza ("Download files",
+per device, see below) or imported from your own folders ("Save offline", see
+**Imported** below). The prototype once offered "Save offline" on anything you
+could play, then on anything you owned — both promised something the product
+will not do. It is back with one meaning: a copy of imported music muza
+keeps on a device that does not hold the files.
 
 "Download files" hands over the lossless files you paid
 to keep, so it exists only on albums you bought: with no price once they are
@@ -372,13 +373,13 @@ phone sheets. One menu per media kind. If two surfaces show different rows for
 the same object, that is a bug. A row with no handler is dropped, never shown
 disabled.
 
-| Row | Album | Playlist (yours) | Playlist (saved) | Artist | Song | Local files |
+| Row | Album | Playlist (yours) | Playlist (saved) | Artist | Song | Imported |
 |---|---|---|---|---|---|---|
-| Open on muza | — | — | — | — | — | first row, if the files match a release on muza |
-| Go to local copy | when it is also in your local files | — | — | — | — | — |
-| Show in Finder / Explorer | — | — | — | — | — | ✓ |
+| Reconnect… | — | — | — | — | — | first, when the source is off and nothing is saved — to Settings › Imported music |
+| Save offline / Remove offline copy | — | — | — | — | — | where the files are on another device (songs: "Save album offline") |
+| Show in Finder / Explorer | — | — | — | — | — | on a computer |
 | Share (adaptive: native share, else Copy link) | tile | tile | tile | tile | ✓ | — nobody else can open it |
-| Save to library / Remove from library | tile | — | tile | tile | ✓ | — in the library by being on disk |
+| Save to library / Remove from library | tile | — | tile | tile | ✓ | — in the library by being imported |
 | Credits | tile (in the list if owned) | — | — | — | ✓ "Show credits" | — |
 | Edit / Edit info | owned | tile | — | — | — | — |
 | Add music | — | tile | — | — | — | — |
@@ -387,8 +388,8 @@ disabled.
 | Make private / Make public | — | ✓ | — | — | — | — |
 | Add to a playlist | ✓ | — | — | — | ✓ | songs |
 | Play next · Add to queue | if wired | if wired | if wired | if wired | — | — |
-| Go to album / Go to playlist | ✓ | ✓ | ✓ | — | ✓ | songs → their local album |
-| Go to artist | ✓ | — | — | — | ✓ | if the files match a release on muza |
+| Go to album / Go to playlist | ✓ | ✓ | ✓ | — | ✓ | songs → their imported album |
+| Go to artist | ✓ | — | — | — | ✓ | — not matched to an artist |
 | Go to owner | — | — | ✓ | — | — | — |
 | Go to label | ✓ | — | — | — | — | — |
 | Artist info | — | — | — | ✓ | — | — |
@@ -401,28 +402,37 @@ disabled.
 |---|---|
 | Not purchased | none |
 | Purchased for listening | `Download files – $x`, where `$x` is the difference between the two tiers; opens checkout. No row if the album offers no files or there is no difference to pay |
-| Files paid for | `Download files` |
+| Files paid for, not on this device | `Download files` — free; this device fetches its copy from muza |
+| Files paid for, downloaded here | `Remove download` — this device's copy goes, the purchase stays |
 
-**Local files** (an album or song from the listener's own folder, see
-`local-library`) are their own kind, switched on by the `local` prop. Not a
-release on muza, so nothing that is about one: no Share, Save, Report, no
-tiles on the sheet. "Open on muza" leads when the files match a release — it
-is the way back to the artist, and the reason a matched folder is worth more
-than a plain player — with "Show credits" beside it (the matched release's;
-unmatched files have none), then "Show in Finder" (Explorer on Windows) and,
-matched only, "Go to artist". On a phone or tablet there is no "Show in
-Finder": the files play from a computer or server elsewhere and there is no
-file manager to hand them to, so the row is left out (decided by platform, not
-window width — a narrow desktop window still has a Finder).
+Downloads are per device (`src/lib/offline.ts`): every device downloads its
+own copy from muza, never from another of your devices. A downloaded album
+carries the offline mark after "Owned".
 
-The other direction: a catalog album the listener also has in their own
-files gets **"Go to local copy"** in its navigation group (beside "Go to
-artist"), through `onOpenLocalCopy`. The album page also says it as a muted
-line under the meta, but on a phone the header is the slim chrome and its
-sheet is the only place the way to your copy can be; it is a menu handler,
-so `usePublishDetailHeader` forwards it there. `useLocalActions` builds the handlers once for the card,
-the row, the table, the album page and the phone's chrome sheet (which reads
-`local` through `usePublishDetailHeader`).
+**Imported** (an album or song from the listener's own files, see
+`local-library`) is its own kind, switched on by the `local` prop. Not a
+release on muza, and not matched to one, so nothing that is about one: no
+Share, Save, credits, artist, Report, no tiles on the sheet. What it has:
+**Reconnect…** first when the source is off (to Settings › Imported music,
+on that source's row), then **Save offline** / **Remove offline copy** — where the files are on
+another device (the phone, or any device for a server's folder; on the
+computer holding the folder there is nothing to save) — then **Show in
+Finder** (Explorer on Windows). On a phone or tablet there is no "Show in
+Finder": there is no file manager to hand the files to, so the row is left
+out (decided by platform, not window width — a narrow desktop window still
+has a Finder).
+
+"Save offline", not "Download": that word belongs to an owned album's
+"Download files", a different act — files you own and can use anywhere,
+against a copy only muza plays. The model is on the team page
+`?page=OfflineModel`.
+
+There used to be "Open on muza", "Show credits" and "Go to artist" here for
+files matched to a release, and "Go to local copy" on the catalog album. All of it needed the files
+matched to muza releases; the product call was no matching, so it went
+together. `useLocalActions` builds the handlers once for the card, the row,
+the table, the album page and the phone's chrome sheet (which reads `local`
+through `usePublishDetailHeader`).
 
 **Context gating is the only per-surface difference:** no "Go to album" on the
 album page, no "Go to artist" on the artist page, no "Add to a playlist" inside

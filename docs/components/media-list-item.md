@@ -52,10 +52,12 @@ claimed a "Label" badge, now says so.
 
 ## `badge`
 
-A one-word label at the head of the second line — "Owned", "Local" — drawn as
+A one-word label at the head of the second line — "Owned", "Imported" — drawn as
 the `square-xs` badge the cards and song rows use, so a list says ownership
 and source the way a card does. Albums list: an owned album gets "Owned"; a
-local one gets "Local" with the format as `meta`.
+imported one gets "Imported", with why it cannot play as `meta` when its source
+is off. `offline` adds the offline mark after the badge when the album plays
+on this device without a connection (downloaded files, or a saved copy).
 
 ## `showType`
 

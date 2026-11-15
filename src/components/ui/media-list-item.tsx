@@ -23,6 +23,7 @@ import * as React from "react"
 import { MoreHorizontal } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
+import { OfflineMark } from "@/components/ui/local-badge"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ContentTypeBadge, type ContentType } from "@/components/ui/badge"
@@ -47,10 +48,13 @@ export interface MediaListItemProps {
   /** Second line, after the dot — year (album/track) or "123 Songs"
    *  (playlist). */
   meta?:     string
-  /** A one-word label leading the second line: "Owned", "Local". The
+  /** A one-word label leading the second line: "Owned", "Imported". The
    *  square-xs badge the album cards and song rows carry, so every list
    *  says it the same way. */
   badge?:    string
+  /** Plays offline on this device: the offline mark after the badge
+   *  (offline.ts). */
+  offline?:  boolean
   /** Song only — marks this row as the currently-playing item. */
   playing?:  boolean
   /** Containers (album/playlist/artist) — open the detail page. */
@@ -76,7 +80,7 @@ export interface MediaListItemProps {
 }
 
 export function MediaListItem({
-  type, title, cover, covers, subtitle, meta, badge, playing = false,
+  type, title, cover, covers, subtitle, meta, badge, offline = false, playing = false,
   onOpen, onPlay, onSubtitleClick, menuItems, trailing, showType = false, size = "default", className,
 }: MediaListItemProps) {
   // Primary (row-body) action. Containers always navigate (onOpen). A song
@@ -131,6 +135,7 @@ export function MediaListItem({
             size === "lg" && "[&_.truncate]:whitespace-normal [&_.truncate]:overflow-visible",
           )}>
             {badge && <Badge variant="secondary" shape="square-xs" className="shrink-0">{badge}</Badge>}
+            {offline && <OfflineMark />}
             {subtitle && (
               onSubtitleClick ? (
                 <button

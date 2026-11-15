@@ -30,7 +30,7 @@
  * container constrains width — header just stretches to fill.
  */
 
-import { Heart, Info, MoreHorizontal, Disc3, ListMusic, Pencil, Download, ExternalLink, RefreshCw, FolderOpen, ChevronRight } from "lucide-react"
+import { Heart, Info, MoreHorizontal, Disc3, ListMusic, Pencil, Download } from "lucide-react"
 import { PurchasedBadge } from "@/components/ui/purchased-badge"
 import { LocalBadge } from "@/components/ui/local-badge"
 import type { DetailMoreButtonProps } from "@/components/ui/detail-more-button"
@@ -94,6 +94,9 @@ export interface MediaHeaderProps {
    *  streaming-tier purchase shows no CTA in that slot (the inline
    *  Purchased badge is sufficient). */
   downloadable?: boolean
+  /** The files are downloaded on this device: the offline mark after
+   *  "Owned" (offline.ts). */
+  downloaded?: boolean
   onDownload?: () => void
   /** Stream-tier purchases can upgrade to download for the price
    *  delta. When this is set (and the user owns the album but not the
@@ -125,27 +128,20 @@ export interface MediaHeaderProps {
   onAddMusic?:    () => void
   onBuy?:         () => void
   onOwnerClick?:  () => void
-  /** A local album — the listener's own files (see local-library). The meta
-   *  line carries the LocalBadge in place of a purchase state; the CTA slot
-   *  links to muza when the files match a release there ("Also on muza"
-   *  opens it to buy, "Owned on muza" when it is already yours); the heart,
-   *  Share and Info drop (nothing to save, share or credit), leaving Play,
-   *  Shuffle and the "…" with the local menu. */
+  /** An imported album — the listener's own files (see local-library). The
+   *  meta line carries the "Imported" badge in place of a purchase state,
+   *  with the offline mark when a copy is saved on this device; no CTA
+   *  ("Save offline" is in the "…" menu); the heart, Share
+   *  and Info drop (nothing to save, share or credit — imported music is not
+   *  matched to a muza release), leaving Play, Shuffle and the "…" with the
+   *  imported menu. */
   local?: {
-    /** The format, or why the source cannot play. */
-    detail:       string
-    unavailable?: boolean
-    match:        "none" | "also" | "owned"
-    onOpenOnMuza?: () => void
-    menu:         Pick<DetailMoreButtonProps, "local" | "onGoToArtist">
+    /** Why it cannot play; empty while it can. */
+    detail:        string
+    unavailable?:  boolean
+    savedOffline?: boolean
+    menu:          Pick<DetailMoreButtonProps, "local">
   }
-  /** A catalog album the listener also has in their own files: a link to
-   *  that local copy on its own line under the meta. The
-   *  mirror of a local album's "Also on muza": from either page the other
-   *  version is one tap away. Where you are is the Local badge: the local
-   *  page carries it, this page does not — so the link is words, not the
-   *  badge, which here would read as "this page is local". */
-  localCopy?: { detail: string; onOpen: () => void }
   className?: string
 }
 
@@ -169,13 +165,14 @@ export function MediaHeader({
   buyingPrice = "$2.99",
   purchased = false,
   downloadable = false,
+  downloaded = false,
   onDownload,
   addDownloadPrice,
   onAddDownload,
   onPlay, onShuffle, shuffleActive = false, playing = false, onAdd,
   libraryType, libraryId, libraryName,
   onInfo, onMore, onEdit, onAddMusic, onBuy, onOwnerClick,
-  local, localCopy, className,
+  local, className,
 }: MediaHeaderProps) {
   const isOwned     = variant === "my-album" || variant === "my-playlist"
   const isPlaylist  = variant === "playlist" || variant === "my-playlist"
@@ -185,10 +182,10 @@ export function MediaHeader({
   // The "i" button opens the release credits dialog on album surfaces
   // (playlists have no release credits — they fall back to onInfo).
   const credits     = useCredits()
-  // A local album has credits only through its match: the matched
-  // release's (useLocalActions). Unmatched files have none, and no button.
+  // An imported album has no credits — it is not matched to a release —
+  // and so no button.
   const showInfo    = local
-    ? local.menu.local?.onShowCredits
+    ? undefined
     : isPlaylist ? onInfo : () => credits.open(slugify(title))
   // 2×2 composite cover when 4 images are supplied (playlists);
   // otherwise the single `cover` image fills the frame.
@@ -226,8 +223,8 @@ export function MediaHeader({
     // in the stacked tier (a 320px phone). Reaching 240 would need a 264px
     // viewport, below anything the app supports.
     <div className="@container/meta flex items-center gap-3 min-w-0 text-small font-normal leading-none text-muted-foreground">
-      {/* No handler, no control: a local album whose files matched nothing
-          has no artist page, so its name is text, not a dead button. */}
+      {/* No handler, no control: an imported album has no artist page, so
+          its name is text, not a dead button. */}
       {owner && !onOwnerClick && (
         <span className="flex items-center gap-1.5 min-w-0">
           <span className="font-medium truncate min-w-0">{owner}</span>
@@ -263,29 +260,8 @@ export function MediaHeader({
       {isOwned && visibility && (
         <StatusBadge status={visibility} onStatusChange={onVisibilityChange} />
       )}
-      {purchased && <PurchasedBadge />}
-      {local && <LocalBadge detail={local.detail} unavailable={local.unavailable} className="shrink-0" />}
+      {purchased && <PurchasedBadge offline={downloaded} />}
     </div>
-  )
-
-  // Its own line under the meta, a step smaller and muted: it is not a fact
-  // about this release (as owner, year and "Owned" are) but a pointer to
-  // another copy of it, so it must not read as part of that line. In the
-  // meta line, in foreground ink, it was the loudest thing in it.
-  // Short, and the whole line is the link: the sentence version ("You also
-  // have this in your local files (MP3). Go to local copy") truncated on a
-  // phone before the link, leaving a line that said nothing you could tap.
-  const localCopyLine = localCopy && (
-    <button
-      type="button"
-      onClick={localCopy.onOpen}
-      className="self-start inline-flex items-center gap-1.5 min-w-0 max-w-full text-xsmall text-muted-foreground hover:text-foreground state-fade cursor-pointer outline-none focus-ring rounded-xs"
-    >
-      <FolderOpen className="size-3.5 shrink-0" />
-      <span className="truncate link-underline">Go to local copy</span>
-      <span className="shrink-0">· {localCopy.detail}</span>
-      <ChevronRight className="size-3.5 shrink-0" />
-    </button>
   )
 
   // Buy / download / upgrade CTA — same element both layouts; full
@@ -300,24 +276,11 @@ export function MediaHeader({
   // products, and had nowhere to sit beside each other in the 234 column.
   // "Buy", not "Unlock All Songs": the button names the act; what
   // unlocking means is the dialog's to explain.
-  // Local files: the slot is the way back to muza — a link, so `outline`, not
-  // the primary buy colour. It names what muza has rather than pushing:
-  // "Also on muza" when the release is there to buy or stream, "Owned on
-  // muza" when you bought it. Unmatched files get no CTA at all. A source
-  // that is not connected puts "Reconnect" there instead: until it is back,
-  // that is the one thing worth doing on this page.
-  const localReconnect = local?.unavailable ? local.menu.local?.onReconnect : undefined
-  const ctaButton = local ? (
-    localReconnect ? (
-      <Button variant="outline" size="lg" onClick={localReconnect} className="w-full">
-        <RefreshCw />Reconnect
-      </Button>
-    ) : local.match !== "none" && local.onOpenOnMuza ? (
-      <Button variant="outline" size="lg" onClick={local.onOpenOnMuza} className="w-full">
-        <ExternalLink />{local.match === "owned" ? "Owned on muza" : "Also on muza"}
-      </Button>
-    ) : null
-  ) : hasBuyingOption ? (
+  // Imported: no CTA. "Reconnect" sits right after the "Imported" badge on
+  // its line (LocalBadge) — a full-width button for it as well said the
+  // same thing twice, louder. "Save offline" is a menu row like every other
+  // imported action (the "…").
+  const ctaButton = local ? null : hasBuyingOption ? (
     <Button variant="outline-primary" size="lg" onClick={onBuy} className="w-full">
       Buy – {buyingPrice}
     </Button>
@@ -410,7 +373,20 @@ export function MediaHeader({
               {title}
             </MarqueeText>
             {metaLine}
-            {localCopyLine}
+            {/* "Imported" on a line of its own, under the meta: it is not a
+                fact about the release (owner, type, year) but where this copy
+                comes from, and in the meta line it read as one more of them.
+                Why it cannot play, when its source is off, follows the badge
+                on the same line; the offline mark when a copy is saved. */}
+            {local && (
+              <LocalBadge
+                detail={local.detail}
+                unavailable={local.unavailable}
+                savedOffline={local.savedOffline}
+                onReconnect={local.menu.local?.onReconnect}
+                className="self-start text-small text-muted-foreground leading-none"
+              />
+            )}
           </div>
 
           {/* ── Mobile actions — single full-width row: Play | Shuffle
@@ -507,7 +483,6 @@ export function MediaHeader({
                 onGoToArtist={isPlaylist ? undefined : onOwnerClick}
                 onGoToOwner={isPlaylist ? onOwnerClick : undefined}
                 onShowInfo={onInfo}
-                onOpenLocalCopy={localCopy?.onOpen}
                 {...local?.menu}
                 triggerVariant="outline"
                 triggerSize="icon-lg"

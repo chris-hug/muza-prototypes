@@ -44,6 +44,7 @@ import { DetailMenuSheetBody } from "@/components/ui/detail-more-button"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 import { useCoarsePointer } from "@/lib/use-media-query"
 import { libraryIdForTitle } from "@/lib/album-meta"
+import { useDeviceDownloads } from "@/lib/offline"
 import { usePlayer } from "@/lib/player"
 import { registerAlbums, getAlbumDetail } from "@/lib/album-catalog"
 import { IconSwap } from "@/components/ui/icon-swap"
@@ -130,6 +131,8 @@ export function AlbumCard({
   // heart / menu Save stay in sync with the detail; slug fallback for
   // synthesized albums not in the catalog.
   const libId = libraryIdForTitle(title) ?? key
+  // Files downloaded on this device: the offline mark after "Owned".
+  const downloads = useDeviceDownloads()
   // Opened by a long press on the cover — see `onLongPress` below.
   const [menuOpen, setMenuOpen] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -166,8 +169,8 @@ export function AlbumCard({
   // passes `onArtistClick`, so without it the name was a button that did
   // nothing. On the artist's own page there is nowhere to go, so no handler —
   // and no handler, no control.
-  // A local album has an artist page only when its files matched muza.
-  const goArtist = l ? l.onGoToArtist : onArtistClick ?? (hideGoToArtist ? undefined : () => openArtist(slugify(artist)))
+  // An imported album has no artist page: it is not matched to muza.
+  const goArtist = l ? undefined : onArtistClick ?? (hideGoToArtist ? undefined : () => openArtist(slugify(artist)))
   // Start playback from the album's first track (context = album title).
   // The card always plays itself — the legacy `onPlay` prop (which hosts
   // historically wired to navigation) is intentionally NOT used here.
@@ -378,12 +381,12 @@ export function AlbumCard({
              the title→artist gap exactly (no centred fixed-height box, which
              would sit a hair tighter against the meta line). */}
         {l ? (
-          <LocalBadge detail={l.detail} unavailable={!l.available} className={cn("text-muted-foreground", metaSize, metaWeight, metaTracking, leadingCls)} />
+          <LocalBadge detail={l.detail} unavailable={!l.available} savedOffline={l.savedOffline} onReconnect={l.onReconnect} className={cn("text-muted-foreground", metaSize, metaWeight, metaTracking, leadingCls)} />
         ) : purchased ? (
           // Match the meta treatment (weight + tracking) AND its line box, so
           // "Owned" sits on the same rhythm as a price line; it keeps
           // `text-foreground` (slightly more present than the muted price).
-          <span className={cn("flex items-center", leadingCls)}><PurchasedBadge /></span>
+          <span className={cn("flex items-center", leadingCls)}><PurchasedBadge offline={downloads.includes(libId)} /></span>
         ) : streamPrice ? (
           <span className={cn("flex items-center gap-1.5 text-muted-foreground tabular-nums", metaSize, metaWeight, metaTracking, leadingCls)}>
             <span>{streamPrice}</span>

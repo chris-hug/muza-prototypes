@@ -22,6 +22,8 @@
  */
 
 import { useState, useRef, useEffect } from "react"
+import { useOfflineFilterShown } from "@/lib/offline"
+import { useLocalAlbums } from "@/lib/local-library"
 import { Plus, Search, ChevronLeft, MoreHorizontal, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -55,10 +57,11 @@ const Avatar = () => <ProfileMenu avatarClassName="size-9" triggerClassName="rel
 // the filters that type has. A second row for the filters read as a second
 // kind of navigation and cost a line on a screen that has none to spare. With
 // nothing active the row IS "all", so there is no All pill; ✕ returns there.
-// Local (your own files) works from either end: Local then Albums lands on the
-// same state as Albums then Local, and turning off one lit chip leaves the
-// other on. It replaced Offline: muza keeps no music on the device, and your
-// own files are the only thing that plays without a connection.
+// Imported (your own files) works from either end: Imported then Albums lands
+// on the same state as Albums then Imported, and turning off one lit chip
+// leaves the other on. Offline (what plays here with no connection, see
+// offline.ts) is a per-type filter on Albums and Songs, shown only where it
+// differs from Imported.
 // Horizontally swipable (MobilePillTabs scrolls on overflow).
 const LIBRARY_PAGES = ["Library", "Albums", "Artists", "Playlists", "Songs"]
 const CLEAR_TAB = "__clear"
@@ -68,7 +71,8 @@ const LIBRARY_TYPES: PillTab[] = [
   { value: "Playlists", label: "Playlists" },
   { value: "Songs", label: "Songs" },
 ]
-const LIBRARY_LOCAL_TAB: PillTab = { value: "local", label: "Local" }
+const LIBRARY_LOCAL_TAB: PillTab = { value: "local", label: "Imported" }
+const LIBRARY_OFFLINE_TAB: PillTab = { value: "offline", label: "Offline" }
 // Local files arrive as albums (a folder) and their songs. No local artists or
 // playlists yet: those come with the connect flow, not with a folder.
 const LOCAL_SUBFILTERS = LIBRARY_TYPES.filter(t => t.value === "Albums" || t.value === "Songs")
@@ -85,6 +89,7 @@ const DETAIL_PAGES = ["Album", "Playlist", "Artist"]
 const PAGE_TITLE: Record<string, string> = {
   ArtistSongs: "Top Songs",
   MenuOptions: "Menu options",
+  OfflineModel: "Offline concept",
 }
 
 interface MobileAppHeaderProps {
@@ -237,6 +242,7 @@ function LibraryFilterRow({ activeNav, onNavChange }: { activeNav: string; onNav
     Songs: [songStatus, setSongStatus],
   }
   const clearTab: PillTab = { value: CLEAR_TAB, label: "", icon: <X />, ariaLabel: "Clear filters" }
+  const offlineShown = useOfflineFilterShown(useLocalAlbums())
 
   if (activeNav === "Library") {
     const local = libraryStatus === "local"
@@ -255,13 +261,18 @@ function LibraryFilterRow({ activeNav, onNavChange }: { activeNav: string; onNav
 
   const type = LIBRARY_TYPES.find(t => t.value === activeNav)!
   const [status, setStatus] = scoped[activeNav] ?? ["all", () => {}]
+  // "Offline" joins Albums and Songs only where it differs from Imported
+  // (see offline.ts) — the same rule as the desktop chips.
+  const filters = (activeNav === "Albums" || activeNav === "Songs") && offlineShown
+    ? [...LIBRARY_FILTERS[activeNav], LIBRARY_OFFLINE_TAB]
+    : LIBRARY_FILTERS[activeNav]
   const clear = () => { setStatus("all"); onNavChange("Library") }
   // The lit type comes off alone: with Local still lit that is the mixed
   // Local view, not everything. ✕ is the one that clears both.
   const dropType = () => { if (status === "local") setLibraryStatus("local"); clear() }
   return (
     <MobilePillTabs
-      tabs={[clearTab, type, ...LIBRARY_FILTERS[activeNav]]}
+      tabs={[clearTab, type, ...filters]}
       value={status === "all" ? [activeNav] : [activeNav, status]}
       onChange={v => {
         if (v === CLEAR_TAB) clear()
