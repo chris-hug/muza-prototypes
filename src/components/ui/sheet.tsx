@@ -179,7 +179,15 @@ function SheetContent({
               <Button
                 variant="ghost"
                 size="icon-sm"
-                className="absolute top-3 right-3"
+                // A BOTTOM sheet's ✕ is invisible but present — the grabber
+                // and the pull-down are its visible way out; screen readers,
+                // Switch Control and the keyboard still get the button (it
+                // shows on keyboard focus). See dialog.md. Side drawers keep
+                // the visible ✕: they have no grabber.
+                className={cn(
+                  "absolute top-3 right-3",
+                  side === "bottom" && "sr-only focus-visible:not-sr-only focus-visible:absolute",
+                )}
               />
             }
           >

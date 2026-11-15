@@ -25,7 +25,7 @@ import { useMediaNav, slugify } from "@/lib/media-nav"
 import { hasAlbumDetail, getAlbumDetail, getCredits, findTrack } from "@/lib/album-catalog"
 import { hasPlaylistDetail, getPlaylistDetail } from "@/lib/playlist-catalog"
 import { getArtistProfile } from "@/lib/artist-catalog"
-import { CreditsContent } from "@/components/app/credits-dialog"
+import { CreditsContent, creditsMode } from "@/components/app/credits-dialog"
 import { SongMenuItems } from "@/components/ui/song-list-item"
 
 /** seconds → "m:ss" (mirrors the parseTime helpers in the player chrome). */
@@ -135,6 +135,7 @@ export function AppPlayer({ footerNav }: { footerNav: boolean }) {
       credits={getCredits(creditsKey)}
       focusTrack={findTrack(getCredits(creditsKey), track.title)}
       showCover={false}
+      variant={creditsMode().variant}
       heading={null}
       onArtist={name => { setOverlayOpen(false); openArtist(slugify(name)) }}
       onAlbum={() => { setOverlayOpen(false); openAlbum(creditsKey) }}

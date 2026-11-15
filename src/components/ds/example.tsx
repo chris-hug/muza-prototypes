@@ -31,6 +31,7 @@ import { Code2, Check, Copy } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { VIEWPORTS, containerAt, sidebarAt, gutterAt } from "@/lib/breakpoints"
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { FOOTER_NAV_BELOW } from "@/lib/use-media-query"
 import { WindowWidthContext } from "@/lib/use-media-query"
 import { ChromeSidebar, ChromeGutter, ChromeTabBar } from "@/components/ds/chrome-schematic"
@@ -41,12 +42,13 @@ export type ExampleWidth = {
   /** The width the STAGE is set to — what the component measures. */
   px: number
   note: string
-  /** What the readout prints when this chip is active. Defaults to `px`. */
-  readout?: string
   /** The page chrome to draw around the stage, when this chip is a window
    *  width. Omitted for chips that are a plain box width (a component's own
    *  steps), where there is no chrome to speak of. */
   chrome?: { window: number; sidebar: number; gutter: number }
+  /** The device the window chip stands for ("iPhone 12 mini …"), shown in
+   *  the chip's tooltip. */
+  device?: string
 }
 
 /*
@@ -73,6 +75,31 @@ export type ExampleWidth = {
  * wide in a list and 363px in a `SongRail` cell — one number in, two answers
  * out. Only its own box says which, so its chips are its own box.
  */
+/* One pill look for every width chip and for "free". */
+function chipClass(on: boolean) {
+  return cn(
+    "px-2 py-0.5 rounded-full text-2xsmall font-medium transition-colors cursor-pointer",
+    on ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted",
+  )
+}
+
+/* What a chip means, in plain words for its tooltip: the screen it
+   simulates, how much of it a page gets, and that sheets take all of it.
+   A first version spelled the arithmetic out ("Page column 351px (375 −
+   2 × 12 gutter)") and read as a riddle. */
+function chipTip(w: ExampleWidth): React.ReactNode {
+  if (!w.chrome) return <span>{w.note}</span>
+  const { window: win, sidebar } = w.chrome
+  const device = w.device?.split(" — ")[0]
+  return (
+    <>
+      <span className="font-medium">A {win}px wide screen{device ? ` (${device})` : ""}</span>
+      <span>Pages get {w.px}px of it — the rest is {sidebar ? "the sidebar and the margins" : "the margins"}</span>
+      {win < 768 && <span>Sheets and dialogs use all {win}px</span>}
+    </>
+  )
+}
+
 export const WINDOW_WIDTHS: ExampleWidth[] = VIEWPORTS.map(v => {
   const container = containerAt(v.px)
   const sidebar = sidebarAt(v.px)
@@ -81,8 +108,8 @@ export const WINDOW_WIDTHS: ExampleWidth[] = VIEWPORTS.map(v => {
     label: String(v.px),
     px: container,
     note: `${v.note} — leaves a ${container}px column`,
-    readout: `${v.px} → ${container}px`,
     chrome: { window: v.px, sidebar, gutter },
+    device: v.note,
   }
 })
 
@@ -213,13 +240,6 @@ export function Example({
   const active = widths.find(w => w.label === width)
   const px = active?.px
 
-  /*
-   * The readout spells out the step the chip does not have room for. A window
-   * chip prints `1069 → 781px`, so the frame never shows a number the reader
-   * has to derive. A chip that carries no `readout` — a component's own steps
-   * — prints its label, because there the label already IS the width.
-   */
-  const readout = !active ? "free" : active.readout ?? `${active.px}px`
 
   /* Chrome is drawn only for a window chip. With none — "free", or a chip that
      is a plain box width — the stage is the frame, as before. */
@@ -257,41 +277,54 @@ export function Example({
               exactly one question — "which width is that?" — and the page used
               to answer it differently in two places. Everything here is a
               WINDOW width now, the same ladder the Responsive section uses;
-              the readout carries the container it leaves. */}
+              each chip's tooltip carries the column it leaves. */}
           <span
             className="mr-1 text-2xsmall text-muted-foreground/70 max-sm:hidden"
             title={`These are ${widthLabel.toUpperCase()} widths — the box the component itself measures. The window is wider by the sidebar and the page gutter; see the Responsive section.`}
           >
             {widthLabel}
           </span>
+          {/* Each chip explains its numbers in a tooltip: the window it
+              simulates, the column that window leaves a PAGE (minus sidebar
+              and gutters), and that a sheet or dialog below 768 ignores the
+              column and fills the window. It was a "375 → 351px" readout
+              after the chips, which read as a riddle. */}
           {widths.map(w => (
-            <button
-              key={w.label}
-              type="button"
-              onClick={() => setWidth(width === w.label ? null : w.label)}
-              aria-pressed={width === w.label}
-              title={`${w.px}px — ${w.note}`}
-              className={cn(
-                "px-2 py-0.5 rounded-full text-2xsmall font-medium transition-colors cursor-pointer",
-                width === w.label
-                  ? "bg-secondary text-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
-              )}
-            >
-              {w.label}
-            </button>
+            <Tooltip key={w.label}>
+              <TooltipTrigger
+                render={
+                  <button
+                    type="button"
+                    onClick={() => setWidth(width === w.label ? null : w.label)}
+                    aria-pressed={width === w.label}
+                    className={chipClass(width === w.label)}
+                  />
+                }
+              >
+                {w.label}
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="flex-col items-start gap-0.5">
+                {chipTip(w)}
+              </TooltipContent>
+            </Tooltip>
           ))}
-          {/* The measured width, and the way back to "as wide as it gets". */}
-          <button
-            type="button"
-            onClick={() => setWidth(null)}
-            className={cn(
-              "ml-1 text-2xsmall tabular-nums transition-colors cursor-pointer",
-              width ? "text-muted-foreground hover:text-foreground underline underline-offset-2" : "text-foreground",
-            )}
-          >
-            {readout}
-          </button>
+          {/* "free" — the way back to as wide as the page allows. A pill like
+              the others, active when no width is set. */}
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button
+                  type="button"
+                  onClick={() => setWidth(null)}
+                  aria-pressed={!width}
+                  className={chipClass(!width)}
+                />
+              }
+            >
+              free
+            </TooltipTrigger>
+            <TooltipContent side="bottom">As wide as this page allows — no window simulated</TooltipContent>
+          </Tooltip>
         </div>
       </div>
 

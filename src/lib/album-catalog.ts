@@ -291,7 +291,7 @@ const ALBUMS: AlbumDetail[] = [
   // Tracks and durations: MusicBrainz release b2cca2a2 (Blue Note CD, 2012).
   {
     id: "a30",
-    cover: "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/cb/c7/1d/cbc71df4-e2b7-4ea4-7edb-563a9aaf7b31/00602537433919.rgb.jpg/600x600bb.jpg",
+    cover: "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/2f/d7/e6/2fd7e69c-d339-050a-cbe8-80295d68cfd0/13UABIM02211.rgb.jpg/600x600bb.jpg",
     title: "Black Radio", artist: "Robert Glasper", artistAvatar: avatar("Robert Glasper"),
     year: 2012, format: "Album", buyingPrice: "$2.99", downloadPrice: "$5.99",
     label: "Blue Note",

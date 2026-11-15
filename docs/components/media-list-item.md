@@ -189,6 +189,21 @@ size. Two sizes inside a 60px row read as busy. The title / meta column is
 `flex-1 min-w-0 gap-0.5` so it takes whatever the thumb and control leave and
 is allowed to shrink to zero.
 
+## `size="lg"` — for a row that is read, not scanned
+
+`size="lg"` takes the **title** one step up, to `text-small` (19px,
+`leading-6`); the meta line stays `text-xsmall` and **wraps** instead of truncating — in the credits it is a person's roles, and a long one ("Piano, Rhodes piano (1, 2, 3 …), Synthesizer (10), Arranger …") cut to "…" hid what the row is for. Used only by the
+[credits dialog](credits-dialog.md) so far — every person and the album
+there — where the names are the content and 17px read as small next to the
+section titles. Everywhere else the dense `"default"` stays, the size of a
+Song List Item's title, so a song reads the same in search and on its album.
+
+**An artist row** shows a second line only when one is passed — the credits
+pass the roles ("Piano, Rhodes piano"); search and the library pass none and
+stay one line. **Without a photo** the artist slot draws the initials (first
+and last word, "A. B. Spellman" → AS) in the same 48px circle, so a sideman
+without a portrait reads as credited, not broken.
+
 ## Inside a dialog: the row brings its own `pl-2`
 
 `dialogListClass` in [`dialog.tsx`](../../src/components/ui/dialog.tsx) is

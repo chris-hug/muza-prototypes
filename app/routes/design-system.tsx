@@ -421,10 +421,12 @@ export default function Prototyper() {
     maxViewportShare: 0.5,
     edge: "left",
   })
-  // Folded or open, remembered like its width. Open by default: a first visit
-  // should show that the tool exists.
+  // Folded or open, remembered like its width. FOLDED by default (Nov 2026):
+  // open, it took a third of the page from the components being read, and
+  // the toggle in the tab bar says it is there. Only an explicit "open"
+  // ("1") opens it.
   const [themerOpen, setThemerOpen] = useState(() => {
-    try { return window.localStorage.getItem("muza:prototyper-themer-open") !== "0" } catch { return true }
+    try { return window.localStorage.getItem("muza:prototyper-themer-open") === "1" } catch { return false }
   })
   const toggleThemer = () => setThemerOpen(open => {
     try { window.localStorage.setItem("muza:prototyper-themer-open", open ? "0" : "1") } catch { /* private mode */ }

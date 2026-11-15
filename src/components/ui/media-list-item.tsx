@@ -41,7 +41,8 @@ export interface MediaListItemProps {
   /** Collage tiles — playlist (uses up to 4). Falls back to `cover`. */
   covers?:   string[]
   /** Second line, before the dot — artist name (album/track) or owner
-   *  (playlist). Artists have no subtitle. */
+   *  (playlist). An artist has none in search and the library; the credits
+   *  pass the roles ("Piano, Rhodes piano"). */
   subtitle?: string
   /** Second line, after the dot — year (album/track) or "123 Songs"
    *  (playlist). */
@@ -66,12 +67,17 @@ export interface MediaListItemProps {
   /** Show the ContentTypeBadge at the row's right edge. Only where nothing
    *  else names the type, i.e. a list that really mixes them. */
   showType?: boolean
+  /** `"lg"` — the title one step up, `text-small` (19px), for a row that is
+   *  read rather than scanned: the credits dialog, where the names are the
+   *  content. Everywhere else the dense `"default"` (17px), so it stays the
+   *  size of a Song List Item's title. */
+  size?:     "default" | "lg"
   className?: string
 }
 
 export function MediaListItem({
   type, title, cover, covers, subtitle, meta, badge, playing = false,
-  onOpen, onPlay, onSubtitleClick, menuItems, trailing, showType = false, className,
+  onOpen, onPlay, onSubtitleClick, menuItems, trailing, showType = false, size = "default", className,
 }: MediaListItemProps) {
   // Primary (row-body) action. Containers always navigate (onOpen). A song
   // navigates to its release when `onOpen` is supplied (so the row opens the
@@ -108,9 +114,22 @@ export function MediaListItem({
 
       {/* Title + meta. */}
       <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-        <p className="text-xsmall font-normal leading-5 text-foreground truncate">{title}</p>
-        {(type !== "artist" && (badge || subtitle || meta)) && (
-          <div className="flex items-center gap-1.5 min-w-0 text-xsmall font-light tracking-[0.02em] text-muted-foreground leading-5">
+        <p className={cn(
+          "font-normal text-foreground truncate",
+          size === "lg" ? "text-small leading-6" : "text-xsmall leading-5",
+        )}>{title}</p>
+        {/* An artist shows a second line only when one is given — the
+            credits' roles ("Piano, Rhodes piano"). Search and the library
+            pass none, so their artist rows stay one line. */}
+        {(badge || subtitle || meta) && (
+          /* `lg` WRAPS its second line instead of truncating it: in the
+             credits it is a person's roles, and "Piano, Rhodes piano (1, 2,
+             3 …), Synthesizer (10), Arranger …" cut to "…" hid exactly the
+             information the row is for. The dense lists keep truncating. */
+          <div className={cn(
+            "flex items-center gap-1.5 min-w-0 text-xsmall font-light tracking-[0.02em] text-muted-foreground leading-5",
+            size === "lg" && "[&_.truncate]:whitespace-normal [&_.truncate]:overflow-visible",
+          )}>
             {badge && <Badge variant="secondary" shape="square-xs" className="shrink-0">{badge}</Badge>}
             {subtitle && (
               onSubtitleClick ? (
@@ -195,6 +214,15 @@ function Leading({
   // avatar + name. Nothing distinguishes the two visually — this comment
   // used to claim a "Label" badge, which the row has never rendered.
   if (type === "artist" || type === "label") {
+    /* No photo — most sidemen have none — initials in the same circle, so
+       the row reads as credited, not broken. */
+    if (!cover) {
+      return (
+        <div aria-hidden="true" className="size-12 shrink-0 rounded-full bg-muted art-edge flex items-center justify-center text-xsmall font-medium text-muted-foreground">
+          {initials(title)}
+        </div>
+      )
+    }
     return (
       <img
         src={cover}
@@ -226,4 +254,13 @@ function Leading({
       className="size-12 shrink-0 rounded-xs object-cover bg-secondary art-edge"
     />
   )
+}
+
+/* "Mark Ernestus" → ME, "A. B. Spellman" → AS: the first and the last word,
+   dots dropped. Names are stored as read, never "Ernestus, Mark". */
+function initials(name: string) {
+  const words = name.replace(/\./g, " ").split(/\s+/).filter(Boolean)
+  const first = words[0]?.[0] ?? ""
+  const last  = words.length > 1 ? words[words.length - 1][0] : ""
+  return (first + last).toUpperCase()
 }

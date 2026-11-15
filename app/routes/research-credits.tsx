@@ -151,7 +151,7 @@ export default function ResearchCredits() {
       <div className="px-page mx-auto flex max-w-[1440px] flex-col gap-16 py-16">
         <header className="flex flex-col gap-3">
           <p className="text-xsmall text-muted-foreground">muza research · 12 Nov 2026</p>
-          <h1 className="text-3xlarge font-bold leading-tight tracking-tight text-foreground">Credits in streaming apps</h1>
+          <h1 className="text-3xlarge font-medium leading-tight tracking-tight text-foreground">Credits in streaming apps</h1>
           <p className="text-small text-muted-foreground max-w-2xl">
             How five services show who played what. Same album everywhere (Robert Glasper Experiment, <em>Black Radio</em>), same song (“Afro Blue”), recorded in each web player.
           </p>

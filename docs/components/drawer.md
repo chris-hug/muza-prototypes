@@ -42,7 +42,7 @@ and modals read as one family.
 | `SheetContent` | `fixed z-50 flex flex-col bg-background text-popover-foreground border-border` + one of the side classes; slides in from its edge | a flex column so the body is the one band that scrolls |
 | `side="right"` / `"left"` | `inset-y-0 h-dvh`, `border-l` / `border-r`; width from `className` | |
 | `side="bottom"` / `"top"` | `inset-x-0 w-dvw`, `border-t` / `border-b`; height from content or `className` | the bottom sheet the "…" menu uses (`rounded-t-2xl` added at the call site) |
-| ✕ | `Button ghost icon-sm` at `absolute top-3 right-3`, on by default (`showCloseButton`) | |
+| ✕ | `Button ghost icon-sm` at `absolute top-3 right-3`, on by default (`showCloseButton`). **Bottom sheets: invisible but present** (`sr-only`, shown on keyboard focus) — the grabber is the visible way out; side drawers keep it visible | see [dialog.md](dialog.md), *The ✕ on a phone sheet* — a base-component change |
 | `SheetHeader` | `flex flex-col gap-0.5 px-6 pt-6 pb-4 shrink-0 border-b border-border/60` | the hairline exists because the body scrolls under the header — a `Dialog` body does not, so it has none |
 | `SheetTitle` | `text-large font-medium leading-none text-foreground` | the style the dialog frames use for their titles |
 | `SheetDescription` | `text-small text-muted-foreground` | |
@@ -75,7 +75,7 @@ over a half-typed field. See [dialog.md](dialog.md).
 is not a control: it is the only thing on screen that says this surface can be
 pulled **down**.
 
-**A sheet with a ✕ can go without one**, because the way out is drawn. A sheet
+**Every bottom sheet needs one** now that its ✕ is invisible (Nov 2026) — the grabber is the visible way out. (It used to read: a sheet with a ✕ can go without one, because the way out is drawn.) A sheet
 whose only way out is the gesture cannot — the release editor put Save in the
 corner the ✕ had been in and left nothing at all saying the sheet could be
 left without saving. Every `Dialog` bottom sheet now carries one, phones only,

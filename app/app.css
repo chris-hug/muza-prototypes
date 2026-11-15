@@ -897,6 +897,24 @@
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)' opacity='0.1'/%3E%3C/svg%3E");
 }
 
+/* The glass's SURFACE without the glass: `.frosted-glass`'s top-right sheen
+   and fractal-noise grain, no backdrop-filter and no tint. For a picture
+   that is already blurred in place (the credits dialog's cover band): the
+   frosted glass's 80–92% tint hid the cover, and its backdrop-filter escaped
+   the dialog's rounded corners in Chrome. Same grain tile, same size. */
+.glass-grain {
+  background-image:
+    linear-gradient(to top right, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)' opacity='0.1'/%3E%3C/svg%3E");
+  background-size: cover, 182px;
+  background-repeat: no-repeat, repeat;
+}
+.dark .glass-grain {
+  background-image:
+    linear-gradient(to top right, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)' opacity='0.1'/%3E%3C/svg%3E");
+}
+
 /* Waveform colours — both adapt to the mode the waveform sits in.
    · played (`--waveform-progress`): deep blue-200 on light glass; brighter
      blue-50 on the near-black dark glass (blue-200 is too low-contrast there).

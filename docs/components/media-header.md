@@ -174,8 +174,9 @@ the type chip below 240, was removed: this line is never narrower than 260
 could never fire. The owner is the highest priority and only truncates once
 the year is gone.
 
-In the frame the window chips read: 375 → 351 stacked · 584 → 536 stacked ·
-608 → 508 stacked · 768 → 692 horizontal, "…" only · 1069 → 781 full.
+In the frame (window → page width, in each chip's tooltip): 375 → 351 stacked ·
+584 → 536 stacked · 608 → 508 stacked · 768 → 692 horizontal, "…" only ·
+1069 → 781 full.
 
 ## Behaviour
 

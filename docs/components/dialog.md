@@ -7,6 +7,7 @@ usage:
   - Library › + / create tile — New Playlist (full-screen form on phones) | /?page=Playlists
   - Playlist detail › … → Edit info (same form) | /?page=Playlist
 contract:
+  - "[sheet] **On a phone a bottom sheet's ✕ is invisible, not gone.** The grabber, the pull-down, the backdrop and Escape are the visible way out; the ✕ stays in the accessibility tree and the tab order (`max-md:sr-only`, shown on keyboard focus), because VoiceOver, Switch Control and a keyboard cannot drag. Desktop keeps the visible ✕; a `mobile=\"form\"` sheet hides it outright, its bar carries the way out."
   - "[touch] **Sheet chrome is shared, and breaks quietly from a call site.** `.sheet-glass` only works because the bar OVERLAYS the content — glass over nothing is a colour — and `--sheet-bar-h` must equal the bar's real height, or the list under an absolute bar loses its first rows."
   - "[sheet] **Every Dialog and AlertDialog is a bottom sheet on mobile and a centred modal from 768.** It is baked into the base content component — an individual dialog sets its desktop width and height only, and must not re-declare the positioning."
   - "[sheet] **Forms go full-screen on phones** (`mobile=\"form\"`). A bottom sheet cannot hold a form once the keyboard is up, so any dialog whose primary action must survive typing anchors to the top, gives only its body a scroll, and puts the confirming action where the keyboard cannot reach it."
@@ -79,8 +80,9 @@ left edge as the rows, the field and the footer below it.
 - **One back control per sheet.** A drilled-in screen does not add its own —
   it fills the header's `leading` slot. Two identical controls on screen is
   the failure this replaced.
-- Dismissal is always the **✕ at the top right**, `mobile="form"` included.
-  Its bar carries no Cancel.
+- Dismissal on **desktop** is the **✕ at the top right**. On a **phone**
+  bottom sheet the ✕ is **invisible but present** (Nov 2026, see below);
+  a `mobile="form"` sheet's bar carries the way out.
 
 Titles are `text-small` (19px), `md:text-large` where a dialog wants the
 larger desktop title — never a bare `text-large`. 21px crowded the line the
@@ -623,3 +625,33 @@ trigger opens the real, portaled sheet at the bottom of the browser.
 - DESIGN_SYSTEM.md, same section · says the `DialogActionBar` carries "`leading` Cancel (ghost) · `DialogTitle` (`text-base font-medium`)" · `dialog.tsx`: the bar's title is `dialogTitleClass` (`text-small`) and dismissal is the ✕ in `trailing`; there is no Cancel (this doc, "Header").
 - dialog.tsx `dialogChromeClass` is `p-3 md:p-6 gap-2 md:gap-5`. A dialog that passes `p-0 gap-0` to own its bands (Purchase, Paywall, Checkout, Credits) cancels only the phone half: tailwind-merge keeps `md:p-6 md:gap-5` (a variant is a separate key), and at ≥768 the media-query rule outranks bare `p-0`. If a desktop screen shows 24px of chrome padding around those dialogs' own `px-6` sections, the fix is `md:p-0 md:gap-0` at each call site — not verified here (no browser).
 - `dialogPreviewPhoneClass` forces `!p-3 !gap-2` on every preview at a phone chip, including the `p-0 gap-0` previews above, so a 375 chip shows them with a 12px gutter the live sheet does not have.
+
+## The ✕ on a phone sheet — invisible, not removed (Nov 2026)
+
+On a phone, a bottom sheet's ✕ is **visually hidden** (`max-md:sr-only`)
+but stays mounted, labelled ("Close"), in the tab order, and shows itself on
+keyboard focus (`max-md:focus-visible:not-sr-only`). The visible ways out are
+the grabber, the pull-down, a tap on the backdrop and Escape.
+
+- **Why hide it:** the 32px ✕ sat in the tightest corner of the sheet and
+  competed with what the sheet is for — on the credits dialog it sat on the
+  album cover. The big apps' content sheets show the grabber alone.
+- **Why not remove it:** VoiceOver, Switch Control and a keyboard cannot
+  drag. For them the ✕ is the one named way out, so it stays in the
+  accessibility tree. The pull-down also closes the sheet by clicking the
+  sheet's own close button (focus goes back where it came from).
+- **Where it stays visible:** every desktop dialog (from 768), and side
+  drawers (`Sheet side="left|right"`, no grabber). A `mobile="form"` sheet
+  hides it outright (`max-md:hidden`): its bar carries the way out, and the
+  form sheet does not dismiss by dragging — a stray swipe would throw away
+  what was typed.
+- **Design-system previews** at a phone chip draw no ✕ either, so the frame
+  shows the sheet that really opens.
+
+**For development (Nevo):** this is a change in the **base components**, not
+in a dialog: `DialogContent` (`src/components/ui/dialog.tsx`) and
+`SheetContent` (`src/components/ui/sheet.tsx`, `side="bottom"`). Every bottom
+sheet in the app inherits it with no call-site change. If production builds
+its own dialog/sheet primitive, the same rule must go there: below 768 a
+bottom sheet keeps a real, labelled, focusable close button, visually hidden
+until it receives keyboard focus — not `display: none`, not removed.

@@ -1261,6 +1261,8 @@ ladder, the derivations, the duplication map — is in
      of the pages that own these rules. Do not edit between these markers —
      edit the owning page and re-run `npm run sync-docs`. -->
 
+**On a phone a bottom sheet's ✕ is invisible, not gone.** The grabber, the pull-down, the backdrop and Escape are the visible way out; the ✕ stays in the accessibility tree and the tab order (`max-md:sr-only`, shown on keyboard focus), because VoiceOver, Switch Control and a keyboard cannot drag. Desktop keeps the visible ✕; a `mobile="form"` sheet hides it outright, its bar carries the way out. → [dialog.md](docs/components/dialog.md)
+
 **Every Dialog and AlertDialog is a bottom sheet on mobile and a centred modal from 768.** It is baked into the base content component — an individual dialog sets its desktop width and height only, and must not re-declare the positioning. → [dialog.md](docs/components/dialog.md)
 
 **Forms go full-screen on phones** (`mobile="form"`). A bottom sheet cannot hold a form once the keyboard is up, so any dialog whose primary action must survive typing anchors to the top, gives only its body a scroll, and puts the confirming action where the keyboard cannot reach it. → [dialog.md](docs/components/dialog.md)

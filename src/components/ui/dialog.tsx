@@ -599,7 +599,6 @@ function DialogContent({
             render={
               <Button
                 variant="ghost"
-                // The form sheet's bar carries Cancel — no X on phones there.
                 // Vertically centred on the HEADER ROW, not on the sheet's
                 // corner — it sits at the gutter, exactly where the row
                 // starts, so title and ✕ share a centre line. `right-2`
@@ -611,7 +610,21 @@ function DialogContent({
                    visibly low and tight in the corner. A corner control has
                    exactly one distance to get right, and it is the same one
                    twice. */
-                className={cn("absolute top-4 right-4", form && "max-md:hidden")}
+                /* On a phone the ✕ of a bottom sheet is INVISIBLE but still
+                   there (Nov 2026): the grabber, the pull-down, the backdrop
+                   and Escape close it, and a visible ✕ in the tightest
+                   corner competed with the content. It stays in the
+                   accessibility tree and the tab order — VoiceOver, Switch
+                   Control and a keyboard have no drag — and shows itself
+                   when focused from the keyboard. The form sheet hides it
+                   outright: its bar carries the way out. Desktop: always
+                   visible. */
+                className={cn(
+                  "absolute top-4 right-4",
+                  form
+                    ? "max-md:hidden"
+                    : "max-md:sr-only max-md:focus-visible:not-sr-only max-md:focus-visible:absolute",
+                )}
                 size="icon-sm"
               />
             }
@@ -840,7 +853,9 @@ function DialogPreview({
       className={cn("relative", dialogChromeClass, className, phone && dialogPreviewPhoneClass, phone && phoneClassName)}
     >
       {children}
-      {showCloseButton && (
+      {/* No ✕ in the phone preview: the real bottom sheet hides it (see
+          DialogContent). */}
+      {showCloseButton && !phone && (
         <Button
           variant="ghost"
           size="icon-sm"

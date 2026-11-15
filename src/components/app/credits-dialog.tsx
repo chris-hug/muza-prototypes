@@ -22,10 +22,11 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from "react"
 
 import {
-  Dialog, DialogContent, DialogTitle,
+  Dialog, DialogContent, DialogTitle, dialogPreviewPhoneClass,
 } from "@/components/ui/dialog"
 import { X as XIcon, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { SheetGrabber } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 import { useIsMobile } from "@/lib/use-media-query"
 import { getCredits, hasAlbumDetail, findTrack, peopleOnTrack, type Credits, type CreditGroup, type CreditPerson } from "@/lib/album-catalog"
@@ -33,6 +34,7 @@ import { usePlayerOptional } from "@/lib/player"
 import { TrackNumberPlayButton } from "@/components/ui/song-list-item"
 import { artistImage } from "@/lib/artist-data"
 import { LibraryHeartButton } from "@/components/ui/library-heart-button"
+import { MediaListItem } from "@/components/ui/media-list-item"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { CreditsContext } from "@/lib/credits-context"
 import { useMediaNav, slugify } from "@/lib/media-nav"
@@ -78,6 +80,28 @@ function Value({ children, onClick, className }: { children: React.ReactNode; on
  *  side by side; the dialog reads `?credits=page` from the URL. */
 export type CreditsLayout = "tabs" | "page"
 
+/** Two versions of one record, both kept while they are compared.
+ *  `"draft"` — the earlier version: compact head, the album's lineup (roles merged), the
+ *  release facts, and a song's credits read TRACK BY TRACK through the whole
+ *  album (Qobuz / Tidal). Built as muza's edge: the catalogue is rich, so show
+ *  it. `"current"` — the version in use (Nov 2026): only what was asked — an album
+ *  under its floating cover (musicians with their instruments, production,
+ *  the sleeve, the release card), or ONE song (title, composer, album, who
+ *  plays on it). Every app gets you there
+ *  from where you came, nothing to switch between (Spotify / YouTube Music).
+ *  The app opens "current"; `?credits=draft` (or `?credits=page`, the
+ *  draft stacked) brings the draft back. The design system shows both. */
+export type CreditsVariant = "current" | "draft"
+
+/** The version (and the draft's layout) the URL asks for. Read where the credits
+ *  are mounted — the dialog and the player — so one switch flips both. */
+export function creditsMode(): { variant: CreditsVariant; layout: CreditsLayout } {
+  const q = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("credits") : null
+  if (q === "page") return { variant: "draft", layout: "page" }
+  if (q === "draft") return { variant: "draft", layout: "tabs" }
+  return { variant: "current", layout: "tabs" }
+}
+
 const GROUP_LABEL: Record<CreditGroup, string> = {
   personnel:   "Personnel",
   composition: "Composition",
@@ -86,30 +110,8 @@ const GROUP_LABEL: Record<CreditGroup, string> = {
 }
 const GROUP_ORDER: CreditGroup[] = ["personnel", "composition", "production", "artwork"]
 
-/* Initials from the FIRST and LAST name — "Mark Ernestus" → ME,
-   "A. B. Spellman" → AS. Qobuz split a stored "Ernestus, Mark" at the comma
-   and showed "E" over a role of "Composer, Mark"; names here are stored the
-   way they are read, so the first and last words are the right two. */
-function initials(name: string) {
-  const words = name.replace(/\./g, " ").split(/\s+/).filter(Boolean)
-  const first = words[0]?.[0] ?? ""
-  const last  = words.length > 1 ? words[words.length - 1][0] : ""
-  return (first + last).toUpperCase()
-}
-
-/* A photo where the catalogue has one, initials otherwise. Sidemen rarely
-   have a photo, so the initials are the common case and get the same circle,
-   size and edge as a portrait — the row must not look broken without one. */
-function PersonAvatar({ name }: { name: string }) {
-  const src = artistImage(name)
-  return src ? (
-    <img src={src} alt="" draggable={false} className="size-10 shrink-0 rounded-full object-cover art-edge" />
-  ) : (
-    <div aria-hidden="true" className="size-10 shrink-0 rounded-full bg-muted art-edge flex items-center justify-center text-2xsmall font-medium text-muted-foreground">
-      {initials(name)}
-    </div>
-  )
-}
+/* Initials and the portrait-or-initials circle now live in `MediaListItem`
+   (its artist slot), which draws every person row here. */
 
 /* "Bass clarinet (1, 2), Flute (3), Composer" — the liner-note convention.
    Track numbers say where a role applies in a few characters, instead of a
@@ -129,7 +131,323 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
  * the others pass `null`. `onArtist`/`onAlbum` make names navigable; omit
  * them for a static render.
  */
-export function CreditsContent({
+export function CreditsContent({ variant = "draft", songCover, ...props }: CreditsContentProps & { variant?: CreditsVariant; songCover?: boolean }) {
+  return variant === "current" ? <CreditsCurrent {...props} songCover={songCover} /> : <CreditsDraft {...props} />
+}
+
+type CreditsContentProps = Parameters<typeof CreditsDraft>[0]
+
+
+/*
+ * CreditsCurrent — the version in use. One scroller. From an album: the
+ * cover floating over a blurred band and hanging into the sheet, album name,
+ * main artist · year, every musician with what they play, production and the
+ * sleeve, the release card. From a song (`focusTrack`): only THAT song —
+ * the floating cover (or text only, `songCover={false}`) with the song's
+ * title and artist, then its Musicians, its Composer(s) and its Album as a
+ * row; no facts, no track list, no switching to the album. It answers the
+ * question the button asked and stops.
+ */
+function CreditsCurrent({
+  credits, heading, onArtist, onAlbum, bodyClassName = "max-h-[60vh]",
+  showCover = true, focusTrack, songCover = true,
+}: CreditsContentProps & {
+  /** A SONG's head: the album's floating cover (`true`, the default) or
+   *  text only. Both are live in the design system while they are judged. */
+  songCover?: boolean
+}) {
+  const track = focusTrack ? credits.tracks[focusTrack - 1] : undefined
+  const ofTrack = (g: CreditGroup) => {
+    const list = credits.people.filter(p => p.group === g)
+    return track && focusTrack ? peopleOnTrack(list, focusTrack) : list
+  }
+  /* What they PLAY, and nothing else: a bandleader's personnel entry also
+     carries Composer, Arranger, Producer — the brief is "musicians +
+     instrument". Track numbers go too ("Synthesizer (10)" → "Synthesizer"):
+     the draft answers "on which track"; this answers "who plays". */
+  const NOT_PLAYING = /compos|arrang|produc|engineer|mix|master|liner|design|photo|lyric|writ/i
+  const WRITING = /compos|lyric|writ/i
+  const musicians = ofTrack("personnel")
+    .map(p => ({
+      ...p,
+      roles: [...new Set(p.roles.map(r => r.role).filter(r => !NOT_PLAYING.test(r)))].map(role => ({ role })),
+    }))
+    .filter(p => p.roles.length > 0)
+  /* Whoever wrote THIS song, from any group — a leader's "Composer" sits in
+     his personnel entry (Dolphy on Gazzelloni), not under Composition — as
+     its own section, rows like the musicians', only the writing roles. */
+  const composers = track && focusTrack
+    ? peopleOnTrack(credits.people, focusTrack)
+        .map(p => ({ ...p, roles: p.roles.filter(r => WRITING.test(r.role)) }))
+        .filter(p => p.roles.length > 0)
+    : []
+
+  /* The floating cover: always for an album; for a song unless
+     `songCover={false}`. */
+  const floatHead = showCover && (!track || songCover)
+  const title = track ? track.title : credits.album
+  const artistLine = (
+    <>
+      <Value onClick={onArtist && (() => onArtist(credits.mainArtist))} className="truncate">
+        {credits.mainArtist}
+      </Value>
+      {!track && credits.year ? <span className="shrink-0">· {credits.year}</span> : null}
+    </>
+  )
+
+  return (
+    <div className={cn("flex flex-col flex-1 min-h-0 overflow-y-auto", bodyClassName)}>
+      {/* The head: a band of the blurred cover; the cover floats in it and
+          hangs into the sheet below, so picture and list read as one object
+          rather than a banner on top of a page. The title, larger, centred
+          under it — the album's, or the song's. Tried and dropped: the cover
+          over a blurred 3:2 copy with the text below (a banner), and the
+          cover full-bleed with the title set on it (too loud). */}
+      {floatHead && (
+        /* Sized from the DIALOG's width, not the window's: `--cover` is
+           min(260px, the sheet's width − 64px) via container units, so the
+           cover floats with 32px either side on the smallest phone and tops
+           out at 260 in the 576 dialog. On a PHONE (sheet under 420px) it is
+           200: the musicians should be readable with little or no scrolling,
+           and 260 pushed them under the fold. 384, 320 and 280 were tried and
+           were too big. With `md:` sizes it went by the window — in a
+           phone-sized design-system frame on a wide screen the 384px cover
+           filled the whole sheet edge to edge. */
+        <div className="@container/credits-head shrink-0">
+        <div className="relative [--cover:min(260px,100cqw-64px)] @max-[420px]/credits-head:[--cover:200px]!">
+          {/* The band ends with a hard edge, so the cover visibly crosses it:
+              the cover 32px down, the band ending at 60% of it, so ~40%
+              hangs on the sheet. A band that faded out left nothing to cross.
+              192, 240 and 288px were tried for the cover and read as a
+              thumbnail. The shadow is lighter in light mode: the dark one sat
+              on the pale sheet as a smudge. */}
+          {/* The cover blurred 8px (scaled 110% so the blur has no soft
+              edge; 16px hid the picture) under a light tint of the sheet.
+              Tried and dropped: the player's backdrop exactly (32px under
+              `.frosted-glass`) — the glass tints to 80% of the background, so
+              the cover was gone, and its `backdrop-filter` escaped the
+              dialog's rounded corners in Chrome, leaving them square. No
+              backdrop-filter here; the glass's grain and sheen come on their
+              own (`.glass-grain`). */}
+          <div aria-hidden="true" className="relative h-[calc(32px+var(--cover)*0.6)] w-full overflow-hidden bg-background">
+            <div
+              className="absolute inset-0 bg-cover bg-center scale-110"
+              style={{ backgroundImage: `url(${credits.cover})`, filter: "blur(8px) saturate(1.5)" }}
+            />
+            {/* The tint only in DARK mode, where it calms a bright cover
+                against the near-black sheet. In light mode it was a 25%
+                wash of off-white over the picture — a grey veil — so light
+                gets none, and the blur is saturated 1.5× in both so the
+                cover's colour survives it. */}
+            <div className="absolute inset-0 dark:bg-background/25" />
+            <div className="absolute inset-0 glass-grain" />
+          </div>
+          <img
+            src={credits.cover}
+            alt={credits.album}
+            draggable={false}
+            className="absolute left-1/2 top-8 size-(--cover) -translate-x-1/2 rounded-sm object-cover art-edge shadow-[0_16px_32px_-12px_rgb(0_0_0/0.22)] dark:shadow-[0_24px_48px_-12px_rgb(0_0_0/0.6)]"
+          />
+          {/* Sizes and spacing are the ALBUM PAGE's stacked header
+              (`MediaHeader` below 560): cover → title 16px, title
+              `text-large font-semibold leading-[1.2]`, 12px to the meta
+              line (6 in a phone-wide sheet, container under 420px, where 12
+              read loose), `text-small leading-none` (the artist regular, not the
+              page's `font-medium` — read as bold here),
+              16px to what follows. Centred here, as the cover is. It had its
+              own scale (30px title, 20/14 gaps) — the same album read
+              differently on its page and in its credits. The gap BELOW is
+              this block's `pb`; the content under it cancels its own 24px. */}
+          <div className="flex flex-col items-center gap-3 px-4 pt-[calc(var(--cover)*0.4+16px)] pb-4 text-center @max-[420px]/credits-head:gap-1.5!">
+            {/* Not a link: an album's credits are opened FROM the album
+                (its ⓘ, its ⋯), so the title would only lead back. */}
+            <p className="text-large font-semibold leading-[1.2] text-foreground text-center">
+              {title}
+            </p>
+            <div className="flex min-w-0 justify-center gap-1.5 text-small leading-none text-muted-foreground">
+              {artistLine}
+            </div>
+          </div>
+        </div>
+        </div>
+      )}
+
+      {/* Under the floating head the text block below is empty (only the
+          sr-only title); `-mt-6` cancels its 24px gap, so the space to the
+          first section is the head's own `pb` (see the head). */}
+      <div className={cn(
+        // ONE gutter at every size, 16px, as the draft: `md:px-6` gave
+        // desktop a wider margin than the phone — and put the release card
+        // 16px from the sides but 8 from the bottom, not concentric.
+        "flex flex-col gap-6 px-4 pb-[max(16px,env(safe-area-inset-bottom))]",
+        floatHead ? "pt-0 -mt-6" : "pt-6",
+      )}>
+        <div className="flex flex-col gap-1">
+          {heading}
+          {/* Without the cover: the title and artist as text. `pr-8` keeps
+              them clear of the ✕ in the corner. */}
+          {/* The song without its cover takes the floating head's title and
+              artist exactly (centred, `text-xlarge`), so the two variants
+              differ only by the picture. In the player (`showCover` off, its
+              own artwork beside) the head stays small and left-aligned.
+              `px-8` keeps the centred title clear of the ✕. */}
+          {!floatHead && showCover && (
+            <div className="flex min-w-0 flex-col items-center gap-3 px-8 pt-4 text-center">
+              <p className="text-large font-semibold leading-[1.2] text-foreground">{title}</p>
+              <div className="flex min-w-0 justify-center gap-1.5 text-small leading-none text-muted-foreground">
+                {artistLine}
+              </div>
+            </div>
+          )}
+          {!showCover && (
+            <div className="flex min-w-0 flex-col gap-0.5 pr-8">
+              <Value onClick={track ? undefined : onAlbum} className={track ? "text-small font-medium text-foreground" : "text-large font-medium leading-tight text-foreground"}>
+                {title}
+              </Value>
+              <div className="flex min-w-0 gap-1.5 text-small text-muted-foreground">
+                {artistLine}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* A SONG's writers come FIRST, before who plays it — the song
+            before the performance. Only the writing roles, from any group. */}
+        {track && composers.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <SectionTitle>{composers.length > 1 ? "Composers" : "Composer"}</SectionTitle>
+            <PersonRows list={composers} onArtist={onArtist} />
+          </div>
+        )}
+
+        {/* Then the album it is on (before the musicians: song, record,
+            players). */}
+        {track && (
+          <div className="flex flex-col gap-2">
+            <SectionTitle>Album</SectionTitle>
+            {/* The library's own album row (`MediaListItem`, as in search
+                and the library lists): cover, title, artist · year, the row
+                opens the album. `-mx-2` puts its cover on the avatars' edge;
+                the chevron, as `trailing`, says it goes somewhere — a phone
+                has no hover. */}
+            <MediaListItem
+              type="album"
+              title={credits.album}
+              cover={credits.cover}
+              subtitle={credits.mainArtist}
+              meta={credits.year ? String(credits.year) : undefined}
+              onOpen={onAlbum}
+              size="lg"
+              trailing={onAlbum && <ChevronRight aria-hidden="true" className="size-4 text-muted-foreground" />}
+              className="-mx-2 bg-transparent"
+            />
+          </div>
+        )}
+
+        {musicians.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <SectionTitle>Musicians</SectionTitle>
+            <PersonRows list={musicians} onArtist={onArtist} />
+          </div>
+        )}
+
+        {/* An ALBUM also gets who made the record and the sleeve, then the
+            release facts (label, catalogue number…) in the draft's album card,
+            last. Production and the sleeve belong to the record, not the
+            take, so a song has neither. */}
+        {!track && (["production", "artwork"] as CreditGroup[]).map(g => {
+          const list = credits.people.filter(p => p.group === g)
+          return list.length > 0 && (
+            <div key={g} className="flex flex-col gap-2">
+              <SectionTitle>{GROUP_LABEL[g]}</SectionTitle>
+              <PersonRows list={list} onArtist={onArtist} />
+            </div>
+          )
+        })}
+        {!track && (
+          /* Concentric with the dialog: 8px from its sides AND its bottom
+             (`-mx-2 -mb-2` out of the 16px gutter and padding), so its
+             radius is the dialog's 18 minus 8 = 10 (`rounded-md`). It was
+             `rounded-xl` (12) sitting 16px from the bottom — the curves ran
+             out of step with the sheet's. */
+          <div className="-mx-2 -mb-2 flex flex-col gap-3 rounded-md bg-muted p-4">
+            <span className="truncate text-small font-medium text-foreground">{credits.album}</span>
+            <FactList credits={credits} lead={[["Main artist", credits.mainArtist]]} />
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* The release facts — Recorded (date + studio) · Released · Label
+   (label · catalogue number) · Songs · Run time — a row left out when the
+   catalogue has no value. Shared by both variants' album card. */
+function releaseFacts(credits: Credits): [string, React.ReactNode][] {
+  const s = credits.tracks.reduce((sum, t) => {
+    const [m, sec] = t.duration.split(":").map(Number)
+    return sum + (m || 0) * 60 + (sec || 0)
+  }, 0)
+  const total = s ? `${Math.round(s / 60)} min` : undefined
+  return [
+    ...(credits.recordingDate || credits.studio
+      ? [["Recorded", <>{credits.recordingDate}{credits.recordingDate && credits.studio && <br />}{credits.studio}</>] as [string, React.ReactNode]]
+      : []),
+    ...(credits.year ? [["Released", String(credits.year)] as [string, React.ReactNode]] : []),
+    ...(credits.label ? [["Label", [credits.label, credits.catalogNumber].filter(Boolean).join(" · ")] as [string, React.ReactNode]] : []),
+    // Two facts, two rows: "Tracks 5 · 42 min" read as one number in two units.
+    ["Songs", String(credits.tracks.length)],
+    ...(total ? [["Run time", total] as [string, React.ReactNode]] : []),
+  ]
+}
+
+function FactList({ credits, lead = [] }: { credits: Credits; lead?: [string, React.ReactNode][] }) {
+  return (
+    <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-small leading-snug">
+      {[...lead, ...releaseFacts(credits)].map(([k, v]) => (
+        <div key={k} className="contents">
+          <dt className="text-muted-foreground">{k}</dt>
+          <dd className="text-foreground">{v}</dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
+/* One row per person: avatar, name (a link when they have a page), roles,
+   heart. Shared by both variants so a person reads the same in either. */
+function PersonRows({ list, onArtist }: { list: CreditPerson[]; onArtist?: (name: string) => void }) {
+  /* The library's own row (`MediaListItem type="artist"`, `size="lg"` — the
+     name one step up, as the content of this dialog): portrait or initials,
+     name, the roles as its second line, the heart as `trailing`, the row
+     opens the artist. No page (`profile: false` — sleeve designers, liner
+     note writers) → no `onOpen` and no heart: credited, not a link. */
+  return (
+    <div className="-mx-2 flex flex-col">
+      {list.map(p => {
+        const linked = p.profile !== false && !!onArtist
+        return (
+          <MediaListItem
+            key={p.name}
+            type="artist"
+            size="lg"
+            title={p.name}
+            cover={artistImage(p.name)}
+            subtitle={rolesLine(p.roles)}
+            onOpen={linked ? () => onArtist!(p.name) : undefined}
+            trailing={p.profile !== false && (
+              <LibraryHeartButton type="artist" id={slugify(p.name)} name={p.name} size="icon-sm" className="touch-target" />
+            )}
+            className={cn("bg-transparent", !linked && "cursor-default [--hover-fill:transparent]")}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
+/* CreditsDraft — the earlier version, kept while the current one settles. */
+function CreditsDraft({
   credits, heading, onArtist, onAlbum, bodyClassName = "max-h-[60vh]",
   showCover = true, layout = "tabs", focusTrack,
 }: {
@@ -298,37 +616,10 @@ export function CreditsContent({
     </div>
   ) : identity
 
-  const total = (() => {
-    const s = credits.tracks.reduce((sum, t) => {
-      const [m, sec] = t.duration.split(":").map(Number)
-      return sum + (m || 0) * 60 + (sec || 0)
-    }, 0)
-    return s ? `${Math.round(s / 60)} min` : undefined
-  })()
-  const facts: [string, React.ReactNode][] = [
-    ...(credits.recordingDate || credits.studio
-      ? [["Recorded", <>{credits.recordingDate}{credits.recordingDate && credits.studio && <br />}{credits.studio}</>] as [string, React.ReactNode]]
-      : []),
-    ...(credits.year ? [["Released", String(credits.year)] as [string, React.ReactNode]] : []),
-    ...(credits.label ? [["Label", [credits.label, credits.catalogNumber].filter(Boolean).join(" · ")] as [string, React.ReactNode]] : []),
-    // Two facts, two rows: "Tracks 5 · 42 min" read as one number in two units.
-    ["Songs", String(credits.tracks.length)],
-    ...(total ? [["Run time", total] as [string, React.ReactNode]] : []),
-  ]
-
   /* `lead` puts facts in front — the album card names the main artist as a
      fact ("Main artist  John Coltrane"); in the album's own reading the head
      already says it. */
-  const factList = (lead: [string, React.ReactNode][] = []) => (
-    <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-small leading-snug">
-      {[...lead, ...facts].map(([k, v]) => (
-        <div key={k} className="contents">
-          <dt className="text-muted-foreground">{k}</dt>
-          <dd className="text-foreground">{v}</dd>
-        </div>
-      ))}
-    </dl>
-  )
+  const factList = (lead: [string, React.ReactNode][] = []) => <FactList credits={credits} lead={lead} />
   const overview = factList()
 
   /* Two readings of one record.
@@ -353,28 +644,7 @@ export function CreditsContent({
     /* One row per PERSON, every role merged. Hairlines between rows, as
        Tidal and Qobuz both draw them; they read as a ruled liner-note sheet
        rather than as floating text. */
-    <ul className="divide-y divide-border/60">
-      {list.map(p => (
-        <li key={p.name} className="flex items-center gap-3 py-3">
-          <PersonAvatar name={p.name} />
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            {/* No page, no link and no heart — nothing to open or save.
-                The row keeps its shape (avatar, name, roles), so a
-                person without a page reads as credited, not as broken. */}
-            <Value
-              onClick={p.profile !== false && onArtist ? () => onArtist(p.name) : undefined}
-              className="text-small text-foreground leading-tight truncate"
-            >
-              {p.name}
-            </Value>
-            <p className="text-2xsmall text-muted-foreground leading-snug">{rolesLine(p.roles)}</p>
-          </div>
-          {p.profile !== false && (
-            <LibraryHeartButton type="artist" id={slugify(p.name)} name={p.name} size="icon-sm" className="touch-target shrink-0" />
-          )}
-        </li>
-      ))}
-    </ul>
+    <PersonRows list={list} onArtist={onArtist} />
   )
 
   /* The sticky bar every section hangs from. 48px, in the dialog's colour so
@@ -461,7 +731,9 @@ export function CreditsContent({
     )
     // Bled 8px past the gutter like the track bars, so card and bars share
     // one width; the text inside then starts on the bars' number column.
-    const card = cn("relative flex flex-col gap-3 rounded-xl bg-muted p-4 text-left", showCover && "-mx-2")
+    // `rounded-md` (10): 8px in from the dialog's 18px corner — concentric
+    // (outer = inner + gap). It was `rounded-xl` (12).
+    const card = cn("relative flex flex-col gap-3 rounded-md bg-muted p-4 text-left", showCover && "-mx-2")
     return link ? (
       <div
         role="button"
@@ -655,7 +927,7 @@ export function CreditsContent({
     <Tabs
       value={tab}
       onValueChange={v => { setTab(String(v)); setScrolled(false) }}
-      className={cn("relative flex flex-col flex-1 min-h-0 gap-0", bodyClassName)}
+      className={cn("relative flex flex-col flex-1 min-h-0 gap-0 rounded-[inherit]", bodyClassName)}
       style={{ "--head-h": `${headH}px` } as React.CSSProperties}
     >
       {/* The head: `.sheet-glass` (the sheet's own glass — its colour at 72%
@@ -665,7 +937,12 @@ export function CreditsContent({
       <div
         ref={headRef}
         className={cn(
-          "sheet-glass absolute inset-x-0 top-0 z-20 flex flex-col gap-6 pt-6 pb-3 transition-shadow duration-200",
+          // `rounded-t-[inherit]`: the head is `backdrop-filter`, and Chrome
+          // paints a backdrop-filter past an ancestor's rounded
+          // `overflow: hidden` clip — the sheet's top corners showed square
+          // (`isolate` on the frame did not help). The head takes the sheet's
+          // own corner radius, passed down by `inherit`.
+          "sheet-glass absolute inset-x-0 top-0 z-20 rounded-t-[inherit] flex flex-col gap-6 pt-6 pb-3 transition-shadow duration-200",
           scrolled ? "shadow-[0_1px_0_var(--border)]" : "shadow-none",
           pad,
         )}
@@ -692,11 +969,8 @@ function CreditsDialogContent({ credits, focusTrack, onClose }: { credits: Credi
   // Navigate, then dismiss the dialog so the destination is visible.
   const go = (fn: () => void) => { fn(); onClose() }
   const albumLinkable = hasAlbumDetail(slugify(credits.album))
-  /* Comparison switch while the two layouts are judged: `?credits=page`
-     stacks the sections, anything else shows the tabs. */
-  const layout: CreditsLayout =
-    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("credits") === "page"
-      ? "page" : "tabs"
+  /* Comparison switch while the variants are judged — see `creditsMode`. */
+  const { variant, layout } = creditsMode()
   return (
     <DialogContent
       fixedHeight
@@ -722,14 +996,22 @@ function CreditsDialogContent({ credits, focusTrack, onClose }: { credits: Credi
         // height whole; from `md` the sheet is placed at a whole 10svh
         // (centred, since it is 80 high) instead of translated by half its
         // height.
-        "h-[round(down,80svh,1px)] max-h-[round(down,80svh,1px)]",
-        "md:top-[round(down,10svh,1px)] md:translate-y-0",
+        // EXCEPT a song in the current version: a few names, and the fixed height left
+        // half the sheet empty under them, so it follows its content, capped
+        // at the same 80svh. `md:max-h-…!` because the base chrome lifts the
+        // cap from `md` (`md:max-h-none`) and its rule comes later in the CSS
+        // — unforced, a long list ran off the screen. Its album is always
+        // long and keeps the fixed height, as the draft does.
+        variant === "current" && focusTrack
+          ? "max-h-[round(down,80svh,1px)] md:max-h-[round(down,80svh,1px)]!"
+          : "h-[round(down,80svh,1px)] max-h-[round(down,80svh,1px)] md:top-[round(down,10svh,1px)] md:translate-y-0",
       )}
     >
       <CreditsContent
         credits={credits}
         focusTrack={focusTrack}
         layout={layout}
+        variant={variant}
         /* Named for screen readers, not drawn: the title and the thumb
            already say what this is, and a grey "Album credits" over them was
            a label for the obvious. */
@@ -750,16 +1032,37 @@ function CreditsDialogContent({ credits, focusTrack, onClose }: { credits: Credi
  * system's frame that is the window CHIP, so a "375" frame shows the sheet
  * shape — full width, top corners only — instead of the desktop card.
  */
-export function CreditsDialogPreview({ albumKey = "a07", layout = "tabs" }: { albumKey?: string; layout?: CreditsLayout }) {
+export function CreditsDialogPreview({ albumKey = "a07", layout = "tabs", variant = "draft", track, songCover }: {
+  albumKey?: string; layout?: CreditsLayout; variant?: CreditsVariant; songCover?: boolean
+  /** A song's title — previews that song's credits instead of the album's. */
+  track?: string
+}) {
   const phone = useIsMobile()
   return (
     <div
       data-mobile={phone ? "sheet" : undefined}
       className={cn(
-        "relative w-full border border-border bg-popover overflow-hidden",
-        phone ? "max-w-full" : "max-w-xl rounded-xl md:rounded-2xl",
+        // A fixed height, as the live dialog has one: the draft's glass head
+        // lies OVER a full-height panel (absolute), so a box that only caps
+        // its height collapses to nothing around it. 640 ≈ the dialog's 80svh
+        // on a laptop.
+        // Capped at 640 like the album's fixed frame — the live dialog caps
+        // both at the same 80svh, so a song is never taller than its album.
+        // Uncapped here, a song with the cover ran past the album beside it.
+        "relative w-full max-h-[min(640px,80svh)] flex flex-col border border-border bg-popover overflow-hidden",
+        // A song in the current version follows its content, as live.
+        !(variant === "current" && track) && "h-[640px]",
+        // A phone chip shows the SHEET: the dialog's own phone-preview shape
+        // (`dialogPreviewPhoneClass` — full width, the sheet's top corners,
+        // square at the bottom; the corner value is owned there, not here),
+        // minus its padding, plus the grabber (below). It was a square box,
+        // nothing like the sheet that opens.
+        phone ? cn(dialogPreviewPhoneClass, "!p-0 !gap-0") : "max-w-xl rounded-xl md:rounded-2xl",
       )}
     >
+      {/* The real sheet's grabber hides from `md` by the REAL window; the
+          frame only pretends to be narrow, so the preview draws its own. */}
+      {phone && <SheetGrabber className="absolute left-1/2 top-1.5 z-30 -translate-x-1/2" />}
       {/* The navigation handlers are passed even though this preview goes
           nowhere. `Value` renders plain text without them and a link with
           them, so leaving them off documented the wrong component: in the
@@ -769,15 +1072,21 @@ export function CreditsDialogPreview({ albumKey = "a07", layout = "tabs" }: { al
           the person reading it. */}
       <CreditsContent
         credits={getCredits(albumKey)}
+        focusTrack={findTrack(getCredits(albumKey), track)}
         layout={layout}
+        variant={variant}
+        songCover={songCover}
         heading={null}
+        bodyClassName="min-h-0"
         onArtist={() => {}}
         onAlbum={() => {}}
       />
-      {/* The real dialog gets its ✕ from `DialogContent`; this preview builds
+      {/* The real dialog gets its ✕ from `DialogContent` (invisible on a
+          phone sheet, so the phone preview draws none); this preview builds
           its own card, so it has to carry one or the frame documents a dialog
           you cannot close. Same position and size as `DialogPreview`'s, inert
           on purpose — there is nothing to dismiss. */}
+      {!phone && (
       <Button
         variant="ghost"
         size="icon-sm"
@@ -786,6 +1095,7 @@ export function CreditsDialogPreview({ albumKey = "a07", layout = "tabs" }: { al
       >
         <XIcon />
       </Button>
+      )}
     </div>
   )
 }

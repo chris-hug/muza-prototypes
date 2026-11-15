@@ -349,8 +349,12 @@ chip above follows.
 
 Every component demo carries the **same window ladder** as chips
 (320 · 375 · 584 · 608 · 768 · 1069 · 1440 · 1512 · 1920). The frame is still
-a container — it sets itself to what that window *leaves*, and the readout
-prints both (`1069 → 781px`), with the chrome drawn around the stage so the
+a container — it sets itself to what that window *leaves*. Each chip's
+**tooltip** says it in plain words ("A 1069px wide screen · Pages get 781px of
+it — the rest is the sidebar and the margins"; below 768 also "Sheets and
+dialogs use all 375px"); the row ends in a **free** pill, the way back to
+the page's own width. A "1069 → 781px" readout after the chips was dropped:
+it read as a riddle. The chrome is drawn around the stage so the
 counter-intuitive steps are legible (584 leaves 536; 608 leaves 508, because
 the icon rail arrives).
 

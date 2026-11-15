@@ -174,6 +174,12 @@ import CreditsDialogBasicExample from "@/ds-examples/credits-dialog-basic"
 import creditsDialogBasicExampleSrc from "@/ds-examples/credits-dialog-basic.tsx?raw"
 import CreditsDialogLiveExample from "@/ds-examples/credits-dialog-live"
 import creditsDialogLiveExampleSrc from "@/ds-examples/credits-dialog-live.tsx?raw"
+import CreditsDialogASongExample from "@/ds-examples/credits-dialog-a-song"
+import creditsDialogASongExampleSrc from "@/ds-examples/credits-dialog-a-song.tsx?raw"
+import CreditsDialogBExample from "@/ds-examples/credits-dialog-b"
+import CreditsDialogBSongExample from "@/ds-examples/credits-dialog-b-song"
+import creditsDialogBSongExampleSrc from "@/ds-examples/credits-dialog-b-song.tsx?raw"
+import creditsDialogBExampleSrc from "@/ds-examples/credits-dialog-b.tsx?raw"
 import DrawerBasicExample from "@/ds-examples/drawer-basic"
 import drawerBasicExampleSrc from "@/ds-examples/drawer-basic.tsx?raw"
 import { ToastPreview } from "@/components/ui/toast"
@@ -1954,12 +1960,11 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           widths={ROW_STEPS.map(s => ({
             label: String(s.px),
             px: s.framePx,
-            note: s.note,
-            /* The chip's own number, not `framePx`. The frame is a little
-               wider on purpose (the row's padding, plus a pixel to land
-               inside the bound), and printing 395 beside a chip marked 380
-               would be one more unexplained number on this page. */
-            readout: `${s.px}px`,
+            /* The chip's own number goes in the tooltip, not `framePx`: the
+               frame is a little wider on purpose (the row's padding, plus a
+               pixel to land inside the bound), and 395 beside a chip marked
+               380 would be one more unexplained number. */
+            note: `${s.px}px row — ${s.note}`,
           }))}
           /* No stage padding here, and that is not cosmetic: the chips name
              the ROW's width, and the stage's usual `p-6` would take 48px off
@@ -2465,17 +2470,28 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
       {/* ══ CREDITS DIALOG ══ */}
       <Section id="credits-dialog" title="Credits Dialog">
         <Example
-          title="Static preview"
+          title="An album"
           doc="credits-dialog"
           align="center"
-          code={creditsDialogBasicExampleSrc}
-          codePath="src/ds-examples/credits-dialog-basic.tsx"
+          code={creditsDialogBExampleSrc}
+          codePath="src/ds-examples/credits-dialog-b.tsx"
           bleed={w => w < 768}
         >
-          <CreditsDialogBasicExample />
+          <CreditsDialogBExample />
         </Example>
         <Example
-          title="Live — useCredits().open(key)"
+          title="A song, with and without the cover"
+          doc="credits-dialog"
+          align="center"
+          code={creditsDialogBSongExampleSrc}
+          codePath="src/ds-examples/credits-dialog-b-song.tsx"
+          bleed={w => w < 768}
+          className="mt-8"
+        >
+          <CreditsDialogBSongExample />
+        </Example>
+        <Example
+          title="Live — useCredits().open(key), as the app opens it (?credits=draft for the draft)"
           doc="credits-dialog"
           align="center"
           code={creditsDialogLiveExampleSrc}
@@ -2484,6 +2500,28 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           className="mt-8"
         >
           <CreditsDialogLiveExample />
+        </Example>
+        <Example
+          title="Draft — an album"
+          doc="credits-dialog"
+          align="center"
+          code={creditsDialogBasicExampleSrc}
+          codePath="src/ds-examples/credits-dialog-basic.tsx"
+          bleed={w => w < 768}
+          className="mt-8"
+        >
+          <CreditsDialogBasicExample />
+        </Example>
+        <Example
+          title="Draft — a song, track by track"
+          doc="credits-dialog"
+          align="center"
+          code={creditsDialogASongExampleSrc}
+          codePath="src/ds-examples/credits-dialog-a-song.tsx"
+          bleed={w => w < 768}
+          className="mt-8"
+        >
+          <CreditsDialogASongExample />
         </Example>
       </Section>
 
