@@ -178,9 +178,9 @@ Three things the press has to get right, each a bug first:
 
 See [Gesture](gesture.md) for the shared numbers.
 
-The ⋯ button's own menu is a `DropdownMenu`, which below a **768px** viewport
+The ⋯ button's own menu is a `DropdownMenu`, which below a **640px** viewport
 (`useIsMobile`) presents as a bottom sheet rather than a popover — a window
-gate (768, presentation), not a hover gate, because the headless preview
+gate (640, presentation), not a hover gate, because the headless preview
 reports `hover: hover` at phone width and hybrid laptops do too.
 
 Behind the cluster a gradient fades in on the same triggers:

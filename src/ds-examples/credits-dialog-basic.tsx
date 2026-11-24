@@ -3,7 +3,7 @@
 /*
  * Credits Dialog, DRAFT, an album — the body, shown inline through `CreditsDialogPreview` so
  * the frame needs no click: the real `CreditsContent` off the real catalog
- * (A Love Supreme, key `a07`). Below a 768 window chip the preview takes the
+ * (A Love Supreme, key `a07`). Below a 640 window chip the preview takes the
  * sheet shape.
  */
 

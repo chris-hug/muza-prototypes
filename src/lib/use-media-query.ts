@@ -22,9 +22,10 @@ export const WindowWidthContext = createContext<number | null>(null)
  *
  * The app's WINDOW gates live below (see `breakpoints.ts` for the vocabulary):
  *   608  chrome        — `useFooterNav()`   tab bar ⇄ rail, mobile header, mini player
- *   768  presentation  — `useIsMobile()`    sheets ⇄ dialogs; == Tailwind `md:` in CSS
+ *   640  presentation  — `useIsMobile()`    sheets ⇄ dialogs; == Tailwind `sm:` in CSS
+ *   768  docked editor — `useDockedEditor()` the playlist editor can dock; == `md:`
  *  1069  sidebar       — `useSidebarAutoCollapsed()`
- * Tailwind's `sm` (640) and `lg` (1024) gate in-page content reflow only.
+ * Tailwind's `md` (768) also reflows in-page content, and `lg` (1024) only does.
  *
  * SSR-safe: returns `false` until the first `useEffect` runs.
  */
@@ -55,13 +56,35 @@ export function useCoarsePointer(): boolean {
   return useMediaQuery("(pointer: coarse)")
 }
 
-/** The PRESENTATION gate: true below 768 — sheets instead of dialogs and
- *  dropdowns, no docked editor. The same gate as Tailwind's `md:`. */
+/** The PRESENTATION gate: true below 640 — sheets instead of dialogs and
+ *  dropdowns. The same gate as Tailwind's `sm:`.
+ *
+ *  It was 768 (`md:`) until a tablet was actually looked at. At 744 (an iPad
+ *  mini held upright) a full-width sheet stretched "Add to a playlist" to
+ *  744px rows — the name at one edge, its ＋ at the other — and covered 85%
+ *  of the page; the centred 576px dialog read as one list. The platforms
+ *  agree: iPadOS presents a sheet as a centred form sheet at that width, and
+ *  Material 3 caps a bottom sheet at 640dp. So a sheet is for a phone, and
+ *  640 is where a phone ends. Staging had already shipped 640. */
 export function useIsMobile(): boolean {
   const override = useContext(WindowWidthContext)
-  const real = useMediaQuery("(max-width: 767px)")
-  return override != null ? override < 768 : real
+  const real = useMediaQuery(`(max-width: ${PRESENTATION_FROM - 1}px)`)
+  return override != null ? override < PRESENTATION_FROM : real
 }
+export const PRESENTATION_FROM = 640
+
+/** True when the docked playlist editor can exist (`hidden md:flex` in
+ *  `playlist-edit-drawer.tsx`, `DRAWER_FROM` in `breakpoints.ts`). It used to
+ *  ride on `useIsMobile()`; once presentation moved to 640 the two had to
+ *  part — between 640 and 768 a dialog is centred, but a 374px docked editor
+ *  would leave the page a phone-width column. Below this, Edit opens the info
+ *  dialog instead. */
+export function useDockedEditor(): boolean {
+  const override = useContext(WindowWidthContext)
+  const real = useMediaQuery(`(min-width: ${DOCKED_EDITOR_FROM}px)`)
+  return override != null ? override >= DOCKED_EDITOR_FROM : real
+}
+export const DOCKED_EDITOR_FROM = 768
 
 /**
  * Sidebar auto-collapse breakpoint — synced to the MediaHeader's

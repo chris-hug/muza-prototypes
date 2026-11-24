@@ -13,7 +13,7 @@
  * Placement mirrors `ToastViewport` rather than approximating it:
  *
  *   phone    `inset-x-3` at the BOTTOM — a slim bar spanning the window
- *   ≥ 768    `right-4 top-4 w-[380px]` — the familiar top-right card
+ *   ≥ 640    `right-4 top-4 w-[380px]` — the familiar top-right card
  *
  * `useIsMobile()` reads the frame's own window chip here (`WindowWidthContext`),
  * so picking 375 above really does move the toast to the bottom. The offsets

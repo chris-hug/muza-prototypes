@@ -3,7 +3,7 @@
 /*
  * Detail Menu, OPEN — the surface the "…" on an album detail page opens,
  * shown inline so the frame needs no click: the anchored dropdown at window
- * chips from 768 up, the bottom sheet below. `useIsMobile()` picks, and inside
+ * chips from 640 up, the bottom sheet below. `useIsMobile()` picks, and inside
  * the frame it reads the window chip, so the chips flip it.
  *
  * This file is a CALL SITE, not a copy: it renders the real surface off the

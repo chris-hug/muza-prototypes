@@ -52,7 +52,7 @@ a bug, not a variant.
 
 The design-system frame does not make you click: `DetailMenuSurface` renders
 the surface itself, open and inline, off the same props `DetailMoreButton`
-takes — the dropdown from 768 up, the bottom sheet below, chosen by
+takes — the dropdown from 640 up, the bottom sheet below, chosen by
 `useIsMobile()` (which inside the frame reads the window chip). It is not a
 mock: the dropdown uses the live component's own class strings
 (`dropdownMenuSurfaceClass` / `dropdownMenuItemClass`, exported by
@@ -83,13 +83,13 @@ The gate is **`useIsMobile()`, never a `hover:` media query**. Two reasons:
 - hybrid touch laptops report `hover: hover` too, and would get the dropdown.
 
 `useIsMobile()` keys off width alone and is reliable on real devices. The
-cutoff is **768px** (`(max-width: 767px)`), the project's "components swap"
-step — not `md` (768), which is where dialogs recentre, and not 608, where the
-sidebar becomes a footer bar. A dropdown ⇄ sheet swap is a *different
-component*, and that is the one case the 768 gate is for; cosmetic show/hide
+cutoff is **640px** (`(max-width: 639px)`), the presentation gate — the
+same step where dialogs recentre (`sm:`), and not 608, where the sidebar
+becomes a footer bar. A dropdown ⇄ sheet swap is a *different component*,
+and that is the one case the 640 gate is for; cosmetic show/hide
 of a control may still use `[@media(hover:…)]`.
 
-Because the hook reads the **window**, the design-system frame stands in for it: a window chip (375, 584 …) is fed to `useIsMobile()` through `WindowWidthContext`, so at "375" the "…" opens the sheet — portaled to the real browser window, full width — and from "768" up the dropdown. "Free" reads the browser you are sitting at.
+Because the hook reads the **window**, the design-system frame stands in for it: a window chip (375, 584 …) is fed to `useIsMobile()` through `WindowWidthContext`, so at "375" the "…" opens the sheet — portaled to the real browser window, full width — and from "640" up the dropdown. "Free" reads the browser you are sitting at.
 
 The desktop surface is the app `DropdownMenu` with `align="end"`,
 `sideOffset={6}` and `min-w-52`, listing the items flat in quick-actions-first
@@ -323,7 +323,7 @@ nothing.
 
 ## Publishing the menu to the chrome
 
-Below 768 the detail page's own "…" is hidden and the floating
+Below 640 the detail page's own "…" is hidden and the floating
 `DetailHeader` in `MobileAppHeader` renders it instead — the slim transparent
 bar with back on the left and "…" on the right. The page hands it the config:
 

@@ -2,7 +2,7 @@
 
 /*
  * Login, LIVE — the real `LoginDialog` behind a trigger: portal, focus trap,
- * the CTA disabled until the field has a value. Below a 768 window chip it
+ * the CTA disabled until the field has a value. Below a 640 window chip it
  * opens as a bottom sheet, straight from the base `DialogContent`.
  */
 

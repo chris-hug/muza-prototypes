@@ -5,7 +5,7 @@
  * from any component under `CreditsProvider` (mounted once in the app shell;
  * the design-system page mounts its own). Two releases so the data variety
  * shows. Artist, album and performers navigate and dismiss the dialog. Below
- * a 768 window chip it opens as a bottom sheet.
+ * a 640 window chip it opens as a bottom sheet.
  */
 
 import { useCredits } from "@/components/app/credits-dialog"

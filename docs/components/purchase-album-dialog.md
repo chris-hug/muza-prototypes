@@ -13,7 +13,7 @@ reads as a transactional cart, not a generic modal.
 
 ## Anatomy
 
-Three steps, one `DialogContent` (`md:max-w-xl max-h-[90vh] p-0 gap-0 flex
+Three steps, one `DialogContent` (`sm:max-w-xl max-h-[90vh] p-0 gap-0 flex
 flex-col`): the dialog owns its bands, so the chrome's padding is zeroed and
 each band pads itself.
 
@@ -24,7 +24,7 @@ each band pads itself.
 | Header | `shrink-0 px-6 pt-6 pb-4 border-b border-border`: `DialogHeader` (title `text-small`, description) + the **In cart** card | `shrink-0` so the buyer always sees what they are buying — the card never scrolls away or compresses when the body is tall |
 | In cart | `rounded-2xl border border-border`, a row of `size-12 rounded-xs` cover · title `text-small font-medium` · `artist · year · format` in `text-muted-foreground` · price `tabular-nums` with a **Remove** link (`text-2xsmall`) under it | mirrors the seller-side `SelectedReleaseCard` in the upload flow, so buying reads as the mirror of listing. Remove does what Cancel does but reads as a cart-line action |
 | Body | `flex-1 overflow-y-auto px-6 py-4 gap-6`: **Tier** (`RadioCardGroup` — Listening · Download files) · **Contact** (email `Input` with a leading `Mail` glyph, `pl-10`) · **Payment** (`SquareContainer`) · **Total** (`text-large font-medium tabular-nums`) · the `ShieldCheck` line | the only scrolling band |
-| Footer | `DialogFooter` with `m-0 shrink-0 border-t bg-muted px-6 py-4 rounded-b-xl md:rounded-b-2xl`: **Add to cart** (`ghost`, cart glyph) when the host passes `onAddToCart`, otherwise Cancel (`ghost`) · **Confirm and pay $x.xx**. Add to cart takes the picked tier and its price, is not gated on the email, and closes the dialog; with `inCart` it reads **View cart** (✓) and calls `onOpenCart`. It replaces Cancel rather than joining it — Remove, the ✕ and the backdrop already dismiss, and three buttons do not fit a phone footer. This is where batch buy lives: the album page keeps one Buy button, as Bandcamp does (Check out now · Add to cart in its dialog) | `m-0` cancels `dialogFooterClass`'s full-bleed negative margins, which assume a `p-6` parent |
+| Footer | `DialogFooter` with `m-0 shrink-0 border-t bg-muted px-6 py-4 rounded-b-xl sm:rounded-b-2xl`: **Add to cart** (`ghost`, cart glyph) when the host passes `onAddToCart`, otherwise Cancel (`ghost`) · **Confirm and pay $x.xx**. Add to cart takes the picked tier and its price, is not gated on the email, and closes the dialog; with `inCart` it reads **View cart** (✓) and calls `onOpenCart`. It replaces Cancel rather than joining it — Remove, the ✕ and the backdrop already dismiss, and three buttons do not fit a phone footer. This is where batch buy lives: the album page keeps one Buy button, as Bandcamp does (Check out now · Add to cart in its dialog) | `m-0` cancels `dialogFooterClass`'s full-bleed negative margins, which assume a `p-6` parent |
 
 Section labels (`SectionLabel`) are `text-small font-medium` — sentence case,
 never uppercase.
@@ -74,8 +74,8 @@ not previewed; open the live dialog for them.
 
 ## Sizing
 
-Reads the **window** at **768** through the base dialog: a bottom sheet
-below, a centred `md:max-w-xl` (576px) modal from there, capped at
+Reads the **window** at **640** through the base dialog: a bottom sheet
+below, a centred `sm:max-w-xl` (576px) modal from there, capped at
 `max-h-[90vh]`. No column or box step of its own; the body scrolls when the
 height runs out. The preview follows the window chip through `DialogPreview`.
 
@@ -105,4 +105,4 @@ height runs out. The preview follows the window chip through `DialogPreview`.
 
 - home.tsx (section comment) says there are "four states (details → confirm → processing → success)" and "two triggers … `hasSavedPayment={boolean}`" · the source has three steps and no `hasSavedPayment` prop; saved-card detection lives inside Square's form.
 - purchase-album-dialog.tsx:551–558 · the preview's body "mirrors the live dialog … if you change one, change both (no shared body extraction by design)" · the two copies already differ: the preview's Remove is a `<span>`, the live one a button. A shared body with a `preview` flag (as `LoginBody` does) would end that.
-- `p-0 gap-0` on the popup cancels only the phone padding; `md:p-6 md:gap-5` from `dialogChromeClass` survive tailwind-merge. See [dialog.md](dialog.md), open questions.
+- `p-0 gap-0` on the popup cancels only the phone padding; `sm:p-6 sm:gap-5` from `dialogChromeClass` survive tailwind-merge. See [dialog.md](dialog.md), open questions.

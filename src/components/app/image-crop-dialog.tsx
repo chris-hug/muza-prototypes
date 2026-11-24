@@ -36,7 +36,7 @@ export function ImageCropDialog({
 }) {
   return (
     <Dialog open={!!image} onOpenChange={onOpenChange}>
-      <DialogContent className="md:max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         {image && (
           <CropBody
             key={image.src}

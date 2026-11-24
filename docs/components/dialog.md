@@ -7,11 +7,11 @@ usage:
   - Library › + / create tile — New Playlist (full-screen form on phones) | /?page=Playlists
   - Playlist detail › … → Edit info (same form) | /?page=Playlist
 contract:
-  - "[sheet] **On a phone a bottom sheet's ✕ is invisible, not gone.** The grabber, the pull-down, the backdrop and Escape are the visible way out; the ✕ stays in the accessibility tree and the tab order (`max-md:sr-only`, shown on keyboard focus), because VoiceOver, Switch Control and a keyboard cannot drag. Desktop keeps the visible ✕; a `mobile=\"form\"` sheet hides it outright, its bar carries the way out."
+  - "[sheet] **On a phone a bottom sheet's ✕ is invisible, not gone.** The grabber, the pull-down, the backdrop and Escape are the visible way out; the ✕ stays in the accessibility tree and the tab order (`max-sm:sr-only`, shown on keyboard focus), because VoiceOver, Switch Control and a keyboard cannot drag. Desktop keeps the visible ✕; a `mobile=\"form\"` sheet hides it outright, its bar carries the way out."
   - "[touch] **Sheet chrome is shared, and breaks quietly from a call site.** `.sheet-glass` only works because the bar OVERLAYS the content — glass over nothing is a colour — and `--sheet-bar-h` must equal the bar's real height, or the list under an absolute bar loses its first rows."
-  - "[sheet] **Every Dialog and AlertDialog is a bottom sheet on mobile and a centred modal from 768.** It is baked into the base content component — an individual dialog sets its desktop width and height only, and must not re-declare the positioning."
+  - "[sheet] **Every Dialog and AlertDialog is a bottom sheet on mobile and a centred modal from 640.** It is baked into the base content component — an individual dialog sets its desktop width and height only, and must not re-declare the positioning."
   - "[sheet] **Forms go full-screen on phones** (`mobile=\"form\"`). A bottom sheet cannot hold a form once the keyboard is up, so any dialog whose primary action must survive typing anchors to the top, gives only its body a scroll, and puts the confirming action where the keyboard cannot reach it."
-  - "[sheet] **A full-bleed footer's negative margins must match the gutter at BOTH sizes** (`-mx-3 md:-mx-6`), or the bar stops short of the edges at one of them — the kind of thing that looks like a rendering bug and is arithmetic."
+  - "[sheet] **A full-bleed footer's negative margins must match the gutter at BOTH sizes** (`-mx-3 sm:-mx-6`), or the bar stops short of the edges at one of them — the kind of thing that looks like a rendering bug and is arithmetic."
 ---
 
 **Every** `Dialog` and `AlertDialog` is a bottom sheet on mobile and a centred
@@ -26,7 +26,7 @@ On a phone there are two presentations: the default **bottom sheet**, and a
 
 ```tsx
 // Pickers, lists, confirms — the default. No opt-in needed.
-<DialogContent className="md:max-w-[max(32rem,50vw)]">…</DialogContent>
+<DialogContent className="sm:max-w-[max(32rem,50vw)]">…</DialogContent>
 
 // A form whose primary action must survive the keyboard.
 <DialogContent mobile="form">…</DialogContent>
@@ -55,7 +55,7 @@ left edge as the rows, the field and the footer below it.
 
 ```tsx
 <DialogHeader leading={<Button variant="ghost" size="icon-sm" aria-label="Back"><ChevronLeft /></Button>}>
-  <DialogTitle className="md:text-large">Add to “Smoky Ballads”</DialogTitle>
+  <DialogTitle className="sm:text-large">Add to “Smoky Ballads”</DialogTitle>
 </DialogHeader>
 ```
 
@@ -67,7 +67,7 @@ left edge as the rows, the field and the footer below it.
   shifts as the title grows.
 - **On a phone a sheet with a back control uses the BAR instead**
   (`DialogActionBar`: back · title · ✕ on one line, title centred on the bar
-  so it can't drift). `AddMusicDialog` renders the bar below 768 and the
+  so it can't drift). `AddMusicDialog` renders the bar below 640 and the
   header above it, gated by `useIsMobile` so only one `DialogTitle` is ever
   mounted, and passes `showCloseButton={!isMobile}` so the corner ✕ doesn't
   double up with the bar's. Two reasons it wins there: the controls already
@@ -84,7 +84,7 @@ left edge as the rows, the field and the footer below it.
   bottom sheet the ✕ is **invisible but present** (Nov 2026, see below);
   a `mobile="form"` sheet's bar carries the way out.
 
-Titles are `text-small` (19px), `md:text-large` where a dialog wants the
+Titles are `text-small` (19px), `sm:text-large` where a dialog wants the
 larger desktop title — never a bare `text-large`. 21px crowded the line the
 ✕ shares.
 
@@ -137,7 +137,7 @@ a no-op.
 A sheet's scroll body is a **flex child**, never a `vh` cap.
 
 ```tsx
-<DialogContent className="flex flex-col h-[calc(100svh-var(--kb,0px)-8px-env(safe-area-inset-top))] md:h-auto md:max-h-[85vh]">
+<DialogContent className="flex flex-col h-[calc(100svh-var(--kb,0px)-8px-env(safe-area-inset-top))] sm:h-auto sm:max-h-[85vh]">
   <DialogHeader className="shrink-0">…</DialogHeader>
   <div className={dialogListClass}>…</div>
   <DialogFooter>…</DialogFooter>
@@ -159,23 +159,23 @@ Two traps inside that rule:
   you switch tabs reads as jumping.
 
 **Let the footer's edge cut the content.** No fade, no gap: cancel the sheet's
-gap on the scroll body (`-mb-2 md:-mb-5`) and the footer's `mt-2`, so the list
+gap on the scroll body (`-mb-2 sm:-mb-5`) and the footer's `mt-2`, so the list
 runs right up to the bar. A strip of empty sheet between a half-row and the
 bar looks like a mistake; the bar's edge doing the cutting does not.
 
 ## Spacing
 
-| Token | Phone | `md` (768) and up |
+| Token | Phone | `sm` (640) and up |
 |---|---|---|
 | Gutter (`p-…`) | 12px | 24px |
 | Gap between bands | 8px | 20px |
 | Header height | `min-h-8` (matches the ✕) | same |
-| ✕ offset | `top-3` | `md:top-6` |
+| ✕ offset | `top-3` | `sm:top-6` |
 
 The gutter matches `--page-px` at phone width. A sheet spans the whole screen,
 so a 24px gutter would cost 48px of a 320–375px width — enough to visibly
 squeeze list rows. The footer's full-bleed negative margins must match the
-gutter at **both** sizes (`-mx-3 md:-mx-6`) or the bar stops short of the edges.
+gutter at **both** sizes (`-mx-3 sm:-mx-6`) or the bar stops short of the edges.
 
 ## Lists inside a sheet
 
@@ -211,7 +211,7 @@ A bar over a body; only the body scrolls.
 - `DialogActionBar` (`sticky top-0 shrink-0`) carries no rule underneath: the
   sheet is one surface, and a hairline right under the title reads as a header
   that isn't there. Same **frosted glass** as `MobileHeader` — it *is* a
-  mobile header, for a modal — with the top safe-area inset, and `md:hidden`.
+  mobile header, for a modal — with the top safe-area inset, and `sm:hidden`.
 - **54px tall: an 8px inset, a 40px control, 6px below it.** Every pixel here
   is one the content underneath does not get, so the bar was built at 40
   around 32px controls (`icon-sm`, `sm`) — the right arithmetic for a ✕ and
@@ -312,7 +312,7 @@ A bar over a body; only the body scrolls.
   way; every control keeps its size.
 - **No field label** where the placeholder carries it — every line costs space
   above the keyboard. Keep an `aria-label`.
-- **Desktop is untouched**: the bar is `md:hidden`, the body is `md:contents`
+- **Desktop is untouched**: the bar is `sm:hidden`, the body is `sm:contents`
   (it dissolves into the modal's ordinary grid), and the usual
   `DialogHeader` / `DialogFooter` render. Gate the two with `useIsMobile()` so
   there is never more than one `DialogTitle` in the DOM.
@@ -394,7 +394,7 @@ arriving through a different door. The measurement is taken against the same
 formula too, so taking the detent while the keyboard is already up grows the
 sheet to the space above it rather than to the whole window.
 
-A dialog that sets its own `max-h` must scope it to `md:` for the same reason:
+A dialog that sets its own `max-h` must scope it to `sm:` for the same reason:
 `max-h-[90vh]` wins over the class (twMerge, last one), and 90% of the LAYOUT
 viewport is not a number iOS shrinks for the keyboard.
 
@@ -421,7 +421,7 @@ bar and the keyboard can never reach them.
 Better still, when the sheet has only ONE action: put it in the bar and keep
 no pinned band at all. `EditReleaseDialog` renders a `DialogActionBar` whose
 `trailing` is Save and whose title is empty — the identity 40px below carries
-the one `DialogTitle` — and hides its `DialogFooter` under `md`. The ✕ goes
+the one `DialogTitle` — and hides its `DialogFooter` under `sm`. The ✕ goes
 with the footer (`showCloseButton={!isMobile}`): a bottom sheet is dismissed
 by pulling it down, so a phone does not need a control that repeats the
 gesture, and the corner it was sitting in is where iOS puts the confirming
@@ -456,7 +456,7 @@ intercepts `onOpenChange(false)` while anything is picked and raises an
 *Discard* — with the sheet still mounted behind it, so cancelling returns to
 the same screen, query and selection.
 
-**The gesture is Base UI's.** Below `md` a `mobile="sheet"` dialog renders as
+**The gesture is Base UI's.** Below `sm` a `mobile="sheet"` dialog renders as
 a `Drawer`, so the pull-down, the release threshold and the spring-back come
 from the primitive. There used to be two hundred lines of ours here; what they
 had to get right is recorded in [gesture.md](gesture.md), because the
@@ -561,7 +561,7 @@ slot, the title returns.
 
 **One band on the browse screen.** The search field and the confirming action
 share the footer
-(`flex-col` so the field sits on top, `md:flex-row`) — one edge of chrome, not
+(`flex-col` so the field sits on top, `sm:flex-row`) — one edge of chrome, not
 a pill hovering over a bar. Spotify and TIDAL avoid the question entirely: a
 bottom field means no bottom confirm, because each row commits on tap.
 
@@ -574,8 +574,8 @@ would otherwise hang 12px outside the sheet on every side.
 | Constant | What it is |
 |---|---|
 | `dialogChromeClass` | surface, gutter, gap, radius |
-| `dialogPositionClass` | bottom sheet on phones, centred modal from `md` (768) |
-| `dialogPreviewPhoneClass` | the sheet shape for the static `DialogPreview` when `useIsMobile()` says phone — in the design-system frame that is the window chip, so a "375" frame shows the sheet, edge to edge, top corners only (`!` because the live `md:` classes still match on a desktop screen) |
+| `dialogPositionClass` | bottom sheet on phones, centred modal from `sm` (640) |
+| `dialogPreviewPhoneClass` | the sheet shape for the static `DialogPreview` when `useIsMobile()` says phone — in the design-system frame that is the window chip, so a "375" frame shows the sheet, edge to edge, top corners only (`!` because the live `sm:` classes still match on a desktop screen) |
 | `dialogFormPositionClass` | the full-screen form presentation |
 | `dialogHeaderClass` / `dialogHeaderStackClass` | the header column |
 | `dialogTitleClass` | `text-small`, `font-medium` |
@@ -588,12 +588,12 @@ title, so nothing has to be balanced against the ✕.
 
 ## Sizing
 
-Reads the **window**, one step: **768** — `md:` in the class strings and
+Reads the **window**, one step: **640** — `sm:` in the class strings and
 `useIsMobile()` in `DialogPreview`, the same gate. Below it every dialog is a
 bottom sheet (`inset-x-0 bottom-[var(--kb,0px)] max-w-full`, capped at
-`100svh − --kb − 8px`, scrolling internally); from 768 it is a centred modal
-at `md:max-w-sm` (384px) unless the dialog sets its own `md:max-w-*`, and
-`md:max-h-none` unless it caps itself. The width is never the column's: a
+`100svh − --kb − 8px`, scrolling internally); from 640 it is a centred modal
+at `sm:max-w-sm` (384px) unless the dialog sets its own `sm:max-w-*`, and
+`sm:max-h-none` unless it caps itself. The width is never the column's: a
 sheet spans the window and a modal floats over it.
 
 One dialog measures a box of its own — the [paywall](paywall.md), whose body
@@ -624,21 +624,21 @@ trigger opens the real, portaled sheet at the bottom of the browser.
 
 **Colour changes fade through `state-fade`** — `color, background-color, border-color, outline-color, opacity` on `cubic-bezier(0.2,0,0,1)`, 440ms in and 100ms out. The split needs no second mechanism: the transition that runs on the way in is the one declared on `:hover`, the one on the way out is the one on the element. Prose links inside a `DialogDescription` carry it too, through `*:[a]:state-fade`.
 
-**`DialogPreview` takes `phoneClassName`.** A dialog's own `max-md:` classes answer the real window, and a DS frame set to 320 only pretends to be narrow, so a preview showed a different sheet than the one that opens. `phoneClassName` is applied after the phone defaults; a dialog with phone spacing of its own passes the same values there (Login does).
+**`DialogPreview` takes `phoneClassName`.** A dialog's own `max-sm:` classes answer the real window, and a DS frame set to 320 only pretends to be narrow, so a preview showed a different sheet than the one that opens. `phoneClassName` is applied after the phone defaults; a dialog with phone spacing of its own passes the same values there (Login does).
 
 ## Open questions
 
 - `DialogFormActions` and `dialogFormActionsClass` have no call site since the form sheets moved their action into the bar. Remove them, or keep the band for a form with room for a full-width action?
 - DESIGN_SYSTEM.md "Forms go full-screen" · says "don't autofocus the field on phones — park `initialFocus` on the bar" · `create-playlist-dialog.tsx:150` passes `initialFocus={inputRef}` and this doc says focus goes straight to the field. The DESIGN_SYSTEM bullet predates the top-anchored form sheet.
 - DESIGN_SYSTEM.md, same section · says the `DialogActionBar` carries "`leading` Cancel (ghost) · `DialogTitle` (`text-base font-medium`)" · `dialog.tsx`: the bar's title is `dialogTitleClass` (`text-small`) and dismissal is the ✕ in `trailing`; there is no Cancel (this doc, "Header").
-- dialog.tsx `dialogChromeClass` is `p-3 md:p-6 gap-2 md:gap-5`. A dialog that passes `p-0 gap-0` to own its bands (Purchase, Paywall, Checkout, Credits) cancels only the phone half: tailwind-merge keeps `md:p-6 md:gap-5` (a variant is a separate key), and at ≥768 the media-query rule outranks bare `p-0`. If a desktop screen shows 24px of chrome padding around those dialogs' own `px-6` sections, the fix is `md:p-0 md:gap-0` at each call site — not verified here (no browser).
+- dialog.tsx `dialogChromeClass` is `p-3 sm:p-6 gap-2 sm:gap-5`. A dialog that passes `p-0 gap-0` to own its bands (Purchase, Paywall, Checkout, Credits) cancels only the phone half: tailwind-merge keeps `sm:p-6 sm:gap-5` (a variant is a separate key), and at ≥768 the media-query rule outranks bare `p-0`. If a desktop screen shows 24px of chrome padding around those dialogs' own `px-6` sections, the fix is `sm:p-0 sm:gap-0` at each call site — not verified here (no browser).
 - `dialogPreviewPhoneClass` forces `!p-3 !gap-2` on every preview at a phone chip, including the `p-0 gap-0` previews above, so a 375 chip shows them with a 12px gutter the live sheet does not have.
 
 ## The ✕ on a phone sheet — invisible, not removed (Nov 2026)
 
-On a phone, a bottom sheet's ✕ is **visually hidden** (`max-md:sr-only`)
+On a phone, a bottom sheet's ✕ is **visually hidden** (`max-sm:sr-only`)
 but stays mounted, labelled ("Close"), in the tab order, and shows itself on
-keyboard focus (`max-md:focus-visible:not-sr-only`). The visible ways out are
+keyboard focus (`max-sm:focus-visible:not-sr-only`). The visible ways out are
 the grabber, the pull-down, a tap on the backdrop and Escape.
 
 - **Why hide it:** the 32px ✕ sat in the tightest corner of the sheet and
@@ -648,9 +648,9 @@ the grabber, the pull-down, a tap on the backdrop and Escape.
   drag. For them the ✕ is the one named way out, so it stays in the
   accessibility tree. The pull-down also closes the sheet by clicking the
   sheet's own close button (focus goes back where it came from).
-- **Where it stays visible:** every desktop dialog (from 768), and side
+- **Where it stays visible:** every desktop dialog (from 640), and side
   drawers (`Sheet side="left|right"`, no grabber). A `mobile="form"` sheet
-  hides it outright (`max-md:hidden`): its bar carries the way out, and the
+  hides it outright (`max-sm:hidden`): its bar carries the way out, and the
   form sheet does not dismiss by dragging — a stray swipe would throw away
   what was typed.
 - **Design-system previews** at a phone chip draw no ✕ either, so the frame
@@ -660,6 +660,6 @@ the grabber, the pull-down, a tap on the backdrop and Escape.
 in a dialog: `DialogContent` (`src/components/ui/dialog.tsx`) and
 `SheetContent` (`src/components/ui/sheet.tsx`, `side="bottom"`). Every bottom
 sheet in the app inherits it with no call-site change. If production builds
-its own dialog/sheet primitive, the same rule must go there: below 768 a
+its own dialog/sheet primitive, the same rule must go there: below 640 a
 bottom sheet keeps a real, labelled, focusable close button, visually hidden
 until it receives keyboard focus — not `display: none`, not removed.

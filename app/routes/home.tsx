@@ -1405,7 +1405,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           codePath="src/ds-examples/multi-select-basic.tsx"
           // The popup is a DropdownMenu, a bottom sheet below the
           // presentation gate — window wide, over the tab bar.
-          bleed={w => w < 768}
+          bleed={w => w < 640}
         >
           <MultiSelectBasicExample />
         </Example>
@@ -1421,7 +1421,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           codePath="src/ds-examples/single-select-basic.tsx"
           // The menu is a DropdownMenu, a bottom sheet below the
           // presentation gate — window wide, over the tab bar.
-          bleed={w => w < 768}
+          bleed={w => w < 640}
         >
           <SingleSelectBasicExample />
         </Example>
@@ -1450,7 +1450,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           codePath="src/ds-examples/menu-basic.tsx"
           // Below the presentation gate the menu is a bottom sheet: window
           // wide, over the tab bar — so the frame draws no gutters there.
-          bleed={w => w < 768}
+          bleed={w => w < 640}
         >
           <MenuBasicExample />
         </Example>
@@ -1466,7 +1466,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           codePath="src/ds-examples/detail-menu-basic.tsx"
           // Below the presentation gate the surface is a bottom sheet: window
           // wide, over the tab bar — so the frame draws no gutters there.
-          bleed={w => w < 768}
+          bleed={w => w < 640}
         >
           <DetailMenuBasicExample />
         </Example>
@@ -1474,7 +1474,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         <p className="text-base text-muted-foreground mb-5 max-w-2xl">
           <code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">DetailMoreButton</code> — the
           overflow affordance on media detail pages. <span className="text-foreground">Window-aware</span>{" "}
-          (<code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">useIsMobile</code>, the 768 presentation gate — inside the frame above, the window chip):
+          (<code className="text-xsmall font-normal font-mono px-1 rounded-sm bg-muted">useIsMobile</code>, the 640 presentation gate — inside the frame above, the window chip):
           desktop opens an anchored <a href="/?page=DesignSystem#menu" className="text-primary-text link-underline">dropdown</a>;
           phones open an <span className="text-foreground">advanced bottom sheet</span> — one action model, two surfaces.
         </p>
@@ -2328,7 +2328,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           align="center"
           code={alertDialogBasicExampleSrc}
           codePath="src/ds-examples/alertdialog-basic.tsx"
-          bleed={w => w < 768}
+          bleed={w => w < 640}
         >
           <AlertDialogBasicExample />
         </Example>
@@ -2346,7 +2346,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           align="center"
           code={dialogFormSrc}
           codePath="src/ds-examples/dialog-form.tsx"
-          bleed={w => w < 768}
+          bleed={w => w < 640}
         >
           <DialogFormExample />
         </Example>
@@ -2356,7 +2356,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           align="center"
           code={dialogBasicExampleSrc}
           codePath="src/ds-examples/dialog-basic.tsx"
-          bleed={w => w < 768}
+          bleed={w => w < 640}
           className="mt-8"
         >
           <DialogBasicExample />
@@ -2371,7 +2371,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           align="center"
           code={purchaseAlbumDialogBasicExampleSrc}
           codePath="src/ds-examples/purchase-album-dialog-basic.tsx"
-          bleed={w => w < 768}
+          bleed={w => w < 640}
         >
           <PurchaseAlbumDialogBasicExample />
         </Example>
@@ -2381,7 +2381,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           align="center"
           code={purchaseAlbumDialogLiveExampleSrc}
           codePath="src/ds-examples/purchase-album-dialog-live.tsx"
-          bleed={w => w < 768}
+          bleed={w => w < 640}
           className="mt-8"
         >
           <PurchaseAlbumDialogLiveExample />
@@ -2400,7 +2400,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           align="center"
           code={paywallBasicExampleSrc}
           codePath="src/ds-examples/paywall-basic.tsx"
-          bleed={w => w < 768}
+          bleed={w => w < 640}
         >
           <PaywallBasicExample />
         </Example>
@@ -2410,7 +2410,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           align="stretch"
           code={paywallCheckoutExampleSrc}
           codePath="src/ds-examples/paywall-checkout.tsx"
-          bleed={w => w < 768}
+          bleed={w => w < 640}
           className="mt-8"
         >
           <PaywallCheckoutExample />
@@ -2424,7 +2424,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           align="stretch"
           code={paywallCheckoutFreeExampleSrc}
           codePath="src/ds-examples/paywall-checkout-free.tsx"
-          bleed={w => w < 768}
+          bleed={w => w < 640}
           className="mt-8"
         >
           <PaywallCheckoutFreeExample />
@@ -2435,7 +2435,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           align="center"
           code={paywallLiveExampleSrc}
           codePath="src/ds-examples/paywall-live.tsx"
-          bleed={w => w < 768}
+          bleed={w => w < 640}
           className="mt-8"
         >
           <PaywallLiveExample />
@@ -2450,7 +2450,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           align="center"
           code={loginBasicExampleSrc}
           codePath="src/ds-examples/login-basic.tsx"
-          bleed={w => w < 768}
+          bleed={w => w < 640}
         >
           <LoginBasicExample />
         </Example>
@@ -2460,7 +2460,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           align="center"
           code={loginLiveExampleSrc}
           codePath="src/ds-examples/login-live.tsx"
-          bleed={w => w < 768}
+          bleed={w => w < 640}
           className="mt-8"
         >
           <LoginLiveExample />
@@ -2475,7 +2475,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           align="center"
           code={creditsDialogBExampleSrc}
           codePath="src/ds-examples/credits-dialog-b.tsx"
-          bleed={w => w < 768}
+          bleed={w => w < 640}
         >
           <CreditsDialogBExample />
         </Example>
@@ -2485,7 +2485,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           align="center"
           code={creditsDialogBSongExampleSrc}
           codePath="src/ds-examples/credits-dialog-b-song.tsx"
-          bleed={w => w < 768}
+          bleed={w => w < 640}
           className="mt-8"
         >
           <CreditsDialogBSongExample />
@@ -2496,7 +2496,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           align="center"
           code={creditsDialogLiveExampleSrc}
           codePath="src/ds-examples/credits-dialog-live.tsx"
-          bleed={w => w < 768}
+          bleed={w => w < 640}
           className="mt-8"
         >
           <CreditsDialogLiveExample />
@@ -2507,7 +2507,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           align="center"
           code={creditsDialogBasicExampleSrc}
           codePath="src/ds-examples/credits-dialog-basic.tsx"
-          bleed={w => w < 768}
+          bleed={w => w < 640}
           className="mt-8"
         >
           <CreditsDialogBasicExample />
@@ -2518,7 +2518,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           align="center"
           code={creditsDialogASongExampleSrc}
           codePath="src/ds-examples/credits-dialog-a-song.tsx"
-          bleed={w => w < 768}
+          bleed={w => w < 640}
           className="mt-8"
         >
           <CreditsDialogASongExample />
@@ -2533,7 +2533,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           align="center"
           code={drawerBasicExampleSrc}
           codePath="src/ds-examples/drawer-basic.tsx"
-          bleed={w => w < 768}
+          bleed={w => w < 640}
         >
           <DrawerBasicExample />
         </Example>
@@ -2554,7 +2554,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           stageClassName="p-0"
           code={toastBasicExampleSrc}
           codePath="src/ds-examples/toast-basic.tsx"
-          bleed={w => w < 768}
+          bleed={w => w < 640}
         >
           <ToastBasicExample />
         </Example>
@@ -2583,7 +2583,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
           align="center"
           code={toastLiveExampleSrc}
           codePath="src/ds-examples/toast-live.tsx"
-          bleed={w => w < 768}
+          bleed={w => w < 640}
           className="mt-8"
         >
           <ToastLiveExample />
@@ -2719,7 +2719,7 @@ export function ExploreView({ showHero = true, showQuickNav = true }: { showHero
         >
           <CommandBasicExample />
         </Example>
-        {/* The palette is a `Dialog`, so below 768 it opens as a bottom sheet
+        {/* The palette is a `Dialog`, so below 640 it opens as a bottom sheet
             — portaled to the real window, like every dialog trigger. What sits
             in the frame is the trigger, so the frame keeps its chrome rather
             than bleeding. */}

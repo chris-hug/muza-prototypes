@@ -767,7 +767,7 @@ function ComposeEmailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="md:max-w-[640px]">
+      <DialogContent className="sm:max-w-[640px]">
         <DialogHeader>
           <DialogTitle>{isResend ? "Resend" : "Send"}: {meta.timelineTitle.replace(/ sent$/i, "")}</DialogTitle>
           <DialogDescription>

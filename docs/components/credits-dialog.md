@@ -50,7 +50,7 @@ shows both, the current version first.
 ## Anatomy
 
 ```tsx
-<DialogContent fixedHeight className="md:max-w-xl p-0 gap-0 overflow-hidden flex flex-col h-[80svh] max-h-[80svh]">
+<DialogContent fixedHeight className="sm:max-w-xl p-0 gap-0 overflow-hidden flex flex-col h-[80svh] max-h-[80svh]">
   <CreditsContent
     credits={credits}
     focusTrack={findTrack(credits, title)}   // track by track, at that song; undefined = the album's overview
@@ -65,7 +65,7 @@ shows both, the current version first.
 
 | Part | What it wears | Why |
 |---|---|---|
-| Header | the ⋯ sheet's identity block (`DetailMenuSheetBody`): `size-18 rounded-xs art-edge` thumb · title `text-small font-medium` · artist `text-small text-muted-foreground` · year · label `text-2xsmall` where the sheet has its content-type badge (the sheet's layout, the dialog's two sizes — see Type). Gutter `px-3`, `md:px-6` | the credits are reached from that sheet's "Credits" tile, so both open on one header instead of two. It replaced a 3:2 cover that spent a third of a phone on the artwork the reader just came from; before that, four equal label/value rows where the title weighed as much as a recording date. **No Album / EP / Single badge:** the sources disagree, and for old jazz the type is a modern label applied afterwards — MusicBrainz editors give a 1940 set of 78s today's categories, Discogs records the format of each pressing (78 RPM, 10", LP), iTunes mostly says "Album" and puts "– EP" in the title. Year and label are what every source agrees on. The catalogue number is an Overview fact. The `heading` slot is an `sr-only` `DialogTitle` ("Album credits") — named for screen readers, not drawn |
+| Header | the ⋯ sheet's identity block (`DetailMenuSheetBody`): `size-18 rounded-xs art-edge` thumb · title `text-small font-medium` · artist `text-small text-muted-foreground` · year · label `text-2xsmall` where the sheet has its content-type badge (the sheet's layout, the dialog's two sizes — see Type). Gutter `px-3`, `sm:px-6` | the credits are reached from that sheet's "Credits" tile, so both open on one header instead of two. It replaced a 3:2 cover that spent a third of a phone on the artwork the reader just came from; before that, four equal label/value rows where the title weighed as much as a recording date. **No Album / EP / Single badge:** the sources disagree, and for old jazz the type is a modern label applied afterwards — MusicBrainz editors give a 1940 set of 78s today's categories, Discogs records the format of each pressing (78 RPM, 10", LP), iTunes mostly says "Album" and puts "– EP" in the title. Year and label are what every source agrees on. The catalogue number is an Overview fact. The `heading` slot is an `sr-only` `DialogTitle` ("Album credits") — named for screen readers, not drawn |
 | All album credits (track by track) | `Button ghost sm` "All album credits ›" on its own line above the head, left-aligned (`-ml-2`, text on the thumb's edge) and on the ✕'s centre line (`-mt-2`); the album card at the end does the same | tried and dropped: a pill under the head (a second, smaller thing about the same album); the whole head as one clickable row with the label at its end (its hover ran into the ✕, and held clear of it the label floated) |
 | Album card (track by track) | at the end of the list: the album's name with "All album credits ›", then the Release facts led by "Main artist"; `rounded-md bg-muted p-4` (10px: 8px in from the dialog's 18px corner — concentric), the whole card opens the album's credits (`role="button"`, `press-ripple`, hover fill `secondary`) | the release facts would split a song from its credits anywhere else; with the way to the album's credits they are one thing, so one card — the pill that used to sit under it said the same thing twice |
 | Tabs | `TabsList size="sm"` full width: Credits · Notes — only when there are Notes; one tab gets no strip. Credits is the default. There was an Overview tab; its facts now sit in the album's Credits (Release, below) | "Show credits" is what was asked for. Header and tab bar hold; only the panel scrolls, so switching tabs never moves the bar. **The head is glass over the panel**, as Tidal does it: the panel runs the full body height, the head (identity + tabs) lies over its top as `.sheet-glass` (the sheet's colour at 72% over a 12px blur), and rows slide UNDER it, blurred and faintly legible, instead of fading out at an edge. A 1px hairline (`shadow-[0_1px_0_var(--border)]`) appears under the head once the panel has scrolled. The head's height is measured (`ResizeObserver` → `--head-h`): it is the panel's top padding (+12px) and the sticky bars' `top`. The scrollbar is thin, `--muted-foreground` on a clear track. Tried and dropped: a hard cut (a row sliced in half); a white gradient veil (paled the rows, read as a band); a masked blur under each sticky bar (a smear with a visible start) |
@@ -128,19 +128,19 @@ render for the design system.
 inset) and 24px above the head (`pt-6`). At the bottom the album card ends
 8px from the sheet's edge — the 8px it keeps at the sides (more on a phone
 with a home indicator). It was 12px on a phone and 24px from
-`md` — two layouts of one dialog — and at 12 the bars and the album card,
+`sm` — two layouts of one dialog — and at 12 the bars and the album card,
 which bleed 8px past the gutter, sat 4px from the sheet's edge, and the thumb
 right under the grabber.
 
-Reads the **window** at **768** through the base dialog: a bottom sheet
-below, a centred `md:max-w-xl` (576px, the purchase and checkout width) modal
+Reads the **window** at **640** through the base dialog: a bottom sheet
+below, a centred `sm:max-w-xl` (576px, the purchase and checkout width) modal
 from there. **One height, always: `h-[80svh]`** — phone and desktop, tabs and
 page, album and track by track. A height that followed the content resized
 the sheet when the reading changed, and the base sheet's
 grow-on-first-scroll detent jumped it to nearly full screen the moment it was
 scrolled; `fixedHeight` turns that off (see [dialog.md](dialog.md)).
-**Whole pixels:** the height is `round(down, 80svh, 1px)` and from `md` the
-sheet sits at a whole `10svh` from the top (`md:translate-y-0`) instead of
+**Whole pixels:** the height is `round(down, 80svh, 1px)` and from `sm` the
+sheet sits at a whole `10svh` from the top (`sm:translate-y-0`) instead of
 the base `top-1/2 -translate-y-1/2`. 80svh is fractional, and half of it put
 the sheet at y = 120.1 — every sticky track bar snapped between pixel rows as
 the panel scrolled and wobbled 1–2px. `p-0` lets the cover header bleed to the edges; the

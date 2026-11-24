@@ -50,4 +50,4 @@ Fixed, no steps. `w-72` = 288px fits the narrowest column the app has — a 320p
 - `DatePicker` (`date-picker.tsx:4`) imports `@base-ui/react/popover` directly and carries its own copy of the popup classes (`w-72 rounded-xl bg-popover border border-border p-4`, line 146) rather than rendering `PopoverContent`. The two match today; nothing keeps them matching.
 - The wrapper itself renders only on the design-system page.
 - `DESIGN_SYSTEM.md` "Context Menu" gives a menu container `w-64 … py-1 shadow-lg`; this popup is `w-72 p-4 shadow-md`. Different components, but the shadow step differs with no stated reason.
-- No phone presentation. Dropdowns present as sheets below 768 (`responsive.md`); a popover stays anchored. Right for a 288px card — but not written down as a decision.
+- No phone presentation. Dropdowns present as sheets below 640 (`responsive.md`); a popover stays anchored. Right for a 288px card — but not written down as a decision.

@@ -30,14 +30,14 @@ opens the checkout directly, without the prompt.
 
 ## The prompt — a landing page inside a dialog
 
-`DialogContent className="md:w-[80vw] md:max-w-[980px] p-0 gap-0 overflow-hidden bg-muted"`.
+`DialogContent className="sm:w-[80vw] sm:max-w-[980px] p-0 gap-0 overflow-hidden bg-muted"`.
 The visible heading is a plain `<h2>`; an `sr-only` `DialogTitle` /
 `DialogDescription` keep the dialog labelled.
 
 | Part | What it wears | Why |
 |---|---|---|
 | Root | `@container`, then `flex-col @[760px]:flex-row @[760px]:min-h-[660px]` | the split is decided by the **dialog's** width, not the window: at `80vw` the same window can hand it very different widths |
-| Narrow step (< 420px of dialog) | columns `px-6` (`px-10` from 420, `px-12` from 760); `h2` `text-xlarge`; pitch `text-small`, default leading; inner gap `gap-3`; left `pt-10 pb-6`, right `pt-4`; both buttons `!text-small` | on a phone the 24px pitch ran to six lines and pushed Subscribe below the fold, and `$10.00/mo` at `text-large` overran the pill and was clipped at both ends. Keyed to the **container**: the old `md:px-12` was viewport-based and gave the narrow design-system stage 48px a side |
+| Narrow step (< 420px of dialog) | columns `px-6` (`px-10` from 420, `px-12` from 760); `h2` `text-xlarge`; pitch `text-small`, default leading; inner gap `gap-3`; left `pt-10 pb-6`, right `pt-4`; both buttons `!text-small` | on a phone the 24px pitch ran to six lines and pushed Subscribe below the fold, and `$10.00/mo` at `text-large` overran the pill and was clipped at both ends. Keyed to the **container**: the old `sm:px-12` was viewport-based and gave the narrow design-system stage 48px a side |
 | Left — the why | `px-10 pt-12 pb-10` from 420 (`px-12` from 760), centred text below 760, left-aligned above; `h2` `text-2xlarge @[760px]:text-4xlarge leading-[1.05] font-medium tracking-[-0.02em] max-w-[16ch]`; pitch `text-large leading-8 max-w-[42ch]`; "See how it works ↗" `text-small text-muted-foreground underline` | centred long copy is the weak spot — once there is room the copy goes ragged-right |
 | Brand lockup | `LogoHorizontal h-6` + "The Platform for Independent Music" (`text-small text-muted-foreground`) — pinned bottom-left of the left column at ≥760, a footer (`@[760px]:hidden`, `text-center`) when stacked — `items-center` centres the box, not the two lines the claim wraps to | last thing seen either way |
 | Right — the action | `@[760px]:border-l border-border @[760px]:bg-muted`; "Choose your monthly amount" `text-small font-medium`; `AmountPillRow`; `h-px bg-border/60` rule; **Subscribe — $10.00/mo** (`size="lg"` forced to `!h-16 !text-large`, `!text-small` below 420); **Try a free month** (`secondary`, same size, `font-normal`); "Cancel anytime · billed monthly" pinned at the bottom | the tint is `bg-muted`, a real token, not `bg-background/50` — an alpha on a surface token produces whatever is behind it, which on the design-system stage was a colour no token has |
@@ -65,7 +65,7 @@ action with the sentinel `"free"`, not a $0 amount.
 
 ## The checkout
 
-`DialogContent className="md:max-w-xl max-h-[90vh] p-0 gap-0 flex flex-col"`
+`DialogContent className="sm:max-w-xl max-h-[90vh] p-0 gap-0 flex flex-col"`
 — the same three-band shell as [Purchase Album Dialog](purchase-album-dialog.md).
 
 | Band | Paid | Free month (`initialAmount="free"`) |
@@ -107,9 +107,9 @@ watch the CTA label change.
 
 ## Sizing
 
-Two measures. The **window** at **768**, through the base dialog: a bottom
-sheet below, and from 768 the prompt is `80vw` capped at **980px** while the
-checkout is `md:max-w-xl` (576px). And the prompt's **own box**: its body is
+Two measures. The **window** at **640**, through the base dialog: a bottom
+sheet below, and from 640 the prompt is `80vw` capped at **980px** while the
+checkout is `sm:max-w-xl` (576px). And the prompt's **own box**: its body is
 a `@container` and goes two-column at **760px of dialog width** — reached at
 a **950px window** (`760 / 0.8`). It is the one dialog that measures itself,
 listed with the box components in [responsive.md](responsive.md). In the

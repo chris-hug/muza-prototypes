@@ -83,7 +83,7 @@ export function BulkActionBarContent({ count, onClear, label = "selected", child
 /** Live, portaled bar. Renders nothing when `count` is 0. */
 export function BulkActionBar(props: BulkActionBarProps) {
   // The lift clears the footer tab bar + mini player, which exist below 608
-  // (`useFooterNav`), NOT below the 768 presentation gate — between the two
+  // (`useFooterNav`), NOT below the 640 presentation gate — between the two
   // the desktop player bar is on screen and `bottom-6` already sits over it.
   const footerNav = useFooterNav()
   if (props.count === 0) return null

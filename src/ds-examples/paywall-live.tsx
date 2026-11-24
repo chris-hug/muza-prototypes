@@ -5,7 +5,7 @@
  * `SubscriptionCheckoutDialog` wired the way the album page wires them: the
  * prompt hands its picked amount to the checkout through `onSubscribe`, and
  * the second button opens the checkout directly (what Settings does). Below a
- * 768 window chip both open as bottom sheets.
+ * 640 window chip both open as bottom sheets.
  */
 
 import { useState } from "react"

@@ -4,7 +4,7 @@
  * Purchase Album Dialog, LIVE — the real `PurchaseAlbumDialog` behind a
  * trigger, the way the album page mounts it: portal, focus trap, and the
  * processing and success steps the static preview does not show. Below a
- * 768 window chip it opens as a bottom sheet.
+ * 640 window chip it opens as a bottom sheet.
  */
 
 import { useState } from "react"

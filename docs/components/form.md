@@ -61,7 +61,7 @@ Measured in the frame:
 
 The Select is worth watching there. Inside a form it is a **field**, so below the presentation gate it goes full width like its neighbours and opens as a bottom sheet; above it, it shrinks to its content. The form does not arrange that — [`Select`](select.md) does it itself, and a form row stays one family at both ends because of it.
 
-A two-column layout is in-page reflow and may use `sm:` ([`responsive.md`](responsive.md)); a form inside a dialog follows the dialog — a sheet below 768, `mobile="form"` when its action must survive the keyboard ([`dialog.md`](dialog.md)).
+A two-column layout is in-page reflow and may use `sm:` ([`responsive.md`](responsive.md)); a form inside a dialog follows the dialog — a sheet below 640, `mobile="form"` when its action must survive the keyboard ([`dialog.md`](dialog.md)).
 
 ## Behaviour
 

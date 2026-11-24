@@ -4,7 +4,7 @@
  * Dialog, LIVE — a trigger that opens the real `Dialog` (portal, backdrop,
  * focus trap). The same "Create Listing" picker the static frame above shows
  * with `DialogPreview`, so the two frames are one dialog seen twice. Below a
- * 768 window chip the trigger opens a bottom sheet; from 768 a centred modal.
+ * 640 window chip the trigger opens a bottom sheet; from 640 a centred modal.
  */
 
 import { useState } from "react"
@@ -31,8 +31,8 @@ export default function DialogBasicExample() {
       <DialogTrigger render={<Button variant="outline" />}>
         Open: Create Listing
       </DialogTrigger>
-      {/* Desktop width only — the sheet below 768 comes from the base. */}
-      <DialogContent className="md:max-w-[600px]">
+      {/* Desktop width only — the sheet below 640 comes from the base. */}
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Create Listing</DialogTitle>
           <DialogDescription>Choose what you want to sell.</DialogDescription>

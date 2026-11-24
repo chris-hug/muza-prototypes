@@ -8,7 +8,7 @@
  *
  * A dialog rather than a page, as designed: buying merch is a short detour
  * from the artist, and closing it returns to the same place in the grid.
- * Below `md` the Dialog is a bottom sheet (see dialog.md), so on a phone this
+ * Below `sm` the Dialog is a bottom sheet (see dialog.md), so on a phone this
  * is a sheet you pull down to leave.
  *
  * Built only from the system's parts: Dialog, Avatar, Badge, Separator,
@@ -60,7 +60,7 @@ export function ProductDialog({
         {/* `pt-12` on the phone sheet: the close ✕ sits top-right, and the
              gallery starts at the top edge, so without it the ✕ lands on the
              image. Desktop has 48px on every side, as designed. */}
-        <DialogContent className="pt-12 md:max-w-[1120px] md:p-12 max-h-[90vh] overflow-y-auto">
+        <DialogContent className="pt-12 sm:max-w-[1120px] sm:p-12 max-h-[90vh] overflow-y-auto">
           {shown && (
             <ProductBody
               key={shown.id}

@@ -188,10 +188,10 @@ export function PurchaseAlbumDialog({
       {/* Sticky-footer layout: outer is flex column with `p-0
            gap-0` so we control padding per section. Header pinned
            at top; middle scrolls; footer pinned at bottom with the
-           Pay button always reachable. `md:max-w-xl` overrides the
-           base `md:max-w-sm` (same breakpoint required for the
+           Pay button always reachable. `sm:max-w-xl` overrides the
+           base `sm:max-w-sm` (same breakpoint required for the
            cascade). */}
-      <DialogContent className="md:max-w-xl max-h-[90vh] p-0 gap-0 md:gap-0 flex flex-col">
+      <DialogContent className="sm:max-w-xl max-h-[90vh] p-0 gap-0 sm:gap-0 flex flex-col">
         {step === "summary" && (
           <>
             {/* ── Sticky header section ─────────────────────────────
@@ -358,7 +358,7 @@ export function PurchaseAlbumDialog({
                  can go: Remove on the cart line, the ✕ and the backdrop
                  already dismiss. Not gated on the email: putting it in
                  the cart asks for nothing yet. */}
-            <DialogFooter className="m-0 shrink-0 border-t border-border bg-muted px-4 py-3 rounded-b-xl md:rounded-b-2xl">
+            <DialogFooter className="m-0 shrink-0 border-t border-border bg-muted px-4 py-3 rounded-b-xl sm:rounded-b-2xl">
               {onAddToCart && !upgradeMode ? (
                 <Button
                   size="lg"
@@ -614,7 +614,7 @@ export function PurchaseAlbumDialogPreview({
   return (
     <DialogPreview
       showCloseButton={false}
-      className={cn("md:max-w-xl max-h-[min(85vh,760px)] p-0 gap-0 md:gap-0 flex flex-col", className)}
+      className={cn("sm:max-w-xl max-h-[min(85vh,760px)] p-0 gap-0 sm:gap-0 flex flex-col", className)}
     >
       {/* Sticky header */}
       <div className="shrink-0 flex flex-col gap-2.5 px-4 pt-3 pb-3 border-b border-border">
@@ -732,7 +732,7 @@ export function PurchaseAlbumDialogPreview({
       </div>
 
       {/* Sticky footer (preview chrome — no real submit) */}
-      <DialogPreviewFooter className="m-0 shrink-0 border-t border-border bg-muted px-4 py-3 rounded-b-xl md:rounded-b-2xl">
+      <DialogPreviewFooter className="m-0 shrink-0 border-t border-border bg-muted px-4 py-3 rounded-b-xl sm:rounded-b-2xl">
         <Button size="lg" variant="ghost">Cancel</Button>
         <Button size="lg">Confirm and pay {price}</Button>
       </DialogPreviewFooter>

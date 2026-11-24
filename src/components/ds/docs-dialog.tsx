@@ -58,8 +58,8 @@ export function DocsButton({ id, className }: { id: string; className?: string }
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
-          className="md:max-w-[min(46rem,90vw)] flex flex-col"
-          /* Inline, not a class: the base sheet sets `md:max-h-none`, and
+          className="sm:max-w-[min(46rem,90vw)] flex flex-col"
+          /* Inline, not a class: the base sheet sets `sm:max-h-none`, and
              between two utilities for the same property the GENERATED CSS
              order decides, not the order they are listed in — `max-h-none`
              wins there whatever tailwind-merge keeps. Without a cap the docs
@@ -68,7 +68,7 @@ export function DocsButton({ id, className }: { id: string; className?: string }
           style={{ maxHeight: "85svh" }}
         >
           <DialogHeader className="shrink-0">
-            <DialogTitle className="md:text-large">{entry.title}</DialogTitle>
+            <DialogTitle className="sm:text-large">{entry.title}</DialogTitle>
             {/* The file, beside the title rather than at the very bottom. It
                 answers "where does this text live" — a question you ask
                 BEFORE reading, when deciding whether to trust it, not after

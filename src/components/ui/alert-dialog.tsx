@@ -66,12 +66,12 @@ function AlertDialogContent({
         data-slot="alert-dialog-content"
         className={cn(
           // Position — same app-wide rule as Dialog: bottom sheet on mobile,
-          // centered modal on desktop (md+, 768).
+          // centered modal on desktop (sm+, 640).
           "fixed z-50 w-full",
           "inset-x-0 bottom-0 top-auto translate-x-0 translate-y-0 max-w-full rounded-b-none rounded-t-[28px]",
           "data-open:slide-in-from-bottom-4 data-open:zoom-in-100",
-          "md:inset-x-auto md:bottom-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-md md:rounded-2xl",
-          "md:data-open:slide-in-from-bottom-0 md:data-open:zoom-in-95",
+          "sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-md sm:rounded-2xl",
+          "sm:data-open:slide-in-from-bottom-0 sm:data-open:zoom-in-95",
           // Surface — bg-background (never bg-white)
           "bg-background border border-border",
           // Spacing
@@ -110,7 +110,7 @@ function AlertDialogFooter({
   return (
     <div
       data-slot="alert-dialog-footer"
-      /* STACKED on a phone, a row from `md` — the same shape `DialogFooter`
+      /* STACKED on a phone, a row from `sm` — the same shape `DialogFooter`
          takes, and for the same reason. Two `lg` buttons carry `px-10` each,
          so a row of "Keep picking" and "Discard" is wider than a 375px sheet:
          the outline button ran off the left edge with its label clipped, on
@@ -119,7 +119,7 @@ function AlertDialogFooter({
          underneath — the platform order, and the one that keeps the
          destructive button away from the thumb's resting place. */
       className={cn(
-        "flex flex-col-reverse gap-2 mt-6 md:flex-row md:justify-end",
+        "flex flex-col-reverse gap-2 mt-6 sm:flex-row sm:justify-end",
         className,
       )}
       {...props}
@@ -164,7 +164,7 @@ function AlertDialogAction({
       // `lg` (48px), like every other action that confirms something: this
       // dialog is most often read with a thumb, and it is the last chance to
       // decline. The size is fixed here rather than at each call site.
-      render={<Button variant="destructive" size="lg" className={cn("w-full md:w-auto", className)} />}
+      render={<Button variant="destructive" size="lg" className={cn("w-full sm:w-auto", className)} />}
       {...props}
     >
       {children}
@@ -180,7 +180,7 @@ function AlertDialogCancel({
   return (
     <AlertDialogPrimitive.Close
       data-slot="alert-dialog-cancel"
-      render={<Button variant="outline" size="lg" className={cn("w-full md:w-auto", className)} />}
+      render={<Button variant="outline" size="lg" className={cn("w-full sm:w-auto", className)} />}
       {...props}
     >
       {children}

@@ -8,7 +8,7 @@
  *
  * This file is a CALL SITE, not a copy: the real `SingleSelect` with the
  * sort options the Discography grid uses. All three share one value, so a
- * pick in any menu updates the others. Below 768 the menu is a bottom sheet
+ * pick in any menu updates the others. Below 640 the menu is a bottom sheet
  * — pick the 375 chip and open one.
  */
 

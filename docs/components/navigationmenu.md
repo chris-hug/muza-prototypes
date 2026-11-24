@@ -39,7 +39,7 @@ it navigates on click and opens on hover. Links inside the panel are
   "Discover" to "Studio" keeps it open and swaps the content, where two
   `DropdownMenu`s would close and reopen.
 - **Hover opens it.** `DropdownMenu` opens on click only.
-- **Not window-gated.** There is no `useIsMobile()` here: below 768 it is the
+- **Not window-gated.** There is no `useIsMobile()` here: below 640 it is the
   same hover popup, while every `DropdownMenu` becomes a sheet
   ([`responsive.md`](responsive.md)). Acceptable only while nothing uses it.
 

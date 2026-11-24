@@ -9,7 +9,7 @@ usage:
 
 A confirm for an action that **cannot be undone** — delete a track, remove a
 card, discard an edit. Like every [Dialog](dialog.md) it is a bottom sheet
-below 768 and a centred modal from there up; it differs in what it demands of
+below 640 and a centred modal from there up; it differs in what it demands of
 the user: no ✕, no outside-click dismissal, exactly two actions.
 
 ## The footer stacks on a phone
@@ -19,7 +19,7 @@ is wider than a 375px sheet: the outline button ran off the left edge with its
 label clipped — on the one dialog whose entire job is to be read before it is
 answered.
 
-`flex-col-reverse` below `md`, a row from `md` up — the same shape
+`flex-col-reverse` below `sm`, a row from `sm` up — the same shape
 `DialogFooter` takes. Reversed puts the **confirming action on top** and the
 way out underneath: the platform order, and the one that keeps a destructive
 button away from where the thumb rests. Both buttons go full width, because a
@@ -67,7 +67,7 @@ The distinction is not cosmetic:
 | Part | What it wears |
 |---|---|
 | `AlertDialogBackdrop` | `fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px]` — darker than the Dialog's `bg-black/10`: the page behind is not something to return to by tapping |
-| `AlertDialogContent` | `bg-background border border-border p-6 shadow-xl`; phone `inset-x-0 bottom-0 rounded-t-2xl rounded-b-none`; `md:` centred, `md:max-w-md md:rounded-2xl` |
+| `AlertDialogContent` | `bg-background border border-border p-6 shadow-xl`; phone `inset-x-0 bottom-0 rounded-t-2xl rounded-b-none`; `sm:` centred, `sm:max-w-md sm:rounded-2xl` |
 | `AlertDialogHeader` | `flex flex-col gap-2 mb-4` |
 | `AlertDialogTitle` | `text-base font-medium text-foreground leading-snug` |
 | `AlertDialogDescription` | `text-small text-muted-foreground leading-relaxed` |
@@ -106,9 +106,9 @@ alert. A red button anywhere else spends the signal that makes this one work.
 
 ## Sizing
 
-Reads the **window**, one step: **768** (`md:`), the presentation gate. Below
+Reads the **window**, one step: **640** (`sm:`), the presentation gate. Below
 it the popup is a full-width bottom sheet (`inset-x-0 bottom-0 max-w-full`,
-top corners only); from 768 it is centred at `max-w-md` (448px). No column or
+top corners only); from 640 it is centred at `max-w-md` (448px). No column or
 box measurement — the sheet is chrome, not content.
 
 ## Behaviour
@@ -124,7 +124,7 @@ box measurement — the sheet is chrome, not content.
 
 ## Open questions
 
-- alert-dialog.tsx:77 · the popup is `p-6` at every width · `dialog.tsx` gives a bottom sheet a 12px gutter (`p-3 md:p-6`) and an 8px band gap, and dialog.md says the alert "shares every surface rule with Dialog — the same gutter, gap and header structure". It does not: the alert has no `dialogChromeClass`, its header is `gap-2 mb-4`, its footer is a plain `justify-end` row (not the full-bleed, sticky, `flex-col-reverse` `dialogFooterClass` bar), and its title is `text-base` where the dialog's is `text-small`. Either the alert adopts the sheet rhythm or the claim goes.
+- alert-dialog.tsx:77 · the popup is `p-6` at every width · `dialog.tsx` gives a bottom sheet a 12px gutter (`p-3 sm:p-6`) and an 8px band gap, and dialog.md says the alert "shares every surface rule with Dialog — the same gutter, gap and header structure". It does not: the alert has no `dialogChromeClass`, its header is `gap-2 mb-4`, its footer is a plain `justify-end` row (not the full-bleed, sticky, `flex-col-reverse` `dialogFooterClass` bar), and its title is `text-base` where the dialog's is `text-small`. Either the alert adopts the sheet rhythm or the claim goes.
 - alert-dialog.tsx:70 · the phone sheet sits at `bottom-0` · every Dialog sheet sits at `bottom-[var(--kb,0px)]`. Moot while an alert holds no field; a sentence in DESIGN_SYSTEM ("every sheet sits at `bottom: var(--kb)`") does not hold for it.
 - The design-system section used to show a static "Confirm — destructive" built from `DialogPreview` (Dialog chrome) beside a hand-typed `<Dialog>` snippet — a look-alike with the wrong gutter, title size and footer. There is no `AlertDialogPreview` export, so the section now shows the live triggers only; an inline preview sharing the alert's own class strings would let a 375 chip show the sheet shape without a click.
 - Whether `Escape` closes an alert is Base UI's default and not set in `alert-dialog.tsx`; the earlier doc asserted it does not. Unverified here.

@@ -6,7 +6,7 @@
 /* ═══ RESPONSIVE LADDER — single reference ════════════════════════════════
    Three measures, by design (vocabulary: window / column / box):
      • WINDOW media queries     → page chrome + presentation: gutters,
-       sidebar / rail / tab bar (608), sheets ⇄ dialogs (768 = `md`).
+       sidebar / rail / tab bar (608), sheets ⇄ dialogs (640 = `sm`), docked editor (768 = `md`).
      • COLUMN container queries (@container on the page shell) → how many
        fit: card grids, rails, MediaHeader. The column is what the window
        LEAVES — not a formula of it: the wrapper cap and the docked editor
@@ -33,7 +33,7 @@
      <584 → 12px.  1069 = sidebar-collapse point; 584 = the 560 mobile-mode
      boundary expressed in viewport px at the 12px gutter (560 + 2×12).
 
-   NAV CHROME (viewport):  <608 → footer tab bar replaces sidebar (FOOTER_NAV_BELOW) · <768 → useIsMobile: sheets, no docked editor ·
+   NAV CHROME (viewport):  <608 → footer tab bar replaces sidebar (FOOTER_NAV_BELOW) · <640 → useIsMobile: sheets · <768 → useDockedEditor: no docked editor ·
      <1069 → sidebar auto-collapses to the icon rail.
    ═════════════════════════════════════════════════════════════════════════ */
 
@@ -1688,7 +1688,7 @@ img {
    attached to it rather than merely followed by it. Base UI's Drawer
    publishes the drag as `--drawer-swipe-progress` (0 → 1), and both families
    of sheet are Drawers now — a `Dialog` presented as a bottom sheet renders
-   as one below `md`. There used to be a second variable here,
+   as one below `sm`. There used to be a second variable here,
    `--sheet-drag-progress`, published by a hand-rolled hook; it went when the
    hook did.
 

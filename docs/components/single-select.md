@@ -61,7 +61,7 @@ the Discography is in grid view.
 
 ## Sizing
 
-**Window**, one step: **768**. The trigger is fixed — a default `Button` —
+**Window**, one step: **640**. The trigger is fixed — a default `Button` —
 and the popup is `DropdownMenu`, a bottom sheet below the presentation gate
 (see `multi-select.md` — the same surface, the same sheet). In the frame the
 375 chip opens the sheet.

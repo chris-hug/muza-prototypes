@@ -53,7 +53,7 @@ overflow-y-auto` and its own padding.
 
 ## Dialogs arrive here too
 
-Below `md`, a `Dialog` with the default `mobile="sheet"` renders as a
+Below `sm`, a `Dialog` with the default `mobile="sheet"` renders as a
 `Drawer` — same markup and classes, different primitive family — so the
 pull-down, the release threshold and the spring-back on a refused close are
 the library's for every bottom sheet in the app, not just the ones written as
@@ -189,7 +189,7 @@ wide as its `className` says; a top or bottom drawer is `w-dvw`. `Sheet` is
 **not** presentation-swapped: it is a drawer at 320 and at 1920. Which is why
 the surfaces that must be a sheet *only* on phones — every `Dialog`, the
 `DropdownMenu`, the Detail Menu — do not use it for both forms; the Detail
-Menu picks a `Sheet` below 768 and a dropdown above it with `useIsMobile()`.
+Menu picks a `Sheet` below 640 and a dropdown above it with `useIsMobile()`.
 
 ## Behaviour
 

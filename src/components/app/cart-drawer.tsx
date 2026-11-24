@@ -538,9 +538,9 @@ function ShippingAddressLink() {
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         {/* Narrower than default — address forms read better in a
-             tight single column. `md:max-w-sm` (384px) gives room for
+             tight single column. `sm:max-w-sm` (384px) gives room for
              two-column pairs without padding them out. */}
-        <DialogContent className="md:max-w-sm">
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Shipping address</DialogTitle>
             <DialogDescription>
@@ -816,11 +816,11 @@ function TopUpWalletDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {/* Wider than the base `md:max-w-sm` (384): its footer holds two `lg`
+      {/* Wider than the base `sm:max-w-sm` (384): its footer holds two `lg`
            buttons, and "Add $160.00 to wallet" beside "Cancel" needs ~400px
            of content. At 384 the grid column grew past the dialog and every
            row was cut off on the right. */}
-      <DialogContent className="md:max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Top up wallet</DialogTitle>
           <DialogDescription>

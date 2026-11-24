@@ -60,7 +60,7 @@ competing with the icon, the one colour a toast is allowed. The text and icon
 carry `relative`, since a positioned box paints over static ones and the fill
 would otherwise run across the words.
 
-The **description is desktop-only** (`hidden md:block`) and the title
+The **description is desktop-only** (`hidden sm:block`) and the title
 truncates. A confirmation
 is a glance, not a panel — on a 375px screen a two-line card with 18px of
 padding took a fifth of the screen to say "added", and the title already says
@@ -88,7 +88,7 @@ else. It centres on the row (`self-center`) rather than pinning to the top of
 it — the phone toast is one 48px line, and a top-pinned action in it reads as
 crooked, which is the fault the status icon had.
 
-Icons are `size-4 shrink-0 self-center md:self-start md:mt-[3px]`: **centred on
+Icons are `size-4 shrink-0 self-center sm:self-start sm:mt-[3px]`: **centred on
 a phone**, where the toast is one 48px line and the icon has a single line to
 sit against — pinned there it read as crooked. On desktop it is pinned to the
 top of the row and nudged down so the glyph sits on the title's x-height centre
@@ -104,7 +104,7 @@ share one baseline.
 // phone → a bar along the TOP
 "inset-x-2 top-[calc(env(safe-area-inset-top)+4px)] bottom-auto w-auto"
 // sm and up → the top-right card
-"md:inset-x-auto md:right-4 md:top-4 md:bottom-auto md:w-[380px] md:max-w-[calc(100vw-2rem)]"
+"sm:inset-x-auto sm:right-4 sm:top-4 sm:bottom-auto sm:w-[380px] sm:max-w-[calc(100vw-2rem)]"
 ```
 
 **Phone — the TOP of the screen.** `inset-x-2`, 4px under the safe-area inset,
@@ -144,7 +144,7 @@ sheet's own title bar, for the seconds it lives.
   toast is at the top edge, right on desktop, where the card is at the right. It is Base UI's default too; naming it keeps the gesture honest if a
   placement moves. The shell is `touch-none` so the page behind cannot take
   the gesture instead.
-- **Close button — desktop only** (`hidden md:flex`). On a phone the toast
+- **Close button — desktop only** (`hidden sm:flex`). On a phone the toast
   auto-dismisses and can be swiped, and a dismiss target would compete for
   width with the message itself on a bar that is already only
   `100vw - 24px` wide. Platform snackbars do not carry one either.
@@ -239,5 +239,5 @@ so a chrome change updates both — no drift between the gallery and the app.
 
 - toast.tsx:33 (comment) says the old phone padding was "4px/18px" · the desktop classes that were kept are `px-4 pt-4 pb-[18px]` = 16/16/18px; "4px" is probably the Tailwind step, not pixels. Not migrated as a number.
 - "Swipe" dismissal (DESIGN_SYSTEM.md, toast.tsx:49–50) is true only via Base UI's default `swipeDirection = ['down','right']` (`@base-ui/react` 1.3.0) — `toast.tsx` sets nothing (toast.tsx:111–115). A Base UI upgrade that changes the default would silently remove it; consider passing it explicitly.
-- `ToastPreview` does not read `useIsMobile()`: its `md:` classes read the real browser, so at a 375 window chip it still shows the desktop padding and the close button while the live toast would be the slim bar with no ✕. `DialogPreview` restates its phone half for the chip (`dialogPreviewPhoneClass`); the toast preview has no equivalent.
+- `ToastPreview` does not read `useIsMobile()`: its `sm:` classes read the real browser, so at a 375 window chip it still shows the desktop padding and the close button while the live toast would be the slim bar with no ✕. `DialogPreview` restates its phone half for the chip (`dialogPreviewPhoneClass`); the toast preview has no equivalent.
 - DESIGN_SYSTEM.md › "Toasts — mobile shape" now points here; its one kept rule is the duration split.

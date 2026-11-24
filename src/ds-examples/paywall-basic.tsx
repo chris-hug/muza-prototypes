@@ -5,7 +5,7 @@
  * `SubscriptionPromptDialogPreview`. The real `PaywallContent`: it measures
  * its own box and goes two-column at 760px of dialog width, so the 1069 chip
  * shows the split and 768 shows the stack. The amount picker is live; the
- * CTA label follows it. Below a 768 window chip the preview takes the sheet
+ * CTA label follows it. Below a 640 window chip the preview takes the sheet
  * shape.
  */
 

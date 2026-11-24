@@ -48,7 +48,7 @@ The palette is the same tree inside `<CommandDialog open={open} onOpenChange={se
 ## Sizing
 
 - Inline: fixed by the call site (`max-w-sm`, 384px); the list caps at 300px tall and scrolls.
-- `CommandDialog`: the **window**, through `Dialog` — a bottom sheet below the **768** presentation gate, a centred `md:max-w-sm` modal from 768 up (see [`dialog.md`](dialog.md)). Inside the frame the window chip drives it.
+- `CommandDialog`: the **window**, through `Dialog` — a bottom sheet below the **640** presentation gate, a centred `sm:max-w-sm` modal from 640 up (see [`dialog.md`](dialog.md)). Inside the frame the window chip drives it.
 
 ## Behaviour
 

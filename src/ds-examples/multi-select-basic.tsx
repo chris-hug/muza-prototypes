@@ -7,7 +7,7 @@
  *
  * This file is a CALL SITE, not a copy: the real `MultiSelect` with the
  * props `studio-music.tsx` passes. The selection is a `Set<string>` the
- * parent owns; the component only reports the next Set. Below 768 the popup
+ * parent owns; the component only reports the next Set. Below 640 the popup
  * is a bottom sheet — pick the 375 chip and open one.
  */
 

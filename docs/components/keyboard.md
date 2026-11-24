@@ -99,7 +99,7 @@ The sheet's cap is `calc(100svh - var(--kb, 0px) - 8px)`, and anything that
 sets its own height has to use the same formula or hand it back to one:
 
 - **A call site's own `max-h` wins over the class** (twMerge, last one), so a
-  `max-h-[90vh]` must be scoped to `md:` — 90% of the layout viewport is not a
+  `max-h-[90vh]` must be scoped to `sm:` — 90% of the layout viewport is not a
   number iOS shrinks.
 - **A measured pixel height must be temporary.** The sheet's grow-on-first-
   scroll detent animates from a measured height, then hands `height` and

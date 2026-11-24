@@ -292,7 +292,7 @@ Say what is true, and say it precisely. `Form` taught this: the component is imp
 **C · What the frame must show**
 
 - **One variant per frame.** Six toasts in a two-column grid made the width change the demo's own layout instead of the component; the rest belong under the frame as a plain catalogue, or in a second frame.
-- **Mirror the real placement.** The toast sits top-right from 768 and bottom-full-width below it because that is where `ToastViewport` puts it; the List Table swaps to mobile rows below 608 because that is what the app does. A frame showing a rendering the app never produces is worse than no frame.
+- **Mirror the real placement.** The toast sits top-right from 640 and bottom-full-width below it because that is where `ToastViewport` puts it; the List Table swaps to mobile rows below 608 because that is what the app does. A frame showing a rendering the app never produces is worse than no frame.
 - **Draw the chrome** wherever a window chip is in play, so the reader sees why a wider window can leave a narrower column.
 
 Two items in group A are one-time wiring (the id and `ds-sources.ts`). Everything in B and C is a decision per component, and the three most common misfires are: a private chip scale with no justification, several variants in one box, and a demo whose own layout — not the component — is what reacts to the width.

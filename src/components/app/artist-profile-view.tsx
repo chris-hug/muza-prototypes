@@ -353,7 +353,7 @@ function ArtistProfilePage({ profile }: { profile: ArtistProfile }) {
                 {/* Chips where there is room; a dropdown on a phone, like
                      Discography's filter. Six chips on a 351px column were a
                      strip you had to swipe to find "Other". Swapped at the
-                     768 presentation gate (`useIsMobile`), the one width
+                     640 presentation gate (`useIsMobile`), the one width
                      allowed to replace a component (responsive.md). */}
                 {shopKinds.length > 1 && (shopCompact ? (
                   <SingleSelect

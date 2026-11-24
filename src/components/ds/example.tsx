@@ -95,7 +95,7 @@ function chipTip(w: ExampleWidth): React.ReactNode {
     <>
       <span className="font-medium">A {win}px wide screen{device ? ` (${device})` : ""}</span>
       <span>Pages get {w.px}px of it — the rest is {sidebar ? "the sidebar and the margins" : "the margins"}</span>
-      {win < 768 && <span>Sheets and dialogs use all {win}px</span>}
+      {win < 640 && <span>Sheets and dialogs use all {win}px</span>}
     </>
   )
 }
@@ -212,7 +212,7 @@ export function Example({
   /** When the demo is CHROME-level at a given window — a bottom sheet, which
    *  spans the window edge to edge and covers the tab bar — return true and
    *  the frame draws no gutters, no tab bar and no stage padding at that chip,
-   *  so the demo really touches the frame's edges. `w => w < 768` for a
+   *  so the demo really touches the frame's edges. `w => w < 640` for a
    *  component that is a sheet below the presentation gate. */
   bleed?: (windowPx: number) => boolean
   /** How the demo sits in the frame. `center` (default) shrink-wraps it —
@@ -286,7 +286,7 @@ export function Example({
           </span>
           {/* Each chip explains its numbers in a tooltip: the window it
               simulates, the column that window leaves a PAGE (minus sidebar
-              and gutters), and that a sheet or dialog below 768 ignores the
+              and gutters), and that a sheet or dialog below 640 ignores the
               column and fills the window. It was a "375 → 351px" readout
               after the chips, which read as a riddle. */}
           {widths.map(w => (

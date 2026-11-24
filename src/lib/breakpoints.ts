@@ -8,9 +8,10 @@
  *
  *   · WINDOW (`VIEWPORTS`, `useIsMobile()`, `useFooterNav()`) decides the
  *     page chrome — sidebar, icon rail, tab bar, gutter — and how a thing is
- *     PRESENTED (sheet or dialog, the docked editor). Two gates, each with a
- *     job: 608 = chrome (`FOOTER_NAV_BELOW`), 768 = presentation
- *     (`useIsMobile()`, Tailwind `md:`). It is read from the real browser, so
+ *     PRESENTED (sheet or dialog, the docked editor). Three gates, each with
+ *     a job: 608 = chrome (`FOOTER_NAV_BELOW`), 640 = presentation
+ *     (`useIsMobile()`, Tailwind `sm:`), 768 = the docked editor
+ *     (`useDockedEditor()`, `md:`). It is read from the real browser, so
  *     nothing on a page can fake it.
  *   · COLUMN (`containerAt()`, `COLUMN_STEPS`) is what the window leaves —
  *     and it is NOT a function of the window: the wrapper cap and the docked
@@ -36,7 +37,7 @@
  * pair shares one number.
  */
 
-import { FOOTER_NAV_BELOW, SIDEBAR_COLLAPSE_BELOW } from "@/lib/use-media-query"
+import { DOCKED_EDITOR_FROM, FOOTER_NAV_BELOW, PRESENTATION_FROM, SIDEBAR_COLLAPSE_BELOW } from "@/lib/use-media-query"
 
 /* ── container ──────────────────────────────────────────────────────────── */
 
@@ -86,7 +87,7 @@ export const CONTENT_CAP_WIDE_FROM = 1920
  *  max-w-[550px]`, draggable within `[374, min(900, 60% of the window)]`
  *  (`playlist-edit-drawer.tsx`, `use-resizable-width.ts`). It is a flex
  *  SIBLING of `<main>`, so it takes its width off the content column. */
-export const DRAWER_FROM = 768
+export const DRAWER_FROM = DOCKED_EDITOR_FROM
 export const DRAWER_MIN = 374
 export const DRAWER_DEFAULT_MAX = 550
 export const DRAWER_DRAG_MAX = 900
@@ -157,8 +158,10 @@ export const VIEWPORTS = [
     note: "page gutter --page-px steps 12 → 24px — a spacing step, not a mode" },
   { px: FOOTER_NAV_BELOW, name: "Tablet", where: "FOOTER_NAV_BELOW",
     note: "chrome gate — icon rail replaces the tab bar; Topbar replaces MobileAppHeader; mini player becomes the desktop bar" },
-  { px: 768,  name: "Tablet wide", where: "useIsMobile()",
-    note: "presentation gate — useIsMobile() and md: flip together: sheets ⇄ dialogs and dropdowns, toast placement; the docked editor starts to exist" },
+  { px: PRESENTATION_FROM, name: "Phablet", where: "useIsMobile()",
+    note: "presentation gate — useIsMobile() and sm: flip together: sheets ⇄ dialogs and dropdowns, toast placement" },
+  { px: DOCKED_EDITOR_FROM, name: "Tablet wide", where: "useDockedEditor()",
+    note: "the docked playlist editor starts to exist (md:); an iPad mini upright (744) is just under it" },
   { px: SIDEBAR_COLLAPSE_BELOW, name: "Desktop", where: "SIDEBAR_COLLAPSE_BELOW",
     note: "sidebar expands from the icon rail; gutter 24 → 40px" },
   { px: 1440, name: "Laptop", where: "—", note: "a typical laptop — nothing switches" },

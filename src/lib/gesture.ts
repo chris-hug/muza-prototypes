@@ -11,7 +11,7 @@
  * feeling like two apps.
  *
  * The sheet drag is GONE. A `Dialog` presented as a bottom sheet renders as a
- * Base UI `Drawer` below `md`, so the pull-down comes from the library, and
+ * Base UI `Drawer` below `sm`, so the pull-down comes from the library, and
  * `useSheetDrag` went with it — along with the dismiss thresholds, the
  * velocity trail and the scroller test, which only it used. What is left is
  * what a press needs: how far a finger may travel before it is going

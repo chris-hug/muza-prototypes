@@ -2,7 +2,7 @@
 
 /*
  * DetailMoreButton — the "…" overflow affordance for media detail pages
- * (Album / Playlist / Artist). Viewport-aware (useIsMobile, < 768):
+ * (Album / Playlist / Artist). Viewport-aware (useIsMobile, < 640):
  *   · Desktop → a dropdown MENU anchored to the button.
  *   · Mobile → an ADVANCED bottom SHEET: a rich header (cover/collage/
  *     avatar + title + type badge + meta), a row of quick-action buttons
@@ -464,7 +464,7 @@ export function DetailMoreButton(props: DetailMoreButtonProps) {
   const isMobile = useIsMobile()
   const { quick, groups, flat, badgeType } = useDetailActions(props)
 
-  // Desktop → anchored dropdown; mobile (< 768) → the advanced bottom sheet.
+  // Desktop → anchored dropdown; mobile (< 640) → the advanced bottom sheet.
   if (!isMobile) {
     return (
       <DropdownMenu>

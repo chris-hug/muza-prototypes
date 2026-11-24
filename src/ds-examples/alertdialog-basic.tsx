@@ -4,7 +4,7 @@
  * AlertDialog — two live triggers: a destructive confirm (the default
  * `AlertDialogAction` is red) and a non-destructive one ("Unpublish", which
  * is reversible, so the action is rendered as a primary `Button` via `render`). The real
- * component: below a 768 window chip it opens as a bottom sheet, from 768 as
+ * component: below a 640 window chip it opens as a bottom sheet, from 640 as
  * a centred modal. There is no static preview export, so the frame shows the
  * triggers.
  */

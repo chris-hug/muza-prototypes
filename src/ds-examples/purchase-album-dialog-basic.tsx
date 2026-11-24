@@ -5,7 +5,7 @@
  * `PurchaseAlbumDialogPreview` so the frame needs no click. The real body
  * off the real catalog: A Love Supreme carries both tiers, so the picker
  * shows. Tier and email are live; flip them and the total follows. Below a
- * 768 window chip the preview takes the sheet shape.
+ * 640 window chip the preview takes the sheet shape.
  */
 
 import { PurchaseAlbumDialogPreview } from "@/components/app/purchase-album-dialog"

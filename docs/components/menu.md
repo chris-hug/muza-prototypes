@@ -7,12 +7,12 @@ usage:
   - Orders — row actions | /?page=Orders
   - Topbar — account | /?page=Home
 contract:
-  - "[sheet] **The app `DropdownMenu` is already a bottom sheet below 768** — use it for simple ⋯ lists rather than building one. Put the trigger on a real `Button` via `render`, and never use `CheckboxItem` / `RadioItem` / `Sub*` in a menu that can render below 768: they have no sheet counterpart."
+  - "[sheet] **The app `DropdownMenu` is already a bottom sheet below 640** — use it for simple ⋯ lists rather than building one. Put the trigger on a real `Button` via `render`, and never use `CheckboxItem` / `RadioItem` / `Sub*` in a menu that can render below 640: they have no sheet counterpart."
 ---
 
 `DropdownMenu` is the app's action menu — the list behind a card's "…", a
 song row's "…", the share button and the toolbar pickers. It is one component
-with two presentations: an anchored popup from 768 up and a bottom sheet
+with two presentations: an anchored popup from 640 up and a bottom sheet
 below, chosen by `useIsMobile()`, so a call site writes the items once and
 never picks the surface.
 
@@ -35,7 +35,7 @@ never picks the surface.
 Fifteen parts are exported; five of them know about the sheet. The rest are
 thin wrappers over `@base-ui/react/menu` and exist only for the popup.
 
-| Part | Popup (≥ 768) | Sheet (< 768) |
+| Part | Popup (≥ 640) | Sheet (< 640) |
 |---|---|---|
 | `DropdownMenu` | `MenuPrimitive.Root` | `Sheet` with `swipeDirection="down"`; `open` / `onOpenChange` / `defaultOpen` pass through |
 | `DropdownMenuTrigger` | `MenuPrimitive.Trigger` | `SheetTrigger` — the same `render` prop works on both |
@@ -58,13 +58,13 @@ if (mobile) return <Sheet swipeDirection="down">…</Sheet>
 return <MenuPrimitive.Root>…</MenuPrimitive.Root>
 ```
 
-The gate is the **window**, at the 768 presentation step, never a `hover:`
+The gate is the **window**, at the 640 presentation step, never a `hover:`
 media query — the reasons are in [`responsive.md`](responsive.md) (headless
 previews and hybrid laptops both report `hover: hover` at phone width). A
-popup ⇄ sheet swap is a different component, which is exactly what the 768
+popup ⇄ sheet swap is a different component, which is exactly what the 640
 gate is for; 608 (the chrome gate) plays no part. Inside the design-system
 frame `useIsMobile()` reads the window chip, so a "375" frame opens the
-sheet — portaled to the real browser window, full width — and "768" opens the
+sheet — portaled to the real browser window, full width — and "640" opens the
 popup.
 
 ## The popup
@@ -113,7 +113,7 @@ text-xsmall tracking-widest text-muted-foreground`.
 
 ## The sheet
 
-Below 768 `DropdownMenuContent` is a `SheetContent side="bottom"` (the base-ui
+Below 640 `DropdownMenuContent` is a `SheetContent side="bottom"` (the base-ui
 Drawer — see `drawer`): pinned `inset-x-0 bottom-0 w-dvw`, slides in from the
 bottom, swipe **down** to dismiss (`swipeDirection="down"` set on the root, as
 `sheet.tsx:31–33` asks).
@@ -201,7 +201,7 @@ The toolbar pickers (`SingleSelect`, `MultiSelect`) are this menu with a
 
 ## Sizing
 
-Reads the **window** once, at **768** — presentation only. Above it the popup
+Reads the **window** once, at **640** — presentation only. Above it the popup
 is intrinsic (`min-w-44 w-max`) and needs no column; below it the sheet is
 the window's full width. There are no other steps, and the menu never
 measures its column or its own box.
@@ -221,7 +221,7 @@ measures its column or its own box.
 
 ## Open questions
 
-- Below 768 `DropdownMenuGroup`, `…CheckboxItem`, `…RadioGroup`, `…RadioItem`,
+- Below 640 `DropdownMenuGroup`, `…CheckboxItem`, `…RadioGroup`, `…RadioItem`,
   `…Sub`, `…SubTrigger`, `…SubContent` render `MenuPrimitive.*` parts under a
   `Sheet` root; base-ui 1.3.0 throws "Menu parts must be placed within
   <Menu.Root>" (`MenuRootContext.js:18`). No app call site uses them today
@@ -231,7 +231,7 @@ measures its column or its own box.
 - In sheet mode `DropdownMenuItem` spreads nothing but `onClick`, `disabled`
   and `className` onto its button (`dropdown-menu.tsx:174–190`); any other
   prop — `aria-label`, `data-*`, base-ui's `closeOnClick` — is silently
-  dropped below 768 and honoured above it.
+  dropped below 640 and honoured above it.
 - `max-h-[80vh]` on the sheet (`dropdown-menu.tsx:92`) · the phone-sheet rule
   in `dialog.md` is `svh`, not `vh`, because `vh` is the *large* viewport on
   iOS and can exceed what is visible with the toolbar shown.

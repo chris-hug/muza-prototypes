@@ -170,7 +170,7 @@ Raw numeric values that the semantic aliases resolve to. These are the **source 
 `xs` 320 · `sm` 384 · `md` 448 · `lg` 512 · `xl` 576 · `2xl` 672 · `3xl` 768 · `4xl` 896 · `5xl` 1024 · `6xl` 1152 · `7xl` 1280
 
 ### Tailwind screens
-`sm` 640 · `md` 768 · `lg` 1024 · `xl` 1280 · `2xl` 1536 — Tailwind's tokens, unchanged. Only **`md` gates a presentation** (it is `useIsMobile()` in CSS); `sm` / `lg` reflow in-page content only. The app's own width system — window, column, box — is in *Responsive & pointer* below and in [`docs/components/responsive.md`](docs/components/responsive.md).
+`sm` 640 · `md` 768 · `lg` 1024 · `xl` 1280 · `2xl` 1536 — Tailwind's tokens, unchanged. Only **`sm` gates a presentation** (it is `useIsMobile()` in CSS); `md` also gates the docked editor (`useDockedEditor()`); otherwise `md` / `lg` reflow in-page content only. The app's own width system — window, column, box — is in *Responsive & pointer* below and in [`docs/components/responsive.md`](docs/components/responsive.md).
 
 ### Layout — page max-width tiers
 
@@ -1198,7 +1198,7 @@ the control the bar has to hold, so it is stated once, in
 **The keyboard is measured, not guessed.** `--kb` and `data-kb="open"` are
 published by `useKeyboardInset`; a media query cannot see the squeeze because
 the layout viewport does not shrink. Cap sheet heights with `svh`, never `vh`
-or `dvh`, and scope any `max-h` of your own to `md:`.
+or `dvh`, and scope any `max-h` of your own to `sm:`.
 → [keyboard.md](docs/components/keyboard.md)
 
 ### The strict rules
@@ -1227,7 +1227,7 @@ Phones are the default surface for the player, so gesture handling is a first-cl
 
 **Three measures, and only three.** *Window* decides the chrome and how a thing is presented; *column* decides how many fit; *box* decides a component's own internal reflow, and only where the same window can hand it two widths. Reading a number from one as if it came from another is the mistake this vocabulary exists to prevent. → [responsive.md](docs/components/responsive.md)
 
-**Two window gates, each with a job.** 608 is chrome (tab bar ⇄ rail, mobile header, mini player); 768 is presentation (`useIsMobile()` and Tailwind `md:` — sheets ⇄ dialogs, dropdowns ⇄ sheets). `sm:` and `lg:` may reflow in-page content and nothing else — never a chrome or presentation switch. → [responsive.md](docs/components/responsive.md)
+**Three window gates, each with a job.** 608 is chrome (tab bar ⇄ rail, mobile header, mini player); 640 is presentation (`useIsMobile()` and Tailwind `sm:` — sheets ⇄ dialogs, dropdowns ⇄ sheets); 768 is the docked editor (`useDockedEditor()`, `md:`). `md:` and `lg:` may otherwise reflow in-page content and nothing else — never a chrome or presentation switch. → [responsive.md](docs/components/responsive.md)
 
 **Gate a different RENDER on the window, never on `hover:`.** The headless preview reports `hover: hover` at phone width and hybrid laptops do too, so a hover-gated sheet simply never appears there. `hover:` is for cosmetic show/hide only. → [responsive.md](docs/components/responsive.md)
 
@@ -1240,9 +1240,10 @@ the browser's own terms. The arithmetic behind every number below — the column
 ladder, the derivations, the duplication map — is in
 [`responsive.md`](docs/components/responsive.md).
 
-**Window — two gates, each with a job:**
+**Window — three gates, each with a job:**
 - **608 = chrome** (`useFooterNav()`, `FOOTER_NAV_BELOW` = 560 + 2×24): tab bar ⇄ icon rail, `MobileAppHeader` ⇄ `Topbar`, mini player ⇄ desktop bar. Anything lifted over the tab bar (`BulkActionBar`) gates here, never on `md`.
-- **768 = presentation** (`useIsMobile()` and Tailwind `md:` — the same gate in TS and CSS): dialogs, alert dialogs and toasts leave their sheet / bottom-bar form, dropdowns stop presenting as sheets, the docked playlist editor starts to exist. `sm:` (640) and `lg:` (1024) may reflow **in-page content** (a form going two-column, a table hiding a column) and nothing else — never a chrome or presentation switch. (Before this rule dialogs recentred at `sm` while the hook still said phone: at 640–767 the create-playlist form rendered its phone branch with every action hidden by `sm:hidden`.)
+- **640 = presentation** (`useIsMobile()` and Tailwind `sm:` — the same gate in TS and CSS): dialogs, alert dialogs and toasts leave their sheet / bottom-bar form, dropdowns stop presenting as sheets. It was 768 until an iPad mini upright (744) showed a full-width sheet with 744px rows; iPadOS and Material both stop bottom sheets at about this width.
+- **768 = docked editor** (`useDockedEditor()`, `md:`): the docked playlist editor starts to exist. Otherwise `md:` (768) and `lg:` (1024) may reflow **in-page content** (a form going two-column, a table hiding a column) and nothing else — never a chrome or presentation switch. (Before this rule dialogs recentred at `sm` while the hook still said phone: at 640–767 the create-playlist form rendered its phone branch with every action hidden by `sm:hidden`.)
 - They are **not folded into one** on purpose: with the tab bar up to 767 the MediaHeader would go horizontal under the mobile detail bar (built for the centred cover), and the mini player slot would receive the 80px desktop bar from a 664px window.
 - **1069 = sidebar expands** (`SIDEBAR_COLLAPSE_BELOW` = 780 + 208 + 80 + 1); gutter 24 → 40px. **584** is a gutter-only step (12 → 24px), not a mode. `--page-px` tiers: ≥1069 → 40px, 584–1068 → 24px, < 584 → 12px.
 
@@ -1250,7 +1251,7 @@ ladder, the derivations, the duplication map — is in
 
 **Box — the four that measure themselves:** `SongListItem` (`@container/row`, 260 / 300 / 380), `PlayerBar` (640 / 688 / 800 — the 640 compact ⇄ desktop switch stays a box step because the docked editor can leave the bar 294px at a 768px window), `PlayerOverlay` (`@container/overlay`, 380), the paywall's two-column split (760). Name the container; an unnamed one binds to whatever ancestor is nearest.
 
-**`@max-[N]` means below N.** Tailwind v4 compiles `@max-[560px]` to `width < 560px` and `max-md:` to `width < 768px` — exclusive — so a step at 560 is `@min-[560px]` / `@max-[560px]`, never `@max-[559px]` (that left the 559px column, a 607px window, matching neither side).
+**`@max-[N]` means below N.** Tailwind v4 compiles `@max-[560px]` to `width < 560px` and `max-sm:` to `width < 640px` — exclusive — so a step at 560 is `@min-[560px]` / `@max-[560px]`, never `@max-[559px]` (that left the 559px column, a 607px window, matching neither side).
 
 ---
 
@@ -1263,13 +1264,13 @@ ladder, the derivations, the duplication map — is in
      of the pages that own these rules. Do not edit between these markers —
      edit the owning page and re-run `npm run sync-docs`. -->
 
-**On a phone a bottom sheet's ✕ is invisible, not gone.** The grabber, the pull-down, the backdrop and Escape are the visible way out; the ✕ stays in the accessibility tree and the tab order (`max-md:sr-only`, shown on keyboard focus), because VoiceOver, Switch Control and a keyboard cannot drag. Desktop keeps the visible ✕; a `mobile="form"` sheet hides it outright, its bar carries the way out. → [dialog.md](docs/components/dialog.md)
+**On a phone a bottom sheet's ✕ is invisible, not gone.** The grabber, the pull-down, the backdrop and Escape are the visible way out; the ✕ stays in the accessibility tree and the tab order (`max-sm:sr-only`, shown on keyboard focus), because VoiceOver, Switch Control and a keyboard cannot drag. Desktop keeps the visible ✕; a `mobile="form"` sheet hides it outright, its bar carries the way out. → [dialog.md](docs/components/dialog.md)
 
-**Every Dialog and AlertDialog is a bottom sheet on mobile and a centred modal from 768.** It is baked into the base content component — an individual dialog sets its desktop width and height only, and must not re-declare the positioning. → [dialog.md](docs/components/dialog.md)
+**Every Dialog and AlertDialog is a bottom sheet on mobile and a centred modal from 640.** It is baked into the base content component — an individual dialog sets its desktop width and height only, and must not re-declare the positioning. → [dialog.md](docs/components/dialog.md)
 
 **Forms go full-screen on phones** (`mobile="form"`). A bottom sheet cannot hold a form once the keyboard is up, so any dialog whose primary action must survive typing anchors to the top, gives only its body a scroll, and puts the confirming action where the keyboard cannot reach it. → [dialog.md](docs/components/dialog.md)
 
-**A full-bleed footer's negative margins must match the gutter at BOTH sizes** (`-mx-3 md:-mx-6`), or the bar stops short of the edges at one of them — the kind of thing that looks like a rendering bug and is arithmetic. → [dialog.md](docs/components/dialog.md)
+**A full-bleed footer's negative margins must match the gutter at BOTH sizes** (`-mx-3 sm:-mx-6`), or the bar stops short of the edges at one of them — the kind of thing that looks like a rendering bug and is arithmetic. → [dialog.md](docs/components/dialog.md)
 
 **Opening the keyboard has to happen inside the tap.** iOS raises it only for a focus during a user gesture, and a dialog focuses its field a frame or two later. A flow that should start typing focuses a zero-sized stand-in input from the trigger's own handler; the keyboard then follows focus into the real field. → [keyboard.md](docs/components/keyboard.md)
 
@@ -1277,7 +1278,7 @@ ladder, the derivations, the duplication map — is in
 
 **The viewport meta must not carry `user-scalable=no` or `maximum-scale=1`.** Blocking pinch-zoom is a WCAG 1.4.4 failure, and the double-tap delay it is usually there to prevent is answered by `touch-action: manipulation` instead. → [keyboard.md](docs/components/keyboard.md)
 
-**The app `DropdownMenu` is already a bottom sheet below 768** — use it for simple ⋯ lists rather than building one. Put the trigger on a real `Button` via `render`, and never use `CheckboxItem` / `RadioItem` / `Sub*` in a menu that can render below 768: they have no sheet counterpart. → [menu.md](docs/components/menu.md)
+**The app `DropdownMenu` is already a bottom sheet below 640** — use it for simple ⋯ lists rather than building one. Put the trigger on a real `Button` via `render`, and never use `CheckboxItem` / `RadioItem` / `Sub*` in a menu that can render below 640: they have no sheet counterpart. → [menu.md](docs/components/menu.md)
 
 **An overlay panel does not push content.** A panel opening under a sticky header is out of flow (`absolute inset-x-* top-full z-40`) so it floats over the page instead of displacing it. → [drawer.md](docs/components/drawer.md)
 
@@ -1289,21 +1290,21 @@ ladder, the derivations, the duplication map — is in
 
 Three escalating surfaces, all bottom-anchored on phones:
 
-**1. Responsive dialog → bottom sheet — the BASE DEFAULT.** **Every** `Dialog` and `AlertDialog` is a **bottom sheet on mobile** and a **centered modal on desktop (md+, 768)** — no per-dialog opt-in; it is baked into the base `DialogContent` / `AlertDialogContent`. Individual dialogs set their **desktop width** (`md:max-w-*`) and height only, and must **not** re-declare the positioning. Everything else about the dialog family — the 12px sheet gutter, the header column, the `text-small` title, `dialogListClass`, the flex scroll body, the footer's edge, the form sheet and the find screen — lives in [docs/components/dialog.md](docs/components/dialog.md); the alert's differences in [docs/components/alertdialog.md](docs/components/alertdialog.md).
+**1. Responsive dialog → bottom sheet — the BASE DEFAULT.** **Every** `Dialog` and `AlertDialog` is a **bottom sheet on mobile** and a **centered modal from 640 (`sm+`)** — no per-dialog opt-in; it is baked into the base `DialogContent` / `AlertDialogContent`. Individual dialogs set their **desktop width** (`md:max-w-*`) and height only, and must **not** re-declare the positioning. Everything else about the dialog family — the 12px sheet gutter, the header column, the `text-small` title, `dialogListClass`, the flex scroll body, the footer's edge, the form sheet and the find screen — lives in [docs/components/dialog.md](docs/components/dialog.md); the alert's differences in [docs/components/alertdialog.md](docs/components/alertdialog.md).
 
 **The keyboard is part of the layout.** iOS does NOT shrink the layout viewport when the on-screen keyboard opens — it shrinks the *visual* viewport — so a `fixed; bottom: 0` sheet sits **behind** the keyboard. Every sheet therefore:
 - sits at `bottom: var(--kb, 0px)` and is capped to `max-h-[calc(100svh-var(--kb,0px)-8px)]`, scrolling internally, with `scroll-padding-bottom: 8rem` so a field the browser scrolls into view lands clear of the sticky footer;
-- keeps its footer **`sticky bottom-[-0.75rem]` on mobile** so the actions can't scroll out of reach (`md:static` — desktop doesn't scroll).
+- keeps its footer **`sticky bottom-[-0.75rem]` on mobile** so the actions can't scroll out of reach (`sm:static` — desktop doesn't scroll).
 
 **`svh`, never `dvh`, for a sheet's height.** On iOS the *dynamic* viewport unit reports the height with the browser chrome **collapsed**, so while the URL bar is expanded a sheet sized to `100dvh` is taller than the screen: its top — title, tabs, the ✕ — sits above the visible area. `100svh` is the small (chrome-visible) viewport and always fits. Subtract `env(safe-area-inset-top)` as well on a sheet that fills the height. Two corollaries that cost a day each: **a call site's own `max-h` beats the class** (twMerge, last one), so scope it to `md:`; and **a measured pixel height must be handed back to the formula** when whatever animated it finishes, or the sheet stays that tall when the keyboard arrives.
 
 `--kb` and **`data-kb="open"`** are published by [`useKeyboardInset`](src/lib/use-keyboard-inset.ts), mounted once in the app shell: the height of the keyboard plus its accessory bar, and a flag for what a length cannot express. A `max-height` media query cannot stand in for either — the layout viewport does not shrink, which is the whole reason they exist. **The full account — the measurement, the two versions that were wrong, the hysteresis, the two scroll pins, the `svh` rule and the re-reveal on resize — lives in [docs/components/keyboard.md](docs/components/keyboard.md).** Do not restate it here; this section holds only what other components have to obey.
 
-The squeeze is bigger than it sounds, and it is the reason the bands give up their padding below 768: an iPhone in Brave reports **495px of layout with 169px still visible**, and a bar plus an action row spend most of that before the field is drawn. Chrome/Android needs none of it — `interactive-widget=resizes-content` in the viewport meta does the same job declaratively, so `--kb` stays 0 there.
+The squeeze is bigger than it sounds, and it is the reason the bands give up their padding below 640: an iPhone in Brave reports **495px of layout with 169px still visible**, and a bar plus an action row spend most of that before the field is drawn. Chrome/Android needs none of it — `interactive-widget=resizes-content` in the viewport meta does the same job declaratively, so `--kb` stays 0 there.
 
 **Forms go full-screen on phones — `<DialogContent mobile="form">`.** A bottom sheet cannot hold a form once the keyboard is up (169px measured, and a title + field + toggle + footer need well over 200), so any dialog whose **primary action must survive typing** uses the form presentation: anchored top, only the body scrolls, the confirming action in the top bar where the keyboard cannot reach it. The bands, the header rules and the find-screen pattern are in [docs/components/dialog.md](docs/components/dialog.md).
 
-**2. DropdownMenu auto-sheet.** The app `DropdownMenu` already presents as a bottom sheet below 768 — use it for simple "…" lists. See [docs/components/menu.md](docs/components/menu.md); the one rule: put the trigger on a real `Button` via `render`, and never use `…CheckboxItem` / `…RadioItem` / `…Sub*` in a menu that can render below 768 — they have no sheet counterpart.
+**2. DropdownMenu auto-sheet.** The app `DropdownMenu` already presents as a bottom sheet below 640 — use it for simple "…" lists. See [docs/components/menu.md](docs/components/menu.md); the one rule: put the trigger on a real `Button` via `render`, and never use `…CheckboxItem` / `…RadioItem` / `…Sub*` in a menu that can render below 768 — they have no sheet counterpart.
 
 **3. Advanced bottom-sheet "…" menu** (`DetailMoreButton`, Album/Playlist/Artist). Rich, store-aware action surface, gated by `useIsMobile()`:
 - **Header** — `MenuCover` (square cover / 2×2 playlist collage / round artist avatar, **72px** ≈ the 3 text lines) + title + `ContentTypeBadge` + meta. No divider; generous `pb-6`.
@@ -1458,4 +1459,4 @@ Owner-only **Edit** on a playlist docks a panel on the right that **persists acr
 
 > **Reference.** A pointer to `toast.md`.
 
-See [docs/components/toast.md](docs/components/toast.md) — **top-anchored on phones**, one line, nearly full width, with its own drain as a clock; the top-right card from 768. It used to be a bottom bar lifted over the mini player, tab bar, home indicator and keyboard, which is four things to clear and still put the message on whatever raised it. The top is the one place on a phone where a message does not sit on the thing you are using. The rule not to miss: plain confirmations ("added", "created", "saved") pass `timeout: TOAST_CONFIRM_MS` (2.5s); a toast carrying an **action** (Undo) stays on the 5s default, because 2.5s is too short to read a line and reach a button.
+See [docs/components/toast.md](docs/components/toast.md) — **top-anchored on phones**, one line, nearly full width, with its own drain as a clock; the top-right card from 640. It used to be a bottom bar lifted over the mini player, tab bar, home indicator and keyboard, which is four things to clear and still put the message on whatever raised it. The top is the one place on a phone where a message does not sit on the thing you are using. The rule not to miss: plain confirmations ("added", "created", "saved") pass `timeout: TOAST_CONFIRM_MS` (2.5s); a toast carrying an **action** (Undo) stays on the 5s default, because 2.5s is too short to read a line and reach a button.

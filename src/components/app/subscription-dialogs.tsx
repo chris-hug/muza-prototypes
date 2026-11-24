@@ -75,7 +75,7 @@ export function SubscriptionPromptDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="md:w-[80vw] md:max-w-[980px] p-0 gap-0 overflow-hidden bg-muted">
+      <DialogContent className="sm:w-[80vw] sm:max-w-[980px] p-0 gap-0 overflow-hidden bg-muted">
         {/* Visible heading lives inside PaywallContent; these keep the
             dialog accessible (aria-labelledby / describedby). */}
         <DialogTitle className="sr-only">Support your artists.</DialogTitle>
@@ -192,7 +192,7 @@ function PaywallContent({
                 and does not wrap. Below 420px of dialog the pair steps down
                 to `text-small` — and the column padding to `px-6` — keyed to
                 the CONTAINER, not the viewport: the design-system stage is
-                narrow on a wide screen, and `md:px-12` gave it 48px a side
+                narrow on a wide screen, and `sm:px-12` gave it 48px a side
                 there, which is what squeezed the label in the first place. */}
             <Button
               size="lg"
@@ -363,7 +363,7 @@ export function SubscriptionCheckoutDialogPreview({
         )}
       </div>
 
-      <div className="m-0 shrink-0 flex justify-end gap-2 border-t border-border bg-muted px-6 py-4 rounded-b-xl md:rounded-b-2xl">
+      <div className="m-0 shrink-0 flex justify-end gap-2 border-t border-border bg-muted px-6 py-4 rounded-b-xl sm:rounded-b-2xl">
         <Button size="lg" variant="ghost">Cancel</Button>
         <Button size="lg" disabled={!emailValid || (!freeTrial && monthlyAmount < MIN_AMOUNT)}>
           {freeTrial ? "Start free month" : `Subscribe — ${formattedMonthly}`}
@@ -425,7 +425,7 @@ export function SubscriptionCheckoutDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="md:max-w-xl max-h-[90vh] p-0 gap-0 flex flex-col">
+      <DialogContent className="sm:max-w-xl max-h-[90vh] p-0 gap-0 flex flex-col">
         {step === "summary" && (
           <>
             <div className="shrink-0 flex flex-col gap-3 px-6 pt-6 pb-4 border-b border-border">
@@ -515,7 +515,7 @@ export function SubscriptionCheckoutDialog({
               )}
             </div>
 
-            <DialogFooter className="m-0 shrink-0 border-t border-border bg-muted px-6 py-4 rounded-b-xl md:rounded-b-2xl">
+            <DialogFooter className="m-0 shrink-0 border-t border-border bg-muted px-6 py-4 rounded-b-xl sm:rounded-b-2xl">
               <DialogClose render={<Button size="lg" variant="ghost" />}>Cancel</DialogClose>
               <Button size="lg" onClick={handleSubscribe} disabled={!emailValid || (!freeTrial && !paidValid)}>
                 {freeTrial ? "Start free month" : `Subscribe — ${formattedMonthly}`}

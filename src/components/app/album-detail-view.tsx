@@ -227,7 +227,7 @@ function CatalogAlbumDetailView() {
 
       {/* "…" — opens a bottom sheet with the actions the MediaHeader's icon
            cluster carries. Stacked layout only (<560), and only off-phone;
-           below 768 the slim detail header's "…" owns it. */}
+           below 608 the slim detail header's "…" owns it. */}
       {!footerNav && (
         <DetailMoreButton
           {...albumMenu}

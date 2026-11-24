@@ -88,7 +88,7 @@ each icon-only segment its own.
 
 Fixed, no steps. The group is `w-fit` and reads none of the three measures.
 One call site overrides that: the mobile search header
-(`mobile-app-header.tsx:315`) passes `className="w-full"` below the 768
+(`mobile-app-header.tsx:315`) passes `className="w-full"` below the 640
 presentation gate, and the segments' `flex-1` splits the header's width in
 two. The desktop Search page keeps it `shrink-0` beside the heading.
 

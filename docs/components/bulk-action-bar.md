@@ -45,7 +45,7 @@ It enters with `animate-in fade-in slide-in-from-bottom-2 duration-200`; there i
 
 Reads the **window** at the **608 chrome gate**, and its own content.
 
-- **Lift.** `bottom-6` (24px) by default; `bottom-24` (96px) when `useFooterNav()` is true — below 608 the footer tab bar and the mini player are on screen and the pill has to clear them. This is the chrome gate, deliberately *not* the 768 presentation gate: between 608 and 767 there is no tab bar, the desktop player bar is on screen, and `bottom-6` already sits over it (`DESIGN_SYSTEM.md`, "Responsive & pointer": *anything lifted over the tab bar gates here, never on `md`*).
+- **Lift.** `bottom-6` (24px) by default; `bottom-24` (96px) when `useFooterNav()` is true — below 608 the footer tab bar and the mini player are on screen and the pill has to clear them. This is the chrome gate, deliberately *not* the 640 presentation gate: between 608 and 767 there is no tab bar, the desktop player bar is on screen, and `bottom-6` already sits over it (`DESIGN_SYSTEM.md`, "Responsive & pointer": *anything lifted over the tab bar gates here, never on `md`*).
 - **Wrap.** The pill is `flex-wrap`: on a 375px phone the count, two actions and ✕ measure 405px, so the actions drop to a second line (`gap-y-2`) instead of the pill running off the left edge. `max-w-full` keeps it inside the row's 12px insets.
 
 In the design-system frame the window chip is the window (`WindowWidthContext`), so at 320 / 375 the pill in the frame wraps as it does on a phone. The **lift is not visible there**: the frame renders `BulkActionBarContent`, because the live bar would portal out of the frame into the page's own `#app-content`.

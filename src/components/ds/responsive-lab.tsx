@@ -448,11 +448,12 @@ export function ResponsiveLab() {
       <p className="max-w-2xl text-2xsmall text-muted-foreground">
         The names are <span className="text-foreground">width bands, not devices</span> — a 1024px
         tablet held sideways is “Desktop” here, and that is right: what matters is the room the
-        layout has, never what the hardware is called. Two of them are gates with a job:{" "}
-        <span className="text-foreground">608 = chrome</span> (tab bar, mobile header, mini player) and{" "}
-        <span className="text-foreground">768 = presentation</span> (sheets ⇄ dialogs, the docked editor) — Tailwind’s{" "}
-        <code className="rounded-sm bg-muted px-1 font-mono text-2xsmall font-normal">md:</code> is that second gate in CSS, and the only screen token allowed to switch a presentation;{" "}
-        <code className="rounded-sm bg-muted px-1 font-mono text-2xsmall font-normal">sm:</code> /{" "}
+        layout has, never what the hardware is called. Three of them are gates with a job:{" "}
+        <span className="text-foreground">608 = chrome</span> (tab bar, mobile header, mini player),{" "}
+        <span className="text-foreground">640 = presentation</span> (sheets ⇄ dialogs) and{" "}
+        <span className="text-foreground">768 = the docked editor</span> — Tailwind’s{" "}
+        <code className="rounded-sm bg-muted px-1 font-mono text-2xsmall font-normal">sm:</code> is the presentation gate in CSS, and the only screen token allowed to switch a presentation;{" "}
+        <code className="rounded-sm bg-muted px-1 font-mono text-2xsmall font-normal">md:</code> /{" "}
         <code className="rounded-sm bg-muted px-1 font-mono text-2xsmall font-normal">lg:</code> reflow in-page content only.{" "}
         <span className="text-foreground">608</span> and{" "}
         <span className="text-foreground">1069</span> are arithmetic —{" "}

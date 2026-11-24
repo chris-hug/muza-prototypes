@@ -6,14 +6,14 @@ related: [dialog, card-rail, song-list-item, mobile-header, toast]
 usage:
   - not a component — the width rules every section is measured against
 summary:
-  - **Window** — the browser. Decides the **chrome** and how a thing is **presented**. Two gates: **608** chrome (tab bar ⇄ icon rail, mobile header, mini player) and **768** presentation (`useIsMobile` and `md:`, the same gate in TS and CSS — sheets ⇄ dialogs, toasts, the docked editor).
+  - **Window** — the browser. Decides the **chrome** and how a thing is **presented**. Three gates: **608** chrome (tab bar ⇄ icon rail, mobile header, mini player), **640** presentation (`useIsMobile` and `sm:`, the same gate in TS and CSS — sheets ⇄ dialogs, toasts) and **768** the docked editor (`useDockedEditor`, `md:`).
   - **Column** — what the window leaves after chrome, cap and editor. Decides **how many fit**: card steps, rail peek, MediaHeader tier. Written `@min-[N]` / `@max-[N]`.
   - **Box** — a component's own width. Only where the same window can hand it two widths (a song row in a list vs a rail cell), and then the container is **named**.
   - **Pointer, not width**, for touch: hover is pointer-only, and a component swaps on the window — never on hover. The one gate that reads the pointer itself is `useCoarsePointer()`, and it is a fourth thing, not a fourth width.
 contract:
   - "[touch] **The gate is the POINTER, not the window.** `useCoarsePointer()` asks what is doing the pointing; the three width measures ask how much room there is. Answering one with the other is how a phone ends up with a mouse's affordances at 375px."
   - "[width] **Three measures, and only three.** *Window* decides the chrome and how a thing is presented; *column* decides how many fit; *box* decides a component's own internal reflow, and only where the same window can hand it two widths. Reading a number from one as if it came from another is the mistake this vocabulary exists to prevent."
-  - "[width] **Two window gates, each with a job.** 608 is chrome (tab bar ⇄ rail, mobile header, mini player); 768 is presentation (`useIsMobile()` and Tailwind `md:` — sheets ⇄ dialogs, dropdowns ⇄ sheets). `sm:` and `lg:` may reflow in-page content and nothing else — never a chrome or presentation switch."
+  - "[width] **Three window gates, each with a job.** 608 is chrome (tab bar ⇄ rail, mobile header, mini player); 640 is presentation (`useIsMobile()` and Tailwind `sm:` — sheets ⇄ dialogs, dropdowns ⇄ sheets); 768 is the docked editor (`useDockedEditor()`, `md:`). `md:` and `lg:` may otherwise reflow in-page content and nothing else — never a chrome or presentation switch."
   - "[width] **Gate a different RENDER on the window, never on `hover:`.** The headless preview reports `hover: hover` at phone width and hybrid laptops do too, so a hover-gated sheet simply never appears there. `hover:` is for cosmetic show/hide only."
   - "[width] **Name a box container.** An unnamed `@container` binds to whatever ancestor is nearest, which is how the player overlay ended up measuring a 1400px page wrapper instead of itself."
 ---
@@ -24,7 +24,7 @@ reading a number from one as if it were from another.
 
 | Measure | What it is | Read by | May decide |
 |---|---|---|---|
-| **window** | the browser viewport | `useFooterNav()`, `useIsMobile()`, `useSidebarAutoCollapsed()`, `@media`, Tailwind `md:` | the page **chrome** and how a thing is **presented**: sidebar / icon rail / tab bar, the gutter, dialog-as-sheet, dropdown-as-sheet, the docked editor, where a toast sits |
+| **window** | the browser viewport | `useFooterNav()`, `useIsMobile()`, `useDockedEditor()`, `useSidebarAutoCollapsed()`, `@media`, Tailwind `sm:` | the page **chrome** and how a thing is **presented**: sidebar / icon rail / tab bar, the gutter, dialog-as-sheet, dropdown-as-sheet, the docked editor, where a toast sits |
 | **column** | the page content area — what the window leaves after chrome, cap and editor | `@container` on the page shell: `.grid-cards`, `@min-[N]:` in rails and headers | **how many fit**: card columns, rail peek, MediaHeader tier |
 | **box** | a component's own width, when the same window can hand it two different widths | a **named** `@container/<name>` on the component itself | internal reflow only: which meta field drops, which player tier |
 
@@ -103,14 +103,15 @@ Three different questions, three different gates:
 
 See [gesture.md](gesture.md) for what the touch answer then changes.
 
-## Window: two gates, each with a job
+## Window: three gates, each with a job
 
 | Name | px | Gate | What changes | Defined in |
 |---|---|---|---|---|
 | **Phone** | 375 | — | Nothing switches — the reference phone (iPhone 12 mini / SE class), the narrowest width the app is tested at | — |
 | **Phone wide** | 584 | gutter only | `--page-px` 12 → 24px. A spacing step, not a mode | `app.css` |
 | **Tablet** | 608 | **chrome** | Icon rail replaces the tab bar; `Topbar` replaces `MobileAppHeader`; the mini player becomes the desktop bar; anything lifted over the tab bar (`BulkActionBar`) drops | `FOOTER_NAV_BELOW` |
-| **Tablet wide** | 768 | **presentation** | `useIsMobile()` and Tailwind `md:` flip together: dialogs, alert dialogs and toasts leave their sheet / bottom-bar form, dropdowns stop presenting as sheets, the docked playlist editor starts to exist | `useIsMobile()`, `DRAWER_FROM`, `md:` |
+| **Phablet** | 640 | **presentation** | `useIsMobile()` and Tailwind `sm:` flip together: dialogs, alert dialogs and toasts leave their sheet / bottom-bar form, dropdowns stop presenting as sheets | `useIsMobile()`, `PRESENTATION_FROM`, `sm:` |
+| **Tablet wide** | 768 | **docked editor** | The docked playlist editor starts to exist; below it, Edit opens the info dialog | `useDockedEditor()`, `DRAWER_FROM`, `md:` |
 | **Desktop** | 1069 | chrome | Sidebar expands from the icon rail; gutter 24 → 40px | `SIDEBAR_COLLAPSE_BELOW` |
 | **Wide** | 1920 | cap | The page wrapper's ceiling rises from 1480 to 1716px | `CONTENT_CAP_WIDE_FROM` |
 
@@ -118,23 +119,35 @@ The names describe **width bands, not devices**. A 1024px tablet held sideways
 is "Desktop" here, and that is correct: what matters is the room the layout
 has, never what the hardware is called.
 
-**Why 608 and 768 are not one gate.** They could be, and one number fewer
+**Why 608 and the presentation gate are not one.** They could be, and one number fewer
 would be tidier — but with the tab bar kept up to 767 the MediaHeader would go
 horizontal (its column reaches 560 at 608 without a sidebar) underneath the
 mobile detail bar, which is built for the centred, stacked cover; and the mini
 player slot would receive the 80px desktop bar from a 664px window, because
 the bar's own box passes 640 there. Folding them means touching both; until
-then, 608 is chrome and 768 is presentation, and each is named for it.
+then, 608 is chrome and 640 is presentation, and each is named for it.
 
-**Tailwind's screens, stated.** `md:` (768) is `useIsMobile()` in CSS and is
-the only screen token that may switch a presentation. `sm:` (640) and `lg:`
-(1024) may reflow **in-page content** — a settings form going two-column, a
-report table hiding a column — and nothing else. Before this rule the dialog
-family recentred at `sm` while the hook still said phone: between 640 and 767
-the create-playlist form rendered its phone branch with every action hidden
-by `sm:hidden`. `xl` and `2xl` gate nothing.
+**Why presentation is 640, not 768.** It was 768 until a tablet was
+looked at. At 744 — an iPad mini held upright, the one common device
+between the two — a full-width sheet stretched "Add to a playlist" into
+744px rows, the name at one edge and its ＋ at the other, and covered 85% of
+the page; the centred 576px dialog read as one list and kept the page in
+view. The platforms say the same: iPadOS presents a sheet as a centred form
+sheet at that width, and Material 3 caps a bottom sheet at 640dp. A sheet is
+for a phone, and 640 is where a phone ends. The docked editor did not move
+with it: at 640 its 374px would leave the page a phone-width column, so it
+got its own gate at 768.
 
-**What "presentation" covers below 768.** Every `Dialog` and `AlertDialog` is
+**Tailwind's screens, stated.** `sm:` (640) is `useIsMobile()` in CSS and is
+the only screen token that may switch a presentation; `md:` (768) is also
+the docked editor's. Otherwise `md:` and `lg:` (1024) may reflow **in-page
+content** — a settings form going two-column, a
+report table hiding a column — and nothing else. The hook and the classes must
+move together: once, the dialog family recentred at `sm` while the hook
+(then at 768) still said phone, and between 640 and 767 the create-playlist
+form rendered its phone branch with every action hidden by `sm:hidden`. `xl` and `2xl` gate nothing.
+
+**What "presentation" covers below 640.** Every `Dialog` and `AlertDialog` is
 a bottom sheet (the base default of `DialogContent`, no opt-in; a form whose
 primary action must survive the keyboard goes full-screen via
 `mobile="form"` — see [`dialog.md`](dialog.md)); `DropdownMenu` presents as a
@@ -269,11 +282,11 @@ phone.
 ## Writing a step: `@max-[N]` means "below N"
 
 Tailwind v4 compiles `@max-[560px]` to `@container (width < 560px)` and
-`max-md:` to `@media (width < 48rem)` — **exclusive**. So the pair for a step
+`max-sm:` to `@media (width < 40rem)` — **exclusive**. So the pair for a step
 at 560 is `@min-[560px]` / `@max-[560px]`, never `@max-[559px]`: that left
 the 559px column (a 607px window) matching neither side of CardRail. The same
-holds for `max-md:` against `useIsMobile()` (`max-width: 767px`, inclusive) —
-they agree; `max-[767px]` (`< 767`) did not.
+holds for `max-sm:` against `useIsMobile()` (`max-width: 639px`, inclusive) —
+they agree; `max-[639px]` (`< 639`) would not.
 
 The base declaration under a container-query ladder must be a **real
 layout**, not the ladder's bottom step — it is what renders in engines
@@ -348,10 +361,10 @@ chip above follows.
 ### `Example` — every component's frame, picked in window widths
 
 Every component demo carries the **same window ladder** as chips
-(320 · 375 · 584 · 608 · 768 · 1069 · 1440 · 1512 · 1920). The frame is still
+(320 · 375 · 584 · 608 · 640 · 768 · 1069 · 1440 · 1512 · 1920). The frame is still
 a container — it sets itself to what that window *leaves*. Each chip's
 **tooltip** says it in plain words ("A 1069px wide screen · Pages get 781px of
-it — the rest is the sidebar and the margins"; below 768 also "Sheets and
+it — the rest is the sidebar and the margins"; below 640 also "Sheets and
 dialogs use all 375px"); the row ends in a **free** pill, the way back to
 the page's own width. A "1069 → 781px" readout after the chips was dropped:
 it read as a riddle. The chrome is drawn around the stage so the
@@ -381,7 +394,7 @@ its own `p-6`.
 
 **A chrome-level demo bleeds.** A bottom sheet spans the window and covers
 the tab bar, so an `Example` whose demo is a sheet below the presentation gate
-passes `bleed={w => w < 768}`: at those chips the frame draws no gutters, no
+passes `bleed={w => w < 640}`: at those chips the frame draws no gutters, no
 tab bar and no stage padding, and the sheet touches the frame's edges. The
 Detail Menu (`DetailMenuSurface`) and the Dialog previews do this;
 `DialogPreview` itself reads the chip and takes the sheet shape.

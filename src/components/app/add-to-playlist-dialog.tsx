@@ -62,7 +62,7 @@ export function AddToPlaylistProvider({ children }: { children: React.ReactNode 
           if (!o && guard.current()) return
           if (!o) setSong(null)
         }}
-        /* The presentation is the root's now (a sheet is a Drawer below `md`,
+        /* The presentation is the root's now (a sheet is a Drawer below `sm`,
            a form sheet is not), and this flow has two steps with two
            presentations — so the step lives up here rather than inside the
            content. `list` is a bottom sheet you can pull down; `create` is a
@@ -97,7 +97,7 @@ function AddToPlaylistContent({ song, guard, onClose, mode, setMode }: {
 }) {
   const { add: toast } = useToast()
   // The header is a BAR on a phone and the ordinary header on desktop; the
-  // create step is a form sheet below `md` and a modal above it.
+  // create step is a form sheet below `sm` and a modal above it.
   const isMobile = useIsMobile()
   const [query, setQuery] = useState("")
   const [name, setName] = useState("")
@@ -169,7 +169,7 @@ function AddToPlaylistContent({ song, guard, onClose, mode, setMode }: {
          field cannot be a bottom sheet — the keyboard leaves ~170px, and the
          action ends up behind it. The form presentation anchors top and puts
          the action in the top bar, where the keyboard cannot reach it. */
-      <DialogContent showCloseButton={!isMobile} className="md:max-w-[max(32rem,50vw)]">
+      <DialogContent showCloseButton={!isMobile} className="sm:max-w-[max(32rem,50vw)]">
         {isMobile ? (
           <DialogActionBar
             className="-mx-3 -mt-3"
@@ -201,7 +201,7 @@ function AddToPlaylistContent({ song, guard, onClose, mode, setMode }: {
           </DialogActionBar>
         ) : (
           <DialogHeader className="shrink-0">
-            <DialogTitle className="md:text-large">New playlist</DialogTitle>
+            <DialogTitle className="sm:text-large">New playlist</DialogTitle>
             <DialogDescription>“{song.title}” will be added to it.</DialogDescription>
           </DialogHeader>
         )}
@@ -235,7 +235,7 @@ function AddToPlaylistContent({ song, guard, onClose, mode, setMode }: {
        is reserved as padding because the bar itself is out of the flow. */
     <DialogContent
       showCloseButton={!isMobile}
-      className="md:max-w-[max(32rem,50vw)] flex flex-col overflow-hidden max-md:pt-[var(--sheet-bar-h)]"
+      className="sm:max-w-[max(32rem,50vw)] flex flex-col overflow-hidden max-sm:pt-[var(--sheet-bar-h)]"
     >
       {isMobile ? (
         /* A bar, not a stacked header: back·title·✕ on one line is the shape
@@ -262,7 +262,7 @@ function AddToPlaylistContent({ song, guard, onClose, mode, setMode }: {
         </DialogActionBar>
       ) : (
         <DialogHeader className="shrink-0">
-          <DialogTitle className="md:text-large">Add to playlist</DialogTitle>
+          <DialogTitle className="sm:text-large">Add to playlist</DialogTitle>
           <DialogDescription>
             {song.title}{song.artist ? ` · ${song.artist}` : ""}
           </DialogDescription>
@@ -272,7 +272,7 @@ function AddToPlaylistContent({ song, guard, onClose, mode, setMode }: {
       {filtered.length === 0 ? (
         /* Its own band, never a `flex-1` child of the scroller: that is the
            case WebKit collapses to zero height, which shows as a blank sheet. */
-        <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center max-md:-mt-[var(--sheet-bar-h)] max-md:pt-[var(--sheet-bar-h)] max-md:-mb-3 max-md:pb-[var(--sheet-band-h)]">
+        <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center max-sm:-mt-[var(--sheet-bar-h)] max-sm:pt-[var(--sheet-bar-h)] max-sm:-mb-3 max-sm:pb-[var(--sheet-band-h)]">
           <p className="text-large font-medium text-foreground">No playlists match</p>
           <p className="text-small text-muted-foreground">“{query}”</p>
         </div>
@@ -283,7 +283,7 @@ function AddToPlaylistContent({ song, guard, onClose, mode, setMode }: {
         <div className={cn(
           dialogListClass,
           "gap-1",
-          "max-md:-mt-[var(--sheet-bar-h)] max-md:-mb-3 max-md:pt-[var(--sheet-bar-h)] max-md:pb-[var(--sheet-band-h)]",
+          "max-sm:-mt-[var(--sheet-bar-h)] max-sm:-mb-3 max-sm:pt-[var(--sheet-bar-h)] max-sm:pb-[var(--sheet-band-h)]",
         )}>
           {/* New playlist — pinned on top (Tidal). */}
           <Row onClick={() => setMode("create")}>
@@ -321,12 +321,12 @@ function AddToPlaylistContent({ song, guard, onClose, mode, setMode }: {
           there is no thumb and no keyboard to plan around. */}
       <DialogFooter
         className={cn(
-          "shrink-0 mt-0 flex-col md:flex-row md:items-center",
-          "max-md:absolute max-md:inset-x-0 max-md:bottom-0 max-md:z-10 max-md:mx-0 max-md:mt-0 max-md:mb-0 max-md:border-t-0 max-md:bg-transparent",
+          "shrink-0 mt-0 flex-col sm:flex-row sm:items-center",
+          "max-sm:absolute max-sm:inset-x-0 max-sm:bottom-0 max-sm:z-10 max-sm:mx-0 max-sm:mt-0 max-sm:mb-0 max-sm:border-t-0 max-sm:bg-transparent",
         )}
       >
         {owned.length > 6 && (
-          <div className="w-full min-w-0 md:flex-1">
+          <div className="w-full min-w-0 sm:flex-1">
             <Input
               value={query}
               onChange={e => setQuery(e.target.value)}
@@ -336,7 +336,7 @@ function AddToPlaylistContent({ song, guard, onClose, mode, setMode }: {
               onClear={() => setQuery("")}
               // Floating over the rows, so it carries its own surface and a
               // lift; 48px to match the control ladder.
-              className="h-12 max-md:bg-popover max-md:shadow-lg"
+              className="h-12 max-sm:bg-popover max-sm:shadow-lg"
             />
           </div>
         )}

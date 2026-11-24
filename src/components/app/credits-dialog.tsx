@@ -210,7 +210,7 @@ function CreditsCurrent({
            out at 260 in the 576 dialog. On a PHONE (sheet under 420px) it is
            200: the musicians should be readable with little or no scrolling,
            and 260 pushed them under the fold. 384, 320 and 280 were tried and
-           were too big. With `md:` sizes it went by the window — in a
+           were too big. With `sm:` sizes it went by the window — in a
            phone-sized design-system frame on a wide screen the 384px cover
            filled the whole sheet edge to edge. */
         <div className="@container/credits-head shrink-0">
@@ -276,7 +276,7 @@ function CreditsCurrent({
           sr-only title); `-mt-6` cancels its 24px gap, so the space to the
           first section is the head's own `pb` (see the head). */}
       <div className={cn(
-        // ONE gutter at every size, 16px, as the draft: `md:px-6` gave
+        // ONE gutter at every size, 16px, as the draft: `sm:px-6` gave
         // desktop a wider margin than the phone — and put the release card
         // 16px from the sides but 8 from the bottom, not concentric.
         "flex flex-col gap-6 px-4 pb-[max(16px,env(safe-area-inset-bottom))]",
@@ -878,7 +878,7 @@ function CreditsDraft({
 
   /* The dialog's own gutter: 16px, at EVERY size — the ✕'s inset, so the
      thumb and the ✕ share an edge. None in the player, which pads its own
-     panel. It was 12 on a phone and 24 from `md`: two layouts of one
+     panel. It was 12 on a phone and 24 from `sm`: two layouts of one
      dialog, and at 12 the bars and the album card (which bleed 8px past the
      gutter) sat 4px from the sheet's edge. */
   const pad = showCover ? "px-4" : "px-0"
@@ -975,14 +975,14 @@ function CreditsDialogContent({ credits, focusTrack, onClose }: { credits: Credi
     <DialogContent
       fixedHeight
       className={cn(
-        // 576, the purchase / checkout dialogs' width. It was `md:max-w-md`
+        // 576, the purchase / checkout dialogs' width. It was `sm:max-w-md`
         // (448), where a role line like Dolphy's wrapped to three lines.
-        "md:max-w-xl",
-        // `md:p-0` / `md:gap-0` are NOT redundant beside `p-0 gap-0`. The base
-        // chrome sets `md:p-6 md:gap-5`, and tailwind-merge keeps a variant
-        // and its unprefixed twin side by side — so from 768 up the base won
+        "sm:max-w-xl",
+        // `sm:p-0` / `sm:gap-0` are NOT redundant beside `p-0 gap-0`. The base
+        // chrome sets `sm:p-6 sm:gap-5`, and tailwind-merge keeps a variant
+        // and its unprefixed twin side by side — so from 640 up the base won
         // and padded the body twice. Cancel the variant with a variant.
-        "p-0 gap-0 md:p-0 md:gap-0 overflow-hidden flex flex-col",
+        "p-0 gap-0 sm:p-0 sm:gap-0 overflow-hidden flex flex-col",
         // ONE height, always: 80% of the viewport, phone and desktop, tabs
         // and page alike. A height that followed the content resized the
         // sheet when the tab or the reading changed, and the base sheet's
@@ -993,18 +993,18 @@ function CreditsDialogContent({ credits, focusTrack, onClose }: { credits: Credi
         // the base centring (`top-1/2 -translate-y-1/2`) put the sheet at
         // y = 120.1 — every sticky track bar then snapped between two pixel
         // rows as the panel scrolled, and wobbled 1–2px. `round()` makes the
-        // height whole; from `md` the sheet is placed at a whole 10svh
+        // height whole; from `sm` the sheet is placed at a whole 10svh
         // (centred, since it is 80 high) instead of translated by half its
         // height.
         // EXCEPT a song in the current version: a few names, and the fixed height left
         // half the sheet empty under them, so it follows its content, capped
-        // at the same 80svh. `md:max-h-…!` because the base chrome lifts the
-        // cap from `md` (`md:max-h-none`) and its rule comes later in the CSS
+        // at the same 80svh. `sm:max-h-…!` because the base chrome lifts the
+        // cap from `sm` (`sm:max-h-none`) and its rule comes later in the CSS
         // — unforced, a long list ran off the screen. Its album is always
         // long and keeps the fixed height, as the draft does.
         variant === "current" && focusTrack
-          ? "max-h-[round(down,80svh,1px)] md:max-h-[round(down,80svh,1px)]!"
-          : "h-[round(down,80svh,1px)] max-h-[round(down,80svh,1px)] md:top-[round(down,10svh,1px)] md:translate-y-0",
+          ? "max-h-[round(down,80svh,1px)] sm:max-h-[round(down,80svh,1px)]!"
+          : "h-[round(down,80svh,1px)] max-h-[round(down,80svh,1px)] sm:top-[round(down,10svh,1px)] sm:translate-y-0",
       )}
     >
       <CreditsContent
@@ -1057,10 +1057,10 @@ export function CreditsDialogPreview({ albumKey = "a07", layout = "tabs", varian
         // square at the bottom; the corner value is owned there, not here),
         // minus its padding, plus the grabber (below). It was a square box,
         // nothing like the sheet that opens.
-        phone ? cn(dialogPreviewPhoneClass, "!p-0 !gap-0") : "max-w-xl rounded-xl md:rounded-2xl",
+        phone ? cn(dialogPreviewPhoneClass, "!p-0 !gap-0") : "max-w-xl rounded-xl sm:rounded-2xl",
       )}
     >
-      {/* The real sheet's grabber hides from `md` by the REAL window; the
+      {/* The real sheet's grabber hides from `sm` by the REAL window; the
           frame only pretends to be narrow, so the preview draws its own. */}
       {phone && <SheetGrabber className="absolute left-1/2 top-1.5 z-30 -translate-x-1/2" />}
       {/* The navigation handlers are passed even though this preview goes

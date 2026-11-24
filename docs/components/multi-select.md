@@ -77,11 +77,11 @@ count says how many, the label says what.
 
 ## Sizing
 
-**Window**, one step: **768**, the presentation gate. The trigger itself is
+**Window**, one step: **640**, the presentation gate. The trigger itself is
 fixed — `h-10`, intrinsic width, `whitespace-nowrap` — and wraps with its
 neighbours in a `flex-wrap` row (`artist-profile-view.tsx:552–556` records
 why: four controls overflowed a 336px row and iOS let you pan to the
-overflow). The popup is `DropdownMenu`, which below 768 presents as a bottom
+overflow). The popup is `DropdownMenu`, which below 640 presents as a bottom
 sheet (`useIsMobile()` in `dropdown-menu.tsx:19`): rows become `SheetClose`
 buttons at `px-3 py-3 text-base rounded-xl`, the surface `rounded-t-2xl px-2
 pt-3 max-h-[80vh]` with a drag handle. Inside the frame the window chip is
@@ -104,11 +104,11 @@ the window, so the 375 chip opens the sheet.
 
 ## Open questions
 
-- **The sheet closes on every tick.** Below 768 `DropdownMenuItem` renders a
+- **The sheet closes on every tick.** Below 640 `DropdownMenuItem` renders a
   `SheetClose` and does not forward `...props` (`dropdown-menu.tsx:157–190`),
   so `closeOnClick={false}` (`multi-select.tsx:141`) never arrives: on a phone
   every tap on an option dismisses the sheet, and picking three types is
-  three opens. "The menu stays open while you toggle" holds from 768 up only.
+  three opens. "The menu stays open while you toggle" holds from 640 up only.
 - Header comment (`multi-select.tsx:10`) says options are `Menu.CheckboxItem`
   with `checked` + `onCheckedChange`; the body renders a plain
   `DropdownMenuItem` with a decorative `Checkbox` (`multi-select.tsx:132–150`).

@@ -502,7 +502,7 @@ function MusicRow({ release, visibleCols, isSelected, onSelect, status, onStatus
 
 // ─── MusicCard — mobile representation of a release ──────────────────────────
 //
-// Shown below the `md` breakpoint instead of a table row. Picks the most
+// Shown below the presentation gate (640) instead of a table row. Picks the most
 // important metadata (title, artist, year, type, status, monetisation) and
 // stacks it into a tappable card. The whole card opens the edit dialog —
 // no hover-only affordances, no per-cell controls.
@@ -614,7 +614,7 @@ function UploadOnDesktop({ onBack }: { onBack: () => void }) {
 }
 
 export function StudioMusicView({ onOpenUpload }: { onOpenUpload?: () => void }) {
-  // Below `md` (768px) the table is unusable — switch to a card list with a
+  // Below the presentation gate (640px) the table is unusable — switch to a card list with a
   // simplified toolbar (no column manager, larger tap targets).
   const isMobile = useIsMobile()
 

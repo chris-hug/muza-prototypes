@@ -85,8 +85,8 @@ these where it does — in this order, so a reader knows where to look:
 3. **Usage** — the call site, one `tsx` block; the wrong way, when there is
    a common one.
 4. **Sizing** — which of the three measures the component reads and at
-   what steps: the **window** (`useIsMobile` 768 = presentation,
-   `useFooterNav` 608 = chrome, Tailwind `md:`), the **column**
+   what steps: the **window** (`useIsMobile` 640 = presentation,
+   `useFooterNav` 608 = chrome, Tailwind `sm:`), the **column**
    (`@container` on the page shell — cards, rails, headers), or its own
    **box** (a named `@container/<name>` — only where the same window can
    hand it two widths). Say what changes at each step and why the number
@@ -102,7 +102,7 @@ these where it does — in this order, so a reader knows where to look:
 |---|---|
 | Column-filling (grids, rails, headers, lists, page sections) | window chips (default); `align="stretch"` |
 | Intrinsic / centred (button, badge, input, card, dialog preview) | window chips (default); `align="center"` |
-| Presentation-swapped, a sheet below 768 (dialog previews, menus, drawers, toasts) | `bleed={w => w < 768}` — at those chips the frame draws no gutters, no tab bar, no stage padding, and the demo touches the edges as a sheet does. Inside the frame the chip **is** the window (`WindowWidthContext`), so `useIsMobile()` follows it |
+| Presentation-swapped, a sheet below 640 (dialog previews, menus, drawers, toasts) | `bleed={w => w < 640}` — at those chips the frame draws no gutters, no tab bar, no stage padding, and the demo touches the edges as a sheet does. Inside the frame the chip **is** the window (`WindowWidthContext`), so `useIsMobile()` follows it |
 | Box-measuring (`SongListItem`, `PlayerBar`, `PlayerOverlay`) | `widths={…}` with the component's own steps and `widthLabel="row"` / `"bar"`; no chrome is drawn |
 
 Two rules for what goes INTO the frame:

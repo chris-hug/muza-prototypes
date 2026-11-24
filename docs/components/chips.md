@@ -125,7 +125,7 @@ because a filter narrows one list and a tab promises another section.
 Fixed, no steps. A chip is as wide as its label; a `ChipGroup` wraps
 (`flex-wrap gap-1.5`) and reads none of the three measures. The one
 width-aware use is not the chip's: `MobilePillTabs` bleeds the strip to the
-header's 12px gutter (`-mx-3 px-3`) below the 768 presentation gate, so
+header's 12px gutter (`-mx-3 px-3`) below the 640 presentation gate, so
 pills scroll under the gutter rather than stopping short of it.
 
 ## Behaviour

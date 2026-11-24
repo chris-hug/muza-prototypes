@@ -24,7 +24,7 @@ import { CreatePlaylistDialog } from "@/components/app/create-playlist-dialog"
 import { usePlaylistEditor } from "@/lib/playlist-editor-context"
 import { DetailMoreButton } from "@/components/ui/detail-more-button"
 import { usePublishDetailHeader } from "@/lib/detail-actions"
-import { useFooterNav, useIsMobile } from "@/lib/use-media-query"
+import { useFooterNav, useDockedEditor } from "@/lib/use-media-query"
 
 import { MediaHeader } from "@/components/ui/media-header"
 import { SongListItem } from "@/components/ui/song-list-item"
@@ -80,10 +80,11 @@ export function PlaylistDetailView() {
   const owned = PLAYLIST.owner === "You"
   const [addMusicOpen, setAddMusicOpen] = useState(false)
   const [editInfoOpen, setEditInfoOpen] = useState(false)
-  // The docked editor is desktop-only (`hidden md:flex`), so below that gate
+  // The docked editor exists from 768 only (`hidden md:flex`), so below that
   // Edit has to lead somewhere else — the same info dialog the create flow
-  // uses, in `edit` mode.
-  const isMobile = useIsMobile()
+  // uses, in `edit` mode. Its own gate, not `useIsMobile()`: dialogs centre
+  // from 640, the editor docks from 768.
+  const canDock = useDockedEditor()
   // Edit (owner-only) opens the docked drawer you can drag tracks into from
   // anywhere in the app.
   const playlistEditor = usePlaylistEditor()
@@ -96,8 +97,8 @@ export function PlaylistDetailView() {
     title:  PLAYLIST.title,
     covers: PLAYLIST.covers,
   })
-  /** "Edit" / "Edit info" — drawer on desktop, info dialog on mobile. */
-  const onEdit = isMobile ? () => setEditInfoOpen(true) : openEditor
+  /** "Edit" / "Edit info" — the docked drawer where it fits, else the info dialog. */
+  const onEdit = canDock ? openEditor : () => setEditInfoOpen(true)
   const onAddMusic = () => setAddMusicOpen(true)
   const playlistMenu = {
     kind: "playlist" as const,
@@ -128,7 +129,7 @@ export function PlaylistDetailView() {
       {/* Back lives in the top bar (chrome) — see the shell's <Topbar>. */}
 
       {/* "…" — opens the actions bottom sheet. Stacked layout only (<560),
-           and only off-phone; below 768 the slim detail header owns "…". */}
+           and only off-phone; below 608 the slim detail header owns "…". */}
       {!footerNav && (
         <DetailMoreButton
           {...playlistMenu}

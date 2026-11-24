@@ -6,7 +6,7 @@
  * Content/flow referenced from a generic "create account or log in" modal,
  * rebuilt in the Muza language: muza mark, semantic type scale, pill primary
  * (no gradient), rounded form control. Mobile behaviour is inherited from the
- * base `DialogContent` — bottom sheet < 768px, centered modal ≥ 768px (`md`, the same gate as `useIsMobile`) — so we
+ * base `DialogContent` — bottom sheet < 640px, centered modal ≥ 640px (`sm`, the same gate as `useIsMobile`) — so we
  * set ONLY the desktop width here (see DESIGN_SYSTEM.md › "Responsive dialog →
  * bottom sheet — the BASE DEFAULT").
  *
@@ -98,7 +98,7 @@ function LoginHeading({ preview = false }: { preview?: boolean }) {
       <div className="w-full flex flex-col items-center text-center pl-8">
         {/* Wrapped: LogoMark does not pass data attributes through to its svg. */}
         <span data-login-aside="" className="contents"><LogoMark className="w-10 h-auto text-foreground mb-2" /></span>
-        <Title className="md:text-large">{TITLE}</Title>
+        <Title className="sm:text-large">{TITLE}</Title>
         <Desc data-login-aside="" className="mt-1.5">{DESCRIPTION}</Desc>
       </div>
     </>
@@ -123,7 +123,7 @@ export function LoginDialog({
           sides (the page gutter, so the field lines up with the page behind),
           24 between the three blocks, 24 below before the home indicator, and
           28 on top so the mark clears the grabber the base overlays at 6px. */}
-      <DialogContent data-login="" className="md:max-w-md max-md:px-6 max-md:pt-7 max-md:gap-6 max-md:pb-[max(24px,env(safe-area-inset-bottom))]">
+      <DialogContent data-login="" className="sm:max-w-md max-sm:px-6 max-sm:pt-7 max-sm:gap-6 max-sm:pb-[max(24px,env(safe-area-inset-bottom))]">
         <DialogHeader>
           <LoginHeading />
         </DialogHeader>
@@ -141,7 +141,7 @@ export function LoginDialogPreview({ className }: { className?: string }) {
   return (
     // The live sheet's phone spacing, restated for the frame (see
     // `phoneClassName` in dialog.tsx). Keep the two in step.
-    <DialogPreview className={className ?? "md:max-w-md"} phoneClassName="!px-6 !pt-7 !gap-6 !pb-6">
+    <DialogPreview className={className ?? "sm:max-w-md"} phoneClassName="!px-6 !pt-7 !gap-6 !pb-6">
       <DialogPreviewHeader>
         <LoginHeading preview />
       </DialogPreviewHeader>

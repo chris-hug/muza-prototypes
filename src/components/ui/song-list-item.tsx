@@ -671,7 +671,7 @@ export function SongListItem({
           </div>
 
           {/* Touch: the same menu the hover panel carries, in the row.
-               `DropdownMenu` presents itself as a bottom sheet below `md`, so
+               `DropdownMenu` presents itself as a bottom sheet below `sm`, so
                this is the "Add to playlist" sheet's only door on a phone.
                Force-hidden on hover-capable devices, where the panel owns it
                and a third resting icon would eat the title's space. */}

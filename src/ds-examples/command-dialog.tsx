@@ -4,7 +4,7 @@
  * Command in a dialog — the palette. `CommandDialog` is the app `Dialog`
  * with the chrome stripped (`p-0`, no ✕) and the list's metrics raised
  * (48px input, 44px+ rows, 20px glyphs), so it takes the Dialog's own
- * presentation: a centred modal from 768 up, a bottom sheet below — inside
+ * presentation: a centred modal from 640 up, a bottom sheet below — inside
  * this frame the window chip decides. ⌘K is bound here, at the call site,
  * because the primitive binds nothing.
  */

@@ -110,7 +110,7 @@ Its first use is the song row's meta line — see
 
 ## The move that deleted it
 
-Below `md`, `Dialog` used to be presented as a bottom sheet by CSS alone — the
+Below `sm`, `Dialog` used to be presented as a bottom sheet by CSS alone — the
 right shape, with no gesture, because a Dialog is not a Drawer. `useSheetDrag`
 supplied one.
 

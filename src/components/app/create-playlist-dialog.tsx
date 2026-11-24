@@ -172,7 +172,7 @@ export function CreatePlaylistDialog({
       {/* Desktop width matches the Add-music step it chains into — at least
           half the viewport. Phones get the full-screen form sheet. */}
       <DialogContent
-        className="md:max-w-[max(32rem,50vw)]"
+        className="sm:max-w-[max(32rem,50vw)]"
         /* A FUNCTION, not the ref: opened by touch, the popup's default is to
            focus ITSELF so the keyboard stays down — right for a picker, wrong
            for a form whose one job is to be typed into. Returning the field
@@ -213,7 +213,7 @@ export function CreatePlaylistDialog({
           </DialogActionBar>
         ) : (
           <DialogHeader>
-            <DialogTitle className="md:text-large">{title}</DialogTitle>
+            <DialogTitle className="sm:text-large">{title}</DialogTitle>
           </DialogHeader>
         )}
 

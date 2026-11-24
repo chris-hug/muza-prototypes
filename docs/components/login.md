@@ -13,10 +13,10 @@ pill that sends a one-time passcode. A plain dialog in the Muza language
 ## Anatomy
 
 ```tsx
-<DialogContent className="md:max-w-md">
+<DialogContent className="sm:max-w-md">
   <DialogHeader>
     <LogoMark className="w-7 h-auto text-foreground" />
-    <DialogTitle className="md:text-large">Create a free account or log in</DialogTitle>
+    <DialogTitle className="sm:text-large">Create a free account or log in</DialogTitle>
     <DialogDescription>Enter your email and we'll send you a one-time passcode — no password to remember.</DialogDescription>
   </DialogHeader>
   <form className="flex flex-col gap-4">
@@ -31,7 +31,7 @@ pill that sends a one-time passcode. A plain dialog in the Muza language
 | Part | What it wears | Why |
 |---|---|---|
 | Mark | `LogoMark w-7 text-foreground`, first in the header stack | the dialog is the account's front door, so the brand leads |
-| Title | `dialogTitleClass` + `md:text-large` | `text-small` on the sheet, where it shares the line with the ✕; the larger desktop title from 768 |
+| Title | `dialogTitleClass` + `sm:text-large` | `text-small` on the sheet, where it shares the line with the ✕; the larger desktop title from 640 |
 | Field | `Label` (`font-medium`) + `Input type="email"`, `autoComplete="email"` | the one thing asked for |
 | CTA | `Button size="lg" w-full px-4`, `disabled` until the field has a non-blank value | one action, full width, 48px. `px-4`, not `lg`'s 40: at 40 the label needed 318px and pushed the form past a 320 phone |
 | Fine print | `text-2xsmall text-muted-foreground` | terms and what the email is used for |
@@ -61,17 +61,17 @@ reuses the [OTP Input](otp-input.md) once a real auth backend is wired.
 
 ## Sizing
 
-Reads the **window** at **768** through the base dialog and sets its
-desktop width, `md:max-w-md` (448px). The bottom sheet below 768 is
+Reads the **window** at **640** through the base dialog and sets its
+desktop width, `sm:max-w-md` (448px). The bottom sheet below 640 is
 inherited from `DialogContent` — there is no positioning of its own here,
 which is the rule every dialog follows. No column or box step.
 
 **On a phone it sets its own spacing.** The base sheet's 12px inset and 8px
 gaps suit a sheet of rows, not a sheet of three things: the field and button
 ran nearly to the edge and heading, form and fine print sat on top of each
-other. So `max-md:px-6` (the page gutter, so the field lines up with the page
-behind), `max-md:gap-6` between heading, form and fine print, `gap-3` between
-field and button (one action), 24 below, and `max-md:pt-7` so the mark clears
+other. So `max-sm:px-6` (the page gutter, so the field lines up with the page
+behind), `max-sm:gap-6` between heading, form and fine print, `gap-3` between
+field and button (one action), 24 below, and `max-sm:pt-7` so the mark clears
 the grabber the base overlays at 6px.
 
 **With the keyboard up** (`[data-kb="open"]`, app.css) the sheet has about
@@ -82,7 +82,7 @@ between. Field and button keep their 48. Everything returns when the
 keyboard goes.
 
 **The static preview shows the same sheet.** Its frame only pretends to be a
-phone, so the `max-md:` classes above never reach it; `LoginDialogPreview`
+phone, so the `max-sm:` classes above never reach it; `LoginDialogPreview`
 passes the same values through `DialogPreview`'s `phoneClassName`. Change one,
 change the other.
 

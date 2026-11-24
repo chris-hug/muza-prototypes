@@ -29,7 +29,7 @@ type ToastType = "default" | "success" | "error" | "warning" | "info" | "loading
 // so toasts don't visually duplicate alert styling. Exported so static
 // previews can render the same shell without forking the styles.
 export const toastShellClass = cn(
-  "relative flex w-full items-center gap-2.5 md:items-start",
+  "relative flex w-full items-center gap-2.5 sm:items-start",
   // A phone toast is ONE LINE, at the CONTROL step: `h-12` and a pill radius,
   // the same box as an `lg` field or button. It lands on top of the control
   // it is answering — the search field at the foot of a sheet, say — and
@@ -37,7 +37,7 @@ export const toastShellClass = cn(
   // desktop-only for the same reason the box is one line: the title already
   // says it, and a two-line card with 18px of padding was a fifth of a 375px
   // screen for the word "added". Desktop keeps the roomier card.
-  "h-12 rounded-full px-4 shadow-2xl md:h-auto md:rounded-xl md:px-4 md:pt-4 md:pb-[18px] md:shadow-lg",
+  "h-12 rounded-full px-4 shadow-2xl sm:h-auto sm:rounded-xl sm:px-4 sm:pt-4 sm:pb-[18px] sm:shadow-lg",
   "border border-border bg-popover",
   // A PILL, like the field it lands on — same height, same gutter, same
   // radius — so it reads as that control rather than as a card parked over
@@ -66,7 +66,7 @@ export const toastCloseButtonClass = cn(
   // Hidden on phones: the toast auto-dismisses and can be swiped away, and a
   // dismiss target competes for width with the message itself. Platform
   // snackbars don't carry one either.
-  "hidden md:flex",
+  "hidden sm:flex",
   "shrink-0 self-start mt-[3px] rounded-lg p-0.5 text-muted-foreground",
   "hover:bg-accent hover:text-accent-foreground transition-colors",
   "focus-visible:outline-none focus-ring",
@@ -79,7 +79,7 @@ export const toastCloseButtonClass = cn(
 // Centred on a phone, where the toast is ONE 48px line and the icon has a
 // single line of text to sit against; the top-pinned nudge is a desktop rule,
 // for a card whose description wraps under the title.
-const ICON_CLS = "relative size-4 shrink-0 self-center mt-0 md:self-start md:mt-[3px]"
+const ICON_CLS = "relative size-4 shrink-0 self-center mt-0 sm:self-start sm:mt-[3px]"
 const ToastIcon: Record<string, React.ReactNode> = {
   default: <InfoIcon        className={cn(ICON_CLS, "text-muted-foreground")} />,
   success: <CheckCircleIcon className={cn(ICON_CLS, "text-green-600 dark:text-green-400")} />,
@@ -115,7 +115,7 @@ function ToastViewport({ className }: { className?: string }) {
     <ToastPrimitive.Viewport
       className={cn(
         "group/toasts fixed z-[100] flex flex-col gap-2 outline-none",
-        /* Below `md` → the TOP of the screen, under the browser chrome and
+        /* Below `sm` → the TOP of the screen, under the browser chrome and
            over everything the app draws.
            
            It lived at the bottom, thumb-side, which is where platform
@@ -136,7 +136,7 @@ function ToastViewport({ className }: { className?: string }) {
         // the frame.
         "inset-x-2 top-[calc(env(safe-area-inset-top)+4px)] bottom-auto w-auto",
         // Desktop → the familiar top-right card.
-        "md:inset-x-auto md:right-4 md:top-4 md:bottom-auto md:w-[380px] md:max-w-[calc(100vw-2rem)]",
+        "sm:inset-x-auto sm:right-4 sm:top-4 sm:bottom-auto sm:w-[380px] sm:max-w-[calc(100vw-2rem)]",
         className
       )}
     >
@@ -186,12 +186,12 @@ function ToastViewport({ className }: { className?: string }) {
                 positioned too, or the fill runs across the words. */}
             <div className="relative flex flex-1 flex-col gap-1 min-w-0">
               {t.title && (
-                <ToastPrimitive.Title className="truncate md:whitespace-normal text-small font-medium leading-5">
+                <ToastPrimitive.Title className="truncate sm:whitespace-normal text-small font-medium leading-5">
                   {t.title}
                 </ToastPrimitive.Title>
               )}
               {t.description && (
-                <ToastPrimitive.Description className="hidden md:block text-small leading-5 text-muted-foreground">
+                <ToastPrimitive.Description className="hidden sm:block text-small leading-5 text-muted-foreground">
                   {t.description}
                 </ToastPrimitive.Description>
               )}

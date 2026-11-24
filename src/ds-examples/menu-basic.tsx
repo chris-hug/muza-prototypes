@@ -3,7 +3,7 @@
 /*
  * Menu — a labelled account menu on an `outline` Button, and the "…" a card
  * or row carries. Real `DropdownMenu` parts, real `Button` triggers via
- * `render`: from 768 up the anchored popup, below it the bottom sheet —
+ * `render`: from 640 up the anchored popup, below it the bottom sheet —
  * `useIsMobile()` picks, and inside the frame it reads the window chip.
  *
  * This file is a CALL SITE, not a copy. The items are inline here because
