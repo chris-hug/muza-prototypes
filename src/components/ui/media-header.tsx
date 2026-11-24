@@ -47,6 +47,7 @@ import { useCredits } from "@/lib/credits-context"
 import { slugify } from "@/lib/media-nav"
 import { PlayFilledAlt, PauseFilledAlt } from "@/components/ui/transport-icons"
 import { ShuffleToggle } from "@/components/ui/transport-toggles"
+import { IconSwap } from "@/components/ui/icon-swap"
 import { LibraryHeartButton } from "@/components/ui/library-heart-button"
 import type { LibraryItemType } from "@/lib/user-library"
 
@@ -305,9 +306,13 @@ export function MediaHeader({
       aria-pressed={playing}
       className={cn("px-0 min-w-12", cls)}
     >
-      {playing
-        ? <PauseFilledAlt className="size-4" />
-        : <PlayFilledAlt className="size-4" />}
+      {/* IconSwap, as on the cards: the button already fades its fill, so a
+          snapping glyph was the one thing in it that did not move. */}
+      <IconSwap
+        on={playing}
+        onIcon={<PauseFilledAlt className="size-4" />}
+        offIcon={<PlayFilledAlt className="size-4" />}
+      />
     </Button>
   )
   // Shuffle uses the shared ShuffleToggle so its active state + pop/halo

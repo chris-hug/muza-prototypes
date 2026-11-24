@@ -37,7 +37,7 @@ year rather than setting it. Products and playlists are mock on every profile.
 | Content | `absolute inset-x-0 bottom-0`, in the **same capped wrapper as the page below** (`max-w-[1480px]`, `1716px` from 1920) with `px-page pb-8`, so the name sits on the page's own left edge | — |
 | Name | `h1`, fluid `clamp(2.5rem, 5vw, 4rem)` — 40px up to an 800px window, 64px from 1280 | `font-medium leading-[1.05] tracking-tight` |
 | Bio | the opening ~100 characters, cut at a word boundary with trailing punctuation dropped, then "… " and a **read more** link | `text-small leading-6 text-foreground/90`; the link is underlined at rest (`underline underline-offset-[3px]`, 1px thick) — a permanent underline has nothing to wipe in, so it does not use `link-underline` |
-| Actions | **Play** (`default`, `lg`, `h-12 px-6 rounded-full`, icon + label, flips to Pause with `aria-pressed`) · **Artist radio** (`outline`, same shape, `Radio` glyph) · right: `ShareButton` and a `LibraryHeartButton` for `type="artist"`, both `outline` `icon` | — |
+| Actions | **Play** (`default`, `lg`, `h-12 px-6 rounded-full`, icon + label, flips to Pause with `aria-pressed`; the glyph cross-fades through [Icon Swap](icon-swap.md), the label switches as text) · **Artist radio** (`outline`, same shape, `Radio` glyph) · right: `ShareButton` and a `LibraryHeartButton` for `type="artist"`, both `outline` `icon` | — |
 
 The bio dialog is the base `DialogContent` — a bottom sheet below 768, a
 centred `md:max-w-xl` modal above — built like the other content dialogs: a

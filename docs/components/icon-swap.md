@@ -5,6 +5,8 @@ related: [button, select-track, cover-play-button]
 usage:
   - Album / playlist card › Play ↔ Pause | /?page=Home
   - Add music › album Add ↔ Added | /?page=Playlist
+  - Album / playlist page › Play ↔ Pause | /?page=Album
+  - Artist page › Play ↔ Pause | /?page=Artist&artist=sun-ra
 ---
 
 `IconSwap` turns one icon into another instead of replacing it. A control
@@ -45,7 +47,9 @@ Both icons stay mounted, stacked in one grid cell (`inline-grid`, each child
 </Button>
 ```
 
-Used for Play ↔ Pause on album and playlist cards and search results,
+Used for Play ↔ Pause on album and playlist cards, search results, and the
+Play buttons of the Media Header and the Artist Header (missed on the first
+pass and added after staging asked),
 Check ↔ Plus on Add music's album button, Lock ↔ Globe in the playlist editor,
 and Copy ↔ Check / Pin ↔ PinOff in the design-system tools.
 

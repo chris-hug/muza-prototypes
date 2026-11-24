@@ -27,6 +27,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { Radio } from "lucide-react"
 import { PlayFilledAlt, PauseFilledAlt } from "@/components/ui/transport-icons"
+import { IconSwap } from "@/components/ui/icon-swap"
 import { ShareButton } from "@/components/ui/share-button"
 import { LibraryHeartButton } from "@/components/ui/library-heart-button"
 import { useFooterNav } from "@/lib/use-media-query"
@@ -110,7 +111,12 @@ export function ArtistHero({ name, cover, avatar, bio, artistId, isPlaying, onPl
               aria-pressed={isPlaying}
               onClick={onPlayToggle}
             >
-              {isPlaying ? <PauseFilledAlt className="size-4" /> : <PlayFilledAlt className="size-4" />}
+              {/* IconSwap, as on the cards; the label still switches as text. */}
+              <IconSwap
+                on={isPlaying}
+                onIcon={<PauseFilledAlt className="size-4" />}
+                offIcon={<PlayFilledAlt className="size-4" />}
+              />
               {isPlaying ? "Pause" : "Play"}
             </Button>
             <Button variant="outline" size="lg" className="h-12 px-6 rounded-full">
