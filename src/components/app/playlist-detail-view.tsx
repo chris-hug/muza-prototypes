@@ -97,10 +97,10 @@ export function PlaylistDetailView() {
   // Edit (owner-only) opens the docked drawer you can drag tracks into from
   // anywhere in the app.
   const playlistEditor = usePlaylistEditor()
-  // The drawer already offers adding tracks (drag-and-drop), so the in-list
-  // "Add music" row would be a duplicate affordance while it's editing THIS
-  // playlist. Another playlist in the drawer doesn't affect this one.
-  const editingThis = playlistEditor.target?.key === slugify(PLAYLIST.title)
+  // Add music and the docked editor are two ways to fill a playlist, and you
+  // use one OR the other: the editor's drop zone beside the Add music dialog
+  // read as two editors of one thing. So the button stays, and opening the
+  // dialog closes the editor.
   const openEditor = () => playlistEditor.open({
     key:    slugify(PLAYLIST.title),
     title:  PLAYLIST.title,
@@ -108,7 +108,10 @@ export function PlaylistDetailView() {
   })
   /** "Edit" / "Edit info" — the docked drawer where it fits, else the info dialog. */
   const onEdit = canDock ? openEditor : () => setEditInfoOpen(true)
-  const onAddMusic = () => setAddMusicOpen(true)
+  const onAddMusic = () => {
+    playlistEditor.close()
+    setAddMusicOpen(true)
+  }
   const playlistMenu = {
     kind: "playlist" as const,
     title: PLAYLIST.title,

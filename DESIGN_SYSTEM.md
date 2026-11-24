@@ -1431,6 +1431,8 @@ The provider mounts both steps: **New Playlist** (cover tile, name `Input`, "Kee
 
 **Typing in Add music switches to global search** — not a local filter. The results render with the standard search pattern: content-type **pills** (`MobilePillTabs`), songs selectable via `MediaListItem` + a trailing `SelectTrackButton`, containers as nav rows.
 
+**Add music OR the docked editor, never both.** Opening Add music closes the docked playlist editor — two ways to fill a playlist side by side read as two editors of one thing. The button stays where it is.
+
 **"Add music" row** leads your own playlist's track list while the header is in its **stacked layout** (`@min-[560px]:hidden`) — a normal list row: `size-12` `bg-secondary` circle with the bespoke `AddMusicIcon`, then the label. Never nest a primary/filled button inside a secondary row.
 
 ---
