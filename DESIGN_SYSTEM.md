@@ -1427,6 +1427,8 @@ One flow, started from every entry point via [`create-playlist-context.ts`](src/
 
 The provider mounts both steps: **New Playlist** (cover tile, name `Input`, "Keep private" setting row) → **Add music**.
 
+**Create lands on the playlist.** The moment Create is pressed the page is the new (empty) playlist, and Add music opens on top of it — so every way out of Add music (Add, ✕, Discard) leaves you in the thing you just made. It used to navigate only after Add; closing Add music instead left you where you started, with a playlist to go and find. The picks show as the playlist's tracks, and the header counts them and takes its cover from them. Creating one from a song's **Add to playlist → New playlist** does the same: the song goes in and you land on it (filing a song into existing playlists still stays put).
+
 **Typing in Add music switches to global search** — not a local filter. The results render with the standard search pattern: content-type **pills** (`MobilePillTabs`), songs selectable via `MediaListItem` + a trailing `SelectTrackButton`, containers as nav rows.
 
 **"Add music" row** leads your own playlist's track list while the header is in its **stacked layout** (`@min-[560px]:hidden`) — a normal list row: `size-12` `bg-secondary` circle with the bespoke `AddMusicIcon`, then the label. Never nest a primary/filled button inside a secondary row.

@@ -5,16 +5,17 @@
  *
  *   Track "…" → Add to playlist → a dialog listing YOUR playlists, with a
  *   pinned "New playlist" row on top. Tap a playlist to add the track (toast
- *   + close); tap "New playlist" to name and create one (which the track goes
- *   straight into). A filter field trims a long list. Built on the base
+ *   + close); tap "New playlist" to name and create one — the track goes
+ *   straight into it and you land on it. A filter field trims a long list. Built on the base
  *   Dialog, so it's a centered modal on desktop and a bottom sheet on mobile.
  *
  * Mounted once via `AddToPlaylistProvider`; any descendant opens it with
  * `useAddToPlaylist().open(song)`. Outside a provider `open` is a no-op.
  *
  * Prototype: playlists are the static catalog; an added song is kept for the
- * session in playlist-additions and shown at the end of that playlist. Create
- * only toasts — wire both to a real playlist-tracks store when it lands.
+ * session in playlist-additions and shown at the end of that playlist; a
+ * playlist created here is registered into the catalog so its page resolves.
+ * Wire both to a real playlist store when it lands.
  */
 
 import { useCallback, useMemo, useRef, useState } from "react"
@@ -38,7 +39,8 @@ import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
 } from "@/components/ui/alert-dialog"
-import { getAllPlaylists } from "@/lib/playlist-catalog"
+import { getAllPlaylists, registerPlaylists } from "@/lib/playlist-catalog"
+import { useMediaNav, slugify } from "@/lib/media-nav"
 import { AddToPlaylistContext } from "@/lib/add-to-playlist-context"
 
 export { useAddToPlaylist } from "@/lib/add-to-playlist-context"
@@ -96,6 +98,7 @@ function AddToPlaylistContent({ song, guard, onClose, mode, setMode }: {
   setMode: (m: "list" | "create") => void
 }) {
   const { add: toast } = useToast()
+  const { openPlaylist } = useMediaNav()
   // The header is a BAR on a phone and the ordinary header on desktop; the
   // create step is a form sheet below `sm` and a modal above it.
   const isMobile = useIsMobile()
@@ -115,16 +118,6 @@ function AddToPlaylistContent({ song, guard, onClose, mode, setMode }: {
     const q = query.trim().toLowerCase()
     return q ? owned.filter(p => p.title.toLowerCase().includes(q)) : owned
   }, [owned, query])
-
-  const done = (playlistTitle: string) => {
-    playlistAdditions.add(playlistTitle, song)
-    toast({
-      title: "Added to playlist",
-      description: `“${song.title}” → ${playlistTitle}`,
-      type: "success",
-    })
-    onClose()
-  }
 
   /** Commit every pick at once — the bar's action. */
   const commit = () => {
@@ -153,10 +146,31 @@ function AddToPlaylistContent({ song, guard, onClose, mode, setMode }: {
     setPicked(prev => prev.includes(playlistTitle)
       ? prev.filter(t => t !== playlistTitle)
       : [...prev, playlistTitle])
+  /* Creating a playlist from here TAKES you to it, with the song in it — the
+     same rule as the library's Create. It used to toast and stay put, and the
+     playlist did not even resolve: nothing registered it, so the toast named
+     a playlist that no page could show. Picking EXISTING playlists still
+     stays put (`commit`): filing a song is a side errand, making a playlist
+     is starting something. */
   const create = () => {
     const trimmed = name.trim()
     if (!trimmed) return
-    done(trimmed)
+    registerPlaylists([{
+      id: `new-${slugify(trimmed)}`,
+      title: trimmed,
+      covers: [],
+      songCount: 0,
+      owner: "You",
+      owned: true,
+    }])
+    playlistAdditions.add(trimmed, song)
+    toast({
+      title: "Playlist created",
+      description: `“${song.title}” → ${trimmed}`,
+      type: "success",
+    })
+    onClose()
+    openPlaylist(slugify(trimmed))
   }
 
   /* Every pattern below is the Add-music sheet's, arrived at the hard way on a

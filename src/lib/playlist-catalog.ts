@@ -52,6 +52,10 @@ export interface PlaylistDetail {
   covers:          string[]
   /** "8 tracks · 1h 31m" style summary for the header meta line. */
   trackMeta:       string
+  /** The count `trackMeta` was made from — synthesised records only. Lets
+   *  the page re-count when songs are added this session; a hand-written
+   *  record's meta is a fixed string and stays as written. */
+  songCount?:      number
   tracks:          PlaylistTrack[]
   /** Source albums the playlist's tracks are drawn from. */
   featuredAlbums:  RailAlbum[]
@@ -93,12 +97,12 @@ const hash = (s: string) => {
 
 // "8 tracks · 1h 31m" — track count from the playlist record, duration
 // estimated at ~6½ min/track so the figure feels plausible.
-const fmtMeta = (songCount: number) => {
+export const fmtMeta = (songCount: number) => {
   const mins  = Math.round(songCount * 6.5)
   const h     = Math.floor(mins / 60)
   const m     = mins % 60
   const dur   = h > 0 ? `${h}h ${m}m` : `${m}m`
-  return `${songCount} tracks · ${dur}`
+  return `${songCount} ${songCount === 1 ? "track" : "tracks"} · ${dur}`
 }
 
 const railOf = (p: SavedPlaylist): RailPlaylist => ({
@@ -183,7 +187,7 @@ function synthDetail(base: SavedPlaylist): PlaylistDetail {
   return {
     id: base.id, title: base.title, owner, ownerAvatar: avatar(owner),
     cover: base.covers[0], covers: base.covers,
-    trackMeta: fmtMeta(base.songCount), tracks,
+    trackMeta: fmtMeta(base.songCount), songCount: base.songCount, tracks,
     featuredAlbums, featuredArtists, similarPlaylists, moreFrom,
   }
 }

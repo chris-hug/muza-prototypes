@@ -15,8 +15,8 @@
  * capping or hiding content just moves the overlap around. Anchoring top and
  * moving the actions above the field removes the budget altogether.
  *
- * Prototype: Create only toasts (no playlist store yet). After creating, the
- * host can open the Add-music step — see `onCreated`.
+ * Prototype: Create toasts and calls `onCreated`; the provider below then
+ * opens the new playlist and the Add-music step on top of it.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react"
@@ -34,6 +34,7 @@ import { useIsMobile } from "@/lib/use-media-query"
 import { AddMusicDialog } from "@/components/app/add-music-dialog"
 import { CreatePlaylistContext } from "@/lib/create-playlist-context"
 import { registerPlaylists } from "@/lib/playlist-catalog"
+import { playlistAdditions } from "@/lib/playlist-additions"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 import type { SavedSong } from "@/lib/user-library"
 
@@ -68,27 +69,37 @@ export function CreatePlaylistProvider({ children }: { children: React.ReactNode
   const { openPlaylist } = useMediaNav()
 
   /*
-   * Adding the tracks ENDS the flow, so it lands on the playlist itself —
-   * the thing just made, with the tracks in it. Anything else (staying put,
-   * or dropping back to the library grid) makes the user go find it.
+   * Create LANDS on the playlist, at once — Add music then opens on top of
+   * it. It used to wait for Add music to finish: close that step instead and
+   * you were left where you started, with a playlist you had to go and find.
+   * Now every way out of Add music (Add, ✕, Discard) leaves you in the thing
+   * you just made — empty if you added nothing, which is what it is.
    *
    * Prototype: there is no playlist store, so the record is registered into
-   * the catalog on the way out and the detail page resolves it by slug like
-   * any other. Covers come from the picks; a real store would own both.
+   * the catalog (as an empty playlist) and the detail page resolves it by
+   * slug like any other. The picks go into `playlistAdditions`, the same
+   * session store "Add to playlist" uses, so the list shows the songs you
+   * actually chose rather than tracks synthesised from a count.
    */
-  const finish = useCallback((songs: SavedSong[]) => {
-    const title = name?.trim()
-    if (!title) return
+  const created = useCallback((title: string) => {
+    setName(title)
     registerPlaylists([{
       id: `new-${slugify(title)}`,
       title,
-      covers: songs.map(s => s.cover).filter((c): c is string => !!c).slice(0, 4),
-      songCount: songs.length,
+      covers: [],
+      songCount: 0,
       owner: "You",
       owned: true,
     }])
     openPlaylist(slugify(title))
-  }, [name, openPlaylist])
+    setAddOpen(true)
+  }, [openPlaylist])
+
+  const finish = useCallback((songs: SavedSong[]) => {
+    const title = name?.trim()
+    if (!title) return
+    for (const song of songs) playlistAdditions.add(title, song)
+  }, [name])
 
   return (
     <CreatePlaylistContext.Provider value={{ open }}>
@@ -96,7 +107,7 @@ export function CreatePlaylistProvider({ children }: { children: React.ReactNode
       <CreatePlaylistDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
-        onCreated={n => { setName(n); setAddOpen(true) }}
+        onCreated={created}
       />
       <AddMusicDialog
         open={addOpen}

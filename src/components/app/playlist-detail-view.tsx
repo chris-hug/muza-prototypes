@@ -34,7 +34,7 @@ import { ArtistCard } from "@/components/ui/artist-card"
 import { CardRail } from "@/components/app/card-rail"
 import { railAlbum, railArtist, railPlaylist } from "@/lib/rail-list"
 import { hasAlbumDetail } from "@/lib/album-catalog"
-import { getPlaylistDetail, hasPlaylistDetail } from "@/lib/playlist-catalog"
+import { fmtMeta, getPlaylistDetail, hasPlaylistDetail } from "@/lib/playlist-catalog"
 import { useMediaNav, slugify } from "@/lib/media-nav"
 import { usePlayer } from "@/lib/player"
 import { usePlaylistAdditions } from "@/lib/playlist-additions"
@@ -54,6 +54,15 @@ export function PlaylistDetailView() {
   // its source was removed or local files are switched off, when it drops
   // out as it does everywhere else.
   const added = usePlaylistAdditions(PLAYLIST.title)
+  // The header counts them too, and a playlist made empty a moment ago
+  // takes its cover from them — otherwise a new playlist with three songs
+  // read "0 tracks" over a blank square.
+  const meta = PLAYLIST.songCount != null && added.length
+    ? fmtMeta(PLAYLIST.songCount + added.length)
+    : PLAYLIST.trackMeta
+  const covers = PLAYLIST.covers.length
+    ? PLAYLIST.covers
+    : added.map(s => s.cover).filter((c): c is string => !!c).slice(0, 4)
   const localAlbums = useLocalAlbums()
 
   // Load a playlist track into the global player ("playing from" = the
@@ -143,8 +152,8 @@ export function PlaylistDetailView() {
         // Your own playlist is already in your library by definition — the
         // `my-playlist` variant swaps the save heart for Edit.
         variant={owned ? "my-playlist" : "playlist"}
-        cover={PLAYLIST.cover}
-        covers={PLAYLIST.covers}
+        cover={PLAYLIST.cover ?? covers[0]}
+        covers={covers}
         title={PLAYLIST.title}
         owner={PLAYLIST.owner}
         ownerAvatar={PLAYLIST.ownerAvatar}
@@ -158,7 +167,7 @@ export function PlaylistDetailView() {
         libraryType="playlist"
         libraryId={slugify(PLAYLIST.title)}
         libraryName={PLAYLIST.title}
-        year={PLAYLIST.trackMeta}
+        year={meta}
         playing={isThisPlaylistPlaying}
         shuffleActive={player.shuffle}
         onPlay={() => {
