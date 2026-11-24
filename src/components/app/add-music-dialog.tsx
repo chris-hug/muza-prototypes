@@ -334,7 +334,9 @@ export function AddMusicDialog({
             costs height the keyboard is already taking. It does NOT change on
             the Find screen: what you're filling is the same job whether
             you're browsing or searching, and swapping in "Find" would drop
-            the only piece of context on screen.
+            the only piece of context on screen. The one exception is on the
+            phone bar, below: once `Add n` takes the trailing slot there is no
+            room for both, and the title is only hidden, never replaced.
 
             On a phone it is a BAR — back · title · ✕ on one line, the same
             shape as the New Playlist sheet — rather than the header's
@@ -365,7 +367,12 @@ export function AddMusicDialog({
               </DialogClose>
             )}
           >
-            <DialogTitle className="truncate">
+            {/* While `Add n` holds the trailing slot the title steps out —
+                `sr-only`, so it still names the dialog. It is centred with
+                80px clear on each side and `Add n` is wider than that: with a
+                long playlist name the two overlapped at 375, and the title
+                was cut down to "Add to “Mobile created pl…" regardless. */}
+            <DialogTitle className={cn("truncate", barAction && "sr-only")}>
               {playlistName ? `Add to “${playlistName}”` : "Add music"}
             </DialogTitle>
           </DialogActionBar>

@@ -551,6 +551,14 @@ is two rows tall with the keyboard up, while the bar is already on screen and
 costs nothing. It also settles what a button under the field kept suggesting —
 "show me these results" — so no gating on a submitted query is needed any more.
 
+**While `Add n` is in the bar, the title steps out** (`sr-only`: still the
+dialog's name for a screen reader, no longer drawn). The title is centred
+with 80px kept free on each side, and `Add n` is wider than that: with a long
+playlist name at 375 the two overlapped by 12px and the title was cut to
+`Add to “Mobile created pl…` anyway. Here the screen is about the picks, and
+the playlist was named on the screen before; at rest, with the ✕ back in the
+slot, the title returns.
+
 **One band on the browse screen.** The search field and the confirming action
 share the footer
 (`flex-col` so the field sits on top, `md:flex-row`) — one edge of chrome, not
