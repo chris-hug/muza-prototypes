@@ -62,8 +62,14 @@ interface RadioCardProps {
   value:        string
   selected:     boolean
   onSelect:     () => void
-  icon:         ReactNode
+  /** Optional. Left out for `size="sm"`, where the row is one line. */
+  icon?:        ReactNode
   title:        string
+  /** `sm` is a one-line row (title only, 48px): for a short list of
+   *  plain options, like a saved card vs a new one, where a 40px icon
+   *  and a description line would make two words look like a form.
+   *  `default` is the two-line card with icon. */
+  size?:        "default" | "sm"
   description?: string
   /** Optional content rendered below a full-width separator. Always
    *  visible (not gated on selection). Useful for the Purchase card's
@@ -75,7 +81,7 @@ interface RadioCardProps {
 
 export function RadioCard({
   value, selected, onSelect,
-  icon, title, description,
+  icon, title, description, size = "default",
   children, className,
 }: RadioCardProps) {
   /* The card is the tap target — the whole thing, not the 16px dot — so the
@@ -140,13 +146,13 @@ export function RadioCard({
           style={from == null ? undefined : { "--card-sweep-from": `${from}deg` } as React.CSSProperties}
         />
       )}
-      <div className="flex items-center gap-4 px-4 py-5">
+      <div className={cn("flex items-center", size === "sm" ? "gap-3 px-4 py-3" : "gap-4 px-4 py-5")}>
         <RadioGroupItem value={value} {...tickProps} />
-        <div className="shrink-0 size-10 rounded-full flex items-center justify-center bg-secondary text-secondary-foreground [&_svg]:size-4">
+        {icon && <div className="shrink-0 size-10 rounded-full flex items-center justify-center bg-secondary text-secondary-foreground [&_svg]:size-4">
           {icon}
-        </div>
+        </div>}
         <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-          <span className="text-small font-medium text-foreground leading-snug">{title}</span>
+          <span className={cn("text-small text-foreground leading-snug", size === "sm" ? "font-normal" : "font-medium")}>{title}</span>
           {description && (
             <span className="text-xsmall text-muted-foreground leading-snug">{description}</span>
           )}

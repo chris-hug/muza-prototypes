@@ -7,8 +7,8 @@ usage:
 ---
 
 `PurchaseAlbumDialog` is the one-time checkout behind an album's "Buy"
-CTA: a cart with one line, a tier picker, a receipt email and a slot
-for Square's universal payment form, then a processing and a success step. It
+CTA: a cart with one line, a tier picker, a payment choice (saved card or a
+new one through Square's universal form), the price with its processing fee, then a processing and a success step. It
 reads as a transactional cart, not a generic modal.
 
 ## Anatomy
@@ -23,8 +23,8 @@ each band pads itself.
 |---|---|---|
 | Header | `shrink-0 px-6 pt-6 pb-4 border-b border-border`: `DialogHeader` (title `text-small`, description) + the **In cart** card | `shrink-0` so the buyer always sees what they are buying — the card never scrolls away or compresses when the body is tall |
 | In cart | `rounded-2xl border border-border`, a row of `size-12 rounded-xs` cover · title `text-small font-medium` · `artist · year · format` in `text-muted-foreground` · price `tabular-nums` with a **Remove** link (`text-2xsmall`) under it | mirrors the seller-side `SelectedReleaseCard` in the upload flow, so buying reads as the mirror of listing. Remove does what Cancel does but reads as a cart-line action |
-| Body | `flex-1 overflow-y-auto px-6 py-4 gap-6`: **Tier** (`RadioCardGroup` — Listening · Download files) · **Contact** (email `Input` with a leading `Mail` glyph, `pl-10`) · **Payment** (`SquareContainer`) · **Total** (`text-large font-medium tabular-nums`) · the `ShieldCheck` line | the only scrolling band |
-| Footer | `DialogFooter` with `m-0 shrink-0 border-t bg-muted px-6 py-4 rounded-b-xl sm:rounded-b-2xl`: **Add to cart** (`ghost`, cart glyph) when the host passes `onAddToCart`, otherwise Cancel (`ghost`) · **Confirm and pay $x.xx**. Add to cart takes the picked tier and its price, is not gated on the email, and closes the dialog; with `inCart` it reads **View cart** (✓) and calls `onOpenCart`. It replaces Cancel rather than joining it — Remove, the ✕ and the backdrop already dismiss, and three buttons do not fit a phone footer. This is where batch buy lives: the album page keeps one Buy button, as Bandcamp does (Check out now · Add to cart in its dialog) | `m-0` cancels `dialogFooterClass`'s full-bleed negative margins, which assume a `p-6` parent |
+| Body | `flex-1 overflow-y-auto px-6 py-4 gap-6`: **Tier** (`RadioCardGroup` — Listening · Download files) · **Payment** (`PaymentMethodPicker`: two one-line `RadioCard size="sm"` rows, **VISA •••• 1111** (the saved card), selected by default, and **Pay with a new card**, which reveals `SquareContainer` under them) · **Price summary** (`PriceSummary`: album price · **Service fee** (5% + $0.30) · **Total** in `text-large font-medium tabular-nums`, the same figure the Buy button showed, plus, only when the cart already holds something, one line with the exact saving: "Add it to your cart with 3 other items and save $0.30." — `cartCount`, the host's count of other cart lines) · the `ShieldCheck` line | the only scrolling band |
+| Footer | `DialogFooter` with `m-0 shrink-0 border-t bg-muted px-6 py-4 rounded-b-xl sm:rounded-b-2xl`: **Add to cart** (`outline`, cart glyph — ghost read as a link beside Pay) when the host passes `onAddToCart`, otherwise Cancel (`ghost`) · **Confirm and pay $x.xx**. Add to cart takes the picked tier and its price, asks for nothing, and closes the dialog; with `inCart` it reads **View cart** (✓) and calls `onOpenCart`. It replaces Cancel rather than joining it — Remove, the ✕ and the backdrop already dismiss, and three buttons do not fit a phone footer. This is where batch buy lives: the album page keeps one Buy button, as Bandcamp does (Check out now · Add to cart in its dialog) | `m-0` cancels `dialogFooterClass`'s full-bleed negative margins, which assume a `p-6` parent |
 
 Section labels (`SectionLabel`) are `text-small font-medium` — sentence case,
 never uppercase.
@@ -44,7 +44,7 @@ abrupt.
 |---|---|
 | `album` | `{ cover, title, artist, year?, format? }` — what the cart line shows |
 | `streamPrice` / `downloadPrice` | the two tiers, as strings (`"$2.99"`); the picker shows only when both are set |
-| `userEmail` | pre-fills the receipt field. Defaults to **empty**, so the field opens on its placeholder — nothing in the app passes it today, and a mock address defaulted in was what every dialog and every design-system frame showed |
+| `userEmail` | the account address the receipt goes to, named on the success step. Not asked for in the dialog — buying needs an account, and the account has one. Nothing passes it yet, so success reads "your account email" |
 | `onPurchased(tier)` | fires on the success step; the album page uses it to mark the album owned in the library store |
 | `upgradeMode` + `upgradePrice` + `onUpgraded` | pay-the-difference flow for the files on an album you own: tier picker hidden, cart shows the delta, the title becomes "Download files", success says "100% of your upgrade" and calls `onUpgraded` |
 | `onGoToLibrary` | the success step's "See in library" |
@@ -68,7 +68,7 @@ download. The catalog stores the stream price as `buyingPrice`; the dialog
 calls it `streamPrice`.
 
 `PurchaseAlbumDialogPreview` renders the summary step inline with the
-`DialogPreview` chrome, interactive (tier and email are local state) so a
+`DialogPreview` chrome, interactive (tier and payment method are local state) so a
 reviewer can flip the tier and watch the total. Processing and success are
 not previewed; open the live dialog for them.
 
@@ -81,17 +81,30 @@ height runs out. The preview follows the window chip through `DialogPreview`.
 
 ## Behaviour
 
-- State resets on every open (`step`, `tier`, `email`).
-- **Confirm and pay** enables once the email matches `\S+@\S+\.\S+`; the
-  live integration would also wait for Square's `checkout.validate()`.
+- State resets on every open (`step`, `tier`, payment `method`).
+- **Every price includes the service fee; the checkout never grows.** The
+  buyer always pays 5% + $0.30 per payment (Assif: ".30 per transaction +
+  5%"); `serviceFee()` and `priceWithFee()` in `lib/cart.tsx` are the one
+  rule. In the EU the full price has to be shown up front, so the album
+  page's **Buy** button, the album tiles and the tier cards all show the
+  price with the fee, what that album costs bought on its own, and Confirm
+  and pay charges exactly that. The breakdown (album price · Service fee ·
+  Total) stays for transparency. The cart only gets cheaper than the tiles added up, because it pays the
+  $0.30 once; it says how much ("You save $0.60 by paying for 3 items at
+  once").
+- **Confirm and pay** is always enabled: the saved card is ready at once. The
+  live integration would wait for Square's `checkout.validate()` when a new
+  card is being entered.
 - Success does not close by itself. Remove, Cancel, the ✕, the backdrop and
   both success CTAs all go through `onOpenChange(false)`.
-- **Square owns the payment UI.** `SquareContainer` is the `<div
-  id="square-container">` Square's universal form mounts into: card fields
-  with brand detection, Apple Pay, Google Pay, PayPal, and the saved-card
-  row for returning customers all render inside that iframe. The dialog owns
-  only the shell around it, which is why there is no "has saved card" prop.
-  The header comment in the source carries the integration sketch.
+- **Saved card first, Square form on demand.** A returning buyer usually
+  pays with the card they used last time, so `VISA •••• 1111` (mocked)
+  leads and starts selected. **Pay with a new card** reveals
+  `SquareContainer`, the `<div id="square-container">` Square's universal
+  form mounts into (card only: Apple Pay and Google Pay are not integrated). The form
+  only renders when it is asked for; otherwise it pushes the price and the
+  Pay button below the fold on a phone. The header comment in the source
+  carries the integration sketch.
 
 ## Artwork, links and motion
 
@@ -102,6 +115,9 @@ height runs out. The preview follows the window chip through `DialogPreview`.
 **Colour changes fade through `state-fade`** — 440ms in, 100ms out, on `cubic-bezier(0.2,0,0,1)`.
 
 ## Open questions
+
+- Where the processing fee is charged. The cart pays from the Muza wallet, so the card fee may really fall on the wallet top-up, not the checkout. The prototype charges it per checkout until that is settled.
+- The saved card is mocked; a buyer with none should see the Square form alone, without the two radio cards.
 
 - home.tsx (section comment) says there are "four states (details → confirm → processing → success)" and "two triggers … `hasSavedPayment={boolean}`" · the source has three steps and no `hasSavedPayment` prop; saved-card detection lives inside Square's form.
 - purchase-album-dialog.tsx:551–558 · the preview's body "mirrors the live dialog … if you change one, change both (no shared body extraction by design)" · the two copies already differ: the preview's Remove is a `<span>`, the live one a button. A shared body with a `preview` flag (as `LoginBody` does) would end that.

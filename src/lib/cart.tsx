@@ -135,6 +135,45 @@ function taxRuleFor(country: string): TaxRule {
     ?? { code: country, name: country, label: "Tax", rate: 0 }
 }
 
+// ─── Service fee ─────────────────────────────────────────────────────────────
+//
+// Muza's service fee: 5% of the amount plus a flat $0.30, charged once per
+// PAYMENT, not per item (Assif, ClickUp 86ca8pmye: ".30 per transaction +
+// 5%"). The buyer always pays it.
+//
+// How it is shown follows the EU rule on price display (plain-English
+// summary: europe-consommateurs.eu/en/topics/shopping/prices/display/): the
+// price shown must be the full price up front, every unavoidable fee
+// included. A fee that first appears at checkout counts as misleading.
+//
+// So every price that invites a purchase (album tiles, the Buy button, the
+// tier cards) is `priceWithFee`: what that album costs bought on its own.
+// The checkout breaks it down (price · service fee · total) to stay
+// transparent, and the cart only ever gets CHEAPER than the sum of those
+// prices: the $0.30 is paid once for the whole cart, and the cart says how
+// much that saved. That is the reason to collect things in a cart.
+//
+// Prototype numbers. Whether the fee is taken at checkout or when the
+// wallet is topped up (the cart pays by wallet) is still open.
+
+export const FEE_RATE        = 0.05
+export const TRANSACTION_FEE = 0.30
+
+/** The service fee on ONE payment of `amount` (USD): 5% + $0.30. Zero when
+ *  there is nothing to pay, so an empty cart never shows a $0.30 line. */
+export function serviceFee(amount: number): number {
+  if (amount <= 0) return 0
+  return Math.round((amount * FEE_RATE + TRANSACTION_FEE) * 100) / 100
+}
+
+/** A catalog price string ("$2.49") as the buyer pays it, bought on its own
+ *  ("$2.91"). Every price that invites a purchase shows this figure. */
+export function priceWithFee(price: string | null | undefined): string {
+  const n = Number((price ?? "").replace(/[^0-9.]/g, ""))
+  if (!price || !Number.isFinite(n) || n <= 0) return price ?? ""
+  return `$${(n + serviceFee(n)).toFixed(2)}`
+}
+
 // ─── Shipping address ────────────────────────────────────────────────────────
 //
 // Structured form so downstream consumers (tax lookup, checkout
@@ -178,7 +217,12 @@ interface CartContextValue {
   /** Tax rule resolved from the shipping address (label + rate). */
   taxLabel:        string
   taxRate:         number
-  /** itemsSubtotal − promoDiscount + shippingTotal + taxTotal. */
+  /** One service fee for the whole checkout — see `serviceFee`. */
+  serviceFee:      number
+  /** What paying once saved against buying each line on its own:
+   *  (lines − 1) × $0.30. Zero for a single line. */
+  feeSaving:       number
+  /** itemsSubtotal − promoDiscount + shippingTotal + taxTotal + serviceFee. */
   grandTotal:      number
 
   /** Structured shipping address. Display strings are derived via
@@ -420,14 +464,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const count         = React.useMemo(() => lines.reduce((s, l) => s + l.qty, 0), [lines])
   const shippingTotal = React.useMemo(() => groups.reduce((s, g) => s + g.shippingFee, 0), [groups])
   const taxTotal      = React.useMemo(() => groups.reduce((s, g) => s + g.tax, 0), [groups])
-  const grandTotal    = React.useMemo(() => groups.reduce((s, g) => s + g.total, 0), [groups])
+  // Shop totals stay fee-free: the fee belongs to the payment, and the
+  // cart is paid once, so it is added once, at the bottom.
+  const ordersTotal   = React.useMemo(() => groups.reduce((s, g) => s + g.total, 0), [groups])
+  const fee           = serviceFee(ordersTotal)
+  const feeSaving     = Math.max(0, lines.length - 1) * TRANSACTION_FEE
+  const grandTotal    = Math.round((ordersTotal + fee) * 100) / 100
   const walletShortfall = Math.max(0, Math.round((grandTotal - walletBalance) * 100) / 100)
 
   const value: CartContextValue = {
     lines, groups, count,
     itemsSubtotal, promoDiscount, shippingTotal, taxTotal,
     taxLabel: `${taxRule.label} ${taxRule.code}`, taxRate: taxRule.rate,
-    grandTotal,
+    serviceFee: fee, feeSaving, grandTotal,
     shippingAddress, setShippingAddress,
     walletBalance, walletShortfall, topUpWallet,
     currency, setCurrency, format,

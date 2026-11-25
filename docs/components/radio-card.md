@@ -34,16 +34,17 @@ one `div` with up to two bands:
 | card | `relative flex flex-col rounded-lg border cursor-pointer`, `transition-[border-color] duration-[130ms] ease-[cubic-bezier(0.2,0,0,1)]` | `relative` because the sweep overlay is absolutely positioned against it; the transition names `border-color` alone — `transition-colors` would sweep the background too |
 | — unselected | `border-border hover:border-foreground/30` | the form-control hover, so it reads as a field |
 | — selected | `border-foreground/20` | structure darkens; it does not go `primary`. The alpha has to match the sweep's ink exactly — see below |
-| header band | `flex items-center gap-4 px-4 py-5` | |
+| header band | `flex items-center gap-4 px-4 py-5`; `size="sm"`: `gap-3 px-4 py-3` | |
 | radio | `RadioGroupItem value={value}` | the real 16px mark; it is the only focusable part |
-| icon circle | `size-10 rounded-full bg-secondary text-secondary-foreground [&_svg]:size-4` | **always** neutral — a selected card has one signal, the border + dot |
-| title | `text-small font-medium text-foreground leading-snug` | |
+| icon circle | `size-10 rounded-full bg-secondary text-secondary-foreground [&_svg]:size-4` | **always** neutral — a selected card has one signal, the border + dot. Optional: left out for `size="sm"` |
+| title | `text-small font-medium text-foreground leading-snug`; `size="sm"`: `font-normal` | |
 | description | `text-xsmall text-muted-foreground leading-snug` | optional |
 | divider | `border-t border-border` | only with `children` |
 | children band | `flex flex-col gap-7 px-6 py-7`, `onClick={e => e.stopPropagation()}` | always visible, never gated on selection; clicks inside do not re-select the card |
 
 ```text
 header band       20 + 40 (icon circle) + 20 = 80px, or taller if the description wraps
+size="sm"         12 + 22 (one line) + 12 ≈ 46px, plus the 2px border = 48
 children band     28 + content + 28, with 28px between children
 ```
 
@@ -70,6 +71,14 @@ const [tier, setTier] = useState<"stream" | "download">("stream")
 
 (`purchase-album-dialog.tsx:263–279`.) Pass the icon bare — the circle sizes
 it to 16px.
+
+## Size sm
+
+`size="sm"` is a one-line row: radio and title, no icon, no description,
+regular weight. It is for a short list of plain options that confirm rather
+than decide. The buy dialog's **VISA •••• 1111** / **Pay with a new card**
+is the case: at full size those two labels read as a second decision as big
+as the Tier picker above them.
 
 ## Sizing
 

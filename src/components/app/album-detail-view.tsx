@@ -34,7 +34,7 @@ import { useDownloadFiles } from "@/lib/offline"
 import { CartDrawer } from "@/components/app/cart-drawer"
 import { railArtist, railPlaylist } from "@/lib/rail-list"
 import { useSearchNav } from "@/lib/use-search-nav"
-import { useCart } from "@/lib/cart"
+import { useCart, priceWithFee } from "@/lib/cart"
 import { useToast } from "@/components/ui/toast"
 import { useUserLibrary } from "@/lib/user-library"
 import { useUserAccount } from "@/lib/user-account"
@@ -274,7 +274,10 @@ function CatalogAlbumDetailView() {
           }
         }}
         hasBuyingOption={!isPurchased && !!ALBUM.buyingPrice}
-        buyingPrice={ALBUM.buyingPrice}
+        // The full price, service fee included: what Confirm and pay will
+        // charge for this album on its own (EU: no price that grows at
+        // checkout). See `serviceFee` in lib/cart.
+        buyingPrice={priceWithFee(ALBUM.buyingPrice)}
         onBuy={() => setBuyOpen(true)}
         purchased={isPurchased}
         // Downloaded here already: no CTA, the meta line's offline mark
@@ -282,7 +285,7 @@ function CatalogAlbumDetailView() {
         downloadable={isDownloadable && !files?.downloaded}
         downloaded={!!files?.downloaded}
         onDownload={files?.download}
-        addDownloadPrice={canUpgradeToDownload ? upgradePriceStr : undefined}
+        addDownloadPrice={canUpgradeToDownload ? priceWithFee(upgradePriceStr) : undefined}
         onAddDownload={() => setUpgradeOpen(true)}
       />
 
@@ -307,6 +310,7 @@ function CatalogAlbumDetailView() {
         onPurchased={(tier) => library.purchase(ALBUM.id, tier)}
         onAddToCart={addToCart}
         inCart={inCart}
+        cartCount={cart.lines.filter(l => l.id !== cartLineId).length}
         onOpenCart={() => setCartOpen(true)}
         onGoToLibrary={() => {
           setBuyOpen(false)

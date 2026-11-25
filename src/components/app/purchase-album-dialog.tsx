@@ -4,8 +4,9 @@
  * PurchaseAlbumDialog — buyer-side checkout for the "Buy"
  * CTA on an album detail page. Three states:
  *
- *   summary    → order summary + tier picker + email + Square
- *                payment container + sticky footer (total + Pay).
+ *   summary    → order summary + tier picker + payment
+ *                method (saved card | new card) + price summary
+ *                (price · processing fee · total) + sticky footer.
  *   processing → Spinner + "Processing payment…" (mocked 1.4s).
  *   success    → CircleCheck + "Unlocked!" then auto-closes 1.5s.
  *
@@ -17,7 +18,7 @@
  * auto-detection, Apple Pay, Google Pay, PayPal) AND the saved-
  * card / new-card affordance for returning customers. We don't
  * write any of that UI ourselves — we just provide the surrounding
- * chrome (order summary, tier, email, total) and a `<div>` host.
+ * chrome (order summary, tier, total) and a `<div>` host.
  *
  * Sketch of the live integration (commented; needs a real merchant
  * id + a backend endpoint that mints a clientSecret per session):
@@ -63,7 +64,7 @@
  */
 
 import { useEffect, useState } from "react"
-import { Check, CircleCheck, CircleCheckBig, Disc3, Download, Mail, Radio as RadioIcon, ShieldCheck, ShoppingCart } from "lucide-react"
+import { Check, CircleCheck, CircleCheckBig, Disc3, Download, Radio as RadioIcon, ShieldCheck, ShoppingCart } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import {
@@ -76,8 +77,7 @@ import { PlayFilledAlt } from "@/components/ui/transport-icons"
 import { Badge } from "@/components/ui/badge"
 import { Spinner } from "@/components/ui/spinner"
 import { RadioCard, RadioCardGroup } from "@/components/ui/radio-card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { serviceFee, priceWithFee, TRANSACTION_FEE } from "@/lib/cart"
 
 export interface PurchaseAlbumDialogProps {
   open: boolean
@@ -93,9 +93,8 @@ export interface PurchaseAlbumDialogProps {
    *  in `upload-music-dialog.tsx`. */
   streamPrice: string
   downloadPrice?: string | null
-  /** Logged-in account email — pre-fills the receipt field so users
-   *  don't have to retype. Real wiring would pull from the auth
-   *  context. */
+  /** The account's email — where the receipt goes. Not asked for in the
+   *  dialog: buying needs an account, and the account already has one. */
   userEmail?: string
   onPurchased?: (tier: PurchaseTier) => void
   /** Upgrade flow — when set, dialog opens in "add download" mode:
@@ -118,31 +117,32 @@ export interface PurchaseAlbumDialogProps {
   onAddToCart?: (tier: PurchaseTier, price: string) => void
   inCart?: boolean
   onOpenCart?: () => void
+  /** How many OTHER lines are already in the cart. With one or more, the
+   *  price summary says exactly what adding this one saves; with none
+   *  there is nothing to save yet, and it says nothing. */
+  cartCount?: number
 }
 
 type Step = "summary" | "processing" | "success"
 type PurchaseTier = "stream" | "download"
+type PayMethod = "saved" | "new"
 
-/* No pre-filled address. `userEmail` defaults to EMPTY so the field opens on
-   its placeholder, the way a person actually meets it. It used to default to
-   `naomi@example.com`, and since nothing in the app passes `userEmail`, that
-   mock was what every dialog and every design-system frame showed: a filled
-   field reads as the product suggesting an address it cannot know, and it hid
-   the empty state — the one state the form always starts in. A real account
-   passes the address in through this prop. */
+/* No Contact field. It asked for an email the account already holds; the
+   receipt goes to the account address. Nothing in the app passes `userEmail`
+   yet, so the success step falls back to "your account email". */
 const MOCK_USER_EMAIL = ""
 
 export function PurchaseAlbumDialog({
   open, onOpenChange, album, streamPrice, downloadPrice,
   userEmail = MOCK_USER_EMAIL, onPurchased, onGoToLibrary,
   upgradeMode = false, upgradePrice, onUpgraded,
-  onAddToCart, inCart = false, onOpenCart,
+  onAddToCart, inCart = false, onOpenCart, cartCount = 0,
 }: PurchaseAlbumDialogProps) {
   const [step, setStep]   = useState<Step>("summary")
   // In upgrade mode tier is forced to "download" — the user already
   // owns the stream tier so the upgrade IS the download license.
   const [tier, setTier]   = useState<PurchaseTier>(upgradeMode ? "download" : "stream")
-  const [email, setEmail] = useState(userEmail)
+  const [method, setMethod] = useState<PayMethod>("saved")
 
   // In upgrade mode the cart line is the price delta, not the full
   // download price (user already paid for the stream tier).
@@ -150,15 +150,17 @@ export function PurchaseAlbumDialog({
     ? upgradePrice
     : tier === "download" && downloadPrice ? downloadPrice : streamPrice
   const itemPrice    = parsePrice(itemPriceStr)
-  const price        = formatPrice(itemPrice)
+  // What the buyer pays: the artist's price plus this payment's
+  // processing fee, which `PriceSummary` itemizes above the button.
+  const price        = formatPrice(itemPrice + serviceFee(itemPrice))
 
   // Reset on each open.
   useEffect(() => {
     if (!open) return
     setStep("summary")
     setTier(upgradeMode ? "download" : "stream")
-    setEmail(userEmail)
-  }, [open, userEmail, upgradeMode])
+    setMethod("saved")
+  }, [open, upgradeMode])
 
   // Success state stays open until the user picks an action. The
   // album's already been added to the library by `onPurchased` —
@@ -166,11 +168,9 @@ export function PurchaseAlbumDialog({
   // not a timer. (Previously we auto-closed after 1.5s which felt
   // abrupt — the buyer barely got to register the success.)
 
-  // Pay button enables once we have a valid email. Real wiring
-  // would also require `checkout.validate()` to return ok before
-  // letting the user submit — for prototype we skip that.
-  const emailValid = /\S+@\S+\.\S+/.test(email)
-  const canPay     = emailValid
+  // Real wiring would wait for `checkout.validate()` when a new card is
+  // being entered; the saved card is ready at once. Prototype: always.
+  const canPay = true
 
   const handlePay = () => {
     setStep("processing")
@@ -249,7 +249,7 @@ export function PurchaseAlbumDialog({
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-0.5 shrink-0">
-                      <span className="text-small font-medium tabular-nums">{itemPriceStr}</span>
+                      <span className="text-small font-medium tabular-nums">{price}</span>
                       <button
                         type="button"
                         onClick={() => onOpenChange(false)}
@@ -283,7 +283,7 @@ export function PurchaseAlbumDialog({
                         onSelect={() => setTier("stream")}
                         icon={<RadioIcon />}
                         title="Listening"
-                        description={`Stream on any device · ${streamPrice}`}
+                        description={`Stream on any device · ${priceWithFee(streamPrice)}`}
                       />
                       {downloadPrice && (
                         <RadioCard
@@ -292,7 +292,7 @@ export function PurchaseAlbumDialog({
                           onSelect={() => setTier("download")}
                           icon={<Download />}
                           title="Download files"
-                          description={`Lossless files + listening · ${downloadPrice}`}
+                          description={`Lossless files + listening · ${priceWithFee(downloadPrice)}`}
                         />
                       )}
                     </RadioCardGroup>
@@ -301,41 +301,19 @@ export function PurchaseAlbumDialog({
                 </>
               )}
 
-              {/* ── Contact (email for receipt) ────────────────── */}
-              <div className="flex flex-col gap-2">
-                <SectionLabel>Contact</SectionLabel>
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="email" className="sr-only">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      placeholder="your@email.com"
-                      autoComplete="email"
-                      className="pl-10"
-                    />
-                  </div>
-                  <p className="text-2xsmall text-muted-foreground">
-                    We'll send your receipt and a link to your files here.
-                  </p>
-                </div>
-              </div>
 
 
               {/* ── Payment (Square universal form mounts here) ─ */}
               <div className="flex flex-col gap-2">
                 <SectionLabel>Payment</SectionLabel>
-                <SquareContainer />
+                <PaymentMethodPicker value={method} onChange={setMethod} />
               </div>
 
-              {/* Total — single line; 100% of the price goes to the artist. */}
-              <dl className="flex items-center justify-between py-1">
-                <dt className="text-small font-medium text-foreground">Total</dt>
-                <dd className="text-large font-medium tabular-nums">{price}</dd>
-              </dl>
+              <PriceSummary
+                itemLabel={upgradeMode ? "Download files" : album.format ?? "Album"}
+                itemPrice={itemPrice}
+                cartCount={onAddToCart && !upgradeMode && !inCart ? cartCount : 0}
+              />
 
               <div className="flex items-center gap-2 text-2xsmall text-muted-foreground">
                 <ShieldCheck className="size-3.5" />
@@ -356,13 +334,16 @@ export function PurchaseAlbumDialog({
                  Cancel — the Bandcamp arrangement (Check out now · Add to
                  cart), and the album page keeps ONE buy button. Cancel
                  can go: Remove on the cart line, the ✕ and the backdrop
-                 already dismiss. Not gated on the email: putting it in
+                 already dismiss. Not gated on payment: putting it in
                  the cart asks for nothing yet. */}
             <DialogFooter className="m-0 shrink-0 border-t border-border bg-muted px-4 py-3 rounded-b-xl sm:rounded-b-2xl">
               {onAddToCart && !upgradeMode ? (
                 <Button
                   size="lg"
-                  variant="ghost"
+                  /* Outline, not ghost: a ghost label on the muted footer read as a
+                     link beside the primary button, and batching is the reason
+                     the cart exists (one $0.30 fee). Still second to Pay. */
+                  variant="outline"
                   onClick={() => {
                     if (inCart) onOpenCart?.()
                     else onAddToCart(tier, itemPriceStr)
@@ -426,8 +407,8 @@ export function PurchaseAlbumDialog({
                       {" received "}
                       <span className="tabular-nums">{itemPriceStr}</span>
                       {upgradeMode
-                        ? " — 100% of your upgrade."
-                        : " — 100% of your purchase."}
+                        ? " — 100% of the upgrade price."
+                        : " — 100% of the album price."}
                     </span>
                   </li>
                 </ul>
@@ -435,13 +416,13 @@ export function PurchaseAlbumDialog({
             )}
 
             {/* Confirmation + receipt — quiet meta lines under the
-                 impact block. Receipt email mirrors the cart email
-                 field so the user immediately sees where to look. */}
+                 impact block. Names the account address
+                 the receipt went to, so the buyer knows where to look. */}
             <div className="flex flex-col gap-1 text-small text-muted-foreground">
               <p>Your order is confirmed.</p>
               <p>
                 Receipt sent to{" "}
-                <span className="text-foreground">{email}</span>.
+                <span className="text-foreground">{userEmail || "your account email"}</span>.
               </p>
             </div>
 
@@ -543,6 +524,57 @@ function formatPrice(amount: number): string {
 }
 
 /*
+ * PriceSummary — the price, the processing fee, the total.
+ *
+ * The fee is itemized, not folded in. For a while this was one Total line,
+ * a leftover of removing the Contribute-to-Muza tip (whose three-line block
+ * existed only to add the tip up); it was never a decision to hide the fee.
+ * One "Service fee" line (5% + $0.30 per payment, see `serviceFee`), and
+ * the total is the price the Buy button already showed: in the EU the full
+ * price has to be up front, so nothing here may grow. The breakdown is for
+ * transparency, the album's own price stays visible.
+ *
+ * The cart hint is a FACT, not an ad. "Buying more? Add to cart…" ran two
+ * lines and spoke to everyone, including the buyer with an empty cart, for
+ * whom it saves nothing. Now it appears only when there is something in the
+ * cart, and says the amount: "Pay with your 3 cart items and save $0.30."
+ * One line, true when it shows, absent when it would not be.
+ */
+function PriceSummary({
+  itemLabel, itemPrice, cartCount = 0,
+}: {
+  itemLabel: string
+  itemPrice: number
+  cartCount?: number
+}) {
+  const fee = serviceFee(itemPrice)
+  return (
+    <div className="flex flex-col gap-2 py-1">
+      <dl className="flex flex-col gap-1 text-small">
+        <div className="flex items-baseline justify-between gap-3">
+          <dt className="text-muted-foreground">{itemLabel}</dt>
+          <dd className="tabular-nums text-foreground">{formatPrice(itemPrice)}</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-3">
+          <dt className="text-muted-foreground">Service fee</dt>
+          <dd className="tabular-nums text-foreground">{formatPrice(fee)}</dd>
+        </div>
+        <div className="flex items-center justify-between gap-3 pt-2 mt-1 border-t border-border">
+          <dt className="font-medium text-foreground">Total</dt>
+          <dd className="text-large font-medium tabular-nums">{formatPrice(itemPrice + fee)}</dd>
+        </div>
+      </dl>
+      {cartCount > 0 && (
+        <p className="text-2xsmall text-muted-foreground">
+          Add it to your cart with {cartCount} other {cartCount === 1 ? "item" : "items"} and
+          save {formatPrice(TRANSACTION_FEE)}.
+        </p>
+      )}
+    </div>
+  )
+}
+
+/*
  * SquareContainer — placeholder for Square's universal payment
  * form. In production this becomes:
  *
@@ -569,10 +601,54 @@ function SquareContainer() {
         Payment fields render here
       </p>
       <p className="text-2xsmall text-muted-foreground text-center max-w-[320px]">
-        Card · Apple Pay · Google Pay · PayPal — all rendered by
-        Square's universal form. Brand auto-detection and saved-card
-        handling come built-in.
+        Card number, expiry and CVC, rendered by Square's card form.
+        Card details never touch Muza's servers.
       </p>
+    </div>
+  )
+}
+
+/*
+ * PaymentMethodPicker — the saved card, or a new one.
+ *
+ * Square remembers a returning buyer's card; the common case is "pay with
+ * the one I used last time", so it leads and starts selected — one tap less
+ * than opening an empty card form every time. "Pay with a new card" opens
+ * Square's card form (card only for now: Apple Pay and Google Pay are not
+ * integrated) under the
+ * cards, and only then: a form nobody asked for would push the price summary
+ * and the Pay button below the fold on a phone.
+ *
+ * `RadioCard size="sm"`: one line each, no icon, no description. Two
+ * short labels at the Tier cards' full size read as a second big decision;
+ * they are a quick confirmation. The card is mocked (`VISA •••• 1111`, Square's
+ * sandbox test card); a buyer with no saved card would see the form alone.
+ */
+function PaymentMethodPicker({
+  value, onChange,
+}: {
+  value: PayMethod
+  onChange: (v: PayMethod) => void
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <RadioCardGroup value={value} onValueChange={v => onChange(v as PayMethod)}>
+        <RadioCard
+          value="saved"
+          selected={value === "saved"}
+          onSelect={() => onChange("saved")}
+          size="sm"
+          title="VISA •••• 1111"
+        />
+        <RadioCard
+          value="new"
+          selected={value === "new"}
+          onSelect={() => onChange("new")}
+          size="sm"
+          title="Pay with a new card"
+        />
+      </RadioCardGroup>
+      {value === "new" && <SquareContainer />}
     </div>
   )
 }
@@ -603,13 +679,13 @@ export function PurchaseAlbumDialogPreview({
   userEmail = MOCK_USER_EMAIL, className,
 }: PurchaseAlbumDialogPreviewProps) {
   // Local state so the preview is interactive even though it's
-  // static-mounted — devs can flip the tier picker / email and see
+  // static-mounted — devs can flip the tier picker and see
   // the total react.
   const [tier, setTier]   = useState<PurchaseTier>("stream")
-  const [email, setEmail] = useState(userEmail)
+  const [method, setMethod] = useState<PayMethod>("saved")
   const itemPriceStr = tier === "download" && downloadPrice ? downloadPrice : streamPrice
   const itemPrice    = parsePrice(itemPriceStr)
-  const price        = formatPrice(itemPrice)
+  const price        = formatPrice(itemPrice + serviceFee(itemPrice))
 
   return (
     <DialogPreview
@@ -651,7 +727,7 @@ export function PurchaseAlbumDialogPreview({
                 </p>
               </div>
               <div className="flex flex-col items-end gap-0.5 shrink-0">
-                <span className="text-small font-medium tabular-nums">{itemPriceStr}</span>
+                <span className="text-small font-medium tabular-nums">{price}</span>
                 <span className="text-2xsmall text-muted-foreground">Remove</span>
               </div>
             </div>
@@ -673,7 +749,7 @@ export function PurchaseAlbumDialogPreview({
               onSelect={() => setTier("stream")}
               icon={<RadioIcon />}
               title="Listening"
-              description={`Stream on any device · ${streamPrice}`}
+              description={`Stream on any device · ${priceWithFee(streamPrice)}`}
             />
             {downloadPrice && (
               <RadioCard
@@ -682,45 +758,21 @@ export function PurchaseAlbumDialogPreview({
                 onSelect={() => setTier("download")}
                 icon={<Download />}
                 title="Download files"
-                description={`Lossless files + listening · ${downloadPrice}`}
+                description={`Lossless files + listening · ${priceWithFee(downloadPrice)}`}
               />
             )}
           </RadioCardGroup>
         </div>
 
 
-        <div className="flex flex-col gap-2">
-          <SectionLabel>Contact</SectionLabel>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="preview-email" className="sr-only">Email</Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-              <Input
-                id="preview-email"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                autoComplete="email"
-                className="pl-10"
-              />
-            </div>
-            <p className="text-2xsmall text-muted-foreground">
-              We'll send your receipt and a link to your files here.
-            </p>
-          </div>
-        </div>
 
 
         <div className="flex flex-col gap-2">
           <SectionLabel>Payment</SectionLabel>
-          <SquareContainer />
+          <PaymentMethodPicker value={method} onChange={setMethod} />
         </div>
 
-        <dl className="flex items-center justify-between py-1">
-          <dt className="text-small font-medium text-foreground">Total</dt>
-          <dd className="text-large font-medium tabular-nums">{price}</dd>
-        </dl>
+        <PriceSummary itemLabel={album.format ?? "Album"} itemPrice={itemPrice} />
 
         <div className="flex items-center gap-2 text-2xsmall text-muted-foreground">
           <ShieldCheck className="size-3.5" />

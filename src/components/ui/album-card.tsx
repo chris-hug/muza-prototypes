@@ -48,6 +48,7 @@ import { useDeviceDownloads } from "@/lib/offline"
 import { usePlayer } from "@/lib/player"
 import { registerAlbums, getAlbumDetail } from "@/lib/album-catalog"
 import { IconSwap } from "@/components/ui/icon-swap"
+import { priceWithFee } from "@/lib/cart"
 
 // Cover-button base — translucent muted fill + light backdrop blur,
 // border-0 to avoid a ghost edge from `bg-clip-padding`. Size
@@ -376,6 +377,9 @@ export function AlbumCard({
         {/* Status / pricing row — only when there's something to say:
              "Owned" once purchased, or the price(s) for paid releases.
              Free albums show nothing (the price's absence IS the signal).
+             Prices are shown WITH the service fee (`priceWithFee`): the
+             EU wants the full price up front, so the tile says what the
+             album costs bought on its own.
              Both the "Owned" label and the price TEXT are line boxes with the
              same line-height as the meta row, so the artist→status gap matches
              the title→artist gap exactly (no centred fixed-height box, which
@@ -389,12 +393,12 @@ export function AlbumCard({
           <span className={cn("flex items-center", leadingCls)}><PurchasedBadge offline={downloads.includes(libId)} /></span>
         ) : streamPrice ? (
           <span className={cn("flex items-center gap-1.5 text-muted-foreground tabular-nums", metaSize, metaWeight, metaTracking, leadingCls)}>
-            <span>{streamPrice}</span>
+            <span>{priceWithFee(streamPrice)}</span>
             {downloadPrice && (
               <>
                 <span className="opacity-30" aria-hidden>·</span>
                 <span className="flex items-center gap-0.5">
-                  <span>{downloadPrice}</span>
+                  <span>{priceWithFee(downloadPrice)}</span>
                   <Download className="size-3 shrink-0" aria-hidden />
                 </span>
               </>

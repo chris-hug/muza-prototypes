@@ -714,12 +714,23 @@ function CheckoutSummary() {
       {cart.taxTotal > 0 && (
         <Row label={cart.taxLabel}>{cart.format(cart.taxTotal)}</Row>
       )}
+      {/* One service fee for the whole cart (5% + $0.30, the $0.30 once).
+          See `serviceFee` in lib/cart. */}
+      <Row label="Service fee">{cart.format(cart.serviceFee)}</Row>
       <div className="flex items-baseline justify-between gap-3 pt-2 mt-1 border-t border-border/60">
         <span className="text-base font-medium text-foreground">Total</span>
         <span className="text-base font-medium text-foreground tabular-nums">
           {cart.format(cart.grandTotal)}
         </span>
       </div>
+      {/* The cart is cheaper than the prices on the tiles added up: each of
+          those includes the $0.30 a payment costs, and the cart pays it
+          once. Said in money, because that is the reason to use it. */}
+      {cart.feeSaving > 0 && (
+        <p className="text-2xsmall text-muted-foreground text-right">
+          You save {cart.format(cart.feeSaving)} by paying for {cart.lines.length} items at once.
+        </p>
+      )}
     </div>
   )
 }

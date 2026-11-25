@@ -47,7 +47,7 @@ fills whatever it is in.
 |---|---|
 | `cover` `title` `artist` | required; an empty `cover` renders the branded placeholder |
 | `year` | rendered after the artist behind a `·`; tagged `data-card-year` so a dense rail can hide it |
-| `streamPrice` / `downloadPrice` | the third line for a paid release; `downloadPrice` only means something next to `streamPrice` |
+| `streamPrice` / `downloadPrice` | the third line for a paid release; `downloadPrice` only means something next to `streamPrice`. Pass the artist's price: the card shows it with the service fee (`priceWithFee`), because the EU wants the full price up front |
 | `purchased` | bought — the third line reads "Owned" and wins over any price |
 | `owned` | uploaded by this user — Edit replaces the heart, the menu swaps Add → Edit and Report → Remove from library |
 | `inLibrary` | already saved — drops the heart and the menu's "Save to library", surfaces "Remove from library" |
